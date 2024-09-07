@@ -4,9 +4,9 @@
  */
 
 import type { ConnectedClientId } from "./baseTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 
 import type { JsonDeserialized } from "@fluid-experimental/presence/internal/core-interfaces";
+import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
 
 /**
  * Metadata for the value state.

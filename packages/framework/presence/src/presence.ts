@@ -4,7 +4,6 @@
  */
 
 import type { ConnectedClientId } from "./baseTypes.js";
-import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { NotificationsManager } from "./notificationsManager.js";
 import type {
 	PresenceStates,
@@ -13,6 +12,7 @@ import type {
 } from "./types.js";
 
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 
 /**
  * A client within a Fluid session (period of container connectivity to service).

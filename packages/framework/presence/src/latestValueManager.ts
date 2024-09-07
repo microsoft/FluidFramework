@@ -4,8 +4,6 @@
  */
 
 import type { ConnectedClientId } from "./baseTypes.js";
-import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { LatestValueControls } from "./latestValueControls.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 
@@ -14,6 +12,8 @@ import type {
 	JsonSerializable,
 } from "@fluid-experimental/presence/internal/core-interfaces";
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
+import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
 
 /**
  * @sealed

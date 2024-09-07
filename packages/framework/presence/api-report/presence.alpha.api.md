@@ -20,68 +20,6 @@ export class ExperimentalPresenceDO {
 // @alpha
 export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & ExperimentalPresenceDO>;
 
-// @alpha
-export namespace InternalTypes {
-    export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<any>, TManager> = (key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>) => {
-        value: TValue;
-        manager: StateValue<TManager>;
-    };
-    // (undocumented)
-    export interface NotificationType {
-        // (undocumented)
-        args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
-        // (undocumented)
-        name: string;
-    }
-    // (undocumented)
-    export class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
-    }
-    export type StateValue<T> = T & StateValueBrand<T>;
-    export class StateValueBrand<T> {
-    }
-    // (undocumented)
-    export interface ValueDirectory<T> {
-        // (undocumented)
-        items: {
-            [name: string | number]: ValueOptionalState<T> | ValueDirectory<T>;
-        };
-        // (undocumented)
-        rev: number;
-    }
-    // (undocumented)
-    export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
-    // (undocumented)
-    export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        value?: JsonDeserialized<TValue>;
-    }
-    // (undocumented)
-    export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        value: JsonDeserialized<TValue>;
-    }
-    // (undocumented)
-    export interface ValueStateMetadata {
-        // (undocumented)
-        rev: number;
-        // (undocumented)
-        timestamp: number;
-    }
-}
-
-// @alpha
-export namespace InternalUtilityTypes {
-    export type FullyReadonly<T> = {
-        readonly [K in keyof T]: FullyReadonly<T[K]>;
-    };
-    export type IsNotificationEvent<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
-    export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
-    export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
-    export type NotificationEvents<E> = {
-        [P in string & keyof E as IsNotificationEvent<E[P]> extends true ? P : never]: E[P];
-    };
-}
-
 // @alpha @sealed
 export interface IPresence {
     readonly events: ISubscribable<PresenceEvents>;

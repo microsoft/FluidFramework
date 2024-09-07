@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 
 /**
  * Unique address within a session.

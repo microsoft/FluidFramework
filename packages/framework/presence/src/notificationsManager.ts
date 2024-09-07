@@ -4,10 +4,10 @@
  */
 
 import type { ConnectedClientId } from "./baseTypes.js";
-import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
+import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
 
 /**
  * @sealed

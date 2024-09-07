@@ -45,6 +45,14 @@
 		"./internal/events": {
 			"import": "./lib/events/events.js",
 			"require": "./dist/events/events.js"
+		},
+		"./internal/exposedInternalTypes": {
+			"import": "./lib/exposedInternalTypes.js",
+			"require": "./dist/exposedInternalTypes.js"
+		},
+		"./internal/exposedUtilityTypes": {
+			"import": "./lib/exposedUtilityTypes.js",
+			"require": "./dist/exposedUtilityTypes.js"
 		}
 	},
 	"files": [

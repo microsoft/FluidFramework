@@ -73,7 +73,3 @@ export {
 	type NotificationsManager,
 	type NotificationsManagerEvents,
 } from "./notificationsManager.js";
-
-// Below here are things that are used by the above, but not part of the desired API surface.
-export type { InternalTypes } from "./exposedInternalTypes.js";
-export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
