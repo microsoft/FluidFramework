@@ -188,7 +188,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		// Cleanup: git clean any untracked files
 		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
-		ux.action.stop("Commit and open a PR!")
+		ux.action.stop();
 
 		this.log("Commit and open a PR!");
 	}
