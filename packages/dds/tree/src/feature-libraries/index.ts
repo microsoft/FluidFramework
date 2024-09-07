@@ -249,4 +249,5 @@ export {
 	isMapTreeSequenceField,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
+	UnhydratedContext,
 } from "./flex-map-tree/index.js";

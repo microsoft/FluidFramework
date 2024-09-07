@@ -131,11 +131,14 @@ export function mapTreeFromNodeData(
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 
-	// TODO:
-	// Since some defaults may still be missing, this can give false positives when context is undefined but schemaValidationPolicy is provided.
 	if (schemaValidationPolicy?.policy.validateSchema === true) {
-		const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
-		inSchemaOrThrow(maybeError);
+		// TODO: BUG: AB#9131
+		// Since some defaults may still be missing, this can give false positives when context is undefined but schemaValidationPolicy is provided.
+		// For now disable this check when context is undefined:
+		if (context !== undefined) {
+			const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
+			inSchemaOrThrow(maybeError);
+		}
 	}
 
 	return mapTree;
