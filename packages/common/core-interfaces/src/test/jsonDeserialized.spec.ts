@@ -1040,8 +1040,30 @@ describe("JsonDeserialized", () => {
 			it("const enums are never readable", () => {
 				// ... and thus don't need accounted for by JsonDeserialized.
 
-				function doNothingPassThru<T>(v: T): T {
-					return v;
+				const enum LocalConstHeterogenousEnum {
+					zero,
+					a = "a",
+				}
+
+				assert.throws(() => {
+					// @ts-expect-error `const enums` are not accessible for reading
+					passThru(LocalConstHeterogenousEnum);
+				}, new ReferenceError("LocalConstHeterogenousEnum is not defined"));
+
+				/**
+				 * In CommonJs, an imported const enum becomes undefined. Only
+				 * local const enums are inaccessible. To avoid building special
+				 * support for both ESM and CommonJS, this helper allows calling
+				 * with undefined (for CommonJS) and simulates the error that
+				 * is expected on ESM.
+				 * Importantly `undefined` is not expected to be serialiable and
+				 * thus is always a problem.
+				 */
+				function doNothingPassThru<T>(v: T): never {
+					if (v === undefined) {
+						throw new ReferenceError(`ConstHeterogenousEnum is not defined`);
+					}
+					throw new Error("Internal test error - should not reach here");
 				}
 
 				assert.throws(() => {
