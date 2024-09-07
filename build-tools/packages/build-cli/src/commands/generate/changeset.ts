@@ -148,45 +148,56 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		}
 		this.log(`Remote for ${context.originRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
-		// If the branch flag was passed explicitly, we don't want to prompt the user to select one. We can't check for
-		// undefined because there's a default value for the flag.
-		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
-		if (!usedBranchFlag) {
-			const { packages: usedBranchPackages } = await repo.getChangedSinceRef(
-				branch,
-				remote,
-				context,
-			);
-
-			if (usedBranchPackages.length > BRANCH_PROMPT_LIMIT) {
-				const answer = await prompts({
-					type: "select",
-					name: "selectedBranch",
-					message: `More than ${BRANCH_PROMPT_LIMIT} packages were edited compared to the ${branch} branch. Maybe you meant to select a different target branch?`,
-					choices: [
-						{ title: "next", value: "next" },
-						{ title: "main", value: "main" },
-						{ title: "lts", value: "lts" },
-					],
-					initial: branch === "next" ? 0 : branch === "main" ? 1 : 2,
-				});
-				branch = answer.selectedBranch as string;
-			}
-		}
-
-		ux.action.start("Comparing local changes to remote...");
-		const {
-			packages,
+		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
+		let {
+			packages: initialBranchChangedPackages,
 			files: changedFiles,
 			releaseGroups: changedReleaseGroups,
 		} = await repo.getChangedSinceRef(branch, remote, context);
 		ux.action.stop();
 
+		// Separate definition to address no-atomic-updates lint rule
+		// https://eslint.org/docs/latest/rules/require-atomic-updates
+		let changedPackages = initialBranchChangedPackages;
+
+		// If the branch flag was passed explicitly, we don't want to prompt the user to select one. We can't check for
+		// undefined because there's a default value for the flag.
+		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
+		if (!usedBranchFlag && initialBranchChangedPackages.length > BRANCH_PROMPT_LIMIT) {
+			const answer = await prompts({
+				type: "select",
+				name: "selectedBranch",
+				message: `More than ${BRANCH_PROMPT_LIMIT} packages were edited compared to the ${branch} branch. Maybe you meant to select a different target branch?`,
+				choices: [
+					{ title: "next", value: "next" },
+					{ title: "main", value: "main" },
+					{ title: "lts", value: "lts" },
+				],
+				initial: branch === "next" ? 0 : branch === "main" ? 1 : 2,
+			});
+
+			// Note if the selected branch matched the original one so we can optimize
+			const sameBranch = branch === answer.selectedBranch;
+			branch = answer.selectedBranch as string;
+
+			if (!sameBranch) {
+				ux.action.start(
+					`Branch changed. Comparing local changes to remote for branch ${branch}`,
+				);
+				const newChanges = await repo.getChangedSinceRef(branch, remote, context);
+				ux.action.stop();
+
+				changedPackages = newChanges.packages;
+				changedReleaseGroups = newChanges.releaseGroups;
+				changedFiles = newChanges.files;
+			}
+		}
+
 		this.verbose(`release groups: ${changedReleaseGroups.join(", ")}`);
-		this.verbose(`packages: ${packages.map((p) => p.name).join(", ")}`);
+		this.verbose(`packages: ${changedPackages.map((p) => p.name).join(", ")}`);
 		this.verbose(`files: ${changedFiles.join(", ")}`);
 
-		const changedPackages = packages.filter((pkg) => {
+		changedPackages = changedPackages.filter((pkg) => {
 			const inReleaseGroup = pkg.monoRepo?.name === releaseGroup;
 			if (!inReleaseGroup) {
 				this.warning(
@@ -200,7 +211,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		if (changedFiles.length === 0) {
 			this.warning(`No changes when compared to ${branch}.`);
 			noChanges = true;
-		} else if (packages.length === 0) {
+		} else if (changedPackages.length === 0) {
 			this.warning(`No changed packages when compared to ${branch}.`);
 			noChanges = true;
 		}
@@ -210,7 +221,37 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				`More than one release group changed when compared to ${branch} (${changedReleaseGroups.join(
 					", ",
 				)}). You must specify which release group you're creating a changeset for using the --releaseGroup flag.`,
+				{ exit: 1 },
 			);
+		}
+
+		if (noChanges) {
+			const question: prompts.PromptObject = {
+				type: "confirm",
+				name: "releaseNotesOnly",
+				message:
+					"No changed packages have been detected.\n\nIf you deleted packages and want to create a changeset that will be included in the release notes only, select Yes.\n\nOtherwise select No and you'll be prompted to choose affected packages as usual.",
+				initial: true,
+			};
+			const { releaseNotesOnly } = await prompts(question);
+
+			if (releaseNotesOnly === true) {
+				const emptyFile = await createChangesetFile(
+					monorepo.directory ?? context.gitRepo.resolvedRoot,
+					new Map(),
+					undefined,
+					{ includeInChangelog: false },
+				);
+				// eslint-disable-next-line @typescript-eslint/no-shadow
+				const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
+				this.logHr();
+				this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
+				return {
+					branch,
+					selectedPackages: [],
+					changesetPath,
+				};
+			}
 		}
 
 		const packageChoices: Choice[] = [];
