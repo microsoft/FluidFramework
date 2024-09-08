@@ -226,6 +226,41 @@ export class GitRepo {
 	}
 
 	/**
+	 * Returns git output of all non-ignored files including deleted files that are not staged.
+	 * A given path may be included multiple timed in the array if git version does not support
+	 * `--deduplicate` option (introduced in v2.31.0).
+	 * Note that this function excludes files that are deleted locally AND staged.
+	 *
+	 * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
+	 * return all files in the repo use the value `"."`.
+	 */
+	private async getAllGitFilesOutput(
+		directory: string,
+		preferredOptions: "--deduplicate"[] = ["--deduplicate"],
+	): Promise<string> {
+		/**
+		 * What these git ls-files flags do:
+		 *
+		 * ```
+		 * --cached: Includes cached (staged) files.
+		 * --others: Includes other (untracked) files that are not ignored.
+		 * --exclude-standard: Excludes files that are ignored by standard ignore rules.
+		 * --deduplicate: [If used] removes duplicate entries from the output.
+		 * --full-name: Shows the full path of the files relative to the repository root.
+		 * ```
+		 */
+		const command = `ls-files --cached --others --exclude-standard ${preferredOptions.join(" ")} --full-name ${directory}`;
+		try {
+			return await this.exec(command, `get files`);
+		} catch (error) {
+			if (preferredOptions.length === 0) {
+				throw error;
+			}
+			return this.getAllGitFilesOutput(directory, preferredOptions.slice(1));
+		}
+	}
+
+	/**
 	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
 	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
 	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
@@ -234,25 +269,15 @@ export class GitRepo {
 	 * return all files in the repo use the value `"."`.
 	 */
 	public async getFiles(directory: string): Promise<string[]> {
-		/**
-		 * What these git ls-files flags do:
-		 *
-		 * ```
-		 * --cached: Includes cached (staged) files.
-		 * --others: Includes other (untracked) files that are not ignored.
-		 * --exclude-standard: Excludes files that are ignored by standard ignore rules.
-		 * --deduplicate: Removes duplicate entries from the output.
-		 * --full-name: Shows the full path of the files relative to the repository root.
-		 * ```
-		 */
-		const command = `ls-files --cached --others --exclude-standard --deduplicate --full-name -- ${directory}`;
 		const [fileResults, deletedFiles] = await Promise.all([
-			this.exec(command, `get files`),
+			this.getAllGitFilesOutput(directory),
 			this.getDeletedFiles(),
 		]);
 
 		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
 		// those from the full list.
+		// Note: an alternative mechanism to exclude deleted files is to use
+		// --debug and filter out files with zeroed stats.
 		const allFiles = new Set(
 			fileResults
 				.split("\n")
@@ -292,20 +317,23 @@ export class GitRepo {
 	/**
 	 * Execute git command
 	 *
-	 * @param command the git command
-	 * @param error description of command line to print when error happens
+	 * @param command - the git command
+	 * @param error - description of command line to print when error happens
+	 * @param pipeStdIn - optinal string to pipe to stdin
+	 * @returns the output of the command
 	 */
-	private async exec(command: string, error: string, pipeStdIn?: string) {
+	private async exec(command: string, error: string, pipeStdIn?: string): Promise<string> {
 		return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn);
 	}
 
 	/**
 	 * Execute git command
 	 *
-	 * @param command the git command
-	 * @param error description of command line to print when error happens
+	 * @param command - the git command
+	 * @param pipeStdIn - optinal string to pipe to stdin
+	 * @returns the output of the command or undefined if there was an error
 	 */
-	private async execNoError(command: string, pipeStdIn?: string) {
+	private async execNoError(command: string, pipeStdIn?: string): Promise<string | undefined> {
 		return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
 	}
 }
