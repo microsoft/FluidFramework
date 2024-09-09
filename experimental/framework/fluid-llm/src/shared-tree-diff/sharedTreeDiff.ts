@@ -392,6 +392,9 @@ export function sharedTreeDiff(
 	return diffs;
 }
 
+/**
+ * Type Guard that determines if a given object is an array of type unknown[] or {@link TreeArrayNode}.
+ */
 function isArrayOrTreeArrayNode(obj: unknown): obj is unknown[] | TreeArrayNode {
 	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -402,6 +405,9 @@ function isArrayOrTreeArrayNode(obj: unknown): obj is unknown[] | TreeArrayNode 
 	return false;
 }
 
+/**
+ * Helper that creates a map of object ids to their index in an array of objects.
+ */
 function createObjectArrayItemIdsToIndexMap(
 	obj: unknown[],
 	idAttributeName: string | number,
@@ -661,6 +667,9 @@ export function createMergableDiffSeries(diffs: Difference[]): Difference[] {
 	return finalDiffSeries;
 }
 
+/**
+ * Creates a UUID for the target array from a {@link Difference}'s ${@link ObjectPath}
+ */
 function arrayUuidFromPath(path: ObjectPath): string {
 	return path.length === 1 ? "" : path.slice(0, -1).join("");
 }

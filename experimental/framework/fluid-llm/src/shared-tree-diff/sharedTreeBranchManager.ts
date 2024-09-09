@@ -6,10 +6,6 @@ import {
 	createMergableIdDiffSeries,
 	sharedTreeDiff,
 	type Difference,
-	type DifferenceChange,
-	type DifferenceCreate,
-	type DifferenceMove,
-	type DifferenceRemove,
 	type ObjectPath,
 } from "./sharedTreeDiff.js";
 import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
@@ -27,6 +23,10 @@ export class SharedTreeBranchManager {
 		this.nodeIdAttributeName = params?.nodeIdAttributeName;
 	}
 
+	/**
+	 * Compares the differences between either two objects or a TreeeNode and a plain object.
+	 * TODO: Should allow comparing two tree nodes? Should we allowe comparing two plain objects? Or just leave as tree node vs object?
+	 */
 	public compare(
 		obj: Record<string, unknown> | TreeArrayNode,
 		newObj: Record<string, unknown> | unknown[],
@@ -177,10 +177,6 @@ export class SharedTreeBranchManager {
 		} else {
 			throw new TypeError("Unsupported object type for diff application");
 		}
-	}
-
-	public isDiffOnArray(diff: Difference): boolean {
-		return typeof diff.path[diff.path.length - 1] === "number";
 	}
 }
 
