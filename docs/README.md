@@ -108,7 +108,7 @@ These can be replaced using standard Markdown link syntax.
 #### `packageref` links
 
 Similar to the above, this shortcode syntax is not supported.
-However, a reusable React component was added to `src/components/shortLink.tsx` that can be leveraged instead for the same purpose.
+However, a reusable React component was added to `src/components/shortLinks.tsx` that can be leveraged instead for the same purpose.
 
 E.g.,
 
@@ -125,6 +125,35 @@ import { PackageLink } from "@site/src/components/shortLinks"; // Best practice:
 
 <PackageLink packageName="azure-client">@fluidframework/azure-client</PackageLink>
 ```
+
+Note: the `packageref` shortcode provided support for specifying an API version.
+This support has not been translated to the new React component, as we now version the entire site, rather than only versioning API docs.
+As a result, the version linked to will always be the same as the version of the docs using specifying the link.
+
+#### `apiref` links
+
+Similar to the above, this shortcode syntax is not supported.
+However, a reusable React component was added to `src/components/shortLinks.tsx` that can be leveraged instead for the same purpose.
+
+E.g.,
+
+```md
+[@fluidframework/azure-client]({{< apiref "azure-client" "AzureClient" "class" >}})
+```
+
+Can be replaced with (`.mdx` only):
+
+```mdx
+import { ApiLink } from "@site/src/components/shortLinks"; // Best practice: put this at the top of the file
+
+...
+
+<ApiLink packageName="azure-client" apiName="AzureClient" apiType="class">Azure Client</ApiLink>
+```
+
+Note: the `apiref` shortcode provided support for specifying an API version.
+This support has not been translated to the new React component, as we now version the entire site, rather than only versioning API docs.
+As a result, the version linked to will always be the same as the version of the docs using specifying the link.
 
 ### MDX
 
