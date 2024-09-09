@@ -12,7 +12,7 @@ import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";
+import { ISegment, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -67,10 +67,11 @@ export const insertAtRefPos: TestOperation = (
 	if (segs.length > 0) {
 		const text = client.longClientId!.repeat(random.integer(1, 3));
 		const seg = random.pick(segs);
+		const movedOrRemoved = toRemovalInfo(seg) ?? toMoveInfo(seg);
 		const lref = client.createLocalReferencePosition(
 			seg,
-			toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1),
-			toRemovalInfo(seg)
+			movedOrRemoved ? 0 : random.integer(0, seg.cachedLength - 1),
+			movedOrRemoved
 				? ReferenceType.SlideOnRemove
 				: random.pick([
 						ReferenceType.Simple,
