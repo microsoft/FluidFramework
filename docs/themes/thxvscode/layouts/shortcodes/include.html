@@ -1,8 +1,0 @@
-{{- $file := .Get "file" -}}
-{{- $safeHTML := .Get "safeHTML" -}}
-{{- $contents := readFile $file -}}
-{{ if $safeHTML }}
-    {{- $contents | safeHTML -}}
-{{ else }}
-    {{- $contents -}}
-{{- end -}}
