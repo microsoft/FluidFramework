@@ -241,16 +241,18 @@ export class GitRepo {
 		 * --cached: Includes cached (staged) files.
 		 * --others: Includes other (untracked) files that are not ignored.
 		 * --exclude-standard: Excludes files that are ignored by standard ignore rules.
-		 * --deduplicate: Removes duplicate entries from the output.
 		 * --full-name: Shows the full path of the files relative to the repository root.
 		 * ```
+		 *
+		 * Note that `--deduplicate` is not used here because it is not available until git version 2.31.0.
 		 */
-		const command = `ls-files --cached --others --exclude-standard --deduplicate --full-name -- ${directory}`;
+		const command = `ls-files --cached --others --exclude-standard --full-name ${directory}`;
 		const [fileResults, deletedFiles] = await Promise.all([
 			this.exec(command, `get files`),
 			this.getDeletedFiles(),
 		]);
 
+		// Deduplicate the list of files by building a Set.
 		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
 		// those from the full list.
 		const allFiles = new Set(
