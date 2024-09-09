@@ -135,7 +135,7 @@ export type ScopedSchemaName<
  *
  * There are two ways to use these APIs:
  *
- * Customizable Approach
+ * Customizable Approach:
  * 1. Declaration: `class X extends schemaFactory.object("x", {}) {}`
  * 2. Allows adding "local" (non-persisted) members: Yes. Members (including methods) can be added to the class.
  * 3. Prototype: The user-defined class.
