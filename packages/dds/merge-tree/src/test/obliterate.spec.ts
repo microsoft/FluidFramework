@@ -176,14 +176,6 @@ describe("obliterate", () => {
 		it("cleans up local references once the collab window advances enough", () => {
 			const client2 = new TestClient({ mergeTreeEnableObliterate: true });
 			client2.startOrUpdateCollaboration("client2");
-			for (const char of "hello world") {
-				client2.applyMsg(
-					client2.makeOpMessage(
-						client2.insertTextLocal(client2.getLength(), char),
-						client2.getCurrentSeq() + 1,
-					),
-				);
-			}
 
 			const obliterateStart = 0;
 			const obliterateEnd = client.getLength();
@@ -211,12 +203,12 @@ describe("obliterate", () => {
 			assert.equal(client.getText(), "");
 
 			startSeg.segment?.localRefs?.walkReferences((ref) => {
-				const oblProps = ref.properties?.obliterate as ObliterateInfo;
-				assert(oblProps.start !== undefined, "start ref should NOT be removed");
+				const oblProps = ref.properties?.obliterate as ObliterateInfo | undefined;
+				assert(oblProps?.start !== undefined, "start ref should NOT be removed");
 			});
 			endSeg.segment?.localRefs?.walkReferences((ref) => {
-				const oblProps = ref.properties?.obliterate as ObliterateInfo;
-				assert(oblProps.end !== undefined, "end ref should NOT be removed");
+				const oblProps = ref.properties?.obliterate as ObliterateInfo | undefined;
+				assert(oblProps?.end !== undefined, "end ref should NOT be removed");
 			});
 
 			// this will force Zamboni to run

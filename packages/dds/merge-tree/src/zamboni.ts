@@ -46,11 +46,11 @@ export function zamboniSegments(
 		) {
 			const refs = segmentToScour.segment.localRefs ?? [];
 			for (const obliterateRef of refs) {
-				const oblInfo = obliterateRef.properties?.obliterate as ObliterateInfo;
-				if (oblInfo.start !== undefined) {
+				const oblInfo = obliterateRef.properties?.obliterate as ObliterateInfo | undefined;
+				if (oblInfo?.start !== undefined) {
 					mergeTree.removeLocalReferencePosition(oblInfo.start);
 				}
-				if (oblInfo.end !== undefined) {
+				if (oblInfo?.end !== undefined) {
 					mergeTree.removeLocalReferencePosition(oblInfo.end);
 				}
 			}
