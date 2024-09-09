@@ -22,7 +22,6 @@ extends:
     taskTest:
       - ci:test:mocha
       - ci:test:jest
-      - ci:test:realsvc:local
       - test:copyresults
     testResultDirs:
       - nyc/examples
