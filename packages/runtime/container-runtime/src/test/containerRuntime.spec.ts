@@ -73,7 +73,7 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage, InboundBatch } from "../opLifecycle/index.js";
+import type { BatchMessage, BatchStartInfo } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -812,7 +812,7 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processInboundBatch: (batch: InboundBatch, _local: boolean) => {
+					processInboundBatch: (batch: BatchStartInfo, _local: boolean) => {
 						return batch.messages.map((message) => ({
 							message,
 							localOpMetadata: undefined,

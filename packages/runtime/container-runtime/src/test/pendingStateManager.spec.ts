@@ -163,7 +163,7 @@ describe("Pending State Manager", () => {
 			emptyBatchSequenceNumber?: number,
 			resubmittedBatchId?: string,
 		) =>
-			pendingStateManager.processInboundBatch(
+			pendingStateManager.processInflux(
 				{
 					messages: messages as InboundSequencedContainerRuntimeMessage[],
 					batchStartCsn,
@@ -556,7 +556,7 @@ describe("Pending State Manager", () => {
 				);
 				const inboundMessage = futureRuntimeMessage as ISequencedDocumentMessage &
 					UnknownContainerRuntimeMessage;
-				pendingStateManager.processInboundBatch(
+				pendingStateManager.processInflux(
 					{
 						messages: [inboundMessage],
 						batchStartCsn: 1 /* batchStartCsn */,
