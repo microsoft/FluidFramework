@@ -210,5 +210,5 @@ function nodeToMapTree(node: FlexTreeNode): MapTree {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
-	return { fields, type: node.schema.name, value: node.value };
+	return { fields, type: node.schema, value: node.value };
 }

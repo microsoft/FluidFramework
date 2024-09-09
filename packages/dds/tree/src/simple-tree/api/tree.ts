@@ -6,9 +6,8 @@
 import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { CommitMetadata } from "../../core/index.js";
+import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
 import type { Listenable } from "../../events/index.js";
-import type { RevertibleFactory } from "../../shared-tree/index.js";
 
 import {
 	type ImplicitAllowedTypes,

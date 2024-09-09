@@ -8,9 +8,17 @@ import * as path from "path";
 import { readdir, stat } from "fs/promises";
 import picomatch from "picomatch";
 import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
-import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
+import { readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
+import { globFn, toPosixPath } from "../taskUtils";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
+
+function unquote(str: string) {
+	if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {
+		return str.substr(1, str.length - 2);
+	}
+	return str;
+}
 
 export class EchoTask extends LeafTask {
 	protected get isIncremental() {
