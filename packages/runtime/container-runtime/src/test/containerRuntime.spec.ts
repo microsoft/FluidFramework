@@ -174,9 +174,7 @@ describe("Runtime", () => {
 				return opFakeSequenceNumber++;
 			},
 			submitSignalFn: (content: unknown, targetClientId?: string) => {
-				if (targetClientId === undefined || targetClientId === mockClientId) {
-					submittedSignals.push(content as ISignalEnvelope); // Note: this object shape is for testing only. Not representative of real signals.
-				}
+				submittedSignals.push(content as ISignalEnvelope); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId: mockClientId,
 			connected: true,
@@ -2558,13 +2556,15 @@ describe("Runtime", () => {
 			function processSignals(signals: ISignalEnvelope[], count: number) {
 				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
-					containerRuntime.processSignal(
-						{
-							clientId: containerRuntime.clientId as string,
-							content: signal,
-						},
-						true,
-					);
+					if (signal.targetClientId === undefined || signal.targetClientId === mockClientId) {
+						containerRuntime.processSignal(
+							{
+								clientId: containerRuntime.clientId as string,
+								content: signal,
+							},
+							true,
+						);
+					}
 				}
 			}
 
@@ -2928,16 +2928,16 @@ describe("Runtime", () => {
 				processSubmittedSignals(1);
 
 				// Send 150 signals and temporarily lose 1
-				sendSignals(150); // 		 150 outstanding including 1 tracked signal (#101); max #151
-				processSubmittedSignals(95); //  55 outstanding including 1 tracked signal (#101)
-				dropSignals(1); //               54 outstanding including 1 tracked signal (#101)
-				processSubmittedSignals(14); //  40 outstanding; none tracked
-				processDroppedSignals(1); //     40 outstanding; none tracked *out of order signal*
-				processSubmittedSignals(40); //   0 outstanding; none tracked
+				sendSignals(150); //            150 outstanding including 1 tracked signal (#101); max #151
+				processSubmittedSignals(95); // 55 outstanding including 1 tracked signal (#101)
+				dropSignals(1); //              54 outstanding including 1 tracked signal (#101)
+				processSubmittedSignals(14); // 40 outstanding; none tracked
+				processDroppedSignals(1); //    40 outstanding; none tracked *out of order signal*
+				processSubmittedSignals(40); //  0 outstanding; none tracked
 
 				// Send 60 signals including tracked signal
-				sendSignals(60); // 		 60 outstanding including 1 tracked signal (#201); max #211
-				processSubmittedSignals(60); //   0 outstanding; none tracked
+				sendSignals(60); //             60 outstanding including 1 tracked signal (#201); max #211
+				processSubmittedSignals(60); //  0 outstanding; none tracked
 
 				// Check SignalLatency logs amount of sent and lost signals
 				logger.assertMatch(
@@ -2961,22 +2961,23 @@ describe("Runtime", () => {
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals and SignalOutOfOrder event",
 				);
 			});
-			it("ignores non-self-targeted signal in signalLatency telemetry", () => {
+
+			it("ignores remote targeted signal in signalLatency telemetry", () => {
 				// Send 1st signal and process it to prime the system
 				sendSignals(1);
 				processSubmittedSignals(1);
 
-				// Rapid send 100+ signals (one targeted)
-				sendSignals(50);
+				// Send 101 signals (one targeted)
+				sendSignals(50); //             50 outstanding; none tracked;
 				containerRuntime.submitSignal(
 					"TargetedSignalType",
 					"TargetedSignalContent",
 					"mockTargetClient",
-				);
-				sendSignals(50);
+				); //                           51 outstanding; none tracked; one remote targeted
+				sendSignals(50); //            101 outstanding including 1 tracked signals (#101); one targeted
 
 				// Process all signals
-				processSubmittedSignals(100);
+				processSubmittedSignals(101); // 0 outstanding; none tracked
 
 				// Check for logged SignalLatency event
 				logger.assertMatch(
@@ -2996,17 +2997,17 @@ describe("Runtime", () => {
 				sendSignals(1);
 				processSubmittedSignals(1);
 
-				// Rapid send 100+ signals (one self-targeted)
-				sendSignals(50);
+				// Send 101 signals (one self-targeted)
+				sendSignals(50); //             50 outstanding; none tracked;
 				containerRuntime.submitSignal(
 					"TargetedSignalType",
 					"TargetedSignalContent",
 					containerRuntime.clientId,
-				);
-				sendSignals(50);
+				); //                           51 outstanding; none tracked; one self-targeted
+				sendSignals(50); //            101 outstanding including 1 tracked signals (#101); one self-targeted
 
 				// Process all signals
-				processSubmittedSignals(100);
+				processSubmittedSignals(101); // 0 outstanding; none tracked
 
 				// Check for logged SignalLatency event
 				logger.assertMatch(
@@ -3026,22 +3027,21 @@ describe("Runtime", () => {
 				sendSignals(1);
 				processSubmittedSignals(1);
 
-				// Rapid send 100 signals (one targeted) and drop 10
-				sendSignals(40);
-				processSubmittedSignals(40);
+				// Send 100 signals (one targeted) and drop 10
+				sendSignals(40); //              40 outstanding; none tracked;
 				containerRuntime.submitSignal(
 					"TargetedSignalType",
 					"TargetedSignalContent",
 					"mockTargetClientId",
-				);
-				sendSignals(40);
-				dropSignals(10);
-				sendSignals(20);
+				); //                            41 outstanding; none tracked; one remote targeted
+				sendSignals(40); //              81 outstanding; none tracked; one remote targeted
+				dropSignals(10); //              71 outstanding; none tracked; one remote targeted
+				sendSignals(20); //              91 outstanding; none tracked; one remote targeted
 
 				// Process all signals (5 out of order)
-				processSubmittedSignals(45);
-				processDroppedSignals(5);
-				processSubmittedSignals(5);
+				processSubmittedSignals(85); //   6 outstanding; none tracked;
+				processDroppedSignals(5); //      6 outstanding; none tracked; *out of order signals*
+				processSubmittedSignals(6); //    0 outstanding; none tracked;
 
 				// Check for logged SignalLatency event
 				logger.assertMatch(
