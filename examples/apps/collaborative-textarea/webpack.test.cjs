@@ -49,7 +49,7 @@ module.exports = (env) => {
 		},
 		plugins: [
 			new webpack.ProvidePlugin({
-				process: "process/browser",
+				process: "process/browser.js",
 			}),
 			new HtmlWebpackPlugin({
 				template: "./tests/index.html",

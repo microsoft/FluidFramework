@@ -27,7 +27,10 @@ import type { IChannel } from "./channel.js";
  * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
-	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
+	(event: "disconnected", listener: () => void);
+	(event: "dispose", listener: () => void);
+	(event: "attaching", listener: () => void);
+	(event: "attached", listener: () => void);
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);

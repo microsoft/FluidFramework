@@ -18,35 +18,26 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import {
-	SchemaBuilder,
-	leaf as leafDomain,
-	singleJsonCursor,
-	typedJsonCursor,
-} from "../../../domains/index.js";
-import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import {
-	LazyLeaf,
-	LazyMap,
-	LazyTreeNode,
-} from "../../../feature-libraries/flex-tree/lazyNode.js";
-import {
-	Any,
-	DefaultChangeFamily,
-	type DefaultChangeset,
-	DefaultEditBuilder,
-	type FlexAllowedTypes,
-	type FlexFieldKind,
-	type FlexTreeField,
-	type FlexTreeNode,
-	type FlexTreeNodeSchema,
+import type { Context } from "../../../feature-libraries/flex-tree/context.js";
+import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
+import type {
+	FlexAllowedTypes,
+	FlexFieldKind,
+	FlexTreeField,
+	FlexTreeNode,
+	FlexTreeNodeSchema,
 } from "../../../feature-libraries/index.js";
-import type { TreeContent, ITreeCheckout } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
-import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
+import type { TreeContent } from "../../../shared-tree/index.js";
 
 import { contextWithContentReadonly } from "./utils.js";
-import { MockNodeKeyManager } from "../../../feature-libraries/node-key/mockNodeKeyManager.js";
+import {
+	cursorFromInsertable,
+	SchemaFactory,
+	toFlexSchema,
+} from "../../../simple-tree/index.js";
+import { getFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { JsonArray, JsonObject, singleJsonCursor } from "../../json/index.js";
+import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
@@ -104,149 +95,103 @@ function createAnchors(
 describe("LazyNode", () => {
 	describe("LazyNode", () => {
 		it("is", () => {
-			// #region Create schemas
-
-			const schemaBuilder = new SchemaBuilder({
-				scope: "testShared",
-			});
-
-			const structNodeSchema = schemaBuilder.object("object", {});
-			const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.optional(Any));
-
-			const schema = schemaBuilder.intoSchema(mapNodeAnySchema);
-
-			// #endregion
-
 			const { context, cursor } = initializeTreeWithContent({
-				schema,
+				schema: toFlexSchema(JsonObject),
 				initialTree: singleJsonCursor({}),
 			});
 			cursor.enterNode(0);
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new TestLazyTree(context, mapNodeAnySchema, cursor, anchorNode, anchor);
+			const node = new TestLazyTree(
+				context,
+				getFlexSchema(JsonObject),
+				cursor,
+				anchorNode,
+				anchor,
+			);
 
-			assert(node.is(mapNodeAnySchema));
-			assert(!node.is(structNodeSchema));
+			assert(node.is(getFlexSchema(JsonObject)));
+			assert(!node.is(getFlexSchema(JsonArray)));
 		});
 
 		it("parent", () => {
-			const schemaBuilder = new SchemaBuilder({
-				scope: "test",
-				libraries: [leafDomain.library],
-			});
-			const fieldNodeSchema = schemaBuilder.map(
-				"map",
-				SchemaBuilder.optional(leafDomain.string),
-			);
-			const schema = schemaBuilder.intoSchema(fieldNodeSchema);
+			const schemaFactory = new SchemaFactory("test");
+			const ParentNode = schemaFactory.map("map", schemaFactory.string);
 
 			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: typedJsonCursor({
-					[typedJsonCursor.type]: fieldNodeSchema,
-					[EmptyKey]: "Hello world",
-				}),
+				schema: toFlexSchema(ParentNode),
+				initialTree: cursorFromInsertable(ParentNode, { [EmptyKey]: "test" }),
 			});
 			cursor.enterNode(0);
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new TestLazyTree(context, fieldNodeSchema, cursor, anchorNode, anchor);
+			const node = new TestLazyTree(
+				context,
+				getFlexSchema(ParentNode),
+				cursor,
+				anchorNode,
+				anchor,
+			);
 			const { index, parent } = node.parentField;
 			assert.equal(index, 0);
 			assert.equal(parent.key, rootFieldKey);
 		});
-	});
 
-	describe("LazyLeaf", () => {
-		const schemaBuilder = new SchemaBuilder({
-			scope: "test",
-			libraries: [leafDomain.library],
-		});
-		const schema = schemaBuilder.intoSchema(leafDomain.string);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: singleJsonCursor("Hello world"),
-		});
-		cursor.enterNode(0);
-
-		const { anchor, anchorNode } = createAnchors(context, cursor);
-
-		const node = new LazyLeaf(context, leafDomain.string, cursor, anchorNode, anchor);
-
-		it("value", () => {
-			assert.equal(node.value, "Hello world");
-		});
-	});
-
-	describe("LazyMap", () => {
-		const schemaBuilder = new SchemaBuilder({
-			scope: "test",
-			libraries: [leafDomain.library],
-		});
-		const mapNodeSchema = schemaBuilder.map(
-			"mapString",
-			SchemaBuilder.optional(leafDomain.string),
-		);
-		const schema = schemaBuilder.intoSchema(mapNodeSchema);
-
-		// Count the number of times edits have been generated.
-		let editCallCount = 0;
-		beforeEach(() => {
-			editCallCount = 0;
+		it("keys", () => {
+			{
+				const { context, cursor } = initializeTreeWithContent({
+					schema: toFlexSchema(JsonObject),
+					initialTree: singleJsonCursor({}),
+				});
+				cursor.enterNode(0);
+				const { anchor, anchorNode } = createAnchors(context, cursor);
+				const node = new TestLazyTree(
+					context,
+					getFlexSchema(JsonObject),
+					cursor,
+					anchorNode,
+					anchor,
+				);
+				assert.deepEqual([...node.keys()], []);
+			}
+			{
+				const { context, cursor } = initializeTreeWithContent({
+					schema: toFlexSchema(JsonObject),
+					initialTree: singleJsonCursor({ x: 5 }),
+				});
+				cursor.enterNode(0);
+				const { anchor, anchorNode } = createAnchors(context, cursor);
+				const node = new TestLazyTree(
+					context,
+					getFlexSchema(JsonObject),
+					cursor,
+					anchorNode,
+					anchor,
+				);
+				assert.deepEqual([...node.keys()], ["x"]);
+			}
 		});
 
-		const editBuilder = new DefaultEditBuilder(
-			new DefaultChangeFamily(failCodecFamily),
-			(change: DefaultChangeset) => {
-				editCallCount++;
-			},
-		);
-		const forest = forestWithContent({
-			schema,
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: mapNodeSchema,
-				foo: "Hello",
-				bar: "world",
-			}),
-		});
-		const context = getTreeContext(
-			schema,
-			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
-			new MockNodeKeyManager(),
-		);
-
-		const cursor = initializeCursor(context, rootFieldAnchor);
-		cursor.enterNode(0);
-
-		const { anchor, anchorNode } = createAnchors(context, cursor);
-
-		const node = new LazyMap(context, mapNodeSchema, cursor, anchorNode, anchor);
-
-		it("value", () => {
-			assert.equal(node.value, undefined); // Map nodes do not have a value
-		});
-
-		it("tryGetField", () => {
-			assert.notEqual(node.tryGetField(brand("foo")), undefined);
-			assert.notEqual(node.tryGetField(brand("bar")), undefined);
-			assert.equal(node.tryGetField(brand("baz")), undefined);
-		});
-
-		it("getBoxed empty", () => {
-			const view = flexTreeViewWithContent({
-				schema,
-				initialTree: typedJsonCursor({ [typedJsonCursor.type]: mapNodeSchema }),
+		it("leaf", () => {
+			const { context, cursor } = initializeTreeWithContent({
+				schema: toFlexSchema(stringSchema),
+				initialTree: singleJsonCursor("Hello world"),
 			});
-			const mapNode = view.flexTree.content;
-			assert(mapNode.is(mapNodeSchema));
+			cursor.enterNode(0);
 
-			const empty = mapNode.getBoxed("foo");
-			assert.equal(empty.parent, mapNode);
-			assert.equal(empty.key, "foo");
+			const { anchor, anchorNode } = createAnchors(context, cursor);
+
+			const node = new LazyTreeNode(
+				context,
+				getFlexSchema(stringSchema),
+				cursor,
+				anchorNode,
+				anchor,
+			);
+
+			assert.equal(node.value, "Hello world");
 		});
 	});
 });
@@ -265,5 +210,5 @@ function nodeToMapTree(node: FlexTreeNode): MapTree {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
-	return { fields, type: node.schema.name, value: node.value };
+	return { fields, type: node.schema, value: node.value };
 }

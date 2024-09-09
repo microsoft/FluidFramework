@@ -25,19 +25,18 @@ import {
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
 } from "../../../simple-tree/index.js";
-import type {
-	FlexTreeNode,
-	FlexTreeNodeSchema,
-	MapTreeNode,
-} from "../../../feature-libraries/index.js";
+import type { FlexTreeNode, MapTreeNode } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { getFlexSchema, toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { validateUsageError } from "../../utils.js";
 import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { EagerMapTreeNode } from "../../../feature-libraries/flex-map-tree/mapTreeNode.js";
+import {
+	EagerMapTreeNode,
+	UnhydratedContext,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/flex-map-tree/mapTreeNode.js";
 
 describe("simple-tree types", () => {
 	describe("TreeNode", () => {
@@ -115,9 +114,10 @@ describe("simple-tree types", () => {
 	});
 
 	describe("TreeNodeValid", () => {
-		class MockFlexNode extends EagerMapTreeNode<FlexTreeNodeSchema> {
+		class MockFlexNode extends EagerMapTreeNode {
 			public constructor(public readonly simpleSchema: TreeNodeSchema) {
 				super(
+					new UnhydratedContext(toFlexSchema(simpleSchema)),
 					getFlexSchema(simpleSchema),
 					{ fields: new Map(), type: brand(simpleSchema.identifier) },
 					undefined,

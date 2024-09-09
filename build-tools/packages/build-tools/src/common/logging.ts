@@ -5,7 +5,7 @@
 
 import chalk from "chalk";
 
-import { commonOptions } from "./commonOptions";
+import { commonOptions } from "../fluidBuild/commonOptions";
 
 /**
  * A function that logs an Error or error message.

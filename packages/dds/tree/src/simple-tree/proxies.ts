@@ -5,7 +5,6 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -17,26 +16,29 @@ import {
 
 import {
 	FieldKinds,
-	type FlexFieldSchema,
 	type FlexTreeField,
 	type FlexTreeNode,
-	type FlexTreeTypedField,
 	tryGetMapTreeNode,
 	isFlexTreeNode,
+	type FlexTreeRequiredField,
+	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
-
-import { anchorProxy, tryGetCachedTreeNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema, type TreeNode, type Unhydrated } from "./core/index.js";
+import {
+	getKernel,
+	tryGetCachedTreeNode,
+	type TreeNode,
+	type Unhydrated,
+	getSimpleNodeSchemaFromNode,
+	type InternalTreeNode,
+} from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.
  */
 export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
-		flexField: FlexTreeTypedField<
-			FlexFieldSchema<typeof FieldKinds.required | typeof FieldKinds.optional>
-		>,
+		flexField: FlexTreeOptionalField | FlexTreeRequiredField,
 	): TreeNode | TreeValue | undefined {
 		const maybeContent = flexField.content;
 		return isFlexTreeNode(maybeContent)
@@ -44,22 +46,17 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 			: maybeContent;
 	}
 	switch (field.schema.kind) {
-		case FieldKinds.required: {
-			const typedField = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.required>
-			>;
+		case FieldKinds.required.identifier: {
+			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.optional: {
-			const typedField = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.optional>
-			>;
+		case FieldKinds.optional.identifier: {
+			const typedField = field as FlexTreeOptionalField;
 			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.identifier: {
+		case FieldKinds.identifier.identifier: {
 			// Identifier fields are just value fields that hold strings
-			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>)
-				.content as string;
+			return (field as FlexTreeRequiredField).content as string;
 		}
 
 		default:
@@ -73,14 +70,13 @@ export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNod
 		return cachedProxy;
 	}
 
-	const schema = flexNode.schema;
-	const classSchema = tryGetSimpleNodeSchema(schema);
-	assert(classSchema !== undefined, 0x91b /* node without schema */);
+	const classSchema = getSimpleNodeSchemaFromNode(flexNode);
+	const node = flexNode as unknown as InternalTreeNode;
+	// eslint-disable-next-line unicorn/prefer-ternary
 	if (typeof classSchema === "function") {
-		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-		return new simpleSchema(flexNode);
+		return new classSchema(node) as TreeNode;
 	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
+		return (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
 	}
 }
 
@@ -203,7 +199,7 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (const { path, proxy } of proxies[i]!.proxyPaths) {
-				anchorProxy(forest.anchors, path, proxy);
+				getKernel(proxy).anchorProxy(forest.anchors, path);
 			}
 			if (++i === proxies.length) {
 				off();

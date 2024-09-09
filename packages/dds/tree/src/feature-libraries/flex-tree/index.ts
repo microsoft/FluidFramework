@@ -8,21 +8,11 @@ export {
 	type FlexTreeNode,
 	type FlexTreeEntity,
 	type FlexTreeTypedField,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
-	type FlexTreeLeafNode,
-	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
-	type FlexTreeObjectNode,
-	type AssignableFieldKinds,
-	type FlexTreeTypedNode,
-	type FlexTreeTypedNodeUnion,
-	type CheckTypesOverlap,
 	TreeStatus,
 	type FlexTreeUnknownUnboxed,
-	type FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
@@ -37,11 +27,15 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, type FlexTreeContext, Context, ContextSlot } from "./context.js";
+export {
+	getTreeContext,
+	type FlexTreeContext,
+	type FlexTreeHydratedContext,
+	Context,
+	ContextSlot,
+} from "./context.js";
 
 export { type FlexTreeNodeEvents } from "./treeEvents.js";
-
-export type { FlexTreeUnboxNodeUnion } from "./flexTreeTypes.js";
 
 export {
 	assertFlexTreeEntityNotFreed,

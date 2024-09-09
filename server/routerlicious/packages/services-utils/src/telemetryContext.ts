@@ -50,11 +50,18 @@ function getTelemetryContextPropertiesFromRequest(
 		req.get(TelemetryContextHeaderName) ?? res.get(TelemetryContextHeaderName);
 	// Safely parse and return accepted telemetry properties.
 	const telemetryContextProperties = parseTelemetryContextHeader(telemetryContextHeader);
+	/**
+	 * Determines the source of the request based on the request headers.
+	 * If TelemetryContextHeaderName is present in the request headers,
+	 * the source is considered as "server". Otherwise, it is considered as "client".
+	 */
+	const requestSource = req.get(TelemetryContextHeaderName) !== undefined ? "server" : "client";
 	return {
 		[BaseTelemetryProperties.correlationId]:
 			telemetryContextProperties?.correlationId ?? correlationIdHeader,
 		[BaseTelemetryProperties.tenantId]: telemetryContextProperties?.tenantId,
 		[BaseTelemetryProperties.documentId]: telemetryContextProperties?.documentId,
+		[BaseTelemetryProperties.requestSource]: requestSource,
 	};
 }
 

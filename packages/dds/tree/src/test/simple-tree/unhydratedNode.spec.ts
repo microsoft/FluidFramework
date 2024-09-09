@@ -22,6 +22,7 @@ import type {
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { hydrate } from "./utils.js";
 import { isMapTreeNode, TreeStatus } from "../../feature-libraries/index.js";
+import { validateUsageError } from "../utils.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -177,6 +178,24 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.status(object), TreeStatus.New);
 	});
 
+	it("preserve event subscriptions during hydration - minimal", () => {
+		const log: unknown[] = [];
+		const leafObject = new TestLeaf({ value: "value" });
+
+		Tree.on(leafObject, "nodeChanged", (data) => {
+			log.push(data);
+		});
+		Tree.on(leafObject, "treeChanged", () => {
+			log.push("treeChanged");
+		});
+
+		hydrate(TestLeaf, leafObject);
+		leafObject.value = "new value";
+		// Assert that the event fired
+		// TODO: Eventually the order of events should be documented, and an approach like this can test that they are ordered as documented.
+		assert.deepEqual(log, [{ changedProperties: new Set(["value"]) }, "treeChanged"]);
+	});
+
 	it("preserve events after hydration", () => {
 		function registerEvents(node: TreeNode): () => void {
 			let deepEvent = false;
@@ -329,8 +348,7 @@ describe("Unhydrated nodes", () => {
 		const leaf = new TestLeaf({ value: "3" });
 		assert.throws(
 			() => new TestArray([leaf, leaf]),
-			(e: Error) =>
-				validateAssertionError(e, /A node may not be in more than one place in the tree/),
+			validateUsageError("A node may not be in more than one place in the tree"),
 		);
 	});
 
@@ -349,11 +367,9 @@ describe("Unhydrated nodes", () => {
 		// This would be confusing, as the user's reference to `leaf` is now a different object than `array[0]`, whereas prior to the insert they were the same.
 		assert.throws(
 			() => view.map.set("key", leaf),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					/Attempted to insert a node which is already under a parent/,
-				),
+			validateUsageError(
+				"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
+			),
 		);
 	});
 });

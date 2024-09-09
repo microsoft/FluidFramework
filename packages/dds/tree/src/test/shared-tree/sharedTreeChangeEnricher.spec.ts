@@ -15,7 +15,7 @@ import {
 	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../domains/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../json/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";

@@ -168,7 +168,9 @@
 		},
 		"jwtTokenCache": {
 			"enable": true
-		}
+		},
+		"enableCollaborationSessionTracking": false,
+		"enableCollaborationSessionPruning": false
 	},
 	"client": {
 		"type": "browser",
