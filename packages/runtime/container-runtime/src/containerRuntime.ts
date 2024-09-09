@@ -2976,7 +2976,7 @@ export class ContainerRuntime
 		if (
 			message.clientId === this.clientId &&
 			this.connected &&
-			envelope.clientSignalSequenceNumber > 0
+			(message.targetClientId === undefined || message.targetClientId === this.clientId) // Signal is expected to return
 		) {
 			if (
 				this._signalTracking.trackingSignalSequenceNumber !== undefined &&
