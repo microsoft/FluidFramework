@@ -18,6 +18,7 @@ import {
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
+	type RevertibleFactory,
 } from "../../core/index.js";
 import {
 	FieldKinds,
@@ -29,7 +30,6 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
-	type RevertibleFactory,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
