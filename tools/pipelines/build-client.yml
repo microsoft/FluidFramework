@@ -60,16 +60,15 @@ trigger:
     - release/*
   paths:
     include:
-    # Trigger on any edits to files in the root
-    - "*.*"
-    - azure
-    - common/build/build-common
-    - examples
-    - experimental
-    - packages
-    - scripts
+    # Using * along with */** exclusion to capture changes to files in the root directory
+    - '*'
+    - packages/**
+    - azure/**
+    - examples/**
+    - experimental/**
+    - common/build/build-common/**
     # markdown-magic is part of the client release group
-    - tools/markdown-magic
+    - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -82,7 +81,11 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
-
+    - scripts/*
+    exclude:
+    # Since the * wildcard includes all changes in root and subdirectories
+    # we need to exclude the subdirectories to avoid triggering the pipeline on all changes
+    - '*/**'
 pr:
   branches:
     include:
@@ -92,16 +95,15 @@ pr:
     - release/*
   paths:
     include:
-    # Trigger on any edits to files in the root
-    - "*.*"
-    - azure
-    - common/build/build-common
-    - examples
-    - experimental
-    - packages
-    - scripts
+    # Using * along with */** exclusion to capture changes to files in the root directory
+    - '*'
+    - packages/**
+    - azure/**
+    - examples/**
+    - experimental/**
+    - common/build/build-common/**
     # markdown-magic is part of the client release group
-    - tools/markdown-magic
+    - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-policy-check.yml
@@ -111,6 +113,11 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - scripts/*
+    exclude:
+    # Since the * wildcard includes all changes in root and subdirectories
+    # we need to exclude the subdirectories to avoid triggering the pipeline on all changes
+    - '*/**'
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self

@@ -83,8 +83,7 @@ export class SnapshotLegacy {
 			sequenceLength < approxSequenceLength &&
 			startIndex + segCount < allSegments.length
 		) {
-			// TODO Non null asserting, why is this not null?
-			const pseg = allSegments[startIndex + segCount]!;
+			const pseg = allSegments[startIndex + segCount];
 			segs.push(pseg);
 			if (pseg.attribution) {
 				segsWithAttribution++;

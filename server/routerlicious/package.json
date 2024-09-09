@@ -80,7 +80,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@changesets/cli": "^2.26.1",
+		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "file:../../packages/tools/changelog-generator-wrapper",
 		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",

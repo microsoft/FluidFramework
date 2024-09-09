@@ -19,6 +19,7 @@ export {
 	type Unhydrated,
 	type InternalTreeNode,
 	isTreeNode,
+	tryDisposeTreeNode,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -44,6 +45,9 @@ export {
 	type TreeNodeApi,
 	cursorFromInsertable,
 	createFromInsertable,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -65,7 +69,7 @@ export {
 	normalizeFieldSchema,
 	type ApplyKind,
 } from "./schemaTypes.js";
-export { getOrCreateInnerNode, tryDisposeTreeNode } from "./proxyBinding.js";
+export { getOrCreateInnerNode } from "./proxyBinding.js";
 export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
@@ -86,7 +90,6 @@ export type {
 } from "./typesUnsafe.js";
 export {
 	getTreeNodeForField,
-	type InsertableContent,
 	prepareContentForHydration,
 } from "./proxies.js";
 
@@ -103,8 +106,8 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { mapTreeFromNodeData } from "./toMapTree.js";
 export { createSimpleTreeIndex, createIdentifierIndex } from "./identifierIndex.js";
+export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 export type { SimpleTreeSchema } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,

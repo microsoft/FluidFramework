@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../../core/index.js";
+import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import {
 	type LazyItem,
 	type TreeStatus,
@@ -13,6 +13,7 @@ import {
 	isTreeValue,
 	FlexObjectNodeSchema,
 	isMapTreeNode,
+	FieldKinds,
 } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
 
@@ -44,6 +45,7 @@ import {
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
 } from "../core/index.js";
+import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -170,12 +172,31 @@ export const treeNodeApi: TreeNodeApi = {
 		const kernel = getKernel(node);
 		switch (eventName) {
 			case "nodeChanged": {
-				return kernel.on("childrenChangedAfterBatch", () => {
-					listener();
-				});
+				const nodeSchema = kernel.schema;
+				if (isObjectNodeSchema(nodeSchema)) {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						const changedProperties = new Set(
+							Array.from(
+								changedFields,
+								(field) =>
+									nodeSchema.storedKeyToPropertyKey.get(field) ??
+									fail(`Could not find stored key '${field}' in schema.`),
+							),
+						);
+						listener({ changedProperties });
+					});
+				} else if (nodeSchema.kind === NodeKind.Array) {
+					return kernel.on("childrenChangedAfterBatch", () => {
+						listener({ changedProperties: undefined });
+					});
+				} else {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						listener({ changedProperties: changedFields });
+					});
+				}
 			}
 			case "treeChanged": {
-				return kernel.on("subtreeChangedAfterBatch", () => listener());
+				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
@@ -211,7 +232,7 @@ export const treeNodeApi: TreeNodeApi = {
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getOrCreateInnerNode(node);
-		const flexSchema = flexNode.schema;
+		const flexSchema = flexNode.flexSchema;
 		const identifierFieldKeys =
 			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
 
@@ -228,7 +249,7 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier?.context !== undefined, 0xa12 /* Expected LazyIdentifierField */);
+				assert(identifier?.context.isHydrated() === true, "Expected hydrated identifier");
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
@@ -279,12 +300,17 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
+	if (parentField.parent.schema.kind === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
+		assert(
+			parentField.parent.key === EmptyKey,
+			"When using index as key, field should use EmptyKey",
+		);
 		return parentField.index;
 	}
 
 	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
+	assert(parentField.index === 0, "When using field key as key, index should be 0");
 	return parentField.parent.key;
 }
 

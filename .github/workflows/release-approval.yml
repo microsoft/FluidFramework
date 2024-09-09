@@ -1,0 +1,189 @@
+# release-approval.yml
+#
+# This workflow checks that a PR has been reviewed by a member of FluidFramework-ReleaseApprovers.
+#
+# This workflow is normally triggered by the completion of the release-branches workflow. However, it can also be run
+# manually using the GitHub UI and providing a PR number.
+
+name: release-approval
+
+on:
+  workflow_run:
+    # Workflow is typically triggered by the completion of the release-branches workflow.
+    workflows: [release-branches]
+    types: [completed]
+
+  # The workflow can be triggered manually in the GitHub UI.
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number on which to run approval checks"
+        required: true
+
+permissions:
+  # Needed to read artifacts from upstream workflows
+  actions: read
+
+  # Needed to check pull request metadata for review status
+  pull-requests: read
+
+  # Needed to update the PR check status to permit/prevent merge
+  statuses: write
+
+jobs:
+  metadata:
+    name: Get PR metadata
+    runs-on: ubuntu-latest
+    outputs:
+      pr_num: ${{ steps.workflow_run_load_pr.outputs.pr_num || steps.workflow_dispatch_load_pr.outputs.pr_num }}
+      is_release_branch: ${{ steps.workflow_run_is_release_branch.outputs.is_release_branch || steps.workflow_dispatch_is_release_branch.outputs.is_release_branch }}
+      commit_sha: ${{ steps.workflow_run_load_commit_sha.outputs.commit_sha || steps.workflow_dispatch_load_commit_sha.outputs.result }}
+
+    steps:
+      ### These steps run on workflow_run event only ###
+      - name: Download metadata
+        if: github.event_name == 'workflow_run'
+        # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v6
+        uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # ratchet:dawidd6/action-download-artifact@v6
+        with:
+          workflow: release-branches.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: release-branch-pr-metadata
+          path: ./artifacts
+
+      - name: "workflow_run: Load PR number"
+        id: workflow_run_load_pr
+        if: github.event_name == 'workflow_run'
+        working-directory: ./artifacts
+        run: echo "pr_num=$(cat pr)" >> $GITHUB_OUTPUT
+
+      - name: "workflow_run: Load is_release_branch"
+        id: workflow_run_is_release_branch
+        if: github.event_name == 'workflow_run'
+        working-directory: ./artifacts
+        run: echo "is_release_branch=$(cat is_release_branch)" >> $GITHUB_OUTPUT
+
+      - name: "workflow_run: Load commit_sha"
+        id: workflow_run_load_commit_sha
+        if: github.event_name == 'workflow_run'
+        working-directory: ./artifacts
+        run: echo "commit_sha=$(cat commit_sha)" >> $GITHUB_OUTPUT
+
+      ### These steps run on workflow_dispatch event only ###
+      - name: "workflow_dispatch: Load PR number"
+        id: workflow_dispatch_load_pr
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "pr_num=${{ github.event.inputs.pr }}" >> $GITHUB_OUTPUT
+
+      - name: "workflow_dispatch: Load is_release_branch"
+        id: workflow_dispatch_is_release_branch
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "is_release_branch=true" >> $GITHUB_OUTPUT
+
+      - name: "workflow_dispatch: Load commit_sha"
+        id: workflow_dispatch_load_commit_sha
+        if: github.event_name == 'workflow_dispatch'
+        # release notes: https://github.com/actions/github-script/releases/tag/v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # ratchet:actions/github-script@v7.0.1
+        env:
+          PR_NUMBER: ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          # Gets the head commit of the PR
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: process.env.PR_NUMBER,
+            });
+            return pr.head.sha;
+
+  check_approval:
+    name: Check PR approval
+    if: needs.metadata.outputs.is_release_branch == 'true'
+    needs: metadata
+    runs-on: ubuntu-latest
+    steps:
+      # Setting status on the PR's head commit is needed in order to associate this workflow run with the PR, since this
+      # workflow is not directly triggered by the PR.
+      - name: Set commit status as pending
+        # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ needs.metadata.outputs.commit_sha }}
+          status: pending
+          context: Check PR approval
+
+      # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
+        with:
+          # The default ref when triggered by the workflow_run event is the default branch -- main
+          # This means the build-tools from the main branch will always be used.
+          persist-credentials: false
+          submodules: false
+
+      # install and configure node, pnpm and the changeset tools
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.0.0
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v4.0.3
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # ratchet:actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Fluid build tools
+        continue-on-error: true
+        run: |
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+          # We want flub available to call, so we run npm link in the build-cli package, which creates shims that are avilable on the PATH
+          # Use npm link instead of pnpm link because it handles bins better
+          cd packages/build-cli
+          npm link
+
+      - name: Check build-tools installation
+        run: |
+          # Info for debugging
+          which flub
+          flub --help
+          flub commands
+
+      - name: Check PR approval
+        id: check-pr
+        env:
+          # The standard token doesn't have org:read permissions, and that scope can't be added using permissions in
+          # the workflow.
+          GITHUB_TOKEN: ${{ secrets.ORGANIZATION_READ_PAT }}
+        continue-on-error: true
+        run: |
+          # This command will fail with an error if the PR is not approved, which
+          # will in turn cause the CI job to fail.
+          flub check prApproval \
+            --pr ${{ needs.metadata.outputs.pr_num }} \
+            --repo ${{ github.repository }} \
+            --team FluidFramework-ReleaseApprovers
+
+      - name: Set commit status as success
+        if: steps.check-pr.outcome == 'success'
+        # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ needs.metadata.outputs.commit_sha }}
+          status: success
+          context: Check PR approval
+
+      - name: Set commit status as failure
+        if: steps.check-pr.outcome != 'success'
+        # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ needs.metadata.outputs.commit_sha }}
+          status: failure
+          context: Check PR approval
