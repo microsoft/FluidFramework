@@ -31,6 +31,7 @@ import {
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
+	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -224,6 +225,11 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 				this.skip();
 			}
 
+			// Skip this test for standard r11s as its flaky and non-reproducible
+			if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
+				this.skip();
+			}
+
 			const container = await provider.makeTestContainer({
 				...testContainerConfig,
 				runtimeOptions: {
@@ -237,7 +243,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 			});
 
 			const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
-			const blobOpP = new Promise<void>((resolve, reject) =>
+			const blobOpP = timeoutPromise((resolve, reject) =>
 				dataStore._context.containerRuntime.on("op", (op) => {
 					if (op.type === ContainerMessageType.BlobAttach) {
 						if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getApiExtractorConfigFilePath,
-	getInstalledPackageVersion,
-} from "../../../common/taskUtils";
+import { getApiExtractorConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class ApiExtractorTask extends TscDependentTask {
