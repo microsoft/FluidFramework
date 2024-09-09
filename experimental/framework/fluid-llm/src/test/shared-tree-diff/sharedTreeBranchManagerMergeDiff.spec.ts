@@ -464,8 +464,6 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Remove Diffs", () => {
 // 			},
 // 		] as const;
 
-
-
 // 		branchManager.mergeDiffs(
 // 			[
 // 				{
@@ -503,68 +501,6 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Remove Diffs", () => {
 // 			{ id: "6", test: true },
 // 		]);
 
-
-// 		// {
-// 		// 	type: "MOVE",
-// 		// 	path: [0],
-// 		// 	newIndex: 1,
-// 		// 	value: {id: "1", test: true},
-// 		// },
-// 		treeNode.moveToIndex(1 + 1, 0); // move {id : 1 } at 0 forward to index 1
-// 		const jsonifiedTreeNode0 = treeNode.map((node) => ({ ...node }));
-
-// 		// {
-// 		// 	type: "MOVE",
-// 		// 	path: [1],
-// 		// 	newIndex: 0,
-// 		// 	value: {id: "2", test: true },
-// 		// },
-// 		// treeNode.moveToIndex(0, 1); move { id: 2 } at index 1 backwards to index 0
-// 		//
-// 		// IGNORED because 2 will already be at the correct position from the last move.
-
-// 		// {
-// 		// 	type: "MOVE",
-// 		// 	path: [2],
-// 		// 	newIndex: 5,
-// 		// 	value: {id: "3", test: true},
-// 		// },
-// 		treeNode.moveToIndex(5 + 1, 2); //  move {id: 3} at 2 forward to index 5
-// 		const jsonifiedTreeNode1 = treeNode.map((node) => ({ ...node }));
-
-// 		// ADJUST ALL MOVES AFTER index 2 to be index - 1 because they have been shifted backwards.
-
-
-// 		// {
-// 		// 	type: "MOVE",
-// 		// 	path: [3],
-// 		// 	newIndex: 4,
-// 		// 	value: {id: "4", test: true},
-// 		// },
-// 		treeNode.moveToIndex(4 + 1, 3); //  move {id: 4} at 3 forwards to index 4
-// 		const jsonifiedTreeNode2 = treeNode.map((node) => ({ ...node }));
-
-
-
-
-// 		// {
-// 		// 	type: "MOVE",
-// 		// 	path: [4],
-// 		// 	newIndex: 3,
-// 		// 	value: {id: "5", test: true},
-// 		// },
-// 		treeNode.moveToIndex(3 + 1, 3); //  move {id: 5} at 4 backwards to index 3
-// 		const jsonifiedTreeNode3 = treeNode.map((node) => ({ ...node }));
-
-// 		// {
-// 		// 	type: "MOVE",
-// 		// 	path: [5],
-// 		// 	newIndex: 2,
-// 		// 	value: {id: "6", test: true},
-// 		// },
-// 		treeNode.moveToIndex(2 + 1, 2); //  move {id: 6} at 5 backwards to index 2
-// 		const jsonifiedTreeNode4 = treeNode.map((node) => ({ ...node }));
-
 // 		const expectedMergedBranch = [
 // 			{ id: "2", test: true },
 // 			{ id: "1", test: true },
@@ -574,51 +510,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Remove Diffs", () => {
 // 			{ id: "3", test: true },
 // 		];
 
-// 		const diffs = branchManager.compare(treeNode, expectedMergedBranch);
-
-
-
-// 		branchManager.mergeDiffs(
-// 			[
-// 				// {
-// 				// 	type: "MOVE",
-// 				// 	path: [0],
-// 				// 	newIndex: 1,
-// 				// 	value: {id: "1", test: true},
-// 				// },
-// 				// {
-// 				// 	type: "MOVE",
-// 				// 	path: [1],
-// 				// 	newIndex: 0,
-// 				// 	value: {id: "2", test: true },
-// 				// },
-// 				{
-// 					type: "MOVE",
-// 					path: [2],
-// 					newIndex: 5,
-// 					value: {id: "3", test: true},
-// 				},
-// 				{
-// 					type: "MOVE",
-// 					path: [3],
-// 					newIndex: 4,
-// 					value: {id: "4", test: true},
-// 				},
-// 				{
-// 					type: "MOVE",
-// 					path: [4],
-// 					newIndex: 3,
-// 					value: {id: "5", test: true},
-// 				},
-// 				{
-// 					type: "MOVE",
-// 					path: [5],
-// 					newIndex: 2,
-// 					value: {id: "6", test: true},
-// 				},
-// 			],
-// 			treeNode,
-// 		);
+// 		branchManager.merge(treeNode, expectedMergedBranch);
 
 // 		const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
 // 		assert.deepStrictEqual(jsonifiedTreeNode, expectedMergedBranch);
@@ -629,30 +521,6 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Remove Diffs", () => {
 // 			{ id: "1", test: true },
 // 			{ id: "2", test: true },
 // 		]);
-
-// 		branchManager.mergeDiffs(
-// 			[
-// 				{
-// 					type: "MOVE",
-// 					path: [0],
-// 					value: treeNode[0],
-// 					newIndex: 1,
-// 				},
-// 				{
-// 					type: "CHANGE",
-// 					path: [0, "test"],
-// 					oldValue: true,
-// 					value: false,
-// 				},
-// 				{
-// 					type: "MOVE",
-// 					path: [1],
-// 					value: treeNode[1],
-// 					newIndex: 0,
-// 				},
-// 			],
-// 			treeNode,
-// 		);
 
 // 		const expectedMergedBranch = [
 // 			{ id: "2", test: true },

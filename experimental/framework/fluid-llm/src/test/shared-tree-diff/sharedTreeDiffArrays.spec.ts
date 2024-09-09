@@ -293,7 +293,7 @@ describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 	});
 });
 
-describe("clean Diffs", () => {
+describe("createMergableIdDiffSeries()", () => {
 	class SimpleObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
 		id: schemaFactory.identifier,
 		test: schemaFactory.boolean,
