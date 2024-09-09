@@ -44,7 +44,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
 		"express": "^4.19.2",
-		"webpack-dev-server": "~5.1.0"
+		"webpack-dev-server": "~4.15.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
