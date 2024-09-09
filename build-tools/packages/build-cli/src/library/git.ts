@@ -211,41 +211,6 @@ export class Repository {
 	}
 
 	/**
-	 * Returns git output of all non-ignored files including deleted files that are not staged.
-	 * A given path may be included multiple timed in the array if git version does not support
-	 * `--deduplicate` option (introduced in v2.31.0).
-	 * Note that this function excludes files that are deleted locally AND staged.
-	 *
-	 * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
-	 * return all files in the repo use the value `"."`.
-	 */
-	private async getAllGitFilesOutput(directory: string): Promise<string> {
-		const args = [
-			"ls-files",
-			directory,
-			// Includes cached (staged) files.
-			"--cached",
-			// Includes other (untracked) files that are not ignored.
-			"--others",
-			// Excludes files that are ignored by standard ignore rules.
-			"--exclude-standard",
-			// Shows the full path of the files relative to the repository root.
-			"--full-name",
-		];
-		const version = await this.gitClient.version();
-		if (version.major < 2 || version.minor < 31) {
-			this.log?.warning(
-				`git version (${version.major}.${version.minor}.${version.patch}) is stale. Recommend updating.`,
-			);
-		} else {
-			// Removes duplicate entries from the output.
-			args.push("--deduplicate");
-		}
-
-		return this.gitClient.raw(args);
-	}
-
-	/**
 	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
 	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
 	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
@@ -254,8 +219,21 @@ export class Repository {
 	 * return all files in the repo use the value `"."`.
 	 */
 	public async getFiles(directory: string): Promise<string[]> {
-		const results = await this.getAllGitFilesOutput(directory);
+		// Note that `--deduplicate` is not used here because it is not available until git version 2.31.0.
+		const results = await this.gitClient.raw(
+			"ls-files",
+			// Includes cached (staged) files.
+			"--cached",
+			// Includes other (untracked) files that are not ignored.
+			"--others",
+			// Excludes files that are ignored by standard ignore rules.
+			"--exclude-standard",
+			// Shows the full path of the files relative to the repository root.
+			"--full-name",
+			directory,
+		);
 
+		// Deduplicate the list of files by building a Set.
 		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
 		// those from the full list.
 		const allFiles = new Set(
