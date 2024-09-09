@@ -10,4 +10,5 @@ export {
 	isMapTreeSequenceField,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
+	UnhydratedContext,
 } from "./mapTreeNode.js";

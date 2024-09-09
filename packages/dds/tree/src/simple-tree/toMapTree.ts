@@ -38,9 +38,15 @@ import {
 	FieldKind,
 	type TreeLeafValue,
 } from "./schemaTypes.js";
-import { NodeKind, tryGetSimpleNodeSchema, type TreeNodeSchema } from "./core/index.js";
+import {
+	getKernel,
+	isTreeNode,
+	NodeKind,
+	tryGetSimpleNodeSchema,
+	type InnerNode,
+	type TreeNodeSchema,
+} from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
-import { tryGetInnerNode } from "./proxyBinding.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -125,11 +131,14 @@ export function mapTreeFromNodeData(
 	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 
-	// TODO:
-	// Since some defaults may still be missing, this can give false positives when context is undefined but schemaValidationPolicy is provided.
 	if (schemaValidationPolicy?.policy.validateSchema === true) {
-		const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
-		inSchemaOrThrow(maybeError);
+		// TODO: BUG: AB#9131
+		// Since some defaults may still be missing, this can give false positives when context is undefined but schemaValidationPolicy is provided.
+		// For now disable this check when context is undefined:
+		if (context !== undefined) {
+			const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
+			inSchemaOrThrow(maybeError);
+		}
 	}
 
 	return mapTree;
@@ -152,7 +161,9 @@ function nodeDataToMapTree(
 	if (flexNode !== undefined) {
 		if (isMapTreeNode(flexNode)) {
 			if (
-				!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))
+				!allowedTypes.has(
+					tryGetSimpleNodeSchema(flexNode.flexSchema) ?? fail("missing schema"),
+				)
 			) {
 				throw new UsageError("Invalid schema for this context.");
 			}
@@ -717,5 +728,18 @@ function provideDefault(
 			// Leaving field empty despite it needing a default value since a context was required and non was provided.
 			// Caller better handle this case by providing the default at some other point in time when the context becomes known.
 		}
+	}
+}
+
+/**
+ * Retrieves the InnerNode associated with the given target via {@link setInnerNode}, if any.
+ * @remarks
+ * If `target` is a unhydrated node, returns its MapTreeNode.
+ * If `target` is a cooked node (or marinated but a FlexTreeNode exists) returns the FlexTreeNode.
+ * If the target is not a node, or a marinated node with no FlexTreeNode for its anchor, returns undefined.
+ */
+function tryGetInnerNode(target: unknown): InnerNode | undefined {
+	if (isTreeNode(target)) {
+		return getKernel(target).tryGetInnerNode();
 	}
 }

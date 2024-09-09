@@ -147,18 +147,6 @@ export {
 	type FlexList,
 } from "./typed-schema/index.js";
 
-export {
-	SchemaBuilderBase,
-	type SchemaLibrary,
-	type FlexImplicitFieldSchema,
-	type NormalizeField,
-	type FlexImplicitAllowedTypes,
-	type SchemaBuilderOptions,
-	normalizeAllowedTypes,
-	normalizeField,
-} from "./schemaBuilderBase.js";
-export { SchemaBuilderInternal } from "./schemaBuilder.js";
-
 export { mapRootChanges } from "./deltaUtils.js";
 
 export {
@@ -230,7 +218,6 @@ export {
 	ContextSlot,
 	// Internal
 	flexTreeMarker,
-	FlexTreeEntityKind,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
@@ -262,4 +249,5 @@ export {
 	isMapTreeSequenceField,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
+	UnhydratedContext,
 } from "./flex-map-tree/index.js";

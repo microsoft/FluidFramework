@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 
-import * as assert from "assert";
-import { globFn, loadModule, toPosixPath } from "../../../common/utils";
+import { globFn, loadModule, toPosixPath } from "../taskUtils";
 import { LeafWithDoneFileTask } from "./leafTask";
 
 interface DoneFileContent {

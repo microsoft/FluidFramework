@@ -9,16 +9,19 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
 	type ChangesetLocalId,
+	type FieldKey,
+	type JsonableTree,
+	mapCursorField,
 	RevisionTagCodec,
 	rootFieldKey,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
 	tryShapeFromSchema,
+	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -40,6 +43,8 @@ import {
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 	MockNodeKeyManager,
+	jsonableTreeFromCursor,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
 	ForestType,
@@ -53,7 +58,7 @@ import {
 	forestWithContent,
 	testIdCompressor,
 } from "../../utils.js";
-import { SchemaFactory } from "../../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -62,6 +67,9 @@ import type { Format } from "../../../feature-libraries/forest-summary/format.js
 // eslint-disable-next-line import/no-internal-modules
 import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { JsonObject } from "../../json/jsonDomainSchema.js";
+import { brand } from "../../../util/index.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -124,7 +132,7 @@ describe("End to end chunked encoding", () => {
 		);
 
 		const forest = buildChunkedForest(chunker);
-		const numberShape = new TreeShape(leaf.number.name, true, []);
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 		const changeLog: ModularChangeset[] = [];
@@ -154,7 +162,7 @@ describe("End to end chunked encoding", () => {
 	// This test (and the one below) are testing for an optimization in the decoding logic to save a copy of the data array.
 	// This optimization is not implemented, so these tests fail, and are skipped.
 	it.skip(`summary values are correct, and shares reference with the original chunk when inserting content.`, () => {
-		const numberShape = new TreeShape(leaf.number.name, true, []);
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 		const checkout = checkoutWithContent({
@@ -190,7 +198,7 @@ describe("End to end chunked encoding", () => {
 
 	// See note on above test.
 	it.skip(`summary values are correct, and shares reference with the original chunk when initializing with content.`, () => {
-		const numberShape = new TreeShape(leaf.number.name, true, []);
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 
@@ -299,6 +307,72 @@ describe("End to end chunked encoding", () => {
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is the original uncompressed id.
 			assert.equal(identifierValue, id);
+		});
+
+		it("In memory identifier encoding", () => {
+			const identifierField: FieldKey = brand("identifier");
+			const nonIdentifierField: FieldKey = brand("nonIdentifierField");
+			const unknownStableIdField: FieldKey = brand("unknownIdField");
+
+			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+
+			const identifierParent: FieldKey = brand("identifierParent");
+
+			const identifierShape = new TreeShape(brand(JsonObject.identifier), false, [
+				[identifierField, stringShape, 1],
+			]);
+
+			const parentNodeWithIdentifiersShape = new TreeShape(
+				brand(JsonObject.identifier),
+				false,
+				[
+					[identifierParent, identifierShape, 1],
+					[nonIdentifierField, stringShape, 1],
+					[unknownStableIdField, stringShape, 1],
+				],
+			);
+
+			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+
+			// Create a stable id from a different source.
+			const nodeKeyManager = new MockNodeKeyManager();
+			const unknownStableId = nodeKeyManager.generateStableNodeKey();
+
+			const initialTree = {
+				type: brand(JsonObject.identifier),
+				fields: {
+					identifierParent: [
+						{
+							type: brand(JsonObject.identifier),
+							fields: {
+								identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id }],
+							},
+						},
+					],
+					nonIdentifierField: [
+						{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue" },
+					],
+					unknownIdField: [
+						{ type: brand("com.fluidframework.leaf.string"), value: unknownStableId },
+					],
+				},
+			} satisfies JsonableTree;
+
+			const chunk = uniformChunkFromCursor(
+				cursorForJsonableTreeNode(initialTree),
+				parentNodeWithIdentifiersShape,
+				1,
+				true,
+				testIdCompressor,
+			);
+			assert.deepEqual(chunk.values, [
+				testIdCompressor.tryRecompress(id),
+				"nonIdentifierValue",
+				unknownStableId,
+			]);
+
+			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);
+			assert.deepEqual([initialTree], jsonableTree);
 		});
 	});
 });

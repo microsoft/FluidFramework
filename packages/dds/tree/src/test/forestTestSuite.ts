@@ -29,7 +29,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorForJsonableTreeNode,
@@ -51,7 +50,14 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "./utils.js";
-import { cursorFromInsertable, SchemaFactory, toFlexSchema } from "../simple-tree/index.js";
+import {
+	booleanSchema,
+	cursorFromInsertable,
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	toFlexSchema,
+} from "../simple-tree/index.js";
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
 import { cursorToJsonObject, JsonArray, singleJsonCursor } from "./json/index.js";
 
@@ -572,9 +578,9 @@ export function testForest(config: ForestTestConfiguration): void {
 			const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 			const forest = factory(schema);
 			const content: JsonableTree[] = [
-				{ type: leaf.number.name, value: 1 },
-				{ type: leaf.boolean.name, value: true },
-				{ type: leaf.string.name, value: "test" },
+				{ type: brand(numberSchema.identifier), value: 1 },
+				{ type: brand(booleanSchema.identifier), value: true },
+				{ type: brand(stringSchema.identifier), value: "test" },
 			];
 			initializeForest(
 				forest,
@@ -688,7 +694,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						id: buildId,
 						trees: [
 							cursorForJsonableTreeNode({
-								type: leaf.boolean.name,
+								type: brand(booleanSchema.identifier),
 								value: true,
 							}),
 						],
@@ -724,7 +730,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						id: buildId,
 						trees: [
 							cursorForJsonableTreeNode({
-								type: leaf.boolean.name,
+								type: brand(booleanSchema.identifier),
 								value: true,
 							}),
 						],
@@ -941,7 +947,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						id: buildId,
 						trees: [
 							cursorForJsonableTreeNode({
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								value: 3,
 							}),
 						],
@@ -950,7 +956,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						id: buildId2,
 						trees: [
 							cursorForJsonableTreeNode({
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								value: 4,
 							}),
 						],

@@ -132,7 +132,7 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * 3. "connect" phase - the following happens synchronously:
 	 * - getSelf() information changes to reflect new connection
 	 * - "selfChanged" event on this object fires
-	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at ContainerRuntime layer if container is read-only.
+	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at IContainerRuntime layer if container is read-only.
 	 *
 	 * That said, at the moment this is an experimental API. It depends on some experimental settings that might change in the future.
 	 * Events described in phase #3 may not happen at the same time if kill-bit feature gates are engaged due to a bug discovered in new logic

@@ -4,7 +4,6 @@
  */
 
 import { EmptyKey, type FieldKey, type JsonableTree } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { dummyRoot } from "../../../feature-libraries/chunked-forest/index.js";
 import {
@@ -12,6 +11,7 @@ import {
 	UniformChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import { numberSchema } from "../../../simple-tree/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { type TestField, EmptyObject } from "../../cursorTestSuite.js";
 import { JsonArray, JsonObject } from "../../json/index.js";
@@ -21,7 +21,7 @@ export const emptyShape = new TreeShape(brand(EmptyObject.identifier), false, []
 export const xField: FieldKey = brand("x");
 export const yField: FieldKey = brand("y");
 
-const numberShape = new TreeShape(leaf.number.name, true, []);
+const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 const withChildShape = new TreeShape(brand(JsonObject.identifier), false, [
 	[xField, numberShape, 1],
 ]);
@@ -48,8 +48,8 @@ export const polygonTree = {
 			[EmptyKey]: makeArray(sides, (index) => ({
 				type: brand(JsonObject.identifier),
 				fields: {
-					x: [{ type: leaf.number.name, value: index * 2 }],
-					y: [{ type: leaf.number.name, value: index * 2 + 1 }],
+					x: [{ type: brand(numberSchema.identifier), value: index * 2 }],
+					y: [{ type: brand(numberSchema.identifier), value: index * 2 + 1 }],
 				},
 			})),
 		},
@@ -64,15 +64,15 @@ const testTrees: {
 	{
 		name: "number",
 		dataFactory: () => new UniformChunk(numberShape.withTopLevelLength(1), [5]),
-		reference: [{ type: leaf.number.name, value: 5 }],
+		reference: [{ type: brand(numberSchema.identifier), value: 5 }],
 	},
 	{
 		name: "root sequence",
 		dataFactory: () => new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
 		reference: [
-			{ type: leaf.number.name, value: 1 },
-			{ type: leaf.number.name, value: 2 },
-			{ type: leaf.number.name, value: 3 },
+			{ type: brand(numberSchema.identifier), value: 1 },
+			{ type: brand(numberSchema.identifier), value: 2 },
+			{ type: brand(numberSchema.identifier), value: 3 },
 		],
 	},
 	{
@@ -89,9 +89,9 @@ const testTrees: {
 				type: brand(JsonArray.identifier),
 				fields: {
 					[EmptyKey]: [
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			},
@@ -104,7 +104,7 @@ const testTrees: {
 			{
 				type: brand(JsonObject.identifier),
 				fields: {
-					x: [{ type: leaf.number.name, value: 1 }],
+					x: [{ type: brand(numberSchema.identifier), value: 1 }],
 				},
 			},
 		],
@@ -116,8 +116,8 @@ const testTrees: {
 			{
 				type: brand(JsonObject.identifier),
 				fields: {
-					x: [{ type: leaf.number.name, value: 1 }],
-					y: [{ type: leaf.number.name, value: 2 }],
+					x: [{ type: brand(numberSchema.identifier), value: 1 }],
+					y: [{ type: brand(numberSchema.identifier), value: 2 }],
 				},
 			},
 		],

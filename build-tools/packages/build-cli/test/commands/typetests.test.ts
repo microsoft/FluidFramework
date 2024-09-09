@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITypeValidationConfig, PackageJson } from "@fluidframework/build-tools";
 import { assert, expect } from "chai";
 
 import {
@@ -12,11 +11,16 @@ import {
 	resetBrokenTests,
 	updateTypeTestDependency,
 } from "../../src/commands/typetests.js";
+import {
+	type ITypeValidationConfig,
+	type PackageWithTypeTestSettings,
+	defaultTypeValidationConfig,
+} from "../../src/typeValidator/typeValidatorConfig.js";
 
 /**
  * A minimal test package.json. It defines only the required fields according to the type definition.
  */
-function packageMinimal(): PackageJson {
+function packageMinimal(): PackageWithTypeTestSettings {
 	return {
 		name: "test-package",
 		version: "6.0.0",
@@ -29,13 +33,14 @@ function packageMinimal(): PackageJson {
  *
  * @param enabled - Set this to false to return a package with disabled type tests.
  */
-function packageWithTypeValidation(enabled = true): PackageJson {
+function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings {
 	return {
 		...packageMinimal(),
 		devDependencies: {
 			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
+			entrypoint: "legacy",
 			broken: {
 				"broken-api": {
 					backCompat: false,
@@ -50,7 +55,7 @@ function packageWithTypeValidation(enabled = true): PackageJson {
 describe("typetests tests", () => {
 	describe("updateTypeTestDependency", () => {
 		it("does not remove unrelated dependencies", () => {
-			const pkg: PackageJson = {
+			const pkg: PackageWithTypeTestSettings = {
 				...packageMinimal(),
 				devDependencies: {
 					"test-package-previous": "4.0.0",
@@ -125,17 +130,16 @@ describe("typetests tests", () => {
 	describe("resetBrokenTests", () => {
 		it("empty", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
-				typeValidation: {
-					broken: {},
-				},
+				typeValidation: defaultTypeValidationConfig,
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {} } });
+			assert.deepEqual(pkgJson.typeValidation?.broken, {});
 		});
 
 		it("minimal", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
 				typeValidation: {
+					entrypoint: "legacy",
 					broken: {
 						"broken-api": {
 							backCompat: false,
@@ -145,7 +149,7 @@ describe("typetests tests", () => {
 				},
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {} } });
+			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacy" } });
 		});
 
 		it("ignores packages with no typeValidation node", () => {

@@ -25,9 +25,13 @@ import {
 	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
-
-import { anchorProxy, tryGetCachedTreeNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema, type TreeNode, type Unhydrated } from "./core/index.js";
+import {
+	getKernel,
+	tryGetCachedTreeNode,
+	tryGetSimpleNodeSchema,
+	type TreeNode,
+	type Unhydrated,
+} from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.
@@ -42,15 +46,15 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 			: maybeContent;
 	}
 	switch (field.schema.kind) {
-		case FieldKinds.required: {
+		case FieldKinds.required.identifier: {
 			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.optional: {
+		case FieldKinds.optional.identifier: {
 			const typedField = field as FlexTreeOptionalField;
 			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.identifier: {
+		case FieldKinds.identifier.identifier: {
 			// Identifier fields are just value fields that hold strings
 			return (field as FlexTreeRequiredField).content as string;
 		}
@@ -66,7 +70,7 @@ export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNod
 		return cachedProxy;
 	}
 
-	const schema = flexNode.schema;
+	const schema = flexNode.flexSchema;
 	const classSchema = tryGetSimpleNodeSchema(schema);
 	assert(classSchema !== undefined, 0x91b /* node without schema */);
 	if (typeof classSchema === "function") {
@@ -196,7 +200,7 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (const { path, proxy } of proxies[i]!.proxyPaths) {
-				anchorProxy(forest.anchors, path, proxy);
+				getKernel(proxy).anchorProxy(forest.anchors, path);
 			}
 			if (++i === proxies.length) {
 				off();
