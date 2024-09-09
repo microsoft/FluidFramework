@@ -2972,8 +2972,12 @@ export class ContainerRuntime
 			targetClientId: message.targetClientId,
 		};
 
-		// Only collect signal telemetry for messages sent by the current client.
-		if (message.clientId === this.clientId && this.connected) {
+		// Only collect signal telemetry for broadcast messages sent by the current client.
+		if (
+			message.clientId === this.clientId &&
+			this.connected &&
+			envelope.clientSignalSequenceNumber > 0
+		) {
 			if (
 				this._signalTracking.trackingSignalSequenceNumber !== undefined &&
 				this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined

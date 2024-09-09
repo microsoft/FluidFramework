@@ -2525,7 +2525,7 @@ describe("Runtime", () => {
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 
-		describe("Signals", () => {
+		describe("Signal Telemetry", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelope[];
@@ -2565,6 +2565,19 @@ describe("Runtime", () => {
 							true,
 						);
 					}
+				}
+			}
+
+			function processWithNoTargetSupport(count: number) {
+				const signalsToProcess = submittedSignals.splice(0, count);
+				for (const signal of signalsToProcess) {
+					containerRuntime.processSignal(
+						{
+							clientId: containerRuntime.clientId as string,
+							content: signal,
+						},
+						true,
+					);
 				}
 			}
 
@@ -3051,6 +3064,52 @@ describe("Runtime", () => {
 							signalsSent: 100,
 							signalsLost: 10,
 							outOfOrderSignals: 5,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
+				);
+			});
+
+			it("ignores targeted signals w/ no service support for targeted signals", () => {
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				// Send 101 signals (one targeted)
+				sendSignals(50); //                50 outstanding; none tracked;
+				containerRuntime.submitSignal(
+					"TargetedSignalType",
+					"TargetedSignalContent",
+					"mockTargetClient",
+				); //                              51 outstanding; none tracked; one remote targeted
+				sendSignals(49); //               100 outstanding; none tracked; one remote targeted
+				processWithNoTargetSupport(100); // 0 outstanding; none tracked
+
+				// Check that 'targeted signal' is ignored
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
+				);
+
+				sendSignals(1); //             	     1 outstanding including 1 tracked signals (#101); one targeted
+
+				processWithNoTargetSupport(1); // 0 outstanding; none tracked
+
+				// Check for logged SignalLatency event
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
+							outOfOrderSignals: 0,
 						},
 					],
 					"SignalLatency telemetry should log correct amount of sent and lost signals",
