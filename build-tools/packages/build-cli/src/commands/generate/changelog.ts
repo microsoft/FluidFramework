@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { readFile, writeFile, rm } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo, Package } from "@fluidframework/build-tools";
+import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
-import { ux } from "@oclif/core";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
 import {
