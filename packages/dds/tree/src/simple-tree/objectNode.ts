@@ -177,6 +177,7 @@ function createProxyHandler(
 					return getTreeNodeForField(field);
 				}
 
+				// TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
 				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
 				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
 				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
