@@ -38,8 +38,7 @@ export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageServic
 		);
 		validateMessages("cached", messages, from, this.logger);
 
-		// Non null asserting here because of the length check
-		if (messages.length === 0 || messages[0]!.sequenceNumber !== from) {
+		if (messages.length === 0 || messages[0].sequenceNumber !== from) {
 			this.snapshotOps = [];
 		}
 		this.snapshotOps = this.snapshotOps.filter(

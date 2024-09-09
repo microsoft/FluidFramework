@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getInstalledPackageVersion } from "../../../common/taskUtils";
+import { getInstalledPackageVersion } from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class GenerateEntrypointsTask extends TscDependentTask {
