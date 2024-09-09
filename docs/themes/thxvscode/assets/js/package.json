@@ -15,5 +15,6 @@
 	"dependencies": {
 		"bootstrap": "^3.4.1",
 		"stickyfilljs": "^2.1.0"
-	}
+	},
+	"packageManager": "yarn@1.22.22"
 }
