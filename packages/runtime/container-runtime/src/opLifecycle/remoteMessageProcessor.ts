@@ -8,6 +8,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	ContainerMessageType,
@@ -75,7 +76,19 @@ export class RemoteMessageProcessor {
 		private readonly opGroupingManager: OpGroupingManager,
 	) {}
 
-	public get partialMessages(): ReadonlyMap<string, string[]> {
+	public getPartialMessageInfoForSummary(
+		telemetryContext?: ITelemetryContext,
+	): ReadonlyMap<string, string[]> | undefined {
+		if (this.opSplitter.chunks.size === 0) {
+			return undefined;
+		}
+
+		telemetryContext?.set(
+			"fluid_RemoteMessageProcessor",
+			"partialMessageCount",
+			this.opSplitter.chunks.size,
+		);
+
 		return this.opSplitter.chunks;
 	}
 
