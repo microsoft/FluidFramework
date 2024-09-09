@@ -20,11 +20,7 @@ import {
 	type MapTreeNode,
 	UnhydratedContext,
 } from "../feature-libraries/index.js";
-import {
-	type InsertableContent,
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	type ImplicitFieldSchema,
@@ -47,7 +43,7 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
+import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
