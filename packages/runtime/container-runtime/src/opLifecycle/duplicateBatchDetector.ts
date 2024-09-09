@@ -18,6 +18,16 @@ export class DuplicateBatchDetector {
 	/** We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances */
 	private readonly batchIdsBySeqNum = new Map<number, string>();
 
+	/** Initialize from snapshot data if provided - otherwise initialize empty */
+	constructor(batchIdsFromSnapshot?: Map<number, string>) {
+		if (batchIdsFromSnapshot) {
+			this.batchIdsBySeqNum = new Map(batchIdsFromSnapshot);
+			for (const batchId of batchIdsFromSnapshot.values()) {
+				this.batchIdsAll.add(batchId);
+			}
+		}
+	}
+
 	/**
 	 * Records this batch's batchId, and checks if it's a duplicate of a batch we've already seen.
 	 * If it's a duplicate, also return the sequence number of the other batch for logging.
@@ -74,5 +84,20 @@ export class DuplicateBatchDetector {
 				this.batchIdsAll.delete(batchId);
 			}
 		});
+	}
+
+	/**
+	 * Returns a snapshot of the state of the detector which can be included in a summary
+	 * and used to "rehydrate" this class when loading from a snapshot.
+	 *
+	 * @remarks - Please do not modify the returned object. Typical usage would be to JSON.stringify it.
+	 *
+	 * @returns - A serializable object representing the state of the detector, or undefined if there is nothing to save.
+	 */
+	public getRecentBatchInfoForSummary(): Map<number, string> | undefined {
+		if (this.batchIdsBySeqNum.size === 0) {
+			return undefined;
+		}
+		return this.batchIdsBySeqNum;
 	}
 }

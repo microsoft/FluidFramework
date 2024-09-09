@@ -62,6 +62,15 @@ describe("DuplicateBatchDetector", () => {
 		);
 	});
 
+	it("Constructor param is respected", () => {
+		const input = new Map([
+			[1, "batch1"],
+			[2, "batch2"],
+		]);
+		detector = new DuplicateBatchDetector(input) as any;
+		assert.deepEqual(detector.getRecentBatchInfoForSummary(), input);
+	});
+
 	it("First inbound batch is not a duplicate", () => {
 		const inboundBatch = makeBatch({
 			sequenceNumber: seqNum++,
@@ -153,5 +162,34 @@ describe("DuplicateBatchDetector", () => {
 			["batch2", "batch3"],
 			"Unexpected batchIds (after 3)",
 		);
+	});
+
+	describe("getStateForSummary", () => {
+		it("If empty, return undefined", () => {
+			assert.equal(detector.getRecentBatchInfoForSummary(), undefined);
+		});
+
+		it("If not empty, return batchIds by seqNum", () => {
+			const inboundBatch1 = makeBatch({
+				sequenceNumber: seqNum++, // 1
+				minimumSequenceNumber: 0,
+				batchId: "batch1",
+			});
+			const inboundBatch2 = makeBatch({
+				sequenceNumber: seqNum++, // 2
+				minimumSequenceNumber: 0,
+				batchId: "batch2",
+			});
+			detector.processInboundBatch(inboundBatch1);
+			detector.processInboundBatch(inboundBatch2);
+
+			assert.deepEqual(
+				detector.getRecentBatchInfoForSummary(),
+				new Map([
+					[1, "batch1"],
+					[2, "batch2"],
+				]),
+			);
+		});
 	});
 });
