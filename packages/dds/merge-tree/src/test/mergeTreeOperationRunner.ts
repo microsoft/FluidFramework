@@ -239,6 +239,8 @@ export function runMergeTreeOperationRunner(
 	let seq = startingSeq;
 	const results: ReplayGroup[] = [];
 
+	let fakeTime = 1725916319097;
+
 	doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
 		if (config.incrementalLog) {
 			console.log(
@@ -260,13 +262,12 @@ export function runMergeTreeOperationRunner(
 				minLength,
 				config.operations,
 			);
-			const msgs = messageData.map((md) => md[0]);
 			seq = apply(seq, messageData, clients, logger, random);
 			const resultText = logger.validate();
 			results.push({
 				initialText,
 				resultText,
-				msgs,
+				msgs: messageData.map((md) => ({ ...md[0], timestamp: fakeTime++ })),
 				seq,
 			});
 			logger.dispose();
