@@ -87,6 +87,6 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},
-		"entrypoint": "legacy"
+		"entrypoint": "public"
 	}
 }
