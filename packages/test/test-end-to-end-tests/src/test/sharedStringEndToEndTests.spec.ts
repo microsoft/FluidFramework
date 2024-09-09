@@ -72,7 +72,7 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-  // compat back 2.0.0-internal.7.4.7 (N-7) - older loader + older driver: 280277
+	// compat back 2.0.0-internal.7.4.7 (N-7) - older loader + older driver: 280277
 	it("can sync SharedString to a newly loaded container", async () => {
 		const text = "syncToNewContainer";
 		sharedString1.insertText(0, text);

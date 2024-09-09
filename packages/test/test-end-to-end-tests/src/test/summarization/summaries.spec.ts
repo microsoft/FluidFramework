@@ -37,6 +37,7 @@ import {
 	createSummarizerFromFactory,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
+	timeoutAwait,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -434,50 +435,75 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			},
 		};
-		const container1 = await provider.makeTestContainer(configNoSummarizer);
-		const entryPoint1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		const sharedString1 = await entryPoint1.getSharedObject<SharedString>(stringId);
+		console.log("1", new Date().toISOString());
+		const container1 = await timeoutAwait(provider.makeTestContainer(configNoSummarizer));
+		console.log("2", new Date().toISOString());
+		const entryPoint1 = await timeoutAwait(
+			getContainerEntryPointBackCompat<ITestFluidObject>(container1),
+		);
+		console.log("3", new Date().toISOString());
+		const sharedString1 = await timeoutAwait(
+			entryPoint1.getSharedObject<SharedString>(stringId),
+		);
 
-		const container2 = await provider.loadTestContainer(configNoSummarizer);
-		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		const sharedString2 = await entryPoint2.getSharedObject<SharedString>(stringId);
+		console.log("4", new Date().toISOString());
+		const container2 = await timeoutAwait(provider.loadTestContainer(configNoSummarizer));
+		console.log("5", new Date().toISOString());
+		const entryPoint2 = await timeoutAwait(
+			getContainerEntryPointBackCompat<ITestFluidObject>(container2),
+		);
+		console.log("6", new Date().toISOString());
+		const sharedString2 = await timeoutAwait(
+			entryPoint2.getSharedObject<SharedString>(stringId),
+		);
 
-		await waitForContainerConnection(container1);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
+		console.log("7", new Date().toISOString());
+		await timeoutAwait(waitForContainerConnection(container1));
+		console.log("8", new Date().toISOString());
+		await timeoutAwait(waitForContainerConnection(container2));
+		console.log("9", new Date().toISOString());
+		await timeoutAwait(provider.ensureSynchronized());
 
 		// Max unsummarized ops is currently 200 for local service in e2e tests (see localServerTestDriver.ts)
 		for (let i = 0; i < 200; i++) {
 			sharedString1.insertText(0, "a");
 		}
-		await provider.ensureSynchronized();
+		console.log("10", new Date().toISOString());
+		await timeoutAwait(provider.ensureSynchronized());
 		{
 			// op 201 will get nacked
 			const prom = getNackPromise(container1);
 			sharedString1.insertText(0, "a");
-			await prom;
+			console.log("11", new Date().toISOString());
+			await timeoutAwait(prom);
 		}
 		{
 			// op 202 will get nacked
 			const prom = getNackPromise(container1);
 			sharedString1.insertText(0, "a");
-			await prom;
+			console.log("12", new Date().toISOString());
+			await timeoutAwait(prom);
 		}
 
 		// We can't call ensureSynchornized here as container1 will reconnect loop
-		await flushPromises();
+		console.log("13", new Date().toISOString());
+		await timeoutAwait(flushPromises());
 
 		assert.strictEqual(sharedString1.getLength(), 202);
 		assert.strictEqual(sharedString2.getLength(), 200);
 
-		const { summarizer } = await createSummarizer(provider, container2, config);
-		await summarizeNow(summarizer);
+		console.log("14", new Date().toISOString());
+		const { summarizer } = await timeoutAwait(createSummarizer(provider, container2, config));
+		console.log("15", new Date().toISOString());
+		await timeoutAwait(summarizeNow(summarizer));
 
 		// Op 203 will succeed since we summarized
 		sharedString1.insertText(0, "a");
 
-		await provider.ensureSynchronized();
-		await flushPromises();
+		console.log("16", new Date().toISOString());
+		await timeoutAwait(provider.ensureSynchronized());
+		console.log("17", new Date().toISOString());
+		await timeoutAwait(flushPromises());
 		assert.strictEqual(sharedString1.getLength(), 203);
 		assert.strictEqual(sharedString2.getLength(), 203);
 	});

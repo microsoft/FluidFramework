@@ -59,6 +59,7 @@ import {
 	createDocumentId,
 	summarizeNow,
 	timeoutPromise,
+	timeoutAwait,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
@@ -637,27 +638,29 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// tree map: 278715
 		it(`doesn't resend a lot of successful ops (${name})`, async function () {
-			const map = await getMapFromProvider(getMap);
-			const pendingOps = await getPendingOps(
-				testContainerConfig,
-				provider,
-				true, // Do send ops from first container instance before closing
-				async (c, d) => {
-					const mapPre = await getMap(d);
-					[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
-				},
+			const map = await timeoutAwait(getMapFromProvider(getMap));
+			const pendingOps = await timeoutAwait(
+				getPendingOps(
+					testContainerConfig,
+					provider,
+					true, // Do send ops from first container instance before closing
+					async (c, d) => {
+						const mapPre = await timeoutAwait(getMap(d));
+						[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
+					},
+				),
 			);
 
 			// send a bunch from first container that should not be overwritten
 			[...Array(lots).keys()].map((i) => map.set(i.toString(), testValue));
-			await provider.ensureSynchronized();
+			await timeoutAwait(provider.ensureSynchronized());
 
 			// load container with pending ops, which should not resend the ops sent by previous container
-			const container2 = await loader.resolve({ url }, pendingOps);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const map2 = await getMap(dataStore2);
-			await waitForContainerConnection(container2);
-			await provider.ensureSynchronized();
+			const container2 = await timeoutAwait(loader.resolve({ url }, pendingOps));
+			const dataStore2 = (await timeoutAwait(container2.getEntryPoint())) as ITestFluidObject;
+			const map2 = await timeoutAwait(getMap(dataStore2));
+			await timeoutAwait(waitForContainerConnection(container2));
+			await timeoutAwait(provider.ensureSynchronized());
 			[...Array(lots).keys()].map((i) => assert.strictEqual(map.get(i.toString()), testValue));
 			[...Array(lots).keys()].map((i) =>
 				assert.strictEqual(map2.get(i.toString()), testValue),
