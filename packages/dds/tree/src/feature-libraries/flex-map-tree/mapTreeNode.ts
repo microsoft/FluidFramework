@@ -310,7 +310,6 @@ const unparentedLocation: LocationInField = {
 		boxedAt(index: number): FlexTreeNode | undefined {
 			return undefined;
 		},
-		flexSchema: FlexFieldSchema.empty,
 		schema: FlexFieldSchema.empty.stored,
 		context: emptyContext,
 		mapTrees: [],
