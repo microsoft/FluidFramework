@@ -60,18 +60,13 @@ trigger:
     - release/*
   paths:
     include:
-    - .prettierignore
-    - biome.json
-    - biome.jsonc
-    - packages
-    - azure
-    - examples
-    - experimental
-    - common/build/build-common
-    - lerna.json
-    - package.json
-    - pnpm-lock.yaml
-    - pnpm-workspace.yaml
+    # Using * along with */** exclusion to capture changes to files in the root directory
+    - '*'
+    - packages/**
+    - azure/**
+    - examples/**
+    - experimental/**
+    - common/build/build-common/**
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
@@ -87,7 +82,10 @@ trigger:
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
-
+    exclude:
+    # Since the * wildcard includes all changes in root and subdirectories
+    # we need to exclude the subdirectories to avoid triggering the pipeline on all changes
+    - '*/**'
 pr:
   branches:
     include:
@@ -97,17 +95,13 @@ pr:
     - release/*
   paths:
     include:
-    - .prettierignore
-    - packages
-    - azure
-    - examples
-    - experimental
-    - common/build/build-common
-    - lerna.json
-    - package.json
-    - pnpm-lock.yaml
-    - pnpm-workspace.yaml
-    - fluidBuild.config.cjs
+    # Using * along with */** exclusion to capture changes to files in the root directory
+    - '*'
+    - packages/**
+    - azure/**
+    - examples/**
+    - experimental/**
+    - common/build/build-common/**
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
@@ -120,6 +114,10 @@ pr:
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
+    exclude:
+    # Since the * wildcard includes all changes in root and subdirectories
+    # we need to exclude the subdirectories to avoid triggering the pipeline on all changes
+    - '*/**'
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
