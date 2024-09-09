@@ -33,4 +33,5 @@ export {
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
 	cachedFlexSchemaFromClassSchema,
+	getSimpleNodeSchemaFromNode,
 } from "./schemaCaching.js";

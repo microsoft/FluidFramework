@@ -5,7 +5,6 @@
 
 import {
 	type FlexMapNodeSchema,
-	type FlexTreeMapNode,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type MapTreeNode,
@@ -145,8 +144,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return this.entries();
 	}
 
-	private get innerNode(): InnerNode & FlexTreeMapNode {
-		return getOrCreateInnerNode(this) as InnerNode & FlexTreeMapNode;
+	private get innerNode(): InnerNode {
+		return getOrCreateInnerNode(this);
 	}
 
 	private editor(key: string): OptionalFieldEditBuilder<ExclusiveMapTree> {

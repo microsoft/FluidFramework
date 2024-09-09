@@ -40,9 +40,9 @@ import {
 } from "./schemaTypes.js";
 import {
 	getKernel,
+	getSimpleNodeSchemaFromNode,
 	isTreeNode,
 	NodeKind,
-	tryGetSimpleNodeSchema,
 	type InnerNode,
 	type TreeNodeSchema,
 } from "./core/index.js";
@@ -160,11 +160,7 @@ function nodeDataToMapTree(
 	const flexNode = tryGetInnerNode(data);
 	if (flexNode !== undefined) {
 		if (isMapTreeNode(flexNode)) {
-			if (
-				!allowedTypes.has(
-					tryGetSimpleNodeSchema(flexNode.flexSchema) ?? fail("missing schema"),
-				)
-			) {
+			if (!allowedTypes.has(getSimpleNodeSchemaFromNode(flexNode))) {
 				throw new UsageError("Invalid schema for this context.");
 			}
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
