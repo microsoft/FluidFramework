@@ -8,8 +8,6 @@ export {
 	type FlexTreeNode,
 	type FlexTreeEntity,
 	type FlexTreeTypedField,
-	type FlexTreeLeafNode,
-	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,

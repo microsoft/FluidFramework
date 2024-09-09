@@ -14,16 +14,12 @@ import {
 
 /**
  * {@link ICollaborationSession} with shortened key names for storage in Redis.
+ *
+ * @remarks
+ * Does not include {@link ICollaborationSession.documentId} and {@link ICollaborationSession.tenantId} because
+ * they are used as the Redis hashmap key.
  */
 interface IShortCollaborationSession {
-	/**
-	 * {@link ICollaborationSession.documentId}
-	 */
-	did: string;
-	/**
-	 * {@link ICollaborationSession.tenantId}
-	 */
-	tid: string;
 	/**
 	 * {@link ICollaborationSession.firstClientJoinTime}
 	 */
@@ -100,7 +96,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 			return undefined;
 		}
 
-		return this.getFullSession(JSON.parse(sessionJson));
+		return this.getFullSession(key, JSON.parse(sessionJson));
 	}
 
 	public async getAllSessions(): Promise<ICollaborationSession[]> {
@@ -108,16 +104,14 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 			.getRedisClient()
 			.hgetall(this.prefix);
 		const sessions: ICollaborationSession[] = [];
-		for (const sessionJson of Object.values(sessionJsons)) {
-			sessions.push(this.getFullSession(JSON.parse(sessionJson)));
+		for (const [fieldKey, sessionJson] of Object.entries(sessionJsons)) {
+			sessions.push(this.getFullSession(fieldKey, JSON.parse(sessionJson)));
 		}
 		return sessions;
 	}
 
 	private getShortSession(session: ICollaborationSession): IShortCollaborationSession {
 		return {
-			did: session.documentId,
-			tid: session.tenantId,
 			fjt: session.firstClientJoinTime,
 			llt: session.lastClientLeaveTime,
 			tp: {
@@ -128,10 +122,12 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		};
 	}
 
-	private getFullSession(shortSession: IShortCollaborationSession): ICollaborationSession {
+	private getFullSession(
+		fieldKey: string,
+		shortSession: IShortCollaborationSession,
+	): ICollaborationSession {
 		return {
-			documentId: shortSession.did,
-			tenantId: shortSession.tid,
+			...this.getTenantIdDocumentIdFromFieldKey(fieldKey),
 			firstClientJoinTime: shortSession.fjt,
 			lastClientLeaveTime: shortSession.llt,
 			telemetryProperties: {
@@ -144,5 +140,13 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 
 	private getFieldKey(session: Pick<ICollaborationSession, "tenantId" | "documentId">): string {
 		return `${session.tenantId}:${session.documentId}`;
+	}
+
+	private getTenantIdDocumentIdFromFieldKey(fieldKey: string): {
+		tenantId: string;
+		documentId: string;
+	} {
+		const [tenantId, documentId] = fieldKey.split(":");
+		return { tenantId, documentId };
 	}
 }
