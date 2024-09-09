@@ -68,7 +68,7 @@ jobs:
       # be included.
       - name: Generate release notes file
         run: |
-          flub generate releaseNotes -g client -t minor --includeUnknown --headingLinks --out RELEASE_NOTES.md -v
+          flub generate releaseNotes -g client -t minor --includeUnknown --headingLinks --outFile RELEASE_NOTES.md -v
 
       # Read the release notes file that we just generated into an output variable.
       - name: Read release notes file
@@ -83,7 +83,7 @@ jobs:
         # release notes: https://github.com/Lehoczky/render-nunjucks-template-action/releases/tag/v1.0.0
         uses: Lehoczky/render-nunjucks-template-action@9e23a64f080194d15347e881438ee53201e25c25 # ratchet:Lehoczky/render-nunjucks-template-action@v1.0.0
         with:
-          template-path: ${{ github.workspace }}/.github/workflows/data/release-notes-issue-intro.njk
+          template-path: .github/workflows/data/release-notes-issue-intro.njk
           vars: |
             {
               "version": "${{ steps.setVersion.outputs.VERSION }}"
