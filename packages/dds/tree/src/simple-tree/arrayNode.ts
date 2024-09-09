@@ -4,6 +4,8 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
 	type FlexTreeNodeSchema,
@@ -16,11 +18,7 @@ import {
 	isMapTreeSequenceField,
 	UnhydratedContext,
 } from "../feature-libraries/index.js";
-import {
-	type InsertableContent,
-	getOrCreateNodeFromFlexTreeNode,
-	prepareContentForHydration,
-} from "./proxies.js";
+import { getOrCreateNodeFromFlexTreeNode, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 // This import seems to trigger a false positive `Type import "TreeNodeFromImplicitAllowedTypes" is used by decorator metadata` lint error.
 // Other ways to import (ex: import the module with the items as type imports) give different more real errors, and auto fix to this format,
@@ -42,10 +40,9 @@ import {
 	type TreeNodeSchema,
 	typeSchemaSymbol,
 } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
+import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getKernel } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 

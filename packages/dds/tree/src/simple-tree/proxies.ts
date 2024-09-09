@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -28,7 +27,6 @@ import {
 	getKernel,
 	tryGetCachedTreeNode,
 	type TreeNode,
-	type Unhydrated,
 	getSimpleNodeSchemaFromNode,
 	type InternalTreeNode,
 } from "./core/index.js";
@@ -209,26 +207,3 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 }
 
 // #endregion Content insertion and proxy binding
-
-/**
- * Content which can be used to build a node.
- * @remarks
- * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
- */
-export type FactoryContent =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| Iterable<readonly [string, InsertableContent]>
-	| readonly InsertableContent[]
-	| {
-			readonly [P in string]?: InsertableContent;
-	  };
-
-/**
- * Content which can be inserted into a tree.
- */
-export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;

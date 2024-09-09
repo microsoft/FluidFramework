@@ -16,6 +16,7 @@ import {
 	isTreeNodeSchemaClass,
 	mapTreeFromNodeData,
 	type ImplicitFieldSchema,
+	type InsertableContent,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
@@ -24,7 +25,6 @@ import {
 import {
 	getTreeNodeForField,
 	prepareContentForHydration,
-	type InsertableContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
