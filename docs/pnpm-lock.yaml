@@ -33,7 +33,7 @@ importers:
         specifier: ^5.3.9
         version: 5.3.9
       dill-cli:
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       fs-extra:
         specifier: ^11.2.0
