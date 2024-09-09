@@ -4,6 +4,8 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	type AnchorNode,
 	EmptyKey,
@@ -13,10 +15,12 @@ import {
 	type MapTree,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
 import { brand, fail, getOrCreate, isReadonlyArray, mapIterable } from "../../util/index.js";
 import {
+	type FlexTreeContext,
 	FlexTreeEntityKind,
 	type FlexTreeField,
 	type FlexTreeNode,
@@ -27,16 +31,22 @@ import {
 	type FlexTreeUnknownUnboxed,
 	flexTreeMarker,
 	indexForAt,
+	type FlexTreeHydratedContext,
 } from "../flex-tree/index.js";
 import {
 	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	intoStoredSchemaCollection,
 	isLazy,
 } from "../typed-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	defaultSchemaPolicy,
+	FieldKinds,
+	type SequenceFieldEditBuilder,
+} from "../default-schema/index.js";
 
 // #region Nodes
 
@@ -113,6 +123,7 @@ export class EagerMapTreeNode implements MapTreeNode {
 	 * Instead, it should always be acquired via {@link getOrCreateNode}.
 	 */
 	public constructor(
+		public readonly context: UnhydratedContext,
 		public readonly flexSchema: FlexTreeNodeSchema,
 		/** The underlying {@link MapTree} that this `MapTreeNode` reads its data from */
 		public readonly mapTree: ExclusiveMapTree,
@@ -201,8 +212,6 @@ export class EagerMapTreeNode implements MapTreeNode {
 		return this.mapTree.value;
 	}
 
-	public context = undefined;
-
 	public get anchorNode(): AnchorNode {
 		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
@@ -214,6 +223,7 @@ export class EagerMapTreeNode implements MapTreeNode {
 			const field = getOrCreateField(this, key, this.flexSchema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
 				const child = getOrCreateChild(
+					this.context,
 					mapTrees[index] ?? oob(),
 					this.flexSchema.getFieldSchema(key).allowedTypes,
 					{ parent: field, index },
@@ -233,6 +243,29 @@ export class EagerMapTreeNode implements MapTreeNode {
 
 // #endregion Nodes
 
+/**
+ * Implementation of `FlexTreeContext`.
+ *
+ * @remarks An editor is required to edit the FlexTree.
+ */
+export class UnhydratedContext implements FlexTreeContext {
+	public readonly schema: TreeStoredSchema;
+
+	/**
+	 * @param flexSchema - Schema to use when working with the tree.
+	 */
+	public constructor(public readonly flexSchema: FlexTreeSchema) {
+		this.schema = {
+			rootFieldSchema: flexSchema.rootFieldSchema.stored,
+			...intoStoredSchemaCollection(flexSchema),
+		};
+	}
+
+	public isHydrated(): this is FlexTreeHydratedContext {
+		return false;
+	}
+}
+
 // #region Fields
 
 /**
@@ -243,6 +276,13 @@ export class EagerMapTreeNode implements MapTreeNode {
 interface MapTreeField extends FlexTreeField {
 	readonly mapTrees: readonly MapTree[];
 }
+
+const emptyContext = new UnhydratedContext({
+	adapters: {},
+	nodeSchema: new Map(),
+	policy: defaultSchemaPolicy,
+	rootFieldSchema: FlexFieldSchema.empty,
+});
 
 /**
  * A special singleton that is the implicit {@link LocationInField} of all un-parented {@link EagerMapTreeNode}s.
@@ -259,7 +299,7 @@ const unparentedLocation: LocationInField = {
 		key: EmptyKey,
 		parent: undefined,
 		is<TKind2 extends FlexFieldKind>(kind: TKind2) {
-			return this.flexSchema.kind === (kind as unknown);
+			return this.schema.kind === kind.identifier;
 		},
 		isExactly(schema: FlexFieldSchema) {
 			return schema === FlexFieldSchema.empty;
@@ -270,9 +310,8 @@ const unparentedLocation: LocationInField = {
 		boxedAt(index: number): FlexTreeNode | undefined {
 			return undefined;
 		},
-		flexSchema: FlexFieldSchema.empty,
 		schema: FlexFieldSchema.empty.stored,
-		context: undefined,
+		context: emptyContext,
 		mapTrees: [],
 		getFieldPath() {
 			fail("unsupported");
@@ -289,6 +328,7 @@ class EagerMapTreeField implements MapTreeField {
 	}
 
 	public constructor(
+		public readonly context: UnhydratedContext,
 		public readonly flexSchema: FlexFieldSchema,
 		public readonly key: FieldKey,
 		public readonly parent: EagerMapTreeNode,
@@ -319,7 +359,7 @@ class EagerMapTreeField implements MapTreeField {
 	}
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
-		return this.flexSchema.kind === (kind as unknown);
+		return this.schema.kind === kind.identifier;
 	}
 
 	public isExactly(schema: FlexFieldSchema): boolean {
@@ -330,7 +370,7 @@ class EagerMapTreeField implements MapTreeField {
 		return this.mapTrees
 			.map(
 				(m, index) =>
-					getOrCreateChild(m, this.flexSchema.allowedTypes, {
+					getOrCreateChild(this.context, m, this.flexSchema.allowedTypes, {
 						parent: this,
 						index,
 					}) as FlexTreeNode,
@@ -345,14 +385,12 @@ class EagerMapTreeField implements MapTreeField {
 		}
 		const m = this.mapTrees[i];
 		if (m !== undefined) {
-			return getOrCreateChild(m, this.flexSchema.allowedTypes, {
+			return getOrCreateChild(this.context, m, this.flexSchema.allowedTypes, {
 				parent: this,
 				index: i,
 			}) as FlexTreeNode;
 		}
 	}
-
-	public context: undefined;
 
 	/**
 	 * Mutate this field.
@@ -498,14 +536,16 @@ export function tryGetMapTreeNode(mapTree: MapTree): MapTreeNode | undefined {
  * @remarks It must conform to the `nodeSchema`.
  */
 export function getOrCreateMapTreeNode(
+	context: UnhydratedContext,
 	nodeSchema: FlexTreeNodeSchema,
 	mapTree: ExclusiveMapTree,
 ): EagerMapTreeNode {
-	return nodeCache.get(mapTree) ?? createNode(nodeSchema, mapTree, undefined);
+	return nodeCache.get(mapTree) ?? createNode(context, nodeSchema, mapTree, undefined);
 }
 
 /** Helper for creating a `MapTreeNode` given the parent field (e.g. when "walking down") */
 function getOrCreateChild(
+	context: UnhydratedContext,
 	mapTree: ExclusiveMapTree,
 	allowedTypes: FlexAllowedTypes,
 	parent: LocationInField | undefined,
@@ -523,16 +563,17 @@ function getOrCreateChild(
 				return t.name === mapTree.type;
 			}) ?? fail("Unsupported node schema");
 
-	return createNode(nodeSchema, mapTree, parent);
+	return createNode(context, nodeSchema, mapTree, parent);
 }
 
 /** Always constructs a new node, therefore may not be called twice for the same `MapTree`. */
 function createNode(
+	context: UnhydratedContext,
 	nodeSchema: FlexTreeNodeSchema,
 	mapTree: ExclusiveMapTree,
 	parentField: LocationInField | undefined,
 ): EagerMapTreeNode {
-	return new EagerMapTreeNode(nodeSchema, mapTree, parentField);
+	return new EagerMapTreeNode(context, nodeSchema, mapTree, parentField);
 }
 
 /** Creates a field with the given attributes, or returns a cached field if there is one */
@@ -550,18 +591,18 @@ function getOrCreateField(
 		schema.kind.identifier === FieldKinds.required.identifier ||
 		schema.kind.identifier === FieldKinds.identifier.identifier
 	) {
-		return new EagerMapTreeRequiredField(schema, key, parent);
+		return new EagerMapTreeRequiredField(parent.context, schema, key, parent);
 	}
 
 	if (schema.kind.identifier === FieldKinds.optional.identifier) {
-		return new EagerMapTreeOptionalField(schema, key, parent);
+		return new EagerMapTreeOptionalField(parent.context, schema, key, parent);
 	}
 
 	if (schema.kind.identifier === FieldKinds.sequence.identifier) {
-		return new EagerMapTreeSequenceField(schema, key, parent);
+		return new EagerMapTreeSequenceField(parent.context, schema, key, parent);
 	}
 
-	return new EagerMapTreeField(schema, key, parent);
+	return new EagerMapTreeField(parent.context, schema, key, parent);
 }
 
 /** Unboxes leaf nodes to their values */
@@ -575,7 +616,7 @@ function unboxed(
 		return value;
 	}
 
-	return getOrCreateChild(mapTree, schema.allowedTypes, parent);
+	return getOrCreateChild(parent.parent.context, mapTree, schema.allowedTypes, parent);
 }
 
 // #endregion Caching and unboxing utilities

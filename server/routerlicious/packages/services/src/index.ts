@@ -14,8 +14,10 @@ export { MongoCollection, MongoDb, MongoDbFactory, ConnectionNotAvailableMode } 
 export { NodeAllowList, NodeCodeLoader } from "./nodeCodeLoader";
 export { RedisCache } from "./redis";
 export { ClientManager } from "./redisClientManager";
+export { RedisCollaborationSessionManager } from "./redisSessionManager";
 export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
 export { SecretManager } from "./secretManager";
+export { CollaborationSessionTracker } from "./sessionTracker";
 export { SocketIoRedisPublisher, SocketIoRedisTopic } from "./socketIoRedisPublisher";
 export { StorageNameRetriever } from "./storageNameRetriever";
 export { Tenant, TenantManager } from "./tenant";

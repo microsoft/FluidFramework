@@ -88,6 +88,13 @@ interface TestSignalClient {
 
 describe("Routerlicious", () => {
 	describe("Nexus", () => {
+		const testClient: IClient = {
+			details: { capabilities: { interactive: true } },
+			mode: "write",
+			permission: [],
+			scopes: [],
+			user: { id: "test" },
+		};
 		describe("WebSockets", () => {
 			describe("Messages", () => {
 				const testTenantId = "test";
@@ -199,7 +206,7 @@ describe("Routerlicious", () => {
 					const token = generateToken(tenantId, id, secret, scopes);
 
 					const connectMessage: IConnect = {
-						client: undefined,
+						client: testClient,
 						id,
 						mode: "write",
 						tenantId,
@@ -1162,12 +1169,9 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					const token = generateToken(tenantId, id, secret, scopes);
 
 					const client: IClient = {
-						mode: undefined,
-						permission: undefined,
-						user: undefined,
-						scopes: undefined,
+						...testClient,
 						details: {
-							capabilities: undefined,
+							...testClient.details,
 							type: clientType,
 						},
 					};
