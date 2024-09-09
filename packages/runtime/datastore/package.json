@@ -159,13 +159,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_FluidDataStoreRuntime": {
-				"backCompat": false
-			},
-			"ClassStatics_FluidDataStoreRuntime": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

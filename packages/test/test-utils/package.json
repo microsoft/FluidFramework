@@ -169,13 +169,16 @@
 	"typeValidation": {
 		"broken": {
 			"Interface_IProvideTestFluidObject": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"Interface_ITestFluidObject": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"Class_TestFluidObject": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"ClassStatics_TestFluidObject": {
 				"backCompat": false

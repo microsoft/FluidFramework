@@ -157,7 +157,9 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.IFluidHandleContext;
 	}
 
-	public readonly idCompressor?: IIdCompressor;
+	public get idCompressor(): IIdCompressor | undefined {
+		return this.dataStoreContext.idCompressor;
+	}
 
 	public get IFluidHandleContext() {
 		return this;
@@ -243,9 +245,6 @@ export class FluidDataStoreRuntime
 			},
 		});
 
-		if (dataStoreContext.idCompressor !== undefined) {
-			this.idCompressor = dataStoreContext.idCompressor;
-		}
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
 		this.deltaManagerInternal = dataStoreContext.deltaManager;
