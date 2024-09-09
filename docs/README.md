@@ -167,3 +167,28 @@ The replacement syntax to use in `.mdx` files would be:
 -   Add prettier (wait until after merge to reduce diff noise)
 -   Add markdown-lint (same as above)
 -   Add eslint for components
+
+
+## Site changes relative to current website
+
+### Versioning
+
+The existing Hugo-based site only has a partial versioning story.
+The API docs are versioned, but the rest of the content isn't.
+This creates a messy story where our hand-written docs likely only discuss topics related to the current version, and we have no place to put docs discussing earlier versions.
+Or, even worse, we have a mixed bag of documentation for different versions, creating a very unclear user story.
+
+This prototype includes an end-to-end versioning story, [automated by Docusaurus](https://docusaurus.io/docs/versioning).
+Current (v2) docs live under `docs`.
+Old (v1) docs live under `versioned_docs/version-1`.
+
+Most of the documentation has been duplicated between the two versions, but some minor changes have been made to make the docs better line up with the corresponding version of the API.
+These changes should be reviewed before being merged into main / deploying the new website.
+
+### Search
+
+This branch includes an offline implementation of search.
+An offline solution comes with some downsides (slower build, larger bundle), and probably isn't what we want long term.
+That said, it is much better than what our current website has (no search whatsoever).
+
+We should come back to this after v1 of our new website.
