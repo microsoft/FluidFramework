@@ -185,7 +185,7 @@ export function isSameFileOrDir(f1: string, f2: string) {
  * @param cmd - Command line to execute
  * @param dir - dir the directory to execute on
  * @param error - description of command line to print when error happens
- * @param pipeStdIn - optinal string to pipe to stdin
+ * @param pipeStdIn - optional string to pipe to stdin
  */
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
 	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
@@ -202,7 +202,7 @@ export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: 
  *
  * @param cmd - Command line to execute
  * @param dir - dir the directory to execute on
- * @param pipeStdIn - optinal string to pipe to stdin
+ * @param pipeStdIn - optional string to pipe to stdin
  */
 export async function execNoError(
 	cmd: string,
