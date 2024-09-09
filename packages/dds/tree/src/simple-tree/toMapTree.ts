@@ -715,7 +715,7 @@ export type FactoryContent =
 	| FactoryContentObject;
 
 /**
- * Record like object which can be used to build some kinds of nodes.
+ * Record-like object which can be used to build some kinds of nodes.
  * @remarks
  * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
  *
