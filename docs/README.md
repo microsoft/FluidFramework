@@ -193,6 +193,8 @@ The replacement syntax to use in `.mdx` files would be:
 ### Other TODOs
 
 -   Verify specific browser support
+-   Remove sample blog contents
+-   Remove "new website features" demo page
 -   Add prettier (wait until after merge to reduce diff noise)
 -   Add markdown-lint (same as above)
 -   Add eslint for components
