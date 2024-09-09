@@ -180,11 +180,12 @@ export function isSameFileOrDir(f1: string, f2: string) {
 }
 
 /**
- * Execute a command. If there is an error, print error message and exit process
+ * Execute a command. If there is an error, throw.
  *
- * @param cmd Command line to execute
- * @param dir dir the directory to execute on
- * @param error description of command line to print when error happens
+ * @param cmd - Command line to execute
+ * @param dir - dir the directory to execute on
+ * @param error - description of command line to print when error happens
+ * @param pipeStdIn - optional string to pipe to stdin
  */
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
 	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
@@ -197,13 +198,17 @@ export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: 
 }
 
 /**
- * Execute a command. If there is an error, print error message and exit process
+ * Execute a command. If there is an error, undefined is returned.
  *
- * @param cmd Command line to execute
- * @param dir dir the directory to execute on
- * @param error description of command line to print when error happens
+ * @param cmd - Command line to execute
+ * @param dir - dir the directory to execute on
+ * @param pipeStdIn - optional string to pipe to stdin
  */
-export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) {
+export async function execNoError(
+	cmd: string,
+	dir: string,
+	pipeStdIn?: string,
+): Promise<string | undefined> {
 	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
 	if (result.error) {
 		return undefined;

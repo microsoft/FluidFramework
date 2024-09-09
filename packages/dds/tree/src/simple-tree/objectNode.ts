@@ -20,11 +20,7 @@ import {
 	type MapTreeNode,
 	UnhydratedContext,
 } from "../feature-libraries/index.js";
-import {
-	type InsertableContent,
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	type ImplicitFieldSchema,
@@ -47,7 +43,7 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
+import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
@@ -177,6 +173,7 @@ function createProxyHandler(
 					return getTreeNodeForField(field);
 				}
 
+				// TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
 				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
 				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
 				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
