@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ISessionClient } from "./presence.js";
 
 import type { JsonDeserialized } from "@fluid-experimental/presence/internal/core-interfaces";
 import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
@@ -44,5 +44,5 @@ export interface LatestValueData<T> {
  * @alpha
  */
 export interface LatestValueClientData<T> extends LatestValueData<T> {
-	clientId: ConnectedClientId;
+	client: ISessionClient;
 }

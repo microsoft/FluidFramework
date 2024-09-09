@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectedClientId } from "./baseTypes.js";
 import type { LatestValueControls } from "./latestValueControls.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
+import type { ISessionClient } from "./presence.js";
 
 import type {
 	JsonDeserialized,
@@ -63,13 +63,13 @@ export interface LatestValueManager<T> {
 	 */
 	clientValues(): IterableIterator<LatestValueClientData<T>>;
 	/**
-	 * Array of known clients' identifiers.
+	 * Array of known clients.
 	 */
-	clients(): ConnectedClientId[];
+	clients(): ISessionClient[];
 	/**
 	 * Access to a specific client's value.
 	 */
-	clientValue(clientId: ConnectedClientId): LatestValueData<T>;
+	clientValue(client: ISessionClient): LatestValueData<T>;
 }
 
 /**

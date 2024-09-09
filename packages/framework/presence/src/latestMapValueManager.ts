@@ -10,6 +10,7 @@ import type {
 	LatestValueData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
+import type { ISessionClient } from "./presence.js";
 
 import type {
 	JsonDeserialized,
@@ -26,14 +27,14 @@ import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal
  * @alpha
  */
 export interface LatestMapValueClientData<
-	SpecificClientId extends ConnectedClientId,
 	T,
 	Keys extends string | number,
+	SpecificClientId extends ConnectedClientId = ConnectedClientId,
 > {
 	/**
-	 * Identifier of the client.
+	 * Associated client.
 	 */
-	clientId: SpecificClientId;
+	client: ISessionClient<SpecificClientId>;
 
 	/**
 	 * @privateRemarks This could be regular map currently as no Map is
@@ -60,7 +61,7 @@ export interface LatestMapItemValueClientData<T, K extends string | number>
  * @alpha
  */
 export interface LatestMapItemRemovedClientData<K extends string | number> {
-	clientId: ConnectedClientId;
+	client: ISessionClient;
 	key: K;
 	metadata: LatestValueMetadata;
 }
@@ -78,7 +79,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	 *
 	 * @eventProperty
 	 */
-	updated: (updates: LatestMapValueClientData<ConnectedClientId, T, K>) => void;
+	updated: (updates: LatestMapValueClientData<T, K>) => void;
 
 	/**
 	 * Raised when specific item's value is updated.
@@ -224,17 +225,17 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	 * Iterable access to remote clients' map of values.
 	 * @remarks This is not yet implemented.
 	 */
-	clientValues(): IterableIterator<LatestMapValueClientData<ConnectedClientId, T, Keys>>;
+	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
 	/**
-	 * Array of known clients' identifiers.
+	 * Array of known clients.
 	 */
-	clients(): ConnectedClientId[];
+	clients(): ISessionClient[];
 	/**
 	 * Access to a specific client's map of values.
 	 */
 	clientValue<SpecificClientId extends ConnectedClientId>(
-		clientId: SpecificClientId,
-	): LatestMapValueClientData<SpecificClientId, T, Keys>;
+		client: ISessionClient<SpecificClientId>,
+	): LatestMapValueClientData<T, Keys, SpecificClientId>;
 }
 
 /**

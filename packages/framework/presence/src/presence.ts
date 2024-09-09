@@ -20,7 +20,9 @@ import type { InternalTypes } from "@fluid-experimental/presence/internal/expose
  * @sealed
  * @alpha
  */
-export interface ISessionClient {
+export interface ISessionClient<
+	SpecificClientId extends ConnectedClientId = ConnectedClientId,
+> {
 	/**
 	 * Get current client connection id.
 	 *
@@ -29,7 +31,7 @@ export interface ISessionClient {
 	 * @remarks
 	 * Connection id will change on reconnection.
 	 */
-	currentClientId(): ConnectedClientId;
+	currentClientId(): SpecificClientId;
 }
 
 /**

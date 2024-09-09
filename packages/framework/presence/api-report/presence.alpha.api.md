@@ -33,8 +33,8 @@ export interface IPresence {
 }
 
 // @alpha @sealed
-export interface ISessionClient {
-    currentClientId(): ConnectedClientId;
+export interface ISessionClient<SpecificClientId extends ConnectedClientId = ConnectedClientId> {
+    currentClientId(): SpecificClientId;
 }
 
 // @alpha
@@ -48,7 +48,7 @@ export function LatestMap<T extends object, RegistrationKey extends string, Keys
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
     // (undocumented)
-    clientId: ConnectedClientId;
+    client: ISessionClient;
     // (undocumented)
     key: K;
     // (undocumented)
@@ -62,17 +62,17 @@ export interface LatestMapItemValueClientData<T, K extends string | number> exte
 }
 
 // @alpha @sealed
-export interface LatestMapValueClientData<SpecificClientId extends ConnectedClientId, T, Keys extends string | number> {
-    clientId: SpecificClientId;
+export interface LatestMapValueClientData<T, Keys extends string | number, SpecificClientId extends ConnectedClientId = ConnectedClientId> {
+    client: ISessionClient<SpecificClientId>;
     // (undocumented)
     items: ReadonlyMap<Keys, LatestValueData<T>>;
 }
 
 // @alpha @sealed
 export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
-    clients(): ConnectedClientId[];
-    clientValue<SpecificClientId extends ConnectedClientId>(clientId: SpecificClientId): LatestMapValueClientData<SpecificClientId, T, Keys>;
-    clientValues(): IterableIterator<LatestMapValueClientData<ConnectedClientId, T, Keys>>;
+    clients(): ISessionClient[];
+    clientValue<SpecificClientId extends ConnectedClientId>(client: ISessionClient<SpecificClientId>): LatestMapValueClientData<T, Keys, SpecificClientId>;
+    clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
     readonly controls: LatestValueControls;
     readonly events: ISubscribable<LatestMapValueManagerEvents<T, Keys>>;
     readonly local: ValueMap<Keys, T>;
@@ -85,13 +85,13 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
     // @eventProperty
     itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
     // @eventProperty
-    updated: (updates: LatestMapValueClientData<ConnectedClientId, T, K>) => void;
+    updated: (updates: LatestMapValueClientData<T, K>) => void;
 }
 
 // @alpha @sealed
 export interface LatestValueClientData<T> extends LatestValueData<T> {
     // (undocumented)
-    clientId: ConnectedClientId;
+    client: ISessionClient;
 }
 
 // @alpha
@@ -110,8 +110,8 @@ export interface LatestValueData<T> {
 
 // @alpha @sealed
 export interface LatestValueManager<T> {
-    clients(): ConnectedClientId[];
-    clientValue(clientId: ConnectedClientId): LatestValueData<T>;
+    clients(): ISessionClient[];
+    clientValue(client: ISessionClient): LatestValueData<T>;
     clientValues(): IterableIterator<LatestValueClientData<T>>;
     readonly controls: LatestValueControls;
     readonly events: ISubscribable<LatestValueManagerEvents<T>>;
@@ -144,7 +144,7 @@ export interface MapValueState<T> {
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationEvents<E>> {
     broadcast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
-    unicast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, targetClientId: ConnectedClientId, ...args: Parameters<E[K]>): void;
+    unicast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, targetClient: ISessionClient, ...args: Parameters<E[K]>): void;
 }
 
 // @alpha
@@ -160,17 +160,17 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
 // @alpha @sealed (undocumented)
 export interface NotificationsManagerEvents {
     // @eventProperty
-    unattendedNotification: (name: string, sender: ConnectedClientId, ...content: unknown[]) => void;
+    unattendedNotification: (name: string, sender: ISessionClient, ...content: unknown[]) => void;
 }
 
 // @alpha @sealed
 export interface NotificationSubscribable<E extends InternalUtilityTypes.NotificationEvents<E>> {
-    on<K extends keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, listener: (sender: ConnectedClientId, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void): () => void;
+    on<K extends keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, listener: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void): () => void;
 }
 
 // @alpha @sealed
 export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationEvents<E>> = {
-    [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ConnectedClientId, ...args: InternalUtilityTypes.JsonSerializableParameters<E[K]>) => void;
+    [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonSerializableParameters<E[K]>) => void;
 };
 
 // @alpha @sealed (undocumented)

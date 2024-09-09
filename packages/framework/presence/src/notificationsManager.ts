@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ISessionClient } from "./presence.js";
 
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
@@ -21,7 +21,7 @@ export interface NotificationsManagerEvents {
 	 */
 	unattendedNotification: (
 		name: string,
-		sender: ConnectedClientId,
+		sender: ISessionClient,
 		...content: unknown[]
 	) => void;
 }
@@ -46,7 +46,7 @@ export interface NotificationSubscribable<
 	on<K extends keyof InternalUtilityTypes.NotificationEvents<E>>(
 		notificationName: K,
 		listener: (
-			sender: ConnectedClientId,
+			sender: ISessionClient,
 			...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
 		) => void,
 	): () => void;
@@ -60,7 +60,7 @@ export interface NotificationSubscribable<
  */
 export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationEvents<E>> = {
 	[K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (
-		sender: ConnectedClientId,
+		sender: ISessionClient,
 		...args: InternalUtilityTypes.JsonSerializableParameters<E[K]>
 	) => void;
 };
@@ -85,12 +85,12 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 	/**
 	 * Emits a notification with the specified name and arguments, notifying a single client.
 	 * @param notificationName - the name of the notification to fire
-	 * @param targetClientId - the single client to notify
+	 * @param targetClient - the single client to notify
 	 * @param args - the arguments sent with the notification
 	 */
 	unicast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(
 		notificationName: K,
-		targetClientId: ConnectedClientId,
+		targetClient: ISessionClient,
 		...args: Parameters<E[K]>
 	): void;
 }
