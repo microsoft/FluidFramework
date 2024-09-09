@@ -60,6 +60,7 @@ trigger:
     - release/*
   paths:
     include:
+    - '*'
     - packages/**
     - azure/**
     - examples/**
@@ -91,6 +92,7 @@ pr:
     - release/*
   paths:
     include:
+    - '*'
     - packages/**
     - azure/**
     - examples/**
