@@ -198,8 +198,6 @@ export {
 } from "./default-schema/index.js";
 
 export {
-	type FlexTreeLeafNode,
-	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -249,4 +247,5 @@ export {
 	isMapTreeSequenceField,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
+	UnhydratedContext,
 } from "./flex-map-tree/index.js";

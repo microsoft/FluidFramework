@@ -5,11 +5,11 @@
 
 import {
 	type FlexMapNodeSchema,
-	type FlexTreeMapNode,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type MapTreeNode,
 	type OptionalFieldEditBuilder,
+	UnhydratedContext,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
@@ -40,7 +40,7 @@ import {
 	typeSchemaSymbol,
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { getFlexSchema } from "./toFlexSchema.js";
+import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
@@ -144,8 +144,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return this.entries();
 	}
 
-	private get innerNode(): InnerNode & FlexTreeMapNode {
-		return getOrCreateInnerNode(this) as InnerNode & FlexTreeMapNode;
+	private get innerNode(): InnerNode {
+		return getOrCreateInnerNode(this);
 	}
 
 	private editor(key: string): OptionalFieldEditBuilder<ExclusiveMapTree> {
@@ -184,12 +184,12 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
 			createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
-			node.context?.nodeKeyManager,
+			node.context.isHydrated() ? node.context.nodeKeyManager : undefined,
 			getSchemaAndPolicy(node),
 		);
 
 		const field = node.getBoxed(brand(key));
-		if (node.context !== undefined) {
+		if (node.context.isHydrated()) {
 			prepareContentForHydration(mapTree, node.context.checkout.forest);
 		}
 
@@ -235,15 +235,16 @@ export function mapSchema<
 	useMapPrototype: boolean,
 ) {
 	let flexSchema: FlexMapNodeSchema;
+	let unhydratedContext: UnhydratedContext;
 
-	class schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
+	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			if (useMapPrototype) {
-				return new Proxy<schema>(instance as schema, handler);
+				return new Proxy<Schema>(instance as Schema, handler);
 			}
 			return instance;
 		}
@@ -254,6 +255,7 @@ export function mapSchema<
 			input: T2,
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
+				unhydratedContext,
 				flexSchema,
 				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
 			);
@@ -262,7 +264,9 @@ export function mapSchema<
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
-			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexMapNodeSchema;
+			const schema = this as unknown as TreeNodeSchema;
+			flexSchema = getFlexSchema(schema) as FlexMapNodeSchema;
+			unhydratedContext = new UnhydratedContext(toFlexSchema(schema));
 		}
 
 		public static readonly identifier = identifier;
@@ -275,7 +279,7 @@ export function mapSchema<
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): typeof schemaErased {
-			return schema.constructorCached?.constructor as unknown as typeof schemaErased;
+			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 	}
 	const schemaErased: TreeNodeSchemaClass<
@@ -285,7 +289,7 @@ export function mapSchema<
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
-	> = schema;
+	> = Schema;
 	return schemaErased;
 }
 

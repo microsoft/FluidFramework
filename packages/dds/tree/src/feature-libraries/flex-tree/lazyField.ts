@@ -362,20 +362,6 @@ export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRe
 	}
 }
 
-export class LazyIdentifierField
-	extends ReadonlyLazyValueField
-	implements FlexTreeRequiredField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-}
-
 export class LazyOptionalField
 	extends LazyField<typeof FieldKinds.optional>
 	implements FlexTreeOptionalField
@@ -427,7 +413,7 @@ const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
-	[FieldKinds.identifier, LazyIdentifierField],
+	[FieldKinds.identifier, LazyValueField],
 ];
 
 const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);
