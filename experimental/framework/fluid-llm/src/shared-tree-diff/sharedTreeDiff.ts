@@ -207,10 +207,8 @@ export function sharedTreeDiff(
 								? [..._stack, objValue as Record<string, unknown> | unknown[]]
 								: [],
 						);
-						// eslint-disable-next-line prefer-spread
-						diffs.push.apply(
-							diffs,
-							nestedDiffs.map((difference) => {
+						diffs.push(
+							...nestedDiffs.map((difference) => {
 								difference.path.unshift(path);
 								return difference;
 							}),
@@ -247,10 +245,8 @@ export function sharedTreeDiff(
 									? [..._stack, objValue as Record<string, unknown> | unknown[]]
 									: [],
 							);
-							// eslint-disable-next-line prefer-spread
-							diffs.push.apply(
-								diffs,
-								nestedDiffs.map((difference) => {
+							diffs.push(
+								...nestedDiffs.map((difference) => {
 									difference.path.unshift(path);
 									return difference;
 								}),
@@ -266,10 +262,8 @@ export function sharedTreeDiff(
 							? [..._stack, objValue as Record<string, unknown> | unknown[]]
 							: [],
 					);
-					// eslint-disable-next-line prefer-spread
-					diffs.push.apply(
-						diffs,
-						nestedDiffs.map((difference) => {
+					diffs.push(
+						...nestedDiffs.map((difference) => {
 							difference.path.unshift(path);
 							return difference;
 						}),
