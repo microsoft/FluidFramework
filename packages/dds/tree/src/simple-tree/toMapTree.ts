@@ -588,7 +588,7 @@ function shallowCompatibilityTest(
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
 		if (data[fieldKey] === undefined && fieldSchema.requiresValue) {
-				return CompatibilityLevel.None;
+			return CompatibilityLevel.None;
 		}
 	}
 
