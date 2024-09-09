@@ -44,7 +44,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
 		"express": "^4.19.2",
-		"webpack-dev-server": "~4.15.1"
+		"webpack-dev-server": "~5.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
@@ -65,13 +65,13 @@
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^5.0.0",
 		"style-loader": "^1.0.0",
-		"ts-loader": "^9.3.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2",
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4",
 		"webpack-dev-middleware": "^7.1.1",
 		"webpack-hot-middleware": "^2.25.3",
-		"webpack-merge": "^5.8.0"
+		"webpack-merge": "^6.0.1"
 	},
 	"typeValidation": {
 		"disabled": true,
