@@ -2987,10 +2987,24 @@ describe("Runtime", () => {
 					"TargetedSignalContent",
 					"mockTargetClient",
 				); //                           51 outstanding; none tracked; one remote targeted
-				sendSignals(50); //            101 outstanding including 1 tracked signals (#101); one targeted
+				sendSignals(49); //            100 outstanding including 1 tracked signals (#101); one targeted
+				processSubmittedSignals(100); // 0 outstanding; none tracked
 
-				// Process all signals
-				processSubmittedSignals(101); // 0 outstanding; none tracked
+				// Check that remote targeted signal is ignored
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
+				);
+
+				sendSignals(1); //               1 outstanding including 1 tracked signals (#101); one targeted
+				processSubmittedSignals(1); //   0 outstanding; none tracked
 
 				// Check for logged SignalLatency event
 				logger.assertMatch(
@@ -3017,10 +3031,10 @@ describe("Runtime", () => {
 					"TargetedSignalContent",
 					containerRuntime.clientId,
 				); //                           51 outstanding; none tracked; one self-targeted
-				sendSignals(50); //            101 outstanding including 1 tracked signals (#101); one self-targeted
+				sendSignals(49); //            100 outstanding including 1 tracked signals (#101); one self-targeted
 
 				// Process all signals
-				processSubmittedSignals(101); // 0 outstanding; none tracked
+				processSubmittedSignals(100); // 0 outstanding; none tracked
 
 				// Check for logged SignalLatency event
 				logger.assertMatch(
@@ -3070,7 +3084,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("ignores targeted signals w/ no service support for targeted signals", () => {
+			it("ignores targeted signals when there is no service support", () => {
 				// Send 1st signal and process it to prime the system
 				sendSignals(1);
 				processSubmittedSignals(1);
@@ -3100,7 +3114,7 @@ describe("Runtime", () => {
 
 				sendSignals(1); //             	     1 outstanding including 1 tracked signals (#101); one targeted
 
-				processWithNoTargetSupport(1); // 0 outstanding; none tracked
+				processWithNoTargetSupport(1); //    0 outstanding; none tracked
 
 				// Check for logged SignalLatency event
 				logger.assertMatch(
