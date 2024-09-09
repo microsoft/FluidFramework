@@ -10,7 +10,7 @@ You may be here because you want to...
 -   Learn more about the Fluid Framework
 -   Build a Fluid object
 
-Documentation and guides can be found at <https://fluidframework.com/>.
+Documentation and guides can be found at <https://fluidframework.com/>. Dummy change to readme
 
 Hello World repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
 
