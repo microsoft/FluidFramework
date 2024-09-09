@@ -463,8 +463,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       react:
         specifier: ^17.0.1
         version: 17.0.2
@@ -472,8 +472,8 @@ importers:
         specifier: ^17.0.1
         version: 17.0.2(react@17.0.2)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -590,8 +590,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       react:
         specifier: ^17.0.1
         version: 17.0.2
@@ -599,8 +599,8 @@ importers:
         specifier: ^17.0.1
         version: 17.0.2(react@17.0.2)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
@@ -811,8 +811,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -820,8 +820,8 @@ importers:
         specifier: ^9.0.2
         version: 9.0.2
       html-loader:
-        specifier: ^3.1.0
-        version: 3.1.2(webpack@5.94.0)
+        specifier: ^5.1.0
+        version: 5.1.0(webpack@5.94.0)
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.0(webpack@5.94.0)
@@ -853,8 +853,8 @@ importers:
         specifier: ^16.0.1
         version: 16.0.1(sass@1.78.0)(webpack@5.94.0)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -862,8 +862,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       url-loader:
-        specifier: ^2.1.0
-        version: 2.3.0(file-loader@3.0.1)(webpack@5.94.0)
+        specifier: ^4.1.1
+        version: 4.1.1(file-loader@3.0.1)(webpack@5.94.0)
       webpack:
         specifier: ^5.94.0
         version: 5.94.0(webpack-cli@5.1.4)
@@ -1031,11 +1031,11 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -1225,8 +1225,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -1261,8 +1261,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-jest:
         specifier: ^29.1.1
         version: 29.1.1(@babel/core@7.24.4)(jest@29.7.0)(typescript@5.4.5)
@@ -1873,8 +1873,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -1891,8 +1891,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.94.0)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -2215,8 +2215,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -2251,8 +2251,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -2260,8 +2260,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       url-loader:
-        specifier: ^2.1.0
-        version: 2.3.0(file-loader@3.0.1)(webpack@5.94.0)
+        specifier: ^4.1.1
+        version: 4.1.1(file-loader@3.0.1)(webpack@5.94.0)
       webpack:
         specifier: ^5.94.0
         version: 5.94.0(webpack-cli@5.1.4)
@@ -2463,8 +2463,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -2475,8 +2475,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -2754,14 +2754,14 @@ importers:
         specifier: ^17.0.44
         version: 17.0.71
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
       html-loader:
-        specifier: ^3.1.0
-        version: 3.1.2(webpack@5.94.0)
+        specifier: ^5.1.0
+        version: 5.1.0(webpack@5.94.0)
       loader-utils:
         specifier: ^1.1.0
         version: 1.4.2
@@ -2784,8 +2784,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.94.0)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -2793,8 +2793,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       url-loader:
-        specifier: ^2.1.0
-        version: 2.3.0(file-loader@3.0.1)(webpack@5.94.0)
+        specifier: ^4.1.1
+        version: 4.1.1(file-loader@3.0.1)(webpack@5.94.0)
       webpack:
         specifier: ^5.94.0
         version: 5.94.0(webpack-cli@5.1.4)
@@ -2982,8 +2982,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3012,8 +3012,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-jest:
         specifier: ^29.1.1
         version: 29.1.1(@babel/core@7.24.4)(jest@29.7.0)(typescript@5.4.5)
@@ -3348,8 +3348,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3360,8 +3360,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -3454,8 +3454,8 @@ importers:
         specifier: ^1.11.7
         version: 1.11.11
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3466,8 +3466,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -3675,8 +3675,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3708,8 +3708,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.94.0)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -3820,8 +3820,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3832,8 +3832,8 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1(webpack@5.94.0)
       html-loader:
-        specifier: ^3.1.0
-        version: 3.1.2(webpack@5.94.0)
+        specifier: ^5.1.0
+        version: 5.1.0(webpack@5.94.0)
       jsdom:
         specifier: ^16.7.0
         version: 16.7.0
@@ -3859,8 +3859,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.94.0)
@@ -3871,8 +3871,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       url-loader:
-        specifier: ^2.1.0
-        version: 2.3.0(file-loader@3.0.1)(webpack@5.94.0)
+        specifier: ^4.1.1
+        version: 4.1.1(file-loader@3.0.1)(webpack@5.94.0)
       webpack:
         specifier: ^5.94.0
         version: 5.94.0(webpack-cli@5.1.4)
@@ -3955,8 +3955,8 @@ importers:
         specifier: ^2.8.4
         version: 2.8.5
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       express:
         specifier: ^4.19.2
         version: 4.19.2
@@ -3973,8 +3973,8 @@ importers:
         specifier: ^17.0.1
         version: 17.0.2(react@17.0.2)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       valid-url:
         specifier: ^1.0.9
         version: 1.0.9
@@ -4260,8 +4260,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/utils/odsp-doclib-utils
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       fluid-framework:
         specifier: workspace:~
         version: link:../../../../packages/framework/fluid-framework
@@ -4272,8 +4272,8 @@ importers:
         specifier: ^17.0.1
         version: 17.0.2(react@17.0.2)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -4871,11 +4871,11 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -5071,8 +5071,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -5110,8 +5110,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-jest:
         specifier: ^29.1.1
         version: 29.1.1(@babel/core@7.24.4)(jest@29.7.0)(typescript@5.4.5)
@@ -5249,8 +5249,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -5288,8 +5288,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       ts-jest:
         specifier: ^29.1.1
         version: 29.1.1(@babel/core@7.24.4)(jest@29.7.0)(typescript@5.4.5)
@@ -5412,8 +5412,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -5451,8 +5451,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
@@ -5617,11 +5617,11 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -5726,8 +5726,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       css-loader:
-        specifier: ^6.11.0
-        version: 6.11.0(webpack@5.94.0)
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.94.0)
       react:
         specifier: ^17.0.1
         version: 17.0.2
@@ -5735,8 +5735,8 @@ importers:
         specifier: ^17.0.1
         version: 17.0.2(react@17.0.2)
       style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.94.0)
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.94.0)
       vue:
         specifier: ~3.4.21
         version: 3.4.21(typescript@5.4.5)
@@ -16531,7 +16531,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/highlight': 7.24.2
-      picocolors: 1.0.0
+      picocolors: 1.1.0
     dev: true
 
   /@babel/compat-data@7.24.4:
@@ -25333,6 +25333,7 @@ packages:
 
   /big.js@5.2.2:
     resolution: {integrity: sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==}
+    dev: true
 
   /binary-extensions@2.2.0:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
@@ -26551,12 +26552,12 @@ packages:
       type-fest: 1.4.0
     dev: true
 
-  /css-loader@6.11.0(webpack@5.94.0):
-    resolution: {integrity: sha512-CTJ+AEQJjq5NzLga5pE39qdiSV56F8ywCIsqNIRF0r7BDgWsN25aazToqAFg7ZrtA/U016xudB3ffgweORxX7g==}
-    engines: {node: '>= 12.13.0'}
+  /css-loader@7.1.2(webpack@5.94.0):
+    resolution: {integrity: sha512-6WvYYn7l/XEGN8Xu2vWFt9nVzrCn39vKyTEFf/ExEyoksJjjSZV/0/35XPlMbpnr6VGhZIUg5yJrL8tGfes/FA==}
+    engines: {node: '>= 18.12.0'}
     peerDependencies:
       '@rspack/core': 0.x || 1.x
-      webpack: ^5.0.0 || ^5.94.0
+      webpack: ^5.27.0 || ^5.94.0
     peerDependenciesMeta:
       '@rspack/core':
         optional: true
@@ -26570,7 +26571,7 @@ packages:
       postcss-modules-scope: 3.2.0(postcss@8.4.35)
       postcss-modules-values: 4.0.0(postcss@8.4.35)
       postcss-value-parser: 4.2.0
-      semver: 7.6.0
+      semver: 7.6.3
       webpack: 5.94.0(webpack-cli@5.1.4)
 
   /css-select@4.3.0:
@@ -27431,6 +27432,7 @@ packages:
   /emojis-list@3.0.0:
     resolution: {integrity: sha512-/kyM18EfinwXZbno9FyUGeFh87KC8HRQBQGildHZbEuRyWFOmv1U10o9BBp8XVZDVNNuQKyIGIu5ZYAAXJ0V2Q==}
     engines: {node: '>= 4'}
+    dev: true
 
   /empty-npm-package@1.0.0:
     resolution: {integrity: sha512-q4Mq/+XO7UNDdMiPpR/LIBIW1Zl4V0Z6UT9aKGqIAnBCtCb3lvZJM1KbDbdzdC8fKflwflModfjR29Nt0EpcwA==}
@@ -29624,14 +29626,14 @@ packages:
     resolution: {integrity: sha512-RuMffC89BOWQoY0WKGpIhn5gX3iI54O6nRA0yC124NYVtzjmFWBIiFd8M0x+ZdX0P9R4lADg1mgP8C7PxGOWuQ==}
     dev: true
 
-  /html-loader@3.1.2(webpack@5.94.0):
-    resolution: {integrity: sha512-9WQlLiAV5N9fCna4MUmBW/ifaUbuFZ2r7IZmtXzhyfyi4zgPEjXsmsYCKs+yT873MzRj+f1WMjuAiPNA7C6Tcw==}
-    engines: {node: '>= 12.13.0'}
+  /html-loader@5.1.0(webpack@5.94.0):
+    resolution: {integrity: sha512-Jb3xwDbsm0W3qlXrCZwcYqYGnYz55hb6aoKQTlzyZPXsPpi6tHXzAfqalecglMQgNvtEfxrCQPaKT90Irt5XDA==}
+    engines: {node: '>= 18.12.0'}
     peerDependencies:
       webpack: ^5.0.0 || ^5.94.0
     dependencies:
-      html-minifier-terser: 6.1.0
-      parse5: 6.0.1
+      html-minifier-terser: 7.2.0
+      parse5: 7.1.2
       webpack: 5.94.0(webpack-cli@5.1.4)
     dev: true
 
@@ -29647,6 +29649,20 @@ packages:
       param-case: 3.0.4
       relateurl: 0.2.7
       terser: 5.24.0
+    dev: true
+
+  /html-minifier-terser@7.2.0:
+    resolution: {integrity: sha512-tXgn3QfqPIpGl9o+K5tpcj3/MN4SfLtsx2GWwBC3SSd0tXQGyF3gsSqad8loJgKZGM3ZxbYDd5yhiBIdWpmvLA==}
+    engines: {node: ^14.13.1 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      camel-case: 4.1.2
+      clean-css: 5.3.2
+      commander: 10.0.1
+      entities: 4.5.0
+      param-case: 3.0.4
+      relateurl: 0.2.7
+      terser: 5.31.6
     dev: true
 
   /html-webpack-plugin@5.6.0(webpack@5.94.0):
@@ -31469,6 +31485,7 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
+    dev: true
 
   /jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
@@ -31849,6 +31866,7 @@ packages:
       big.js: 5.2.2
       emojis-list: 3.0.0
       json5: 2.2.3
+    dev: true
 
   /locate-path@5.0.0:
     resolution: {integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==}
@@ -32844,12 +32862,6 @@ packages:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}
     engines: {node: '>=4'}
     hasBin: true
-
-  /mime@2.6.0:
-    resolution: {integrity: sha512-USPkMeET31rOMiarsBNIHZKLGgvKc/LrjofAnBlOttf5ajRvqiRA8QsenbcooctK6d6Ts6aqZXBA+XbkKthiQg==}
-    engines: {node: '>=4.0.0'}
-    hasBin: true
-    dev: true
 
   /mime@3.0.0:
     resolution: {integrity: sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A==}
@@ -34316,6 +34328,7 @@ packages:
 
   /picocolors@1.0.0:
     resolution: {integrity: sha512-1fygroTLlHu66zi26VoTDv8yRgm0Fccecssto+MhsZ0D/DGW2sm8E8AjW7NU5VVTRt5GxbeZ5qBuJr+HyLYkjQ==}
+    dev: true
 
   /picocolors@1.1.0:
     resolution: {integrity: sha512-TQ92mBOW0l3LeMeyLV6mzy/kWr8lkd/hp3mTg7wYK7zJhuBStmGMBG0BdeDZS/dZx1IukaX6Bk11zcln25o1Aw==}
@@ -34645,7 +34658,7 @@ packages:
     engines: {node: ^10 || ^12 || >=14}
     dependencies:
       nanoid: 3.3.7
-      picocolors: 1.0.0
+      picocolors: 1.1.0
       source-map-js: 1.0.2
 
   /prebuild-install@7.1.2:
@@ -36165,14 +36178,6 @@ packages:
       ajv-keywords: 3.5.2(ajv@6.12.6)
     dev: true
 
-  /schema-utils@2.7.1:
-    resolution: {integrity: sha512-SHiNtMOUGWBQJwzISiVYKu82GiV4QYGePp3odlY1tuKO7gPtphAT5R/py0fA6xtbgLL/RvtJZnU9b8s0F1q0Xg==}
-    engines: {node: '>= 8.9.0'}
-    dependencies:
-      '@types/json-schema': 7.0.15
-      ajv: 6.12.6
-      ajv-keywords: 3.5.2(ajv@6.12.6)
-
   /schema-utils@3.3.0:
     resolution: {integrity: sha512-pN/yOAvcC+5rQ5nERGuwrjLlYvLTbCibnZ1I7B1LaiAz9BRBlE9GMgE/eqV30P7aJQUf7Ddimy/RsbYO/GrVGg==}
     engines: {node: '>= 10.13.0'}
@@ -37181,14 +37186,12 @@ packages:
     engines: {node: '>=14.16'}
     dev: true
 
-  /style-loader@1.3.0(webpack@5.94.0):
-    resolution: {integrity: sha512-V7TCORko8rs9rIqkSrlMfkqA63DfoGBBJmK1kKGCcSi+BWb4cqz0SRsnp4l6rU5iwOEd0/2ePv68SV22VXon4Q==}
-    engines: {node: '>= 8.9.0'}
+  /style-loader@4.0.0(webpack@5.94.0):
+    resolution: {integrity: sha512-1V4WqhhZZgjVAVJyt7TdDPZoPBPNHbekX4fWnCJL1yQukhCeZhJySUL+gL9y6sNdN95uEOS83Y55SqHcP7MzLA==}
+    engines: {node: '>= 18.12.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || ^5.94.0
+      webpack: ^5.27.0 || ^5.94.0
     dependencies:
-      loader-utils: 2.0.4
-      schema-utils: 2.7.1
       webpack: 5.94.0(webpack-cli@5.1.4)
 
   /stylis@4.3.0:
@@ -38388,20 +38391,20 @@ packages:
     resolution: {integrity: sha512-HXgFDgDommxn5/bIv0cnQZsPhHDA90NPHD6+c/v21U5+Sx5hoP8+dP9IZXBU1gIfvdRfhG8cel9QNPeionfcCQ==}
     dev: true
 
-  /url-loader@2.3.0(file-loader@3.0.1)(webpack@5.94.0):
-    resolution: {integrity: sha512-goSdg8VY+7nPZKUEChZSEtW5gjbS66USIGCeSJ1OVOJ7Yfuh/36YxCwMi5HVEJh6mqUYOoy3NJ0vlOMrWsSHog==}
-    engines: {node: '>= 8.9.0'}
+  /url-loader@4.1.1(file-loader@3.0.1)(webpack@5.94.0):
+    resolution: {integrity: sha512-3BTV812+AVHHOJQO8O5MkWgZ5aosP7GnROJwvzLS9hWDj00lZ6Z0wNak423Lp9PBZN05N+Jk/N5Si8jRAlGyWA==}
+    engines: {node: '>= 10.13.0'}
     peerDependencies:
       file-loader: '*'
-      webpack: ^4.0.0 || ^5.94.0
+      webpack: ^4.0.0 || ^5.0.0 || ^5.94.0
     peerDependenciesMeta:
       file-loader:
         optional: true
     dependencies:
       file-loader: 3.0.1(webpack@5.94.0)
-      loader-utils: 1.4.2
-      mime: 2.6.0
-      schema-utils: 2.7.1
+      loader-utils: 2.0.4
+      mime-types: 2.1.35
+      schema-utils: 3.3.0
       webpack: 5.94.0(webpack-cli@5.1.4)
     dev: true
 

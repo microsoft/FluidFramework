@@ -52,10 +52,10 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"css-loader": "^6.11.0",
+		"css-loader": "^7.1.2",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
-		"style-loader": "^1.0.0"
+		"style-loader": "^4.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
