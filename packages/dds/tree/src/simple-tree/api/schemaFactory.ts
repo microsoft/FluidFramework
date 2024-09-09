@@ -146,7 +146,7 @@ export type ScopedSchemaName<
  * 8. IntelliSense: Shows and links to user-defined class by name: `X`.
  * 9. Recursion: Supported with special declaration patterns.
  *
- * POJO Emulation Approach
+ * POJO Emulation Approach:
  * 1. Declaration: `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>;`
  * 2. Allows adding "local" (non-persisted) members: No. Attempting to set non-field members will result in an error.
  * 3. Prototype: `Object.prototype`, `Map.prototype`, or `Array.prototype` depending on node kind.
