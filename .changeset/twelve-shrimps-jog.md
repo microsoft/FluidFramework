@@ -12,5 +12,5 @@ However when actually constructing the node from the data, only own properties w
 This could lead to input containing inherited properties getting validated, but producing out of schema nodes missing fields.
 This has been fixed and now both code paths use the same check, for own properties, when evaluating if an input has a property that should be considered for providing the content of the node's field.
 
-This may cause some causes with previously exhibited data corruption to now throw a usage error reporting the data is incompatible.
+This may cause some cases which previously exhibited data corruption to now throw a usage error reporting the data is incompatible.
 Such cases may need to copy data from the objects with inherited properties into new objects with own properties before constructing nodes from them.

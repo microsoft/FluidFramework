@@ -71,7 +71,7 @@ describeHydration(
 						assert.equal(x, undefined);
 
 						{
-							// In this particular case of overloads, TypeScript knows this is unsafe, but in other similar cases (like the one above).
+							// In this particular case of overloads, TypeScript knows this is unsafe, but in other similar cases (like the one above), it can compile without error.
 							// @ts-expect-error Unsafely construct insertable with correct type.
 							const _insertable: NodeBuilderData<typeof Schema> = {};
 						}
