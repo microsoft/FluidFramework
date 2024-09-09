@@ -67,7 +67,6 @@
 		"test": "echo \"No tests yet\"",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
-	"dependencies": {},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
@@ -102,6 +101,6 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},
-		"entrypoint": "legacy"
+		"entrypoint": "public"
 	}
 }
