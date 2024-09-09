@@ -60,6 +60,7 @@ trigger:
     - release/*
   paths:
     include:
+    # Using * along with */** exclusion to capture changes to files in the root directory
     - '*'
     - packages/**
     - azure/**
@@ -82,7 +83,9 @@ trigger:
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
     exclude:
-      - '*/**'
+    # Since the * wildcard includes all changes in root and subdirectories
+    # we need to exclude the subdirectories to avoid triggering the pipeline on all changes
+    - '*/**'
 pr:
   branches:
     include:
@@ -92,6 +95,7 @@ pr:
     - release/*
   paths:
     include:
+    # Using * along with */** exclusion to capture changes to files in the root directory
     - '*'
     - packages/**
     - azure/**
@@ -111,7 +115,9 @@ pr:
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
     exclude:
-     - '*/**'
+    # Since the * wildcard includes all changes in root and subdirectories
+    # we need to exclude the subdirectories to avoid triggering the pipeline on all changes
+    - '*/**'
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
