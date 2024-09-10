@@ -364,6 +364,7 @@ declare type current_as_old_for_ClassStatics_MockEmptyDeltaConnection = requireA
  * typeValidation.broken:
  * "Class_MockFluidDataStoreContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<old.MockFluidDataStoreContext>, TypeOnly<current.MockFluidDataStoreContext>>
 
 /*

@@ -230,6 +230,31 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_ChannelCollection": {
+				"forwardCompat": false
+			},
+			"Class_FluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"Interface_IFluidDataStoreContextInternal": {
+				"forwardCompat": false
+			},
+			"Interface_IFluidDataStoreContextProps": {
+				"forwardCompat": false
+			},
+			"Interface_ILocalDetachedFluidDataStoreContextProps": {
+				"forwardCompat": false
+			},
+			"Interface_ILocalFluidDataStoreContextProps": {
+				"forwardCompat": false
+			},
+			"Class_LocalFluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"Class_LocalFluidDataStoreContextBase": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

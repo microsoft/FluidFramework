@@ -1074,9 +1074,6 @@ importers:
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.8
-      '@types/ioredis-mock':
-        specifier: ^8.2.1
-        version: 8.2.2
       '@types/lru-cache':
         specifier: ^5.1.0
         version: 5.1.1
@@ -1101,9 +1098,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      ioredis-mock:
-        specifier: ^8.2.3
-        version: 8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.3.2)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -1869,8 +1863,8 @@ importers:
         specifier: workspace:~
         version: link:../services-telemetry
       '@types/ioredis-mock':
-        specifier: ^8.2.1
-        version: 8.2.2
+        specifier: ^8.2.5
+        version: 8.2.5
       assert:
         specifier: ^2.0.0
         version: 2.0.0
@@ -1884,8 +1878,8 @@ importers:
         specifier: ^5.2.3
         version: 5.3.2
       ioredis-mock:
-        specifier: ^8.2.3
-        version: 8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.3.2)
+        specifier: ^8.8.2
+        version: 8.9.0(@types/ioredis-mock@8.2.5)(ioredis@5.3.2)
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -4306,12 +4300,12 @@ packages:
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
-      '@types/ioredis-mock': 8.2.2
+      '@types/ioredis-mock': 8.2.5
       assert: 2.1.0
       debug: 4.3.4(supports-color@8.1.1)
       events: 3.3.0
       ioredis: 5.3.2
-      ioredis-mock: 8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.3.2)
+      ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.5)(ioredis@5.3.2)
       lodash: 4.17.21
       string-hash: 1.1.3
       uuid: 9.0.1
@@ -6281,9 +6275,10 @@ packages:
     resolution: {integrity: sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ==}
     dev: true
 
-  /@types/ioredis-mock@8.2.2:
-    resolution: {integrity: sha512-bnbPHOjxy4TUDjRh61MMoK2QvDNZqrMDXJYrEDZP/HPFvBubR24CQ0DBi5lgWhLxG4lvVsXPRDXtZ03+JgonoQ==}
+  /@types/ioredis-mock@8.2.5:
+    resolution: {integrity: sha512-cZyuwC9LGtg7s5G9/w6rpy3IOZ6F/hFR0pQlWYZESMo1xQUYbDpa6haqB4grTePjsGzcB/YLBFCjqRunK5wieg==}
     dependencies:
+      '@types/node': 18.19.39
       ioredis: 5.3.2
     transitivePeerDependencies:
       - supports-color
@@ -10458,8 +10453,8 @@ packages:
     engines: {node: '>=10.13.0'}
     dev: true
 
-  /ioredis-mock@8.7.0(@types/ioredis-mock@8.2.2)(ioredis@5.3.2):
-    resolution: {integrity: sha512-BJcSjkR3sIMKbH93fpFzwlWi/jl1kd5I3vLvGQxnJ/W/6bD2ksrxnyQN186ljAp3Foz4p1ivViDE3rZeKEAluA==}
+  /ioredis-mock@8.9.0(@types/ioredis-mock@8.2.5)(ioredis@5.3.2):
+    resolution: {integrity: sha512-yIglcCkI1lvhwJVoMsR51fotZVsPsSk07ecTCgRTRlicG0Vq3lke6aAaHklyjmRNRsdYAgswqC2A0bPtQK4LSw==}
     engines: {node: '>=12.22'}
     peerDependencies:
       '@types/ioredis-mock': ^8
@@ -10467,11 +10462,11 @@ packages:
     dependencies:
       '@ioredis/as-callback': 3.0.0
       '@ioredis/commands': 1.2.0
-      '@types/ioredis-mock': 8.2.2
+      '@types/ioredis-mock': 8.2.5
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
       ioredis: 5.3.2
-      semver: 7.5.3
+      semver: 7.6.0
 
   /ioredis@5.3.2:
     resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
@@ -13846,7 +13841,6 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
-    dev: true
 
   /send@0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}

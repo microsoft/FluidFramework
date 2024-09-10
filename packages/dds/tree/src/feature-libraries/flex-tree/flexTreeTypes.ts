@@ -20,7 +20,7 @@ import type {
 	OptionalFieldEditBuilder,
 } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import type { FlexFieldSchema, FlexTreeNodeSchema } from "../typed-schema/index.js";
+import type { FlexTreeNodeSchema } from "../typed-schema/index.js";
 
 import type { FlexTreeContext } from "./context.js";
 
@@ -230,11 +230,6 @@ export interface FlexTreeField extends FlexTreeEntity {
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
 	is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind>;
-
-	/**
-	 * Type guard for narrowing / down-casting to a specific schema.
-	 */
-	isExactly(schema: FlexFieldSchema): boolean;
 
 	boxedIterator(): IterableIterator<FlexTreeNode>;
 

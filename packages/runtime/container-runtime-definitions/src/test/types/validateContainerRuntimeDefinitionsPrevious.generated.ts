@@ -41,6 +41,7 @@ declare type current_as_old_for_Interface_IContainerRuntime = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>>
 
 /*
