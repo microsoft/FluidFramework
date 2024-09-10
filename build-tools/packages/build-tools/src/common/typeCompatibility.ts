@@ -9,6 +9,14 @@
 // Blocks are used in this file intentionally for scoping.
 /* eslint-disable no-lone-blocks */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+/**
+ * The types defined here cannot be in build-cli because it is an ESM-only package, and these types are imported in
+ * packages that are dual-emit or CJS-only. Long term these types should move to a shared library between build-cli and
+ * build-tools.
+ */
+
 /**
  * Compile time assert that A is assignable to (extends) B.
  * To use, simply define a type:
@@ -46,7 +54,7 @@ type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
  * Omit (replace with never) a key if it is a custom symbol,
  * not just symbol or a well known symbol from the global Symbol.
  */
-type SkipUniqueSymbols<Key> = symbol extends Key
+export type SkipUniqueSymbols<Key> = symbol extends Key
 	? Key // Key is symbol or a generalization of symbol, so leave it as is.
 	: Key extends symbol
 		? Key extends WellKnownSymbols
@@ -56,7 +64,7 @@ type SkipUniqueSymbols<Key> = symbol extends Key
 /**
  * Remove details of T which are incompatible with type testing while keeping as much as is practical.
  *
- * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ * See 'build-tools/packages/build-cli/src/typeValidator/compatibility.ts' for more information.
  */
 export type TypeOnly<T> = T extends number
 	? number
@@ -218,9 +226,7 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type _check_undefined1 = requireAssignableTo<TypeOnly<undefined>, undefined>;
 	type _check_undefined2 = requireAssignableTo<undefined, TypeOnly<undefined>>;
 
-	// eslint-disable-next-line @rushstack/no-new-null
 	type _check_null1 = requireAssignableTo<TypeOnly<null>, null>;
-	// eslint-disable-next-line @rushstack/no-new-null
 	type _check_null2 = requireAssignableTo<null, TypeOnly<null>>;
 
 	// Due to limitations of the current version of TypeOnly, brands on number are lost,
@@ -261,7 +267,6 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type _check_symbol2 = requireAssignableTo<brandedSymbol, TypeOnly<symbol>>;
 
 	// Unions of primitive types are preserved.
-	// eslint-disable-next-line @rushstack/no-new-null
 	type union = undefined | null | boolean | number | bigint | string | symbol;
 	type _check_union1 = requireAssignableTo<TypeOnly<union>, union>;
 	type _check_union2 = requireAssignableTo<union, TypeOnly<union>>;
@@ -269,7 +274,6 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	// Branded unions of primitive types are preserved, except for string and number,
 	// which are stripped to just 'string | number'.
 	// Symbols are excluded from this as they are more aggressively omitted to handle unique symbols.
-	// eslint-disable-next-line @rushstack/no-new-null
 	type brandedUnion = (undefined | null | boolean | bigint) & {
 		brand: "Union";
 	};

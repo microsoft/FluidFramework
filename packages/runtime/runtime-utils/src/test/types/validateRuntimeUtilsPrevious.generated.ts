@@ -166,6 +166,7 @@ declare type old_as_current_for_Class_RequestParser = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_RequestParser": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_RequestParser = requireAssignableTo<TypeOnly<current.RequestParser>, TypeOnly<old.RequestParser>>
 
 /*
@@ -175,6 +176,7 @@ declare type current_as_old_for_Class_RequestParser = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_RequestParser": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_RequestParser = requireAssignableTo<TypeOnly<typeof current.RequestParser>, TypeOnly<typeof old.RequestParser>>
 
 /*

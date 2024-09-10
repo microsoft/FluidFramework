@@ -47,8 +47,7 @@ export class ReadBuffer {
 		let length = lengthArg;
 		while (length > 0) {
 			assert(!this.eof, 0x223 /* "unexpected end of buffer" */);
-			// TODO Why are we non null asserting here?
-			res += this.data[this.index]! * multiplier;
+			res += this.data[this.index] * multiplier;
 			this.index++;
 			multiplier *= 256;
 			length--;

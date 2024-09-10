@@ -18,12 +18,9 @@ import {
 	getSchemaAndPolicy,
 	isMapTreeNode,
 	type MapTreeNode,
+	UnhydratedContext,
 } from "../feature-libraries/index.js";
-import {
-	type InsertableContent,
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	type ImplicitFieldSchema,
@@ -46,9 +43,9 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
+import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
-import { getFlexSchema } from "./toFlexSchema.js";
+import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
@@ -97,6 +94,8 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  * Helper used to produce types for:
  *
  * 1. Insertable content which can be used to construct an object node.
+ * In this case, only own properties are considered.
+ * This reduces the risk of incorrectly interpreting data at the cost of occasionally requiring users to convert data into a compatible format.
  *
  * 2. Insertable content which is an unhydrated object node.
  *
@@ -176,6 +175,7 @@ function createProxyHandler(
 					return getTreeNodeForField(field);
 				}
 
+				// TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
 				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
 				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
 				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
@@ -264,11 +264,11 @@ export function setField(
 	const mapTree = mapTreeFromNodeData(
 		value,
 		simpleFieldSchema,
-		field.context?.nodeKeyManager,
+		field.context.isHydrated() ? field.context.nodeKeyManager : undefined,
 		getSchemaAndPolicy(field),
 	);
 
-	if (field.context !== undefined) {
+	if (field.context.isHydrated()) {
 		prepareContentForHydration(mapTree, field.context.checkout.forest);
 	}
 
@@ -321,6 +321,7 @@ export function objectSchema<
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
 	let flexSchema: FlexObjectNodeSchema;
+	let unhydratedContext: UnhydratedContext;
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
@@ -373,6 +374,7 @@ export function objectSchema<
 			input: T2,
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
+				unhydratedContext,
 				flexSchema,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
@@ -384,7 +386,9 @@ export function objectSchema<
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
 			handler = createProxyHandler(flexKeyMap, customizable);
-			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexObjectNodeSchema;
+			const schema = this as unknown as TreeNodeSchema;
+			flexSchema = getFlexSchema(schema) as FlexObjectNodeSchema;
+			unhydratedContext = new UnhydratedContext(toFlexSchema(schema));
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
