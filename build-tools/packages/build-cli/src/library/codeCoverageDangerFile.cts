@@ -23,9 +23,14 @@ declare const danger: {
 				repoConfig?: { owner: string; repo: string; id: number },
 			) => Promise<void>;
 		};
-		updateOrCreateComment: (message: string) => Promise<void>;
 		api: {
 			issues: {
+				createComment: (params: {
+					owner: string;
+					repo: string;
+					issue_number: number;
+					body: string;
+				}) => Promise<void>;
 				updateComment: (params: {
 					owner: string;
 					repo: string;
@@ -91,7 +96,12 @@ export async function codeCoverageCompare(): Promise<void> {
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (comment === undefined) {
 		// Create a new comment if not found
-		await danger.github.updateOrCreateComment(messageContent);
+		await danger.github.api.issues.createComment({
+			owner: danger.github.thisPR.owner,
+			repo: danger.github.thisPR.repo,
+			issue_number: danger.github.thisPR.number,
+			body: messageContent,
+		});
 	} else {
 		// Update the existing comment
 		await danger.github.api.issues.updateComment({
