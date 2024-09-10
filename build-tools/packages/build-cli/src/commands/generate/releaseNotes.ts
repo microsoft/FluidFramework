@@ -213,7 +213,8 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			.use(stripSoftBreaks)
 			.use(admonitions, {
 				titleTextMap: (title) => ({
-					// To remove the `[!` prefix and `]` suffix
+					// By default the `[!` prefix and `]` suffix are removed; we don't want that, so we override the default and
+					// return he title as-is.
 					displayTitle: title,
 					checkedTitle: title,
 				}),
@@ -234,8 +235,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 		const processor = flags.headingLinks
 			? baseProcessor.use(remarkHeadingLinks)
-			: // .use(foo)
-				baseProcessor;
+			: baseProcessor;
 
 		const contents = String(
 			await processor.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),
