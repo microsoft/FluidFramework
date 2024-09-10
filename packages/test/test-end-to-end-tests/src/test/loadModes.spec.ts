@@ -273,15 +273,16 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			dataObject1.increment();
 		}
 		await loaderContainerTracker.ensureSynchronized(container1);
-		const result = summarizer.summarizeOnDemand({ reason: "test" });
-		const submitResult = await result.receivedSummaryAckOrNack;
-		assert.ok(submitResult);
+		const result = await summarizeNow(summarizer);
 
 		// Record sequence number we want to pause at, and the expected value at that sequence number
 		const sequenceNumber = container1.deltaManager.lastSequenceNumber;
 		const expectedValue = dataObject1.value;
 
-		const headers: IRequestHeader = {};
+		const headers: IRequestHeader = {
+			// Force the container to load from the latest created summary instead of using the cached version. Latest snapshot is in cache is updated async so could cause test flakiness.
+			[LoaderHeader.version]: result.summaryVersion,
+		};
 		const container2 = await loadContainer(
 			container1.resolvedUrl,
 			testDataObjectFactory,

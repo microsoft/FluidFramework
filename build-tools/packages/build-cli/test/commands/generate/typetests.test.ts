@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { TypeData } from "@fluidframework/build-tools";
 import {
 	loadTypesSourceFile,
 	typeDataFromFile,
 } from "../../../src/commands/generate/typetests.js";
+import type { TypeData } from "../../../src/typeValidator/typeData.js";
 
 describe("generate:typetests", () => {
 	const logger = {

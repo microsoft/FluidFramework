@@ -9,7 +9,10 @@ import * as semver from "semver";
 
 import * as assert from "assert";
 import registerDebug from "debug";
-import { FileHashCache } from "../common/fileHashCache";
+import { defaultLogger } from "../common/logging";
+import { Package } from "../common/npmPackage";
+import { Timer } from "../common/timer";
+import { FileHashCache } from "./fileHashCache";
 import {
 	TaskDefinition,
 	TaskDefinitions,
@@ -17,10 +20,7 @@ import {
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
-} from "../common/fluidTaskDefinitions";
-import { defaultLogger } from "../common/logging";
-import { Package } from "../common/npmPackage";
-import { Timer } from "../common/timer";
+} from "./fluidTaskDefinitions";
 import { options } from "./options";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";

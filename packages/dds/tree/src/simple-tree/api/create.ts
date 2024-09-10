@@ -23,12 +23,13 @@ import {
 	FieldKinds,
 	intoStoredSchema,
 	mapTreeFromCursor,
+	UnhydratedContext,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { getOrCreateNodeFromFlexTreeNode, type InsertableContent } from "../proxies.js";
+import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
 import { getOrCreateMapTreeNode, isFieldInSchema } from "../../feature-libraries/index.js";
 import { toFlexSchema } from "../toFlexSchema.js";
-import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
+import { inSchemaOrThrow, mapTreeFromNodeData, type InsertableContent } from "../toMapTree.js";
 import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
@@ -171,7 +172,11 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mapTree = mapTrees[0]!;
 	const rootSchema = flexSchema.nodeSchema.get(mapTree.type) ?? fail("missing schema");
-	const mapTreeNode = getOrCreateMapTreeNode(rootSchema, mapTree);
+	const mapTreeNode = getOrCreateMapTreeNode(
+		new UnhydratedContext(flexSchema),
+		rootSchema,
+		mapTree,
+	);
 
 	// TODO: ensure this works for InnerNodes to create unhydrated nodes
 	const result = getOrCreateNodeFromFlexTreeNode(mapTreeNode);

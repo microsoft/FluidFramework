@@ -4,8 +4,8 @@
  */
 
 import { BiomeConfigReader } from "../../../common/biomeConfig";
-import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
+import { getResolvedFluidRoot } from "../../fluidUtils";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 /**
