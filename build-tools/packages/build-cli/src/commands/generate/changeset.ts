@@ -320,6 +320,11 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				message:
 					"No changed packages have been detected. Do you want to create a changeset associated with no packages?",
 				initial: true,
+				onState: (state: PromptState): void => {
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
 			},
 			{
 				name: "selectedPackages",
