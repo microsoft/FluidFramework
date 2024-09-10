@@ -1,4 +1,4 @@
-# Contributing
+# Contributing to FF
 
 This project welcomes contributions and suggestions. Detailed instructions for working in the repo
 can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
