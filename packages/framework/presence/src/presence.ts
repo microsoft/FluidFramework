@@ -17,6 +17,18 @@ import type { InternalTypes } from "@fluid-experimental/presence/internal/expose
 /**
  * A client within a Fluid session (period of container connectivity to service).
  *
+ * @remarks
+ * Note: This is very preliminary session client represenation.
+ *
+ * `ISessionClient` should be used as key to distinguish between different
+ * clients as they join, rejoin, and disconnect from a session. While a
+ * client's {@link ConnectedClientId} may change over time `ISessionClient`
+ * will be fixed.
+ *
+ * @privateRemarks
+ * As this is evolved, pay attention to how this relates to Audience, Service
+ * Audience, and Quorum representations of clients and users.
+ *
  * @sealed
  * @alpha
  */
@@ -55,6 +67,15 @@ export interface PresenceEvents {
 
 	/**
 	 * Raised when a workspace is activated within the session.
+	 *
+	 * "Activated" means that a workspace is being used by a client and this
+	 * client is seeing information for the first time.
+	 *
+	 * @remarks
+	 * Local workspaces may be passively acquired/registered when this event
+	 * is raised. For a notifications workspace, that lazy registration must
+	 * be done before the event handler returns to ensure no notifications
+	 * are missed.
 	 */
 	workspaceActivated: (
 		workspaceAddress: PresenceWorkspaceAddress,
