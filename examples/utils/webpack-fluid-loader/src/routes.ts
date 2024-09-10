@@ -213,6 +213,29 @@ export const after = (
 		};
 	}
 
+	const isReady = async (req, res) => {
+		if (readyP !== undefined) {
+			let canContinue = false;
+			try {
+				canContinue = await readyP(req, res);
+			} catch (error) {
+				let toLog = error;
+				try {
+					toLog = JSON.stringify(error);
+				} catch {}
+				console.log(toLog);
+			}
+			if (!canContinue) {
+				if (!res.finished) {
+					res.end();
+				}
+				return false;
+			}
+		}
+
+		return true;
+	};
+
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	app.get("/odspLogin", async (req, res) => {
 		if (options.mode !== "spo-df" && options.mode !== "spo") {
@@ -258,29 +281,6 @@ export const after = (
 		const buffer = fs.readFileSync(req.params[0].substr(1));
 		res.end(buffer);
 	});
-
-	const isReady = async (req, res) => {
-		if (readyP !== undefined) {
-			let canContinue = false;
-			try {
-				canContinue = await readyP(req, res);
-			} catch (error) {
-				let toLog = error;
-				try {
-					toLog = JSON.stringify(error);
-				} catch {}
-				console.log(toLog);
-			}
-			if (!canContinue) {
-				if (!res.finished) {
-					res.end();
-				}
-				return false;
-			}
-		}
-
-		return true;
-	};
 
 	/**
 	 * For urls of format - http://localhost:8080/doc/<id>.
