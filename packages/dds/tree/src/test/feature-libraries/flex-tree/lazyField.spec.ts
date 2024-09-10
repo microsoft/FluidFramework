@@ -120,24 +120,9 @@ describe("LazyField", () => {
 			detachedFieldAnchor,
 		);
 
-		assert(
-			booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(booleanSchema)]),
-			),
-		);
-
-		// Different types
-		assert(
-			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(nullSchema)]),
-			),
-		);
+		assert(booleanOptionalField.is(FieldKinds.optional));
 		// Different kinds
-		assert(
-			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.required, [getFlexSchema(booleanSchema)]),
-			),
-		);
+		assert(!booleanOptionalField.is(FieldKinds.required));
 		// #endregion
 	});
 
