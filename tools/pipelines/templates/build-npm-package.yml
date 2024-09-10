@@ -407,6 +407,21 @@ extends:
                         inputs:
                           sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                      - task: Bash@3
+                        displayName: Testing code coverage directory
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          targetType: inline
+                          script: |
+                            echo "Checking for code coverage files in : ${{ parameters.buildDirectory }}/nyc/report"
+                            echo "Checking for code coverage files in : $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis"
+                            ls ${{ parameters.buildDirectory }}/nyc/report/*.xml'
+                            ls $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis/*.xml'
+                            ls ${{ parameters.buildDirectory }}
+                            ls $(Build.ArtifactStagingDirectory)
+                            ls ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml'
+                            echo "Now in directory: $(pwd)"
+
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
@@ -579,7 +594,7 @@ extends:
                 - ${{ if eq(parameters.testCoverage, true) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifacts - code-coverage
-                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'), eq(variables['Build.Reason'], 'PullRequest'))
+                    condition: and( succeeded(), eq(variables['ReportDirExists'], 'true'), eq(variables['Build.Reason'], 'PullRequest'))
                     targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
                     artifactName: codeCoverageAnalysis
                     sbomEnabled: false
