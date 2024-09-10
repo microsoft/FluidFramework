@@ -13,7 +13,10 @@ import {
 	type IResponse,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import {
+	type IContainerRuntimeBase,
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -31,7 +34,7 @@ import { RuntimeAttributorFactory } from "./runtimeAttributorDataStoreFactory.js
  * @internal
  */
 export async function getRuntimeAttributor(
-	runtime: IContainerRuntime,
+	runtime: IContainerRuntimeBase,
 ): Promise<IRuntimeAttributor | undefined> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint(attributorDataStoreAlias);
 	const runtimeAttributor = (await entryPoint?.get()) as
