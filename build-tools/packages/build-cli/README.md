@@ -85,7 +85,6 @@ For client that is:
 			"@fluidframework/build-tools": "file:./build-tools/packages/build-tools",
 			"@fluid-tools/version-tools": "file:./build-tools/packages/version-tools",
 			"@fluidframework/bundle-size-tools": "file:./build-tools/packages/bundle-size-tools"
-			"@fluidframework/code-coverage-tools": "file:./build-tools/packages/code-coverage-tools"
 ```
 
 This approach can be used with `flub generate typetests` to ensure that the `--level` configuration from the scripts is included, and can be done from a JavaScript Debug console to debug, though breakpoints will need to be set in the `.js` files in `node_modules` (for example in `node_modules/.pnpm/file+build-tools+packages+build-cli_@types+node@18.19.1/node_modules/@fluid-tools/build-cli/lib/commands/generate/typetests.js`).

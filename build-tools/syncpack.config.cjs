@@ -105,7 +105,6 @@ module.exports = {
 				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",
 				"@fluidframework/bundle-size-tools",
-				"@fluidframework/code-coverage-tools",
 			],
 			packages: ["**"],
 			range: "~",

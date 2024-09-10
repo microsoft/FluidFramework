@@ -65,7 +65,6 @@ fluid-build now parses build commands with subcommands properly. Prior to this r
 -   @fluid-tools/build-cli
 -   @fluidframework/build-tools
 -   @fluidframework/bundle-size-tools
--   @fluidframework/code-coverage-tools
 -   @fluid-tools/version-tools
 
 # Fluid Framework build-tools v0.5
@@ -75,28 +74,14 @@ tools. These release notes cover the major changes in this release.
 
 This is a **major release** that includes some breaking changes in addition to useful new features and bug fixes:
 
-- [Fluid Framework build-tools v0.6](#fluid-framework-build-tools-v06)
-  - [💥 Breaking changes](#-breaking-changes)
-  - [✨ Features](#-features)
-    - [Type compatibility tests are configurable per-branch](#type-compatibility-tests-are-configurable-per-branch)
-    - [Release groups can use yarn or pnpm](#release-groups-can-use-yarn-or-pnpm)
-  - [🐛 Bug fixes](#-bug-fixes)
-    - [`fluid-build` parses tasks from build-cli incorrectly](#fluid-build-parses-tasks-from-build-cli-incorrectly)
-  - [List of packages released](#list-of-packages-released)
-- [Fluid Framework build-tools v0.5](#fluid-framework-build-tools-v05)
-  - [💥 Breaking changes](#-breaking-changes-1)
-  - [✨ Features](#-features-1)
-    - [Autocomplete support for bash and zsh](#autocomplete-support-for-bash-and-zsh)
-    - [`flub merge info` shows main/next branch integration status](#flub-merge-info-shows-mainnext-branch-integration-status)
-    - [`release report` command has a new `--all` flag](#release-report-command-has-a-new---all-flag)
-    - [`generate typetests` is a more configurable type test generator](#generate-typetests-is-a-more-configurable-type-test-generator)
-    - [`bump` command has a new `--exact` flag](#bump-command-has-a-new---exact-flag)
-    - [`check policy` can list and exclude handlers by name](#check-policy-can-list-and-exclude-handlers-by-name)
-    - [`check policy` checks for extraneous lockfiles and tilde dependencies](#check-policy-checks-for-extraneous-lockfiles-and-tilde-dependencies)
-    - [Conventional commits enabled in build-tools release group](#conventional-commits-enabled-in-build-tools-release-group)
-  - [🐛 Bug fixes](#-bug-fixes-1)
-    - [`bump deps` excludes independent packages when bumping release groups](#bump-deps-excludes-independent-packages-when-bumping-release-groups)
-  - [List of packages released](#list-of-packages-released-1)
+-   [Autocomplete support for bash and zsh](#autocomplete-support-for-bash-and-zsh)
+-   [`flub merge info` shows main/next branch integration status](#flub-merge-info-shows-mainnext-branch-integration-status)
+-   [`release report` command has a new `--all` flag](#release-report-command-has-a-new---all-flag)
+-   [`generate typetests` is a more configurable type test generator](#generate-typetests-is-a-more-configurable-type-test-generator)
+-   [`bump` command has a new `--exact` flag](#bump-command-has-a-new---exact-flag)
+-   [`check policy` can list and exclude handlers by name](#check-policy-can-list-and-exclude-handlers-by-name)
+-   [`check policy` checks for extraneous lockfiles and tilde dependencies](#check-policy-checks-for-extraneous-lockfiles-and-tilde-dependencies)
+-   [Conventional commits enabled in build-tools release group](#conventional-commits-enabled-in-build-tools-release-group)
 
 For a full list of changes in this release, see the [changelog](./CHANGELOG.md#050-2022-11-04).
 
@@ -217,5 +202,4 @@ that behavior so that only the release group specified will be updated.
 -   @fluid-tools/build-cli
 -   @fluidframework/build-tools
 -   @fluidframework/bundle-size-tools
--   @fluidframework/code-coverage-tools
 -   @fluid-tools/version-tools
