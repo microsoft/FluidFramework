@@ -43,7 +43,6 @@ import {
 import {
 	booleanSchema,
 	cursorFromInsertable,
-	nullSchema,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
