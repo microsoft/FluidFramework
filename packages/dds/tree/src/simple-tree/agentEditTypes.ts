@@ -92,6 +92,7 @@ class RootObject extends sf.object("RootObject", {
 const config = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
 
 // Example of generated JSON schema we send to the model:
+// TODO: add descriptions to fluid-generated types
 
 const jsonSchema = {
 	type: { "$ref": "#/$defs/__fluid_RootWrapper" },
