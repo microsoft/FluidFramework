@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-
 import type { ConnectedClientId } from "./baseTypes.js";
 import type { IPresence, ISessionClient, PresenceEvents } from "./presence.js";
-import { createPresenceStates, type PresenceStatesInternal } from "./presenceStates.js";
+import type {
+	IEphemeralRuntime,
+	PresenceDatastoreManager,
+} from "./presenceDatastoreManager.js";
+import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type {
 	PresenceStates,
 	PresenceWorkspaceAddress,
@@ -18,14 +19,8 @@ import type {
 import type {
 	IContainerExtension,
 	IExtensionMessage,
-	IRuntimeInternal,
 } from "@fluid-experimental/presence/internal/container-definitions/internal";
 import { createEmitter } from "@fluid-experimental/presence/internal/events";
-
-interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
-	public: PresenceStates<TSchema>;
-	internal: PresenceStatesInternal;
-}
 
 /**
  * @internal
@@ -35,23 +30,14 @@ export interface IPresenceManager
 		Pick<Required<IContainerExtension<[]>>, "processSignal"> {}
 
 /**
- * This interface is a subset of (IContainerRuntime & IRuntimeInternal) and (IFluidDataStoreRuntime) that is needed by the PresenceStates.
- *
- * @privateRemarks
- * Replace with non-DataStore based interface.
- *
- * @internal
- */
-export type IEphemeralRuntime = Pick<
-	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "getAudience" | "off" | "on" | "submitSignal"
->;
-
-/**
  * Common Presence manager
  */
 class PresenceManager implements IPresenceManager {
-	public constructor(private readonly runtime: IEphemeralRuntime) {}
+	private readonly datastoreManager: PresenceDatastoreManager;
+
+	public constructor(runtime: IEphemeralRuntime) {
+		this.datastoreManager = new PresenceDatastoreManagerImpl(runtime, this);
+	}
 
 	public readonly events = createEmitter<PresenceEvents>();
 
@@ -65,33 +51,18 @@ class PresenceManager implements IPresenceManager {
 		throw new Error("Method not implemented.");
 	}
 
-	private readonly workspaces = new Map<string, PresenceStatesEntry<PresenceStatesSchema>>();
-
-	private getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: `${"s" | "n"}:${PresenceWorkspaceAddress}`,
-		requestedContent: TSchema,
-	): PresenceStates<TSchema> {
-		const existing = this.workspaces.get(internalWorkspaceAddress);
-		if (existing) {
-			return existing.internal.ensureContent(requestedContent);
-		}
-		const entry = createPresenceStates(this, this.runtime, requestedContent);
-		this.workspaces.set(internalWorkspaceAddress, entry);
-		return entry.public;
-	}
-
 	public getStates<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema> {
-		return this.getWorkspace(`s:${workspaceAddress}`, requestedContent);
+		return this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent);
 	}
 
 	public getNotifications<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema> {
-		return this.getWorkspace(`n:${workspaceAddress}`, requestedContent);
+		return this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent);
 	}
 
 	/**
@@ -102,11 +73,7 @@ class PresenceManager implements IPresenceManager {
 	 * @param local - Whether the message originated locally (`true`) or remotely (`false`)
 	 */
 	public processSignal(address: string, message: IExtensionMessage, local: boolean): void {
-		// Direct to the appropriate Presence Workspace, if present.
-		const workspace = this.workspaces.get(address);
-		if (workspace) {
-			workspace.internal.processSignal(message, local);
-		}
+		this.datastoreManager.processSignal(message, local);
 	}
 }
 

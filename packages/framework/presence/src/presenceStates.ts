@@ -4,22 +4,36 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { ConnectedClientId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import type { IPresence, ISessionClient } from "./presence.js";
-import type { IEphemeralRuntime } from "./presenceManager.js";
+import type { ISessionClient } from "./presence.js";
 import { handleFromDatastore, type StateDatastore } from "./stateDatastore.js";
 import type { PresenceStates, PresenceStatesMethods, PresenceStatesSchema } from "./types.js";
 import { unbrandIVM } from "./valueManager.js";
 
-type MapSchemaElement<
+/**
+ * @internal
+ */
+export type MapSchemaElement<
 	TSchema extends PresenceStatesSchema,
 	Part extends keyof ReturnType<TSchema[keyof TSchema]>,
 	Keys extends keyof TSchema = keyof TSchema,
 > = ReturnType<TSchema[Keys]>[Part];
+
+/**
+ * @internal
+ */
+export interface PresenceRuntime {
+	clientId(): ConnectedClientId | undefined;
+	lookupClient(clientId: ConnectedClientId): ISessionClient;
+	localUpdate<Key extends string>(
+		stateKey: Key,
+		value: MapSchemaElement<PresenceStatesSchema, "value", Key>,
+		_forceBroadcast: boolean,
+	): void;
+}
 
 type PresenceSubSchemaFromWorkspaceSchema<
 	TSchema extends PresenceStatesSchema,
@@ -41,8 +55,10 @@ type MapEntries<TSchema extends PresenceStatesSchema> = PresenceSubSchemaFromWor
  *
  * This generic aspect makes some typing difficult. The loose typing is not broadcast to the
  * consumers that are expected to maintain their schema over multiple versions of clients.
+ *
+ * @internal
  */
-interface ValueElementMap<_TSchema extends PresenceStatesSchema> {
+export interface ValueElementMap<_TSchema extends PresenceStatesSchema> {
 	[key: string]: ClientRecord<InternalTypes.ValueDirectoryOrState<unknown>>;
 }
 // An attempt to make the type more precise, but it is not working.
@@ -66,52 +82,6 @@ interface ValueElementMap<_TSchema extends PresenceStatesSchema> {
 // 	// };
 // }
 
-interface GeneralDatastoreMessageContent {
-	[PresenceStatesKey: string]: {
-		[StateValueManagerKey: string]: {
-			[ClientId: ConnectedClientId]: InternalTypes.ValueDirectoryOrState<unknown> & {
-				keepUnregistered?: true;
-			};
-		};
-	};
-}
-
-interface SystemDatastore {
-	"system:map": {
-		priorClientIds: {
-			[ClientId: ConnectedClientId]: InternalTypes.ValueRequiredState<ConnectedClientId[]>;
-		};
-	};
-}
-
-type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
-
-interface DatastoreUpdateMessage extends IInboundSignalMessage {
-	type: "DIS:DatastoreUpdate";
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-		isComplete?: true;
-		data: GeneralDatastoreMessageContent & Partial<SystemDatastore>;
-	};
-}
-
-interface ClientJoinMessage extends IInboundSignalMessage {
-	type: "DIS:ClientJoin";
-	content: {
-		updateProviders: ConnectedClientId[];
-		sendTimestamp: number;
-		avgLatency: number;
-		data: DatastoreMessageContent;
-	};
-}
-
-function isDISMessage(
-	message: IInboundSignalMessage,
-): message is DatastoreUpdateMessage | ClientJoinMessage {
-	return message.type.startsWith("DIS:");
-}
-
 /**
  * @internal
  */
@@ -119,7 +89,12 @@ export interface PresenceStatesInternal {
 	ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
 		content: TSchemaAdditional,
 	): PresenceStates<TSchemaAdditional>;
-	processSignal(message: IInboundSignalMessage, local: boolean): void;
+	onConnect(clientId: ConnectedClientId): void;
+	processUpdate(
+		received: number,
+		timeModifier: number,
+		remoteDatastore: ValueElementMap<PresenceStatesSchema>,
+	): void;
 }
 
 function isValueDirectory<
@@ -174,6 +149,34 @@ function mergeValueDirectory<
 	return mergeBase;
 }
 
+/**
+ * Updates remote state into the local [untracked] datastore.
+ *
+ * @param key - The key of the datastore to merge the untracked data into.
+ * @param remoteAllKnownState - The remote state to merge into the datastore.
+ * @param datastore - The datastore to merge the untracked data into.
+ *
+ * @internal
+ */
+export function mergeUntrackedDatastore(
+	key: string,
+	remoteAllKnownState: ClientRecord<InternalTypes.ValueDirectoryOrState<unknown>>,
+	datastore: ValueElementMap<PresenceStatesSchema>,
+	timeModifier: number,
+): void {
+	if (!(key in datastore)) {
+		datastore[key] = {};
+	}
+	const localAllKnownState = datastore[key];
+	for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
+		localAllKnownState[clientId] = mergeValueDirectory(
+			localAllKnownState[clientId],
+			value,
+			timeModifier,
+		);
+	}
+}
+
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements
 		PresenceStatesInternal,
@@ -183,52 +186,22 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			MapSchemaElement<TSchema, "value", keyof TSchema & string>
 		>
 {
-	private readonly datastore: ValueElementMap<TSchema> = {};
 	public readonly nodes: MapEntries<TSchema>;
-	private averageLatency = 0;
-	private returnedMessages = 0;
-	private refreshBroadcastRequested = false;
 
 	public constructor(
-		private readonly manager: IPresence,
-		private readonly runtime: IEphemeralRuntime,
+		private readonly runtime: PresenceRuntime,
+		private readonly datastore: ValueElementMap<TSchema>,
 		initialContent: TSchema,
 	) {
-		this.runtime.getAudience().on("addMember", (clientId) => {
-			for (const [_key, allKnownState] of Object.entries(this.datastore)) {
-				assert(!(clientId in allKnownState), "New client already in workspace");
-			}
-			// TODO: Send all current state to the new client
-		});
-		runtime.on("disconnected", () => {
-			const { clientId } = this.runtime;
-			assert(clientId !== undefined, "Disconnected without local clientId");
-			for (const [_key, allKnownState] of Object.entries(this.datastore)) {
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete allKnownState[clientId];
-			}
-			// TODO: Consider caching prior (current) clientId to broadcast when reconnecting so others may remap state.
-		});
-		runtime.on("connected", () => {
-			const { clientId } = this.runtime;
-			assert(clientId !== undefined, "Connected without local clientId");
-			for (const [key, allKnownState] of Object.entries(this.datastore)) {
-				if (key in this.nodes) {
-					allKnownState[clientId] = unbrandIVM(this.nodes[key]).value;
-				}
-			}
-		});
-		runtime.on("signal", this.processSignal.bind(this));
-
 		// Prepare initial map content from initial state
 		{
-			const clientId = this.runtime.clientId;
+			const clientId = this.runtime.clientId();
 			// eslint-disable-next-line unicorn/no-array-reduce
 			const initial = Object.entries(initialContent).reduce(
 				(acc, [key, nodeFactory]) => {
 					const newNodeData = nodeFactory(key, handleFromDatastore(this));
 					acc.nodes[key as keyof TSchema] = newNodeData.manager;
-					acc.datastore[key] = {};
+					acc.datastore[key] = acc.datastore[key] ?? {};
 					if (clientId !== undefined && clientId) {
 						acc.datastore[key][clientId] = newNodeData.value;
 					}
@@ -236,11 +209,18 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				},
 				{
 					nodes: {} as unknown as MapEntries<TSchema>,
-					datastore: {} as unknown as ValueElementMap<TSchema>,
+					datastore,
 				},
 			);
 			this.nodes = initial.nodes;
-			this.datastore = initial.datastore;
+		}
+	}
+
+	public onConnect(clientId: ConnectedClientId): void {
+		for (const [key, allKnownState] of Object.entries(this.datastore)) {
+			if (key in this.nodes) {
+				allKnownState[clientId] = unbrandIVM(this.nodes[key]).value;
+			}
 		}
 	}
 
@@ -251,7 +231,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		states: ClientRecord<MapSchemaElement<TSchema, "value", Key>>;
 	} {
 		return {
-			self: this.runtime.clientId,
+			self: this.runtime.clientId(),
 			states: this.datastore[key],
 		};
 	}
@@ -261,21 +241,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		value: MapSchemaElement<TSchema, "value", Key>,
 		_forceBroadcast: boolean,
 	): void {
-		const clientId = this.runtime.clientId;
-		if (clientId === undefined) {
-			return;
-		}
-		const content = {
-			sendTimestamp: Date.now(),
-			avgLatency: this.averageLatency,
-			// isComplete: false,
-			data: {
-				"<unused>": {
-					[key]: { [clientId]: value },
-				},
-			},
-		} satisfies DatastoreUpdateMessage["content"];
-		this.runtime.submitSignal("DIS:DatastoreUpdate", content);
+		this.runtime.localUpdate(key, value, _forceBroadcast);
 	}
 
 	public update<Key extends keyof TSchema & string>(
@@ -288,7 +254,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	}
 
 	public lookupClient(clientId: ConnectedClientId): ISessionClient {
-		return this.manager.getAttendee(clientId);
+		return this.runtime.lookupClient(clientId);
 	}
 
 	public add<
@@ -311,7 +277,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			this.datastore[key] = {};
 		}
 		// If we have a clientId, then add the local state entry to the all state.
-		const { clientId } = this.runtime;
+		const clientId = this.runtime.clientId();
 		if (clientId !== undefined && clientId) {
 			this.datastore[key][clientId] = nodeData.value;
 		}
@@ -326,96 +292,21 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		return this as PresenceStates<TSchema & TSchemaAdditional>;
 	}
 
-	private broadcastAllKnownState(): void {
-		this.runtime.submitSignal("DIS:DatastoreUpdate", {
-			sendTimestamp: Date.now(),
-			avgLatency: this.averageLatency,
-			isComplete: true,
-			data: { "<unused>": this.datastore },
-		} satisfies DatastoreUpdateMessage["content"]);
-		this.refreshBroadcastRequested = false;
-	}
-
-	public processSignal(
-		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
-		local: boolean,
+	public processUpdate(
+		received: number,
+		timeModifier: number,
+		remoteDatastore: ValueElementMap<TSchema>,
 	): void {
-		const received = Date.now();
-		assert(message.clientId !== null, "Map received signal without clientId");
-		if (!isDISMessage(message)) {
-			return;
-		}
-		if (local) {
-			const deliveryDelta = received - message.content.sendTimestamp;
-			this.returnedMessages = Math.min(this.returnedMessages + 1, 256);
-			this.averageLatency =
-				(this.averageLatency * (this.returnedMessages - 1) + deliveryDelta) /
-				this.returnedMessages;
-			return;
-		}
-
-		const timeModifier =
-			received -
-			(this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
-
-		if (message.type === "DIS:ClientJoin") {
-			const updateProviders = message.content.updateProviders;
-			this.refreshBroadcastRequested = true;
-			// We must be connected to receive this message, so clientId should be defined.
-			// If it isn't then, not really a problem; just won't be in provider list.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (updateProviders.includes(this.runtime.clientId!)) {
-				// Send all current state to the new client
-				this.broadcastAllKnownState();
+		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
+			if (key in this.nodes) {
+				const node = unbrandIVM(this.nodes[key]);
+				for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
+					const client = this.runtime.lookupClient(clientId);
+					node.update(client, received, value);
+				}
 			} else {
-				// Schedule a broadcast to the new client after a delay only to send if
-				// another broadcast hasn't been seen in the meantime. The delay is based
-				// on the position in the audience list. It doesn't have to be a stable
-				// list across all clients. We need something to provide suggested order
-				// to prevent a flood of broadcasts.
-				let indexOfSelf = 0;
-				for (const clientId of this.runtime.getAudience().getMembers().keys()) {
-					if (clientId === this.runtime.clientId) {
-						break;
-					}
-					indexOfSelf += 1;
-				}
-				const waitTime = indexOfSelf * 20 + 200;
-				setTimeout(() => {
-					if (this.refreshBroadcastRequested) {
-						this.broadcastAllKnownState();
-					}
-				}, waitTime);
-			}
-		} else {
-			assert(message.type === "DIS:DatastoreUpdate", "Unexpected message type");
-			if (message.content.isComplete) {
-				this.refreshBroadcastRequested = false;
-			}
-		}
-		for (const mapData of Object.values(message.content.data)) {
-			const remoteDatastore = mapData as ValueElementMap<TSchema>;
-			for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
-				if (key in this.nodes) {
-					const node = unbrandIVM(this.nodes[key]);
-					for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
-						const client = this.manager.getAttendee(clientId);
-						node.update(client, received, value);
-					}
-				} else {
-					// Assume all broadcast state is meant to be kept even if not currently registered.
-					if (!(key in this.datastore)) {
-						this.datastore[key] = {};
-					}
-					const localAllKnownState = this.datastore[key];
-					for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
-						localAllKnownState[clientId] = mergeValueDirectory(
-							localAllKnownState[clientId],
-							value,
-							timeModifier,
-						);
-					}
-				}
+				// Assume all broadcast state is meant to be kept even if not currently registered.
+				mergeUntrackedDatastore(key, remoteAllKnownState, this.datastore, timeModifier);
 			}
 		}
 	}
@@ -423,17 +314,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 
 /**
  * Create a new PresenceStates using the DataStoreRuntime provided.
- * @param runtime - The dedicated runtime to use for the PresenceStates. The requirements
- * are very unstable and will change. Recommendation is to use PresenceStatesFactory from
- * `alpha` entrypoint for now.
  * @param initialContent - The initial value managers to register.
  */
 export function createPresenceStates<TSchema extends PresenceStatesSchema>(
-	manager: IPresence,
-	runtime: IEphemeralRuntime,
+	runtime: PresenceRuntime,
+	datastore: ValueElementMap<PresenceStatesSchema>,
 	initialContent: TSchema,
 ): { public: PresenceStates<TSchema>; internal: PresenceStatesInternal } {
-	const impl = new PresenceStatesImpl(manager, runtime, initialContent);
+	const impl = new PresenceStatesImpl(runtime, datastore, initialContent);
 
 	// Capture the top level "public" map. Both the map implementation and
 	// the wrapper object reference this object.

@@ -10,7 +10,7 @@ import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal"
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 
 import type { IPresence } from "./presence.js";
-import type { IEphemeralRuntime } from "./presenceManager.js";
+import type { IEphemeralRuntime } from "./presenceDatastoreManager.js";
 import { createPresenceManager } from "./presenceManager.js";
 
 import type {
