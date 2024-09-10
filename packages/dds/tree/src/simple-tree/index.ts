@@ -90,7 +90,6 @@ export type {
 } from "./typesUnsafe.js";
 export {
 	getTreeNodeForField,
-	type InsertableContent,
 	prepareContentForHydration,
 } from "./proxies.js";
 
@@ -107,7 +106,7 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { mapTreeFromNodeData } from "./toMapTree.js";
+export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 export type { SimpleTreeSchema } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
