@@ -9,9 +9,6 @@ import { toString } from "mdast-util-to-string";
 import type { Node } from "unist";
 import { visit } from "unist-util-visit";
 
-const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)(\s*)/gm;
-const SOFT_BREAK_REGEX = /$[^$]/gms;
-
 /**
  * Using the same instance for all slug generation ensures that no duplicate IDs are generated.
  */
@@ -46,6 +43,29 @@ export function remarkHeadingLinks(): (tree: Node) => void {
 }
 
 /**
+ * A regular expression that extracts an admonition title from a string UNLESS the admonition title is the only thing on
+ * the line.
+ *
+ * Capture group 1 is the admonition type/title. Capture group 2 is any trailing whitespace.
+ *
+ * @remarks
+ *
+ * Description of the regular expression:
+ *
+ * This regular expression matches patterns in the form of `[!WORD]` where WORD can be CAUTION, IMPORTANT, NOTE, TIP, or
+ * WARNING. It ensures that the pattern is not followed by only whitespace characters until the end of the line.
+ * Additionally, it captures any whitespace characters that follow the matched pattern.
+ */
+const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)(\s*)/gm;
+
+/**
+ * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
+ * nodes in markdown. This is useful because GitHub sometimes renders single line breaks, and sometimes it ignores them
+ * like the CommonMark spec describes. Removing them ensures that markdown renders as expected across GitHub.
+ */
+const SOFT_BREAK_REGEX = /$[^$]/gms;
+
+/**
  * A remarkjs/unist plugin that strips soft line breaks. This is a workaround for GitHub's inconsistent markdown
  * rendering in GitHub Releases. According to spec, Markdown paragraphs are denoted by two line breaks, and single line
  * breaks should be ignored. But in GitHub releases, single line breaks are rendered. This plugin removes the soft line
@@ -58,11 +78,11 @@ export function stripSoftBreaks(): (tree: Node) => void {
 			node.value = node.value.replace(SOFT_BREAK_REGEX, " ");
 		});
 
-		// preserve GitHub alerts; without this the line breaks in the alert are lost and it doesn't render correctly.
+		// preserve GitHub admonitions; without this the line breaks in the alert are lost and it doesn't render correctly.
 		visit(tree, "blockquote", (node: Node) => {
-			// eslint-disable-next-line @typescript-eslint/no-shadow
-			visit(node, "text", (node: { value: string }) => {
-				node.value = node.value.replace(ADMONITION_REGEX, "$1\n");
+			visit(node, "text", (innerNode: { value: string }) => {
+				// If the text is an admonition title, split
+				innerNode.value = innerNode.value.replace(ADMONITION_REGEX, "$1\n");
 			});
 		});
 	};
