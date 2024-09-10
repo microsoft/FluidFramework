@@ -112,13 +112,19 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Interface_IFluidDataStoreContext": {
-				"backCompat": false
+			"Interface_IContainerRuntimeBase": {
+				"forwardCompat": false
 			},
-			"Interface_IFluidDataStoreContextDetached": {
+			"Interface_IFluidDataStoreContext": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"Interface_IFluidParentContext": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreContextDetached": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}

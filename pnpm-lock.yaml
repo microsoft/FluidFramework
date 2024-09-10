@@ -11347,6 +11347,40 @@ importers:
         version: 5.4.5
 
   packages/framework/presence:
+    dependencies:
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../fluid-static
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -11356,7 +11390,7 @@ importers:
         version: 1.8.3
       '@fluid-tools/build-cli':
         specifier: ^0.44.0
-        version: 0.44.0(webpack-cli@4.10.0)
+        version: 0.44.0(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11369,15 +11403,36 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
+      '@types/mocha':
+        specifier: ^9.1.1
+        version: 9.1.1
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.1
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      mocha:
+        specifier: ^10.2.0
+        version: 10.2.0
+      mocha-json-output-reporter:
+        specifier: ^2.0.1
+        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.2.0)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
