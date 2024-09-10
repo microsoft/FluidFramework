@@ -732,6 +732,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return { age: revertAge };
 	}
 
+	/**
+	 * Recursively creates a revertible for the given commit and its ancestors.
+	 */
 	private forkRevertible(
 		view: TreeCheckout,
 		commit: GraphCommit<SharedTreeChange>,
