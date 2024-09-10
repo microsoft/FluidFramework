@@ -96,16 +96,10 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
 	};
 }
 
-/**
- * @internal
- */
 export const before = (app: express.Application) => {
 	app.get("/", (req, res) => res.redirect("/new"));
 };
 
-/**
- * @internal
- */
 export const after = (
 	app: express.Application,
 	webpackServer: WebpackDevServer,
