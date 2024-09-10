@@ -122,9 +122,7 @@ export function extendIfUndefined<T>(
 		// eslint-disable-next-line no-restricted-syntax
 		for (const key in extension) {
 			if (base[key] === undefined) {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				base[key] = extension[key]!;
+				base[key] = extension[key];
 			}
 		}
 	}

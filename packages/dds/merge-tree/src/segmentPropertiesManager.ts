@@ -50,7 +50,6 @@ export class PropertiesManager {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && this.pendingKeyUpdateCount?.[key] !== undefined) {
 				assert(
-					// TODO Non null asserting, why is this not null?
 					this.pendingKeyUpdateCount[key]! > 0,
 					0x05c /* "Trying to update more annotate props than do exist!" */,
 				);
