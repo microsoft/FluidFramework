@@ -27,3 +27,27 @@ export interface LatestValueControls {
 	 */
 	forcedRefreshInterval: number;
 }
+
+/**
+ * @internal
+ */
+export class LatestValueControl implements LatestValueControls {
+	public allowableUpdateLatency: number;
+	private _forcedRefreshInterval: number;
+
+	public constructor(settings: LatestValueControls) {
+		this.allowableUpdateLatency = settings.allowableUpdateLatency;
+		this._forcedRefreshInterval = settings.forcedRefreshInterval;
+	}
+
+	public get forcedRefreshInterval(): number {
+		return this._forcedRefreshInterval;
+	}
+	public set forcedRefreshInterval(value: number) {
+		this._forcedRefreshInterval = value < 10 ? 0 : value;
+		if (this._forcedRefreshInterval >= 10) {
+			// TODO: enable periodic forced refresh
+			throw new Error("Forced Refresh feature is not implemented");
+		}
+	}
+}

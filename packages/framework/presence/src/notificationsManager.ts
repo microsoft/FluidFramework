@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { ValueManager } from "./internalTypes.js";
 import type { ISessionClient } from "./presence.js";
+import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
+import { brandIVM } from "./valueManager.js";
 
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import { createEmitter } from "@fluid-experimental/presence/internal/events";
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
 
@@ -121,6 +125,61 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
 	readonly notifications: NotificationSubscribable<T>;
 }
 
+class NotificationsManagerImpl<
+	T extends InternalUtilityTypes.NotificationEvents<T>,
+	Key extends string,
+> implements
+		NotificationsManager<T>,
+		ValueManager<
+			InternalTypes.NotificationType,
+			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
+		>
+{
+	public readonly events = createEmitter<NotificationsManagerEvents>();
+
+	public readonly emit: NotificationEmitter<T> = {
+		broadcast: (name, ...args) => {
+			this.datastore.localUpdate(
+				this.key,
+				// @ts-expect-error TODO
+				{ rev: 0, timestamp: 0, value: { name, args: [...args] } },
+				true,
+			);
+		},
+		unicast: (name, targetClient, ...args) => {
+			this.datastore.localUpdate(
+				this.key,
+				// @ts-expect-error TODO
+				{ rev: 0, timestamp: 0, value: { name, args: [...args] } },
+				targetClient,
+			);
+		},
+	};
+
+	// @ts-expect-error TODO
+	public readonly notifications: NotificationSubscribable<T> =
+		// @ts-expect-error TODO
+		createEmitter<NotificationSubscriptions<T>>();
+
+	public constructor(
+		private readonly key: Key,
+		private readonly datastore: StateDatastore<
+			Key,
+			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
+		>,
+		_initialSubscriptions: NotificationSubscriptions<T>,
+		public readonly value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	) {}
+
+	public update(
+		client: ISessionClient,
+		_received: number,
+		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	): void {
+		this.events.emit("unattendedNotification", value.value.name, client, ...value.value.args);
+	}
+}
+
 /**
  * Factory for creating a {@link NotificationsManager}.
  *
@@ -136,5 +195,30 @@ export function Notifications<
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	NotificationsManager<T>
 > {
-	throw new Error("Method not implemented.");
+	const value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType> = {
+		rev: 0,
+		timestamp: Date.now(),
+		value: { name: "", args: [] },
+	};
+	return (
+		key: Key,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<
+			Key,
+			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
+		>,
+	) => ({
+		value,
+		manager: brandIVM<
+			NotificationsManagerImpl<T, Key>,
+			InternalTypes.NotificationType,
+			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
+		>(
+			new NotificationsManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				initialSubscriptions,
+				value,
+			),
+		),
+	});
 }
