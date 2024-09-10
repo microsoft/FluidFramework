@@ -741,12 +741,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		data: CommitMetadata,
 	): Revertible {
 		const forkRevertibleFunction = this.forkRevertible.bind(this);
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const outerThis = this;
+		const revertibleCommit = this.revertibleCommitBranches.get(commit.revision);
 
 		const forked: Revertible = {
 			get status(): RevertibleStatus {
-				const revertibleCommit = outerThis.revertibleCommitBranches.get(commit.revision);
 				return revertibleCommit === undefined
 					? RevertibleStatus.Disposed
 					: RevertibleStatus.Valid;
