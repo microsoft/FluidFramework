@@ -38,21 +38,21 @@ function itCorrectlyObliterates({
 	});
 }
 
-describe.skip("obliterate", () => {
+describe("obliterate", () => {
 	itCorrectlyObliterates({
 		title: "obliterate adjacent insert",
 		action: (helper) => {
 			helper.insertText("A", 0, "|ABC>");
 			helper.processAllOps();
-			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 4, side: Side.After });
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 4, side: Side.Before });
 			// not concurrent to A's obliterate - ops on the same client are never concurrent to one another
 			// because they are all sequenced locally
-			helper.insertText("A", 1, "XYZ");
-			helper.obliterateRange("B", { pos: 0, side: Side.After }, { pos: 4, side: Side.After });
-			helper.insertText("B", 1, "XYZ");
+			helper.insertText("A", 1, "AAA");
+			helper.obliterateRange("B", { pos: 0, side: Side.After }, { pos: 4, side: Side.Before });
+			helper.insertText("B", 1, "BBB");
 		},
-		expectedText: "|XYZ>",
-		expectedEventCount: 3,
+		expectedText: "|BBB>",
+		expectedEventCount: 5,
 	});
 	itCorrectlyObliterates({
 		title: "does not obliterate non-adjacent insert",
@@ -63,7 +63,7 @@ describe.skip("obliterate", () => {
 			// do not obliterate the XYZ - outside the obliterated range without expansion
 			helper.insertText("B", 0, "XYZ");
 		},
-		expectedText: "XYZheo world",
+		expectedText: "XYZhe world",
 		expectedEventCount: 3,
 	});
 });

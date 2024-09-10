@@ -16,6 +16,7 @@ import {
 	MergeTreeDeltaType,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
+import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties
@@ -89,10 +90,20 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  * @internal
  */
 // eslint-disable-next-line import/no-deprecated
-export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
+export function createObliterateRangeOp(
+	start: SequencePlace,
+	end: SequencePlace,
+): IMergeTreeObliterateMsg {
+	const startPlace = normalizePlace(start);
+	const endPlace =
+		typeof end === "number"
+			? { pos: end - 1, side: Side.After } // default to inclusive bounds
+			: normalizePlace(end);
 	return {
-		pos1: start,
-		pos2: end,
+		pos1: startPlace.pos,
+		before1: startPlace.side === Side.Before,
+		pos2: endPlace.pos,
+		before2: endPlace.side === Side.Before,
 		type: MergeTreeDeltaType.OBLITERATE,
 	};
 }

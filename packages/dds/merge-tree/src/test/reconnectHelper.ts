@@ -56,20 +56,18 @@ export class ReconnectTestHelper {
 		end: SequencePlace,
 	): void {
 		const client = this.clients[clientName];
-		let { startPos, endPos } = endpointPosAndSide(start, end);
-		assert(
-			startPos !== undefined && endPos !== undefined,
-			"start and end positions must be defined",
-		);
-		startPos = startPos === "start" ? 0 : startPos;
-		endPos = endPos === "end" ? client.getLength() : endPos;
-		assert(
-			startPos !== "end" && endPos !== "start",
-			"start cannot be end and end cannot be start",
-		);
-		this.ops.push(
-			client.makeOpMessage(client.obliterateRangeLocal(startPos, endPos), ++this.seq),
-		);
+		// let { startPos, endPos } = endpointPosAndSide(start, end);
+		// assert(
+		// 	startPos !== undefined && endPos !== undefined,
+		// 	"start and end positions must be defined",
+		// );
+		// startPos = startPos === "start" ? 0 : startPos;
+		// endPos = endPos === "end" ? client.getLength() : endPos;
+		// assert(
+		// 	startPos !== "end" && endPos !== "start",
+		// 	"start cannot be end and end cannot be start",
+		// );
+		this.ops.push(client.makeOpMessage(client.obliterateRangeLocal(start, end), ++this.seq));
 	}
 
 	public insertTextLocal(

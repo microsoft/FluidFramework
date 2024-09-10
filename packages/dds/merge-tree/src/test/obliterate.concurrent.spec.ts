@@ -62,12 +62,12 @@ for (const incremental of [true, false]) {
 
 			helper.insertText("A", 0, "ABCDEFGH");
 			helper.processAllOps();
-			helper.removeRange("C", 0, 3);
-			helper.insertText("C", 1, "123456");
-			helper.removeRange("A", 5, 7);
-			helper.insertText("A", 0, "IJKLM");
-			helper.obliterateRange("A", 2, 11);
-			helper.removeRange("A", 1, 2);
+			helper.removeRange("C", 0, 3); // DEFGH
+			helper.insertText("C", 1, "123456"); // D123456GH
+			helper.removeRange("A", 5, 7); // ABCDEH
+			helper.insertText("A", 0, "IJKLM"); // IJKLMABCDEH
+			helper.obliterateRange("A", 2, 11); // IJ
+			helper.removeRange("A", 1, 2); // I
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "I");

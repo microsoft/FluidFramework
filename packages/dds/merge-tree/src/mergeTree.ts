@@ -89,7 +89,7 @@ import {
 } from "./referencePositions.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
-import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
+import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 import { zamboniSegments } from "./zamboni.js";
 
 export function wasRemovedAfter(seg: ISegment, seq: number): boolean {
@@ -1511,17 +1511,18 @@ export class MergeTree {
 				}
 
 				this.updateRoot(splitNode);
-				saveIfLocal(newSegment);
 
 				insertPos += newSegment.cachedLength;
 
 				if (!this.options?.mergeTreeEnableObliterate) {
+					saveIfLocal(newSegment);
 					continue;
 				}
 
 				const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
 
 				if (smallestSeqMoveOp === undefined) {
+					saveIfLocal(newSegment);
 					continue;
 				}
 
@@ -1575,14 +1576,13 @@ export class MergeTree {
 							oldest = ob;
 							movedClientIds.unshift(ob.clientId);
 							movedSeqs.unshift(ob.seq);
-						} else {
-							if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
-								normalizedNewestSeq = normalizedObSeq;
-								newest = ob;
-							}
-							movedClientIds.push(ob.clientId);
-							movedSeqs.push(ob.seq);
 						}
+						if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
+							normalizedNewestSeq = normalizedObSeq;
+							newest = ob;
+						}
+						movedClientIds.push(ob.clientId);
+						movedSeqs.push(ob.seq);
 					}
 				}
 
@@ -1611,7 +1611,12 @@ export class MergeTree {
 					if (newSegment.parent) {
 						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 					}
+				} else if (oldest && newest?.clientId === clientId) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(newSegment as any).prevObliterateByInserter = newest;
 				}
+
+				saveIfLocal(newSegment);
 			}
 		}
 	}
@@ -1928,17 +1933,11 @@ export class MergeTree {
 	): void {
 		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
 
-		const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
-
-		assert(
-			startPos !== undefined &&
-				endPos !== undefined &&
-				startSide !== undefined &&
-				endSide !== undefined &&
-				startPos !== "end" &&
-				endPos !== "start",
-			0x9e2 /* start and end cannot be undefined because they were not passed in as undefined */,
-		);
+		// const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
+		const startPlace = normalizePlace(start);
+		const endPlace = normalizePlace(end);
+		const startPos = startPlace.side === Side.Before ? startPlace.pos : startPlace.pos + 1;
+		const endPos = endPlace.side === Side.Before ? endPlace.pos : endPlace.pos + 1;
 
 		this.ensureIntervalBoundary(startPos, refSeq, clientId);
 		this.ensureIntervalBoundary(endPos, refSeq, clientId);
@@ -1972,23 +1971,54 @@ export class MergeTree {
 			_end: number,
 		): boolean => {
 			const existingMoveInfo = toMoveInfo(segment);
-			if (startPos === pos || (startPos === "start" && pos === 0)) {
+			if (startPlace.side === Side.Before && startPos === pos) {
 				obliterate.start = this.createLocalReferencePosition(
 					segment,
 					0,
-					ReferenceType.StayOnRemove,
+					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+					{ obliterate },
+				);
+			} else if (startPlace.side === Side.After && startPos === pos + segment.cachedLength) {
+				obliterate.start = this.createLocalReferencePosition(
+					segment,
+					segment.cachedLength - 1,
+					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+					{ obliterate },
+				);
+				return true; // start is exclusive, don't mark segment moved
+			}
+			if (endPlace.side === Side.Before && endPos === pos) {
+				if (obliterate.end) {
+					this.removeLocalReferencePosition(obliterate.end);
+				}
+				obliterate.end = this.createLocalReferencePosition(
+					segment,
+					0,
+					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+					{ obliterate },
+				);
+				return true; // end is exclusive, don't mark segment moved
+			} else if (
+				endPlace.side === Side.After &&
+				segment.cachedLength > 0 && // if the segment is empty we must have already set our reference
+				endPos === pos + segment.cachedLength
+			) {
+				obliterate.end = this.createLocalReferencePosition(
+					segment,
+					segment.cachedLength - 1,
+					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 					{ obliterate },
 				);
 			}
-			if (obliterate.end) {
-				this.removeLocalReferencePosition(obliterate.end);
+
+			// TODO: if segment was inserted inside of a later local obliteration range
+			// then it shouldn't be obliterated.
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			if ((segment as any).prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
+				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
+				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
+				return true;
 			}
-			obliterate.end = this.createLocalReferencePosition(
-				segment,
-				segment.cachedLength - 1,
-				ReferenceType.StayOnRemove,
-				{ obliterate },
-			);
 
 			if (
 				clientId !== segment.clientId &&
@@ -2069,8 +2099,8 @@ export class MergeTree {
 			markMoved,
 			undefined,
 			afterMarkMoved,
-			start,
-			end,
+			startPlace.pos,
+			endPlace.pos + 1, // include the segment containing the end reference
 			undefined,
 			seq === UnassignedSequenceNumber ? undefined : seq,
 		);
@@ -2712,28 +2742,18 @@ export class MergeTree {
 		leaf: ISegmentAction<TClientData>,
 		accum: TClientData,
 		post?: BlockAction<TClientData>,
-		start: SequencePlace = 0,
-		end?: SequencePlace,
+		start: number = 0,
+		end?: number,
 		localSeq?: number,
 		visibilitySeq: number = refSeq,
 	): void {
-		const maybeEndPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
-		if (maybeEndPos === start) {
+		const endPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
+		if (endPos === start) {
 			return;
 		}
 
 		let pos = 0;
-		let { startPos, endPos } = endpointPosAndSide(start, end);
 
-		startPos = startPos === "start" || startPos === undefined ? 0 : startPos;
-		endPos =
-			endPos === "end" || endPos === undefined
-				? this.root.mergeTree?.getLength(refSeq, clientId) ?? 0
-				: endPos;
-		assert(
-			startPos !== "end" && endPos !== "start",
-			0x9e3 /* start cannot be 'end' and end cannot be 'start' */,
-		);
 		depthFirstNodeWalk(
 			this.root,
 			this.root.children[0],
@@ -2761,15 +2781,13 @@ export class MergeTree {
 
 				const nextPos = pos + lenAtRefSeq;
 				// start is beyond the current node, so we can skip it
-				if (typeof startPos === "number" && startPos >= nextPos) {
+				if (start >= nextPos) {
 					pos = nextPos;
 					return NodeAction.Skip;
 				}
 
 				if (node.isLeaf()) {
-					if (
-						leaf(node, pos, refSeq, clientId, startPos - pos, endPos - pos, accum) === false
-					) {
+					if (leaf(node, pos, refSeq, clientId, start - pos, endPos - pos, accum) === false) {
 						return NodeAction.Exit;
 					}
 					pos = nextPos;
@@ -2779,7 +2797,7 @@ export class MergeTree {
 			post === undefined
 				? undefined
 				: (block): boolean =>
-						post(block, pos, refSeq, clientId, startPos - pos, endPos - pos, accum),
+						post(block, pos, refSeq, clientId, start - pos, endPos - pos, accum),
 		);
 	}
 }
