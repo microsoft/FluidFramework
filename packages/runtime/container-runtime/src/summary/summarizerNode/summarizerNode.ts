@@ -19,7 +19,6 @@ import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 	SummarizeInternalFn,
-	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import { type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
@@ -522,7 +521,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			config,
 			createDetails.summaryHandleId,
 			createDetails.changeSequenceNumber,
-			createDetails.lastSummaryreferenceSequenceNumber,
+			createDetails.lastSummaryReferenceSequenceNumber,
 			this.wipSummaryLogger,
 			createDetails.telemetryNodeId,
 		);
@@ -579,16 +578,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
-		const childSummaryHandleId = this._summaryHandleId.concatWith(
-			EscapedPath.create(id),
-			channelsTreeName,
-		);
+		const childSummaryHandleId = this._summaryHandleId.createChildPath(EscapedPath.create(id));
 
 		return {
 			changeSequenceNumber,
 			telemetryNodeId: childTelemetryNodeId,
 			summaryHandleId: childSummaryHandleId,
-			lastSummaryreferenceSequenceNumber: childLastSummaryReferenceSequenceNumber,
+			lastSummaryReferenceSequenceNumber: childLastSummaryReferenceSequenceNumber,
 		};
 	}
 

@@ -210,7 +210,7 @@ export interface ISummarizerNode {
 	 * path is "/a/.channels/b", then the additional path part is ".channels".
 	 * @param snapshot - the base summary to parse
 	 *
-	 * @deprecated - The code now always assumes that all summary nodes have .channels
+	 * @deprecated The code now always assumes that all summary nodes have .channels
 	 * in their handle so there is no need to maintain any additional path information.
 	 */
 	updateBaseSummaryState(snapshot: ISnapshotTree): void;

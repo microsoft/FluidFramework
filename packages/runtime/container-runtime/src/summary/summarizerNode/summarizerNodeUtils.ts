@@ -5,6 +5,7 @@
 
 import { SummaryObject } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	TelemetryDataTag,
@@ -63,20 +64,27 @@ export interface ISummarizerNodeRootContract {
 	): Promise<IRefreshSummaryResult>;
 }
 
-/** Path for nodes in a tree with escaped special characters */
+/** Class to build paths for nodes in a tree with escaped special characters */
 export class EscapedPath {
 	private constructor(public readonly path: string) {}
+
+	/**
+	 * Creates and returns a new instance of this class.
+	 * @param path - Id or path part of a node
+	 */
 	public static create(path: string): EscapedPath {
 		return new EscapedPath(encodeURIComponent(path));
 	}
 	public toString(): string {
 		return this.path;
 	}
-	public concatWith(path: EscapedPath, concatWith: string): EscapedPath {
-		return new EscapedPath(`${this.path}/${encodeURIComponent(concatWith)}/${path.path}`);
-	}
-	public concat(path: EscapedPath): EscapedPath {
-		return new EscapedPath(`${this.path}/${path.path}`);
+	/**
+	 * Creates and returns a new instance of this class for child of the current node.
+	 */
+	public createChildPath(childNodePath: EscapedPath): EscapedPath {
+		return new EscapedPath(
+			`${this.path}/${encodeURIComponent(channelsTreeName)}/${childNodePath.path}`,
+		);
 	}
 }
 export interface PendingSummaryInfo {
@@ -95,7 +103,7 @@ export interface ICreateChildDetails {
 	/** Summary handle for child node */
 	summaryHandleId: EscapedPath;
 	/** last reference sequence number seen when last successful summary was created */
-	lastSummaryreferenceSequenceNumber: number | undefined;
+	lastSummaryReferenceSequenceNumber: number | undefined;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
