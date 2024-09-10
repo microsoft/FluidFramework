@@ -19,6 +19,7 @@ import {
 	type BatchMessage,
 	ensureContentsDeserialized,
 	type IBatch,
+	type InboundBatch,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -159,10 +160,13 @@ describe("RemoteMessageProcessor", () => {
 			outboundMessages.push(...batch.messages);
 
 			const messageProcessor = getMessageProcessor();
-			const actual: ISequencedDocumentMessage[] = [];
+			let actualBatch: InboundBatch | undefined;
 			let seqNum = 1;
-			let actualBatchStartCsn: number | undefined;
 			for (const message of outboundMessages) {
+				assert(
+					actualBatch === undefined,
+					"actualBatch only should be set when we're done looping",
+				);
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
 					type: MessageType.Operation,
@@ -175,23 +179,8 @@ describe("RemoteMessageProcessor", () => {
 				} as ISequencedDocumentMessage;
 
 				ensureContentsDeserialized(inboundMessage, true, () => {});
-				const processResult = messageProcessor.process(inboundMessage, () => {});
-
-				// It'll be undefined for the first n-1 chunks if chunking is enabled
-				if (processResult === undefined) {
-					continue;
-				}
-
-				actual.push(...processResult.messages);
-
-				if (actualBatchStartCsn === undefined) {
-					actualBatchStartCsn = processResult.batchStartCsn;
-				} else {
-					assert(
-						actualBatchStartCsn === processResult.batchStartCsn,
-						"batchStartCsn shouldn't change while processing a single batch",
-					);
-				}
+				// actualBatch will remain undefined every time except the last time through the loop
+				actualBatch = messageProcessor.process(inboundMessage, () => {});
 			}
 
 			const expected = option.grouping
@@ -210,8 +199,12 @@ describe("RemoteMessageProcessor", () => {
 						getProcessedMessage("e", startSeqNum, startSeqNum, false),
 					];
 
-			assert.deepStrictEqual(actual, expected, "unexpected output");
-			assert.equal(actualBatchStartCsn, leadingChunkCount + 1, "unexpected batchStartCsn");
+			assert.deepStrictEqual(actualBatch?.messages, expected, "unexpected output");
+			assert.equal(
+				actualBatch?.batchStartCsn,
+				leadingChunkCount + 1,
+				"unexpected batchStartCsn",
+			);
 		});
 	});
 
@@ -251,88 +244,97 @@ describe("RemoteMessageProcessor", () => {
 			processor.process(message, () => {}),
 		);
 
+		// Expected results
+		const messagesA = [
+			{
+				"contents": "A1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 1,
+				"metadata": { "batch": true },
+				"clientId": "CLIENT_ID",
+			},
+			{
+				"contents": "A2",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 2,
+				"clientId": "CLIENT_ID",
+			},
+			{
+				"contents": "A3",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 3,
+				"metadata": { "batch": false },
+				"clientId": "CLIENT_ID",
+			},
+		];
+		const messagesB = [
+			{
+				"contents": "B1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 4,
+				"clientId": "CLIENT_ID",
+			},
+		];
+		const messagesC = [
+			{
+				"contents": "C1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 5,
+				"metadata": { "batch": true, "batchId": "C" },
+				"clientId": "CLIENT_ID",
+			},
+			{
+				"contents": "C2",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 6,
+				"metadata": { "batch": false },
+				"clientId": "CLIENT_ID",
+			},
+		];
+		const messagesD = [
+			{
+				"contents": "D1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 7,
+				"metadata": { "batchId": "D" },
+				"clientId": "CLIENT_ID",
+			},
+		];
 		const expectedResults = [
 			// A
 			undefined,
 			undefined,
 			{
-				messages: [
-					{
-						"contents": "A1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 1,
-						"metadata": { "batch": true },
-						"clientId": "CLIENT_ID",
-					},
-					{
-						"contents": "A2",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 2,
-						"clientId": "CLIENT_ID",
-					},
-					{
-						"contents": "A3",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 3,
-						"metadata": { "batch": false },
-						"clientId": "CLIENT_ID",
-					},
-				],
+				messages: messagesA,
 				clientId: "CLIENT_ID",
 				batchId: undefined,
 				batchStartCsn: 1,
+				keyMessage: messagesA[0],
 			},
 			// B
 			{
-				messages: [
-					{
-						"contents": "B1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 4,
-						"clientId": "CLIENT_ID",
-					},
-				],
+				messages: messagesB,
 				clientId: "CLIENT_ID",
 				batchId: undefined,
 				batchStartCsn: 4,
+				keyMessage: messagesB[0],
 			},
 			// C
 			undefined,
 			{
-				messages: [
-					{
-						"contents": "C1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 5,
-						"metadata": { "batch": true, "batchId": "C" },
-						"clientId": "CLIENT_ID",
-					},
-					{
-						"contents": "C2",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 6,
-						"metadata": { "batch": false },
-						"clientId": "CLIENT_ID",
-					},
-				],
+				messages: messagesC,
 				batchId: "C",
 				clientId: "CLIENT_ID",
 				batchStartCsn: 5,
+				keyMessage: messagesC[0],
 			},
 			// D
 			{
-				messages: [
-					{
-						"contents": "D1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 7,
-						"metadata": { "batchId": "D" },
-						"clientId": "CLIENT_ID",
-					},
-				],
+				messages: messagesD,
 				clientId: "CLIENT_ID",
 				batchId: "D",
 				batchStartCsn: 7,
+				keyMessage: messagesD[0],
 			},
 		];
 
@@ -524,7 +526,7 @@ describe("RemoteMessageProcessor", () => {
 				batchStartCsn: 12,
 				clientId: "CLIENT_ID",
 				batchId: "BATCH_ID",
-				emptyBatchSequenceNumber: undefined,
+				keyMessage: expected[0],
 			},
 			"unexpected processing of groupedBatch",
 		);
@@ -556,7 +558,7 @@ describe("RemoteMessageProcessor", () => {
 				batchStartCsn: 8,
 				clientId: "CLIENT_ID",
 				batchId: "BATCH_ID",
-				emptyBatchSequenceNumber: 10,
+				keyMessage: groupedBatch,
 			},
 			"unexpected processing of empty groupedBatch",
 		);

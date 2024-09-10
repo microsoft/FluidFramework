@@ -191,7 +191,7 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
 		assert.strictEqual(event.count, 1);
-		assert(event.duration !== bucketProperties.get("bucket1")!.duration);
+		assert(event.duration !== bucketProperties.get("bucket1")?.duration);
 	});
 
 	it("generates telemetry event from buffered data when disposed", () => {

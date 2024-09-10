@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
@@ -16,26 +15,28 @@ import {
 
 import {
 	FieldKinds,
-	type FlexFieldSchema,
 	type FlexTreeField,
 	type FlexTreeNode,
-	type FlexTreeTypedField,
 	tryGetMapTreeNode,
 	isFlexTreeNode,
+	type FlexTreeRequiredField,
+	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
-
-import { anchorProxy, tryGetCachedTreeNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema, type TreeNode, type Unhydrated } from "./core/index.js";
+import {
+	getKernel,
+	tryGetCachedTreeNode,
+	type TreeNode,
+	getSimpleNodeSchemaFromNode,
+	type InternalTreeNode,
+} from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.
  */
 export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
-		flexField: FlexTreeTypedField<
-			FlexFieldSchema<typeof FieldKinds.required | typeof FieldKinds.optional>
-		>,
+		flexField: FlexTreeOptionalField | FlexTreeRequiredField,
 	): TreeNode | TreeValue | undefined {
 		const maybeContent = flexField.content;
 		return isFlexTreeNode(maybeContent)
@@ -43,28 +44,17 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 			: maybeContent;
 	}
 	switch (field.schema.kind) {
-		case FieldKinds.required: {
-			const typedField = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.required>
-			>;
+		case FieldKinds.required.identifier: {
+			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.optional: {
-			const typedField = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.optional>
-			>;
+		case FieldKinds.optional.identifier: {
+			const typedField = field as FlexTreeOptionalField;
 			return tryToUnboxLeaves(typedField);
 		}
-		// TODO: Remove if/when 'FieldNode' is removed.
-		case FieldKinds.sequence: {
-			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
-			// this case unreachable as long as users follow the 'array recipe'.
-			fail("'sequence' field is unexpected.");
-		}
-		case FieldKinds.identifier: {
+		case FieldKinds.identifier.identifier: {
 			// Identifier fields are just value fields that hold strings
-			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>)
-				.content as string;
+			return (field as FlexTreeRequiredField).content as string;
 		}
 
 		default:
@@ -78,14 +68,13 @@ export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNod
 		return cachedProxy;
 	}
 
-	const schema = flexNode.schema;
-	const classSchema = tryGetSimpleNodeSchema(schema);
-	assert(classSchema !== undefined, 0x91b /* node without schema */);
+	const classSchema = getSimpleNodeSchemaFromNode(flexNode);
+	const node = flexNode as unknown as InternalTreeNode;
+	// eslint-disable-next-line unicorn/prefer-ternary
 	if (typeof classSchema === "function") {
-		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-		return new simpleSchema(flexNode);
+		return new classSchema(node) as TreeNode;
 	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
+		return (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
 	}
 }
 
@@ -139,26 +128,23 @@ function prepareArrayContentForHydration(
 	content: readonly MapTree[],
 	forest: IForestSubscription,
 ): void {
-	const proxies: RootedProxyPaths[] = [];
-	for (const [i, item] of content.entries()) {
-		proxies.push({
+	const proxyPaths: RootedProxyPaths[] = [];
+	for (const item of content) {
+		const proxyPath: RootedProxyPaths = {
 			rootPath: {
 				parent: undefined,
 				parentField: EmptyKey,
 				parentIndex: 0,
 			},
 			proxyPaths: [],
-		});
-		// Non null asserting here because we are iterating over content and pushing into proxies for every content
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		walkMapTree(item, proxies[i]!.rootPath, (p, proxy) => {
-			// Non null asserting here because we are iterating over content and pushing into proxies for every content
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			proxies[i]!.proxyPaths.push({ path: p, proxy });
+		};
+		proxyPaths.push(proxyPath);
+		walkMapTree(item, proxyPath.rootPath, (p, proxy) => {
+			proxyPath.proxyPaths.push({ path: p, proxy });
 		});
 	}
 
-	bindProxies(proxies, forest);
+	bindProxies(proxyPaths, forest);
 }
 
 function walkMapTree(
@@ -166,25 +152,35 @@ function walkMapTree(
 	path: UpPath,
 	onVisitTreeNode: (path: UpPath, treeNode: TreeNode) => void,
 ): void {
-	const mapTreeNode = tryGetMapTreeNode(mapTree);
-	if (mapTreeNode !== undefined) {
-		const treeNode = tryGetCachedTreeNode(mapTreeNode);
-		if (treeNode !== undefined) {
-			onVisitTreeNode(path, treeNode);
-		}
+	if (tryGetMapTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
+		throw new UsageError(
+			"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
+		);
 	}
 
-	for (const [key, field] of mapTree.fields) {
-		for (const [i, item] of field.entries()) {
-			walkMapTree(
-				item,
-				{
-					parent: path,
-					parentField: key,
-					parentIndex: i,
-				},
-				onVisitTreeNode,
-			);
+	type Next = [path: UpPath, tree: MapTree];
+	const nexts: Next[] = [];
+	for (let next: Next | undefined = [path, mapTree]; next !== undefined; next = nexts.pop()) {
+		const [p, m] = next;
+		const mapTreeNode = tryGetMapTreeNode(m);
+		if (mapTreeNode !== undefined) {
+			const treeNode = tryGetCachedTreeNode(mapTreeNode);
+			if (treeNode !== undefined) {
+				onVisitTreeNode(p, treeNode);
+			}
+		}
+
+		for (const [key, field] of m.fields) {
+			for (const [i, child] of field.entries()) {
+				nexts.push([
+					{
+						parent: p,
+						parentField: key,
+						parentIndex: i,
+					},
+					child,
+				]);
+			}
 		}
 	}
 }
@@ -201,7 +197,7 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (const { path, proxy } of proxies[i]!.proxyPaths) {
-				anchorProxy(forest.anchors, path, proxy);
+				getKernel(proxy).anchorProxy(forest.anchors, path);
 			}
 			if (++i === proxies.length) {
 				off();
@@ -211,26 +207,3 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 }
 
 // #endregion Content insertion and proxy binding
-
-/**
- * Content which can be used to build a node.
- * @remarks
- * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
- */
-export type FactoryContent =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| Iterable<readonly [string, InsertableContent]>
-	| readonly InsertableContent[]
-	| {
-			readonly [P in string]?: InsertableContent;
-	  };
-
-/**
- * Content which can be inserted into a tree.
- */
-export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;

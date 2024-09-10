@@ -498,8 +498,11 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 					return true;
 				}
 				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
-				traceTaskTrigger(doneFileExpectedContent);
-				traceTaskTrigger(doneFileContent);
+				// These log statements can be useful for debugging, but they're extremely long and completely
+				// obscure other logs.
+				// In the future we can consider logging just the diff between the input and output.
+				// this.traceTrigger(doneFileExpectedContent);
+				// this.traceTrigger(doneFileContent);
 			} else {
 				this.traceTrigger(
 					"unable to generate done file expected content (getDoneFileContent returned undefined)",
@@ -555,11 +558,12 @@ export class UnknownLeafTask extends LeafTask {
 
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
-	 * @returns the list of files that this task depends on. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task depends on.
 	 */
 	protected abstract getInputFiles(): Promise<string[]>;
+
 	/**
-	 * @returns the list of files that this task generates. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task generates.
 	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
 

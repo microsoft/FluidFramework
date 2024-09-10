@@ -64,7 +64,7 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 				return arraySchemaToSimpleSchema(schema);
 			}
 			case NodeKind.Object: {
-				assert(isObjectNodeSchema(schema), "Expected object schema");
+				assert(isObjectNodeSchema(schema), 0xa06 /* Expected object schema */);
 				return objectSchemaToSimpleSchema(schema);
 			}
 			default: {
@@ -196,7 +196,7 @@ function populateSchemaDefinitionsForNode(
 			break;
 		}
 		case NodeKind.Object: {
-			assert(isObjectNodeSchema(schema), "Expected object schema");
+			assert(isObjectNodeSchema(schema), 0xa07 /* Expected object schema */);
 			for (const [, field] of schema.fields) {
 				populateSchemaDefinitionsForField(field, definitions);
 			}

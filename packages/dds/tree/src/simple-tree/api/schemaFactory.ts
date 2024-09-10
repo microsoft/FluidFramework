@@ -303,7 +303,7 @@ export class SchemaFactory<
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
 		T
@@ -325,7 +325,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
 		T
@@ -377,7 +377,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
@@ -429,7 +429,7 @@ export class SchemaFactory<
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T
@@ -453,7 +453,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T
@@ -508,7 +508,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T
@@ -663,7 +663,7 @@ export class SchemaFactory<
 		return RecursiveArray as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
-			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 			{
 				/**
 				 * Iterator for the iterable of content for this node.
@@ -705,7 +705,7 @@ export class SchemaFactory<
 		return MapSchema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 			{
 				/**
 				 * Iterator for the iterable of content for this node.
@@ -748,7 +748,7 @@ export function structuralName<const T extends string>(
 		names.sort();
 		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
 		// Using JSON is a simple way to accomplish this.
-		// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
+		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;

@@ -16,14 +16,12 @@ import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
 
 import { normalizeFlexListEager } from "./flexList.js";
 import {
-	FlexFieldNodeSchema,
 	type FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	type FlexTreeNodeSchema,
 	LeafNodeSchema,
 	type SchemaCollection,
-	allowedTypesIsAny,
 } from "./typedTreeSchema.js";
 import type { Sourced } from "./view.js";
 
@@ -169,21 +167,17 @@ export function validateSchemaCollection(
 			validateField(
 				lintConfiguration,
 				collection,
-				tree.info,
+				tree.info as FlexFieldSchema,
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if ((tree.info.kind.multiplicity as Multiplicity) === Multiplicity.Single) {
+			if ((tree.info as FlexFieldSchema).kind.multiplicity === Multiplicity.Single) {
 				errors.push(
 					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind with multiplicity "Single". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
 			}
 		} else if (tree instanceof LeafNodeSchema) {
 			// No validation for now.
-		} else if (tree instanceof FlexFieldNodeSchema) {
-			const description = (): string =>
-				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
-			validateField(lintConfiguration, collection, tree.info, description, errors);
 		} else if (tree instanceof FlexObjectNodeSchema) {
 			for (const [key, field] of tree.objectNodeFields) {
 				const description = (): string =>
@@ -218,23 +212,22 @@ export function validateField(
 	errors: string[],
 ): void {
 	const types = field.allowedTypes;
-	if (!allowedTypesIsAny(types)) {
-		const normalizedTypes = normalizeFlexListEager(types);
-		for (const type of normalizedTypes) {
-			const referenced = collection.nodeSchema.get(type.name);
-			if (referenced === undefined) {
-				errors.push(
-					`${describeField()} references type "${type.name}" from library "${
-						type.builder.name
-					}" which is not defined. Perhaps another type was intended, or that library needs to be added.`,
-				);
-			}
-		}
-		if (types.length === 0 && lintConfiguration.rejectEmpty) {
+
+	const normalizedTypes = normalizeFlexListEager(types);
+	for (const type of normalizedTypes) {
+		const referenced = collection.nodeSchema.get(type.name);
+		if (referenced === undefined) {
 			errors.push(
-				`${describeField()} requires children to have a type from a set of zero types. This means the field must always be empty.`,
+				`${describeField()} references type "${type.name}" from library "${
+					type.builder.name
+				}" which is not defined. Perhaps another type was intended, or that library needs to be added.`,
 			);
 		}
+	}
+	if (types.length === 0 && lintConfiguration.rejectEmpty) {
+		errors.push(
+			`${describeField()} requires children to have a type from a set of zero types. This means the field must always be empty.`,
+		);
 	}
 
 	const kind = field.kind;

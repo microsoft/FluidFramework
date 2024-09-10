@@ -8,8 +8,11 @@ export {
 	TreeNodeKernel,
 	getKernel,
 	tryGetTreeNodeSchema,
+	type InnerNode,
+	tryGetCachedTreeNode,
+	tryDisposeTreeNode,
 } from "./treeNodeKernel.js";
-export { type WithType, typeNameSymbol } from "./withType.js";
+export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
 	type TreeChangeEvents,
 	TreeNode,
@@ -30,4 +33,5 @@ export {
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
 	cachedFlexSchemaFromClassSchema,
+	getSimpleNodeSchemaFromNode,
 } from "./schemaCaching.js";

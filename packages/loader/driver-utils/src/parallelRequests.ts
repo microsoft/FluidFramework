@@ -595,21 +595,13 @@ export function requestOps(
 		(deltas: ISequencedDocumentMessage[]) => {
 			// Assert continuing and right start.
 			if (lastFetch === undefined) {
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				assert(deltas[0]!.sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
+				assert(deltas[0].sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
 			} else {
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				assert(deltas[0]!.sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
+				assert(deltas[0].sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
 			}
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			lastFetch = deltas[deltas.length - 1]!.sequenceNumber;
+			lastFetch = deltas[deltas.length - 1].sequenceNumber;
 			assert(
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				lastFetch - deltas[0]!.sequenceNumber + 1 === deltas.length,
+				lastFetch - deltas[0].sequenceNumber + 1 === deltas.length,
 				0x26f /* "continuous and no duplicates" */,
 			);
 			length += deltas.length;

@@ -10,22 +10,21 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
-import * as readline from "node:readline";
 import { writeJson } from "fs-extra/esm";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
 import {
 	PackageJson,
-	PackageNamePolicyConfig,
-	ScriptRequirement,
 	getApiExtractorConfigFilePath,
-	loadFluidBuildConfig,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
+import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
 import { Handler, readFile, writeFile } from "./common.js";
+
+import { PackageNamePolicyConfig, ScriptRequirement, getFlubConfig } from "../../config.js";
 
 const require = createRequire(import.meta.url);
 
@@ -155,7 +154,7 @@ export function packageMayChooseToPublishToInternalFeedOnly(
  * private to prevent publishing.
  */
 export function packageMustBePrivate(name: string, root: string): boolean {
-	const config = loadFluidBuildConfig(root).policy?.packageNames;
+	const config = getFlubConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -174,7 +173,7 @@ export function packageMustBePrivate(name: string, root: string): boolean {
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
 export function packageMustNotBePrivate(name: string, root: string): boolean {
-	const config = loadFluidBuildConfig(root).policy?.packageNames;
+	const config = getFlubConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -190,7 +189,7 @@ export function packageMustNotBePrivate(name: string, root: string): boolean {
  * Whether the package either belongs to a known Fluid package scope or is a known unscoped package.
  */
 function packageIsFluidPackage(name: string, root: string): boolean {
-	const config = loadFluidBuildConfig(root).policy?.packageNames;
+	const config = getFlubConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages are considered Fluid packages
@@ -354,39 +353,25 @@ function getReadmeInfo(dir: string): IReadmeInfo {
 }
 
 let computedPrivatePackages: Set<string> | undefined;
-function ensurePrivatePackagesComputed(): Set<string> {
-	if (computedPrivatePackages) {
+async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
+	if (computedPrivatePackages !== undefined) {
 		return computedPrivatePackages;
 	}
 
-	const newPrivatePackages = new Set<string>();
+	computedPrivatePackages = new Set();
 	const pathToGitRoot = child_process
 		.execSync("git rev-parse --show-cdup", { encoding: "utf8" })
 		.trim();
-	const p = child_process.spawn("git", [
-		"ls-files",
-		"-co",
-		"--exclude-standard",
-		"--full-name",
-		"**/package.json",
-	]);
-	const lineReader = readline.createInterface({
-		input: p.stdout,
-		terminal: false,
-	});
+	const repo = new Repository({ baseDir: pathToGitRoot });
+	const packageJsons = await repo.getFiles("**/package.json");
 
-	lineReader.on("line", (line) => {
-		const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
-		if (fs.existsSync(filePath)) {
-			const packageJson = JSON.parse(readFile(filePath)) as PackageJson;
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			if (packageJson.private) {
-				newPrivatePackages.add(packageJson.name);
-			}
+	for (const filePath of packageJsons) {
+		const packageJson = JSON.parse(readFile(filePath)) as PackageJson;
+		if (packageJson.private ?? false) {
+			computedPrivatePackages.add(packageJson.name);
 		}
-	});
+	}
 
-	computedPrivatePackages = newPrivatePackages;
 	return computedPrivatePackages;
 }
 
@@ -914,7 +899,7 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${file}`;
 			}
 
-			const privatePackages = ensurePrivatePackagesComputed();
+			const privatePackages = await ensurePrivatePackagesComputed();
 			const errors: string[] = [];
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -1215,7 +1200,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-dep",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			const manifest = loadFluidBuildConfig(root);
+			const manifest = getFlubConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
 				return;
@@ -1881,8 +1866,7 @@ export const handlers: Handler[] = [
 				return;
 			}
 
-			const requirements =
-				loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+			const requirements = getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 			if (requirements === undefined) {
 				// If no requirements have been specified, we have nothing to validate.
 				return;
@@ -1939,7 +1923,7 @@ export const handlers: Handler[] = [
 				}
 
 				const requirements =
-					loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+					getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 				if (requirements === undefined) {
 					// If no requirements have been specified, we have nothing to validate.
 					return;

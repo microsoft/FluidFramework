@@ -44,14 +44,14 @@ export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
 export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
-	implements FlexTreeEntity<TSchema>, IDisposable
+	implements FlexTreeEntity, IDisposable
 {
 	readonly #lazyCursor: ITreeSubscriptionCursor;
 	public readonly [anchorSymbol]: TAnchor;
 
 	protected constructor(
 		public readonly context: Context,
-		public readonly schema: TSchema,
+		public readonly flexSchema: TSchema,
 		cursor: ITreeSubscriptionCursor,
 		anchor: TAnchor,
 	) {
@@ -109,12 +109,3 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	 */
 	protected abstract [forgetAnchorSymbol](): void;
 }
-
-/**
- * Prevent Entities from inheriting members from Object.prototype including:
- * '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', '__proto__',
- * 'hasOwnProperty', 'isPrototypeOf', 'valueOf', 'propertyIsEnumerable', 'toLocaleString' and 'toString'.
- *
- * This opens up more options for field names on struct nodes.
- */
-Object.setPrototypeOf(LazyEntity.prototype, null);

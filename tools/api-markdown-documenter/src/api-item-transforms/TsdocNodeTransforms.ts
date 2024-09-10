@@ -79,9 +79,9 @@ export interface TsdocNodeTransformOptions extends ConfigurationBase {
 	 * Callback for resolving symbolic links to API items.
 	 *
 	 * @param codeDestination - The referenced target.
-	 * @param contextApiItem -
 	 *
-	 * @returns The appropriate URL target if the reference can be resolved. Otherwise, `undefined`.
+	 * @returns The appropriate URL target if the reference can be resolved.
+	 * Otherwise, `undefined`.
 	 */
 	readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { globFn } from "../../../common/utils";
+import { globFn } from "../taskUtils";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 /**

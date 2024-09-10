@@ -65,7 +65,9 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 
 // @alpha (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
-    constructor();
+    constructor(params?: {
+        groupId?: string;
+    });
     // (undocumented)
     addAttachment(id: string): void;
     // (undocumented)
