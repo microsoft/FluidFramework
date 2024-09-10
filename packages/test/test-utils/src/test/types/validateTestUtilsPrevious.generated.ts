@@ -139,6 +139,7 @@ declare type current_as_old_for_Interface_IOpProcessingController = requireAssig
  * typeValidation.broken:
  * "Interface_IProvideTestFluidObject": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IProvideTestFluidObject = requireAssignableTo<TypeOnly<old.IProvideTestFluidObject>, TypeOnly<current.IProvideTestFluidObject>>
 
 /*
@@ -148,6 +149,7 @@ declare type old_as_current_for_Interface_IProvideTestFluidObject = requireAssig
  * typeValidation.broken:
  * "Interface_IProvideTestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IProvideTestFluidObject = requireAssignableTo<TypeOnly<current.IProvideTestFluidObject>, TypeOnly<old.IProvideTestFluidObject>>
 
 /*
@@ -193,6 +195,7 @@ declare type current_as_old_for_Interface_ITestContainerConfig = requireAssignab
  * typeValidation.broken:
  * "Interface_ITestFluidObject": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITestFluidObject = requireAssignableTo<TypeOnly<old.ITestFluidObject>, TypeOnly<current.ITestFluidObject>>
 
 /*
@@ -202,6 +205,7 @@ declare type old_as_current_for_Interface_ITestFluidObject = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ITestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ITestFluidObject = requireAssignableTo<TypeOnly<current.ITestFluidObject>, TypeOnly<old.ITestFluidObject>>
 
 /*
@@ -328,6 +332,7 @@ declare type current_as_old_for_Variable_TestContainerRuntimeFactory = requireAs
  * typeValidation.broken:
  * "Class_TestFluidObject": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TestFluidObject = requireAssignableTo<TypeOnly<old.TestFluidObject>, TypeOnly<current.TestFluidObject>>
 
 /*
@@ -337,6 +342,7 @@ declare type old_as_current_for_Class_TestFluidObject = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_TestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TestFluidObject = requireAssignableTo<TypeOnly<current.TestFluidObject>, TypeOnly<old.TestFluidObject>>
 
 /*
@@ -346,6 +352,7 @@ declare type current_as_old_for_Class_TestFluidObject = requireAssignableTo<Type
  * typeValidation.broken:
  * "ClassStatics_TestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TestFluidObject = requireAssignableTo<TypeOnly<typeof current.TestFluidObject>, TypeOnly<typeof old.TestFluidObject>>
 
 /*

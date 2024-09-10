@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FieldKind, NodeKind, type JsonTreeSchema } from "../../simple-tree/index.js";
-import { getJsonValidator } from "./jsonSchemaUtilities.js";
+import { FieldKind, NodeKind, type JsonTreeSchema } from "../../../simple-tree/index.js";
+import { getJsonValidator } from "../jsonSchemaUtilities.js";
+import type {
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/api/simpleSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpleSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toJsonSchema } from "../../simple-tree/simpleSchemaToJsonSchema.js";
-import { ValueSchema } from "../../core/index.js";
+import { toJsonSchema } from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
+import { ValueSchema } from "../../../core/index.js";
 
 describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
