@@ -48,3 +48,9 @@ export {
 	type RunTransaction,
 	rollback,
 } from "./treeApi.js";
+
+export {
+	type Revertible,
+	RevertibleStatus,
+	type RevertibleFactory,
+} from "./revertible.js";

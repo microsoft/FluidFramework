@@ -20,7 +20,6 @@ import {
 
 import {
 	CommitKind,
-	type Revertible,
 	type UpPath,
 	compareUpPaths,
 	moveToDetachedField,
@@ -53,6 +52,7 @@ import {
 	SharedTreeFactory,
 	Tree,
 	type TreeCheckout,
+	type Revertible,
 } from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,

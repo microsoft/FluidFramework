@@ -24,8 +24,6 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type JsonableTree,
-	type Revertible,
-	RevertibleStatus,
 	type RevisionTag,
 	type RevisionTagCodec,
 	type TreeStoredSchema,
@@ -38,7 +36,6 @@ import {
 	rootFieldKey,
 	tagChange,
 	visitDelta,
-	type RevertibleFactory,
 } from "../core/index.js";
 import {
 	type HasListeners,
@@ -56,7 +53,7 @@ import {
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { type IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
-
+import { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";

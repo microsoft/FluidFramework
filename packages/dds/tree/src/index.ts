@@ -19,16 +19,13 @@ export {
 	type FieldKindIdentifier,
 	type TreeTypeSet,
 	type TreeStoredSchema,
-	type Revertible,
 	CommitKind,
-	RevertibleStatus,
 	type CommitMetadata,
 	type StoredSchemaCollection,
 	type ErasedTreeNodeSchemaDataFormat,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
-	type RevertibleFactory,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
@@ -58,6 +55,9 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	type Revertible,
+	RevertibleStatus,
+	type RevertibleFactory,
 } from "./shared-tree/index.js";
 
 export {

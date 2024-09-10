@@ -11,15 +11,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	type FieldUpPath,
-	type Revertible,
-	rootFieldKey,
-	RevertibleStatus,
-	CommitKind,
-	EmptyKey,
-	type RevertibleFactory,
-} from "../../core/index.js";
+import { type FieldUpPath, rootFieldKey, CommitKind, EmptyKey } from "../../core/index.js";
 import {
 	FieldKinds,
 	cursorForJsonableTreeField,
@@ -30,6 +22,9 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
+	type RevertibleFactory,
+	RevertibleStatus,
+	type Revertible,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
