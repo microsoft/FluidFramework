@@ -116,7 +116,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     get isDirty(): boolean;
-    protected _loadIdCompressor: Promise<void> | undefined;
     static loadRuntime(params: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;

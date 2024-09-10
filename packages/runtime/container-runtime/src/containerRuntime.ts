@@ -67,7 +67,6 @@ import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
-	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
@@ -1186,10 +1185,6 @@ export class ContainerRuntime
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
-	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
-	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
-	private pendingIdCompressorOps: IdCreationRange[] = [];
-
 	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
 	// (such ops will be marked by Loader layer as savedOp === true)
 	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
@@ -1199,31 +1194,26 @@ export class ContainerRuntime
 	public get idCompressorMode() {
 		return this.sessionSchema.idCompressorMode;
 	}
+
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
 	 */
 	public get idCompressor() {
-		// Expose ID Compressor only if it's On from the start.
-		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
-		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
-		// to reason over such things as session ID space.
-		if (this.idCompressorMode === "on") {
-			assert(this._idCompressor !== undefined, 0x8ea /* compressor should have been loaded */);
-			return this._idCompressor;
+		// During a schema migration, the idCompressor is eagerly loaded but should not be exposed until
+		// the document schema change is committed.
+		if (this.idCompressorMode !== "on") {
+			return undefined;
 		}
-	}
 
-	/**
-	 * True if we have ID compressor loading in-flight (async operation). Useful only for
-	 * this.idCompressorMode === "delayed" mode
-	 */
-	protected _loadIdCompressor: Promise<void> | undefined;
+		assert(this._idCompressor !== undefined, 0x8ea /* compressor should have been loaded */);
+		return this._idCompressor;
+	}
 
 	/**
 	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
 	 */
 	public generateDocumentUniqueId() {
-		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
+		return this.idCompressor?.generateDocumentUniqueId() ?? uuid();
 	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
@@ -2017,7 +2007,7 @@ export class ContainerRuntime
 		});
 
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
-		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
+		// saved state, i.e. all the ops marked by Loader layer as savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
@@ -2026,19 +2016,6 @@ export class ContainerRuntime
 			eventName: "SchemaChangeAccept",
 			sessionRuntimeSchema: JSON.stringify(schema),
 		});
-
-		// Most of the settings will be picked up only by new sessions (i.e. after reload).
-		// We can make it better in the future (i.e. start to use op compression right away), but for simplicity
-		// this is not done.
-		// But ID compressor is special. It's possible, that in future, we will remove "stickiness" of ID compressor setting
-		// and will allow to start using it. If that were to happen, we want to ensure that we do not break eventual consistency
-		// promises. To do so, we need to initialize id compressor right away.
-		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
-		// Anything else is too risky, and requires ability to initialize ID compressor synchronously!
-		if (schema.runtime.idCompressorMode !== undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.loadIdCompressor();
-		}
 	}
 
 	public getCreateChildSummarizerNodeFn(
@@ -2075,13 +2052,10 @@ export class ContainerRuntime
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
 	private async initializeBaseState(): Promise<void> {
-		if (
-			this.idCompressorMode === "on" ||
-			(this.idCompressorMode === "delayed" && this.connected)
-		) {
+		// If IdCompressor is currently enabled, or a schema migration is desires to enable it,
+		// then we need to ensure that the IdCompressor is created before we start processing ops.
+		if (this.idCompressorMode !== undefined) {
 			this._idCompressor = await this.createIdCompressor();
-			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
-			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
 
 		await this.garbageCollector.initializeBaseState();
@@ -2367,8 +2341,8 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this._idCompressor) {
-			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
+		if (this.idCompressor) {
+			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
 
@@ -2541,31 +2515,6 @@ export class ContainerRuntime
 		}
 	}
 
-	private async loadIdCompressor() {
-		if (
-			this._idCompressor === undefined &&
-			this.idCompressorMode !== undefined &&
-			this._loadIdCompressor === undefined
-		) {
-			this._loadIdCompressor = this.createIdCompressor()
-				.then((compressor) => {
-					// Finalize any ranges we received while the compressor was turned off.
-					const ops = this.pendingIdCompressorOps;
-					this.pendingIdCompressorOps = [];
-					for (const range of ops) {
-						compressor.finalizeCreationRange(range);
-					}
-					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
-					this._idCompressor = compressor;
-				})
-				.catch((error) => {
-					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
-					throw error;
-				});
-		}
-		return this._loadIdCompressor;
-	}
-
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
@@ -2575,10 +2524,6 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
-		if (connected && this.idCompressorMode === "delayed") {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.loadIdCompressor();
-		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -2893,21 +2838,13 @@ export class ContainerRuntime
 				// thus we need to process all the ops.
 				if (!(this.skipSavedCompressorOps && savedOp === true)) {
 					const range = message.contents;
-					// Some other client turned on the id compressor. If we have not turned it on,
-					// put it in a pending queue and delay finalization.
-					if (this._idCompressor === undefined) {
-						assert(
-							this.idCompressorMode !== undefined,
-							0x93c /* id compressor should be enabled */,
-						);
-						this.pendingIdCompressorOps.push(range);
-					} else {
-						assert(
-							this.pendingIdCompressorOps.length === 0,
-							0x979 /* there should be no pending ops! */,
-						);
-						this._idCompressor.finalizeCreationRange(range);
-					}
+
+					assert(
+						this.idCompressor !== undefined,
+						"IdCompressor must be enabled before processing ID allocation",
+					);
+
+					this.idCompressor.finalizeCreationRange(range);
 				}
 				break;
 			case ContainerMessageType.GC:
@@ -3372,13 +3309,15 @@ export class ContainerRuntime
 		}
 
 		// We can finalize any allocated IDs since we're the only client
-		const idRange = this._idCompressor?.takeNextCreationRange();
+		const idRange = this.idCompressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
 			assert(
 				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
 				0x93e /* No other ranges should be taken while container is detached. */,
 			);
-			this._idCompressor?.finalizeCreationRange(idRange);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- per 'idRange !== undefined' check above
+			this.idCompressor!.finalizeCreationRange(idRange);
 		}
 
 		const summarizeResult = this.channelCollection.getAttachSummary(telemetryContext);
@@ -3410,9 +3349,6 @@ export class ContainerRuntime
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
-
-		// Ensure that ID compressor had a chance to load, if we are using delayed mode.
-		await this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
 		return {
@@ -4125,10 +4061,10 @@ export class ContainerRuntime
 	}
 
 	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
-		if (this._idCompressor) {
+		if (this.idCompressor) {
 			const idRange = resubmitOutstandingRanges
-				? this._idCompressor.takeUnfinalizedCreationRange()
-				: this._idCompressor.takeNextCreationRange();
+				? this.idCompressor.takeUnfinalizedCreationRange()
+				: this.idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
@@ -4575,7 +4511,7 @@ export class ContainerRuntime
 			const sessionExpiryTimerStarted =
 				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
-			const pendingIdCompressorState = this._idCompressor?.serialize(true);
+			const pendingIdCompressorState = this.idCompressor?.serialize(true);
 
 			return {
 				pending,
