@@ -49,8 +49,9 @@ interface IShortCollaborationSession {
 
 /**
  * Options for {@link RedisCollaborationSessionManager} that tune specific behaviors.
+ * @internal
  */
-interface IRedisCollaborationSessionManagerOptions {
+export interface IRedisCollaborationSessionManagerOptions {
 	/**
 	 * Maximum number of sessions to scan at once when calling {@link RedisCollaborationSessionManager.getAllSessions}.
 	 * The expected return size of a given session is less than 200 bytes, including the key.
@@ -128,7 +129,8 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 			const sessions: ICollaborationSession[] = [];
 			sessionJsonScanStream.on("data", (result: string[]) => {
 				if (!result) {
-					// When redis scan is done, it will return null.
+					// When redis scan is done, it pushes null to the stream.
+					// This should only trigger the "end" event, but we should check for it to be safe.
 					return;
 				}
 				if (!Array.isArray(result) || result.length % 2 !== 0) {
