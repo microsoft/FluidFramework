@@ -53,41 +53,40 @@ export const getCoverageMetricsForBaseline = async (baselineZip: JSZip) => {
 	try {
 		console.log(`${coverageReportsFiles.length} coverage files found`);
 
-		await Promise.all(
-			coverageReportsFiles.map(async (coverageReportFile: string) => {
-				const jsZipObject = baselineZip.file(coverageReportFile);
-				if (!jsZipObject) {
-					console.log(`could not find file ${coverageReportFile}`);
-				}
+		for (let i = 0; i < coverageReportsFiles.length; i++) {
+			const coverageReportFile = coverageReportsFiles[i];
+			const jsZipObject = baselineZip.file(coverageReportFile);
+			if (!jsZipObject) {
+				console.log(`could not find file ${coverageReportFile}`);
+			}
 
-				const coverageReportXML = await jsZipObject?.async("nodebuffer");
-				let count = 0;
-				coverageReportXML &&
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any -- missing type for XML output
-					xmlParser.parseString(
-						coverageReportXML,
-						function (err: Error | null, result: unknown): void {
-							if (err) {
-								console.warn(`Error processing file ${coverageReportFile}: ${err}`);
-								return;
+			const coverageReportXML = await jsZipObject?.async("nodebuffer");
+			coverageReportXML &&
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- missing type for XML output
+				xmlParser.parseString(
+					coverageReportXML,
+					function (err: Error | null, result: unknown): void {
+						if (err) {
+							console.warn(`Error processing file ${coverageReportFile}: ${err}`);
+							return;
+						}
+						const metrics = extractCoverageMetrics(result);
+						metrics.forEach((metric: CoverageReport) => {
+							if (
+								metric.packageName &&
+								!isNaN(metric.lineCoverage) &&
+								!isNaN(metric.branchCoverage) &&
+								metric.lineCoverage < 1
+							) {
+								coverageMetricsForBaseline.push(metric);
 							}
-							count++;
-							const metrics = extractCoverageMetrics(result);
-							metrics.forEach((metric: CoverageReport) => {
-								if (
-									metric.packageName &&
-									!isNaN(metric.lineCoverage) &&
-									!isNaN(metric.branchCoverage) &&
-									metric.lineCoverage < 1
-								) {
-									coverageMetricsForBaseline.push(metric);
-								}
-							});
-						},
-					);
-				console.log("count", count);
-			}),
-		);
+						});
+					},
+				);
+			if (coverageMetricsForBaseline.length > 0) {
+				break;
+			}
+		}
 	} catch (error) {
 		console.log(`Error encountered with reading files: ${error}`);
 	}
@@ -104,45 +103,37 @@ export const getCoverageMetricsForBaseline = async (baselineZip: JSZip) => {
 export const getCoverageMetricsForPr = async (coverageReportsFolder: string) => {
 	const coverageMetricsForPr: CoverageReport[] = [];
 	const coverageReportsFiles = await glob(
-		path.join(coverageReportsFolder, "*cobertura-coverage-patched.xml"),
-	);
-	const coverageReportsFiles1 = await glob(
-		path.join("./codeCoverageAnalysis", "*cobertura-coverage-patched.xml"),
-	);
-	const coverageReportsFiles2 = await glob(path.join("./", "*cobertura-coverage-patched.xml"));
-	const coverageReportsFiles3 = await glob(
 		path.join(coverageReportsFolder, "cobertura-coverage-patched.xml"),
 	);
 
 	const xmlParser = new Parser();
 
 	console.log(`${coverageReportsFiles.length} coverage files found`);
-	console.log(`${coverageReportsFiles1.length} coverage files found`);
-	console.log(`${coverageReportsFiles2.length} coverage files found`);
-	console.log(`${coverageReportsFiles3.length} coverage files found`);
 
-	await Promise.all(
-		coverageReportsFiles.map(async (coverageReportFile: string) => {
-			const coverageReportXML = await fs.readFile(coverageReportFile, "utf-8");
-			try {
-				const result = await xmlParser.parseStringPromise(coverageReportXML);
-				const metrics = extractCoverageMetrics(result);
-				metrics.forEach((metric: CoverageReport) => {
-					if (
-						metric.packageName &&
-						!isNaN(metric.lineCoverage) &&
-						!isNaN(metric.branchCoverage) &&
-						metric.lineCoverage < 1
-					) {
-						coverageMetricsForPr.push(metric);
-					}
-				});
-			} catch (err) {
-				console.warn(`Error processing file ${coverageReportXML}: ${err}`);
-				return;
+	for (let i = 0; i < coverageReportsFiles.length; i++) {
+		const coverageReportFile = coverageReportsFiles[i];
+		const coverageReportXML = await fs.readFile(coverageReportFile, "utf-8");
+		try {
+			const result = await xmlParser.parseStringPromise(coverageReportXML);
+			const metrics = extractCoverageMetrics(result);
+			metrics.forEach((metric: CoverageReport) => {
+				if (
+					metric.packageName &&
+					!isNaN(metric.lineCoverage) &&
+					!isNaN(metric.branchCoverage) &&
+					metric.lineCoverage < 1
+				) {
+					coverageMetricsForPr.push(metric);
+				}
+			});
+			if (coverageMetricsForPr.length > 0) {
+				break;
 			}
-		}),
-	);
+		} catch (err) {
+			console.warn(`Error processing file ${coverageReportFile}: ${err}`);
+			continue;
+		}
+	}
 
 	return coverageMetricsForPr;
 };

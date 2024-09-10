@@ -20,20 +20,15 @@ export type CoverageReport = {
 /**
  * Post the code coverage summary on the PRs
  * @param adoToken ADO token
- * @param adoPrId Pr ID for which we are running code coverage
- * @param adoBuildId Build Id for the PR for which we are running code coverage
  * @param coverageReportsFolder The path to where the coverage reports exist
  */
 export const postCodeCoverageSummary = async (
 	adoToken: string,
-	adoPrId: number,
-	adoBuildId: number,
 	coverageReportsFolder: string,
 ): Promise<CodeCoverageSummary> => {
 	const adoConnection = getAzureDevopsApi(adoToken, codeCoverageConstants.orgUrl);
 
 	const baselineBuildInfo = await getBaselineBuildMetrics(
-		adoBuildId,
 		"codeCoverage",
 		codeCoverageConstants.codeCoverageAnalysisArtifactName,
 		adoConnection,

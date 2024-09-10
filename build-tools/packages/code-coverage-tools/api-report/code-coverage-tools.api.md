@@ -4,10 +4,10 @@
 
 ```ts
 
-// @public (undocumented)
-export function codeCoverageCli(adoToken: string, adoPrId: number, adoBuildId: number, coverageReportsFolder: string): Promise<CodeCoverageSummary>;
+// @public
+export function codeCoverageCli(adoToken: string, coverageReportsFolder: string): Promise<CodeCoverageSummary>;
 
-// @public (undocumented)
+// @public
 export interface CodeCoverageSummary {
     // (undocumented)
     commentMessage: string;

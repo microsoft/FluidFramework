@@ -9,10 +9,6 @@ import { CodeCoverageSummary, codeCoverageCli } from "@fluidframework/code-cover
 // from using this file directly, and the js transpilation renames the danger
 // import which prevents danger from removing it before evaluation (because it
 // actually puts its exports in the global namespace at that time)
-declare function markdown(message: string, file?: string, line?: number): void;
-
-declare function warn(message: string, file?: string, line?: number): void;
-
 declare function fail(message: string, file?: string, line?: number): void;
 
 declare const danger: {
@@ -52,9 +48,10 @@ declare const danger: {
 	};
 };
 
-const localReportPath = "./nyc/report";
+const localCodeCoverageReportPath = "./nyc/report";
+
 // Unique identifier for the comment
-const commentIdentifier = "<!-- DANGER_TASK_1 -->";
+const commentIdentifier = "<!-- DANGER_TASK_1_For_Code_Coverage_Analysis-->";
 
 export async function codeCoverageCompare(): Promise<void> {
 	if (process.env.ADO_API_TOKEN === undefined) {
@@ -73,12 +70,9 @@ export async function codeCoverageCompare(): Promise<void> {
 		throw new Error("no env build id provided");
 	}
 
-	const build_Id = Number.parseInt(process.env.BUILD_ID, 10);
 	const report: CodeCoverageSummary = await codeCoverageCli(
 		process.env.ADO_API_TOKEN,
-		Number.parseInt(process.env.PULL_REQUEST_ID, 10),
-		build_Id,
-		localReportPath,
+		localCodeCoverageReportPath,
 	);
 	if (report.failBuild) {
 		fail(`Code coverage failed`);

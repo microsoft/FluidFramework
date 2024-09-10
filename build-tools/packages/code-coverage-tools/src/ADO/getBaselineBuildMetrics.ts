@@ -36,14 +36,11 @@ function* naiveFallbackCommitGenerator(startingCommit: string): Generator<string
 
 /**
  * Method that returns buildId and commit for the baseline build along with the commit hash for the current PR
- * @param adoBuildId - The build id of the current PR
  * @param metric - The metric for which the baseline build is being fetched, such as code coverage or bundle analysis
  * @param artifactName - The name of the artifact that contains the artifact of interest
  * @param adoConnection - The connection to the Azure DevOps API
- * @param prUtil - The utility class for PR operations
  */
 export async function getBaselineBuildMetrics(
-	adoBuildId: number,
 	metric: Metric,
 	artifactName: string,
 	adoConnection: WebApi,

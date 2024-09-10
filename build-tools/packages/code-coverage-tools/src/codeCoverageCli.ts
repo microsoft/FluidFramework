@@ -5,7 +5,9 @@
 
 import { postCodeCoverageSummary } from "./codeCoveragePr";
 
-// Interface that reflects the type of object returned by the coverage summary method
+/**
+ * Interface that reflects the type of object returned by the coverage summary method
+ */
 export interface CodeCoverageSummary {
 	// Message to be put in the comment
 	commentMessage: string;
@@ -14,11 +16,14 @@ export interface CodeCoverageSummary {
 	failBuild: boolean;
 }
 
+/**
+ * Entrypoint for posting the code coverage summary on the PRs
+ * @param adoToken - adoToken ADO token
+ * @param coverageReportsFolder - The path to where the coverage reports exist
+ */
 export async function codeCoverageCli(
 	adoToken: string,
-	adoPrId: number,
-	adoBuildId: number,
 	coverageReportsFolder: string,
 ): Promise<CodeCoverageSummary> {
-	return postCodeCoverageSummary(adoToken, adoPrId, adoBuildId, coverageReportsFolder);
+	return postCodeCoverageSummary(adoToken, coverageReportsFolder);
 }

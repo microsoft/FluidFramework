@@ -8,7 +8,6 @@ export const codeCoverageConstants = {
 	projectName: "public",
 	ciBuildDefinitionId: 48,
 	projectRepoGuid: "203843667",
-	// projectRepoGuid: "microsoft/FluidFramework",
-	codeCoverageAnalysisArtifactName: "Code Coverage Report",
+	codeCoverageAnalysisArtifactName: "codeCoverageAnalysis",
 	buildsToSearch: 50,
 };
