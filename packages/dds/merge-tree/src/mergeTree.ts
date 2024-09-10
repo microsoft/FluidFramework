@@ -63,7 +63,6 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
-	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
 import {
@@ -1063,6 +1062,18 @@ export class MergeTree {
 			const firstMoveSeqIdx = this.moveSeqs.findIndex((seq) => seq >= minSeq);
 			this.moveSeqs = firstMoveSeqIdx === -1 ? [] : this.moveSeqs.slice(firstMoveSeqIdx);
 			if (MergeTree.options.zamboniSegments) {
+				walkAllChildSegments(this.root, (seg) => {
+					const refs = seg.localRefs ?? [];
+					for (const obliterateRef of refs) {
+						const oblInfo = obliterateRef.properties?.obliterate as ObliterateInfo | undefined;
+						if (oblInfo?.start !== undefined) {
+							this.removeLocalReferencePosition(oblInfo.start);
+						}
+						if (oblInfo?.end !== undefined) {
+							this.removeLocalReferencePosition(oblInfo.end);
+						}
+					}
+				});
 				zamboniSegments(this);
 			}
 		}

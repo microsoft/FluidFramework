@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import { MergeTree, type ObliterateInfo } from "./mergeTree.js";
+import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
@@ -44,16 +44,6 @@ export function zamboniSegments(
 			segmentToScour?.segment?.parent &&
 			segmentToScour.segment.parent.needsScour !== false
 		) {
-			const refs = segmentToScour.segment.localRefs ?? [];
-			for (const obliterateRef of refs) {
-				const oblInfo = obliterateRef.properties?.obliterate as ObliterateInfo | undefined;
-				if (oblInfo?.start !== undefined) {
-					mergeTree.removeLocalReferencePosition(oblInfo.start);
-				}
-				if (oblInfo?.end !== undefined) {
-					mergeTree.removeLocalReferencePosition(oblInfo.end);
-				}
-			}
 			const block = segmentToScour.segment.parent;
 			const childrenCopy: IMergeNode[] = [];
 			scourNode(block, childrenCopy, mergeTree);
