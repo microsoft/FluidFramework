@@ -170,7 +170,7 @@ This allows you to write methods that are more suited to your app's specific nee
 ```typescript
 class TodoList extends schemaFactory.object("TodoList", {
 	title: schemaFactory.string,
-	items: todoItems,
+	items: TodoItems,
 }) {
 	public removeFirst = () => {
 		if (this.length > 0) this.removeAt(0);

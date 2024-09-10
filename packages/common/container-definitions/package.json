@@ -114,6 +114,10 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Interface_IContainerContext": {
+				"backCompat": false
+			}
+		}
 	}
 }

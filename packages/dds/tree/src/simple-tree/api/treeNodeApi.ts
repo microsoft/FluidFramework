@@ -249,7 +249,7 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier?.context !== undefined, 0xa12 /* Expected LazyIdentifierField */);
+				assert(identifier?.context.isHydrated() === true, "Expected hydrated identifier");
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
