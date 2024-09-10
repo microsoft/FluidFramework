@@ -282,6 +282,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 // @public @sealed
 export interface Revertible {
     dispose(): void;
+    fork(view: TreeCheckout): Revertible;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;

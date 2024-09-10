@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeCheckout } from "./treeCheckout.js";
+
 /**
  * Allows reversion of a change made to SharedTree.
  *
@@ -29,6 +31,11 @@ export interface Revertible {
 	 * due to merge conflicts, and one wants to attempt reverting again.
 	 */
 	revert(dispose: boolean): void;
+
+	/**
+	 * Forks a new revertible from the current revertible.
+	 */
+	fork(view: TreeCheckout): Revertible;
 
 	/**
 	 * Disposes this revertible, allowing associated resources to be released.
