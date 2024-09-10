@@ -7,6 +7,8 @@ menuPosition: 6
 
 The `SharedTree` distributed data structure (DDS), available in Fluid Framework 2 and later, is used to store most or all of your application's shared data in a hierarchical structure.
 
+To get started working with `SharedTree` in your application, read this [quick start guide](../start/tree-start.md).
+
 A `SharedTree` has the following characteristics:
 
 -   It is accessed through a `TreeView` object that exposes all the functionality for reading and editing data within a `SharedTree`.

@@ -381,28 +381,29 @@ extends:
                   - ${{ if parameters.testCoverage }}:
                       - task: Bash@3
                         displayName: Check for nyc/report directory
+                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                         inputs:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
                             test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
-                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                       - task: Bash@3
                         displayName: Patch Coverage Results
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
                           script: |
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                       - task: PublishCodeCoverageResults@2
                         displayName: Publish Code Coverage
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
-                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                       - task: CopyFiles@2
                         displayName: Copy code coverage report to artifact staging directory
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
                           sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
@@ -578,7 +579,7 @@ extends:
                 - ${{ if eq(parameters.testCoverage, true) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifacts - code-coverage
-                    condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest') )
+                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'), eq(variables['Build.Reason'], 'PullRequest'))
                     targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
                     artifactName: codeCoverageAnalysis
                     sbomEnabled: false
