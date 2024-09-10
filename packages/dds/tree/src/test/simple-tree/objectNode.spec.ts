@@ -7,7 +7,12 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, type NodeKind, type TreeNodeSchema } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	type NodeBuilderData,
+	type NodeKind,
+	type TreeNodeSchema,
+} from "../../simple-tree/index.js";
 
 import { describeHydration, hydrate, pretty } from "./utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
@@ -20,17 +25,83 @@ describeHydration(
 	"ObjectNode",
 	(init) => {
 		describe("shadowing", () => {
-			it("constructor", () => {
-				// constructor is a special case, since one is built in on the derived type.
+			describe("constructor", () => {
+				it("empty", () => {
+					class Schema extends schemaFactory.object("x", {}) {}
+					const n = init(Schema, {});
+					// constructor is a special case, since one is built in on the derived type.
+					// Check that it is exposed as expected based on type:
+					const x = n.constructor;
+					// eslint-disable-next-line @typescript-eslint/ban-types
+					type check_ = requireAssignableTo<typeof x, Function>;
+					assert.equal(x, Schema);
+				});
+
+				it("required", () => {
+					class Schema extends schemaFactory.object("x", {
+						constructor: schemaFactory.number,
+					}) {}
+
+					const n = init(Schema, { constructor: 5 });
+
+					const x = n.constructor;
+					type check_ = requireAssignableTo<typeof x, number>;
+					assert.equal(x, 5);
+				});
+
+				describe("optional", () => {
+					class Schema extends schemaFactory.object("x", {
+						constructor: schemaFactory.optional(schemaFactory.number),
+					}) {}
+
+					it("explicit undefined", () => {
+						const n = init(Schema, { constructor: undefined });
+						const x = n.constructor;
+						type check_ = requireAssignableTo<typeof x, number | undefined>;
+						assert.equal(x, undefined);
+					});
+
+					it("default", () => {
+						// Example of how a type conversion that allows using literals with defaults can still be allowed to compile in the presence of overloaded inherited values.
+						const data: { [P in "constructor"]?: undefined } = {};
+						const insertable: NodeBuilderData<typeof Schema> = data;
+
+						const n = init(Schema, insertable);
+						const x = n.constructor;
+						assert.equal(x, undefined);
+
+						{
+							// In this particular case of overloads, TypeScript knows this is unsafe, but in other similar cases (like the one above), it can compile without error.
+							// @ts-expect-error Unsafely construct insertable with correct type.
+							const _insertable: NodeBuilderData<typeof Schema> = {};
+						}
+					});
+				});
+			});
+
+			it("union", () => {
 				class Schema extends schemaFactory.object("x", {
 					constructor: schemaFactory.number,
 				}) {}
+				class Other extends schemaFactory.object("y", {
+					other: schemaFactory.number,
+				}) {}
 
-				const n = init(Schema, { constructor: 5 });
+				// TODO:
+				// "init" can't handle field schema, so this uses hydrate, making the two versions of this test the same.
+				// Either:
+				// 1. Generalize init
+				// 2. Reorganize these tests to avoid hitting this requirement
+				// 3. Some other refactor to resolve this
+				const a = hydrate([Schema, Other], { constructor: 5 });
+				const b = hydrate([Schema, Other], { other: 6 });
 
-				const x = n.constructor;
-				type check_ = requireAssignableTo<typeof x, number>;
-				assert.equal(x, 5);
+				// eslint-disable-next-line @typescript-eslint/ban-types
+				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
+				assert.equal(a.constructor, 5);
+				assert.equal(b.constructor, Other);
+				assert(Tree.is(b, Other));
+				assert.equal(b.other, 6);
 			});
 		});
 
@@ -254,6 +325,14 @@ describeHydration(
 			describe.skip("optional map", () => {
 				// TODO
 			});
+		});
+
+		it("default optional field", () => {
+			class Schema extends schemaFactory.object("x", {
+				x: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const n = init(Schema, {});
+			assert.equal(n.x, undefined);
 		});
 	},
 	() => {
