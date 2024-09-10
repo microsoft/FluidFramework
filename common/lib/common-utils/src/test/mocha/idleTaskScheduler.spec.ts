@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SinonFakeTimers, useFakeTimers, fake, match } from "sinon";
+
 import * as idleTask from "../../idleTaskScheduler";
 
 describe("Idle task scheduler", () => {
