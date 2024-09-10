@@ -13,12 +13,7 @@ import {
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
-import {
-	type FactoryContent,
-	type InsertableContent,
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	createFieldSchema,
@@ -39,7 +34,11 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
+import {
+	mapTreeFromNodeData,
+	type FactoryContent,
+	type InsertableContent,
+} from "./toMapTree.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";

@@ -26,10 +26,10 @@ import {
 	UnhydratedContext,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { getOrCreateNodeFromFlexTreeNode, type InsertableContent } from "../proxies.js";
+import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
 import { getOrCreateMapTreeNode, isFieldInSchema } from "../../feature-libraries/index.js";
 import { toFlexSchema } from "../toFlexSchema.js";
-import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
+import { inSchemaOrThrow, mapTreeFromNodeData, type InsertableContent } from "../toMapTree.js";
 import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,

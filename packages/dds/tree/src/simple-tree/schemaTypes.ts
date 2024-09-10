@@ -21,7 +21,7 @@ import type {
 	TreeNodeSchemaClass,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
-import type { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./toMapTree.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
