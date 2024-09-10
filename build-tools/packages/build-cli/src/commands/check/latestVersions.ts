@@ -23,7 +23,7 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		package_or_release_group: packageOrReleaseGroupArg({ required: true }),
 	} as const;
 
-	public async run(): Promise<boolean> {
+	public async run(): Promise<void> {
 		const { args } = this;
 		const context = await this.getContext();
 		const versionInput = this.args.version;
@@ -73,7 +73,7 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		const shouldDeploy = latestVersions.some((item) => item.version === versionInput);
 
 		if (!shouldDeploy) {
-			this.error("message", { exit: 1 })
+			this.error("message", { exit: 1 });
 		}
 	}
 }
