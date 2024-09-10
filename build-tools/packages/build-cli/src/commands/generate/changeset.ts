@@ -225,82 +225,57 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			);
 		}
 
-		if (noChanges) {
-			const question: prompts.PromptObject = {
-				type: "confirm",
-				name: "releaseNotesOnly",
-				message:
-					"No changed packages have been detected.\n\nIf you deleted packages and want to create a changeset that will be included in the release notes only, select Yes.\n\nOtherwise select No and you'll be prompted to choose affected packages as usual.",
-				initial: true,
-			};
-			const { releaseNotesOnly } = await prompts(question);
-
-			if (releaseNotesOnly === true) {
-				const emptyFile = await createChangesetFile(
-					monorepo.directory ?? context.gitRepo.resolvedRoot,
-					new Map(),
-					undefined,
-				);
-				// eslint-disable-next-line @typescript-eslint/no-shadow
-				const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
-				this.logHr();
-				this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
-				return {
-					branch,
-					selectedPackages: [],
-					changesetPath,
-				};
-			}
-		}
-
 		const packageChoices: Choice[] = [];
 
-		// Handle the selected release group first so it shows up in the list first.
-		packageChoices.push(
-			{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
-			...monorepo.packages
-				.filter((pkg) => all || noChanges || isIncludedByDefault(pkg))
-				.sort((a, b) => packageComparer(a, b, changedPackages))
-				.map((pkg) => {
-					const changed = changedPackages.some((cp) => cp.name === pkg.name);
-					return {
-						title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
-						value: pkg,
-						selected: changed,
-					};
-				}),
-			// Next list independent packages in a group
-			{ title: chalk.bold("Independent Packages"), heading: true, disabled: true },
-		);
+		// Only populate the package choices if there are changes. If there are NO changes, then
+		if (!noChanges) {
+			// Handle the selected release group first so it shows up in the list first.
+			packageChoices.push(
+				{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
+				...monorepo.packages
+					.filter((pkg) => all || noChanges || isIncludedByDefault(pkg))
+					.sort((a, b) => packageComparer(a, b, changedPackages))
+					.map((pkg) => {
+						const changed = changedPackages.some((cp) => cp.name === pkg.name);
+						return {
+							title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
+							value: pkg,
+							selected: changed,
+						};
+					}),
+				// Next list independent packages in a group
+				{ title: chalk.bold("Independent Packages"), heading: true, disabled: true },
+			);
 
-		for (const pkg of context.independentPackages) {
-			if (!all && !isIncludedByDefault(pkg)) {
-				continue;
+			for (const pkg of context.independentPackages) {
+				if (!all && !isIncludedByDefault(pkg)) {
+					continue;
+				}
+				const changed = changedPackages.some((cp) => cp.name === pkg.name);
+				packageChoices.push({
+					title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
+					value: pkg,
+					selected: changed,
+				});
 			}
-			const changed = changedPackages.some((cp) => cp.name === pkg.name);
-			packageChoices.push({
-				title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
-				value: pkg,
-				selected: changed,
-			});
-		}
 
-		// Finally list the remaining (unchanged) release groups and their packages
-		for (const rg of context.repo.releaseGroups.values()) {
-			if (rg.name !== releaseGroup) {
-				packageChoices.push(
-					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
-					...rg.packages
-						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-						.sort((a, b) => packageComparer(a, b, changedPackages))
-						.map((pkg) => {
-							return {
-								title: pkg.name,
-								value: pkg,
-								selected: false,
-							};
-						}),
-				);
+			// Finally list the remaining (unchanged) release groups and their packages
+			for (const rg of context.repo.releaseGroups.values()) {
+				if (rg.name !== releaseGroup) {
+					packageChoices.push(
+						{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
+						...rg.packages
+							.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
+							.sort((a, b) => packageComparer(a, b, changedPackages))
+							.map((pkg) => {
+								return {
+									title: pkg.name,
+									value: pkg,
+									selected: false,
+								};
+							}),
+					);
+				}
 			}
 		}
 
@@ -338,8 +313,24 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const questions: prompts.PromptObject[] = [
 			{
+				// Ask this question only if there are no changes.
+				// falsy values for "type" will cause the question to be skipped.
+				type: noChanges ? "confirm" : false,
+				name: "releaseNotesOnly",
+				message:
+					"No changed packages have been detected. Do you want to create a changeset associated with no packages?",
+				initial: true,
+			},
+			{
 				name: "selectedPackages",
-				type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
+				// If the previous answer was yes, skip this question.
+				// falsy values for "type" will cause the question to be skipped.
+				type: (prev: boolean) =>
+					prev === true
+						? false
+						: uiMode === "default"
+							? "autocompleteMultiselect"
+							: "multiselect",
 				choices: [...packageChoices, { title: " ", heading: true, disabled: true }],
 				instructions: INSTRUCTIONS,
 				message: "Choose which packages to include in the changeset. Type to filter the list.",
@@ -352,21 +343,20 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				// This is typed as any because the typings don't include the optionsPerPage property.
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any,
-			// This question should only be asked if the releaseNotes config is available
-			context.flubConfig.releaseNotes === undefined
-				? undefined
-				: {
-						name: "section",
-						type: "select",
-						choices: sectionChoices,
-						instructions: INSTRUCTIONS,
-						message: "What section of the release notes should this change be in?",
-						onState: (state: PromptState): void => {
-							if (state.aborted) {
-								process.nextTick(() => this.exit(0));
-							}
-						},
-					},
+			{
+				name: "section",
+				// This question should only be asked if the releaseNotes config is available.
+				// falsy values for "type" will cause the question to be skipped.
+				type: context.flubConfig.releaseNotes === undefined ? false : "select",
+				choices: sectionChoices,
+				instructions: INSTRUCTIONS,
+				message: "What section of the release notes should this change be in?",
+				onState: (state: PromptState): void => {
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
+			},
 			{
 				name: "summary",
 				type: "text",
@@ -388,13 +378,10 @@ export default class GenerateChangesetCommand extends BaseCommand<
 					}
 				},
 			},
-		].filter(
-			// Filter out undefined items
-			(p) => p !== undefined,
-		);
+		];
 
 		const response = await prompts(questions);
-		const selectedPackages: Package[] = response.selectedPackages as Package[];
+		const selectedPackages: Package[] = (response.selectedPackages ?? []) as Package[];
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
 		const newFile = await createChangesetFile(
