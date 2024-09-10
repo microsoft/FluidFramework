@@ -106,6 +106,12 @@
 		"broken": {
 			"TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {
 				"forwardCompat": false
+			},
+			"Interface_IContainerRuntime": {
+				"backCompat": false
+			},
+			"Interface_IContainerRuntimeWithResolveHandle_Deprecated": {
+				"backCompat": false
 			}
 		}
 	}

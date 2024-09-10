@@ -154,7 +154,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	/**
 	 * Policies implemented/instructed by driver.
 	 */
-	readonly policies?: IDocumentStorageServicePolicies;
+	readonly policies?: IDocumentStorageServicePolicies | undefined;
 
 	/**
 	 * Returns the snapshot tree.

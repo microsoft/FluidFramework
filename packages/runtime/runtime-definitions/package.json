@@ -116,13 +116,16 @@
 				"forwardCompat": false
 			},
 			"Interface_IFluidDataStoreContext": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"Interface_IFluidParentContext": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"Interface_IFluidDataStoreContextDetached": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
