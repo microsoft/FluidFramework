@@ -95,10 +95,8 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		const toWriteOrDelete: Promise<void>[] = [];
 		for (const changeset of changesets) {
-			if (
-				changeset.additionalMetadata?.includeInChangelog === false ||
-				Object.keys(changeset.metadata).length === 0
-			) {
+			// changesets that apply to no packages should be omitted from the changelogs.
+			if (Object.keys(changeset.metadata).length === 0) {
 				this.info(`Removing changeset not included in changelog: ${changeset.sourceFile}`);
 				toWriteOrDelete.push(rm(changeset.sourceFile));
 			}

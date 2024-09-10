@@ -240,7 +240,6 @@ export default class GenerateChangesetCommand extends BaseCommand<
 					monorepo.directory ?? context.gitRepo.resolvedRoot,
 					new Map(),
 					undefined,
-					{ includeInChangelog: false },
 				);
 				// eslint-disable-next-line @typescript-eslint/no-shadow
 				const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);

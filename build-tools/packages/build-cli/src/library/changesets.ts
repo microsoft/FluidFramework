@@ -57,14 +57,6 @@ export interface FluidCustomChangesetMetadata {
 	includeInReleaseNotes?: boolean;
 
 	/**
-	 * If false, the changeset will not be included in per-package changelogs. This is useful for changesets associated
-	 * with deleted packages, for example.
-	 *
-	 * @defaultValue `true`
-	 */
-	includeInChangelog?: boolean;
-
-	/**
 	 * If true, the changeset will be ordered before the other changes in that section. If multiple changesets are
 	 * highlighted they will be internally sorted by date.
 	 *
@@ -90,7 +82,6 @@ export const fluidCustomChangeSetMetadataDefaults: RequiredKeysAllowUndefined<
 > = {
 	section: undefined,
 	includeInReleaseNotes: true,
-	includeInChangelog: true,
 	highlight: false,
 } as const;
 
