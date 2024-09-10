@@ -63,6 +63,7 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
+	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
 import {
@@ -414,15 +415,6 @@ const forwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference !== SlidingPreference.BACKWARD;
 const backwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference === SlidingPreference.BACKWARD;
-
-export interface ObliterateInfo {
-	start: LocalReferencePosition;
-	end: LocalReferencePosition;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	localSeq: number | undefined;
-}
 
 /**
  * @internal
@@ -1562,29 +1554,45 @@ export class MergeTree {
 				backwardExcursion(newSegment, findLeftMovedSegment);
 				forwardExcursion(newSegment, findRightMovedSegment);
 
-				let found: ObliterateInfo | undefined;
+				let oldest: ObliterateInfo | undefined;
+				let normalizedOldestSeq: number = 0;
+				let newest: ObliterateInfo | undefined;
+				let normalizedNewestSeq: number = 0;
 				const movedClientIds: number[] = [];
 				const movedSeqs: number[] = [];
 				for (const ob of overlapping) {
-					if (ob.seq === UnassignedSequenceNumber || ob.seq > refSeq) {
-						if (found === undefined || found.seq < ob.seq) {
-							found = ob;
+					// compute a normalized seq that takes into account local seqs
+					// but is still comparable to remote seqs to keep the checks below easy
+					// REMOTE SEQUENCE NUMBERS                                     LOCAL SEQUENCE NUMBERS
+					// [0, 1, 2, 3, ..., 100, ..., 1000, ..., (MAX - MaxLocalSeq), L1, L2, L3, L4, ..., L100, ..., L1000, ...(MAX)]
+					const normalizedObSeq =
+						ob.seq === UnassignedSequenceNumber
+							? Number.MAX_SAFE_INTEGER - this.collabWindow.localSeq + ob.localSeq!
+							: ob.seq;
+					if (normalizedObSeq > refSeq) {
+						if (oldest === undefined || normalizedOldestSeq > normalizedObSeq) {
+							normalizedOldestSeq = normalizedObSeq;
+							oldest = ob;
 							movedClientIds.unshift(ob.clientId);
 							movedSeqs.unshift(ob.seq);
 						} else {
+							if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
+								normalizedNewestSeq = normalizedObSeq;
+								newest = ob;
+							}
 							movedClientIds.push(ob.clientId);
 							movedSeqs.push(ob.seq);
 						}
 					}
 				}
 
-				if (found) {
+				if (oldest && newest?.clientId !== clientId) {
 					const moveInfo: IMoveInfo = {
 						movedClientIds,
-						movedSeq: found.seq,
+						movedSeq: oldest.seq,
 						movedSeqs,
-						localMovedSeq: found.localSeq,
-						wasMovedOnInsert: found.seq !== UnassignedSequenceNumber,
+						localMovedSeq: oldest.localSeq,
+						wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
 					};
 
 					markSegmentMoved(newSegment, moveInfo);
@@ -2031,6 +2039,7 @@ export class MergeTree {
 					clientId === this.collabWindow.clientId
 				) {
 					segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
+					segmentGroup.obliterateInfo ??= obliterate;
 				} else {
 					if (MergeTree.options.zamboniSegments) {
 						this.addToLRUSet(segment, seq);

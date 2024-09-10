@@ -641,6 +641,22 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
+// @alpha (undocumented)
+export interface ObliterateInfo {
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    end: LocalReferencePosition;
+    // (undocumented)
+    localSeq: number | undefined;
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    seq: number;
+    // (undocumented)
+    start: LocalReferencePosition;
+}
+
 // @alpha @deprecated (undocumented)
 export class PropertiesManager {
     // (undocumented)
@@ -705,6 +721,8 @@ export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDrive
 export interface SegmentGroup {
     // (undocumented)
     localSeq?: number;
+    // (undocumented)
+    obliterateInfo?: ObliterateInfo;
     // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)

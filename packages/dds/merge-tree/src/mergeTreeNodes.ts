@@ -14,8 +14,7 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "./constants.js";
-import { LocalReferenceCollection } from "./localReference.js";
-import type { ObliterateInfo } from "./mergeTree.js";
+import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
@@ -395,6 +394,19 @@ export interface SegmentActions<TClientData> {
 }
 
 /**
+ * @legacy
+ * @alpha
+ */
+export interface ObliterateInfo {
+	start: LocalReferencePosition;
+	end: LocalReferencePosition;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	localSeq: number | undefined;
+}
+
+/**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @legacy
  * @alpha
@@ -404,6 +416,7 @@ export interface SegmentGroup {
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
+	obliterateInfo?: ObliterateInfo;
 }
 
 /**
@@ -658,21 +671,13 @@ export abstract class BaseSegment implements ISegment {
 			case MergeTreeDeltaType.OBLITERATE: {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
-
-				this.localRefs?.walkReferences((ref) => {
-					const obliterate = ref.properties?.obliterate as ObliterateInfo | undefined;
-					if (obliterate !== undefined && obliterate.localSeq === moveInfo.localMovedSeq) {
-						obliterate.seq = opArgs.sequencedMessage!.sequenceNumber;
-						obliterate.localSeq = undefined;
-						return false;
-					}
-					return true;
-				});
-
-				this.localMovedSeq = undefined;
+				const obliterateInfo = segmentGroup.obliterateInfo;
+				assert(obliterateInfo !== undefined, "must have obliterate info");
+				this.localMovedSeq = obliterateInfo.localSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
+				moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
+					opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
 					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
