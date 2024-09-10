@@ -10,7 +10,7 @@ import { BaseCommand, sortVersions } from "../../library/index.js";
 
 export default class LatestVersionsCommand extends BaseCommand<typeof LatestVersionsCommand> {
 	static readonly summary =
-		"Determines if an input version matches a latest minor release version.";
+		"Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.";
 
 	static readonly description =
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
@@ -20,17 +20,13 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			required: true,
 			description: "The version corresponding to the pipeline trigger branch.",
 		}),
-		package_or_release_group: packageOrReleaseGroupArg(),
+		package_or_release_group: packageOrReleaseGroupArg({ required: true }),
 	} as const;
 
 	public async run(): Promise<boolean> {
 		const { args } = this;
 		const context = await this.getContext();
 		const versionInput = this.args.version;
-
-		if (args.package_or_release_group === undefined) {
-			this.error("No dependency provided.");
-		}
 
 		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {
@@ -76,7 +72,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 
 		const shouldDeploy = latestVersions.some((item) => item.version === versionInput);
 
-		// eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit
-		process.exit(shouldDeploy ? 0 : 1);
+		if (!shouldDeploy) {
+			this.error("message", { exit: 1 })
+		}
 	}
 }
