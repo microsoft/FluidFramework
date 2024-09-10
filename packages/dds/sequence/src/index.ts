@@ -39,9 +39,6 @@ export {
 	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
-	Side,
-	InteriorSequencePlace,
-	SequencePlace,
 } from "./intervalCollection.js";
 export {
 	IntervalIndex,
@@ -109,4 +106,7 @@ export {
 	reservedRangeLabelsKey,
 	TrackingGroup,
 	LocalReferencePosition,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
 } from "@fluidframework/merge-tree/internal";

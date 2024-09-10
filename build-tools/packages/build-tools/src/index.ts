@@ -4,12 +4,9 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export {
-	type ITypeValidationConfig,
-	FluidRepo,
-	type BrokenCompatTypes,
-} from "./common/fluidRepo";
-export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
+export { FluidRepo } from "./fluidBuild/fluidRepo";
+export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./fluidBuild/fluidUtils";
 export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
 export {
@@ -19,28 +16,15 @@ export {
 	updatePackageJsonFileAsync,
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
-export type {
-	IFluidBuildConfig,
-	PackageNamePolicyConfig,
-	PolicyConfig,
-	PreviousVersionStyle,
-	ScriptRequirement,
-} from "./common/fluidRepo";
 
 // For repo policy check
 export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
-} from "./common/fluidTaskDefinitions";
-export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
-export * as TscUtils from "./common/tscUtils";
-
+} from "./fluidBuild/fluidTaskDefinitions";
 export {
-	TypeOnly,
-	MinimalType,
-	FullType,
-	requireAssignableTo,
-} from "./typeValidator/compatibility";
-export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
-export { type TypeData, getFullTypeName } from "./typeValidator/typeData";
-export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";
+	getApiExtractorConfigFilePath,
+	getEsLintConfigFilePath,
+} from "./fluidBuild/tasks/taskUtils";
+export * as TscUtils from "./fluidBuild/tscUtils";
+export { getTypeTestPreviousPackageDetails } from "./common/typeTests";

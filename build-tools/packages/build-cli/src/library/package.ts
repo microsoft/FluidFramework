@@ -651,6 +651,26 @@ export async function setVersion(
 }
 
 /**
+ * Extracts the dependencies record from a package.json file based on the dependency group.
+ */
+function getDependenciesRecord(
+	packageJson: PackageJson,
+	depClass: "prod" | "dev" | "peer",
+): PackageJson["dependencies" | "devDependencies" | "peerDependencies"] | undefined {
+	switch (depClass) {
+		case "dev": {
+			return packageJson.devDependencies;
+		}
+		case "peer": {
+			return packageJson.peerDependencies;
+		}
+		default: {
+			return packageJson.dependencies;
+		}
+	}
+}
+
+/**
  * Set the version of _dependencies_ within a package according to the provided map of packages to range strings.
  *
  * @param pkg - The package whose dependencies should be updated.
@@ -675,14 +695,12 @@ async function setPackageDependencies(
 ): Promise<boolean> {
 	let changed = false;
 	let newRangeString: string;
-	for (const { name, dev } of pkg.combinedDependencies) {
+	for (const { name, depClass } of pkg.combinedDependencies) {
 		const dep = dependencyVersionMap.get(name);
 		if (dep !== undefined) {
 			const isSameReleaseGroup = MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo);
 			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
-				const dependencies = dev
-					? pkg.packageJson.devDependencies
-					: pkg.packageJson.dependencies;
+				const dependencies = getDependenciesRecord(pkg.packageJson, depClass);
 				if (dependencies === undefined) {
 					continue;
 				}
@@ -717,16 +735,16 @@ async function findDepUpdates(
 	// Get the new version for each package based on the update type
 	for (const pkgName of dependencies) {
 		let latest: string;
-		let next: string;
+		let dev: string;
 
 		try {
 			// eslint-disable-next-line no-await-in-loop
-			[latest, next] = await Promise.all([
+			[latest, dev] = await Promise.all([
 				latestVersion(pkgName, {
 					version: "latest",
 				}),
 				latestVersion(pkgName, {
-					version: "next",
+					version: "dev",
 				}),
 			]);
 		} catch (error: unknown) {
@@ -734,12 +752,12 @@ async function findDepUpdates(
 			continue;
 		}
 
-		// If we're allowing pre-release, use the next tagged version. Warn if it is lower than the latest.
+		// If we're allowing pre-release, use the version that has the 'dev' dist-tag in npm. Warn if it is lower than the 'latest'.
 		if (prerelease) {
-			dependencyVersionMap[pkgName] = next;
-			if (semver.gt(latest, next)) {
+			dependencyVersionMap[pkgName] = dev;
+			if (semver.gt(latest, dev)) {
 				log?.warning(
-					`The latest dist-tag is version ${latest}, which is greater than the next dist-tag version, ${next}. Is this expected?`,
+					`The 'latest' dist-tag is version ${latest}, which is greater than the 'dev' dist-tag version, ${dev}. Is this expected?`,
 				);
 			}
 		} else {

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import * as core from "@fluidframework/server-services-core";
 import * as services from "@fluidframework/server-services-shared";
 import {
@@ -32,7 +31,6 @@ export class GitrestResources implements core.IResources {
 		public readonly port: string | number,
 		public readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		public readonly repositoryManagerFactory: IRepositoryManagerFactory,
-		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public readonly enableOptimizedInitialSummary?: boolean,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -50,7 +48,6 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		customizations?: IGitrestResourcesCustomizations,
 	): Promise<GitrestResources> {
 		const port = normalizePort(process.env.PORT || "3000");
-		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
 
 		const fileSystemManagerFactories = this.getFileSystemManagerFactories(
 			config,
@@ -66,7 +63,6 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			port,
 			fileSystemManagerFactories,
 			repositoryManagerFactory,
-			asyncLocalStorage,
 		);
 	}
 
@@ -82,6 +78,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			config.get("git:ephemeralfilesystem:name") ?? "redisFs";
 		const ephemeralFileSystemMaxFileSizeBytes: number | undefined =
 			config.get("git:ephemeralfilesystem:maxFileSizeBytes") ?? 0;
+		const ephemeralDocumentTTLSec: number | undefined =
+			config.get("git:ephemeralDocumentTTLSec") ?? 60 * 60 * 24; // 24 hours default
 
 		// Creating two customizations for redisClientConnectionManager for now.
 		// This may be changed to a single customization in the future.
@@ -96,6 +94,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			config,
 			customizations?.redisClientConnectionManagerForEphemeralFileSystem,
 			ephemeralFileSystemMaxFileSizeBytes,
+			ephemeralDocumentTTLSec,
 		);
 
 		return {
@@ -109,6 +108,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		config: Provider,
 		redisClientConnectionManagerCustomization?: IRedisClientConnectionManager,
 		maxFileSizeBytes?: number,
+		documentTtlSec?: number,
 	) {
 		if (!fileSystemName || fileSystemName === "nodeFs") {
 			return new NodeFsManagerFactory(maxFileSizeBytes);
@@ -126,6 +126,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 				config,
 				redisClientConnectionManager,
 				maxFileSizeBytes,
+				documentTtlSec,
 			);
 		}
 		throw new Error("Invalid file system name.");
@@ -171,7 +172,6 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
 			resources.port,
 			resources.fileSystemManagerFactories,
 			resources.repositoryManagerFactory,
-			resources.asyncLocalStorage,
 		);
 	}
 }

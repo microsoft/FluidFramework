@@ -92,13 +92,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
-// @alpha
-export interface InteriorSequencePlace {
-    // (undocumented)
-    pos: number;
-    // (undocumented)
-    side: Side;
-}
+export { InteriorSequencePlace }
 
 // @alpha
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
@@ -189,11 +183,11 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 
 // @alpha (undocumented)
 export interface ISerializableInterval extends IInterval {
-    // (undocumented)
+    // @deprecated (undocumented)
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     getIntervalId(): string | undefined;
     properties: PropertySet;
-    // (undocumented)
+    // @deprecated (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
     serialize(): ISerializedInterval;
@@ -368,8 +362,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
-// @alpha
-export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
+export { SequencePlace }
 
 // @alpha (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedSegmentSequence<T> {
@@ -477,13 +470,7 @@ export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertib
 // @alpha (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
 
-// @alpha
-export enum Side {
-    // (undocumented)
-    After = 1,
-    // (undocumented)
-    Before = 0
-}
+export { Side }
 
 export { TextSegment }
 

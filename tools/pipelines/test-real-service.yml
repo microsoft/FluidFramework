@@ -40,11 +40,12 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Large # Need Large pool for full-compat matrix
+        poolBuild: NewLarge-linux-1ES # Need Large pool for full-compat matrix
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:local:report:full
+        cacheCompatVersionsInstalls: true
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
@@ -60,7 +61,9 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:tinylicious:report:full
-        timeoutInMinutes: 90
+        cacheCompatVersionsInstalls: true
+        # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
+        timeoutInMinutes: 120
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           # Disable colorization for tinylicious logs (not useful when printing to a file)
@@ -93,6 +96,7 @@ stages:
             flags: --compatVersion=LTS
           - name: Cross-version
             flags: --compatVersion=CROSS_VERSION
+        cacheCompatVersionsInstalls: true
         env:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -123,6 +127,7 @@ stages:
             flags: --compatVersion=LTS
           - name: Cross-Version
             flags: --compatVersion=CROSS_VERSION
+        cacheCompatVersionsInstalls: true
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -156,6 +161,7 @@ stages:
           # Tests N-2 to LTS+3 back compat for loader + driver
           - name: N-2ToLTS+1-back-compat
             flags: --compatVersion=V2_INT_3 --tenantIndex=3
+        cacheCompatVersionsInstalls: true
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)

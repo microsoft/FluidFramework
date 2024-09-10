@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
+import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import type { InboundBatch } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;
@@ -20,6 +25,40 @@ export interface IBatchManagerOptions {
 export interface BatchSequenceNumbers {
 	referenceSequenceNumber?: number;
 	clientSequenceNumber?: number;
+}
+
+/** Type alias for the batchId stored in batch metadata */
+export type BatchId = string;
+
+/** Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect */
+export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
+	return `${originalClientId}_[${batchStartCsn}]`;
+}
+
+/**
+ * Get the effective batch ID for the input argument.
+ * Supports either an IPendingMessage or an InboundBatch.
+ * If the batch ID is explicitly present, return it.
+ * Otherwise, generate a new batch ID using the client ID and batch start CSN.
+ */
+export function getEffectiveBatchId(
+	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
+): string {
+	if ("localOpMetadata" in pendingMessageOrInboundBatch) {
+		const pendingMessage: IPendingMessage = pendingMessageOrInboundBatch;
+		return (
+			asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
+			generateBatchId(
+				pendingMessage.batchInfo.clientId,
+				pendingMessage.batchInfo.batchStartCsn,
+			)
+		);
+	}
+
+	const inboundBatch: InboundBatch = pendingMessageOrInboundBatch;
+	return (
+		inboundBatch.batchId ?? generateBatchId(inboundBatch.clientId, inboundBatch.batchStartCsn)
+	);
 }
 
 /**
@@ -53,9 +92,7 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: // Non null asserting here since we are checking the length above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.pendingBatch[this.pendingBatch.length - 1]!.referenceSequenceNumber;
+			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
 	/**
@@ -99,7 +136,10 @@ export class BatchManager {
 		return this.pendingBatch.length === 0;
 	}
 
-	public popBatch(): IBatch {
+	/**
+	 * Gets the pending batch and clears state for the next batch.
+	 */
+	public popBatch(batchId?: BatchId): IBatch {
 		const batch: IBatch = {
 			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
@@ -112,7 +152,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch);
+		return addBatchMetadata(batch, batchId);
 	}
 
 	/**
@@ -124,9 +164,7 @@ export class BatchManager {
 			rollback: (process: (message: BatchMessage) => void) => {
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
-					// Non null asserting here since we are iterating though pendingBatch
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const message = this.pendingBatch[i]!;
+					const message = this.pendingBatch[i];
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
@@ -137,24 +175,31 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: IBatch): IBatch => {
+const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
+	const batchEnd = batch.messages.length - 1;
+
+	const firstMsg = batch.messages[0];
+	const lastMsg = batch.messages[batchEnd];
+	assert(
+		firstMsg !== undefined && lastMsg !== undefined,
+		0x9d1 /* expected non-empty batch */,
+	);
+
+	const firstMetadata: Partial<IBatchMetadata> = firstMsg.metadata ?? {};
+	const lastMetadata: Partial<IBatchMetadata> = lastMsg.metadata ?? {};
+
+	// Multi-message batches: mark the first and last messages with the "batch" flag indicating batch start/end
 	if (batch.messages.length > 1) {
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		batch.messages[0]!.metadata = {
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			...batch.messages[0]!.metadata,
-			batch: true,
-		};
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		batch.messages[batch.messages.length - 1]!.metadata = {
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			...batch.messages[batch.messages.length - 1]!.metadata,
-			batch: false,
-		};
+		firstMetadata.batch = true;
+		lastMetadata.batch = false;
+		firstMsg.metadata = firstMetadata;
+		lastMsg.metadata = lastMetadata;
+	}
+
+	// If batchId is provided (e.g. in case of resubmit): stamp it on the first message
+	if (batchId !== undefined) {
+		firstMetadata.batchId = batchId;
+		firstMsg.metadata = firstMetadata;
 	}
 
 	return batch;

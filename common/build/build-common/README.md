@@ -10,10 +10,19 @@ This package exports several base configurations for use with [API-Extractor](ht
 It can be extended in your package's local configuration file like the following:
 
 ```json
-"extends": "@fluidframework/build-common/api-extractor-base.(cjs|esm).<export set>.json",
+"extends": "@fluidframework/build-common/api-extractor-<task set>.(cjs|esm).<export set>.json",
 ```
 
 Chose `cjs` or `esm` based on primary or only output.
+
+### API Task Set
+
+| Set Name | report | model | lint | Description                                                 |
+| -------- | ------ | ----- | ---- | ----------------------------------------------------------- |
+| report   | ✔️     |       |      | generates `*.api.md` report files and `tsdoc-metadata.json` |
+| model    |        | ✔️    |      | generates `_api-extractor-temp/doc-models/*.api.json`       |
+| lint     |        |       | ✔️   | performs api-extractor linting                              |
+| base     | ✔️     | ✔️    |      | combined report and model                                   |
 
 ### Export Set
 

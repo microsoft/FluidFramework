@@ -9,9 +9,9 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	GenericError,
-	MonitoringContext,
 	UsageError,
-	createChildMonitoringContext,
+	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
@@ -22,6 +22,7 @@ import {
 	BatchSequenceNumbers,
 	estimateSocketSize,
 	sequenceNumbersMatch,
+	type BatchId,
 } from "./batchManager.js";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
@@ -95,7 +96,7 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
  * to support slight variation in semantics for each batch (e.g. support for rebasing or grouping).
  */
 export class Outbox {
-	private readonly mc: MonitoringContext;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
 	private readonly idAllocationBatch: BatchManager;
@@ -112,7 +113,8 @@ export class Outbox {
 	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
-		this.mc = createChildMonitoringContext({ logger: params.logger, namespace: "Outbox" });
+		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
+
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;
@@ -165,7 +167,7 @@ export class Outbox {
 		}
 
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			this.mc.logger.sendTelemetryEvent(
+			this.logger.sendTelemetryEvent(
 				{
 					category: this.params.config.disablePartialFlush ? "error" : "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
@@ -232,28 +234,78 @@ export class Outbox {
 		}
 	}
 
-	public flush() {
+	/**
+	 * Flush all the batches to the ordering service.
+	 * This method is expected to be called at the end of a batch.
+	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+	 * with the given Batch ID, which must be preserved
+	 */
+	public flush(resubmittingBatchId?: BatchId) {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll();
+		this.flushAll(resubmittingBatchId);
 	}
 
-	private flushAll() {
+	private flushAll(resubmittingBatchId?: BatchId) {
+		// Don't use resubmittingBatchId for idAllocationBatch.
+		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);
-		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
-		this.flushInternal(this.mainBatch);
+		// We need to flush an empty batch if the main batch *becomes* empty on resubmission.
+		// When resubmitting the main batch, the blobAttach batch will always be empty since we don't resubmit them simultaneously.
+		// And conversely, the blobAttach will never *become* empty on resubmit.
+		// So if both blobAttachBatch and mainBatch are empty, we must submit an empty main batch.
+		if (resubmittingBatchId && this.blobAttachBatch.empty && this.mainBatch.empty) {
+			this.flushEmptyBatch(resubmittingBatchId);
+			return;
+		}
+		this.flushInternal(
+			this.blobAttachBatch,
+			true /* disableGroupedBatching */,
+			resubmittingBatchId,
+		);
+		this.flushInternal(
+			this.mainBatch,
+			false /* disableGroupedBatching */,
+			resubmittingBatchId,
+		);
 	}
 
-	private flushInternal(batchManager: BatchManager, disableGroupedBatching: boolean = false) {
+	private flushEmptyBatch(resubmittingBatchId: BatchId) {
+		const referenceSequenceNumber =
+			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
+		assert(
+			referenceSequenceNumber !== undefined,
+			0xa01 /* reference sequence number should be defined */,
+		);
+		const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+			resubmittingBatchId,
+			referenceSequenceNumber,
+		);
+		let clientSequenceNumber: number | undefined;
+		if (this.params.shouldSend()) {
+			clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+		}
+		this.params.pendingStateManager.onFlushBatch(
+			emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+			clientSequenceNumber,
+		);
+		return;
+	}
+
+	private flushInternal(
+		batchManager: BatchManager,
+		disableGroupedBatching: boolean = false,
+		resubmittingBatchId?: BatchId,
+	) {
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch();
+		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
@@ -274,6 +326,10 @@ export class Outbox {
 				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
 			clientSequenceNumber = this.sendBatch(processedBatch);
+			assert(
+				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
+				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
+			);
 		}
 
 		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);
@@ -300,7 +356,7 @@ export class Outbox {
 		}
 
 		if (this.batchRebasesToReport > 0) {
-			this.mc.logger.sendTelemetryEvent(
+			this.logger.sendTelemetryEvent(
 				{
 					eventName: "BatchRebase",
 					length: rawBatch.messages.length,
@@ -377,7 +433,7 @@ export class Outbox {
 
 		const socketSize = estimateSocketSize(batch);
 		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
-			this.mc.logger.sendPerformanceEvent({
+			this.logger.sendPerformanceEvent({
 				eventName: "LargeBatch",
 				length: batch.messages.length,
 				sizeInBytes: batch.contentSizeInBytes,
@@ -390,9 +446,7 @@ export class Outbox {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				batch.messages[0]!.compression === undefined,
+				batch.messages[0].compression === undefined,
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 

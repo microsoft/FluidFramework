@@ -10,6 +10,7 @@ mocha).
 This package exports a few functions that you'll use instead of mocha's `it()` to define profiling tests:
 
 -   `benchmark()` for runtime tests
+-   `benchmarkCustom()` for custom usage tests
 -   `benchmarkMemory()` for memory usage tests
 
 More details particular to each can be found in the sections below.
@@ -84,6 +85,12 @@ when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for
 > The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
 > The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
 > See documentation on `HookArguments` for more detail.
+
+## Profiling custom usage
+
+To customize profiling, define tests using the `benchmarkCustom()` function. The run argument of this function
+includes a reporter that uses `addMeasurement()` to record custom data for reporting. Look at the documentation
+on `Titled`, `BenchmarkDescription`, `MochaExclusiveOptions` for more details on what the rest of its properties do.
 
 ## Profiling memory usage
 
@@ -175,10 +182,36 @@ Breaking Changes:
 -   `onCycle` renamed to `beforeEachBatch`.
 -   Many renames and a lot of refactoring unlikely to impact users of the mocha test APIs, but likely to break more integrated code, like custom reporters.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+## Help
+
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
 
 ## Trademark
 

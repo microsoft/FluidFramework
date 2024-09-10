@@ -20,276 +20,258 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidSerializer": {"forwardCompat": false}
+ * "Class_FluidSerializer": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_FluidSerializer = requireAssignableTo<TypeOnly<old.FluidSerializer>, TypeOnly<current.FluidSerializer>>
+declare type old_as_current_for_Class_FluidSerializer = requireAssignableTo<TypeOnly<old.FluidSerializer>, TypeOnly<current.FluidSerializer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidSerializer": {"backCompat": false}
+ * "Class_FluidSerializer": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_FluidSerializer = requireAssignableTo<TypeOnly<current.FluidSerializer>, TypeOnly<old.FluidSerializer>>
+declare type current_as_old_for_Class_FluidSerializer = requireAssignableTo<TypeOnly<current.FluidSerializer>, TypeOnly<old.FluidSerializer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FluidSerializer": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FluidSerializer = requireAssignableTo<TypeOnly<typeof current.FluidSerializer>, TypeOnly<typeof old.FluidSerializer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFluidSerializer": {"forwardCompat": false}
+ * "Interface_IFluidSerializer": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IFluidSerializer = requireAssignableTo<TypeOnly<old.IFluidSerializer>, TypeOnly<current.IFluidSerializer>>
+declare type old_as_current_for_Interface_IFluidSerializer = requireAssignableTo<TypeOnly<old.IFluidSerializer>, TypeOnly<current.IFluidSerializer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFluidSerializer": {"backCompat": false}
+ * "Interface_IFluidSerializer": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IFluidSerializer = requireAssignableTo<TypeOnly<current.IFluidSerializer>, TypeOnly<old.IFluidSerializer>>
+declare type current_as_old_for_Interface_IFluidSerializer = requireAssignableTo<TypeOnly<current.IFluidSerializer>, TypeOnly<old.IFluidSerializer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObject": {"forwardCompat": false}
+ * "Interface_ISharedObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedObject = requireAssignableTo<TypeOnly<old.ISharedObject>, TypeOnly<current.ISharedObject>>
+declare type old_as_current_for_Interface_ISharedObject = requireAssignableTo<TypeOnly<old.ISharedObject>, TypeOnly<current.ISharedObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObject": {"backCompat": false}
+ * "Interface_ISharedObject": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedObject = requireAssignableTo<TypeOnly<current.ISharedObject>, TypeOnly<old.ISharedObject>>
+declare type current_as_old_for_Interface_ISharedObject = requireAssignableTo<TypeOnly<current.ISharedObject>, TypeOnly<old.ISharedObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObjectEvents": {"forwardCompat": false}
+ * "Interface_ISharedObjectEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedObjectEvents = requireAssignableTo<TypeOnly<old.ISharedObjectEvents>, TypeOnly<current.ISharedObjectEvents>>
+declare type old_as_current_for_Interface_ISharedObjectEvents = requireAssignableTo<TypeOnly<old.ISharedObjectEvents>, TypeOnly<current.ISharedObjectEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObjectEvents": {"backCompat": false}
+ * "Interface_ISharedObjectEvents": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedObjectEvents = requireAssignableTo<TypeOnly<current.ISharedObjectEvents>, TypeOnly<old.ISharedObjectEvents>>
+declare type current_as_old_for_Interface_ISharedObjectEvents = requireAssignableTo<TypeOnly<current.ISharedObjectEvents>, TypeOnly<old.ISharedObjectEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObjectKind": {"forwardCompat": false}
+ * "Interface_ISharedObjectKind": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedObjectKind = requireAssignableTo<TypeOnly<old.ISharedObjectKind<any>>, TypeOnly<current.ISharedObjectKind<any>>>
+declare type old_as_current_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<old.ISharedObjectKind<any>>, TypeOnly<current.ISharedObjectKind<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObjectKind": {"backCompat": false}
+ * "Interface_ISharedObjectKind": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedObjectKind = requireAssignableTo<TypeOnly<current.ISharedObjectKind<any>>, TypeOnly<old.ISharedObjectKind<any>>>
+declare type current_as_old_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<current.ISharedObjectKind<any>>, TypeOnly<old.ISharedObjectKind<any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedObject": {"forwardCompat": false}
+ * "Class_SharedObject": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_SharedObject = requireAssignableTo<TypeOnly<old.SharedObject>, TypeOnly<current.SharedObject>>
+declare type old_as_current_for_Class_SharedObject = requireAssignableTo<TypeOnly<old.SharedObject>, TypeOnly<current.SharedObject>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedObject": {"backCompat": false}
+ * "Class_SharedObject": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_SharedObject = requireAssignableTo<TypeOnly<current.SharedObject>, TypeOnly<old.SharedObject>>
+declare type current_as_old_for_Class_SharedObject = requireAssignableTo<TypeOnly<current.SharedObject>, TypeOnly<old.SharedObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_SharedObject": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_SharedObject = requireAssignableTo<TypeOnly<typeof current.SharedObject>, TypeOnly<typeof old.SharedObject>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedObjectCore": {"forwardCompat": false}
+ * "Class_SharedObjectCore": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_SharedObjectCore = requireAssignableTo<TypeOnly<old.SharedObjectCore>, TypeOnly<current.SharedObjectCore>>
+declare type old_as_current_for_Class_SharedObjectCore = requireAssignableTo<TypeOnly<old.SharedObjectCore>, TypeOnly<current.SharedObjectCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedObjectCore": {"backCompat": false}
+ * "Class_SharedObjectCore": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_SharedObjectCore = requireAssignableTo<TypeOnly<current.SharedObjectCore>, TypeOnly<old.SharedObjectCore>>
+declare type current_as_old_for_Class_SharedObjectCore = requireAssignableTo<TypeOnly<current.SharedObjectCore>, TypeOnly<old.SharedObjectCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_SharedObjectKind": {"backCompat": false}
+ * "ClassStatics_SharedObjectCore": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_SharedObjectKind = requireAssignableTo<TypeOnly<current.SharedObjectKind>, TypeOnly<old.SharedObjectKind>>
+declare type current_as_old_for_ClassStatics_SharedObjectCore = requireAssignableTo<TypeOnly<typeof current.SharedObjectCore>, TypeOnly<typeof old.SharedObjectCore>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_SharedObjectKind": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_SharedObjectKind = requireAssignableTo<TypeOnly<current.SharedObjectKind>, TypeOnly<old.SharedObjectKind>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SummarySerializer": {"forwardCompat": false}
+ * "Class_SummarySerializer": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_SummarySerializer = requireAssignableTo<TypeOnly<old.SummarySerializer>, TypeOnly<current.SummarySerializer>>
+declare type old_as_current_for_Class_SummarySerializer = requireAssignableTo<TypeOnly<old.SummarySerializer>, TypeOnly<current.SummarySerializer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SummarySerializer": {"backCompat": false}
+ * "Class_SummarySerializer": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_SummarySerializer = requireAssignableTo<TypeOnly<current.SummarySerializer>, TypeOnly<old.SummarySerializer>>
+declare type current_as_old_for_Class_SummarySerializer = requireAssignableTo<TypeOnly<current.SummarySerializer>, TypeOnly<old.SummarySerializer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_SummarySerializer": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_SummarySerializer = requireAssignableTo<TypeOnly<typeof current.SummarySerializer>, TypeOnly<typeof old.SummarySerializer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_ValueType": {"forwardCompat": false}
+ * "Enum_ValueType": {"forwardCompat": false}
  */
-declare type old_as_current_for_EnumDeclaration_ValueType = requireAssignableTo<TypeOnly<old.ValueType>, TypeOnly<current.ValueType>>
+declare type old_as_current_for_Enum_ValueType = requireAssignableTo<TypeOnly<old.ValueType>, TypeOnly<current.ValueType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_ValueType": {"backCompat": false}
+ * "Enum_ValueType": {"backCompat": false}
  */
-declare type current_as_old_for_EnumDeclaration_ValueType = requireAssignableTo<TypeOnly<current.ValueType>, TypeOnly<old.ValueType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_bindHandles": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_bindHandles = requireAssignableTo<TypeOnly<typeof old.bindHandles>, TypeOnly<typeof current.bindHandles>>
+declare type current_as_old_for_Enum_ValueType = requireAssignableTo<TypeOnly<current.ValueType>, TypeOnly<old.ValueType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_bindHandles": {"backCompat": false}
+ * "Function_bindHandles": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_bindHandles = requireAssignableTo<TypeOnly<typeof current.bindHandles>, TypeOnly<typeof old.bindHandles>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_createSharedObjectKind": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_createSharedObjectKind = requireAssignableTo<TypeOnly<typeof old.createSharedObjectKind>, TypeOnly<typeof current.createSharedObjectKind>>
+declare type current_as_old_for_Function_bindHandles = requireAssignableTo<TypeOnly<typeof current.bindHandles>, TypeOnly<typeof old.bindHandles>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createSharedObjectKind": {"backCompat": false}
+ * "Function_createSharedObjectKind": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_createSharedObjectKind = requireAssignableTo<TypeOnly<typeof current.createSharedObjectKind>, TypeOnly<typeof old.createSharedObjectKind>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_createSingleBlobSummary": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_createSingleBlobSummary = requireAssignableTo<TypeOnly<typeof old.createSingleBlobSummary>, TypeOnly<typeof current.createSingleBlobSummary>>
+declare type current_as_old_for_Function_createSharedObjectKind = requireAssignableTo<TypeOnly<typeof current.createSharedObjectKind>, TypeOnly<typeof old.createSharedObjectKind>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createSingleBlobSummary": {"backCompat": false}
+ * "Function_createSingleBlobSummary": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_createSingleBlobSummary = requireAssignableTo<TypeOnly<typeof current.createSingleBlobSummary>, TypeOnly<typeof old.createSingleBlobSummary>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_makeHandlesSerializable": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_makeHandlesSerializable = requireAssignableTo<TypeOnly<typeof old.makeHandlesSerializable>, TypeOnly<typeof current.makeHandlesSerializable>>
+declare type current_as_old_for_Function_createSingleBlobSummary = requireAssignableTo<TypeOnly<typeof current.createSingleBlobSummary>, TypeOnly<typeof old.createSingleBlobSummary>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_makeHandlesSerializable": {"backCompat": false}
+ * "Function_makeHandlesSerializable": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_makeHandlesSerializable = requireAssignableTo<TypeOnly<typeof current.makeHandlesSerializable>, TypeOnly<typeof old.makeHandlesSerializable>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_parseHandles": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_parseHandles = requireAssignableTo<TypeOnly<typeof old.parseHandles>, TypeOnly<typeof current.parseHandles>>
+declare type current_as_old_for_Function_makeHandlesSerializable = requireAssignableTo<TypeOnly<typeof current.makeHandlesSerializable>, TypeOnly<typeof old.makeHandlesSerializable>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_parseHandles": {"backCompat": false}
+ * "Function_parseHandles": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_parseHandles = requireAssignableTo<TypeOnly<typeof current.parseHandles>, TypeOnly<typeof old.parseHandles>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_serializeHandles": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_serializeHandles = requireAssignableTo<TypeOnly<typeof old.serializeHandles>, TypeOnly<typeof current.serializeHandles>>
+declare type current_as_old_for_Function_parseHandles = requireAssignableTo<TypeOnly<typeof current.parseHandles>, TypeOnly<typeof old.parseHandles>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_serializeHandles": {"backCompat": false}
+ * "Function_serializeHandles": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_serializeHandles = requireAssignableTo<TypeOnly<typeof current.serializeHandles>, TypeOnly<typeof old.serializeHandles>>
+declare type current_as_old_for_Function_serializeHandles = requireAssignableTo<TypeOnly<typeof current.serializeHandles>, TypeOnly<typeof old.serializeHandles>>

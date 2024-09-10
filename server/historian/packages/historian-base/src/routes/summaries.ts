@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
@@ -37,9 +36,9 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
@@ -102,8 +101,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getSummary(sha, useCache);
 	}
@@ -125,11 +124,11 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			initialUpload: initial,
 			storageName,
 			isEphemeralContainer,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -147,9 +146,9 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			allowDisabledTenant: true,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {

@@ -5,15 +5,17 @@
 
 import { strict as assert } from "assert";
 import {
+	type ChangesetLocalId,
 	DetachedFieldIndex,
 	type ForestRootId,
 	type IEditableForest,
+	type RevisionTag,
 	TreeStoredSchemaRepository,
 	initializeForest,
 	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../domains/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../json/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -22,6 +24,7 @@ import {
 	ModularChangeFamily,
 	type ModularChangeset,
 	ModularEditBuilder,
+	type TreeChunk,
 	buildForest,
 	fieldKinds,
 } from "../../feature-libraries/index.js";
@@ -38,7 +41,6 @@ import {
 	brand,
 	disposeSymbol,
 	idAllocatorFromMaxId,
-	nestedMapToFlatList,
 } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
@@ -57,7 +59,11 @@ const dataChanges: ModularChangeset[] = [];
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
 	dataChanges.push(change),
 );
-const modularBuilder = new ModularEditBuilder(modularFamily, () => {});
+const modularBuilder = new ModularEditBuilder(
+	modularFamily,
+	modularFamily.fieldKinds,
+	() => {},
+);
 
 // Side effects results in `dataChanges` being populated
 defaultEditor.optionalField({ parent: undefined, field: rootFieldKey }).set(undefined, false);
@@ -110,7 +116,7 @@ describe("SharedTreeChangeEnricher", () => {
 		fork.applyTipChange(removeRoot, revision1);
 
 		assert.deepEqual(jsonTreeFromForest(fork.forest), []);
-		assert.deepEqual(Array.from(fork.removedRoots.entries()), [{ id: { minor: 0 }, root: 0 }]);
+		assert.equal(Array.from(fork.removedRoots.entries()).length, 1);
 
 		// The original enricher should not have been modified
 		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
@@ -150,7 +156,11 @@ describe("SharedTreeChangeEnricher", () => {
 		// Check that the enriched change now sports the adequate refresher
 		assert.equal(enriched.changes[0].type, "data");
 		assert.equal(enriched.changes[0].innerChange.refreshers?.size, 1);
-		const refreshers = nestedMapToFlatList(enriched.changes[0].innerChange.refreshers);
+		const refreshers: [RevisionTag | undefined, ChangesetLocalId, TreeChunk][] =
+			enriched.changes[0].innerChange.refreshers
+				.toArray()
+				.map(([[revision, id], value]) => [revision, id, value]);
+
 		assert.equal(refreshers[0][0], undefined);
 		assert.equal(refreshers[0][1], 0);
 		const refreshedTree = mapCursorField(refreshers[0][2].cursor(), cursorToJsonObject);

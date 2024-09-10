@@ -31,6 +31,7 @@ import {
 	type UpPath,
 	type Value,
 	aboveRootPlaceholder,
+	deepCopyMapTree,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
 import {
@@ -39,7 +40,6 @@ import {
 	assertValidRange,
 	brand,
 	fail,
-	mapIterable,
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
@@ -59,18 +59,6 @@ function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTre
 	const newField: MutableMapTree[] = [];
 	mapTree.fields.set(key, newField);
 	return newField;
-}
-
-function deepCopyMapTree(mapTree: MapTree): MutableMapTree {
-	return {
-		...mapTree,
-		fields: new Map(
-			mapIterable(mapTree.fields.entries(), ([key, field]) => [
-				key,
-				field.map(deepCopyMapTree),
-			]),
-		),
-	};
 }
 
 /**
@@ -94,6 +82,7 @@ export class ObjectForest implements IEditableForest {
 
 	public constructor(
 		public readonly anchors: AnchorSet = new AnchorSet(),
+		public readonly additionalAsserts: boolean = false,
 		roots?: MapTree,
 	) {
 		this.#roots =
@@ -117,7 +106,7 @@ export class ObjectForest implements IEditableForest {
 	}
 
 	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		return new ObjectForest(anchors, this.roots);
+		return new ObjectForest(anchors, this.additionalAsserts, this.roots);
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -554,6 +543,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(anchors?: AnchorSet): ObjectForest {
-	return new ObjectForest(anchors);
+export function buildForest(
+	anchors?: AnchorSet,
+	additionalAsserts: boolean = false,
+): ObjectForest {
+	return new ObjectForest(anchors, additionalAsserts);
 }

@@ -10,6 +10,7 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingMethod,
+	breakingClass,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../util/breakable.js";
 import { validateUsageError } from "../utils.js";
@@ -82,5 +83,58 @@ Error: BreakFoo`;
 				return true;
 			},
 		);
+	});
+
+	class Base {
+		public baseRead(a: number): number {
+			return a;
+		}
+
+		// overridden, should not run
+		public read(a: number): number {
+			throw new Error("overridden");
+		}
+	}
+
+	@breakingClass
+	class Foo2 extends Base implements WithBreakable {
+		public readonly breaker: Breakable = new Breakable("Foo");
+
+		public willBreak: boolean = false;
+
+		@throwIfBroken
+		public override read(a: number): number {
+			return a;
+		}
+
+		public canBreak<T>(a: T): T {
+			if (this.willBreak) {
+				throw breakError;
+			}
+			return a;
+		}
+	}
+
+	it("breakingClass", () => {
+		const foo = new Foo2();
+
+		// Ensure wrapper preserves return value and arguments.
+		assert.equal(foo.read(1), 1);
+		assert.equal(foo.canBreak(1), 1);
+		assert.equal(foo.baseRead(1), 1);
+
+		foo.willBreak = true;
+
+		assert.throws(
+			() => foo.canBreak(1),
+			(error: Error) => {
+				assert.equal(error, breakError);
+				return true;
+			},
+		);
+
+		assert.throws(() => foo.read(1), validateUsageError(message));
+		assert.throws(() => foo.canBreak(1), validateUsageError(message));
+		assert.throws(() => foo.baseRead(1), validateUsageError(message));
 	});
 });

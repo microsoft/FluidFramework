@@ -90,4 +90,5 @@ extends:
     buildDirectory: server/gitssh
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false
+    enableDockerImagePull: false
     tagName: gitssh

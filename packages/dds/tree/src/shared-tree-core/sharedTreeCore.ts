@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -39,8 +39,8 @@ import {
 	brand,
 	Breakable,
 	type WithBreakable,
-	breakingMethod,
 	throwIfBroken,
+	breakingClass,
 } from "../util/index.js";
 
 import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
@@ -69,11 +69,9 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 }
 
 /**
- * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
- *
- * TODO: actually implement
- * TODO: is history policy a detail of what indexes are used, or is there something else to it?
+ * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
  */
+@breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	extends SharedObject
 	implements WithBreakable
@@ -95,6 +93,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 */
 	public get editor(): TEditor {
 		return this.getLocalBranch().editor;
+	}
+
+	/**
+	 * Gets the revision at the head of the trunk.
+	 */
+	protected get trunkHeadRevision(): RevisionTag {
+		return this.editManager.getTrunkHead().revision;
 	}
 
 	/**
@@ -209,7 +214,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 					change.newCommits.length === 1,
 					0x983 /* Unexpected number of commits when committing transaction */,
 				);
-				this.commitEnricher.prepareCommit(change.newCommits[0], true);
+				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
 			}
 		});
 		this.editManager.localBranch.on("afterChange", (change) => {
@@ -300,7 +305,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return builder.getSummaryTree();
 	}
 
-	@breakingMethod
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		const loadSummaries = this.summarizables.map(async (summaryElement) =>
 			summaryElement.load(
@@ -318,7 +322,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
 	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
-	@breakingMethod
+
 	private submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
@@ -366,7 +370,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine.onCommitSubmitted(commit);
 	}
 
-	@breakingMethod
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -402,7 +405,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
-	@breakingMethod
 	protected override reSubmitCore(
 		content: JsonCompatibleReadOnly,
 		localOpMetadata: unknown,
@@ -435,7 +437,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
-	@breakingMethod
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
 		assert(
 			!this.getLocalBranch().isTransacting(),
@@ -454,7 +455,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
-					gcNodes[id].push(route);
+					// Non null asserting here because we are creating an array at gcNodes[id] if it is undefined
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					gcNodes[id]!.push(route);
 				}
 			}
 		}

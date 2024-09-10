@@ -50,7 +50,7 @@ function includeTransform(content, options, config) {
 			const split = fileContents.split(/\r?\n/);
 			fileContents = split.slice(startLine, endLine).join("\n");
 		}
-		const section = formattedSectionText(fileContents.trim());
+		const section = formattedSectionText(fileContents.trim(), /* headingOptions: */ undefined);
 
 		return formattedEmbeddedContentBody(section);
 	} catch (error) {

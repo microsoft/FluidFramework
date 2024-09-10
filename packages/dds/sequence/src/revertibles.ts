@@ -21,9 +21,10 @@ import {
 	isMergeTreeDeltaRevertible,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
+	InteriorSequencePlace,
+	Side,
 } from "@fluidframework/merge-tree/internal";
 
-import { InteriorSequencePlace, Side } from "./intervalCollection.js";
 import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import { ISharedString, SharedStringSegment } from "./sharedString.js";

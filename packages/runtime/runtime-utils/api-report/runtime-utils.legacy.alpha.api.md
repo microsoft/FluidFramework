@@ -27,6 +27,9 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract readonly isAttached: boolean;
 }
 
+// @public
+export function isFluidHandle(value: unknown): value is IFluidHandle;
+
 // @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
@@ -62,7 +65,9 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 
 // @alpha (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
-    constructor();
+    constructor(params?: {
+        groupId?: string;
+    });
     // (undocumented)
     addAttachment(id: string): void;
     // (undocumented)

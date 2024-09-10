@@ -20,10 +20,12 @@ export {
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
+	getOrAddInMapLazy,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
 	type NestedMap,
+	type ReadonlyNestedMap,
 	SizedNestedMap,
 	populateNestedMap,
 	setInNestedMap,
@@ -68,6 +70,7 @@ export {
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
+	filterIterable,
 	type Mutable,
 	type Populated,
 	type RecursiveReadonly,
@@ -86,6 +89,7 @@ export {
 	transformObjectMap,
 	compareStrings,
 	find,
+	count,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
@@ -127,4 +131,10 @@ export {
 	fakeIdAllocator,
 } from "./idAllocator.js";
 
-export { Breakable, type WithBreakable, breakingMethod, throwIfBroken } from "./breakable.js";
+export {
+	Breakable,
+	type WithBreakable,
+	breakingMethod,
+	throwIfBroken,
+	breakingClass,
+} from "./breakable.js";

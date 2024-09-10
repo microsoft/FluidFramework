@@ -76,13 +76,13 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 	async function summarizeAndValidateDataStoreState(
 		summarizer: ISummarizer,
 		dataStoresAsHandles: string[],
-		gcEnabled: boolean,
+		gcAllowed: boolean,
 	) {
 		await provider.ensureSynchronized();
 		const summaryResult = await summarizeNow(summarizer);
 
 		const gcTreeExists = summaryResult.summaryTree.tree[gcTreeKey] !== undefined;
-		assert.strictEqual(gcTreeExists, gcEnabled, "GC tree in summary is not as expected.");
+		assert.strictEqual(gcTreeExists, gcAllowed, "GC tree in summary is not as expected.");
 
 		const dataStoreTrees = (summaryResult.summaryTree.tree[channelsTreeName] as ISummaryTree)
 			.tree;
@@ -193,7 +193,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		await summarizeAndValidateDataStoreState(
 			summarizer1,
 			dataStoresAsHandles,
-			true /* gcEnabled */,
+			true /* gcAllowed */,
 		);
 
 		// Generate another summary in which the summaries for all data stores are handles. This validates that the
@@ -202,7 +202,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		const summaryVersion = await summarizeAndValidateDataStoreState(
 			summarizer1,
 			dataStoresAsHandles,
-			true /* gcEnabled */,
+			true /* gcAllowed */,
 		);
 
 		// Create a new summarizer. It will have newer GC version that the above container.
@@ -237,7 +237,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		await summarizeAndValidateDataStoreState(
 			summarizer1,
 			dataStoresAsHandles,
-			true /* gcEnabled */,
+			true /* gcAllowed */,
 		);
 
 		// Generate another summary in which the summaries for all data stores are handles. This validates that the
@@ -246,7 +246,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		const summaryVersion = await summarizeAndValidateDataStoreState(
 			summarizer1,
 			dataStoresAsHandles,
-			true /* gcEnabled */,
+			true /* gcAllowed */,
 		);
 
 		// Create a new summarizer. It will have older GC version that the above container.

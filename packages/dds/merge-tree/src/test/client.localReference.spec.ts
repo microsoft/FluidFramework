@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -16,7 +17,7 @@ import {
 	setValidateRefCount,
 } from "../localReference.js";
 import { getSlideToSegoff } from "../mergeTree.js";
-import { toRemovalInfo } from "../mergeTreeNodes.js";
+import { toRemovalInfo, type ISegment } from "../mergeTreeNodes.js";
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { DetachedReferencePosition } from "../referencePositions.js";
@@ -30,7 +31,10 @@ function getSlideOnRemoveReferencePosition(
 	client: Client,
 	pos: number,
 	op: ISequencedDocumentMessage,
-) {
+): {
+	segment: ISegment | undefined;
+	offset: number | undefined;
+} {
 	let segoff = client.getContainingSegment(pos, {
 		referenceSequenceNumber: op.referenceSequenceNumber,
 		clientId: op.clientId,
@@ -539,11 +543,11 @@ describe("MergeTree.Client", () => {
 		// apply all the ops
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 
 		// regression: would fire 0x2be on zamboni during segment append
-		clients.all.forEach((c) => c.updateMinSeq(seq));
+		for (const c of clients.all) c.updateMinSeq(seq);
 	});
 
 	describe("avoids removing StayOnRemove references on local + remote concurrent delete", () => {
@@ -573,8 +577,8 @@ describe("MergeTree.Client", () => {
 			);
 			for (const ref of [localRefA, localRefB]) {
 				ref.callbacks = {
-					beforeSlide: () => assert.fail("Unexpected slide"),
-					afterSlide: () => assert.fail("Unexpected slide"),
+					beforeSlide: (): void => assert.fail("Unexpected slide"),
+					afterSlide: (): void => assert.fail("Unexpected slide"),
 				};
 			}
 		});
@@ -644,18 +648,18 @@ describe("MergeTree.Client", () => {
 	const tgCases = [
 		{
 			name: "when the ref is not in a tracking group",
-			addRef: () => {},
+			addRef: (): void => {},
 		},
 		{
 			name: "when the ref is in a TrackingGroup",
-			addRef: (ref: LocalReferencePosition) => {
+			addRef: (ref: LocalReferencePosition): void => {
 				const tg = new TrackingGroup();
 				tg.link(ref);
 			},
 		},
 		{
 			name: "when the ref is in an UnorderedTrackingGroup",
-			addRef: (ref: LocalReferencePosition) => {
+			addRef: (ref: LocalReferencePosition): void => {
 				const tg = new UnorderedTrackingGroup();
 				tg.link(ref);
 			},
@@ -663,7 +667,7 @@ describe("MergeTree.Client", () => {
 	];
 
 	describe("doesn't crash for remove ref then link to undefined", () => {
-		tgCases.forEach(({ name, addRef }) => {
+		for (const { name, addRef } of tgCases) {
 			it(name, () => {
 				const client1 = new TestClient();
 				const client2 = new TestClient();
@@ -695,6 +699,8 @@ describe("MergeTree.Client", () => {
 
 				segInfo.segment.localRefs.removeLocalRef(localRef);
 				assert(segInfo.segment.localRefs.empty);
+				// Cast is necessary because LocalReference is not exported, so we can't directly call link.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(localRef as any).link(undefined, 0, undefined);
 				assert(segInfo.segment.localRefs.empty);
 
@@ -703,11 +709,11 @@ describe("MergeTree.Client", () => {
 				assert.equal(localRef.getSegment(), undefined);
 				assert.equal(localRef.getOffset(), 0);
 			});
-		});
+		}
 	});
 
 	describe("doesn't crash for link to undefined then remove ref", () => {
-		tgCases.forEach(({ name, addRef }) => {
+		for (const { name, addRef } of tgCases) {
 			it(name, () => {
 				const client1 = new TestClient();
 				const client2 = new TestClient();
@@ -736,7 +742,8 @@ describe("MergeTree.Client", () => {
 
 				assert(segInfo.segment.localRefs);
 				assert(!segInfo.segment.localRefs.empty);
-
+				// Cast is necessary because LocalReference is not exported, so we can't directly call link
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(localRef as any).link(undefined, 0, undefined);
 				assert(segInfo.segment.localRefs.empty);
 				segInfo.segment.localRefs.removeLocalRef(localRef);
@@ -747,6 +754,6 @@ describe("MergeTree.Client", () => {
 				assert.equal(localRef.getSegment(), undefined);
 				assert.equal(localRef.getOffset(), 0);
 			});
-		});
+		}
 	});
 });

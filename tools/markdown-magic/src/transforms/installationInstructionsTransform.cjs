@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+const { defaultSectionHeadingLevel } = require("../constants.cjs");
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
 	resolveRelativePackageJsonPath,
+	parseHeadingOptions,
 } = require("../utilities.cjs");
 
 /**
@@ -15,16 +17,22 @@ const {
  *
  * @param {string} packageName - Name of the package (fully scoped).
  * @param {boolean} devDependency - Whether or not the package is intended to be installed as a dev dependency.
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
  */
-const generateInstallationInstructionsSection = (packageName, devDependency, includeHeading) => {
+const generateInstallationInstructionsSection = (packageName, devDependency, headingOptions) => {
 	const sectionBody = `To get started, install the package by running the following command:
 
 \`\`\`bash
 npm i ${packageName}${devDependency ? " -D" : ""}
 \`\`\``;
 
-	return formattedSectionText(sectionBody, includeHeading ? "Installation" : undefined);
+	return formattedSectionText(sectionBody, {
+		...headingOptions,
+		headingText: "Installation",
+	});
 };
 
 /**
@@ -34,15 +42,18 @@ npm i ${packageName}${devDependency ? " -D" : ""}
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
+ * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+ * Must be a positive integer.
+ * Default: {@link defaultSectionHeadingLevel}.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a dev dependency.
  * Default: `FALSE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function installationInstructionsTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
+	const headingOptions = parseHeadingOptions(options);
 	const devDependency = options.devDependency === "TRUE";
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
@@ -53,7 +64,7 @@ function installationInstructionsTransform(content, options, config) {
 
 	const packageName = packageMetadata.name;
 	return formattedGeneratedContentBody(
-		generateInstallationInstructionsSection(packageName, devDependency, includeHeading),
+		generateInstallationInstructionsSection(packageName, devDependency, headingOptions),
 	);
 }
 

@@ -5,8 +5,10 @@
 
 export {
 	type MapTreeNode,
+	type MapTreeSequenceField,
 	isMapTreeNode,
-	getOrCreateNode,
+	isMapTreeSequenceField,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
+	UnhydratedContext,
 } from "./mapTreeNode.js";
