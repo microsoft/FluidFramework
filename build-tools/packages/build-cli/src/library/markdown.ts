@@ -5,8 +5,12 @@
 
 import GithubSlugger from "github-slugger";
 import type { Heading, Html } from "mdast";
+import { toString } from "mdast-util-to-string";
 import type { Node } from "unist";
 import { visit } from "unist-util-visit";
+
+const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)(\s*)/gm;
+const SOFT_BREAK_REGEX = /$[^$]/gms;
 
 /**
  * Using the same instance for all slug generation ensures that no duplicate IDs are generated.
@@ -26,18 +30,40 @@ export function remarkHeadingLinks(): (tree: Node) => void {
 			if (node.children?.length > 0) {
 				const firstChild = node.children[0];
 				if (firstChild.type === "text") {
-					const headingValue = firstChild.value;
-					const slug = slugger.slug(headingValue);
+					const slug = slugger.slug(toString(node));
 					// We need to insert an Html node instead of a string, because raw
 					// strings will get markdown-escaped when rendered
 					const htmlNode: Html = {
 						type: "html",
 						value: `<a id="${slug}"></a>`,
 					};
-					// Insert the HTML node before the text node of the heading
+					// Insert the HTML node as the first child node of the heading
 					node.children.unshift(htmlNode);
 				}
 			}
+		});
+	};
+}
+
+/**
+ * A remarkjs/unist plugin that strips soft line breaks. This is a workaround for GitHub's inconsistent markdown
+ * rendering in GitHub Releases. According to spec, Markdown paragraphs are denoted by two line breaks, and single line
+ * breaks should be ignored. But in GitHub releases, single line breaks are rendered. This plugin removes the soft line
+ * breaks so that the markdown is correctly rendered.
+ */
+export function stripSoftBreaks(): (tree: Node) => void {
+	return (tree: Node): void => {
+		// strip soft breaks
+		visit(tree, "text", (node: { value: string }) => {
+			node.value = node.value.replace(SOFT_BREAK_REGEX, " ");
+		});
+
+		// preserve GitHub alerts; without this the line breaks in the alert are lost and it doesn't render correctly.
+		visit(tree, "blockquote", (node: Node) => {
+			// eslint-disable-next-line @typescript-eslint/no-shadow
+			visit(node, "text", (node: { value: string }) => {
+				node.value = node.value.replace(ADMONITION_REGEX, "$1\n");
+			});
 		});
 	};
 }
