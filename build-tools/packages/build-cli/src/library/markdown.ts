@@ -67,9 +67,9 @@ const SOFT_BREAK_REGEX = /$[^$]/gms;
 
 /**
  * A remarkjs/unist plugin that strips soft line breaks. This is a workaround for GitHub's inconsistent markdown
- * rendering in GitHub Releases. According to spec, Markdown paragraphs are denoted by two line breaks, and single line
- * breaks should be ignored. But in GitHub releases, single line breaks are rendered. This plugin removes the soft line
- * breaks so that the markdown is correctly rendered.
+ * rendering in GitHub Releases. According to CommonMark, Markdown paragraphs are denoted by two line breaks, and single
+ * line breaks should be ignored. But in GitHub releases, single line breaks are rendered. This plugin removes the soft
+ * line breaks so that the markdown is correctly rendered.
  */
 export function stripSoftBreaks(): (tree: Node) => void {
 	return (tree: Node): void => {
