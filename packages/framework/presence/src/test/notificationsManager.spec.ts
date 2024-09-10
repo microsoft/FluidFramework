@@ -22,8 +22,8 @@ describe("NotificationsManager", () => {
 export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
-	const statesWorkspace = presence.getNotifications("name:testNotificationWorkspace", {
-		notifications: Notifications<
+	const notificationsWorkspace = presence.getNotifications("name:testNotificationWorkspace", {
+		chat: Notifications<
 			{
 				msg: (message: string) => void;
 			},
@@ -35,7 +35,7 @@ export function checkCompiles(): void {
 		}),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	const map: typeof statesWorkspace = statesWorkspace;
+	const notifications: typeof notificationsWorkspace = notificationsWorkspace;
 
 	// TODO: inferences for Notifications additions are not working.
 	// They allow incorrect listener signatures and no named events
@@ -46,7 +46,7 @@ export function checkCompiles(): void {
 		},
 	});
 
-	map.add("my_events", NF);
+	notifications.add("my_events", NF);
 	// Below explicit generic specifaction should not be required.
 	// 	Notifications<
 	// 		{
@@ -70,10 +70,20 @@ export function checkCompiles(): void {
 		);
 	}
 
-	const notifications = map.notifications;
+	const chat = notifications.chat;
 
-	notifications.emit.broadcast("msg", "howdy");
+	chat.emit.broadcast("msg", "howdy");
 
-	const unattendedOff = notifications.events.on("unattendedNotification", logUnattended);
+	// Track clients that have started chatting
+	const chatClients = new Set<ISessionClient>();
+	const chatMsgOff = chat.notifications.on("msg", (client, _message) => {
+		if (!chatClients.has(client)) {
+			console.log(`client ${client.currentClientId()} has started chatting`);
+			chatClients.add(client);
+		}
+	});
+	chatMsgOff();
+
+	const unattendedOff = chat.events.on("unattendedNotification", logUnattended);
 	unattendedOff();
 }
