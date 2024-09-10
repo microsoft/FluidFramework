@@ -2,11 +2,11 @@
 
 ## Overview
 
-This package contains all the utilities required to run code coverage analysis on PRs. The tool uses the coverage reports generated in the PR build to run comparison against a baseline CI build for packages that have been updated on the PR. If the tool finds that the line coverage for a package has been impacted in the PR, it posts a comment on the PR showing the diff of the line coverage between baseline and PR. The tool also identifies if there are packages that have been updated in a PR but do not have associated coverage reports in PR or baseline build and calls that out in the PR comment.
+This package contains all the utilities required to run code coverage analysis on PRs. The tool uses the coverage reports generated in the PR build to run comparison against a baseline CI build for packages that have been updated on the PR. If the tool finds that the line or branch coverage for a package has been impacted in the PR, it posts a comment on the PR showing the diff of the line coverage between baseline and PR.
 
 ## Generating coverage reports
 
-Currently, the code coverage plugin only generates coverage reports for unit tests and uses that for analysis. You can generate these reports for your package locally by running `yarn test --to packageName --coverage`. Find more instructions [here](../../docs/developer-guide/testing/setup/AutomationCoverage.md).
+Currently, the code coverage plugin only generates coverage reports for tests and uses that for analysis. You can generate these reports for your package locally by running `npm run test:coverage` for the individual package or by running `npm run ci:test:mocha:coverage` from the root.
 
 ## Pieces of the code coverage analysis plugin
 
@@ -18,11 +18,11 @@ The code coverage plugin uses cobertura coverage files for running code coverage
 
 ### Identifying the baseline build
 
-Before running coverage comparison, code coverage plugin identifies the baseline build for the PR, much like the bundle-buddy. For example, if a pull request was targeting master, we would consider the baseline to be the master commit that the PR branch was based off of.
+Before running coverage comparison, code coverage plugin identifies the baseline build for the PR. For example, if a pull request was targeting main, we would consider the baseline to be the main commit that the PR branch was based off of.
 
 ### Downloading artifacts from baseline build
 
-Once the baseline build is identified, we download the build artifacts corresponding to the `test-coverage` artifact name for this build. We unzip the files, and extract the coverage metrics out of the coverage reports using the helper `getCoverageMetricsForBaseline`. Currently, we track `lineCoverage` and `branchCoverage` as our metrics for comparison. The final structure of the extracted metrics looks like
+Once the baseline build is identified, we download the build artifacts corresponding to the `codeCoverageAnalysis` artifact name for this build. We unzip the files, and extract the coverage metrics out of the coverage reports using the helper `getCoverageMetricsForBaseline`. Currently, we track `lineCoverage` and `branchCoverage` as our metrics for comparison. The final structure of the extracted metrics looks like
 
 ```typescript
 export type CoverageReport = {
@@ -59,16 +59,4 @@ export type CodeCoverageComparison = {
 };
 ```
 
-We run coverage analysis only for packages that have been touched in the PR. To identify packages that have been updated in a PR, we iterate through all commits on the PR and build a list of files that have changed. We then extract the package name from the list of files to get a list of packages that have been updated and pass that into the `compareCodeCoverage` utility. You can find how this is done inside the `getChangedPackages` utility.
-
-### Updating code coverage numbers when baseline CI finishes
-
-If the baseline CI has not finished while the coverage analysis step on the PR build runs, we mark the PR with a tag and a separate pipeline runs to make sure code coverage analysis comments are updated. This is done via the same mechanism as bundle-buddy. Please refer [here](../bundle-buddy/README.md#build-runs-master-ci-completes-to-update-pull-requests-pending-baseline-stats) for more details.
-
-## Code coverage dashboard
-
-Code coverage numbers for all packages are also pushed to an Azure dashboard. You can find the dashboard at [Code Coverage Metrics](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/dashboard/arm/subscriptions/9bce0b36-d6e6-43af-b290-d8b87e75b0e3/resourcegroups/dashboards/providers/microsoft.portal/dashboards/42a03746-f95c-4e58-a283-9499bebb02ee).
-
-## Add optional reviewer for a package when code coverage falls below threshold
-
-If the code coverage for a particular package drops below minimum threshold, we will be adding an optional reviewer to the PR who will review the PR and make sure the code coverage does not fall below threshold. Code coverage threshold can be configured at a package level. The minimum threshold configuration needs to be defined in codeCoverage.json file at the package root directory. reviewerId, minimumThresholdPercentage and _reviewerEmail needs to be filled in codeCoverage.json file. reviewerId would be the ado Id,_reviewerEmail would be the ado group and minimumThresholdPercentage would be the threshold percentage number below which the reviewer ado group should be added. To get ado Id from ado group, we can have a look at the PR in which that group is added, open inspect element in browser, navigate to network tab, click on the ado group and capture the response of the Identities network call which contains the ado Id of the group.
+If the code coverage diff (line or branch coverage) is more than a percentage point change, then we fail the build for the PR. We also fail the build in case the code coverage for the newly added package is less than 50%.
