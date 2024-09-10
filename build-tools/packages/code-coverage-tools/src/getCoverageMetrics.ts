@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Parser } from "xml2js";
-import JSZip from "jszip";
+import * as path from "path";
 import * as fs from "fs/promises";
 import { glob } from "glob";
-import * as path from "path";
+import JSZip from "jszip";
+import { Parser } from "xml2js";
 
 /**
  * The type for the coverage report, containing the name of the package, line coverage and branch coverage

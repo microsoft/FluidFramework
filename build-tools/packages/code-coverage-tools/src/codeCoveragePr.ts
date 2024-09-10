@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { compareCodeCoverage } from "./compareCodeCoverage";
-import { getCoverageMetricsForBaseline, getCoverageMetricsForPr } from "./getCoverageMetrics";
-import { getBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics";
-import { getAzureDevopsApi } from "./ADO/getAzureDevopsApi";
-import { getCommentForCodeCoverageDiff } from "./getCommentForCodeCoverage";
 import { codeCoverageConstants } from "./ADO/codeCoverageConstants";
+import { getAzureDevopsApi } from "./ADO/getAzureDevopsApi";
+import { getBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics";
 import type { CodeCoverageSummary } from "./codeCoverageCli";
+import { compareCodeCoverage } from "./compareCodeCoverage";
+import { getCommentForCodeCoverageDiff } from "./getCommentForCodeCoverage";
+import { getCoverageMetricsForBaseline, getCoverageMetricsForPr } from "./getCoverageMetrics";
 
 export type CoverageReport = {
 	packageName: string;

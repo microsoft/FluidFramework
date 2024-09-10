@@ -5,8 +5,8 @@
 
 import { execSync } from "child_process";
 import type { WebApi } from "azure-devops-node-api";
+import { type Build, BuildQueryOrder } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import JSZip from "jszip";
-import { BuildQueryOrder, type Build } from "azure-devops-node-api/interfaces/BuildInterfaces";
 
 export interface GetBuildOptions {
 	// The ADO project name

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { codeCoverageCli, CodeCoverageSummary } from "@fluidframework/code-coverage-tools";
+import { CodeCoverageSummary, codeCoverageCli } from "@fluidframework/code-coverage-tools";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
 // from using this file directly, and the js transpilation renames the danger

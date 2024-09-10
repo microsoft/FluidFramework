@@ -1,16 +1,16 @@
-import {
-	getBaselineCommit,
-	getSimpleComment,
-	Metric,
-	getPriorCommit,
-	getBuilds,
-} from "./utils";
+import type { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import type { WebApi } from "azure-devops-node-api";
-import { codeCoverageConstants } from "./codeCoverageConstants";
 import type JSZip from "jszip";
 import { getZipObjectFromArtifact } from "./ADOArtifactFileProvider";
+import { codeCoverageConstants } from "./codeCoverageConstants";
+import {
+	Metric,
+	getBaselineCommit,
+	getBuilds,
+	getPriorCommit,
+	getSimpleComment,
+} from "./utils";
 
 export interface IBaselineBuildMetrics {
 	baselineBuild: Build & { id: number };
