@@ -447,8 +447,7 @@ export async function codeCoverageTesting(
 			: tree.blobs[".attributes"];
 
 	// Non null asserting here because of the length check above
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash!);
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 
 	return attributes;
 }
