@@ -14,6 +14,8 @@ import { SchemaFactory, TreeViewConfiguration } from "./index.js";
  * TODO: only 100 object fields total are allowed by OpenAI right now, so larger schemas will fail faster if we have a bunch of schema types generated for type-specific edits.
  *
  * TODO: experiment using https://github.com/outlines-dev/outlines (and maybe a llama model) to avoid many of the annoyances of OpenAI's JSON Schema subset.
+ *
+ * TODO: without field count limits, we could generate a schema for valid paths from the root object to any field, but it's not clear how useful that would be.
  */
 
 // For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
