@@ -3,7 +3,7 @@ import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/Build
 import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import type JSZip from "jszip";
 import { getZipObjectFromArtifact } from "./ADOArtifactFileProvider";
-import { codeCoverageConstants } from "./codeCoverageConstants";
+import type { IADOCodeCoverageConstants } from "./constants";
 import {
 	Metric,
 	getBaselineCommit,
@@ -26,9 +26,12 @@ export interface IBaselineBuildMetrics {
  * Naive fallback generator provided for convenience.  It yields the commit directly
  * prior to the previous commit.
  */
-function* naiveFallbackCommitGenerator(startingCommit: string): Generator<string> {
+function* naiveFallbackCommitGenerator(
+	startingCommit: string,
+	codeCoverageConstants: IADOCodeCoverageConstants,
+): Generator<string> {
 	let currentCommit = startingCommit;
-	for (let i = 0; i < (codeCoverageConstants.buildsToSearch ?? 20); i++) {
+	for (let i = 0; i < (codeCoverageConstants.buildsToSearch ?? 50); i++) {
 		currentCommit = getPriorCommit(currentCommit);
 		yield currentCommit;
 	}
@@ -37,12 +40,12 @@ function* naiveFallbackCommitGenerator(startingCommit: string): Generator<string
 /**
  * Method that returns buildId and commit for the baseline build along with the commit hash for the current PR
  * @param metric - The metric for which the baseline build is being fetched, such as code coverage or bundle analysis
- * @param artifactName - The name of the artifact that contains the artifact of interest
+ * @param codeCoverageConstants - Code coverage constants for the project
  * @param adoConnection - The connection to the Azure DevOps API
  */
 export async function getBaselineBuildMetrics(
 	metric: Metric,
-	artifactName: string,
+	codeCoverageConstants: IADOCodeCoverageConstants,
 	adoConnection: WebApi,
 ): Promise<IBaselineBuildMetrics | string | undefined> {
 	let baselineCommit = getBaselineCommit();
@@ -50,7 +53,7 @@ export async function getBaselineBuildMetrics(
 
 	// Some circumstances may want us to try a fallback, such as when a commit does
 	// not trigger any CI loops.  Use fallback generator in that case.
-	const fallbackGen = naiveFallbackCommitGenerator(baselineCommit);
+	const fallbackGen = naiveFallbackCommitGenerator(baselineCommit, codeCoverageConstants);
 	const recentBuilds = await getBuilds(adoConnection, {
 		project: codeCoverageConstants.projectName,
 		definitions: [codeCoverageConstants.ciBuildDefinitionId],
@@ -114,10 +117,11 @@ export async function getBaselineBuildMetrics(
 		baselineArtifactZip = await getZipObjectFromArtifact(
 			adoConnection,
 			baselineBuild.id,
-			`${artifactName}_${baselineBuild.id}`,
+			codeCoverageConstants.codeCoverageAnalysisArtifactName,
+			codeCoverageConstants.projectName,
 		).catch((error) => {
 			console.log(
-				`Failed to fetch artifact: ${artifactName} from CI build. Cannot generate analysis at this time`,
+				`Failed to fetch artifact: ${codeCoverageConstants.codeCoverageAnalysisArtifactName} from CI build. Cannot generate analysis at this time`,
 			);
 			console.log(`Error unzipping object from artifact: ${error.message}`);
 			console.log(`Error stack: ${error.stack}`);

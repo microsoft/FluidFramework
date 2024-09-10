@@ -5,14 +5,28 @@
 ```ts
 
 // @public
-export function codeCoverageCli(adoToken: string, coverageReportsFolder: string): Promise<CodeCoverageSummary>;
+export function codeCoverageCli(adoToken: string, coverageReportsFolder: string, codeCoverageConstants: IADOCodeCoverageConstants): Promise<CodeCoverageSummary>;
 
 // @public
 export interface CodeCoverageSummary {
-    // (undocumented)
     commentMessage: string;
-    // (undocumented)
     failBuild: boolean;
+}
+
+// @public (undocumented)
+export interface IADOCodeCoverageConstants {
+    // (undocumented)
+    buildsToSearch?: number;
+    // (undocumented)
+    ciBuildDefinitionId: number;
+    // (undocumented)
+    codeCoverageAnalysisArtifactName: string;
+    // (undocumented)
+    orgUrl: string;
+    // (undocumented)
+    projectName: string;
+    // (undocumented)
+    projectRepoGuid: string;
 }
 
 // (No @packageDocumentation comment for this package)

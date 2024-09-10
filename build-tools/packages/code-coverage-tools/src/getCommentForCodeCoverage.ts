@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { IBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics";
 import type { CodeCoverageSummary } from "./codeCoverageCli";
 import type { CodeCoverageComparison } from "./compareCodeCoverage";
 
-const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline coverage</th><th>Compare coverage</th><th>Coverage Diff</th></tr>`;
+const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline coverage</th><th>PR coverage</th><th>Coverage Diff</th></tr>`;
 
 /**
  * Method that returns the comment to be posted on PRs about code coverage
@@ -17,6 +18,7 @@ const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline c
  */
 export const getCommentForCodeCoverageDiff = async (
 	codeCoverageComparisonReport: CodeCoverageComparison[],
+	baselineBuildInfo: IBaselineBuildMetrics,
 ): Promise<CodeCoverageSummary> => {
 	// Find new packages that do not have test setup and are being impacted by changes in the PR
 	const newPackagesIdentifiedByCodeCoverage = codeCoverageComparisonReport.filter(
@@ -38,10 +40,11 @@ export const getCommentForCodeCoverageDiff = async (
 
 	const packagesWithNotableRegressions = existingPackagesWithCoverageChange.filter(
 		(codeCoverageReport) =>
-			codeCoverageReport.branchCoverageDiff < -0.5 ||
-			codeCoverageReport.lineCoverageDiff < -0.5,
+			codeCoverageReport.branchCoverageDiff < -1.0 ||
+			codeCoverageReport.lineCoverageDiff < -1.0,
 	);
 
+	// Code coverage for the newly added package should be less than 50% to fail the build
 	const newPackagesWithNotableRegressions = newPackagesIdentifiedByCodeCoverage.filter(
 		(codeCoverageReport) =>
 			codeCoverageReport.branchCoverageInPr < 50 || codeCoverageReport.lineCoverageInPr < 50,
@@ -62,7 +65,7 @@ export const getCommentForCodeCoverageDiff = async (
 		existingPackagesWithCoverageChange.length === 0 &&
 		newPackagesIdentifiedByCodeCoverage.length === 0
 	) {
-		coverageSummaryForImpactedPackages = `No packages impacted by the change`;
+		coverageSummaryForImpactedPackages = `No packages impacted by the change.`;
 	}
 
 	if (existingPackagesWithCoverageChange.length > 0) {
@@ -81,14 +84,16 @@ export const getCommentForCodeCoverageDiff = async (
 			title,
 			coverageSummaryForImpactedPackages,
 			coverageSummaryForNewPackages,
-			getSummaryFooter(),
+			getSummaryFooter(baselineBuildInfo),
 		].join("\n\n"),
 		failBuild,
 	};
 };
 
-const getSummaryFooter = () => {
-	return `Happy Testing!`;
+const getSummaryFooter = (baselineBuildInfo: IBaselineBuildMetrics) => {
+	return `<hr><p>Baseline commit: ${
+		baselineBuildInfo.baselineCommit
+	} <br>Baseline build: ${baselineBuildInfo.baselineBuild.id}</p><br> Happy Testing!!`;
 };
 
 const getCodeCoverageSummary = (codeCoverageComparisonReport: CodeCoverageComparison[]) => {

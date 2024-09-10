@@ -6,7 +6,6 @@
 import assert from "assert";
 import { WebApi } from "azure-devops-node-api";
 import JSZip from "jszip";
-import { codeCoverageConstants } from "./codeCoverageConstants";
 import { unzipStream } from "./utils";
 
 /**
@@ -14,11 +13,13 @@ import { unzipStream } from "./utils";
  * @param adoConnection - A connection to the ADO api.
  * @param buildNumber - The ADO build number that contains the artifact we wish to fetch
  * @param artifactName - Name of the artifact to download
+ * @param projectName - Name of the project that contains the build
  */
 export async function getZipObjectFromArtifact(
 	adoConnection: WebApi,
 	buildNumber: number,
 	artifactName: string,
+	projectName: string,
 ): Promise<JSZip> {
 	const buildApi = await adoConnection.getBuildApi();
 
@@ -31,7 +32,7 @@ export async function getZipObjectFromArtifact(
 	const originalCreateAcceptHeader = buildApi.createAcceptHeader;
 	buildApi.createAcceptHeader = (type: string): string => type;
 	const artifactStream = await buildApi.getArtifactContentZip(
-		codeCoverageConstants.projectName,
+		projectName,
 		buildNumber,
 		artifactName,
 	);

@@ -5,5 +5,4 @@
 
 export { getAzureDevopsApi } from "./getAzureDevopsApi";
 export { IADOCodeCoverageConstants } from "./constants";
-export { codeCoverageConstants } from "./codeCoverageConstants";
 export { getBaselineBuildMetrics } from "./getBaselineBuildMetrics";

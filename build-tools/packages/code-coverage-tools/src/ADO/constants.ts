@@ -13,11 +13,6 @@ export interface IADOCodeCoverageConstants {
 	// The ID for the build that runs against main when PRs are merged
 	ciBuildDefinitionId: number;
 
-	// The ID for the build that runs to validate PRs
-	// Used to update tagged PRs on CI build completion
-	// Note: Assumes CI and PR builds both run in the same org/project
-	prBuildDefinitionId?: number;
-
 	// The name of the build artifact that contains the bundle size artifacts
 	codeCoverageAnalysisArtifactName: string;
 

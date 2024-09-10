@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { codeCoverageConstants } from "./ADO/codeCoverageConstants";
+import { IADOCodeCoverageConstants } from "./ADO/constants";
 import { getAzureDevopsApi } from "./ADO/getAzureDevopsApi";
 import { getBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics";
 import type { CodeCoverageSummary } from "./codeCoverageCli";
@@ -21,16 +21,18 @@ export type CoverageReport = {
  * Post the code coverage summary on the PRs
  * @param adoToken ADO token
  * @param coverageReportsFolder The path to where the coverage reports exist
+ * @param codeCoverageConstants - The code coverage constants required for the code coverage analysis
  */
 export const postCodeCoverageSummary = async (
 	adoToken: string,
 	coverageReportsFolder: string,
+	codeCoverageConstants: IADOCodeCoverageConstants,
 ): Promise<CodeCoverageSummary> => {
 	const adoConnection = getAzureDevopsApi(adoToken, codeCoverageConstants.orgUrl);
 
 	const baselineBuildInfo = await getBaselineBuildMetrics(
 		"codeCoverage",
-		codeCoverageConstants.codeCoverageAnalysisArtifactName,
+		codeCoverageConstants,
 		adoConnection,
 	);
 
@@ -52,5 +54,5 @@ export const postCodeCoverageSummary = async (
 		coverageMetricsForPr,
 	);
 
-	return getCommentForCodeCoverageDiff(codeCoverageComparison);
+	return getCommentForCodeCoverageDiff(codeCoverageComparison, baselineBuildInfo);
 };

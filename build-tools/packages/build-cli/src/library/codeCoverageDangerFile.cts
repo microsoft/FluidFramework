@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { CodeCoverageSummary, codeCoverageCli } from "@fluidframework/code-coverage-tools";
+import {
+	CodeCoverageSummary,
+	IADOCodeCoverageConstants,
+	codeCoverageCli,
+} from "@fluidframework/code-coverage-tools";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
 // from using this file directly, and the js transpilation renames the danger
@@ -50,6 +54,15 @@ declare const danger: {
 
 const localCodeCoverageReportPath = "./nyc/report";
 
+export const codeCoverageConstants: IADOCodeCoverageConstants = {
+	orgUrl: "https://dev.azure.com/fluidframework",
+	projectName: "public",
+	ciBuildDefinitionId: 48,
+	projectRepoGuid: "203843667",
+	codeCoverageAnalysisArtifactName: "codeCoverageAnalysis",
+	buildsToSearch: 50,
+};
+
 // Unique identifier for the comment
 const commentIdentifier = "<!-- DANGER_TASK_1_For_Code_Coverage_Analysis-->";
 
@@ -62,20 +75,13 @@ export async function codeCoverageCompare(): Promise<void> {
 		throw new Error("no env github api token provided");
 	}
 
-	if (process.env.PULL_REQUEST_ID === undefined) {
-		throw new Error("no env pull request id provided");
-	}
-
-	if (process.env.BUILD_ID === undefined) {
-		throw new Error("no env build id provided");
-	}
-
 	const report: CodeCoverageSummary = await codeCoverageCli(
 		process.env.ADO_API_TOKEN,
 		localCodeCoverageReportPath,
+		codeCoverageConstants,
 	);
 	if (report.failBuild) {
-		fail(`Code coverage failed`);
+		fail(`Code coverage failed: ${report.commentMessage}`);
 	}
 	const messageContent = `${commentIdentifier}\n${report.commentMessage}`;
 	const comments = await danger.github.api.issues.listComments({
