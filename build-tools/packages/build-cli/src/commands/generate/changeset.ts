@@ -227,55 +227,52 @@ export default class GenerateChangesetCommand extends BaseCommand<
 
 		const packageChoices: Choice[] = [];
 
-		// Only populate the package choices if there are changes. If there are NO changes, then
-		if (!noChanges) {
-			// Handle the selected release group first so it shows up in the list first.
-			packageChoices.push(
-				{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
-				...monorepo.packages
-					.filter((pkg) => all || noChanges || isIncludedByDefault(pkg))
-					.sort((a, b) => packageComparer(a, b, changedPackages))
-					.map((pkg) => {
-						const changed = changedPackages.some((cp) => cp.name === pkg.name);
-						return {
-							title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
-							value: pkg,
-							selected: changed,
-						};
-					}),
-				// Next list independent packages in a group
-				{ title: chalk.bold("Independent Packages"), heading: true, disabled: true },
-			);
+		// Handle the selected release group first so it shows up in the list first.
+		packageChoices.push(
+			{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
+			...monorepo.packages
+				.filter((pkg) => all || noChanges || isIncludedByDefault(pkg))
+				.sort((a, b) => packageComparer(a, b, changedPackages))
+				.map((pkg) => {
+					const changed = changedPackages.some((cp) => cp.name === pkg.name);
+					return {
+						title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
+						value: pkg,
+						selected: changed,
+					};
+				}),
+			// Next list independent packages in a group
+			{ title: chalk.bold("Independent Packages"), heading: true, disabled: true },
+		);
 
-			for (const pkg of context.independentPackages) {
-				if (!all && !isIncludedByDefault(pkg)) {
-					continue;
-				}
-				const changed = changedPackages.some((cp) => cp.name === pkg.name);
-				packageChoices.push({
-					title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
-					value: pkg,
-					selected: changed,
-				});
+		for (const pkg of context.independentPackages) {
+			if (!all && !isIncludedByDefault(pkg)) {
+				continue;
 			}
+			const changed = changedPackages.some((cp) => cp.name === pkg.name);
+			packageChoices.push({
+				title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
+				value: pkg,
+				selected: changed,
+			});
+		}
 
-			// Finally list the remaining (unchanged) release groups and their packages
-			for (const rg of context.repo.releaseGroups.values()) {
-				if (rg.name !== releaseGroup) {
-					packageChoices.push(
-						{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
-						...rg.packages
-							.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-							.sort((a, b) => packageComparer(a, b, changedPackages))
-							.map((pkg) => {
-								return {
-									title: pkg.name,
-									value: pkg,
-									selected: false,
-								};
-							}),
-					);
-				}
+		// Finally list the remaining (unchanged) release groups and their packages
+		for (const rg of context.repo.releaseGroups.values()) {
+			if (rg.name !== releaseGroup) {
+				packageChoices.push(
+					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
+					...rg.packages
+						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
+						.sort((a, b) => packageComparer(a, b, changedPackages))
+						.map((pkg) => {
+							return {
+								title: pkg.name,
+								value: pkg,
+								selected: false,
+							};
+						}),
+				);
 			}
 		}
 
