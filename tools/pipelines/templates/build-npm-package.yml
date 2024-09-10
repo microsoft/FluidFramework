@@ -423,8 +423,12 @@ extends:
                             ls ${{ parameters.buildDirectory }}
                             echo "List files 4"
                             ls $(Build.ArtifactStagingDirectory)
-                            echo "List files 4"
+                            echo "List files 5"
                             ls ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                            echo "List files 6"
+                            ls ${{ parameters.buildDirectory }}/nyc/report/*/*.xml
+                            echo "List files 7"
+                            ls ${{ parameters.buildDirectory }}/nyc/report
                             echo "Now in directory: $(pwd)"
 
 
