@@ -204,3 +204,5 @@ export {
 	type TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view/index.js";
+
+export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";
