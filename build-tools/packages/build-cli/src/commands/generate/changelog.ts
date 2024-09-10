@@ -99,6 +99,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			if (Object.keys(changeset.metadata).length === 0) {
 				this.info(`Removing changeset not included in changelog: ${changeset.sourceFile}`);
 				toWriteOrDelete.push(rm(changeset.sourceFile));
+				continue;
 			}
 
 			const metadata = Object.entries(changeset.metadata).map((entry) => {
