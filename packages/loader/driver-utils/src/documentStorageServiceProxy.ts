@@ -27,7 +27,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		this._policies = policies;
 	}
 
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this._policies ?? this.internalStorageService.policies;
 	}
 
