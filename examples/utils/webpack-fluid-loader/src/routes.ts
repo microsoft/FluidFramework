@@ -76,7 +76,15 @@ function getTestTenantCredentials(mode: "spo" | "spo-df"): {
 const beforeMiddlewares: Middleware[] = [
 	{
 		path: "/",
-		middleware: ((req, res) => res.redirect("/new")) as ExpressRequestHandler,
+		middleware: ((req, res, next) => {
+			// For some reason, this middleware is matching for other paths that it shouldn't.
+			// E.g. matching for "/new", causing infinite redirect.
+			if (req.originalUrl === "/") {
+				res.redirect("/new");
+			} else {
+				next();
+			}
+		}) as ExpressRequestHandler,
 	},
 ];
 
@@ -165,7 +173,7 @@ const makeAfterMiddlewares = (
 		const clientConfig = getPublicClientConfig();
 
 		readyP = async (req: express.Request, res: express.Response) => {
-			if (req.url === "/favicon.ico") {
+			if (req.baseUrl === "/favicon.ico") {
 				// ignore these
 				return false;
 			}
@@ -308,7 +316,7 @@ const makeAfterMiddlewares = (
 				) {
 					// The `id` is not for a new document. We assume the user is trying to load an existing document and
 					// redirect them to - http://localhost:8080/doc/<id>.
-					const reqUrl = req.url.replace(documentId, `doc/${documentId}`);
+					const reqUrl = req.baseUrl.replace(documentId, `doc/${documentId}`);
 					const newUrl = `${getThisOrigin(options)}${reqUrl}`;
 					res.redirect(newUrl);
 					return;
