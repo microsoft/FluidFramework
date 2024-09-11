@@ -39,7 +39,7 @@ This is done by calling `viewWith` on the `SharedTree` with your tree configurat
 
 ```typescript
 const treeConfiguration = new TreeViewConfiguration(
-	{ schema: RootSchema }
+	{ schema: TodoList }
 )
 
 const appData = container.initialObjects.appData.viewWith(
@@ -48,6 +48,7 @@ const appData = container.initialObjects.appData.viewWith(
 ```
 
 The tree configuration takes in a schema for the root of the tree which will need to be defined by your application.
+This example uses the `TodoList` schema, which we define in the next section, as the root schema.
 
 ## Defining a Schema
 
