@@ -82,13 +82,10 @@ export const compareCodeCoverage = (
 			continue;
 		}
 
-		let lineCoverageInPr = 0;
+		const lineCoverageInPr = packageInPrReport.lineCoverage;
 		let lineCoverageInBaseline = 0;
-		let branchCoverageInPr = 0;
+		const branchCoverageInPr = packageInPrReport.branchCoverage;
 		let branchCoverageInBaseline = 0;
-
-		lineCoverageInPr = packageInPrReport.lineCoverage;
-		branchCoverageInPr = packageInPrReport.branchCoverage;
 
 		// Find the package in baseline report and update metrics
 		const packageInBaselineReport = baselineCoverageReport.find(

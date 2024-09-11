@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { getZipObjectFromArtifact } from "@fluidframework/bundle-size-tools";
 import type { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type JSZip from "jszip";
-import { getZipObjectFromArtifact } from "./ADOArtifactFileProvider.js";
 import type { IADOCodeCoverageConstants } from "./constants.js";
 import {
 	Metric,
@@ -128,9 +128,9 @@ export async function getBaselineBuildMetrics(
 		// eslint-disable-next-line no-await-in-loop
 		baselineArtifactZip = await getZipObjectFromArtifact(
 			adoConnection,
+			codeCoverageConstants.projectName,
 			baselineBuild.id,
 			codeCoverageConstants.codeCoverageAnalysisArtifactName,
-			codeCoverageConstants.projectName,
 		).catch((error: Error) => {
 			console.log(
 				`Failed to fetch artifact: ${codeCoverageConstants.codeCoverageAnalysisArtifactName} from CI build. Cannot generate analysis at this time`,

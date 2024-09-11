@@ -67,7 +67,7 @@ export async function codeCoverageCompare(): Promise<void> {
 		codeCoverageAnalysisArtifactName: "codeCoverageAnalysis",
 		buildsToSearch: 50,
 	};
-	const { codeCoverageCli } = await import("../codeCoverageAnalysisTool/codeCoverageCli.js");
+	const { codeCoverageCli } = await import("../codeCoverage/codeCoverageCli.js");
 	const report = await codeCoverageCli(
 		process.env.ADO_API_TOKEN,
 		localCodeCoverageReportPath,
