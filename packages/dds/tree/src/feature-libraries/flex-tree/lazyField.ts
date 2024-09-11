@@ -13,6 +13,7 @@ import {
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	type TreeFieldStoredSchema,
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
@@ -51,7 +52,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
-import { unboxedUnion } from "./unboxed.js";
+import { unboxedFlexNode } from "./unboxed.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
@@ -133,6 +134,10 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 	}
 	public readonly key: FieldKey;
 
+	public get schema(): TreeFieldStoredSchema {
+		return this.flexSchema.stored;
+	}
+
 	/**
 	 * If this field ends its lifetime before the Anchor does, this needs to be invoked to avoid a double free
 	 * if/when the Anchor is destroyed.
@@ -162,20 +167,11 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
 		assert(
-			this.context.schema.policy.fieldKinds.get(kind.identifier) === kind,
+			this.context.flexSchema.policy.fieldKinds.get(kind.identifier) === kind,
 			"Narrowing must be done to a kind that exists in this context",
 		);
 
-		return this.schema.kind === (kind as unknown);
-	}
-
-	public isExactly<TSchema extends FlexFieldSchema>(schema: TSchema): boolean {
-		assert(
-			this.context.schema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
-			0x77c /* Narrowing must be done to a kind that exists in this context */,
-		);
-
-		return this.schema.equals(schema);
+		return this.flexSchema.kind === (kind as unknown);
 	}
 
 	public get parent(): FlexTreeNode | undefined {
@@ -208,7 +204,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 
@@ -234,7 +230,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 
@@ -284,7 +280,7 @@ export class LazySequence
 		}
 
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 	public get asArray(): readonly FlexTreeUnknownUnboxed[] {
@@ -357,20 +353,6 @@ export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRe
 	}
 }
 
-export class LazyIdentifierField
-	extends ReadonlyLazyValueField
-	implements FlexTreeRequiredField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-}
-
 export class LazyOptionalField
 	extends LazyField<typeof FieldKinds.optional>
 	implements FlexTreeOptionalField
@@ -422,7 +404,7 @@ const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
-	[FieldKinds.identifier, LazyIdentifierField],
+	[FieldKinds.identifier, LazyValueField],
 ];
 
 const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);

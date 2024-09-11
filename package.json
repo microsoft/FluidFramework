@@ -154,7 +154,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
-		"@changesets/cli": "^2.26.1",
+		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
 		"@fluid-tools/build-cli": "^0.44.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
@@ -388,7 +388,7 @@
 			"allowedVersions": {
 				"react": "17.0.2",
 				"react-dom": "17.0.2",
-				"webpack": "^5.82.0"
+				"webpack": "^5.94.0"
 			},
 			"ignoreMissing": [
 				"@types/node",

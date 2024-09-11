@@ -13,6 +13,7 @@ import { merge } from "ts-deepmerge";
 // Note: in more recent versions of type-fest, this type has been replaced with "Tagged"
 // We are using version 2.x because of this issue: https://github.com/sindresorhus/type-fest/issues/547
 import type { Opaque } from "type-fest";
+
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
 

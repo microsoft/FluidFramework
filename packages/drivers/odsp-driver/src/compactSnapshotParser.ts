@@ -215,6 +215,7 @@ function readTreeSection(node: NodeCore): {
 			if (records.groupId !== undefined) {
 				const groupId = getStringInstance(records.groupId, "groupId should be a string");
 				trees[path].groupId = groupId;
+				treeStructureCountWithGroupId++;
 			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
 			treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
@@ -240,7 +241,8 @@ function readSnapshotSection(node: NodeTypes): {
 
 	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
 	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-	const { snapshotTree, slowTreeStructureCount } = readTreeSection(records.treeNodes);
+	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
+		readTreeSection(records.treeNodes);
 	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
