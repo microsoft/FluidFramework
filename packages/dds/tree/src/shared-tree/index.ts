@@ -53,4 +53,5 @@ export {
 	type Revertible,
 	RevertibleStatus,
 	type RevertibleFactory,
+	type RervertibleTarget,
 } from "./revertible.js";

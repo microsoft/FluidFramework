@@ -58,6 +58,7 @@ export {
 	type Revertible,
 	RevertibleStatus,
 	type RevertibleFactory,
+	type RervertibleTarget,
 } from "./shared-tree/index.js";
 
 export {

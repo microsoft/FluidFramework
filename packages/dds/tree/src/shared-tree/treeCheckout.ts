@@ -54,7 +54,12 @@ import {
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { type IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
-import { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";
+import {
+	type Revertible,
+	RevertibleStatus,
+	type RevertibleFactory,
+	type RervertibleTarget,
+} from "./revertible.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -470,9 +475,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const { change, revision } = commit;
 			let withinEventContext = true;
 
-			// eslint-disable-next-line @typescript-eslint/no-this-alias
-			const outerThis = this;
-
 			const getRevertible = hasSchemaChange(change)
 				? undefined
 				: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
@@ -511,8 +513,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									revertible.dispose();
 								}
 							},
-							fork(view: TreeCheckout): Revertible {
-								return outerThis.forkRevertible(view, commit, data);
+							fork: (view: RervertibleTarget): Revertible => {
+								return this.forkRevertible(view, commit, data);
 							},
 							dispose: () => {
 								if (revertible.status === RevertibleStatus.Disposed) {
@@ -736,7 +738,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * Recursively creates a revertible for the given commit and its ancestors.
 	 */
 	private forkRevertible(
-		view: TreeCheckout,
+		view: RervertibleTarget,
 		commit: GraphCommit<SharedTreeChange>,
 		data: CommitMetadata,
 	): Revertible {
@@ -764,7 +766,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					forked.dispose();
 				}
 			},
-			fork(newView: TreeCheckout): Revertible {
+			fork(newView: RervertibleTarget): Revertible {
 				return forkRevertibleFunction(newView.fork(), commit, data);
 			},
 			dispose: () => {
@@ -773,7 +775,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						"Unable to dispose a revertible that has already been disposed.",
 					);
 				}
-				this.disposeRevertible(forked, commit.revision);
+				view.disposeRevertible(forked, commit.revision);
 				// onRevertibleDisposed?.(revertible);
 			},
 		};
