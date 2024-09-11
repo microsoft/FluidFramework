@@ -111,7 +111,7 @@ const getCodeCoverageSummaryForPackages = (coverageReport: CodeCoverageCompariso
 	const metrics = codeCoverageDetailsHeader + getMetricRows(coverageReport);
 
 	return `<details><summary><b>${getColorGlyph(coverageReport.branchCoverageDiff)} ${
-		coverageReport.packageName
+		coverageReport.packagePath
 	}:</b> ${formatDiff(coverageReport.branchCoverageDiff)}</summary>${metrics}</table></details>`;
 };
 

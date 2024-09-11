@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { execSync } from "node:child_process";
+import execa from "execa";
 import type { WebApi } from "azure-devops-node-api";
 import {
 	type Build,
 	BuildQueryOrder,
 } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
-import JSZip from "jszip";
 
 export interface GetBuildOptions {
 	// The ADO project name
@@ -29,13 +28,15 @@ export interface GetBuildOptions {
  * Gets the commit in master that the current branch is based on.
  */
 export function getBaselineCommit(): string {
-	return execSync(`git merge-base microsoft/${process.env.TARGET_BRANCH_NAME} HEAD`)
-		.toString()
-		.trim();
+	const result = execa.commandSync(
+		`git merge-base microsoft/${process.env.TARGET_BRANCH_NAME} HEAD`,
+	);
+	return result.stdout.toString().trim();
 }
 
 export function getPriorCommit(baseCommit: string): string {
-	return execSync(`git log --pretty=format:"%H" -1 ${baseCommit}~1`).toString().trim();
+	const result = execa.commandSync(`git log --pretty=format:"%H" -1 ${baseCommit}~1`);
+	return result.stdout.toString().trim();
 }
 
 /**
@@ -126,24 +127,4 @@ function exhaustiveTypeCheck(value: never): Error {
 	return new Error(
 		`Value ${value} was not exhaustively type checked, this function should not be run at runtime`,
 	);
-}
-
-async function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
-	return new Promise((resolve, reject) => {
-		/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-		const data: any[] = [];
-		stream.on("data", (chunk) => {
-			data.push(chunk);
-		});
-		stream.on("close", () => {
-			resolve(Buffer.concat(data));
-		});
-		stream.on("error", (error) => {
-			reject(error);
-		});
-	});
-}
-
-export async function unzipStream(stream: NodeJS.ReadableStream): Promise<JSZip> {
-	return JSZip.loadAsync(await readStreamAsBuffer(stream));
 }

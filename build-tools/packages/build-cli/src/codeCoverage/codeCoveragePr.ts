@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
 import { type IADOCodeCoverageConstants } from "./ADO/constants.js";
-import { getAzureDevopsApi } from "./ADO/getAzureDevopsApi.js";
 import { getBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics.js";
 import type { CodeCoverageSummary } from "./codeCoverageCli.js";
 import { compareCodeCoverage } from "./compareCodeCoverage.js";
@@ -13,12 +13,6 @@ import {
 	getCoverageMetricsForBaseline,
 	getCoverageMetricsForPr,
 } from "./getCoverageMetrics.js";
-
-export interface CoverageReport {
-	packageName: string;
-	lineCoverage: number;
-	branchCoverage: number;
-}
 
 /**
  * Post the code coverage summary on the PRs

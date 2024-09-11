@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IADOCodeCoverageConstants } from "./ADO/index.js";
+import type { IADOCodeCoverageConstants } from "./ADO/constants.js";
 import { postCodeCoverageSummary } from "./codeCoveragePr.js";
 
 /**

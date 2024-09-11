@@ -4,6 +4,7 @@
  */
 
 import { execSync } from "node:child_process";
+import execa from "execa";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Flags } from "@oclif/core";
@@ -26,6 +27,11 @@ export default class RunCodeCoverageStats extends BaseCommand<typeof RunCodeCove
 	public async run(): Promise<void> {
 		const scriptPath = path.join(__dirname, "../../library/codeCoverageDangerFile.cjs");
 
-		execSync(`npx danger ci -d ${scriptPath}`, { stdio: "inherit" });
+		await execa
+			.command(`npx danger ci -d ${scriptPath}`, { stdio: "inherit" })
+			.catch((error) => {
+				console.error(error);
+				throw error;
+			});
 	}
 }

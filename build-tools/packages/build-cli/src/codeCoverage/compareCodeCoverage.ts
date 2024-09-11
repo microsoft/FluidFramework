@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { CoverageReport } from "./getCoverageMetrics.js";
+import type { CoverageMetric } from "./getCoverageMetrics.js";
 
-// List of packages to be ignored from code coverage analysis
+// List of packages to be ignored from code coverage analysis. These are just prefixes. Reason is that when the package src code contains different
+// folders, coverage report calculates coverage of sub folders separately. Also, for example we want to ignore all packages inside examples. So, checking
+// prefix helps. If we want to ignore a specific package, we can add the package name directly. Also, the coverage report generates paths using dots as a
+// separator for the path.
 const codeCoverageComparisonIgnoreList: string[] = [
 	"experimental",
 	"examples",
@@ -21,9 +24,9 @@ const codeCoverageComparisonIgnoreList: string[] = [
  */
 export interface CodeCoverageComparison {
 	/**
-	 * Name of the package
+	 * Path of the package
 	 */
-	packageName: string;
+	packagePath: string;
 	/**
 	 * Line coverage in baseline build (as a percent)
 	 */
@@ -59,20 +62,20 @@ export interface CodeCoverageComparison {
  * one per package.
  */
 export const compareCodeCoverage = (
-	baselineCoverageReport: CoverageReport[],
-	prCoverageReport: CoverageReport[],
+	baselineCoverageReport: CoverageMetric[],
+	prCoverageReport: CoverageMetric[],
 ): CodeCoverageComparison[] => {
 	const results: CodeCoverageComparison[] = [];
 
 	for (const packageInPrReport of prCoverageReport) {
-		const { packageName } = packageInPrReport;
-		if (packageName.length === 0) {
+		const { packagePath } = packageInPrReport;
+		if (packagePath.length === 0) {
 			continue;
 		}
 		let skip = false;
 		// Return if the package being updated in the PR is in the list of packages to be ignored
 		for (const ignorePackageName of codeCoverageComparisonIgnoreList) {
-			if (packageName.startsWith(ignorePackageName)) {
+			if (packagePath.startsWith(ignorePackageName)) {
 				skip = true;
 				break;
 			}
@@ -89,7 +92,7 @@ export const compareCodeCoverage = (
 
 		// Find the package in baseline report and update metrics
 		const packageInBaselineReport = baselineCoverageReport.find(
-			(report) => report.packageName === packageName,
+			(report) => report.packagePath === packagePath,
 		);
 		const isNewPackage = packageInBaselineReport === undefined;
 		if (packageInBaselineReport) {
@@ -98,7 +101,7 @@ export const compareCodeCoverage = (
 		}
 
 		results.push({
-			packageName,
+			packagePath,
 			lineCoverageInBaseline,
 			lineCoverageInPr,
 			lineCoverageDiff: lineCoverageInPr - lineCoverageInBaseline,

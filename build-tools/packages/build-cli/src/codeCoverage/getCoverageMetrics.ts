@@ -18,24 +18,24 @@ import { Parser } from "xml2js";
 /**
  * The type for the coverage report, containing the name of the package, line coverage and branch coverage
  */
-export interface CoverageReport {
-	packageName: string;
+export interface CoverageMetric {
+	packagePath: string;
 	lineCoverage: number;
 	branchCoverage: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- missing type for XML output
-const extractCoverageMetrics = (result: any): CoverageReport[] => {
-	const report: CoverageReport[] = [];
+const extractCoverageMetrics = (result: any): CoverageMetric[] => {
+	const report: CoverageMetric[] = [];
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const coverageForPackagesResult = result?.coverage?.packages?.[0]?.package as any[];
 
 	for (const coverageForPackage of coverageForPackagesResult) {
-		const packageName = coverageForPackage["$"].name as string;
-		const lineCoverage = Number.parseFloat(coverageForPackage["$"]["line-rate"]);
-		const branchCoverage = Number.parseFloat(coverageForPackage["$"]["branch-rate"]);
+		const packagePath = coverageForPackage["$"].name as string;
+		const lineCoverage = Number.parseFloat(coverageForPackage["$"]["line-rate"]) * 100;
+		const branchCoverage = Number.parseFloat(coverageForPackage["$"]["branch-rate"]) * 100;
 		report.push({
-			packageName,
+			packagePath,
 			lineCoverage,
 			branchCoverage,
 		});
@@ -51,14 +51,15 @@ const extractCoverageMetrics = (result: any): CoverageReport[] => {
  */
 export const getCoverageMetricsForBaseline = async (
 	baselineZip: JSZip,
-): Promise<CoverageReport[]> => {
+): Promise<CoverageMetric[]> => {
 	const coverageReportsFiles: string[] = [];
-	for (const filePath of Object.keys(baselineZip.files)) {
+	// eslint-disable-next-line unicorn/no-array-for-each
+	baselineZip.forEach((filePath) => {
 		if (filePath.endsWith("cobertura-coverage-patched.xml"))
 			coverageReportsFiles.push(filePath);
-	}
+	});
 
-	const coverageMetricsForBaseline: CoverageReport[] = [];
+	const coverageMetricsForBaseline: CoverageMetric[] = [];
 	const xmlParser = new Parser();
 
 	try {
@@ -78,17 +79,7 @@ export const getCoverageMetricsForBaseline = async (
 						console.warn(`Error processing file ${coverageReportFile}: ${err} in baseline`);
 						return;
 					}
-					const metrics = extractCoverageMetrics(result);
-					for (const metric of metrics) {
-						if (
-							metric.packageName &&
-							!Number.isNaN(metric.lineCoverage) &&
-							!Number.isNaN(metric.branchCoverage) &&
-							metric.lineCoverage < 1
-						) {
-							coverageMetricsForBaseline.push(metric);
-						}
-					}
+					extractCoverageMetricsUtil(result, coverageMetricsForBaseline);
 				});
 			}
 			if (coverageMetricsForBaseline.length > 0) {
@@ -110,8 +101,8 @@ export const getCoverageMetricsForBaseline = async (
  */
 export const getCoverageMetricsForPr = async (
 	coverageReportsFolder: string,
-): Promise<CoverageReport[]> => {
-	const coverageMetricsForPr: CoverageReport[] = [];
+): Promise<CoverageMetric[]> => {
+	const coverageMetricsForPr: CoverageMetric[] = [];
 	const coverageReportsFiles = await globby(
 		path.posix.join(coverageReportsFolder, "cobertura-coverage-patched.xml"),
 	);
@@ -124,17 +115,7 @@ export const getCoverageMetricsForPr = async (
 		const coverageReportXML = await fs.readFile(coverageReportFile, "utf8");
 		try {
 			const result = await xmlParser.parseStringPromise(coverageReportXML);
-			const metrics = extractCoverageMetrics(result);
-			for (const metric of metrics) {
-				if (
-					metric.packageName &&
-					!Number.isNaN(metric.lineCoverage) &&
-					!Number.isNaN(metric.branchCoverage) &&
-					metric.lineCoverage < 1
-				) {
-					coverageMetricsForPr.push(metric);
-				}
-			}
+			extractCoverageMetricsUtil(result, coverageMetricsForPr);
 			if (coverageMetricsForPr.length > 0) {
 				break;
 			}
@@ -146,3 +127,17 @@ export const getCoverageMetricsForPr = async (
 
 	return coverageMetricsForPr;
 };
+
+function extractCoverageMetricsUtil(result: unknown, coverageMetrics: CoverageMetric[]): void {
+	const metrics = extractCoverageMetrics(result);
+	for (const metric of metrics) {
+		if (
+			metric.packagePath &&
+			!Number.isNaN(metric.lineCoverage) &&
+			!Number.isNaN(metric.branchCoverage) &&
+			metric.lineCoverage < 1
+		) {
+			coverageMetrics.push(metric);
+		}
+	}
+}
