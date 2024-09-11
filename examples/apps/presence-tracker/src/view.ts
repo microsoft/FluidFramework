@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FocusTracker } from "./FocusTracker.js";
-import { MouseTracker } from "./MouseTracker.js";
+import type { FocusTracker } from "./FocusTracker.js";
+import type { MouseTracker } from "./MouseTracker.js";
+import type { PointerTracker } from "./PointerTracker.js";
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
@@ -78,10 +79,10 @@ export function renderMousePresence(
 		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
 			if (focusTracker.getFocusPresences().get(userName) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = userName;
+				posDiv.textContent = `/${userName}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
-				posDiv.style.top = `${mousePosition.y}px`;
+				posDiv.style.top = `${mousePosition.y - 6}px`;
 				posDiv.style.fontWeight = "bold";
 				div.appendChild(posDiv);
 			}
@@ -90,4 +91,22 @@ export function renderMousePresence(
 
 	onPositionChanged();
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
+}
+
+export function renderPointerPresence(pointerTracker: PointerTracker, div: HTMLDivElement) {
+	function onPositionChanged() {
+		div.innerHTML = "";
+		pointerTracker.getPointerPresences().forEach((pointerPosition, pointerId) => {
+			const posDiv = document.createElement("div");
+			posDiv.textContent = `\\${pointerId}`;
+			posDiv.style.position = "absolute";
+			posDiv.style.left = `${pointerPosition.x}px`;
+			posDiv.style.top = `${pointerPosition.y + 6}px`;
+			posDiv.style.fontWeight = "lighter";
+			div.appendChild(posDiv);
+		});
+	}
+
+	onPositionChanged();
+	pointerTracker.on("pointerChanged", onPositionChanged);
 }

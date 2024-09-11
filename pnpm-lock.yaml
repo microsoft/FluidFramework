@@ -1000,6 +1000,9 @@ importers:
       '@fluid-experimental/data-objects':
         specifier: workspace:~
         version: link:../../../experimental/framework/data-objects
+      '@fluid-experimental/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils

@@ -6,7 +6,7 @@
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
 import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "./containerCode.js";
-import { renderFocusPresence, renderMousePresence } from "./view.js";
+import { renderFocusPresence, renderMousePresence, renderPointerPresence } from "./view.js";
 
 /**
  * Start the app and render.
@@ -39,9 +39,11 @@ async function start() {
 
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+	const pointerContentDiv = document.getElementById("pointer-position") as HTMLDivElement;
 
 	renderFocusPresence(model.focusTracker, contentDiv);
 	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
+	renderPointerPresence(model.pointerTracker, pointerContentDiv);
 }
 
 start().catch(console.error);
