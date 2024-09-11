@@ -7,7 +7,7 @@ export interface IADOCodeCoverageConstants {
 	// URL for the ADO org
 	orgUrl: string;
 
-	// The ADO project that contains the repo
+	// The ADO project which contains the pipeline that generates the code coverage report artifacts to be used as baselines
 	projectName: string;
 
 	// The ID for the build that runs against main when PRs are merged
