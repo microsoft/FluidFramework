@@ -62,6 +62,13 @@ const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)(\
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
  * nodes in markdown. This is useful because GitHub sometimes renders single line breaks, and sometimes it ignores them
  * like the CommonMark spec describes. Removing them ensures that markdown renders as expected across GitHub.
+ *
+ * The regular expression is tricky to understand but battle-tested in
+ * https://github.com/ghalactic/github-release-from-tag
+ *
+ * The `$` in the `[^$]` piece could be replaced with almost any character (`&` for example), because it's interpreted
+ * literally in the brackets. So the regex essentially finds the end of lines then captures another single character
+ * that isn't the literal `$` - which would be the newline itself.
  */
 const SOFT_BREAK_REGEX = /$[^$]/gms;
 
