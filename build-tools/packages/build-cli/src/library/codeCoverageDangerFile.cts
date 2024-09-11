@@ -52,7 +52,6 @@ const localCodeCoverageReportPath = "./nyc/report";
 const commentIdentifier = "<!-- DANGER_TASK_1_For_Code_Coverage_Analysis-->";
 
 export async function codeCoverageCompare(): Promise<void> {
-	// const imp = await import("../codeCoverageAnalysisTool/index.js");
 	if (process.env.ADO_API_TOKEN === undefined) {
 		throw new Error("ADO_API_TOKEN not provided in environment");
 	}
