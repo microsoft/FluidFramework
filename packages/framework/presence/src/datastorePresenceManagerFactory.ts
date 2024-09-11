@@ -7,14 +7,8 @@
  * Hacky support for internal datastore based usages.
  */
 
-// import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-// import type {
-// 	AliasResult,
-// 	IContainerRuntimeBase,
-// 	NamedFluidDataStoreRegistryEntry,
-// } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
@@ -47,45 +41,6 @@ class PresenceManagerFactory {
 		"@fluid-experimental/presence",
 		PresenceManagerDataObject,
 	);
-
-	// #region Encapsulated model support
-
-	// private readonly alias: string = "system:presence-manager";
-
-	// public get registryEntry(): NamedFluidDataStoreRegistryEntry {
-	// 	return [this.factory.type, Promise.resolve(this.factory)];
-	// }
-
-	// /**
-	//  * Creates exclusive data store for {@link IPresenceManager} to work in.
-	//  */
-	// public async initializingFirstTime(
-	// 	containerRuntime: IContainerRuntimeBase,
-	// ): Promise<AliasResult> {
-	// 	return containerRuntime
-	// 		.createDataStore(this.factory.type)
-	// 		.then(async (datastore) => datastore.trySetAlias(this.alias));
-	// }
-
-	// /**
-	//  * Provides {@link IPresence} once factory has been registered and
-	//  * instantiation is complete.
-	//  */
-	// public async getPresenceManager(
-	// 	containerRuntime: IContainerRuntime,
-	// ): Promise<IPresence> {
-	// 	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(
-	// 		this.alias,
-	// 	)) as IFluidHandle<IPresence> | undefined;
-
-	// 	if (entryPointHandle === undefined) {
-	// 		throw new Error(`dataStore [${this.alias}] must exist`);
-	// 	}
-
-	// 	return entryPointHandle.get();
-	// }
-
-	// #endregion
 }
 
 /**
