@@ -82,7 +82,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * This flag is used to identify scenarios where a node may not have been summarized during the summary
 	 * because of application code creating data structures for data stores which were already summarized.
 	 */
-	private wipSummary: boolean = false;
+	private wipSummarizeCalled: boolean = false;
 	private wipSkipRecursion = false;
 
 	protected readonly logger: ITelemetryLoggerExt;
@@ -180,8 +180,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		// Set to wipSummary true to represent that current node was included in the summary process.
-		this.wipSummary = true;
+		// Set to wipSummarizeCalled true to represent that current node was included in the summary process.
+		this.wipSummarizeCalled = true;
 
 		// If trackState is false, call summarize internal directly and don't track any state.
 		if (!trackState) {
@@ -289,7 +289,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// If the parent node skipped recursion, it did not call summarize on this node. So, summarize was not missed
 		// but was intentionally not called.
 		// Otherwise, summarize should have been called on this node and wipLocalPaths must be set.
-		if (parentSkipRecursion || this.wipSummary) {
+		if (parentSkipRecursion || this.wipSummarizeCalled) {
 			return false;
 		}
 
@@ -361,7 +361,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	public clearSummary() {
 		this.wipReferenceSequenceNumber = undefined;
-		this.wipSummary = false;
+		this.wipSummarizeCalled = false;
 		this.wipSkipRecursion = false;
 		this.wipSummaryLogger = undefined;
 		for (const child of this.children.values()) {
