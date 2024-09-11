@@ -41,6 +41,8 @@ module.exports = {
 					"**/handlers/index.js",
 					"**/machines/index.js",
 					"**/repoPolicyCheck/index.js",
+					"**/codeCoverageAnalysisTool/**",
+					"azure-devops-node-api/**",
 				],
 			},
 		],
@@ -61,11 +63,15 @@ module.exports = {
 		// Too strict for our needs
 		"unicorn/filename-case": "off",
 
+		"unicorn/no-array-for-each": "off",
+
 		// In commands, destructuring is useful in some places but makes others less legible, so consistency isn't preferred.
 		"unicorn/consistent-destructuring": "off",
 
 		// Deprecated in 2018: https://eslint.org/blog/2018/11/jsdoc-end-of-life/
 		"valid-jsdoc": "off",
+
+		"no-await-expression-member": "off",
 
 		// Disable all perfectionist rules that are inherited from oclif's lint config.
 		"perfectionist/sort-array-includes": "off",

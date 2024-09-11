@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	CodeCoverageSummary,
-	IADOCodeCoverageConstants,
-	codeCoverageCli,
-} from "@fluidframework/code-coverage-tools";
-
 // Handle weirdness with Danger import.  The current module setup prevents us
 // from using this file directly, and the js transpilation renames the danger
 // import which prevents danger from removing it before evaluation (because it
@@ -54,19 +48,11 @@ declare const danger: {
 
 const localCodeCoverageReportPath = "./nyc/report";
 
-export const codeCoverageConstants: IADOCodeCoverageConstants = {
-	orgUrl: "https://dev.azure.com/fluidframework",
-	projectName: "public",
-	ciBuildDefinitionId: 48,
-	projectRepoGuid: "203843667",
-	codeCoverageAnalysisArtifactName: "codeCoverageAnalysis",
-	buildsToSearch: 50,
-};
-
 // Unique identifier for the comment
 const commentIdentifier = "<!-- DANGER_TASK_1_For_Code_Coverage_Analysis-->";
 
 export async function codeCoverageCompare(): Promise<void> {
+	// const imp = await import("../codeCoverageAnalysisTool/index.js");
 	if (process.env.ADO_API_TOKEN === undefined) {
 		throw new Error("no env ado api token provided");
 	}
@@ -75,7 +61,16 @@ export async function codeCoverageCompare(): Promise<void> {
 		throw new Error("no env github api token provided");
 	}
 
-	const report: CodeCoverageSummary = await codeCoverageCli(
+	const codeCoverageConstants = {
+		orgUrl: "https://dev.azure.com/fluidframework",
+		projectName: "public",
+		ciBuildDefinitionId: 48,
+		projectRepoGuid: "203843667",
+		codeCoverageAnalysisArtifactName: "codeCoverageAnalysis",
+		buildsToSearch: 50,
+	};
+	const { codeCoverageCli } = await import("../codeCoverageAnalysisTool/codeCoverageCli.js");
+	const report = await codeCoverageCli(
 		process.env.ADO_API_TOKEN,
 		localCodeCoverageReportPath,
 		codeCoverageConstants,

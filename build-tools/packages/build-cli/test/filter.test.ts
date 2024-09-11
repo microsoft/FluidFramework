@@ -58,7 +58,6 @@ describe("filterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluidframework/code-coverage-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -91,7 +90,6 @@ describe("filterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluidframework/code-coverage-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -135,7 +133,6 @@ describe("filterPackages", async () => {
 		expect(names).to.be.equalTo([
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluidframework/code-coverage-tools",
 		]);
 	});
 });
@@ -157,7 +154,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluidframework/code-coverage-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -213,7 +209,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluidframework/code-coverage-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -314,7 +309,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluidframework/code-coverage-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -361,7 +355,6 @@ describe("selectAndFilterPackages", async () => {
 		expect(names).to.be.equalTo([
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluidframework/code-coverage-tools",
 		]);
 	});
 });
