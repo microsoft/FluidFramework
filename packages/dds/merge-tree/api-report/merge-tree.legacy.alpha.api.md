@@ -652,6 +652,8 @@ export interface ObliterateInfo {
     // (undocumented)
     refSeq: number;
     // (undocumented)
+    segmentGroup: SegmentGroup | undefined;
+    // (undocumented)
     seq: number;
     // (undocumented)
     start: LocalReferencePosition;
