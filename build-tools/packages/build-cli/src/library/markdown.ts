@@ -104,25 +104,24 @@ export function removeSectionContent(options: { heading: string | RegExp }): (
 	};
 }
 
+/**
+ * Removes all the headings at a particular level. Most useful to remove the top-level H1 headings from a document.
+ *
+ * @param options - The `level` property must be set to the level of heading to remove.
+ */
 export function removeHeadingsAtLevel(options: { level: 1 | 2 | 3 | 4 | 5 | 6 }): (
 	tree: Root,
 ) => void {
 	return (tree: Root) => {
-		let headingRemoved = false;
-
 		visit(
 			tree,
 			"heading",
 			(node: Heading, index: number | undefined, parent: Parent | undefined) => {
 				if (
-					!headingRemoved &&
-					// node.children?.[0].type === "text" &&
-					// node.children[0].value === "⬆️ Table of contents" &&
 					node.depth === options.level &&
 					index !== undefined
 				) {
 					parent?.children.splice(index, 1);
-					headingRemoved = true;
 					return [SKIP, index];
 				}
 			},
