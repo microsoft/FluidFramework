@@ -6,7 +6,7 @@ This package contains all the utilities required to run code coverage analysis o
 
 ## Generating coverage reports
 
-Currently, the code coverage plugin only generates coverage reports for tests and uses that for analysis. You can generate these reports for your package locally by running `npm run test:coverage` for the individual package or by running `npm run ci:test:mocha:coverage` from the root.
+The code coverage plugin only generates coverage reports when tests run. You can generate these reports for your package locally by running `npm run test:coverage` for the individual package or by running `npm run ci:test:mocha:coverage` from the root.
 
 ## Pieces of the code coverage analysis plugin
 
