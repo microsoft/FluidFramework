@@ -40,8 +40,7 @@ export const getCommentForCodeCoverageDiff = async (
 
 	const packagesWithNotableRegressions = existingPackagesWithCoverageChange.filter(
 		(codeCoverageReport: CodeCoverageComparison) =>
-			codeCoverageReport.branchCoverageDiff < -1 ||
-			codeCoverageReport.lineCoverageDiff < -1,
+			codeCoverageReport.branchCoverageDiff < -1 || codeCoverageReport.lineCoverageDiff < -1,
 	);
 
 	// Code coverage for the newly added package should be less than 50% to fail the build

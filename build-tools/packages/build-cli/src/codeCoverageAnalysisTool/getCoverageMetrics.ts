@@ -8,8 +8,8 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as path from "node:path";
 import globby from "globby";
 import JSZip from "jszip";
 import { Parser } from "xml2js";
