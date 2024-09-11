@@ -2,9 +2,11 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+---
+"section": "tree"
+---
 
-
-A `@beta` version of `nodeChanged` which includes the list of properties has been added.
+A `@beta` version of `nodeChanged` which includes the list of properties has been added
 
 ```typescript
 const factory = new SchemaFactory("example");
