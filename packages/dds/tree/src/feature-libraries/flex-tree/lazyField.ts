@@ -174,15 +174,6 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 		return this.flexSchema.kind === (kind as unknown);
 	}
 
-	public isExactly<TSchema extends FlexFieldSchema>(schema: TSchema): boolean {
-		assert(
-			this.context.flexSchema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
-			0x77c /* Narrowing must be done to a kind that exists in this context */,
-		);
-
-		return this.flexSchema.equals(schema);
-	}
-
 	public get parent(): FlexTreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;

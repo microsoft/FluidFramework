@@ -153,6 +153,19 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_AuthorizationError": {
+				"backCompat": false
+			},
+			"Class_PrefetchDocumentStorageService": {
+				"backCompat": false
+			},
+			"ClassStatics_AuthorizationError": {
+				"backCompat": false
+			},
+			"ClassStatics_PrefetchDocumentStorageService": {
+				"backCompat": false
+			}
+		}
 	}
 }

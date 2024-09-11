@@ -271,7 +271,7 @@ export class TestClientLogger {
 			}
 			let pos = 0;
 			depthFirstNodeWalk(c.mergeTree.root, c.mergeTree.root.children[0], undefined, (seg) => {
-				if (toRemovalInfo(seg) === undefined) {
+				if (toMoveOrRemove(seg) === undefined) {
 					const segProps = seg.properties;
 					for (let i = 0; i < seg.cachedLength; i++) {
 						if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
