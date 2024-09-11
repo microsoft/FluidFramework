@@ -8,6 +8,7 @@ import type { Heading, Html, Link, Root } from "mdast";
 import { headingRange } from "mdast-util-heading-range";
 import type { Node, Parent } from "unist";
 import { SKIP, visit } from "unist-util-visit";
+import { toString } from "mdast-util-to-string";
 
 /**
  * Using the same instance for all slug generation ensures that no duplicate IDs are generated.
@@ -25,19 +26,17 @@ export function addHeadingLinks(): (tree: Node) => void {
 	return (tree: Node): void => {
 		visit(tree, "heading", (node: Heading) => {
 			if (node.children?.length > 0) {
-				const firstChild = node.children[0];
-				if (firstChild.type === "text") {
-					const headingValue = firstChild.value;
-					const slug = slugger.slug(headingValue);
-					// We need to insert an Html node instead of a string, because raw
-					// strings will get markdown-escaped when rendered
-					const htmlNode: Html = {
-						type: "html",
-						value: `<a id="${slug}"></a>`,
-					};
-					// Insert the HTML node before the text node of the heading
-					node.children.unshift(htmlNode);
-				}
+				// Calling toString on the whole node ensures that embedded nodes (e.g. formatted text in the heading) are
+				// included in the slugged string.
+				const slug = slugger.slug(toString(node));
+				// We need to insert an Html node instead of a string, because raw
+				// strings will get markdown-escaped when rendered
+				const htmlNode: Html = {
+					type: "html",
+					value: `<a id="${slug}"></a>`,
+				};
+				// Insert the HTML node as the first child node of the heading
+				node.children.unshift(htmlNode);
 			}
 		});
 	};
@@ -47,7 +46,7 @@ export function addHeadingLinks(): (tree: Node) => void {
  * A regular expression that extracts an admonition title from a string UNLESS the admonition title is the only thing on
  * the line.
  *
- * Capture group 1 is the admonition type/title.
+ * Capture group 1 is the admonition type/title (from the leading `[!` all the way to the trailing `]`).
  *
  * @remarks
  *
@@ -63,6 +62,13 @@ const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
  * nodes in markdown. This is useful because GitHub sometimes renders single line breaks, and sometimes it ignores them
  * like the CommonMark spec describes. Removing them ensures that markdown renders as expected across GitHub.
+ *
+ * The regular expression is tricky to understand but battle-tested in
+ * https://github.com/ghalactic/github-release-from-tag
+ *
+ * The `$` in the `[^$]` piece could be replaced with almost any character (`&` for example), because it's interpreted
+ * literally in the brackets. So the regex essentially finds the end of lines then captures another single character
+ * that isn't the literal `$` - which would be the newline itself.
  */
 const SOFT_BREAK_REGEX = /$[^$]/gms;
 
