@@ -25,18 +25,17 @@ export function remarkHeadingLinks(): (tree: Node) => void {
 	return (tree: Node): void => {
 		visit(tree, "heading", (node: Heading) => {
 			if (node.children?.length > 0) {
-				const firstChild = node.children[0];
-				if (firstChild.type === "text") {
-					const slug = slugger.slug(toString(node));
-					// We need to insert an Html node instead of a string, because raw
-					// strings will get markdown-escaped when rendered
-					const htmlNode: Html = {
-						type: "html",
-						value: `<a id="${slug}"></a>`,
-					};
-					// Insert the HTML node as the first child node of the heading
-					node.children.unshift(htmlNode);
-				}
+				// Calling toString on the whole node ensures that embedded nodes (e.g. formatted text in the heading) are
+				// included in the slugged string.
+				const slug = slugger.slug(toString(node));
+				// We need to insert an Html node instead of a string, because raw
+				// strings will get markdown-escaped when rendered
+				const htmlNode: Html = {
+					type: "html",
+					value: `<a id="${slug}"></a>`,
+				};
+				// Insert the HTML node as the first child node of the heading
+				node.children.unshift(htmlNode);
 			}
 		});
 	};
