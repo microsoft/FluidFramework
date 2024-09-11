@@ -96,6 +96,8 @@ module.exports = {
 				"@graphql-codegen/cli",
 				"@graphql-codegen/typescript",
 				"@material-ui/*",
+				// api-extractor is patched, so it must use an exact version to avoid the patch breaking when updating.
+				"@microsoft/api-extractor",
 				"@types/chrome",
 				"@types/codemirror",
 				"@types/expect-puppeteer",
