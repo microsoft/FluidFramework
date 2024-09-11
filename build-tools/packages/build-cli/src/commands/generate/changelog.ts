@@ -85,13 +85,18 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	}
 
 	/**
-	 * Removes any additional metadata from all changesets and writes the output back to the source files.
+	 * Removes any additional metadata from all changesets and writes the output back to the source files. Changesets that
+	 * apply to no packages are assumed to be changesets for the release notes only and are thus deleted as part of
+	 * canonicalization, because such changesets cannot be made canonical.
 	 * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
 	 * control so changes can usually be reverted.
+	 *
+	 * @returns an array of paths to any remaining changesets.
 	 */
-	private async stripAdditionalMetadata(releaseGroupRootDir: string): Promise<void> {
+	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<string[]> {
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
+		const changesetPaths: string[] =[];
 
 		const toWriteOrDelete: Promise<void>[] = [];
 		for (const changeset of changesets) {
@@ -109,8 +114,10 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
 			this.info(`Writing stripped changeset content: ${changeset.sourceFile}`);
 			toWriteOrDelete.push(writeFile(changeset.sourceFile, output));
+			changesetPaths.push(changeset.sourceFile);
 		}
 		await Promise.all(toWriteOrDelete);
+		return changesetPaths;
 	}
 
 	public async run(): Promise<void> {
@@ -132,9 +139,9 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		const releaseGroupRoot = monorepo?.directory ?? gitRoot;
 
-		// Strip additional metadata from the source files before we call `changeset version`,
+		// Strips additional custom metadata from the source files before we call `changeset version`,
 		// because the changeset tools only work on canonical changesets.
-		await this.stripAdditionalMetadata(releaseGroupRoot);
+		await this.canonicalizeChangesets(releaseGroupRoot);
 
 		// The `changeset version` command applies the changesets to the changelogs
 		ux.action.start("Running `changeset version`");

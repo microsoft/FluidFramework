@@ -306,9 +306,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			aborted: boolean;
 		}
 
-		// One of the items is typed as any - see below.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const questions: prompts.PromptObject[] = [
+		const questions: (prompts.PromptObject & { optionsPerPage?: number })[] = [
 			{
 				// Ask this question only if there are no changes.
 				// falsy values for "type" will cause the question to be skipped.
@@ -342,9 +340,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 						process.nextTick(() => this.exit(0));
 					}
 				},
-				// This is typed as any because the typings don't include the optionsPerPage property.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} as any,
+			},
 			{
 				name: "section",
 				// This question should only be asked if the releaseNotes config is available.
@@ -383,6 +379,8 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		];
 
 		const response = await prompts(questions);
+		// The selectedPackages response will be undefined if the question was skipped, so initiate an empty array in that
+		// case.
 		const selectedPackages: Package[] = (response.selectedPackages ?? []) as Package[];
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
