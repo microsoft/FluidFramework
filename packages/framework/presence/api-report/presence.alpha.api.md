@@ -43,7 +43,7 @@ export function Latest<T extends object, Key extends string>(initialValue: JsonS
 // @alpha
 export function LatestMap<T extends object, RegistrationKey extends string, Keys extends string | number = string | number>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: LatestValueControls): InternalTypes.ManagerFactory<RegistrationKey, MapValueState<T>, LatestMapValueManager<T, Keys>>;
+}, controls?: LatestValueControls): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T>, LatestMapValueManager<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
@@ -129,16 +129,6 @@ export interface LatestValueManagerEvents<T> {
 export interface LatestValueMetadata {
     revision: number;
     timestamp: number;
-}
-
-// @alpha @sealed (undocumented)
-export interface MapValueState<T> {
-    // (undocumented)
-    items: {
-        [name: string | number]: InternalTypes.ValueOptionalState<T>;
-    };
-    // (undocumented)
-    rev: number;
 }
 
 // @alpha @sealed

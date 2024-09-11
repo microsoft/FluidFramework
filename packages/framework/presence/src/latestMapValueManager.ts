@@ -186,25 +186,14 @@ export interface ValueMap<K extends string | number, V> {
 	// values(): IterableIterator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>>;
 }
 
-/**
- * @sealed
- * @alpha
- */
-export interface MapValueState<T> {
-	rev: number;
-	items: {
-		// Caution: any particular item may or may not exist
-		// Typescript does not support absent keys without forcing type to also be undefined.
-		// See https://github.com/microsoft/TypeScript/issues/42810.
-		[name: string | number]: InternalTypes.ValueOptionalState<T>;
-	};
-}
-
 class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	private countDefined: number;
 	public constructor(
-		private readonly value: MapValueState<T>,
-		private readonly localUpdate: (updates: MapValueState<T>, forceUpdate: boolean) => void,
+		private readonly value: InternalTypes.MapValueState<T>,
+		private readonly localUpdate: (
+			updates: InternalTypes.MapValueState<T>,
+			forceUpdate: boolean,
+		) => void,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -247,7 +236,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	): void {
 		for (const [key, item] of Object.entries(this.value.items)) {
 			if (item.value !== undefined) {
-				// TODO: see about typing MapValueState with K
+				// TODO: see about typing InternalTypes.MapValueState with K
 				callbackfn(item.value, key as K, this);
 			}
 		}
@@ -327,22 +316,25 @@ class LatestMapValueManagerImpl<
 	T,
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
-> implements LatestMapValueManager<T, Keys>, ValueManager<T, MapValueState<T>>
+> implements LatestMapValueManager<T, Keys>, ValueManager<T, InternalTypes.MapValueState<T>>
 {
 	public readonly events = createEmitter<LatestMapValueManagerEvents<T, Keys>>();
 	public readonly controls: LatestValueControl;
 
 	public constructor(
 		private readonly key: RegistrationKey,
-		private readonly datastore: StateDatastore<RegistrationKey, MapValueState<T>>,
-		public readonly value: MapValueState<T>,
+		private readonly datastore: StateDatastore<
+			RegistrationKey,
+			InternalTypes.MapValueState<T>
+		>,
+		public readonly value: InternalTypes.MapValueState<T>,
 		controlSettings: LatestValueControls,
 	) {
 		this.controls = new LatestValueControl(controlSettings);
 
 		this.local = new ValueMapImpl<T, Keys>(
 			value,
-			(updates: MapValueState<T>, forceUpdate: boolean) => {
+			(updates: InternalTypes.MapValueState<T>, forceUpdate: boolean) => {
 				datastore.localUpdate(key, updates, forceUpdate);
 			},
 		);
@@ -386,7 +378,7 @@ class LatestMapValueManagerImpl<
 	public update<SpecificClientId extends ConnectedClientId>(
 		client: SpecificSessionClient<SpecificClientId>,
 		_received: number,
-		value: MapValueState<T>,
+		value: InternalTypes.MapValueState<T>,
 	): void {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientId: SpecificClientId = client.currentClientId();
@@ -457,11 +449,11 @@ export function LatestMap<
 	controls?: LatestValueControls,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
-	MapValueState<T>,
+	InternalTypes.MapValueState<T>,
 	LatestMapValueManager<T, Keys>
 > {
 	const timestamp = Date.now();
-	const value: MapValueState<T> = { rev: 0, items: {} };
+	const value: InternalTypes.MapValueState<T> = { rev: 0, items: {} };
 	// LatestMapValueManager takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of Object.keys(initialValues)) {
@@ -476,13 +468,16 @@ export function LatestMap<
 			};
 	return (
 		key: RegistrationKey,
-		datastoreHandle: InternalTypes.StateDatastoreHandle<RegistrationKey, MapValueState<T>>,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<
+			RegistrationKey,
+			InternalTypes.MapValueState<T>
+		>,
 	) => ({
 		value,
 		manager: brandIVM<
 			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
-			MapValueState<T>
+			InternalTypes.MapValueState<T>
 		>(
 			new LatestMapValueManagerImpl(
 				key,
