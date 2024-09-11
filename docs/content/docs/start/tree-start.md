@@ -238,4 +238,4 @@ useEffect(() => {
 
 Note that any `Revertible`s obtained should be disposed of by the app author in order to free up the resources that are required to revert an edit.
 
-See [undo redo support](../data-structures/tree) for more information.
+See [this blog post](https://devblogs.microsoft.com/microsoft365dev/fluid-framework-undo-redo-and-transactions-in-sharedtree/) or [undo redo support](../data-structures/tree) for more information.
