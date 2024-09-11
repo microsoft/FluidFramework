@@ -26,23 +26,23 @@ interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 	internal: PresenceStatesInternal;
 }
 
+interface SystemDatastore {
+	"system:presence": {
+		priorClientIds: {
+			[ClientId: ConnectedClientId]: InternalTypes.ValueRequiredState<ConnectedClientId[]>;
+		};
+	};
+}
+
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type PresenceDatastore = {
 	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
-};
+} & SystemDatastore;
 
 interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
 		[StateValueManagerKey: string]: {
 			[ClientId: ConnectedClientId]: ClientUpdateEntry;
-		};
-	};
-}
-
-interface SystemDatastore {
-	"system:presence": {
-		priorClientIds: {
-			[ClientId: ConnectedClientId]: InternalTypes.ValueRequiredState<ConnectedClientId[]>;
 		};
 	};
 }
@@ -105,7 +105,9 @@ export interface PresenceDatastoreManager {
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastore = {};
+	private readonly datastore: PresenceDatastore = {
+		"system:presence": { priorClientIds: {} },
+	};
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -116,14 +118,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly runtime: IEphemeralRuntime,
 		private readonly presence: IPresence,
 	) {
-		this.runtime.getAudience().on("addMember", (clientId) => {
-			for (const [_address, allKnownWorkspaceState] of Object.entries(this.datastore)) {
-				for (const [_key, allKnownState] of Object.entries(allKnownWorkspaceState)) {
-					assert(!(clientId in allKnownState), "New client already in workspace");
-				}
-			}
-			// TODO: Send all current state to the new client
-		});
 		runtime.on("disconnected", () => {
 			const { clientId } = this.runtime;
 			assert(clientId !== undefined, "Disconnected without local clientId");
@@ -151,6 +145,22 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					// client in held state -- search for past client ids.
 				}
 			}
+
+			// Broadcast join message to all clients
+			const updateProviders = [...this.runtime.getAudience().getMembers().keys()].filter(
+				(audienceClientId) => audienceClientId !== clientId,
+			);
+			// Limit to three providers to prevent flooding the network.
+			// If none respond, others present will (should) after a delay.
+			if (updateProviders.length > 3) {
+				updateProviders.length = 3;
+			}
+			this.runtime.submitSignal(joinMessageType, {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				data: this.datastore,
+				updateProviders,
+			} satisfies ClientJoinMessage["content"]);
 		});
 		runtime.on("signal", this.processSignal.bind(this));
 	}
@@ -290,15 +300,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			if (workspace) {
 				workspace.internal.processUpdate(received, timeModifier, remoteDatastore);
 			} else {
-				// Assume all broadcast state is meant to be kept even if not currently registered.
+				// All broadcast state is kept even if not currently registered, unless a value
+				// notes itself to be ignored.
 				let workspaceDatastore = this.datastore[workspaceAddress];
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
+					// TODO: Emit workspaceActivated event for PresenceEvents
 				}
-				// if (!(workspaceAddress in this.datastore)) {
-				// 	this.datastore[workspaceAddress] = {};
-				// }
-				// const localAllKnownState = this.datastore[workspaceAddress];
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}

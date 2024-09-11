@@ -51,15 +51,20 @@ class PresenceManager implements IPresenceManager {
 			this.attendees.set(originalClientId, this.selfAttendee);
 		}
 
-		this.datastoreManager = new PresenceDatastoreManagerImpl(runtime, this);
-
 		// Watch for connected event that will produce new (or first) clientId.
+		// This event is added before instantiating the datastore manager so
+		// that self can be given a proper clientId before datastore manager
+		// might possibly try to use it. (Datastore manager is expected to
+		// use connected clientId more directly and no order dependence should
+		// be relied upon, but helps with debugging consistency.)
 		runtime.on("connected", () => {
 			const clientId = runtime.clientId;
 			assert(clientId !== undefined, "Connected without local clientId");
 			this.selfAttendee.currentClientId = () => clientId;
 			this.attendees.set(clientId, this.selfAttendee);
 		});
+
+		this.datastoreManager = new PresenceDatastoreManagerImpl(runtime, this);
 	}
 
 	public readonly events = createEmitter<PresenceEvents>();
