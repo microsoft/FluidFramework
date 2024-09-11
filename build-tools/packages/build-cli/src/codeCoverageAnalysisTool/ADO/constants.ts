@@ -10,7 +10,7 @@ export interface IADOCodeCoverageConstants {
 	// The ADO project which contains the pipeline that generates the code coverage report artifacts to be used as baselines
 	projectName: string;
 
-	// The ID for the build that runs against main when PRs are merged
+	// The ADO ID of the pipeline (aka `definitionId`) that runs against main when PRs are merged and generates the baseline code coverage artifacts
 	ciBuildDefinitionId: number;
 
 	// The name of the build artifact that contains the bundle size artifacts
