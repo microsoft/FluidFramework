@@ -121,7 +121,7 @@ jobs:
         # This content is the "default" release notes - this should be used for minor and major releases of client and
         # server release groups. To use this, a release group needs to be using changesets. Build-tools does not use
         # changesets, so it is excluded.
-        if: ${{ fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server') }}
+        if: fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server')
         run: |
           flub publish releaseNotes \
           --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md
