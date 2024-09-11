@@ -62,7 +62,7 @@ export const getCoverageMetricsForBaseline = async (
 	const xmlParser = new Parser();
 
 	try {
-		console.log(`${coverageReportsFiles.length} coverage files found`);
+		console.log(`${coverageReportsFiles.length} coverage files found in baseline`);
 
 		for (const coverageReportFile of coverageReportsFiles) {
 			const jsZipObject = baselineZip.file(coverageReportFile);
@@ -75,7 +75,7 @@ export const getCoverageMetricsForBaseline = async (
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- missing type for XML output
 				xmlParser.parseString(coverageReportXML, (err: Error | null, result: any): void => {
 					if (err) {
-						console.warn(`Error processing file ${coverageReportFile}: ${err}`);
+						console.warn(`Error processing file ${coverageReportFile}: ${err} in baseline`);
 						return;
 					}
 					const metrics = extractCoverageMetrics(result);
@@ -96,7 +96,7 @@ export const getCoverageMetricsForBaseline = async (
 			}
 		}
 	} catch (error) {
-		console.log(`Error encountered with reading files: ${error}`);
+		console.log(`Error encountered with reading files: ${error} in baseline`);
 	}
 
 	console.log(`${coverageMetricsForBaseline.length} coverage reports generated`);
@@ -118,7 +118,7 @@ export const getCoverageMetricsForPr = async (
 
 	const xmlParser = new Parser();
 
-	console.log(`${coverageReportsFiles.length} coverage files found`);
+	console.log(`${coverageReportsFiles.length} coverage files found in PR`);
 
 	for (const coverageReportFile of coverageReportsFiles) {
 		const coverageReportXML = await fs.readFile(coverageReportFile, "utf8");
@@ -139,7 +139,7 @@ export const getCoverageMetricsForPr = async (
 				break;
 			}
 		} catch (error) {
-			console.warn(`Error processing file ${coverageReportFile}: ${error}`);
+			console.warn(`Error processing file ${coverageReportFile}: ${error} in PR`);
 			continue;
 		}
 	}
