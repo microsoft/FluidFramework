@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert } from "assert";
 
 import { getView } from "../../utils.js";
 import { type FlexTreeNode, AnchorTreeIndex } from "../../../feature-libraries/index.js";
 import type { AnchorNode, FieldKey, ITreeSubscriptionCursor } from "../../../core/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
 import {
+	getOrCreateInnerNode,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
-import { tryGetInnerNode } from "../../../simple-tree/proxyBinding.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -29,7 +28,7 @@ function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): s
 	return value;
 }
 
-describe.only("TreeIndexes", () => {
+describe.only("tree indexes", () => {
 	/** The field key under which the parentId node puts its identifier */
 	const parentKey: FieldKey = brand("parentKey");
 	/** The identifier of the parent node */
@@ -54,7 +53,7 @@ describe.only("TreeIndexes", () => {
 		const view = getView(config);
 		view.initialize({ [parentKey]: parentId, child });
 
-		return { view, root: view.root };
+		return { view, parent: view.root };
 	}
 
 	function createIndex(root: SchematizingSimpleTreeView<typeof IndexableParent>) {
@@ -96,8 +95,7 @@ describe.only("TreeIndexes", () => {
 						[
 							key,
 							nodes.map((f) => {
-								const flexNode: FlexTreeNode =
-									tryGetInnerNode(f) ?? fail("nodes in index should be cooked");
+								const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
 								return getOrCreate(
 									anchorIds,
 									flexNode.anchorNode,
@@ -142,7 +140,7 @@ describe.only("TreeIndexes", () => {
 	}
 
 	it("can look up nodes in an initial tree", () => {
-		const { view, root: parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -150,7 +148,7 @@ describe.only("TreeIndexes", () => {
 	});
 
 	it("can look up an inserted node", () => {
-		const { view, root: parent } = createView(); // Create a parent with no child
+		const { view, parent } = createView(); // create a parent with no child
 		const { assertContents } = createIndex(view);
 		parent.child = new IndexableChild({ [childKey]: childId });
 		const child = parent.child;
@@ -160,7 +158,7 @@ describe.only("TreeIndexes", () => {
 
 	// todo: detached/removed nodes should be filtered out of the index
 	it("can look up nodes that are detached when the index is created", () => {
-		const { view, root: parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
@@ -169,7 +167,7 @@ describe.only("TreeIndexes", () => {
 	});
 
 	it("can look up a removed node", () => {
-		const { view, root: parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -179,7 +177,7 @@ describe.only("TreeIndexes", () => {
 
 	it("can look up multiple nodes with the same key", () => {
 		// Give the child the same ID as the parent (`parentId` rather than `childId`)
-		const { view, root: parent } = createView(new IndexableChild({ [childKey]: parentId }));
+		const { view, parent } = createView(new IndexableChild({ [childKey]: parentId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);

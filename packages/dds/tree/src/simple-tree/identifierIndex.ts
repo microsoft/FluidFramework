@@ -4,6 +4,8 @@
  * Licensed under the MIT License.
  */
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { AnchorNode, FieldKey, TreeValue } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
@@ -12,23 +14,19 @@ import {
 	AnchorTreeIndex,
 	flexTreeSlot,
 	type FlexTreeNode,
-	FlexObjectNodeSchema,
-	FieldKinds,
-	type FlexTreeContext,
 	type KeyFinder,
 	isTreeValue,
 	type TreeIndexNodes,
 	hasElement,
 	type TreeIndex,
+	type FlexTreeContext,
 } from "../feature-libraries/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand, fail } from "../util/index.js";
-import { assert } from "@fluidframework/core-utils/internal";
-import type { NodeFromSchema } from "./schemaTypes.js";
+import { FieldKind, type NodeFromSchema } from "./schemaTypes.js";
 import type { TreeNode, TreeNodeSchema } from "./index.js";
 import { getSimpleNodeSchema } from "./core/index.js";
 import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
-import { tryGetCachedHydratedTreeNode } from "./proxyBinding.js";
+import { ObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
  * A {@link TreeIndex} that returns tree nodes given their associated keys.
@@ -46,6 +44,9 @@ type SimpleTreeIndex<TKey extends TreeValue, TSchema extends TreeNodeSchema> =
  * @param indexer -
  * @param getValue -
  * @param indexableSchema -
+ *
+ * @privateRemarks
+ * This creates an anchor tree index that indexes the value of some simple tree nodes on some key.
  */
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
@@ -69,9 +70,8 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 		| ((nodes: TreeIndexNodes<TreeNode>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
 	indexableSchema?: readonly TreeNodeSchema[],
-	// todo fix this
 ): SimpleTreeIndex<TKey, TreeNodeSchema> {
-	assert(context instanceof Context, "Unexpected context implementation");
+	assert(context instanceof Context, "unexpected context implementation");
 	const index = new AnchorTreeIndex<TKey, TValue>(
 		context.checkout.forest,
 		(schemaIdentifier) => {
@@ -83,12 +83,10 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 					}
 				}
 			} else {
-				const flexSchema = context.schema.nodeSchema.get(schemaIdentifier);
-				if (flexSchema !== undefined) {
-					const schemus = getSimpleNodeSchema(flexSchema);
-					// if (isObjectNodeSchema(schemus)) {
+				const storedSchema = context.flexSchema.nodeSchema.get(schemaIdentifier);
+				if (storedSchema !== undefined) {
+					const schemus = getSimpleNodeSchema(storedSchema);
 					return indexer(schemus);
-					// }
 				} else {
 					// else: the node is out of schema. TODO: do we error, or allow that?
 					fail("node is out of schema");
@@ -128,10 +126,11 @@ export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex
 	// For each node schema, find which field key the identifier field is under.
 	// This can be done easily because identifiers are their own field kinds.
 	const identifierFields = new Map<string, FieldKey>();
-	for (const [schemaId, schemus] of context.schema.nodeSchema.entries()) {
-		if (schemus instanceof FlexObjectNodeSchema) {
-			for (const [fieldKey, fieldSchema] of schemus.objectNodeFields.entries()) {
-				if (fieldSchema.kind.identifier === FieldKinds.identifier.identifier) {
+	for (const [schemaId, flexSchema] of context.flexSchema.nodeSchema.entries()) {
+		const schemus = getSimpleNodeSchema(flexSchema);
+		if (schemus instanceof ObjectNodeSchema) {
+			for (const [fieldKey, fieldSchema] of schemus.fields.entries()) {
+				if (fieldSchema.kind === FieldKind.Identifier) {
 					identifierFields.set(schemaId, brand(fieldKey));
 					break;
 				}
@@ -157,9 +156,11 @@ export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex
 		(nodes) => {
 			if (nodes.length > 1) {
 				throw new UsageError(
-					"Cannot retrieve node from index: there are multiple nodes with the same identifier",
+					"cannot retrieve node from index: there are multiple nodes with the same identifier",
 				);
 			}
+
+			return nodes[0];
 		},
 	);
 }
@@ -171,11 +172,8 @@ function getOrCreateSimpleTree(
 	context: Context,
 	anchorNode: AnchorNode,
 ): TreeNode | TreeValue {
-	return (
-		tryGetCachedHydratedTreeNode(anchorNode) ??
-		getOrCreateNodeFromFlexTreeNode(
-			anchorNode.slots.get(flexTreeSlot) ?? makeFlexNode(context, anchorNode),
-		)
+	return getOrCreateNodeFromFlexTreeNode(
+		anchorNode.slots.get(flexTreeSlot) ?? makeFlexNode(context, anchorNode),
 	);
 }
 

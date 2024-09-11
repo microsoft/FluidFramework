@@ -18,8 +18,6 @@ import {
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexNodes } from "./types.js";
 import type { TreeStatus } from "../flex-tree/index.js";
-// import { tryGetCachedHydratedTreeNode } from "../../simple-tree/index.js";
-// import { Tree } from "../../index.js";
 
 /**
  * Specifies whether an indexable tree is currently in the document,
@@ -33,7 +31,8 @@ export type IndexableTreeStatus =
  * A function that returns some key given a cursor to a node where the key is what the node
  * is indexed on.
  *
- * TODO: document cursor ownership
+ * This walks the cursor to find the key the node is indexed on but returns the cursor to the state it
+ * was in before being passed to the function. It should also not be disposed by this function.
  */
 export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
 
