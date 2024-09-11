@@ -63,7 +63,10 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 			// Remove the existing TOC section because its links are incorrect; we'll regenerate it.
 			.use(removeSectionContent, { heading: "Contents" })
 			// Update the "back to TOC" links to prepend 'user-content-' because that's what GH Releases does.
-			.use(updateTocLinks, { checkValue: RELEASE_NOTES_TOC_LINK_TEXT, newUrl: "#user-content-contents" })
+			.use(updateTocLinks, {
+				checkValue: RELEASE_NOTES_TOC_LINK_TEXT,
+				newUrl: "#user-content-contents",
+			})
 			// Parse the markdown as GitHub-Flavored Markdown
 			.use(remarkGfm)
 			// Strip any single-line breaks. See the docs for the stripSoftBreaks function for more details.

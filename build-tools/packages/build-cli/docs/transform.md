@@ -11,7 +11,7 @@ Transforms a markdown release notes file into a format appropriate for use in a 
 
 ```
 USAGE
-  $ flub transform releaseNotes --inFile <value> --outFile <value> [--json] [-v | --quiet]
+  $ flub transform releaseNotes --inFile <value> --outFile <value> [-v | --quiet]
 
 FLAGS
   --inFile=<value>   (required) A release notes file that was generated using 'flub generate releaseNotes'. The file
@@ -22,9 +22,6 @@ FLAGS
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
-
-GLOBAL FLAGS
-  --json  Format output as json.
 
 EXAMPLES
   Transform the release notes from version 2.2.0 and output the results to out.md.

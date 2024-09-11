@@ -216,9 +216,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			})
 			.use(remarkToc, { maxDepth: 3, skip: ".*Start Building Today.*" });
 
-		const processor = flags.headingLinks
-			? baseProcessor.use(addHeadingLinks)
-			: baseProcessor;
+		const processor = flags.headingLinks ? baseProcessor.use(addHeadingLinks) : baseProcessor;
 
 		const contents = String(
 			await processor.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),

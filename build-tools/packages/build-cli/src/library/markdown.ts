@@ -123,10 +123,7 @@ export function removeHeadingsAtLevel(options: { level: 1 | 2 | 3 | 4 | 5 | 6 })
 			tree,
 			"heading",
 			(node: Heading, index: number | undefined, parent: Parent | undefined) => {
-				if (
-					node.depth === options.level &&
-					index !== undefined
-				) {
+				if (node.depth === options.level && index !== undefined) {
 					parent?.children.splice(index, 1);
 					return [SKIP, index];
 				}
@@ -141,15 +138,14 @@ export function removeHeadingsAtLevel(options: { level: 1 | 2 | 3 | 4 | 5 | 6 })
  * @param options - `checkValue` is a string that will be compared against the link text. Only matching nodes will be
  * updated. `newUrl` is the new URL to assign to the link.
  */
-export function updateTocLinks(options: { checkValue: string, newUrl: string }): (tree: Root) => void {
+export function updateTocLinks(options: { checkValue: string; newUrl: string }): (
+	tree: Root,
+) => void {
 	const { checkValue, newUrl } = options;
 
 	return (tree: Root) => {
 		visit(tree, "link", (node: Link) => {
-			if (
-				node.children?.[0].type === "text" &&
-				node.children[0].value === checkValue
-			) {
+			if (node.children?.[0].type === "text" && node.children[0].value === checkValue) {
 				node.url = newUrl;
 			}
 		});
