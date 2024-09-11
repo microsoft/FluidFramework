@@ -94,13 +94,10 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	 *
 	 * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
 	 * control so changes can usually be reverted.
-	 *
-	 * @returns an array of paths to the canonicalized changesets.
 	 */
-	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<string[]> {
+	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<void> {
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
-		const changesetPaths: string[] = [];
 
 		const toWrite: Promise<void>[] = [];
 		for (const changeset of changesets) {
@@ -111,10 +108,8 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
 			this.info(`Writing canonical changeset: ${changeset.sourceFile}`);
 			toWrite.push(writeFile(changeset.sourceFile, output));
-			changesetPaths.push(changeset.sourceFile);
 		}
 		await Promise.all(toWrite);
-		return changesetPaths;
 	}
 
 	public async run(): Promise<void> {
