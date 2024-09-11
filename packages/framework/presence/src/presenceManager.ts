@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import type { ConnectedClientId } from "./baseTypes.js";
 import type { IPresence, ISessionClient, PresenceEvents } from "./presence.js";
 import type {
@@ -34,21 +36,50 @@ export interface IPresenceManager
  */
 class PresenceManager implements IPresenceManager {
 	private readonly datastoreManager: PresenceDatastoreManager;
+	private readonly attendees = new Map<ConnectedClientId, ISessionClient>();
+	private readonly selfAttendee: ISessionClient = {
+		currentClientId: () => {
+			throw new Error("Client has never been connected");
+		},
+	};
 
 	public constructor(runtime: IEphemeralRuntime) {
+		// If already connected, populate self and attendees.
+		const originalClientId = runtime.clientId;
+		if (originalClientId !== undefined) {
+			this.selfAttendee.currentClientId = () => originalClientId;
+			this.attendees.set(originalClientId, this.selfAttendee);
+		}
+
 		this.datastoreManager = new PresenceDatastoreManagerImpl(runtime, this);
+
+		// Watch for connected event that will produce new (or first) clientId.
+		runtime.on("connected", () => {
+			const clientId = runtime.clientId;
+			assert(clientId !== undefined, "Connected without local clientId");
+			this.selfAttendee.currentClientId = () => clientId;
+			this.attendees.set(clientId, this.selfAttendee);
+		});
 	}
 
 	public readonly events = createEmitter<PresenceEvents>();
 
 	public getAttendees(): ReadonlySet<ISessionClient> {
-		throw new Error("Method not implemented.");
+		return new Set(this.attendees.values());
 	}
 	public getAttendee(clientId: ConnectedClientId): ISessionClient {
-		throw new Error("Method not implemented.");
+		const attendee = this.attendees.get(clientId);
+		if (attendee) {
+			return attendee;
+		}
+		const newAttendee = {
+			currentClientId: () => clientId,
+		};
+		this.attendees.set(clientId, newAttendee);
+		return newAttendee;
 	}
 	public getMyself(): ISessionClient {
-		throw new Error("Method not implemented.");
+		return this.selfAttendee;
 	}
 
 	public getStates<TSchema extends PresenceStatesSchema>(
