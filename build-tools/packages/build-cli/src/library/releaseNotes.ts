@@ -4,6 +4,6 @@
  */
 
 /**
- * The test used in release notes links that point back to the table of contents in the document.
+ * The text used in release notes links that point back to the table of contents in the document.
  */
 export const RELEASE_NOTES_TOC_LINK_TEXT = "⬆️ Table of contents";
