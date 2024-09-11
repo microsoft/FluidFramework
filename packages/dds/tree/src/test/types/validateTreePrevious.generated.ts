@@ -895,6 +895,7 @@ declare type old_as_current_for_TypeAlias_MapNodeInsertableData = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_MapNodeInsertableData": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_MapNodeInsertableData = requireAssignableTo<TypeOnly<current.MapNodeInsertableData<any>>, TypeOnly<old.MapNodeInsertableData<any>>>
 
 /*

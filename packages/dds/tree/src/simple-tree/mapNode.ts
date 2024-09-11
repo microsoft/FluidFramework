@@ -40,7 +40,7 @@ import {
 	type InsertableContent,
 } from "./toMapTree.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
-import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
+import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
 
@@ -298,4 +298,4 @@ export function mapSchema<
  */
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
 	| Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
-	| RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+	| RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;

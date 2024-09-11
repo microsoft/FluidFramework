@@ -100,6 +100,7 @@ export type {
 	_RecursiveTrick,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
+	RestrictiveStringRecord,
 	Assume,
 	_InlineTrick,
 	FlattenKeys,

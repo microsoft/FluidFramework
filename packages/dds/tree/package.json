@@ -214,6 +214,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAlias_MapNodeInsertableData": {
+				"backCompat": false
+			}
+		}
 	}
 }

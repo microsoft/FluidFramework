@@ -154,6 +154,7 @@ export {
 	type Covariant,
 	BrandedType,
 	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	type MakeNominal,
 } from "./util/index.js";
 
