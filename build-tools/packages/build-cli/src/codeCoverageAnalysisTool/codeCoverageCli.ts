@@ -23,7 +23,7 @@ export interface CodeCoverageSummary {
 
 /**
  * Entrypoint for posting the code coverage summary on the PRs
- * @param adoToken - adoToken ADO token
+ * @param adoToken - ADO token that will be used to download artifacts from ADO pipeline runs
  * @param coverageReportsFolder - The path to where the coverage reports exist
  * @param codeCoverageConstants - The code coverage constants required for the code coverage analysis
  */
