@@ -41,7 +41,7 @@ import {
 } from "../leafNodeSchema.js";
 import { toFlexSchema } from "../toFlexSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { walkFieldSchema } from "./tree.js";
+import { walkFieldSchema } from "../walkSchema.js";
 
 /**
  * Verbose encoding of a {@link TreeNode} or {@link TreeValue}.
