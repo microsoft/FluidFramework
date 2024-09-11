@@ -17,11 +17,7 @@ import type {
 	ValueElementMap,
 } from "./presenceStates.js";
 import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
-import type {
-	PresenceStates,
-	PresenceStatesSchema,
-	PresenceWorkspaceAddress,
-} from "./types.js";
+import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 
 import type { IRuntimeInternal } from "@fluid-experimental/presence/internal/container-definitions/internal";
 
@@ -53,7 +49,7 @@ interface SystemDatastore {
 
 type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
 
-const datastoreUpdateMessageType = "DIS:DatastoreUpdate";
+const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
 interface DatastoreUpdateMessage extends IInboundSignalMessage {
 	type: typeof datastoreUpdateMessageType;
 	content: {
@@ -64,7 +60,7 @@ interface DatastoreUpdateMessage extends IInboundSignalMessage {
 	};
 }
 
-const joinMessageType = "DIS:ClientJoin";
+const joinMessageType = "Pres:ClientJoin";
 interface ClientJoinMessage extends IInboundSignalMessage {
 	type: typeof joinMessageType;
 	content: {
@@ -75,10 +71,10 @@ interface ClientJoinMessage extends IInboundSignalMessage {
 	};
 }
 
-function isDISMessage(
+function isPresenceMessage(
 	message: IInboundSignalMessage,
 ): message is DatastoreUpdateMessage | ClientJoinMessage {
-	return message.type.startsWith("DIS:");
+	return message.type.startsWith("Pres:");
 }
 
 /**
@@ -99,7 +95,7 @@ export type IEphemeralRuntime = Pick<
  */
 export interface PresenceDatastoreManager {
 	getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: `${"s" | "n"}:${PresenceWorkspaceAddress}`,
+		internalWorkspaceAddress: string,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema>;
 	processSignal(message: IInboundSignalMessage, local: boolean): void;
@@ -236,7 +232,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	): void {
 		const received = Date.now();
 		assert(message.clientId !== null, "Map received signal without clientId");
-		if (!isDISMessage(message)) {
+		if (!isPresenceMessage(message)) {
 			return;
 		}
 		if (local) {
