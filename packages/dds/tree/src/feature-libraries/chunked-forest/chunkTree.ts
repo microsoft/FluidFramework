@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -28,6 +28,8 @@ import { BasicChunk } from "./basicChunk.js";
 import { type TreeChunk, tryGetChunk } from "./chunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import { isStableNodeKey } from "../node-key/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface Disposable {
 	/**
@@ -158,7 +160,7 @@ export class Chunker implements IChunker {
  * @param cursor - cursor in nodes mode
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
-	return chunkRange(cursor, policy, 1, true)[0];
+	return chunkRange(cursor, policy, 1, true)[0] ?? oob();
 }
 
 /**
@@ -182,7 +184,7 @@ export function chunkFieldSingle(
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
 	if (chunks.length === 1) {
-		return chunks[0];
+		return chunks[0] ?? oob();
 	}
 	return new SequenceChunk(chunks);
 }
@@ -278,7 +280,7 @@ export function tryShapeFromFieldSchema(
 	if (type.types?.size !== 1) {
 		return undefined;
 	}
-	const childType = [...type.types][0];
+	const childType = [...type.types][0] ?? oob();
 	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
@@ -448,11 +450,15 @@ export function chunkRange(
 
 	return output;
 }
-
+/**
+ * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * If the idCompressor is not provided, the values will be the original uncompressed values.
+ */
 export function insertValues(
 	cursor: ITreeCursorSynchronous,
 	shape: TreeShape,
 	values: Value[],
+	idCompressor?: IIdCompressor,
 ): void {
 	assert(shape.type === cursor.type, 0x582 /* shape and type must match */);
 
@@ -461,13 +467,21 @@ export function insertValues(
 
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
-		values.push(cursor.value);
+		if (
+			typeof cursor.value === "string" &&
+			idCompressor !== undefined &&
+			isStableNodeKey(cursor.value)
+		) {
+			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value);
+		} else {
+			values.push(cursor.value);
+		}
 	}
 	for (const [key, childShape, length] of shape.fieldsArray) {
 		cursor.enterField(key);
 		let count = 0;
 		for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-			insertValues(cursor, childShape, values);
+			insertValues(cursor, childShape, values, idCompressor);
 			count++;
 		}
 		cursor.exitField();
@@ -484,12 +498,16 @@ export function insertValues(
  * If this stops early due to the type changing, `skipLastNavigation` is not involved:
  * `skipLastNavigation` only determines if the cursor will be left on the node after the last one (possibly exiting the field)
  * if the full length is used.
+ *
+ * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * If the idCompressor is not provided, the values will be the original uncompressed values.
  */
 export function uniformChunkFromCursor(
 	cursor: ITreeCursorSynchronous,
 	shape: TreeShape,
 	maxTopLevelLength: number,
 	skipLastNavigation: boolean,
+	idCompressor?: IIdCompressor,
 ): UniformChunk {
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
@@ -497,7 +515,7 @@ export function uniformChunkFromCursor(
 	const values: TreeValue[] = [];
 	let topLevelLength = 1;
 	while (topLevelLength <= maxTopLevelLength) {
-		insertValues(cursor, shape, values);
+		insertValues(cursor, shape, values, idCompressor);
 		if (topLevelLength === maxTopLevelLength) {
 			if (!skipLastNavigation) {
 				cursor.nextNode();
@@ -510,5 +528,5 @@ export function uniformChunkFromCursor(
 		}
 		topLevelLength += 1;
 	}
-	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values);
+	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor);
 }

@@ -266,6 +266,7 @@ describe("Snapshot Format Conversion Tests", () => {
 		assert(result.telemetryProps.slowBlobStructureCount === 0);
 		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
 		assert(result.telemetryProps.slowTreeStructureCount === 4);
+		assert(result.telemetryProps.treeStructureCountWithGroupId === 3);
 
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);

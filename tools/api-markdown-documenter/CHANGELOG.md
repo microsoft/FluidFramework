@@ -1,5 +1,39 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.16.0
+
+-   Added the following new utility function to `ApiItemUtilities`:
+    1. `ancestryHasModifierTag`: Checks if the provided API item or ancestor items are tagged with the specified [modifier tag](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags).
+
+### Beta
+
+-   Adds prototype functionality for "linting" an API Model (i.e., the set of packages whose docs are published as a single "suite").
+    Can be invoked by importing `lintApiModel` from `@fluid-tools/api-markdown-documenter/beta`.
+    Returns a set of TSDoc-related "errors" discovered while walking the API Model.
+    -   The primary goal of this tool is to detect issues that `API-Extractor` cannot validate on a per-package basis when generating API reports.
+        For now, this is limited to validating `@link` and `@inheritDoc` tags to ensure that symbolic references are valid within the API Model.
+
+### ⚠ BREAKING CHANGES
+
+-   Updated `loadModel` to take a configuration object, rather than individual parameters.
+    -   Also allows default use of the console logger when no logger is explicitly given.
+
+## 0.15.0
+
+-   Added the following new utility functions to `ApiItemUtilities`:
+    1. `getCustomBlockComments`: Gets all _custom_ [block comments](https://tsdoc.org/pages/spec/tag_kinds/#block-tags) associated with the provided API item.
+        - **Will not** include built-in block comment kinds like `@see`, `@param`, etc.
+    2. `getModifierTags`: Gets all [modifier tags](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags) associated with the provided API item.
+        - **Will** include built-in modifier tags like `@sealed`, release tags, etc.
+    3. `hasModifierTag`: Checks if the provided API item is tagged with the specified [modifier tag](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags).
+
+### ⚠ BREAKING CHANGES
+
+-   The following existing APIs were updated to return `readonly` arrays, where they were not previously `readonly`:
+    -   `getExampleBlocks`
+    -   `getSeeBlocks`
+    -   `getThrowsBlocks`
+
 ## 0.14.0
 
 -   Allow configuration of "alerts" in child item tables.

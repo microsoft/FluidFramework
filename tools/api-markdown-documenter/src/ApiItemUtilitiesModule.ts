@@ -15,10 +15,13 @@ export {
 	shouldItemBeIncluded,
 } from "./api-item-transforms/index.js";
 export {
+	ancestryHasModifierTag,
+	getCustomBlockComments,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
 	getModifiers,
+	getModifierTags,
 	getQualifiedApiItemName,
 	getReleaseTag,
 	getReturnsBlock,
@@ -26,6 +29,7 @@ export {
 	getSingleLineExcerptText,
 	getThrowsBlocks,
 	getUnscopedPackageName,
+	hasModifierTag,
 	isDeprecated,
 	isOptional,
 	isReadonly,

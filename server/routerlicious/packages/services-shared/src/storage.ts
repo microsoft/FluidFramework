@@ -50,6 +50,7 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
 		private readonly storageNameAssigner: IStorageNameAllocator,
+		private readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
 	) {}
 
 	/**
@@ -275,23 +276,31 @@ export class DocumentStorage implements IDocumentStorage {
 			lumberjackProperties,
 		);
 
+		const document: IDocument = {
+			createTime: Date.now(),
+			deli: JSON.stringify(deli),
+			documentId,
+			session,
+			scribe: JSON.stringify(scribe),
+			tenantId,
+			version: "0.1",
+			storageName,
+			isEphemeralContainer,
+		};
+		const documentDbValue: IDocument & { ttl?: number } = {
+			...document,
+		};
+		if (isEphemeralContainer) {
+			documentDbValue.ttl = this.ephemeralDocumentTTLSec;
+		}
+
 		try {
 			const result = await this.documentRepository.findOneOrCreate(
 				{
 					documentId,
 					tenantId,
 				},
-				{
-					createTime: Date.now(),
-					deli: JSON.stringify(deli),
-					documentId,
-					session,
-					scribe: JSON.stringify(scribe),
-					tenantId,
-					version: "0.1",
-					storageName,
-					isEphemeralContainer,
-				},
+				documentDbValue,
 			);
 			createDocumentCollectionMetric.setProperty(
 				CommonProperties.isEphemeralContainer,

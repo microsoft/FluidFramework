@@ -35,6 +35,7 @@ import {
 	createCacheSnapshotKey,
 	createOdspLogger,
 	getOdspResolvedUrl,
+	snapshotWithLoadingGroupIdSupported,
 	toInstrumentedOdspStorageTokenFetcher,
 	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
@@ -76,9 +77,7 @@ export async function prefetchLatestSnapshot(
 ): Promise<boolean> {
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
-	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
-		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2",
-	);
+	const useGroupIdsForSnapshotFetch = snapshotWithLoadingGroupIdSupported(mc.config);
 	// For prefetch, we just want to fetch the ungrouped data and want to use the new API if the
 	// feature gate is set, so provide an empty array.
 	const loadingGroupIds = useGroupIdsForSnapshotFetch ? [] : undefined;
@@ -113,7 +112,7 @@ export async function prefetchLatestSnapshot(
 			controller,
 		);
 	};
-	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
+	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl, useGroupIdsForSnapshotFetch);
 	let cacheP: Promise<void> | undefined;
 	let snapshotEpoch: string | undefined;
 	const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {

@@ -4,7 +4,6 @@
  */
 
 import { DevtoolsFeatures } from "@fluidframework/devtools-core/internal";
-// eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";

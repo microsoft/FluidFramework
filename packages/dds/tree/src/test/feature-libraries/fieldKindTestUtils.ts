@@ -4,8 +4,8 @@
  */
 
 import type { FieldKey, ITreeCursorSynchronous, JsonableTree } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import { stringSchema } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 
 // TODO: Users of this are mainly working with in memory representations.
@@ -16,7 +16,7 @@ import { brand } from "../../util/index.js";
  * Arbitrary tree with value `s`
  */
 export function testTree(s: string): JsonableTree {
-	return { type: leaf.string.name, value: s };
+	return { type: brand(stringSchema.identifier), value: s };
 }
 
 /**

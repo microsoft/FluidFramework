@@ -98,7 +98,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 			}
 			case "disconnected": {
 				// orange
-				return tokens.colorPaletteDarkOrangeBorderActive;
+				return tokens.colorPaletteDarkOrangeBorder1;
 			}
 			case "disposed": {
 				// dark red

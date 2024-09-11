@@ -1,0 +1,249 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current e2e test (local driver)",
+			"env": {
+				"fluid__test__driver": "local",
+				"fluid__test__backCompat": "${input:backCompat}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+			},
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
+			"windows": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
+			},
+			"sourceMaps": true,
+			"program": "${file}",
+			"args": [
+				// "--fgrep",               // Uncomment to filter by test case name
+				// "<test case name>",
+				"--no-timeouts",
+				"--exit",
+			],
+			"cwd": "${fileDirname}",
+			"skipFiles": [
+				"<node_internals>/**",
+				// Allow debugging into legacy Fluid packages (and breakpoints to be set in them)
+				"**/node_modules/!(.legacy)/**",
+			],
+			"outFiles": [
+				// This config avoids loading dependent packages' test files, just those in test-end-to-end-tests.
+				// This reduces the number of source files VSCode needs to load to debug the e2e tests
+				// considerably, which decreases the time it takes to start debugging.
+				// Note: these globs include files under node_modules, which is explicitly desirable when trying to set breakpoints
+				// in legacy FF packages. When the user doesn't select that option, debugOldFluidModules will handle excluding node_modules.
+				"${workspaceFolder}/lib/**/*.js",
+				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
+				"${input:debugOldFluidModules}",
+			],
+			"presentation": {
+				"group": "e2e-tests",
+				"order": 1,
+			},
+			"preLaunchTask": "Build Current Tests",
+			"internalConsoleOptions": "openOnSessionStart",
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Client: Debug Current e2e test (tinylicious)",
+			"env": {
+				"fluid__test__driver": "t9s",
+				"fluid__test__backCompat": "${input:backCompat}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+			},
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
+			"windows": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
+			},
+			"sourceMaps": true,
+			"program": "${file}",
+			"args": [
+				// "--fgrep",               // Uncomment to filter by test case name
+				// "<test case name>",
+				"--no-timeouts",
+				"--exit",
+			],
+			"cwd": "${fileDirname}",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/!(.legacy)/**"],
+			"outFiles": [
+				"${workspaceFolder}/lib/**/*.js",
+				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
+				"${input:debugOldFluidModules}",
+			],
+			"presentation": {
+				"hidden": true,
+			},
+			"preLaunchTask": "Build Current Tests",
+			"internalConsoleOptions": "openOnSessionStart",
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "tinylicious",
+			"cwd": "${workspaceFolder}",
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tinylicious",
+			"windows": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tinylicious.cmd",
+			},
+			"sourceMaps": true,
+			"skipFiles": ["<node_internals>/**"],
+			// Only load source maps for tinylicious and Fluid packages
+			"outFiles": [
+				"${workspaceFolder:FluidFramework}/node_modules/**/tinylicious/**/*.[mc]?js",
+				"${workspaceFolder:FluidFramework}/node_modules/**/@fluid*/**/*.[mc]?js",
+			],
+			"presentation": {
+				"hidden": true,
+			},
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current e2e test (odsp)",
+			"env": {
+				"fluid__test__driver": "odsp",
+				"fluid__test__backCompat": "${input:backCompat}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+				"fluid__test__odspEndpointName": "${input:odspEndpoint}",
+			},
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
+			"windows": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
+			},
+			"sourceMaps": true,
+			"program": "${file}",
+			"args": [
+				// "--fgrep",               // Uncomment to filter by test case name
+				// "<test case name>",
+				"--no-timeouts",
+				"--exit",
+			],
+			"cwd": "${fileDirname}",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/!(.legacy)/**"],
+			"outFiles": [
+				"${workspaceFolder}/lib/**/*.js",
+				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
+				"${input:debugOldFluidModules}",
+			],
+			"presentation": {
+				"group": "e2e-tests",
+				"order": 3,
+			},
+			"preLaunchTask": "Build Current Tests",
+			"internalConsoleOptions": "openOnSessionStart",
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current e2e test (routerlicious)",
+			"env": {
+				"fluid__test__driver": "r11s",
+				"fluid__test__backCompat": "${input:backCompat}",
+				"fluid__test__r11sEndpointName": "${input:r11sEndpoint}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+			},
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
+			"windows": {
+				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
+			},
+			"sourceMaps": true,
+			"program": "${file}",
+			"args": [
+				// "--fgrep",               // Uncomment to filter by test case name
+				// "<test case name>",
+				"--no-timeouts",
+				"--exit",
+			],
+			"cwd": "${fileDirname}",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/!(.legacy)/**"],
+			"outFiles": [
+				"${workspaceFolder}/lib/**/*.js",
+				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
+				"${input:debugOldFluidModules}",
+			],
+			"presentation": {
+				"group": "e2e-tests",
+				"order": 4,
+			},
+			"preLaunchTask": "Build Current Tests",
+			"internalConsoleOptions": "openOnSessionStart",
+		},
+	],
+	"compounds": [
+		{
+			"name": "Debug Current e2e test (tinylicious)",
+			"configurations": ["tinylicious", "Client: Debug Current e2e test (tinylicious)"],
+			"presentation": {
+				"group": "e2e-tests",
+				"order": 2,
+			},
+		},
+	],
+	// Note: if launching some debug configuration with non-default values repeatedly, you can use "restart" to avoid specifying
+	// the inputs each time.
+	// We could consider using something like https://marketplace.visualstudio.com/items?itemName=spadin.memento-inputs to make
+	// this a bit more ergonomic, but that would require extension installation to make these launch targets work.
+	"inputs": [
+		{
+			"id": "argDriver",
+			"description": "e2e test driver to use",
+			"default": "local",
+			"type": "pickString",
+			"options": ["local", "tinylicious", "routerlicious", "odsp"],
+		},
+		{
+			"id": "backCompat",
+			"description": "compatibility matrix",
+			"default": "small",
+			"type": "pickString",
+			"options": [
+				{ "label": "default (PR)", "value": "" },
+				{ "label": "full (CI)", "value": "FULL" },
+			],
+		},
+		{
+			"id": "verboseConsoleOutputt",
+			"description": "Show console output?",
+			"default": "",
+			"type": "pickString",
+			"options": [{ "label": "No", "value": "" }, { "label": "Yes", "value": "1" }],
+		},
+		{
+			"id": "debugOldFluidModules",
+			"description": "Load source maps for compat matrix? (slower, but allows breakpoints in compat Fluid packages)",
+			"type": "pickString",
+			"default": "!**/node_modules/**",
+			"options": [
+				{ "label": "No", "value": "!**/node_modules/**" },
+				// VSCode doesn't correctly handle an empty string in outFiles. This is an arbitrary glob that doesn't match any files.
+				{ "label": "Yes", "value": "**/dummy-folder-unused/**" },
+			],
+		},
+		{
+			"id": "odspEndpoint",
+			"description": "Which odsp endpoint should be used?",
+			"type": "pickString",
+			"default": "odsp",
+			"options": ["odsp", "odsp-df"],
+		},
+		{
+			"id": "r11sEndpoint",
+			"description": "Which r11s endpoint should be used?",
+			"type": "pickString",
+			"default": "frs",
+			"options": [
+				"frs",
+				{
+					"label": "docker (local service must be started separately prior to debugging)",
+					"value": "docker",
+				},
+			],
+		},
+	],
+}

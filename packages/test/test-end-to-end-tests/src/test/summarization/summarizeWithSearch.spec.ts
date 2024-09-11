@@ -6,136 +6,27 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	IContainer,
-	IRuntimeFactory,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
-import { ILoaderProps } from "@fluidframework/container-loader/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	IAckedSummary,
-	ISummaryNackMessage,
 	SummaryCollection,
 	neverCancelledSummaryToken,
+	type ISummaryNackMessage,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	DriverHeader,
-	type IDocumentServiceFactory,
-	ISummaryContext,
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../../mocking.js";
-
-/**
- * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
- */
-async function loadSummarizer(
-	provider: ITestObjectProvider,
-	runtimeFactory: IRuntimeFactory,
-	summaryVersion?: string,
-	loaderProps?: Partial<ILoaderProps>,
-) {
-	const requestHeader = {
-		[LoaderHeader.cache]: false,
-		[LoaderHeader.clientDetails]: {
-			capabilities: { interactive: true },
-			type: "summarizer",
-		},
-		[DriverHeader.summarizingClient]: true,
-		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.version]: summaryVersion,
-	};
-	const summarizerContainer = await provider.loadContainer(
-		runtimeFactory,
-		loaderProps,
-		requestHeader,
-	);
-	await waitForContainerConnection(summarizerContainer);
-
-	// Fail fast if we receive a nack as something must have gone wrong.
-	const summaryCollection = new SummaryCollection(
-		summarizerContainer.deltaManager,
-		createChildLogger(),
-	);
-	summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
-		throw new Error(
-			`Received Nack for sequence#: ${op.contents.summaryProposal.summarySequenceNumber}`,
-		);
-	});
-
-	// entryPoint of a summarizer container is the Summarizer object
-	const summarizer = await summarizerContainer.getEntryPoint();
-	// The runtime prop is private to the Summarizer class
-	const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
-	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint("default");
-	if (entryPoint === undefined) {
-		throw new Error("default dataStore must exist");
-	}
-	return {
-		containerRuntime,
-		entryPoint: entryPoint.get(),
-		summaryCollection,
-	};
-}
-
-/**
- * Generates, uploads, submits a summary on the given container runtime and waits for the summary to be ack'd
- * by the server.
- * @returns The acked summary and the last sequence number contained in the summary that is submitted.
- */
-async function submitAndAckSummary(
-	provider: ITestObjectProvider,
-	summarizerClient: {
-		containerRuntime: ContainerRuntime;
-		summaryCollection: SummaryCollection;
-	},
-	logger: ITelemetryLoggerExt,
-	latestSummaryRefSeqNum: number,
-	fullTree: boolean = false,
-	cancellationToken = neverCancelledSummaryToken,
-) {
-	// Wait for all pending ops to be processed by all clients.
-	await provider.ensureSynchronized();
-	const summarySequenceNumber =
-		summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
-	// Submit a summary
-	const result = await summarizerClient.containerRuntime.submitSummary({
-		fullTree,
-		summaryLogger: logger,
-		cancellationToken,
-		latestSummaryRefSeqNum,
-	});
-	assert(result.stage === "submit", "The summary was not submitted");
-	// Wait for the above summary to be ack'd.
-	const ackedSummary =
-		await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
-	// Update the container runtime with the given ack. We have to do this manually because there is no summarizer
-	// client in these tests that takes care of this.
-	await summarizerClient.containerRuntime.refreshLatestSummaryAck({
-		proposalHandle: ackedSummary.summaryOp.contents.handle,
-		ackHandle: ackedSummary.summaryAck.contents.handle,
-		summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
-		summaryLogger: logger,
-	});
-	return { ackedSummary, summarySequenceNumber };
-}
 
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
@@ -212,79 +103,56 @@ describeCompat(
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataStoreFactory1,
 			registryEntries: registryStoreEntries,
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: { state: "disabled" },
+				},
+			},
 		});
 
 		const logger = createChildLogger();
 
 		let provider: ITestObjectProvider;
-
-		// Stores the latest summary uploaded to the server.
-		let latestUploadedSummary: ISummaryTree | undefined;
-		// Stores the latest summary context uploaded to the server.
-		let latestSummaryContext: ISummaryContext | undefined;
-		// Stores the latest acked summary for the document.
-		let latestAckedSummary: IAckedSummary | undefined;
-
 		let mainContainer: IContainer;
 		let mainDataStore: TestDataObject1;
 		let mainContainerRuntime: ContainerRuntime;
 
-		const createContainer = async (): Promise<IContainer> => {
-			return provider.createContainer(runtimeFactory);
-		};
-
-		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(provider, runtimeFactory, summaryVersion);
-		};
-
 		/**
-		 * Callback that will be called by the document storage service whenever a summary is uploaded by the client.
-		 * Update the summary context to include the summary proposal and ack handle as per the latest ack for the
-		 * document.
+		 * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
 		 */
-		function uploadSummaryCb(
-			summaryTree: ISummaryTree,
-			context: ISummaryContext,
-		): ISummaryContext {
-			latestUploadedSummary = summaryTree;
-			latestSummaryContext = context;
-			const newSummaryContext = { ...context };
-			// If we received an ack for this document, update the summary context with its information. The
-			// server rejects the summary if it doesn't have the proposal and ack handle of the previous
-			// summary.
-			if (latestAckedSummary !== undefined) {
-				newSummaryContext.ackHandle = latestAckedSummary.summaryAck.contents.handle;
-				newSummaryContext.proposalHandle = latestAckedSummary.summaryOp.contents.handle;
-			}
-			return newSummaryContext;
-		}
-
-		/**
-		 * Submits a summary and validates that the data stores with ids in `changedDataStoreIds` are resummarized. All
-		 * other data stores are not resummarized and a handle is sent for them in the summary.
-		 */
-		async function waitForSummary(summarizerClient: {
-			containerRuntime: ContainerRuntime;
-			summaryCollection: SummaryCollection;
-		}): Promise<string> {
-			const latestSummaryRefSeqNum =
-				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
-			const summaryResult = await submitAndAckSummary(
+		async function loadSummarizer(summaryVersion?: string) {
+			const { summarizer, container } = await createSummarizerFromFactory(
 				provider,
-				summarizerClient,
-				logger,
-				latestSummaryRefSeqNum,
-				false, // fullTree
+				mainContainer,
+				dataStoreFactory1,
+				summaryVersion,
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				registryStoreEntries,
 			);
-			latestAckedSummary = summaryResult.ackedSummary;
-			assert(
-				latestSummaryContext &&
-					latestSummaryContext.referenceSequenceNumber >= summaryResult.summarySequenceNumber,
-				`Did not get expected summary. Expected: ${summaryResult.summarySequenceNumber}. ` +
-					`Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
+			await waitForContainerConnection(container);
+
+			// Fail fast if we receive a nack as something must have gone wrong.
+			const summaryCollection = new SummaryCollection(
+				container.deltaManager,
+				createChildLogger(),
 			);
-			assert(latestUploadedSummary !== undefined, "Did not get a summary");
-			return latestAckedSummary.summaryAck.contents.handle;
+			summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
+				throw new Error(
+					`Received Nack for sequence#: ${op.contents.summaryProposal.summarySequenceNumber}`,
+				);
+			});
+			// The runtime prop is private to the Summarizer class
+			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+			const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint("default");
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			return {
+				summarizer,
+				containerRuntime,
+				entryPoint: entryPoint.get(),
+				summaryCollection,
+			};
 		}
 
 		async function waitForSummaryOp(containerRuntime: ContainerRuntime) {
@@ -300,22 +168,7 @@ describeCompat(
 		describe("Realize DataStore during Search while waiting for Summary Ack", () => {
 			beforeEach("setup", async () => {
 				provider = getTestObjectProvider({ syncSummarizer: true });
-				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
-				// time the summarizer client uploads a summary.
-				(provider as any)._documentServiceFactory =
-					wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
-						createDocumentService: {
-							connectToStorage: {
-								uploadSummaryWithContext: (dss) => async (summary, context) => {
-									uploadSummaryCb(summary, context);
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-									return dss.uploadSummaryWithContext(summary, context);
-								},
-							},
-						},
-					});
-
-				mainContainer = await createContainer();
+				mainContainer = await provider.createContainer(runtimeFactory);
 				// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 				// re-sent. Do it here so that the extra events don't mess with rest of the test.
 				mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject1;
@@ -324,29 +177,30 @@ describeCompat(
 				await waitForContainerConnection(mainContainer);
 			});
 
-			it("Test Assert 0x1a6 should not happen - small repro", async () => {
-				const summarizerClient = await getNewSummarizer();
+			it("summarize should not fail when data store is created after summary generation and before processing summary ack", async () => {
+				const { containerRuntime, summaryCollection } = await loadSummarizer();
+
 				// Wait for all pending ops to be processed by all clients.
 				await provider.ensureSynchronized();
-				const summarySequenceNumber =
-					summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
+
 				// Submit a summary
-				const result = await summarizerClient.containerRuntime.submitSummary({
+				const result = await containerRuntime.submitSummary({
 					fullTree: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
 					latestSummaryRefSeqNum: 0,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
-				await waitForSummaryOp(summarizerClient.containerRuntime);
-				const dataStore =
-					await summarizerClient.containerRuntime.createDataStore(TestDataObjectType2);
+				await waitForSummaryOp(containerRuntime);
+				const dataStore = await containerRuntime.createDataStore(TestDataObjectType2);
 				await dataStore.entryPoint.get();
+
 				// Wait for the above summary to be ack'd.
-				const ackedSummary =
-					await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
+				const ackedSummary = await summaryCollection.waitSummaryAck(
+					result.referenceSequenceNumber,
+				);
 				// The assert 0x1a6 should not be hit anymore.
-				await summarizerClient.containerRuntime.refreshLatestSummaryAck({
+				await containerRuntime.refreshLatestSummaryAck({
 					proposalHandle: ackedSummary.summaryOp.contents.handle,
 					ackHandle: ackedSummary.summaryAck.contents.handle,
 					summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
@@ -355,45 +209,42 @@ describeCompat(
 			});
 
 			it("Test Assert 0x1a6 should not happen with MixinSearch", async () => {
-				const summarizerClient1 = await getNewSummarizer();
+				const { summarizer } = await loadSummarizer();
 
 				const dataStoreA = await dataStoreFactory1.createInstance(
 					mainDataStore._context.containerRuntime,
 				);
 				mainDataStore._root.set("dataStoreA", dataStoreA.handle);
 
-				const summaryVersion = await waitForSummary(summarizerClient1);
+				const { summaryVersion } = await summarizeNow(summarizer);
 				mainDataStore._root.set("key", "value");
 
-				const summarizerClient2 = await getNewSummarizer(summaryVersion);
+				const { containerRuntime: containerRuntime2, summaryCollection: summaryCollection2 } =
+					await loadSummarizer(summaryVersion);
 				// Wait for all pending ops to be processed by all clients.
 				await provider.ensureSynchronized();
-				const summarySequenceNumber =
-					summarizerClient2.containerRuntime.deltaManager.lastSequenceNumber;
 
 				// Submit a summary
-				const latestSummaryRefSeqNum =
-					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
-				const result = await summarizerClient2.containerRuntime.submitSummary({
+				const result = await containerRuntime2.submitSummary({
 					fullTree: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
-					latestSummaryRefSeqNum,
+					latestSummaryRefSeqNum: 0,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 
-				await waitForSummaryOp(summarizerClient2.containerRuntime);
+				await waitForSummaryOp(containerRuntime2);
 
-				const dataStore =
-					await summarizerClient2.containerRuntime.createDataStore(TestDataObjectType2);
+				const dataStore = await containerRuntime2.createDataStore(TestDataObjectType2);
 				await dataStore.entryPoint.get();
 
 				// Wait for the above summary to be ack'd.
-				const ackedSummary =
-					await summarizerClient2.summaryCollection.waitSummaryAck(summarySequenceNumber);
+				const ackedSummary = await summaryCollection2.waitSummaryAck(
+					result.referenceSequenceNumber,
+				);
 
 				// The assert 0x1a6 should be hit now.
-				await summarizerClient2.containerRuntime.refreshLatestSummaryAck({
+				await containerRuntime2.refreshLatestSummaryAck({
 					proposalHandle: ackedSummary.summaryOp.contents.handle,
 					ackHandle: ackedSummary.summaryAck.contents.handle,
 					summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
@@ -423,7 +274,7 @@ describeCompat(
 				summarizer1.close();
 
 				// Create a new summarizer from the above summary.
-				const summarizer2 = await getNewSummarizer(summary1.summaryVersion);
+				const summarizer2 = await loadSummarizer(summary1.summaryVersion);
 
 				const summarySequenceNumber =
 					summarizer2.containerRuntime.deltaManager.lastSequenceNumber;
@@ -459,12 +310,6 @@ describeCompat(
 					summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
 					summaryLogger: logger,
 				});
-			});
-
-			afterEach(() => {
-				latestAckedSummary = undefined;
-				latestSummaryContext = undefined;
-				latestUploadedSummary = undefined;
 			});
 		});
 	},

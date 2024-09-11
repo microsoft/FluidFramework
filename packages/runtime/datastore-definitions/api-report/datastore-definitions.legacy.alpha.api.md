@@ -88,7 +88,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    readonly idCompressor?: IIdCompressor;
+    readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
@@ -107,7 +107,13 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
 // @alpha
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
-    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
+    (event: "disconnected", listener: () => void): any;
+    // (undocumented)
+    (event: "dispose", listener: () => void): any;
+    // (undocumented)
+    (event: "attaching", listener: () => void): any;
+    // (undocumented)
+    (event: "attached", listener: () => void): any;
     // (undocumented)
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     // (undocumented)
@@ -132,7 +138,5 @@ export type JsonableTypeWith<T> = undefined | null | boolean | number | string |
 
 // @alpha
 export type Serializable<T> = Jsonable<T, IFluidHandle>;
-
-// (No @packageDocumentation comment for this package)
 
 ```

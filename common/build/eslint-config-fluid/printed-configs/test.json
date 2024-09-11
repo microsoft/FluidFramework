@@ -603,6 +603,11 @@
                 "allow": [
                     "@fluid*/*/test*",
                     "@fluid*/*/internal/test*",
+                    "@fluid-example/*/internal",
+                    "@fluid-experimental/*/internal",
+                    "@fluid-internal/*/internal",
+                    "@fluid-private/*/internal",
+                    "@fluid-tools/*/internal",
                     "@fluidframework/*/internal",
                     "@fluid-experimental/**",
                     "*/index.js"
@@ -1400,7 +1405,7 @@
             "error"
         ],
         "unicorn/no-useless-spread": [
-            "error"
+            "off"
         ],
         "unicorn/no-useless-switch-case": [
             "error"
@@ -1493,7 +1498,7 @@
             "error"
         ],
         "unicorn/prefer-module": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-native-coercion-functions": [
             "error"

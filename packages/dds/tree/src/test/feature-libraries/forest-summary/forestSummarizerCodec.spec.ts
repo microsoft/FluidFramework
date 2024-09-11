@@ -30,7 +30,7 @@ import {
 	makeFieldBatchCodec,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { emptySchema } from "../../cursorTestSuite.js";
+import { EmptyObject } from "../../cursorTestSuite.js";
 import { testIdCompressor } from "../../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
@@ -44,7 +44,7 @@ const context = {
 const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);
 
 const testFieldChunks: TreeChunk[] = chunkField(
-	cursorForJsonableTreeField([{ type: emptySchema.name }]),
+	cursorForJsonableTreeField([{ type: brand(EmptyObject.identifier) }]),
 	defaultChunkPolicy,
 );
 assert(testFieldChunks.length === 1);

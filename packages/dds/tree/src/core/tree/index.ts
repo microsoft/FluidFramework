@@ -43,7 +43,7 @@ export type {
 	DetachedNodeRename as DeltaDetachedNodeRename,
 	FieldChanges as DeltaFieldChanges,
 } from "./delta.js";
-export type { MapTree } from "./mapTree.js";
+export { type MapTree, type ExclusiveMapTree, deepCopyMapTree } from "./mapTree.js";
 export {
 	clonePath,
 	topDownPath,
@@ -110,4 +110,5 @@ export {
 	emptyDelta,
 } from "./deltaUtil.js";
 
-export { DetachedFieldIndex, type ForestRootId } from "./detachedFieldIndex.js";
+export { DetachedFieldIndex } from "./detachedFieldIndex.js";
+export { type ForestRootId } from "./detachedFieldIndexTypes.js";

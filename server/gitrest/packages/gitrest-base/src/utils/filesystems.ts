@@ -114,6 +114,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 		config: Provider,
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		private readonly maxFileSizeBytes?: number,
+		private readonly documentTtlSec?: number,
 	) {
 		this.redisFsConfig = {
 			enableRedisFsMetrics: (config.get("git:enableRedisFsMetrics") as boolean) ?? true,
@@ -125,7 +126,8 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 
 		const enableHashmapRedisFs = (config.get("git:enableHashmapRedisFs") as boolean) ?? false;
 		this.redisParams = {
-			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
+			expireAfterSeconds:
+				this.documentTtlSec ?? (redisConfig.keyExpireAfterSeconds as number | undefined),
 			enableHashmapRedisFs,
 			enableRedisMetrics: this.redisFsConfig.enableRedisFsMetrics,
 			redisApiMetricsSamplingPeriod: this.redisFsConfig.redisApiMetricsSamplingPeriod,

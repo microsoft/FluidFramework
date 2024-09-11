@@ -5,7 +5,6 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
@@ -14,8 +13,8 @@ import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
+import { type IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
 import { options } from "../fluidBuild/options";
-import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, PackageManager } from "./monoRepo";
 import {
@@ -42,12 +41,6 @@ export type FluidPackageJson = {
 	nyc?: any;
 
 	/**
-	 * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
-	 * it at the root of the repo or release group has no effect.
-	 */
-	typeValidation?: ITypeValidationConfig;
-
-	/**
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
 	 */
 	fluidBuild?: IFluidBuildConfig;
@@ -69,6 +62,15 @@ export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJson,
 	"name" | "scripts" | "version"
 >;
+
+/**
+ * Information about a package dependency.
+ */
+interface PackageDependency {
+	name: string;
+	version: string;
+	depClass: "prod" | "dev" | "peer";
+}
 
 export class Package {
 	private static packageCount: number = 0;
@@ -141,20 +143,6 @@ export class Package {
 		return this.color(this.name);
 	}
 
-	/**
-	 * The name of the package excluding the scope.
-	 */
-	public get nameUnscoped(): string {
-		return PackageName.getUnscopedName(this.name);
-	}
-
-	/**
-	 * The parsed package scope, including the \@-sign, or an empty string if there is no scope.
-	 */
-	public get scope(): string {
-		return PackageName.getScope(this.name);
-	}
-
 	public get private(): boolean {
 		return this.packageJson.private ?? false;
 	}
@@ -190,22 +178,31 @@ export class Package {
 		return Object.keys(this.packageJson.dependencies ?? {});
 	}
 
-	public get combinedDependencies(): Generator<
-		{
-			name: string;
-			version: string;
-			dev: boolean;
-		},
-		void
-	> {
+	public get combinedDependencies(): Generator<PackageDependency, void> {
 		const it = function* (packageJson: PackageJson) {
 			for (const item in packageJson.dependencies) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				yield { name: item, version: packageJson.dependencies[item]!, dev: false };
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.dependencies[item]!,
+					depClass: "prod",
+				} as const;
 			}
 			for (const item in packageJson.devDependencies) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				yield { name: item, version: packageJson.devDependencies[item]!, dev: true };
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.devDependencies[item]!,
+					depClass: "dev",
+				} as const;
+			}
+			for (const item in packageJson.peerDependencies) {
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.peerDependencies[item]!,
+					depClass: "peer",
+				} as const;
 			}
 		};
 		return it(this.packageJson);

@@ -46,6 +46,7 @@ steps:
 # Download package that has performance tests
 - task: DownloadPipelineArtifact@2
   displayName: Download package with perf tests - ${{ parameters.testPackageName }}
+  retryCountOnTaskFailure: 1
   inputs:
     # It seems there's a bug and preferTriggeringPipeline is not respected.
     # We force the behavior by explicitly specifying:
@@ -66,13 +67,16 @@ steps:
 # Install package that has performance tests
 - task: Bash@3
   displayName: Install package with perf tests - ${{ parameters.testPackageName }}
+  retryCountOnTaskFailure: 1
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.installPath }}
     script: |
       echo "Installing ${{ parameters.testPackageName }}"
 
-      TEST_PACKAGE_PATH_PATTERN=$(itpbip_downloadPath)/scoped/$(itpbip_sanitizedPackageName)
+      # Note that this path must match the path that the packed packages are saved to in the build pipeline.
+      # It should be kept up to date with the path defined in scripts/pack-packages.sh.
+      TEST_PACKAGE_PATH_PATTERN=$(itpbip_downloadPath)/tarballs/$(itpbip_sanitizedPackageName)
       echo "Looking for tarball with pattern $TEST_PACKAGE_PATH_PATTERN :"
       ls -1 $TEST_PACKAGE_PATH_PATTERN
 

@@ -2,12 +2,24 @@
 
 ## [5.4.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.4.0)
 
+### New no-unchecked-record-access rule
+
+Enabled new no-unchecked-record-access rule to enforce safe property access on index signature types.
+
 ### Disabled rules
 
 The following rules have been disabled in all configs because they conflict with formatter settings:
 
 -   [@typescript-eslint/brace-style](https://typescript-eslint.io/rules/brace-style)
 -   [unicorn/number-literal-case](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/number-literal-case.md)
+
+The following rules have been disabled for test code:
+
+-   [unicorn/prefer-module](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/prefer-module.md)
+
+The following rules have been disabled due to frequency of false-positives reported:
+
+-   [unicorn/no-useless-spread](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/no-useless-spread.md)
 
 ### @typescript-eslint/explicit-function-return-type changes
 

@@ -8,6 +8,11 @@
 
 	// We prefer to use type-only imports, so we want the autoimporter to do that by default.
 	"typescript.preferences.preferTypeOnlyAutoImports": true,
+	"typescript.preferences.autoImportFileExcludePatterns": [
+		// Avoid suggesting autoimports for the 'previous' version packages which are used for typetesting.
+		"**/node_modules/**/@fluid*/*-previous",
+		"**/node_modules/**/@fluid*/*-previous/*",
+	],
 
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)

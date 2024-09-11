@@ -147,26 +147,44 @@ export function addSummarizeResultToSummary(
 }
 
 /**
+ * An object who's properties are used to initialize a {@link SummaryTreeBuilder}
+ * @legacy
+ * @alpha
+ */
+export interface SummaryTreeBuilderParams {
+	/**
+	 * This value will become the {@link @fluidframework/driver-definitions#ISummaryTree.groupId}
+	 * of the {@link @fluidframework/driver-definitions#ISummaryTree} built by the {@link SummaryTreeBuilder}.
+	 */
+	groupId?: string;
+}
+/**
  * @legacy
  * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
+	private readonly groupId?: string;
 
 	public get summary(): ISummaryTree {
-		return {
+		const summary: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
 		};
+		if (this.groupId !== undefined) {
+			summary.groupId = this.groupId;
+		}
+		return summary;
 	}
 
 	public get stats(): Readonly<ISummaryStats> {
 		return { ...this.summaryStats };
 	}
 
-	constructor() {
+	constructor(params?: { groupId?: string }) {
 		this.summaryStats = mergeStats();
 		this.summaryStats.treeNodeCount++;
+		this.groupId = params?.groupId;
 	}
 
 	private readonly summaryTree: { [path: string]: SummaryObject } = {};
@@ -301,14 +319,18 @@ export function convertSnapshotTreeToSummaryTree(
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
 		if (snapshot.blobsContents !== undefined) {
-			const content: ArrayBufferLike = snapshot.blobsContents[id];
+			// TODO Why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const content: ArrayBufferLike = snapshot.blobsContents[id]!;
 			if (content !== undefined) {
 				decoded = bufferToString(content, "utf-8");
 			}
 			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
 			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
 		} else if (snapshot.blobs[id] !== undefined) {
-			decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+			// Non null asserting here because of the undefined check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			decoded = fromBase64ToUtf8(snapshot.blobs[id]!);
 		}
 		if (decoded !== undefined) {
 			builder.addBlob(path, decoded);

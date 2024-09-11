@@ -13,6 +13,7 @@ import {
 	doOverRange,
 	generateClientNames,
 	insertAtRefPos,
+	obliterateRange,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
@@ -23,16 +24,22 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 	clients: IConfigRange;
 }
 
-const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
+const allOperations: TestOperation[] = [
+	removeRange,
+	annotateRange,
+	insertAtRefPos,
+	obliterateRange,
+];
 
 export const debugOptions: IConflictFarmConfig = {
-	minLength: { min: 1, max: 1 },
-	clients: { min: 3, max: 3 },
-	opsPerRoundRange: { min: 1, max: 100 },
-	rounds: 1000,
+	minLength: { min: 1, max: 512 },
+	clients: { min: 1, max: 8 },
+	opsPerRoundRange: { min: 1, max: 128 },
+	rounds: 8,
 	operations: allOperations,
 	incrementalLog: true,
-	growthFunc: (input: number) => input + 1,
+	growthFunc: (input: number) => input * 2,
+	// resultsFilePostfix: `conflict-farm-with-obliterate-2.3.0.json`,
 };
 
 export const defaultOptions: IConflictFarmConfig = {
@@ -75,12 +82,12 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [new TestClient()];
-			clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+			const clients: TestClient[] = [new TestClient({ mergeTreeEnableObliterate: true })];
+			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 			let seq = 0;
 			while (clients.length < opts.clients.max) {
-				clients.forEach((c) => c.updateMinSeq(seq));
+				for (const c of clients) c.updateMinSeq(seq);
 
 				// Add double the number of clients each iteration
 				const targetClients = Math.max(opts.clients.min, opts.growthFunc(clients.length));
