@@ -1452,7 +1452,7 @@ export class ContainerRuntime
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
-		recentBatchInfo: Map<number, string> | undefined,
+		recentBatchInfo: ReadonlyMap<number, string> | undefined,
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
@@ -2398,7 +2398,8 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, chunksBlobName, content);
 		}
 
-		const recentBatchInfo = this.duplicateBatchDetector.getRecentBatchInfoForSummary();
+		const recentBatchInfo =
+			this.duplicateBatchDetector.getRecentBatchInfoForSummary(telemetryContext);
 		if (recentBatchInfo !== undefined) {
 			addBlobToSummary(summaryTree, recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
 		}
