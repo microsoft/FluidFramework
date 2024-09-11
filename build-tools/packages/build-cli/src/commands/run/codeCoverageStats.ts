@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { execSync } from "node:child_process";
 import execa from "execa";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

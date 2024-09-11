@@ -5,9 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-await-in-loop */
-/* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
@@ -24,16 +22,32 @@ export interface CoverageMetric {
 	branchCoverage: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- missing type for XML output
-const extractCoverageMetrics = (result: any): CoverageMetric[] => {
+interface TXmlCoverageReportSchema {
+	coverage: {
+		packages: TXmlCoverageReportSchemaForPackage[];
+	};
+}
+
+interface TXmlCoverageReportSchemaForPackage {
+	package: [
+		{
+			"$": {
+				name: string;
+				"line-rate": string;
+				"branch-rate": string;
+			};
+		},
+	];
+}
+
+const extractCoverageMetrics = (result: TXmlCoverageReportSchema): CoverageMetric[] => {
 	const report: CoverageMetric[] = [];
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const coverageForPackagesResult = result?.coverage?.packages?.[0]?.package as any[];
+	const coverageForPackagesResult = result.coverage.packages[0]?.package;
 
 	for (const coverageForPackage of coverageForPackagesResult) {
-		const packagePath = coverageForPackage["$"].name as string;
-		const lineCoverage = Number.parseFloat(coverageForPackage["$"]["line-rate"]) * 100;
-		const branchCoverage = Number.parseFloat(coverageForPackage["$"]["branch-rate"]) * 100;
+		const packagePath = coverageForPackage.$.name;
+		const lineCoverage = Number.parseFloat(coverageForPackage.$["line-rate"]) * 100;
+		const branchCoverage = Number.parseFloat(coverageForPackage.$["branch-rate"]) * 100;
 		report.push({
 			packagePath,
 			lineCoverage,
@@ -128,7 +142,10 @@ export const getCoverageMetricsForPr = async (
 	return coverageMetricsForPr;
 };
 
-function extractCoverageMetricsUtil(result: unknown, coverageMetrics: CoverageMetric[]): void {
+function extractCoverageMetricsUtil(
+	result: TXmlCoverageReportSchema,
+	coverageMetrics: CoverageMetric[],
+): void {
 	const metrics = extractCoverageMetrics(result);
 	for (const metric of metrics) {
 		if (
