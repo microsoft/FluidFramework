@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 
 import { getEffectiveBatchId } from "./batchManager.js";
 import { type InboundBatch } from "./remoteMessageProcessor.js";
@@ -94,10 +95,19 @@ export class DuplicateBatchDetector {
 	 *
 	 * @returns - A serializable object representing the state of the detector, or undefined if there is nothing to save.
 	 */
-	public getRecentBatchInfoForSummary(): Map<number, string> | undefined {
+	public getRecentBatchInfoForSummary(
+		telemetryContext: TelemetryContext,
+	): Map<number, string> | undefined {
 		if (this.batchIdsBySeqNum.size === 0) {
 			return undefined;
 		}
+
+		telemetryContext.set(
+			"fluid_DuplicateBatchDetector",
+			"recentBatchCount",
+			this.batchIdsAll.size,
+		);
+
 		return this.batchIdsBySeqNum;
 	}
 }
