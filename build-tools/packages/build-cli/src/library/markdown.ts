@@ -6,9 +6,9 @@
 import GithubSlugger from "github-slugger";
 import type { Heading, Html, Link, Root } from "mdast";
 import { headingRange } from "mdast-util-heading-range";
+import { toString } from "mdast-util-to-string";
 import type { Node, Parent } from "unist";
 import { SKIP, visit } from "unist-util-visit";
-import { toString } from "mdast-util-to-string";
 
 /**
  * Using the same instance for all slug generation ensures that no duplicate IDs are generated.
