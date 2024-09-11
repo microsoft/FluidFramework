@@ -27,6 +27,7 @@ import {
 } from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
+import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 
 /**
  * Generates release notes from individual changeset files.
@@ -196,7 +197,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 						.join("");
 					body.append(`Affected packages:\n\n${affectedPackages}\n\n`);
 					body.append(
-						`[⬆️ Table of contents](#${flags.headingLinks ? "user-content-" : ""}contents)\n\n`,
+						`[${RELEASE_NOTES_TOC_LINK_TEXT}](#${flags.headingLinks ? "user-content-" : ""}contents)\n\n`,
 					);
 				} else {
 					this.info(
