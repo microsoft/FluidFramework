@@ -46,7 +46,7 @@ export function remarkHeadingLinks(): (tree: Node) => void {
  * A regular expression that extracts an admonition title from a string UNLESS the admonition title is the only thing on
  * the line.
  *
- * Capture group 1 is the admonition type/title. Capture group 2 is any trailing whitespace.
+ * Capture group 1 is the admonition type/title (from the leading `[!` all the way to the trailing `]`). Capture group 2 is any trailing whitespace.
  *
  * @remarks
  *
