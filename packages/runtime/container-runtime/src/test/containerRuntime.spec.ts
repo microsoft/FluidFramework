@@ -3084,7 +3084,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("ignores targeted signals when there is no service support", () => {
+			it("ignores targeted signals when there is no service support/when unexpected", () => {
 				// Send 1st signal and process it to prime the system
 				sendSignals(1);
 				processSubmittedSignals(1);
