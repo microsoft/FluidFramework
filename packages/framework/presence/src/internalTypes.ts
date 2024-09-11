@@ -4,7 +4,7 @@
  */
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import type { ClientSessionId, IPresence, ISessionClient } from "./presence.js";
 
 /**
  * @internal
@@ -26,6 +26,13 @@ export interface ClientRecord<
 export const brandedObjectEntries = Object.entries as <K extends string, T>(
 	o: Record<K, T>,
 ) => [K, T][];
+
+/**
+ * Collection of utilities provided by PresenceManager that are used by presence sub-components.
+ *
+ * @internal
+ */
+export type PresenceManagerInternal = Pick<IPresence, "getAttendee">;
 
 /**
  * @internal

@@ -10,7 +10,8 @@ import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientSessionId, IPresence } from "./presence.js";
+import type { PresenceManagerInternal } from "./internalTypes.js";
+import type { ClientSessionId } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	PresenceStatesInternal,
@@ -19,7 +20,10 @@ import type {
 import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 
-import type { IRuntimeInternal } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type {
+	IExtensionMessage,
+	IRuntimeInternal,
+} from "@fluid-experimental/presence/internal/container-definitions/internal";
 
 interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;
@@ -99,7 +103,7 @@ export interface PresenceDatastoreManager {
 		internalWorkspaceAddress: string,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema>;
-	processSignal(message: IInboundSignalMessage, local: boolean): void;
+	processSignal(message: IExtensionMessage, local: boolean): void;
 }
 
 /**
@@ -118,10 +122,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public constructor(
 		private readonly clientSessionId: ClientSessionId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly presence: IPresence,
+		private readonly presence: PresenceManagerInternal,
 	) {
 		runtime.on("connected", this.onConnect.bind(this));
-		runtime.on("signal", this.processSignal.bind(this));
 
 		// Check if already connected at the time of construction.
 		// If constructed during data store load, the runtime may already be connected
@@ -232,6 +235,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public processSignal(
+		// Note: IInboundSignalMessage is used here in place of IExtensionMessage
+		// as IExtensionMessage's strictly JSON `content` creates type compatibility
+		// issues with `ClientSessionId` keys and really unknown value content.
+		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
+		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
+		// IExtensionMessage<> derivatives to see the issues.
 		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
 		local: boolean,
 	): void {
