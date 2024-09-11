@@ -58,7 +58,7 @@ export async function codeCoverageCompare(): Promise<void> {
 	}
 
 	if (process.env.DANGER_GITHUB_API_TOKEN === undefined) {
-		throw new Error("no env github api token provided");
+		throw new Error("DANGER_GITHUB_API_TOKEN not provided in environment");
 	}
 
 	const codeCoverageConstants = {
