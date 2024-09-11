@@ -63,7 +63,7 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 			.use(removeHeadingsAtLevel, { level: 1 })
 			// Remove the existing TOC section because its links are incorrect; we'll regenerate it.
 			.use(removeSectionContent, { heading: "Contents" })
-			// Update the "back to TOC" links to prepent 'user-content-' because that's what GH Releases does.
+			// Update the "back to TOC" links to prepend 'user-content-' because that's what GH Releases does.
 			.use(updateTocLinks, { newUrl: "#user-content-contents" })
 			// Parse the markdown as GitHub-Flavored Markdown
 			.use(remarkGfm)
