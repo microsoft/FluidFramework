@@ -17,7 +17,7 @@ import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
  * @privateRemarks
  * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
  * @deprecated External code should use `Tree.schema(theNode)` for schema related runtime data access. For type narrowing, use `WithType` instead of the symbols directly.
- * @system @public
+ * @system @system @public
  */
 export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
 
