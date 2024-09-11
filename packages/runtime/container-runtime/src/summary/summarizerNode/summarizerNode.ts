@@ -332,8 +332,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a4 /* "Not tracking a summary" */,
 		);
 		if (parentSkipRecursion) {
-			const latestSummary = this._lastSummaryReferenceSequenceNumber;
-			if (latestSummary === undefined) {
+			if (this._lastSummaryReferenceSequenceNumber === undefined) {
 				// This case the child is added after the latest non-failure summary.
 				// This node and all children should consider themselves as still not
 				// having a successful summary yet.
