@@ -85,18 +85,19 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	}
 
 	/**
-	 * Removes any additional metadata from all changesets and writes the output back to the source files. Changesets that
+	 * Removes any custom metadata from all changesets and writes the output back to the source files. Changesets that
 	 * apply to no packages are assumed to be changesets for the release notes only and are thus deleted as part of
 	 * canonicalization, because such changesets cannot be made canonical.
+	 *
 	 * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
 	 * control so changes can usually be reverted.
 	 *
-	 * @returns an array of paths to any remaining changesets.
+	 * @returns an array of paths to the canonicalized changesets. Deleted changesets will not be included.
 	 */
 	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<string[]> {
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
-		const changesetPaths: string[] =[];
+		const changesetPaths: string[] = [];
 
 		const toWriteOrDelete: Promise<void>[] = [];
 		for (const changeset of changesets) {
