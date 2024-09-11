@@ -143,15 +143,15 @@ const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): st
 	return (
 		`<tr>
     <td>Branch Coverage</td>
-    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInBaseline)}</td>
-    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInPr)}</td>
-    <td>${glyphForBranchCoverage} ${formatDiff(codeCoverageComparisonReport.branchCoverageDiff)}</td>
+    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInBaseline)}%</td>
+    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInPr)}%</td>
+    <td>${glyphForBranchCoverage} ${formatDiff(codeCoverageComparisonReport.branchCoverageDiff)}%</td>
   </tr>` +
 		`<tr>
     <td>Line Coverage</td>
-    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInBaseline)}</td>
-    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInPr)}</td>
-    <td>${glyphForLineCoverage} ${formatDiff(codeCoverageComparisonReport.lineCoverageDiff)}</td>
+    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInBaseline)}%</td>
+    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInPr)}%</td>
+    <td>${glyphForLineCoverage} ${formatDiff(codeCoverageComparisonReport.lineCoverageDiff)}%</td>
     </tr>`
 	);
 };
