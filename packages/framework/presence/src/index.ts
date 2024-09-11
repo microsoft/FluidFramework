@@ -51,7 +51,6 @@ export {
 	type LatestMapValueClientData,
 	type LatestMapValueManager,
 	type LatestMapValueManagerEvents,
-	type MapValueState,
 	type ValueMap,
 } from "./latestMapValueManager.js";
 export {
