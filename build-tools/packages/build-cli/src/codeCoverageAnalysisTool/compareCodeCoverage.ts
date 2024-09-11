@@ -73,7 +73,7 @@ export const compareCodeCoverage = (
 			if (packageName.startsWith(ignorePackageName)) {
 				return;
 			}
-		};
+		}
 
 		let lineCoverageInPr = 0;
 		let lineCoverageInBaseline = 0;
