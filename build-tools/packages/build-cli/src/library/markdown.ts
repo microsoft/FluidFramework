@@ -6,9 +6,8 @@
 import GithubSlugger from "github-slugger";
 import type { Heading, Html, Link, Root } from "mdast";
 import { headingRange } from "mdast-util-heading-range";
-import { toString } from "mdast-util-to-string";
 import type { Node, Parent } from "unist";
-import { EXIT, SKIP, visit } from "unist-util-visit";
+import { SKIP, visit } from "unist-util-visit";
 
 /**
  * Using the same instance for all slug generation ensures that no duplicate IDs are generated.
@@ -90,44 +89,6 @@ export function stripSoftBreaks(): (tree: Node) => void {
 	};
 }
 
-export function removeHeadingAndContent(headingText: string) {
-	return () =>
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		(tree: Node): void => {
-			let remove = false;
-			let headingDepth = 0;
-
-			visit(tree, "heading", (node: Heading, index: number | undefined, parent: Parent) => {
-				const text = node.children.map((child) => toString(child)).join("");
-				if (text === headingText) {
-					remove = true;
-					headingDepth = node.depth;
-					if (index === undefined) {
-						throw new Error("index is undefined");
-					}
-					parent.children.splice(index, 1);
-					return [SKIP, index];
-				}
-			});
-
-			if (remove) {
-				visit(tree, (node: Node, index: number | undefined, parent: Parent) => {
-					if (node.type === "heading" && (node as Heading).depth <= headingDepth) {
-						remove = false;
-						return EXIT;
-					}
-					if (remove && index !== undefined) {
-						// if (index === undefined) {
-						// 	throw new Error("index is undefined");
-						// }
-						parent.children.splice(index, 1);
-						return [SKIP, index];
-					}
-				});
-			}
-		};
-}
-
 export function removeSectionContent(options: { heading: string | RegExp }): (
 	tree: Root,
 ) => void {
@@ -136,7 +97,7 @@ export function removeSectionContent(options: { heading: string | RegExp }): (
 			console.log(`removing section ${options.heading}`);
 			return [
 				start,
-				// { type: "paragraph", children: [{ type: "text", value: "Qux." }] },
+				// No child nodes - effectively empties the section.
 				end,
 			];
 		});

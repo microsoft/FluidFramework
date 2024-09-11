@@ -50,7 +50,8 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 	static readonly examples = [
 		{
 			description: `Transform the release notes from version 2.2.0 and output the results to out.md.`,
-			command: "<%= config.bin %> <%= command.id %> --inFile RELEASE_NOTES/2.2.0.md --outFile out.md",
+			command:
+				"<%= config.bin %> <%= command.id %> --inFile RELEASE_NOTES/2.2.0.md --outFile out.md",
 		},
 	];
 

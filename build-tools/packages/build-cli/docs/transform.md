@@ -25,6 +25,11 @@ LOGGING FLAGS
 
 GLOBAL FLAGS
   --json  Format output as json.
+
+EXAMPLES
+  Transform the release notes from version 2.2.0 and output the results to out.md.
+
+    $ flub transform releaseNotes --inFile RELEASE_NOTES/2.2.0.md --outFile out.md
 ```
 
 _See code: [src/commands/transform/releaseNotes.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/transform/releaseNotes.ts)_
