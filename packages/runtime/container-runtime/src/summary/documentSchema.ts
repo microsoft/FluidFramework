@@ -76,7 +76,7 @@ export interface IDocumentSchema {
  * Content of the type=ContainerMessageType.DocumentSchemaChange ops.
  * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
  * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
- * regSeq of last known schema change (known to a client proposing schema change).
+ * refSeq of last known schema change (known to a client proposing schema change).
  * @see ContainerRuntimeDocumentSchemaMessage
  * @legacy
  * @alpha
@@ -262,9 +262,9 @@ function checkRuntimeCompatibility(
 
 	let unknownProperty: string | undefined;
 
-	const regSeq = documentSchema.refSeq;
+	const refSeq = documentSchema.refSeq;
 	// defence in depth - it should not be possible to get here anything other than integer, but worth validating it.
-	if (typeof regSeq !== "number" || regSeq < 0 || !Number.isInteger(regSeq)) {
+	if (typeof refSeq !== "number" || refSeq < 0 || !Number.isInteger(refSeq)) {
 		unknownProperty = "refSeq";
 	} else if (documentSchema.runtime === null || typeof documentSchema.runtime !== "object") {
 		unknownProperty = "runtime";
@@ -609,7 +609,7 @@ export class DocumentsSchemaController {
 	) {
 		this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
 		this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
-		// validate is strickly less, not equal
+		// validate is strictly less, not equal
 		assert(
 			this.documentSchema.refSeq < sequenceNumber,
 			0x950 /* time should move forward only! */,
