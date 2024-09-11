@@ -99,6 +99,20 @@ export enum TreeStatus {
 
 	/**
 	 * Is created but has not yet been inserted into the tree.
+	 * @remarks
+	 * See also {@link Unhydrated}.
+	 *
+	 * Nodes in the new state have some limitations:
+	 *
+	 * - Events are not currently triggered for changes. Fixes for this are planned.
+	 *
+	 * - Reading identifiers from nodes which were left unspecified (defaulted) when creating the tree will error.
+	 * This is because allocating unique identifiers in a compressible manner requires knowing which tree the nodes will be inserted into.
+	 *
+	 * - Transactions do not work: transactions apply to a single {@link TreeView}, and `New` nodes are not part of one.
+	 *
+	 * - `Tree.shortId` (when the identifier was explicitly specified and thus works at all) will just return the full identifier as a string,
+	 * but might return a compressed form as a number once hydrated.
 	 */
 	New = 3,
 }
