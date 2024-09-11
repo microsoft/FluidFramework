@@ -142,7 +142,7 @@ class NotificationsManagerImpl<
 			this.datastore.localUpdate(
 				this.key,
 				// @ts-expect-error TODO
-				{ rev: 0, timestamp: 0, value: { name, args: [...args] } },
+				{ rev: 0, timestamp: 0, value: { name, args: [...args] }, ignoreUnmonitored: true },
 				true,
 			);
 		},
@@ -150,7 +150,7 @@ class NotificationsManagerImpl<
 			this.datastore.localUpdate(
 				this.key,
 				// @ts-expect-error TODO
-				{ rev: 0, timestamp: 0, value: { name, args: [...args] } },
+				{ rev: 0, timestamp: 0, value: { name, args: [...args] }, ignoreUnmonitored: true },
 				targetClient,
 			);
 		},

@@ -12,7 +12,7 @@ import type { ConnectedClientId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { IPresence } from "./presence.js";
 import type {
-	MapSchemaElement,
+	ClientUpdateEntry,
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
@@ -30,26 +30,21 @@ interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 	internal: PresenceStatesInternal;
 }
 
-type CustomerWorkspaceAddress = `${"s" | "n"}:${PresenceWorkspaceAddress}`;
-type InternalWorkspaceAddress = CustomerWorkspaceAddress | `system:${string}`;
-
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type PresenceDatastore = {
-	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<PresenceStatesSchema>;
+	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
 };
 
 interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
 		[StateValueManagerKey: string]: {
-			[ClientId: ConnectedClientId]: InternalTypes.ValueDirectoryOrState<unknown> & {
-				keepUnregistered?: true;
-			};
+			[ClientId: ConnectedClientId]: ClientUpdateEntry;
 		};
 	};
 }
 
 interface SystemDatastore {
-	"system:map": {
+	"system:presence": {
 		priorClientIds: {
 			[ClientId: ConnectedClientId]: InternalTypes.ValueRequiredState<ConnectedClientId[]>;
 		};
@@ -119,10 +114,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
 
-	private readonly workspaces = new Map<
-		string /* InternalWorkspaceAddress */,
-		PresenceStatesEntry<PresenceStatesSchema>
-	>();
+	private readonly workspaces = new Map<string, PresenceStatesEntry<PresenceStatesSchema>>();
 
 	public constructor(
 		private readonly runtime: IEphemeralRuntime,
@@ -168,7 +160,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: `${"s" | "n"}:${PresenceWorkspaceAddress}`,
+		internalWorkspaceAddress: string,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
@@ -181,15 +173,16 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
 		}
 
-		const localUpdate = <Key extends string>(
-			stateKey: Key,
-			value: MapSchemaElement<PresenceStatesSchema, "value", Key>,
+		const localUpdate = (
+			stateKey: string,
+			value: ClientUpdateEntry,
 			forceBroadcast: boolean,
 		): void => {
 			const clientId = this.runtime.clientId;
 			if (clientId === undefined) {
 				return;
 			}
+
 			this.localUpdate(
 				{
 					[internalWorkspaceAddress]: {
@@ -295,16 +288,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 		}
 
-		for (const [rawWorkspaceAddress, remoteDatastore] of Object.entries(
-			message.content.data,
-		)) {
+		for (const [workspaceAddress, remoteDatastore] of Object.entries(message.content.data)) {
 			// Direct to the appropriate Presence Workspace, if present.
-			const workspace = this.workspaces.get(rawWorkspaceAddress);
+			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
 				workspace.internal.processUpdate(received, timeModifier, remoteDatastore);
 			} else {
 				// Assume all broadcast state is meant to be kept even if not currently registered.
-				const workspaceAddress = rawWorkspaceAddress as InternalWorkspaceAddress;
 				let workspaceDatastore = this.datastore[workspaceAddress];
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};

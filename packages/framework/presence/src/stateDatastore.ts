@@ -30,7 +30,13 @@ export interface StateDatastore<
 	TKey extends string,
 	TValue extends InternalTypes.ValueDirectoryOrState<any>,
 > {
-	localUpdate(key: TKey, value: TValue, forceBroadcast: boolean): void;
+	localUpdate(
+		key: TKey,
+		value: TValue & {
+			ignoreUnmonitored?: true;
+		},
+		forceBroadcast: boolean,
+	): void;
 	update(key: TKey, clientId: ConnectedClientId, value: TValue): void;
 	knownValues(key: TKey): {
 		self: ConnectedClientId | undefined;

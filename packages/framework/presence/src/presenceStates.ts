@@ -28,11 +28,7 @@ export type MapSchemaElement<
 export interface PresenceRuntime {
 	clientId(): ConnectedClientId | undefined;
 	lookupClient(clientId: ConnectedClientId): ISessionClient;
-	localUpdate<Key extends string>(
-		stateKey: Key,
-		value: MapSchemaElement<PresenceStatesSchema, "value", Key>,
-		_forceBroadcast: boolean,
-	): void;
+	localUpdate(stateKey: string, value: ClientUpdateEntry, forceBroadcast: boolean): void;
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
@@ -61,6 +57,7 @@ type MapEntries<TSchema extends PresenceStatesSchema> = PresenceSubSchemaFromWor
 export interface ValueElementMap<_TSchema extends PresenceStatesSchema> {
 	[key: string]: ClientRecord<InternalTypes.ValueDirectoryOrState<unknown>>;
 }
+
 // An attempt to make the type more precise, but it is not working.
 // If the casting in support code is too much we could keep two references to the same
 // complete datastore, but with the respective types desired.
@@ -85,6 +82,19 @@ export interface ValueElementMap<_TSchema extends PresenceStatesSchema> {
 /**
  * @internal
  */
+export type ClientUpdateEntry = InternalTypes.ValueDirectoryOrState<unknown> & {
+	ignoreUnmonitored?: true;
+};
+
+type ClientUpdateRecord = ClientRecord<ClientUpdateEntry>;
+
+interface ValueUpdateRecord {
+	[valueKey: string]: ClientUpdateRecord;
+}
+
+/**
+ * @internal
+ */
 export interface PresenceStatesInternal {
 	ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
 		content: TSchemaAdditional,
@@ -93,7 +103,7 @@ export interface PresenceStatesInternal {
 	processUpdate(
 		received: number,
 		timeModifier: number,
-		remoteDatastore: ValueElementMap<PresenceStatesSchema>,
+		remoteDatastore: ValueUpdateRecord,
 	): void;
 }
 
@@ -156,11 +166,15 @@ function mergeValueDirectory<
  * @param remoteAllKnownState - The remote state to merge into the datastore.
  * @param datastore - The datastore to merge the untracked data into.
  *
+ * @remarks
+ * In the case of ignored unmonitored data, the client entries are not stored,
+ * though the value keys will be populated and often remain empty.
+ *
  * @internal
  */
 export function mergeUntrackedDatastore(
 	key: string,
-	remoteAllKnownState: ClientRecord<InternalTypes.ValueDirectoryOrState<unknown>>,
+	remoteAllKnownState: ClientUpdateRecord,
 	datastore: ValueElementMap<PresenceStatesSchema>,
 	timeModifier: number,
 ): void {
@@ -169,11 +183,13 @@ export function mergeUntrackedDatastore(
 	}
 	const localAllKnownState = datastore[key];
 	for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
-		localAllKnownState[clientId] = mergeValueDirectory(
-			localAllKnownState[clientId],
-			value,
-			timeModifier,
-		);
+		if (!("ignoreUnmonitored" in value)) {
+			localAllKnownState[clientId] = mergeValueDirectory(
+				localAllKnownState[clientId],
+				value,
+				timeModifier,
+			);
+		}
 	}
 }
 
@@ -238,7 +254,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 
 	public localUpdate<Key extends keyof TSchema & string>(
 		key: Key,
-		value: MapSchemaElement<TSchema, "value", Key>,
+		value: MapSchemaElement<TSchema, "value", Key> & ClientUpdateEntry,
 		_forceBroadcast: boolean,
 	): void {
 		this.runtime.localUpdate(key, value, _forceBroadcast);
@@ -295,7 +311,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	public processUpdate(
 		received: number,
 		timeModifier: number,
-		remoteDatastore: ValueElementMap<TSchema>,
+		remoteDatastore: ValueUpdateRecord,
 	): void {
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 			if (key in this.nodes) {
