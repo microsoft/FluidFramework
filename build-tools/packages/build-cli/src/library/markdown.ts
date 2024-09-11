@@ -97,7 +97,7 @@ export function stripSoftBreaks(): (tree: Node) => void {
 
 /**
  * Given a heading string or regex, removes all the content in sections under that heading. Most useful for removing a
- * table of contents section that will later be regenerated, Note that the section heading remains - only the inner
+ * table of contents section that will later be regenerated. Note that the section heading remains - only the inner
  * content is removed.
  *
  * @param options - `heading` is a string or regex that a section's heading must match to be removed.
