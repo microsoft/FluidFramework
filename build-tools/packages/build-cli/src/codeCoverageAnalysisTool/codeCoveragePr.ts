@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IADOCodeCoverageConstants } from "./ADO/constants.js";
+import { type IADOCodeCoverageConstants } from "./ADO/constants.js";
 import { getAzureDevopsApi } from "./ADO/getAzureDevopsApi.js";
 import { getBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics.js";
 import type { CodeCoverageSummary } from "./codeCoverageCli.js";
