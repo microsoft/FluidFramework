@@ -104,7 +104,7 @@ jobs:
       # Generate release notes
       - name: Generate patch release notes
         # This content is only for patch releases
-        if: (fromJson(env.RELEASE_JSON).releaseType == 'patch'
+        if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
         run: |
           # We only need the root dependencies
           pnpm install -w --frozen-lockfile
