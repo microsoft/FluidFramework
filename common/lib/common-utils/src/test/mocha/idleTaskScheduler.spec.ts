@@ -12,8 +12,11 @@ import * as idleTask from "../../idleTaskScheduler";
 describe("Idle task scheduler", () => {
 	let clock: SinonFakeTimers;
 
-	beforeEach("setClock", () => {
+	before(() => {
 		clock = useFakeTimers();
+	});
+
+	beforeEach("setClock", () => {
 		(globalThis as any).requestIdleCallback = undefined;
 	});
 
