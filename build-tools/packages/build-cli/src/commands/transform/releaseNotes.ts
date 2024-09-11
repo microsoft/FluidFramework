@@ -95,7 +95,7 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 					return values.type === "mention" ? false : defaultBuildUrl(values);
 				},
 			})
-			// Add custom achor tags with IDs to all the headings.
+			// Add custom anchor tags with IDs to all the headings.
 			.use(addHeadingLinks);
 
 		const contents = String(await processor.process(input));
