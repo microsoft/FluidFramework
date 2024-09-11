@@ -14,13 +14,15 @@ import remarkToc from "remark-toc";
 
 import { BaseCommand } from "../../library/index.js";
 import {
-	remarkHeadingLinks,
+	addHeadingLinks,
 	removeHeadingsAtLevel,
 	removeSectionContent,
 	stripSoftBreaks,
 	updateTocLinks,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/markdown.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 
 /**
  * Transforms a markdown release notes file into a format appropriate for use in a GitHub Release.
@@ -30,9 +32,6 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 > {
 	static readonly summary =
 		`Transforms a markdown release notes file into a format appropriate for use in a GitHub Release. This is used to transform in-repo release notes such that they can be automatically posted to our GitHub Releases.`;
-
-	// Enables the global JSON flag in oclif.
-	static readonly enableJsonFlag = true;
 
 	static readonly flags = {
 		inFile: Flags.file({
@@ -64,7 +63,7 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 			// Remove the existing TOC section because its links are incorrect; we'll regenerate it.
 			.use(removeSectionContent, { heading: "Contents" })
 			// Update the "back to TOC" links to prepend 'user-content-' because that's what GH Releases does.
-			.use(updateTocLinks, { newUrl: "#user-content-contents" })
+			.use(updateTocLinks, { checkValue: RELEASE_NOTES_TOC_LINK_TEXT, newUrl: "#user-content-contents" })
 			// Parse the markdown as GitHub-Flavored Markdown
 			.use(remarkGfm)
 			// Strip any single-line breaks. See the docs for the stripSoftBreaks function for more details.
@@ -94,7 +93,7 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 				},
 			})
 			// Add custom achor tags with IDs to all the headings.
-			.use(remarkHeadingLinks);
+			.use(addHeadingLinks);
 
 		const contents = String(await processor.process(input));
 

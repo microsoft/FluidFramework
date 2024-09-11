@@ -21,7 +21,7 @@ const slugger = new GithubSlugger();
  *
  * For more details, see: https://github.com/orgs/community/discussions/48311#discussioncomment-10436184
  */
-export function remarkHeadingLinks(): (tree: Node) => void {
+export function addHeadingLinks(): (tree: Node) => void {
 	return (tree: Node): void => {
 		visit(tree, "heading", (node: Heading) => {
 			if (node.children?.length > 0) {
@@ -47,7 +47,7 @@ export function remarkHeadingLinks(): (tree: Node) => void {
  * A regular expression that extracts an admonition title from a string UNLESS the admonition title is the only thing on
  * the line.
  *
- * Capture group 1 is the admonition type/title. Capture group 2 is any trailing whitespace.
+ * Capture group 1 is the admonition type/title.
  *
  * @remarks
  *
@@ -57,7 +57,7 @@ export function remarkHeadingLinks(): (tree: Node) => void {
  * WARNING. It ensures that the pattern is not followed by only whitespace characters until the end of the line.
  * Additionally, it captures any whitespace characters that follow the matched pattern.
  */
-const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)(\s*)/gm;
+const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s*/gm;
 
 /**
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
@@ -89,12 +89,18 @@ export function stripSoftBreaks(): (tree: Node) => void {
 	};
 }
 
+/**
+ * Given a heading string or regex, removes all the content in sections under that heading. Most useful for removing a
+ * table of contents section that will later be regenerated, Note that the section heading remains - only the inner
+ * content is removed.
+ *
+ * @param options - `heading` is a string or regex that a section's heading must match to be removed.
+ */
 export function removeSectionContent(options: { heading: string | RegExp }): (
 	tree: Root,
 ) => void {
 	return function (tree: Root) {
 		headingRange(tree, options.heading, (start, nodes, end, info) => {
-			console.log(`removing section ${options.heading}`);
 			return [
 				start,
 				// No child nodes - effectively empties the section.
@@ -129,14 +135,20 @@ export function removeHeadingsAtLevel(options: { level: 1 | 2 | 3 | 4 | 5 | 6 })
 	};
 }
 
-export function updateTocLinks(options: { newUrl: string }): (tree: Root) => void {
-	const { newUrl } = options;
+/**
+ * Updates URLs of links whose value match a provided value.
+ *
+ * @param options - `checkValue` is a string that will be compared against the link text. Only matching nodes will be
+ * updated. `newUrl` is the new URL to assign to the link.
+ */
+export function updateTocLinks(options: { checkValue: string, newUrl: string }): (tree: Root) => void {
+	const { checkValue, newUrl } = options;
 
 	return (tree: Root) => {
 		visit(tree, "link", (node: Link) => {
 			if (
 				node.children?.[0].type === "text" &&
-				node.children[0].value === "⬆️ Table of contents"
+				node.children[0].value === checkValue
 			) {
 				node.url = newUrl;
 			}

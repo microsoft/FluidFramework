@@ -26,7 +26,7 @@ import {
 	loadChangesets,
 } from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { remarkHeadingLinks } from "../../library/markdown.js";
+import { addHeadingLinks } from "../../library/markdown.js";
 
 /**
  * Generates release notes from individual changeset files.
@@ -217,7 +217,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			.use(remarkToc, { maxDepth: 3, skip: ".*Start Building Today.*" });
 
 		const processor = flags.headingLinks
-			? baseProcessor.use(remarkHeadingLinks)
+			? baseProcessor.use(addHeadingLinks)
 			: baseProcessor;
 
 		const contents = String(
