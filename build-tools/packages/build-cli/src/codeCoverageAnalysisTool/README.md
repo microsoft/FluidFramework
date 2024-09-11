@@ -59,4 +59,4 @@ export type CodeCoverageComparison = {
 };
 ```
 
-If the code coverage diff (line or branch coverage) is more than a percentage point change, then we fail the build for the PR. We also fail the build in case the code coverage for the newly added package is less than 50%.
+If the code coverage (either line or branch) decreased by more than one percentage point, then we fail the build for the PR. We also fail the build in case the code coverage for a newly added package is less than 50%.
