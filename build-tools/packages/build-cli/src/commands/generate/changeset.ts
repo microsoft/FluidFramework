@@ -379,8 +379,8 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		];
 
 		const response = await prompts(questions);
-		// The selectedPackages response will be undefined if the question was skipped, so initiate an empty array in that
-		// case.
+		// The response.selectedPackages value will be undefined if the question was skipped, so default to an empty array
+		// in that case.
 		const selectedPackages: Package[] = (response.selectedPackages ?? []) as Package[];
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 

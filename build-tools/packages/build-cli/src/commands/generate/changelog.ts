@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo, Package } from "@fluidframework/build-tools";
@@ -85,39 +85,35 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	}
 
 	/**
-	 * Removes any custom metadata from all changesets and writes the output back to the source files. Changesets that
-	 * apply to no packages are assumed to be changesets for the release notes only and are thus deleted as part of
-	 * canonicalization, because such changesets cannot be made canonical.
+	 * Removes any custom metadata from all changesets and writes the resulting changes back to the source files. This
+	 * metadata needs to be removed prior to running `changeset version` from the \@changesets/cli package. If it is not,
+	 * then the custom metadata is interpreted as part of the content and the changelogs end up with the metadata in them.
+	 *
+	 * For more information about the custom metadata we use in our changesets, see
+	 * https://github.com/microsoft/FluidFramework/wiki/Changesets#custom-metadata
 	 *
 	 * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
 	 * control so changes can usually be reverted.
 	 *
-	 * @returns an array of paths to the canonicalized changesets. Deleted changesets will not be included.
+	 * @returns an array of paths to the canonicalized changesets.
 	 */
 	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<string[]> {
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
 		const changesetPaths: string[] = [];
 
-		const toWriteOrDelete: Promise<void>[] = [];
+		const toWrite: Promise<void>[] = [];
 		for (const changeset of changesets) {
-			// changesets that apply to no packages should be omitted from the changelogs.
-			if (Object.keys(changeset.metadata).length === 0) {
-				this.info(`Removing changeset not included in changelog: ${changeset.sourceFile}`);
-				toWriteOrDelete.push(rm(changeset.sourceFile));
-				continue;
-			}
-
 			const metadata = Object.entries(changeset.metadata).map((entry) => {
 				const [packageName, bump] = entry;
 				return `"${packageName}": ${bump}`;
 			});
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
-			this.info(`Writing stripped changeset content: ${changeset.sourceFile}`);
-			toWriteOrDelete.push(writeFile(changeset.sourceFile, output));
+			this.info(`Writing canonical changeset: ${changeset.sourceFile}`);
+			toWrite.push(writeFile(changeset.sourceFile, output));
 			changesetPaths.push(changeset.sourceFile);
 		}
-		await Promise.all(toWriteOrDelete);
+		await Promise.all(toWrite);
 		return changesetPaths;
 	}
 
@@ -141,7 +137,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		const releaseGroupRoot = monorepo?.directory ?? gitRoot;
 
 		// Strips additional custom metadata from the source files before we call `changeset version`,
-		// because the changeset tools only work on canonical changesets.
+		// because the changeset tools - like @changesets/cli - only work on canonical changesets.
 		await this.canonicalizeChangesets(releaseGroupRoot);
 
 		// The `changeset version` command applies the changesets to the changelogs
