@@ -11,7 +11,7 @@
  */
 
 // ===============================================================
-// #region Public exports
+// #region Public (and Beta) exports
 // #region Basic re-exports
 
 export type {
