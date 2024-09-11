@@ -25,27 +25,27 @@ export interface CodeCoverageComparison {
 	 */
 	packageName: string;
 	/**
-	 * Line coverage in baseline build
+	 * Line coverage in baseline build (as a percent)
 	 */
 	lineCoverageInBaseline: number;
 	/**
-	 * Line coverage in pr build
+	 * Line coverage in pr build (as a percent)
 	 */
 	lineCoverageInPr: number;
 	/**
-	 * difference between line coverage in pr build and baseline build
+	 * difference between line coverage in pr build and baseline build (percentage points)
 	 */
 	lineCoverageDiff: number;
 	/**
-	 * branch coverage in baseline build
+	 * branch coverage in baseline build (as a percent)
 	 */
 	branchCoverageInBaseline: number;
 	/**
-	 * branch coverage in pr build
+	 * branch coverage in pr build (as a percent)
 	 */
 	branchCoverageInPr: number;
 	/**
-	 * difference between branch coverage in pr build and baseline build
+	 * difference between branch coverage in pr build and baseline build (percentage points)
 	 */
 	branchCoverageDiff: number;
 	/**

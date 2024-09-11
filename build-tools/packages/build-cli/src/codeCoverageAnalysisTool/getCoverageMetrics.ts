@@ -67,7 +67,7 @@ export const getCoverageMetricsForBaseline = async (
 		for (const coverageReportFile of coverageReportsFiles) {
 			const jsZipObject = baselineZip.file(coverageReportFile);
 			if (!jsZipObject) {
-				console.log(`could not find file ${coverageReportFile}`);
+				console.log(`could not find file ${coverageReportFile} in baseline`);
 			}
 
 			const coverageReportXML = await jsZipObject?.async("nodebuffer");

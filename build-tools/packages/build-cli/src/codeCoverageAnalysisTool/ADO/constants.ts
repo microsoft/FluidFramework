@@ -16,10 +16,6 @@ export interface IADOCodeCoverageConstants {
 	// The name of the build artifact that contains the bundle size artifacts
 	codeCoverageAnalysisArtifactName: string;
 
-	// The guid of the repo
-	// Used to post/update comments in ADO
-	projectRepoGuid: string;
-
 	// The number of most recent ADO builds to pull when searching for one associated
 	// with a specific commit, default 20.  Pulling more builds takes longer, but may
 	// be useful when there are a high volume of commits/builds.

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package contains all the utilities required to run code coverage analysis on PRs. The tool uses the coverage reports generated in the PR build to run comparison against a baseline CI build for packages that have been updated on the PR. If the tool finds that the line or branch coverage for a package has been impacted in the PR, it posts a comment on the PR showing the diff of the line coverage between baseline and PR.
+This module contains all the utilities required to run code coverage analysis on PRs. The tool uses the coverage reports generated in the PR build to run comparison against a baseline CI build for packages that have been updated on the PR. If the tool finds that the line or branch coverage for a package has been impacted in the PR, it posts a comment on the PR showing the diff of the line coverage between baseline and PR.
 
 ## Generating coverage reports
 

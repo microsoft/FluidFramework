@@ -64,7 +64,6 @@ export async function codeCoverageCompare(): Promise<void> {
 		orgUrl: "https://dev.azure.com/fluidframework",
 		projectName: "public",
 		ciBuildDefinitionId: 48,
-		projectRepoGuid: "203843667",
 		codeCoverageAnalysisArtifactName: "codeCoverageAnalysis",
 		buildsToSearch: 50,
 	};
