@@ -12,7 +12,7 @@ const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline c
 /**
  * Method that returns the comment to be posted on PRs about code coverage
  * @param codeCoverageComparisonReport - The comparison report between baseline and pr test coverage
-@returns Comment to be posted on the PR, and whether the code coverage comparison check passed or not
+ * @returns Comment to be posted on the PR, and whether the code coverage comparison check passed or not
  */
 export const getCommentForCodeCoverageDiff = async (
 	codeCoverageComparisonReport: CodeCoverageComparison[],

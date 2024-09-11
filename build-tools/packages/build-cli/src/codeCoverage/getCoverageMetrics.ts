@@ -53,10 +53,10 @@ export const getCoverageMetricsForBaseline = async (
 	baselineZip: JSZip,
 ): Promise<CoverageReport[]> => {
 	const coverageReportsFiles: string[] = [];
-	baselineZip.forEach((filePath) => {
+	for (const filePath of Object.keys(baselineZip.files)) {
 		if (filePath.endsWith("cobertura-coverage-patched.xml"))
 			coverageReportsFiles.push(filePath);
-	});
+	}
 
 	const coverageMetricsForBaseline: CoverageReport[] = [];
 	const xmlParser = new Parser();
@@ -79,7 +79,7 @@ export const getCoverageMetricsForBaseline = async (
 						return;
 					}
 					const metrics = extractCoverageMetrics(result);
-					metrics.forEach((metric: CoverageReport) => {
+					for (const metric of metrics) {
 						if (
 							metric.packageName &&
 							!Number.isNaN(metric.lineCoverage) &&
@@ -88,7 +88,7 @@ export const getCoverageMetricsForBaseline = async (
 						) {
 							coverageMetricsForBaseline.push(metric);
 						}
-					});
+					}
 				});
 			}
 			if (coverageMetricsForBaseline.length > 0) {
@@ -125,7 +125,7 @@ export const getCoverageMetricsForPr = async (
 		try {
 			const result = await xmlParser.parseStringPromise(coverageReportXML);
 			const metrics = extractCoverageMetrics(result);
-			metrics.forEach((metric: CoverageReport) => {
+			for (const metric of metrics) {
 				if (
 					metric.packageName &&
 					!Number.isNaN(metric.lineCoverage) &&
@@ -134,7 +134,7 @@ export const getCoverageMetricsForPr = async (
 				) {
 					coverageMetricsForPr.push(metric);
 				}
-			});
+			}
 			if (coverageMetricsForPr.length > 0) {
 				break;
 			}

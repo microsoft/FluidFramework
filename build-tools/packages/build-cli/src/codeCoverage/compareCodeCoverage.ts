@@ -64,16 +64,22 @@ export const compareCodeCoverage = (
 ): CodeCoverageComparison[] => {
 	const results: CodeCoverageComparison[] = [];
 
-	prCoverageReport.forEach((packageInPrReport: CoverageReport) => {
+	for (const packageInPrReport of prCoverageReport) {
 		const { packageName } = packageInPrReport;
 		if (packageName.length === 0) {
-			return;
+			continue;
 		}
+		let skip = false;
 		// Return if the package being updated in the PR is in the list of packages to be ignored
 		for (const ignorePackageName of codeCoverageComparisonIgnoreList) {
 			if (packageName.startsWith(ignorePackageName)) {
-				return;
+				skip = true;
+				break;
 			}
+		}
+
+		if (skip) {
+			continue;
 		}
 
 		let lineCoverageInPr = 0;
@@ -104,7 +110,7 @@ export const compareCodeCoverage = (
 			branchCoverageDiff: branchCoverageInPr - branchCoverageInBaseline,
 			isNewPackage,
 		});
-	});
+	}
 
 	return results;
 };
