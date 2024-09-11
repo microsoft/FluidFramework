@@ -55,7 +55,8 @@ export interface CodeCoverageComparison {
 }
 
 /**
- * Compares the code coverage for pr and baseline build and returns an array of the CodeCoverageDiffReport type
+ * Compares the code coverage for pr and baseline build and returns an array of objects with comparison results,
+ * one per package.
  */
 export const compareCodeCoverage = (
 	baselineCoverageReport: CoverageReport[],
