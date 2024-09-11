@@ -88,7 +88,7 @@ export const compareCodeCoverage = (
 		const packageInBaselineReport = baselineCoverageReport.find(
 			(report) => report.packageName === packageName,
 		);
-		const isNewPackage = !packageInBaselineReport;
+		const isNewPackage = packageInBaselineReport === undefined;
 		if (packageInBaselineReport) {
 			lineCoverageInBaseline = packageInBaselineReport.lineCoverage;
 			branchCoverageInBaseline = packageInBaselineReport.branchCoverage;
