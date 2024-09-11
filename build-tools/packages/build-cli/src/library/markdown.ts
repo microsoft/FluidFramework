@@ -25,7 +25,7 @@ const slugger = new GithubSlugger();
 export function addHeadingLinks(): (tree: Node) => void {
 	return (tree: Node): void => {
 		visit(tree, "heading", (node: Heading) => {
-			if (node.children?.length > 0) {
+			if (node.children?.length > 0 && node.children[0].type === "text") {
 				// Calling toString on the whole node ensures that embedded nodes (e.g. formatted text in the heading) are
 				// included in the slugged string.
 				const slug = slugger.slug(toString(node));

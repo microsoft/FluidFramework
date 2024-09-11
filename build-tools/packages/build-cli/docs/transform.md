@@ -14,9 +14,7 @@ USAGE
   $ flub transform releaseNotes --inFile <value> --outFile <value> [-v | --quiet]
 
 FLAGS
-  --inFile=<value>   (required) A release notes file that was generated using 'flub generate releaseNotes'. The file
-                     must not already contain heading links. That is, the input file must not have been generated with
-                     the --headingLinks flag.
+  --inFile=<value>   (required) A release notes file that was generated using 'flub generate releaseNotes'.
   --outFile=<value>  (required) Output the transformed content to this file.
 
 LOGGING FLAGS

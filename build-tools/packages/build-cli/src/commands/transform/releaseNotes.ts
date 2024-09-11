@@ -35,7 +35,7 @@ export default class TransformReleaseNotesCommand extends BaseCommand<
 
 	static readonly flags = {
 		inFile: Flags.file({
-			description: `A release notes file that was generated using 'flub generate releaseNotes'. The file must not already contain heading links. That is, the input file must not have been generated with the --headingLinks flag.`,
+			description: `A release notes file that was generated using 'flub generate releaseNotes'.`,
 			required: true,
 			exists: true,
 		}),
