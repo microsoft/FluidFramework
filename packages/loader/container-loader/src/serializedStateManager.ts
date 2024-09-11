@@ -188,9 +188,7 @@ export class SerializedStateManager {
 		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
 			const savedOpsSize = pendingLocalState.savedOps.length;
 			this.lastSavedOpSequenceNumber =
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				pendingLocalState.savedOps[savedOpsSize - 1]!.sequenceNumber;
+				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
 		}
 		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
@@ -242,10 +240,7 @@ export class SerializedStateManager {
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
-				const snapshotBlobs = await getBlobContentsFromTree(
-					baseSnapshotTree,
-					this.storageAdapter,
-				);
+				const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, this.storageAdapter);
 				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
 				this.snapshot = {
 					baseSnapshot: baseSnapshotTree,
@@ -346,9 +341,7 @@ export class SerializedStateManager {
 		if (
 			snapshotSequenceNumber === undefined ||
 			this.processedOps.length === 0 ||
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.processedOps[this.processedOps.length - 1]!.sequenceNumber <
+			this.processedOps[this.processedOps.length - 1].sequenceNumber <
 				this.lastSavedOpSequenceNumber ||
 			this.containerDirty()
 		) {
@@ -356,13 +349,9 @@ export class SerializedStateManager {
 			// Pending state would be behind the latest snapshot.
 			return -1;
 		}
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const firstProcessedOpSequenceNumber = this.processedOps[0]!.sequenceNumber;
+		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
 		const lastProcessedOpSequenceNumber =
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.processedOps[this.processedOps.length - 1]!.sequenceNumber;
+			this.processedOps[this.processedOps.length - 1].sequenceNumber;
 
 		if (snapshotSequenceNumber < firstProcessedOpSequenceNumber) {
 			// Snapshot seq number is older than our first processed op, which could mean we're fetching
@@ -388,9 +377,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					// Non null asserting here because of the length check above
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					this.processedOps.length === 0 ? undefined : this.processedOps[0]!.sequenceNumber,
+					this.processedOps.length === 0 ? undefined : this.processedOps[0].sequenceNumber,
 			});
 		}
 		return snapshotSequenceNumber;
@@ -414,9 +401,8 @@ export class SerializedStateManager {
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-			const attributes = JSON.parse(snapshotBlobs[attributesHash!]!);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
 			assert(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				attributes.sequenceNumber === 0,
@@ -524,7 +510,7 @@ export async function getLatestSnapshotInfo(
 
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			const snapshotFetchedTime = Date.now();
-			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshotTree, storageAdapter);
+			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
 				baseSnapshotTree,

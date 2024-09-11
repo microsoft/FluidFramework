@@ -70,10 +70,8 @@ function readBlobSection(node: NodeTypes): {
 			 */
 			slowBlobStructureCount += 1;
 			const records = getNodeProps(blob);
-			// TODO why are we non null asserting here?
-			assertBlobCoreInstance(records.data!, "data should be of BlobCore type");
-			// TODO why are we non null asserting here?
-			const id = getStringInstance(records.id!, "blob id should be string");
+			assertBlobCoreInstance(records.data, "data should be of BlobCore type");
+			const id = getStringInstance(records.id, "blob id should be string");
 			blobContents.set(id, records.data.arrayBuffer);
 		}
 	}
@@ -88,10 +86,8 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
-	// TODO Why are we non null asserting here?
-	assertNumberInstance(records.firstSequenceNumber!, "Seq number should be a number");
-	// TODO Why are we non null asserting here?
-	assertNodeCoreInstance(records.deltas!, "Deltas should be a Node");
+	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
+	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		ops.push(JSON.parse(records.deltas.getString(i)));
@@ -100,8 +96,7 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
 	assert(
-		// Non null asserting here because of the length check
-		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0]!.sequenceNumber,
+		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
@@ -114,8 +109,10 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 function readTreeSection(node: NodeCore): {
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
+	treeStructureCountWithGroupId: number;
 } {
 	let slowTreeStructureCount = 0;
+	let treeStructureCountWithGroupId = 0;
 	const trees: Record<string, ISnapshotTree> = {};
 	const snapshotTree: ISnapshotTree = {
 		blobs: {},
@@ -146,6 +143,7 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(3));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
+						treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
 						continue;
 					}
 					// "name": <node name>
@@ -178,6 +176,7 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(5));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
+						treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
 						assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
 						snapshotTree.unreferenced = true;
 						continue;
@@ -193,7 +192,7 @@ function readTreeSection(node: NodeCore): {
 		/**
 		 * More generalized workflow
 		 */
-		slowTreeStructureCount += 1;
+		slowTreeStructureCount++;
 		const records = getNodeProps(treeNode);
 
 		if (records.unreferenced !== undefined) {
@@ -202,8 +201,7 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		// TODO Why are we non null asserting here?
-		const path = getStringInstance(records.name!, "Path name should be string");
+		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
 				records.value,
@@ -216,15 +214,16 @@ function readTreeSection(node: NodeCore): {
 			trees[path] = result.snapshotTree;
 			if (records.groupId !== undefined) {
 				const groupId = getStringInstance(records.groupId, "groupId should be a string");
-				// Non null asserting since trees[path] is already created
-				trees[path]!.groupId = groupId;
+				trees[path].groupId = groupId;
+				treeStructureCountWithGroupId++;
 			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
+			treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
 		} else {
 			trees[path] = { blobs: {}, trees: {} };
 		}
 	}
-	return { snapshotTree, slowTreeStructureCount };
+	return { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId };
 }
 
 /**
@@ -235,22 +234,22 @@ function readSnapshotSection(node: NodeTypes): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
+	treeStructureCountWithGroupId: number;
 } {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
-	// TODO Why are we non null asserting here?
-	assertNodeCoreInstance(records.treeNodes!, "TreeNodes should be of type NodeCore");
-	// TODO Why are we non null asserting here?
-	assertNumberInstance(records.sequenceNumber!, "sequenceNumber should be of type number");
-	const { snapshotTree, slowTreeStructureCount } = readTreeSection(records.treeNodes);
-	// TODO Why are we non null asserting here?
-	snapshotTree.id = getStringInstance(records.id!, "snapshotId should be string");
+	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
+	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
+	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
+		readTreeSection(records.treeNodes);
+	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
 		sequenceNumber,
 		snapshotTree,
 		slowTreeStructureCount,
+		treeStructureCountWithGroupId,
 	};
 }
 
@@ -270,10 +269,8 @@ export function parseCompactSnapshotResponse(
 
 	const records = getNodeProps(root);
 
-	// TODO Why are we non null asserting here?
-	const mrv = getStringInstance(records.mrv!, "minReadVersion should be string");
-	// TODO Why are we non null asserting here?
-	const cv = getStringInstance(records.cv!, "createVersion should be string");
+	const mrv = getStringInstance(records.mrv, "minReadVersion should be string");
+	const cv = getStringInstance(records.cv, "createVersion should be string");
 	if (records.lsn !== undefined) {
 		assertNumberInstance(records.lsn, "lsn should be a number");
 	}
@@ -292,11 +289,9 @@ export function parseCompactSnapshotResponse(
 	);
 
 	const [snapshot, durationSnapshotTree] = measure(() =>
-		// TODO Why are we non null asserting here?
-		readSnapshotSection(records.snapshot!),
+		readSnapshotSection(records.snapshot),
 	);
-	// TODO Why are we non null asserting here?
-	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs!));
+	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
 
 	return {
 		...snapshot,
@@ -310,6 +305,7 @@ export function parseCompactSnapshotResponse(
 			durationBlobs,
 			slowTreeStructureCount: snapshot.slowTreeStructureCount,
 			slowBlobStructureCount: blobContents.slowBlobStructureCount,
+			treeStructureCountWithGroupId: snapshot.treeStructureCountWithGroupId,
 		},
 	};
 }

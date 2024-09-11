@@ -5,7 +5,7 @@ The `SharedCell` Distributed Data Structure (DDS) stores a single, shared value 
 This package is primarily intended as a minimal example of how distributed data structures work.
 For real-world scenarios, we recommend using one of our other DDSs, like [SharedTree](https://fluidframework.com./docs/data-structures/tree/).
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -29,6 +29,15 @@ npm i @fluidframework/cell
 ## API Documentation
 
 API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/apis/cell>.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
 

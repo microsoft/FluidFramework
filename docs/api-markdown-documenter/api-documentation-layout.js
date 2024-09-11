@@ -26,6 +26,7 @@ const supportDocsLinkSpan = new SpanNode([
 	new PlainTextNode("For more information about our API support guarantees, see "),
 	LinkNode.createFromPlainText(
 		"here",
+		// Is there a URL that would be relative to the current site? (For development use)
 		"https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
 	),
 	new PlainTextNode("."),
@@ -87,15 +88,34 @@ function createImportNotice(apiItem) {
 }
 
 /**
+ * Creates a special use notice for the provided API item, if one is appropriate.
+ *
+ * If the item is tagged as "@system", displays an internal notice with use notes.
+ */
+function createSystemNotice(apiItem) {
+	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
+		return new AlertNode(
+			[supportDocsLinkSpan],
+			/* alertKind: */ "warning",
+			"This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
+		);
+	}
+
+	return undefined;
+}
+
+/**
  * Default content layout for all API items.
  *
  * @remarks Lays out the content in the following manner:
  *
  * 1. Summary (if any)
  *
+ * 1. System notice (if any)
+ *
  * 1. Deprecation notice (if any)
  *
- * 1. Alpha/Beta warning (if item annotated with `@alpha` or `@beta`)
+ * 1. Alpha/Beta/Legacy warning (if item annotated with `@alpha`, `@beta`, or `@legacy`)
  *
  * 1. Item Signature
  *
@@ -124,16 +144,22 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		sections.push(new SectionNode([summary]));
 	}
 
-	// Render deprecation notice (if any)
-	const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
-	if (deprecationNotice !== undefined) {
-		sections.push(new SectionNode([deprecationNotice]));
-	}
+	// Render system notice (if any) that supercedes deprecation and import notices
+	const systemNotice = createSystemNotice(apiItem);
+	if (systemNotice !== undefined) {
+		sections.push(new SectionNode([systemNotice]));
+	} else {
+		// Render deprecation notice (if any)
+		const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
+		if (deprecationNotice !== undefined) {
+			sections.push(new SectionNode([deprecationNotice]));
+		}
 
-	// Render the appropriate API notice (with import instructions), if applicable.
-	const importNotice = createImportNotice(apiItem);
-	if (importNotice !== undefined) {
-		sections.push(new SectionNode([importNotice]));
+		// Render the appropriate API notice (with import instructions), if applicable.
+		const importNotice = createImportNotice(apiItem);
+		if (importNotice !== undefined) {
+			sections.push(new SectionNode([importNotice]));
+		}
 	}
 
 	// Render signature (if any)

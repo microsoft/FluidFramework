@@ -1,0 +1,131 @@
+{
+	"$schema": "../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"root": ".",
+		"useIgnoreFile": true,
+		"defaultBranch": "main"
+	},
+	"files": {
+		"ignoreUnknown": true,
+
+		"ignore": [
+			// Build output
+			"**/base-1/*",
+			"**/base-2/*",
+			"**/base/*.done.build.log"
+		],
+
+		"maxSize": 2097152
+	},
+	"organizeImports": {
+		"enabled": false
+	},
+	"linter": {
+		"enabled": false,
+		"rules": {
+			"recommended": true
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": true,
+		"indentStyle": "tab",
+		"lineWidth": 95,
+		"lineEnding": "lf"
+	},
+	"javascript": {
+		"formatter": {
+			"arrowParentheses": "always",
+			"jsxQuoteStyle": "double",
+			"semicolons": "always",
+			"trailingCommas": "all",
+			"quoteProperties": "preserve",
+			"quoteStyle": "double",
+			"bracketSpacing": true
+		}
+	},
+	"json": {
+		"formatter": {
+			"indentStyle": "tab"
+		}
+	},
+	"overrides": [
+		{
+			// @fluid-experimental/tree FORMATTING
+			// This configuration is used to format the @fluid-experimental/tree package, which uses different settings than
+			// most projects. This override is needed to ensure that the formatter is applied correctly when run from the root
+			// of the repo.
+			//
+			// This configuration should be kept up-to-date with the settings in `experimental/dds/tree/biome.jsonc`.
+			"include": ["experimental/dds/tree/**"],
+			"formatter": {
+				"lineWidth": 120
+			},
+			"javascript": {
+				"formatter": {
+					"jsxQuoteStyle": "single",
+					"trailingCommas": "es5",
+					"quoteStyle": "single"
+				}
+			}
+		},
+		{
+			// JSONC WITHOUT TRAILING COMMAS JSONC is not a standard, and support for trailing commas is not universal. For
+			// simplicity and safety, we parse most JSONC files in a liberal way -- allowing comments and trailing commas, but
+			// format them conservatively without trailing commas.
+			//
+			// See also: https://github.com/microsoft/vscode/issues/102061
+			"include": [
+				"**/*.jsonc",
+
+				// Tools reading api-extractor config files do not consistently support trailing commas.
+				"**/api-extractor*.json",
+
+				// Tools reading tsdoc config files do not consistently support trailing commas.
+				"**/tsdoc*.json"
+			],
+			"json": {
+				"parser": {
+					"allowComments": true,
+					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "none"
+				}
+			}
+		},
+		{
+			// JSONC WITH TRAILING COMMAS
+			// These JSONC files are known to support trailing commas.
+			"include": [
+				// vscode config files all support trailing commas.
+				"**/.vscode/*.json",
+
+				// tsconfig files support trailing commas.
+				"**/tsconfig*.json"
+			],
+			"json": {
+				"parser": {
+					"allowComments": true,
+					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "all"
+				}
+			}
+		},
+		{
+			// PACKAGE.JSON
+			// These settings are used to format package.json files in the way npm itself does, with the exception of using
+			// tabs instead of spaces.
+			"include": ["**/package.json"],
+			"json": {
+				"formatter": {
+					"lineWidth": 1
+				}
+			}
+		}
+	]
+}

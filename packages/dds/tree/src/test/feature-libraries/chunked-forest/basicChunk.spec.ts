@@ -10,9 +10,7 @@ import {
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
-	type TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import type {
@@ -38,13 +36,13 @@ import {
 import { ReferenceCountedBase, brand } from "../../../util/index.js";
 import {
 	type TestField,
-	mapSchema,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
-
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
+import { JsonObject } from "../../json/index.js";
+import { numberSchema } from "../../../simple-tree/index.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
@@ -89,14 +87,18 @@ describe("basic chunk", () => {
 		true,
 	);
 
-	const schema: TreeNodeSchemaIdentifier = mapSchema.name;
-
 	const hybridData: TestField<BasicChunk>[] = [];
 	for (const data of testData) {
 		hybridData.push({
 			name: data.name,
-			dataFactory: () => new BasicChunk(schema, new Map([[EmptyKey, [data.dataFactory()]]])),
-			reference: [{ type: schema, fields: { [EmptyKey]: data.reference } }],
+			dataFactory: () =>
+				new BasicChunk(
+					brand(JsonObject.identifier),
+					new Map([[EmptyKey, [data.dataFactory()]]]),
+				),
+			reference: [
+				{ type: brand(JsonObject.identifier), fields: { [EmptyKey]: data.reference } },
+			],
 			path: data.path,
 		});
 	}
@@ -106,7 +108,7 @@ describe("basic chunk", () => {
 		builders: {
 			withKeys: (keys) => {
 				const withKeysShape = new BasicChunk(
-					schema,
+					brand(JsonObject.identifier),
 					new Map(
 						keys.map((key) => [key, [uniformChunk(emptyShape.withTopLevelLength(1), [])]]),
 					),
@@ -204,7 +206,7 @@ describe("basic chunk", () => {
 });
 
 function numericBasicChunk(value: number = 0): BasicChunk {
-	return new BasicChunk(leaf.number.name, new Map(), value);
+	return new BasicChunk(brand(numberSchema.identifier), new Map(), value);
 }
 
 /**

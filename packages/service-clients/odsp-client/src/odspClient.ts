@@ -9,10 +9,11 @@ import type {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
-	type FluidObject,
-	type IConfigProviderBase,
-	type IRequest,
+import type {
+	FluidObject,
+	IConfigProviderBase,
+	IRequest,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
@@ -47,7 +48,7 @@ import type {
 	OdspContainerServices,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
-import { type IOdspTokenProvider } from "./token.js";
+import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
@@ -97,11 +98,15 @@ export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: OdspDriverUrlResolver;
 	private readonly configProvider: IConfigProviderBase | undefined;
+	private readonly connectionConfig: OdspConnectionConfig;
+	private readonly logger: ITelemetryBaseLogger | undefined;
 
-	public constructor(private readonly properties: OdspClientProps) {
+	public constructor(properties: OdspClientProps) {
+		this.connectionConfig = properties.connection;
+		this.logger = properties.logger;
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			async (options) => getStorageToken(options, this.properties.connection.tokenProvider),
-			async (options) => getWebsocketToken(options, this.properties.connection.tokenProvider),
+			async (options) => getStorageToken(options, this.connectionConfig.tokenProvider),
+			async (options) => getWebsocketToken(options, this.connectionConfig.tokenProvider),
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
@@ -121,10 +126,7 @@ export class OdspClient {
 			config: {},
 		});
 
-		const fluidContainer = await this.createFluidContainer(
-			container,
-			this.properties.connection,
-		);
+		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
 
 		const services = await this.getContainerServices(container);
 
@@ -140,8 +142,8 @@ export class OdspClient {
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const url = createOdspUrl({
-			siteUrl: this.properties.connection.siteUrl,
-			driveId: this.properties.connection.driveId,
+			siteUrl: this.connectionConfig.siteUrl,
+			driveId: this.connectionConfig.driveId,
 			itemId: id,
 			dataStorePath: "",
 		});
@@ -182,7 +184,7 @@ export class OdspClient {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
-			logger: this.properties.logger,
+			logger: this.logger,
 			options: { client },
 			configProvider: this.configProvider,
 		});

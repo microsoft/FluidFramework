@@ -6,9 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { type IBatchMetadata } from "../metadata.js";
+import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
+import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import type { InboundBatch } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;
@@ -31,6 +33,32 @@ export type BatchId = string;
 /** Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect */
 export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
 	return `${originalClientId}_[${batchStartCsn}]`;
+}
+
+/**
+ * Get the effective batch ID for the input argument.
+ * Supports either an IPendingMessage or an InboundBatch.
+ * If the batch ID is explicitly present, return it.
+ * Otherwise, generate a new batch ID using the client ID and batch start CSN.
+ */
+export function getEffectiveBatchId(
+	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
+): string {
+	if ("localOpMetadata" in pendingMessageOrInboundBatch) {
+		const pendingMessage: IPendingMessage = pendingMessageOrInboundBatch;
+		return (
+			asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
+			generateBatchId(
+				pendingMessage.batchInfo.clientId,
+				pendingMessage.batchInfo.batchStartCsn,
+			)
+		);
+	}
+
+	const inboundBatch: InboundBatch = pendingMessageOrInboundBatch;
+	return (
+		inboundBatch.batchId ?? generateBatchId(inboundBatch.clientId, inboundBatch.batchStartCsn)
+	);
 }
 
 /**
@@ -64,9 +92,7 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: // Non null asserting here since we are checking the length above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.pendingBatch[this.pendingBatch.length - 1]!.referenceSequenceNumber;
+			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
 	/**
@@ -138,9 +164,7 @@ export class BatchManager {
 			rollback: (process: (message: BatchMessage) => void) => {
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
-					// Non null asserting here since we are iterating though pendingBatch
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const message = this.pendingBatch[i]!;
+					const message = this.pendingBatch[i];
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
@@ -156,7 +180,10 @@ const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
 
 	const firstMsg = batch.messages[0];
 	const lastMsg = batch.messages[batchEnd];
-	assert(firstMsg !== undefined && lastMsg !== undefined, "expected non-empty batch");
+	assert(
+		firstMsg !== undefined && lastMsg !== undefined,
+		0x9d1 /* expected non-empty batch */,
+	);
 
 	const firstMetadata: Partial<IBatchMetadata> = firstMsg.metadata ?? {};
 	const lastMetadata: Partial<IBatchMetadata> = lastMsg.metadata ?? {};

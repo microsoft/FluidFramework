@@ -8,6 +8,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AllowedUpdateType,
 	Compatibility,
+	CursorLocationType,
 	type ITreeCursorSynchronous,
 	type TreeStoredSchema,
 	rootFieldKey,
@@ -17,14 +18,13 @@ import {
 	FieldKinds,
 	type FlexFieldSchema,
 	type FlexTreeSchema,
-	type InsertableFlexField,
 	type ViewSchema,
 	allowsRepoSuperset,
+	cursorForMapTreeField,
 	defaultSchemaPolicy,
-	intoStoredSchema,
-	normalizeNewFieldContent,
+	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import { fail, isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
 
@@ -45,7 +45,7 @@ export function initializeContent(
 		storedSchema: ITreeCheckout["storedSchema"];
 		updateSchema: ITreeCheckout["updateSchema"];
 	},
-	newSchema: FlexTreeSchema,
+	newSchema: TreeStoredSchema,
 	setInitialTree: () => void,
 ): void {
 	assert(
@@ -53,8 +53,7 @@ export function initializeContent(
 		0x743 /* cannot initialize after a schema is set */,
 	);
 
-	const schema = intoStoredSchema(newSchema);
-	const rootSchema = schema.rootFieldSchema;
+	const rootSchema = newSchema.rootFieldSchema;
 	const rootKind = rootSchema.kind;
 
 	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
@@ -64,12 +63,12 @@ export function initializeContent(
 		rootKind === FieldKinds.optional.identifier
 	) {
 		// These kinds are known to tolerate empty, so use the schema as is:
-		incrementalSchemaUpdate = schema;
+		incrementalSchemaUpdate = newSchema;
 	} else {
 		assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
 		// Replace value kind with optional kind in root field schema:
 		incrementalSchemaUpdate = {
-			nodeSchema: schema.nodeSchema,
+			nodeSchema: newSchema.nodeSchema,
 			rootFieldSchema: {
 				kind: FieldKinds.optional.identifier,
 				types: rootSchema.types,
@@ -83,7 +82,7 @@ export function initializeContent(
 	// 	"Incremental Schema update should support the existing empty tree",
 	// );
 	assert(
-		allowsRepoSuperset(defaultSchemaPolicy, schema, incrementalSchemaUpdate),
+		allowsRepoSuperset(defaultSchemaPolicy, newSchema, incrementalSchemaUpdate),
 		0x5c9 /* Incremental Schema during update should be a allow a superset of the final schema */,
 	);
 	// Update to intermediate schema
@@ -92,8 +91,8 @@ export function initializeContent(
 	setInitialTree();
 
 	// If intermediate schema is not final desired schema, update to the final schema:
-	if (incrementalSchemaUpdate !== schema) {
-		schemaRepository.updateSchema(schema);
+	if (incrementalSchemaUpdate !== newSchema) {
+		schemaRepository.updateSchema(newSchema);
 	}
 }
 
@@ -155,6 +154,24 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
 	return checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
 }
 
+function normalizeNewFieldContent(
+	content: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined,
+): ITreeCursorSynchronous {
+	if (content === undefined) {
+		return cursorForMapTreeField([]);
+	}
+
+	if (isReadonlyArray(content)) {
+		return cursorForMapTreeField(content.map((c) => mapTreeFromCursor(c)));
+	}
+
+	if (content.mode === CursorLocationType.Fields) {
+		return content;
+	}
+
+	return cursorForMapTreeField([mapTreeFromCursor(content)]);
+}
+
 /**
  * Initialize a checkout with a schema and tree content.
  * This function should only be called when the tree is uninitialized (no schema or content).
@@ -163,16 +180,13 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
  * If the proposed schema (from `treeContent`) is not compatible with the emptry tree, this function handles using an intermediate schema
  * which supports the empty tree as well as the final tree content.
  */
-export function initialize(checkout: ITreeCheckout, treeContent: TreeContent): void {
+export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredContent): void {
 	checkout.transaction.start();
 	try {
 		initializeContent(checkout, treeContent.schema, () => {
 			const field = { field: rootFieldKey, parent: undefined };
-			const content = normalizeNewFieldContent(
-				{ schema: treeContent.schema },
-				treeContent.schema.rootFieldSchema,
-				treeContent.initialTree,
-			);
+			const content = normalizeNewFieldContent(treeContent.initialTree);
+
 			switch (checkout.storedSchema.rootFieldSchema.kind) {
 				case FieldKinds.optional.identifier: {
 					const fieldEditor = checkout.editor.optionalField(field);
@@ -215,7 +229,7 @@ export function ensureSchema(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,
 	checkout: ITreeCheckout,
-	treeContent: TreeContent | undefined,
+	treeContent: TreeStoredContent | undefined,
 ): boolean {
 	let possibleModifications = allowedSchemaModifications;
 	if (treeContent === undefined) {
@@ -232,7 +246,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(intoStoredSchema(viewSchema.schema));
+			checkout.updateSchema(viewSchema.storedSchema);
 			return true;
 		}
 		case UpdateType.Initialize: {
@@ -253,8 +267,6 @@ export function ensureSchema(
 
 /**
  * View Schema for a `SharedTree`.
- *
- * @internal
  */
 export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema> {
 	/**
@@ -265,8 +277,6 @@ export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSc
 
 /**
  * Content that can populate a `SharedTree`.
- *
- * @internal
  */
 export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -274,16 +284,24 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree:
-		| InsertableFlexField<TRoot>
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous;
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ */
+export interface TreeStoredContent {
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 */
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
 }
 
 /**
  * Options used to schematize a `SharedTree`.
- *
- * @internal
  */
 export interface SchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -295,8 +313,6 @@ export interface SchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFie
 
 /**
  * Options used to initialize (if needed) and schematize a `SharedTree`.
- *
- * @internal
  */
 export interface InitializeAndSchematizeConfiguration<
 	TRoot extends FlexFieldSchema = FlexFieldSchema,
@@ -307,7 +323,6 @@ export interface InitializeAndSchematizeConfiguration<
  * Options used to initialize (if needed) and schematize a `SharedTree`.
  * @remarks
  * Using this builder improves type safety and error quality over just constructing the configuration as a object.
- * @internal
  */
 export function buildTreeConfiguration<T extends FlexFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<T>,

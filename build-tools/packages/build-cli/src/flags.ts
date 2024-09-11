@@ -79,6 +79,21 @@ export const packageSelectorFlag = Flags.custom({
 });
 
 /**
+ * A re-usable CLI flag to parse semver version strings. Values are verified to be valid semvers during flag parsing.
+ */
+export const semverFlag = Flags.custom<semver.SemVer, { loose?: boolean }>({
+	description:
+		"A semantic versioning (semver) version string. Values are verified to be valid semvers during flag parsing.",
+	parse: async (input, _, opts) => {
+		const parsed = semver.parse(input, opts.loose);
+		if (parsed === null) {
+			throw new Error(`Invalid semver: ${input}`);
+		}
+		return parsed;
+	},
+});
+
+/**
  * A re-usable CLI flag to parse semver ranges.
  */
 export const semverRangeFlag = Flags.custom<string | undefined>({
@@ -366,3 +381,22 @@ export interface filterFlags {
 	readonly scope: string[] | undefined;
 	readonly skipScope: string[] | undefined;
 }
+
+/**
+ * A reusable flag for GitHub tokens.
+ */
+export const githubTokenFlag = Flags.custom({
+	description:
+		"GitHub access token. This parameter should be passed using the GITHUB_TOKEN environment variable for security purposes.",
+	env: "GITHUB_TOKEN",
+});
+
+/**
+ * A reusable flag to indicate the command is running in the GitHub Actions environment. This value is typically parsed
+ * from the GITHUB_ACTIONS environment variable but can be set manually for testing.
+ */
+export const githubActionsFlag = Flags.boolean({
+	description:
+		"Set to true to output logs in a GitHub Actions-compatible format. This value will be set to true automatically when running in GitHub Actions.",
+	env: "GITHUB_ACTIONS",
+});

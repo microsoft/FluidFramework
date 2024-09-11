@@ -22,7 +22,7 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions, ReferencePosition } from "../index.js";
+import { IMergeTreeOptions, ReferencePosition, type SequencePlace } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
@@ -198,8 +198,8 @@ export class TestClient extends Client {
 		overwrite = false,
 		opArgs,
 	}: {
-		start: number;
-		end: number;
+		start: SequencePlace;
+		end: SequencePlace;
 		refSeq: number;
 		clientId: number;
 		seq: number;
@@ -245,10 +245,7 @@ export class TestClient extends Client {
 		text: string,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = TextSegment.make(text, props);
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -260,10 +257,7 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = TextSegment.make(text, props);
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);
@@ -299,10 +293,8 @@ export class TestClient extends Client {
 		behaviors: ReferenceType,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new Marker(behaviors);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = Marker.make(behaviors, props);
+
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -314,10 +306,8 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new Marker(markerDef.refType ?? ReferenceType.Tile);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = Marker.make(markerDef.refType ?? ReferenceType.Tile, props);
+
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);

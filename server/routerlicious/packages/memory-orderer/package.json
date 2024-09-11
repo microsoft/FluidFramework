@@ -92,9 +92,16 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocalKafka": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalOrderer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

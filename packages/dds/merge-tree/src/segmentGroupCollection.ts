@@ -8,8 +8,11 @@ import { DoublyLinkedList, walkList } from "./collections/index.js";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
 
 /**
+ * @deprecated - This class should not be used externally and will be removed in a subsequent release.
  * @legacy
  * @alpha
+ *
+ * @privateRemarks After the deprecation period this class should be remove from this package's exports, and only be used internally
  */
 export class SegmentGroupCollection {
 	// eslint-disable-next-line import/no-deprecated
@@ -67,9 +70,7 @@ export class SegmentGroupCollection {
 			// duplicate the previousProps for this segment
 			const index = segmentGroup.segments.indexOf(sourceSegment);
 			if (index !== -1) {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				segmentGroup.previousProps.push(segmentGroup.previousProps[index]!);
+				segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
 			}
 		}
 	}

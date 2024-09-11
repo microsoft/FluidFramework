@@ -32,11 +32,6 @@ export enum ValueSchema {
  * Set of allowed tree types.
  * Providing multiple values here allows polymorphism, tagged union style.
  *
- * If not specified, types are unconstrained
- * (equivalent to the set containing every TreeNodeSchemaIdentifier defined in the document).
- *
- * Note that even when unconstrained, children must still be in-schema for their own type.
- *
  * In the future, this could be extended to allow inlining a TreeNodeStoredSchema here
  * (or some similar structural schema system).
  * For structural types which could go here, there are a few interesting options:
@@ -58,15 +53,13 @@ export enum ValueSchema {
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
  * @internal
  */
-export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
+export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier>;
 
 /**
  * Declarative portion of a Field Kind.
  *
  * @remarks
  * Enough info about a field kind to know if a given tree is is schema.
- *
- * @internal
  */
 export interface FieldKindData {
 	readonly identifier: FieldKindIdentifier;
@@ -83,7 +76,6 @@ export interface SchemaAndPolicy {
 
 /**
  * Extra data needed to interpret schema.
- * @internal
  */
 export interface SchemaPolicy {
 	/**
@@ -112,7 +104,7 @@ export interface TreeFieldStoredSchema {
 	 * The set of allowed child types.
 	 * If not specified, types are unconstrained.
 	 */
-	readonly types?: TreeTypeSet;
+	readonly types: TreeTypeSet;
 }
 
 /**
@@ -122,8 +114,6 @@ export interface TreeFieldStoredSchema {
  * This mainly show up in:
  * 1. The root default field for documents.
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
- *
- * @internal
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
@@ -140,8 +130,6 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 
 /**
  * Identifier used for the FieldKind for fields of type identifier.
- *
- * @internal
  */
 export const identifierFieldKindIdentifier = "Identifier";
 
@@ -302,20 +290,18 @@ function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
 }
 
 export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
-	const out: FieldSchemaFormat = {
+	return {
 		kind: schema.kind,
+		// Types are sorted by identifier to improve stability of persisted data to increase chance of schema blob reuse.
+		types: [...schema.types].sort(),
 	};
-	if (schema.types !== undefined) {
-		out.types = [...schema.types];
-	}
-	return out;
 }
 
 export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSchema {
 	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,
-		types: schema.types === undefined ? undefined : new Set(schema.types),
+		types: new Set(schema.types),
 	};
 	return out;
 }

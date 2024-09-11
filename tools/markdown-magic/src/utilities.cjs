@@ -92,22 +92,61 @@ function getPackageMetadata(packageJsonFilePath) {
 }
 
 /**
- * Gets the appropriate scope kind for the provided package name.
+ * Gets the appropriate special scope kind for the provided package name, if applicable.
+ *
+ * @remarks for an overview of the Fluid Framework's package scopes, see {@link https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes}.
  *
  * @param {string} packageName
- * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} A scope kind based on the package's scope (namespace).
+ * @returns {"" | "FRAMEWORK" | "EXAMPLE" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined}
+ * A scope kind based on the package's scope (namespace).
+ * Will be an empty string if the package has no scope.
+ * Will be `undefined` if the package has an unrecognized scope.
  */
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
-	if (packageScope === `@fluid-experimental`) {
+	if (packageScope === "") {
+		return "";
+	} else if (packageScope === "@fluidframework") {
+		return "FRAMEWORK";
+	} else if (packageScope === "@fluid-example") {
+		return "EXAMPLE";
+	} else if (packageScope === "@fluid-experimental") {
 		return "EXPERIMENTAL";
-	} else if (packageScope === `@fluid-internal`) {
+	} else if (packageScope === "@fluid-internal") {
 		return "INTERNAL";
-	} else if (packageScope === `@fluid-private`) {
+	} else if (packageScope === "@fluid-private") {
 		return "PRIVATE";
+	} else if (packageScope === "@fluid-tools") {
+		return "TOOLS";
 	} else {
 		return undefined;
 	}
+};
+
+/**
+ * Determines if the package is end-user facing or not.
+ * For the purposes of README content generation, this is true for "fluid-framework" and published packages in the
+ * "@fluidframework" and "@fluid-experimental" scopes.
+ *
+ * Will always return `false` if the package.json specifies`"private": true`.
+ *
+ * @remarks Used to determine which automatically generated sections should be included in package READMEs, etc.
+ * @param {object} packageMetadata - The parsed `package.json` file for the package.
+ */
+const isPublic = (packageMetadata) => {
+	// If the package is not published, return `false`.
+	if (packageMetadata.private === true) {
+		return false;
+	}
+
+	// For published packages, only return `true` for package scopes for which we offer public support.
+	const packageName = packageMetadata.name;
+	if (packageName === "fluid-framework") {
+		return true;
+	}
+
+	const scope = getScopeKindFromPackage(packageName);
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL";
 };
 
 /**
@@ -197,12 +236,34 @@ function parseHeadingOptions(transformationOptions, headingText) {
 	};
 }
 
+/**
+ * Parses a provided "boolean" (i.e., "TRUE" | "FALSE") MarkdownMagic transform option.
+ * Returns the provided default if no option was specified.
+ * @param {"TRUE" | "FALSE" | undefined} option
+ * @param {function} defaultValue - The default value, or a callback that returns the default value to use for the option.
+ * Used if the option is not explicitly provided.
+ */
+function parseBooleanOption(option, defaultValue) {
+	if (option === "TRUE") {
+		return true;
+	}
+	if (option === "FALSE") {
+		return false;
+	}
+	if (typeof defaultValue === "function") {
+		return defaultValue();
+	}
+	return defaultValue;
+}
+
 module.exports = {
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	isPublic,
+	parseBooleanOption,
 	parseHeadingOptions,
 	readTemplate,
 	resolveRelativePackageJsonPath,

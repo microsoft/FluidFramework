@@ -191,7 +191,7 @@ export interface IInternalMockRuntimeMessage {
 }
 
 /**
- * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
+ * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
  * @legacy
@@ -854,7 +854,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor?: IIdCompressor & IIdCompressorCore;
+	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 

@@ -96,6 +96,8 @@ export {
 	type DeltaDetachedNodeDestruction,
 	type DeltaDetachedNodeRename,
 	type DeltaFieldChanges,
+	type ExclusiveMapTree,
+	deepCopyMapTree,
 } from "./tree/index.js";
 
 export {
@@ -203,4 +205,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { type Revertible, RevertibleStatus } from "./revertible/index.js";
+export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";

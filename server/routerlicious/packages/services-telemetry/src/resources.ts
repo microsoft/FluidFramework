@@ -39,6 +39,7 @@ export enum BaseTelemetryProperties {
 	tenantId = "tenantId",
 	documentId = "documentId",
 	correlationId = "correlationId",
+	requestSource = "requestSource",
 }
 
 // Incoming message properties
@@ -69,6 +70,7 @@ export enum HttpProperties {
 	responseFinishToCloseLatencyMs = "responseFinishToCloseLatencyMs",
 	status = "status",
 	url = "url",
+	retryCount = "retryCount",
 }
 
 /**

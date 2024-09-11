@@ -48,7 +48,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		const id = await this.getIdForPath(path);
-		assert(id !== undefined, "id is undefined in ChannelStorageService.readBlob()");
+		assert(id !== undefined, 0x9d7 /* id is undefined in ChannelStorageService.readBlob() */);
 		const blob = this.extraBlobs !== undefined ? this.extraBlobs.get(id) : undefined;
 
 		if (blob !== undefined) {

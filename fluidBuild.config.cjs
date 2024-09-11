@@ -37,6 +37,7 @@ module.exports = {
 		},
 		"build": {
 			dependsOn: [
+				"check:format",
 				"compile",
 				"lint",
 				"build:api-reports",
@@ -55,14 +56,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: [
-				"check:format",
-				"eslint",
-				"good-fences",
-				"depcruise",
-				"check:exports",
-				"check:release-tags",
-			],
+			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -75,7 +69,10 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
-		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
+		// These dependencies for typetests:gen can be removed once build-tools is upgraded to 0.45+.
+		// After that version, typetests are generated from the previous version of the package only, so they have no
+		// dependent tasks.
+		"typetests:gen": ["^tsc"],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
@@ -107,8 +104,7 @@ module.exports = {
 		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
-		// therefore we need to require both before running api-extractor. For packages with /legacy
-		// exports, we need the export rollups too and in those cases we only use ESM.
+		// therefore we need to require both before running api-extractor.
 		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
@@ -220,7 +216,7 @@ module.exports = {
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
-			"packages/common/client-utils/src/cjs/package.json",
+			"packages/framework/presence/src/cjs/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
@@ -381,12 +377,11 @@ module.exports = {
 				"server/historian/package.json",
 				"package.json",
 			],
-			"npm-package-json-script-dep": ["^build-tools/"],
+			"npm-package-json-script-dep": [],
 			"npm-public-package-requirements": [
 				// Test packages published only for the purpose of running tests in CI.
 				"^azure/packages/test/",
 				"^packages/service-clients/end-to-end-tests/",
-				"^packages/test/test-app-insights-logger/",
 				"^packages/test/test-service-load/",
 				"^packages/test/test-end-to-end-tests/",
 
@@ -441,7 +436,6 @@ module.exports = {
 				// internal partners or internal CI requirements.
 				internalFeed: [
 					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
-					"@fluid-internal/test-app-insights-logger",
 					"@fluid-internal/test-service-load",
 					// Most examples should be private, but table-document needs to publish internally for legacy compat
 					"@fluid-example/table-document",
@@ -460,6 +454,7 @@ module.exports = {
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
 				["attw", "@arethetypeswrong/cli"],
+				["biome", "@biomejs/biome"],
 				["c8", "c8"],
 				["concurrently", "concurrently"],
 				["copyfiles", "copyfiles"],
@@ -550,5 +545,15 @@ module.exports = {
 		"lts": "minor",
 		"release/**": "patch",
 		"next": "major",
+	},
+
+	releaseNotes: {
+		sections: {
+			feature: { heading: "✨ New Features" },
+			tree: { heading: "🌳 SharedTree DDS changes" },
+			fix: { heading: "🐛 Bug Fixes" },
+			deprecation: { heading: "⚠️ Deprecations" },
+			other: { heading: "Other Changes" },
+		},
 	},
 };

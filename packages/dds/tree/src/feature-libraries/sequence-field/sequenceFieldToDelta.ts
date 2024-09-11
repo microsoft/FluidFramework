@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type DeltaDetachedNodeChanges,
@@ -164,6 +164,12 @@ export function sequenceFieldToDelta(
 						local.push(deltaMark);
 					}
 					break;
+				case "Rename":
+					assert(
+						mark.cellId !== undefined,
+						0x9f9 /* Renames should only target empty cells */,
+					);
+					break;
 				default:
 					unreachableCase(type);
 			}
@@ -171,7 +177,7 @@ export function sequenceFieldToDelta(
 	}
 	// Remove trailing no-op marks
 	while (local.length > 0) {
-		const lastMark = local[local.length - 1];
+		const lastMark = local[local.length - 1] ?? oob();
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||

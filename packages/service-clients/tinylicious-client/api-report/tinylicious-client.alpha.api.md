@@ -11,7 +11,7 @@ export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
 // @public @sealed
 export class TinyliciousClient {
-    constructor(props?: TinyliciousClientProps | undefined);
+    constructor(properties?: TinyliciousClientProps);
     createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;

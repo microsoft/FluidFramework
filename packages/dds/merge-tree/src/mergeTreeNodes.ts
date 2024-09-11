@@ -20,15 +20,17 @@ import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import {
 	ReferencePosition,
 	refGetTileLabels,
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
+// eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+import { Side } from "./sequencePlace.js";
 
 /**
  * Common properties for a node in a merge tree.
@@ -182,6 +184,10 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
+	/**
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
 	/**
@@ -218,7 +224,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 
 	/**
 	 * Manages pending local state for properties on this segment.
+	 *
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	propertyManager?: PropertiesManager;
 	/**
 	 * Local seq at which this segment was inserted.
@@ -254,9 +263,19 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
+	/**
+	 * Stores side information passed to obliterate for the start of a range.
+	 */
+	startSide?: Side.Before | Side.After;
+	/**
+	 * Stores side information passed to obliterate for the end of a range.
+	 */
+	endSide?: Side.Before | Side.After;
 
 	/**
 	 * Add properties to this segment via annotation.
+	 *
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
 	 *
 	 * @remarks This function should not be called directly. Properties should
 	 * be added through the `annotateRange` functions.
@@ -265,6 +284,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 		newProps: PropertySet,
 		seq?: number,
 		collaborating?: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		rollback?: PropertiesRollback,
 	): PropertySet;
 	clone(): ISegment;
@@ -275,6 +295,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	toJSONObject(): any;
 	/**
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
 	 * Acks the current segment against the segment group, op, and merge tree.
 	 *
 	 * @param segmentGroup - Pending segment group associated with this op.
@@ -451,9 +472,7 @@ export class MergeBlock implements IMergeNodeCommon {
 		// Using Array.from leads to unused children being undefined, which are counted in childCount.
 		// eslint-disable-next-line unicorn/no-new-array
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
-		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<Marker>();
-		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<Marker>();
 	}
 
@@ -502,12 +521,22 @@ export abstract class BaseSegment implements ISegment {
 	public ordinal: string = "";
 	public cachedLength: number = 0;
 
+	/**
+	 * {@inheritdoc ISegment.segmentGroups}
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(
 		this,
 	);
 	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
+	/**
+	 * {@inheritdoc ISegment.propertyManager}
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public propertyManager?: PropertiesManager;
 	public properties?: PropertySet;
 	public localRefs?: LocalReferenceCollection;
@@ -516,15 +545,27 @@ export abstract class BaseSegment implements ISegment {
 	public localRemovedSeq?: number;
 	public localMovedSeq?: number;
 
+	public constructor(properties?: PropertySet) {
+		if (properties !== undefined) {
+			this.properties = clone(properties);
+		}
+	}
+
+	/**
+	 * {@inheritdoc ISegment.addProperties}
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 */
 	public addProperties(
 		newProps: PropertySet,
 		seq?: number,
 		collaborating?: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet {
+		// eslint-disable-next-line import/no-deprecated
 		this.propertyManager ??= new PropertiesManager();
 		// A property set must be able to hold properties of any type, so the any is needed.
-		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -546,7 +587,6 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
-		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
@@ -573,6 +613,10 @@ export abstract class BaseSegment implements ISegment {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public abstract toJSONObject(): any;
 
+	/**
+	 * {@inheritdoc ISegment.ack}
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 */
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
 		assert(
@@ -651,7 +695,10 @@ export abstract class BaseSegment implements ISegment {
 		// Give the leaf a temporary yet valid ordinal.
 		// when this segment is put in the tree, it will get its real ordinal,
 		// but this ordinal meets all the necessary invariants for now.
-		leafSegment.ordinal = this.ordinal + String.fromCodePoint(0);
+		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+		// eslint-disable-next-line unicorn/prefer-code-point
+		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
 		leafSegment.removedClientIds = this.removedClientIds?.slice();
 		leafSegment.removedSeq = this.removedSeq;
@@ -677,13 +724,18 @@ export abstract class BaseSegment implements ISegment {
 	}
 
 	private copyPropertiesTo(other: ISegment): void {
-		if (this.propertyManager && this.properties) {
-			other.propertyManager = new PropertiesManager();
-			other.properties = this.propertyManager.copyTo(
-				this.properties,
-				other.properties,
-				other.propertyManager,
-			);
+		if (this.properties !== undefined) {
+			if (this.propertyManager) {
+				// eslint-disable-next-line import/no-deprecated
+				other.propertyManager = new PropertiesManager();
+				other.properties = this.propertyManager.copyTo(
+					this.properties,
+					other.properties,
+					other.propertyManager,
+				);
+			} else {
+				other.properties = clone(this.properties);
+			}
 		}
 	}
 
@@ -756,15 +808,14 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public readonly type = Marker.type;
 
 	public static make(refType: ReferenceType, props?: PropertySet): Marker {
-		const marker = new Marker(refType);
-		if (props) {
-			marker.addProperties(props);
-		}
-		return marker;
+		return new Marker(refType, props);
 	}
 
-	constructor(public refType: ReferenceType) {
-		super();
+	constructor(
+		public refType: ReferenceType,
+		props?: PropertySet,
+	) {
+		super(props);
 		this.cachedLength = 1;
 	}
 
@@ -913,15 +964,11 @@ export class CollaborationWindow {
 
 /**
  * Compares two numbers.
- *
- * @internal
  */
 export const compareNumbers = (a: number, b: number): number => a - b;
 
 /**
  * Compares two strings.
- *
- * @internal
  */
 export const compareStrings = (a: string, b: string): number => a.localeCompare(b);
 

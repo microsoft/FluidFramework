@@ -214,15 +214,9 @@ export const getPackageName = (
 	codeDetails: IFluidCodeDetails | undefined,
 ): IContainerPackageInfo => {
 	// TODO: use a real type
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let containerPackageName: any;
-	if (codeDetails && "name" in codeDetails) {
-		containerPackageName = codeDetails;
-	} else if (isFluidPackage(codeDetails?.package)) {
-		containerPackageName = codeDetails?.package.name;
-	} else {
-		containerPackageName = codeDetails?.package;
-	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	return { name: containerPackageName };
+	// This is the normal path that any modern customer would hit
+	const containerPackageName: string | undefined = isFluidPackage(codeDetails?.package)
+		? codeDetails?.package.name
+		: codeDetails?.package;
+	return { name: containerPackageName as string };
 };

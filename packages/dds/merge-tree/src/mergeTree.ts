@@ -77,7 +77,6 @@ import {
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -86,7 +85,9 @@ import {
 	refHasTileLabel,
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
+import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { zamboniSegments } from "./zamboni.js";
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
@@ -191,6 +192,23 @@ export interface IMergeTreeOptions {
 	 * Default value: false
 	 */
 	mergeTreeEnableObliterate?: boolean;
+
+	/**
+	 * Enables support for reconnecting when obliterate operations are present
+	 *
+	 * Obliterate is currently experimental and may not work in all scenarios.
+	 *
+	 * @defaultValue `false`
+	 */
+	mergeTreeEnableObliterateReconnect?: boolean;
+}
+export function errorIfOptionNotTrue(
+	options: IMergeTreeOptions | undefined,
+	option: keyof IMergeTreeOptions,
+): void {
+	if (options?.[option] !== true) {
+		throw new Error(`${option} is not enabled.`);
+	}
 }
 
 /**
@@ -396,31 +414,6 @@ const forwardPred = (ref: LocalReferencePosition): boolean =>
 const backwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference === SlidingPreference.BACKWARD;
 
-const continueFrom = (node: MergeBlock): boolean => {
-	let siblingExists = false;
-	forwardExcursion(node, () => {
-		siblingExists = true;
-		return false;
-	});
-	return siblingExists;
-};
-
-const onLeaf = (
-	segment: ISegment | undefined,
-	_pos: number,
-	context: InsertContext,
-): ISegmentChanges => {
-	const segmentChanges: ISegmentChanges = {};
-	if (segment) {
-		// Insert before segment
-		segmentChanges.replaceCurrent = context.candidateSegment;
-		segmentChanges.next = segment;
-	} else {
-		segmentChanges.next = context.candidateSegment;
-	}
-	return segmentChanges;
-};
-
 /**
  * @internal
  */
@@ -624,8 +617,7 @@ export class MergeTree {
 					childIndex++, nodeIndex++ // Advance to next child & node
 				) {
 					// Insert the next node into the current block
-					// TODO Non null asserting, why is this not null?
-					this.addNode(block, nodes[nodeIndex]!);
+					this.addNode(block, nodes[nodeIndex]);
 				}
 
 				// Calculate this block's info.  Previously this was inlined into the above loop as a micro-optimization,
@@ -635,8 +627,7 @@ export class MergeTree {
 			}
 
 			return blocks.length === 1 // If there is only one block at this layer...
-				? // Non null asserting here because of the length check above
-					blocks[0]! // ...then we're done.  Return the root.
+				? blocks[0] // ...then we're done.  Return the root.
 				: buildMergeBlock(blocks); // ...otherwise recursively build the next layer above blocks.
 		};
 		if (segments.length > 0) {
@@ -695,8 +686,7 @@ export class MergeTree {
 		while (parent) {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
-				// TODO Non null asserting, why is this not null?
-				const child = children[childIndex]!;
+				const child = children[childIndex];
 				if ((!!prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1438,6 +1428,16 @@ export class MergeTree {
 		localSeq: number | undefined,
 		newSegments: T[],
 	): void {
+		// Keeping this function within the scope of blockInsert for readability.
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const continueFrom = (node: MergeBlock): boolean => {
+			let siblingExists = false;
+			forwardExcursion(node, () => {
+				siblingExists = true;
+				return false;
+			});
+			return siblingExists;
+		};
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
 		const saveIfLocal = (locSegment: ISegment): void => {
@@ -1459,6 +1459,23 @@ export class MergeTree {
 					this.addToLRUSet(locSegment, locSegment.seq!);
 				}
 			}
+		};
+		const onLeaf = (
+			segment: ISegment | undefined,
+			_pos: number,
+			context: InsertContext,
+			// Keeping this function within the scope of blockInsert for readability.
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+		): ISegmentChanges => {
+			const segmentChanges: ISegmentChanges = {};
+			if (segment) {
+				// Insert before segment
+				segmentChanges.replaceCurrent = context.candidateSegment;
+				segmentChanges.next = segment;
+			} else {
+				segmentChanges.next = context.candidateSegment;
+			}
+			return segmentChanges;
 		};
 
 		// TODO: build tree from segs and insert all at once
@@ -1635,7 +1652,11 @@ export class MergeTree {
 		return { next };
 	};
 
-	private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number): void {
+	private ensureIntervalBoundary(
+		pos: number | "start" | "end",
+		refSeq: number,
+		clientId: number,
+	): void {
 		const splitNode = this.insertingWalk(
 			this.root,
 			pos,
@@ -1683,22 +1704,29 @@ export class MergeTree {
 
 	private insertingWalk(
 		block: MergeBlock,
-		pos: number,
+		pos: number | "start" | "end",
 		refSeq: number,
 		clientId: number,
 		seq: number,
 		context: InsertContext,
 		isLastChildBlock: boolean = true,
 	): MergeBlock | undefined {
-		let _pos = pos;
+		let _pos: number;
+		if (pos === "start") {
+			_pos = 0;
+		} else if (pos === "end") {
+			_pos = this.root.mergeTree?.getLength(refSeq, clientId) ?? 0;
+		} else {
+			_pos = pos;
+		}
+
 		const children = block.children;
 		let childIndex: number;
 		let child: IMergeNode;
 		let newNode: IMergeNode | undefined;
 		let fromSplit: MergeBlock | undefined;
 		for (childIndex = 0; childIndex < block.childCount; childIndex++) {
-			// TODO Non null asserting, why is this not null?
-			child = children[childIndex]!;
+			child = children[childIndex];
 			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
 			const isLastNonLeafBlock =
 				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
@@ -1769,10 +1797,8 @@ export class MergeTree {
 		}
 		if (newNode) {
 			for (let i = block.childCount; i > childIndex; i--) {
-				// TODO Non null asserting, why is this not null?
-				block.children[i] = block.children[i - 1]!;
-				// TODO Non null asserting, why is this not null?
-				block.children[i]!.index = i;
+				block.children[i] = block.children[i - 1];
+				block.children[i].index = i;
 			}
 			block.assignChild(newNode, childIndex, false);
 			block.childCount++;
@@ -1809,8 +1835,7 @@ export class MergeTree {
 		// Update ordinals to reflect lowered child count
 		this.nodeUpdateOrdinals(node);
 		for (let i = 0; i < halfCount; i++) {
-			// TODO Non null asserting, why is this not null?
-			newNode.assignChild(node.children[halfCount + i]!, i, false);
+			newNode.assignChild(node.children[halfCount + i], i, false);
 			node.children[halfCount + i] = undefined!;
 		}
 		this.nodeUpdateLengthNewStructure(node);
@@ -1820,8 +1845,7 @@ export class MergeTree {
 
 	public nodeUpdateOrdinals(block: MergeBlock): void {
 		for (let i = 0; i < block.childCount; i++) {
-			// TODO Non null asserting, why is this not null?
-			const child = block.children[i]!;
+			const child = block.children[i];
 			block.setOrdinal(child, i);
 			if (!child.isLeaf()) {
 				this.nodeUpdateOrdinals(child);
@@ -1848,6 +1872,7 @@ export class MergeTree {
 		clientId: number,
 		seq: number,
 		opArgs: IMergeTreeDeltaOpArgs,
+		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
 		this.ensureIntervalBoundary(start, refSeq, clientId);
@@ -1909,20 +1934,30 @@ export class MergeTree {
 	}
 
 	public obliterateRange(
-		start: number,
-		end: number,
+		start: SequencePlace,
+		end: SequencePlace,
 		refSeq: number,
 		clientId: number,
 		seq: number,
 		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
-		if (!this.options?.mergeTreeEnableObliterate) {
-			throw new UsageError("Attempted to send obliterate op without enabling feature flag.");
-		}
+		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
 
-		this.ensureIntervalBoundary(start, refSeq, clientId);
-		this.ensureIntervalBoundary(end, refSeq, clientId);
+		const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
+
+		assert(
+			startPos !== undefined &&
+				endPos !== undefined &&
+				startSide !== undefined &&
+				endSide !== undefined &&
+				startPos !== "end" &&
+				endPos !== "start",
+			0x9e2 /* start and end cannot be undefined because they were not passed in as undefined */,
+		);
+
+		this.ensureIntervalBoundary(startPos, refSeq, clientId);
+		this.ensureIntervalBoundary(endPos, refSeq, clientId);
 
 		let _overwrite = overwrite;
 		const localOverlapWithRefs: ISegment[] = [];
@@ -1943,6 +1978,8 @@ export class MergeTree {
 			_end: number,
 		): boolean => {
 			const existingMoveInfo = toMoveInfo(segment);
+			if (startSide) segment.startSide = startSide;
+			if (endSide) segment.endSide = endSide;
 
 			if (
 				clientId !== segment.clientId &&
@@ -2247,8 +2284,7 @@ export class MergeTree {
 						{ op: removeOp },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
-					// TODO Non null asserting, why is this not null?
-					const props = pendingSegmentGroup.previousProps![i]!;
+					const props = pendingSegmentGroup.previousProps![i];
 					const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props);
 					this.annotateRange(
 						start,
@@ -2258,6 +2294,7 @@ export class MergeTree {
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
 						{ op: annotateOp },
+						// eslint-disable-next-line import/no-deprecated
 						PropertiesRollback.Rollback,
 					);
 					i++;
@@ -2420,9 +2457,8 @@ export class MergeTree {
 		}
 
 		for (let i = 0; i < newOrder.length; i++) {
-			// TODO Non null asserting, why is this not null?
-			const seg = newOrder[i]!;
-			const { parent, index, ordinal } = currentOrder[i]!;
+			const seg = newOrder[i];
+			const { parent, index, ordinal } = currentOrder[i];
 			parent?.assignChild(seg, index, false);
 			seg.ordinal = ordinal;
 		}
@@ -2511,14 +2547,11 @@ export class MergeTree {
 	private blockUpdate(block: MergeBlock): void {
 		let len: number | undefined;
 
-		// eslint-disable-next-line import/no-deprecated
 		const rightmostTiles = createMap<Marker>();
-		// eslint-disable-next-line import/no-deprecated
 		const leftmostTiles = createMap<Marker>();
 
 		for (let i = 0; i < block.childCount; i++) {
-			// TODO Non null asserting, why is this not null?
-			const node = block.children[i]!;
+			const node = block.children[i];
 			const nodeLength = nodeTotalLength(this, node);
 			if (nodeLength !== undefined) {
 				len ??= 0;
@@ -2548,9 +2581,7 @@ export class MergeTree {
 					}
 				}
 			} else {
-				// eslint-disable-next-line import/no-deprecated
 				extend(rightmostTiles, node.rightmostTiles);
-				// eslint-disable-next-line import/no-deprecated
 				extendIfUndefined(leftmostTiles, node.leftmostTiles);
 			}
 		}
@@ -2665,18 +2696,28 @@ export class MergeTree {
 		leaf: ISegmentAction<TClientData>,
 		accum: TClientData,
 		post?: BlockAction<TClientData>,
-		start: number = 0,
-		end?: number,
+		start: SequencePlace = 0,
+		end?: SequencePlace,
 		localSeq?: number,
 		visibilitySeq: number = refSeq,
 	): void {
-		const endPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
-		if (endPos === start) {
+		const maybeEndPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
+		if (maybeEndPos === start) {
 			return;
 		}
 
 		let pos = 0;
+		let { startPos, endPos } = endpointPosAndSide(start, end);
 
+		startPos = startPos === "start" || startPos === undefined ? 0 : startPos;
+		endPos =
+			endPos === "end" || endPos === undefined
+				? this.root.mergeTree?.getLength(refSeq, clientId) ?? 0
+				: endPos;
+		assert(
+			startPos !== "end" && endPos !== "start",
+			0x9e3 /* start cannot be 'end' and end cannot be 'start' */,
+		);
 		depthFirstNodeWalk(
 			this.root,
 			this.root.children[0],
@@ -2704,13 +2745,15 @@ export class MergeTree {
 
 				const nextPos = pos + lenAtRefSeq;
 				// start is beyond the current node, so we can skip it
-				if (start >= nextPos) {
+				if (typeof startPos === "number" && startPos >= nextPos) {
 					pos = nextPos;
 					return NodeAction.Skip;
 				}
 
 				if (node.isLeaf()) {
-					if (leaf(node, pos, refSeq, clientId, start - pos, endPos - pos, accum) === false) {
+					if (
+						leaf(node, pos, refSeq, clientId, startPos - pos, endPos - pos, accum) === false
+					) {
 						return NodeAction.Exit;
 					}
 					pos = nextPos;
@@ -2720,7 +2763,7 @@ export class MergeTree {
 			post === undefined
 				? undefined
 				: (block): boolean =>
-						post(block, pos, refSeq, clientId, start - pos, endPos - pos, accum),
+						post(block, pos, refSeq, clientId, startPos - pos, endPos - pos, accum),
 		);
 	}
 }

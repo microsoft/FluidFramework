@@ -1,6 +1,6 @@
 # @fluidframework/counter
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -13,14 +13,13 @@ library consumers should always prefer `^`.
 
 If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
-<!-- prettier-ignore-end -->
+## Installation
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+To get started, install the package by running the following command:
 
-<!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+```bash
+npm i @fluidframework/counter
+```
 
 ## Importing from this package
 
@@ -30,6 +29,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/counter` like normal.
 
 To access the `legacy` APIs, import via `@fluidframework/counter/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/counter** is available at <https://fluidframework.com/docs/apis/counter>.
 
 <!-- prettier-ignore-end -->
 
@@ -173,14 +176,10 @@ This causes the `incremented` event to be sent to all of the clients who have th
 
 Since `updateCounterValueLabel` is listening for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&installation=FALSE&importInstructions=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/counter** is available at <https://fluidframework.com/docs/apis/counter>.
 
 ## Minimum Client Requirements
 

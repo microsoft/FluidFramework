@@ -38,6 +38,9 @@ import type { Root } from 'hast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
+function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
+
+// @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
 
 export { ApiItem }
@@ -77,6 +80,7 @@ declare namespace ApiItemUtilities {
         getHeadingForApiItem,
         getLinkForApiItem,
         shouldItemBeIncluded,
+        ancestryHasModifierTag,
         getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
@@ -484,8 +488,35 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
     readonly type = DocumentationNodeType.Link;
 }
 
+// @beta
+export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
+
+// @beta
+export interface LintApiModelConfiguration extends ConfigurationBase {
+    apiModel: ApiModel;
+}
+
+// @beta
+export interface LinterErrors {
+    readonly referenceErrors: ReadonlySet<LinterReferenceError>;
+}
+
+// @beta
+export interface LinterReferenceError {
+    readonly linkText: string | undefined;
+    readonly packageName: string;
+    readonly referenceTarget: string;
+    readonly sourceItem: string;
+    readonly tagName: string;
+}
+
 // @public
-export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
+export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
+
+// @public
+export interface LoadModelOptions extends ConfigurationBase {
+    readonly modelDirectoryPath: string;
+}
 
 // @public
 export interface Logger {

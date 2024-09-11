@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { type Listenable, createEmitter } from "../../events/index.js";
@@ -28,7 +30,7 @@ import type {
 	RangeUpPath,
 	UpPath,
 } from "./pathTree.js";
-import { EmptyKey, type Value } from "./types.js";
+import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 import type { PathVisitor } from "./visitPath.js";
 import type { AnnouncedVisitor } from "./visitorUtils.js";
@@ -36,7 +38,6 @@ import type { AnnouncedVisitor } from "./visitorUtils.js";
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
  * Associated with a ref count on the underlying {@link AnchorNode}.
- * @internal
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -47,7 +48,6 @@ const NeverAnchor: Anchor = brand(0);
 
 /**
  * Maps anchors (which must be ones this locator knows about) to paths.
- * @internal
  */
 export interface AnchorLocator {
 	/**
@@ -65,7 +65,6 @@ export interface AnchorLocator {
  * Stores arbitrary, user-defined data on an {@link Anchor}.
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
- * @internal
  */
 export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
@@ -77,8 +76,6 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
  * TODO:
  * - Include sub-deltas in events.
  * - Add more events.
- *
- * @internal
  */
 export interface AnchorEvents {
 	/**
@@ -130,7 +127,10 @@ export interface AnchorEvents {
 	 *
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
-	childrenChangedAfterBatch(anchor: AnchorNode): void;
+	childrenChangedAfterBatch(arg: {
+		anchor: AnchorNode;
+		changedFields: ReadonlySet<FieldKey>;
+	}): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
@@ -180,11 +180,6 @@ export interface AnchorEvents {
 	 * fire when something _may_ have changed or _may_ be about to change.
 	 */
 	subtreeChangedAfterBatch(anchor: AnchorNode): void;
-
-	/**
-	 * Value on this node is changing.
-	 */
-	valueChanging(anchor: AnchorNode, value: Value): void;
 }
 
 /**
@@ -196,8 +191,6 @@ export interface AnchorEvents {
  * - Design how events should be ordered.
  * - Include sub-deltas in events.
  * - Add more events.
- *
- * @internal
  */
 export interface AnchorSetRootEvents {
 	/**
@@ -213,7 +206,6 @@ export interface AnchorSetRootEvents {
 
 /**
  * Node in a tree of anchors.
- * @internal
  */
 export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
 	/**
@@ -263,7 +255,6 @@ export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents>
  * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
  * }
  * ```
- * @internal
  */
 export function anchorSlot<TContent>(): AnchorSlot<TContent> {
 	return brandedSlot<AnchorSlot<TContent>>();
@@ -279,7 +270,6 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * API surface to a small subset.
  *
  * @sealed
- * @internal
  */
 export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
 	private readonly events = createEmitter<AnchorSetRootEvents>();
@@ -332,6 +322,20 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get slots(): BrandedMapSubset<AnchorSlot<any>> {
 		return this.root.slots;
+	}
+
+	public *[Symbol.iterator](): IterableIterator<AnchorNode> {
+		const stack: PathNode[] = [];
+		let node: PathNode | undefined = this.root;
+		while (node !== undefined) {
+			yield node;
+			for (const [_, children] of node.children) {
+				for (const child of children) {
+					stack.push(child);
+				}
+			}
+			node = stack.pop();
+		}
 	}
 
 	public on<K extends keyof AnchorSetRootEvents>(
@@ -482,7 +486,6 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	private deepDelete(nodes: readonly PathNode[]): void {
 		const stack = [...nodes];
 		while (stack.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const node = stack.pop()!;
 			assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
 			node.status = Status.Dangling;
@@ -516,27 +519,26 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			let index = 0;
 			while (
 				index < sourceChildren.length &&
-				sourceChildren[index].parentIndex < startPath.parentIndex
+				sourceChildren[index]!.parentIndex < startPath.parentIndex
 			) {
 				numberBeforeDecouple++;
 				index++;
 			}
 			while (
 				index < sourceChildren.length &&
-				sourceChildren[index].parentIndex < startPath.parentIndex + count
+				sourceChildren[index]!.parentIndex < startPath.parentIndex + count
 			) {
 				numberToDecouple++;
 				index++;
 			}
 			while (index < sourceChildren.length) {
 				// Fix indexes in source after moved items (subtract count).
-				sourceChildren[index].parentIndex -= count;
+				sourceChildren[index]!.parentIndex -= count;
 				index++;
 			}
 			// Sever the parent -> child connections
 			nodes = sourceChildren.splice(numberBeforeDecouple, numberToDecouple);
 			if (sourceChildren.length === 0) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				sourceParent!.afterEmptyField(startPath.parentField);
 			}
 		}
@@ -605,12 +607,12 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		count: number,
 	): number {
 		let index = 0;
-		while (index < field.length && field[index].parentIndex < fromParentIndex) {
+		while (index < field.length && field[index]!.parentIndex < fromParentIndex) {
 			index++;
 		}
 		const numberBeforeIncrease = index;
 		while (index < field.length) {
-			field[index].parentIndex += count;
+			field[index]!.parentIndex += count;
 			index++;
 		}
 
@@ -711,7 +713,19 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
-			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
+
+			/**
+			 * Events collected during the visit which get sent as a batch during "free".
+			 */
+			bufferedEvents: [] as {
+				node: PathNode;
+				event: keyof AnchorEvents;
+				/**
+				 * The key for the impacted field, if the event is associated with a key.
+				 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
+				 */
+				changedField?: FieldKey;
+			}[],
 
 			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			// subtreeChangedAfterBatch events.
@@ -753,7 +767,18 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						continue;
 					}
 					emittedEvents?.push(event);
-					node.events.emit(event, node);
+					if (event === "childrenChangedAfterBatch") {
+						const fieldKeys: FieldKey[] = this.bufferedEvents
+							.filter((e) => e.node === node && e.event === event)
+							.map(
+								(e) =>
+									e.changedField ??
+									fail("childrenChangedAfterBatch events should have a changedField"),
+							);
+						node.events.emit(event, { anchor: node, changedFields: new Set(fieldKeys) });
+					} else {
+						node.events.emit(event, node);
+					}
 				}
 			},
 			notifyChildrenChanging(): void {
@@ -765,10 +790,15 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
 					(p) => {
+						assert(
+							this.parentField !== undefined,
+							"Must be in a field to modify its contents",
+						);
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
+							changedField: this.parentField,
 						});
 					},
 					() => {},
