@@ -72,7 +72,7 @@ jobs:
         with:
           name: release-metadata
           path: release-metadata.json
-          retention-days: 3
+          retention-days: 30
       - name: Load release metadata into env variable
         run: |
           echo "RELEASE_JSON=$(cat release-metadata.json)" >> $GITHUB_ENV
@@ -101,10 +101,10 @@ jobs:
           path: reports
           retention-days: 7
 
-      # Generate changelog
-      - name: Generate changelog
-        # This changelog is only for client patch releases and build-tools releases
-        if: (fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools'
+      # Generate release notes
+      - name: Generate patch release notes
+        # This content is only for patch releases
+        if: (fromJson(env.RELEASE_JSON).releaseType == 'patch'
         run: |
           # We only need the root dependencies
           pnpm install -w --frozen-lockfile
@@ -116,11 +116,16 @@ jobs:
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
           --output auto-changelog.md \
           --template .github/workflows/data/patch-changelog.hbs
-      - name: Generate changelog
-        # This changelog is a basically empty one used for everything except client patches and build-tools.
-        if: ${{ !(fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') && fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'build-tools' }}
+
+      - name: Generate minor/major release notes
+        # This content is the "default" release notes - this should be used for minor and major releases of client and
+        # server release groups. To use this, a release group needs to be using changesets. Build-tools does not use
+        # changesets, so it is excluded.
+        if: ${{ fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server') }}
         run: |
-          echo "This is a **${{ fromJson(env.RELEASE_JSON).releaseType }}** release." > auto-changelog.md
+          flub publish releaseNotes \
+          --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md
+          --outFile auto-changelog.md
 
       # Only creates GH releases for client, server, and build-tools releases.
       - name: Create GH release
@@ -132,11 +137,6 @@ jobs:
 
           # Will skip if a published (non-draft) release already exists.
           skipIfReleaseExists: true
-
-          # If the release is NOT a patch, leave it as a draft. Only patch releases are auto-published because their
-          # auto-generated release notes are sufficient for those releases. Minor and major releases currently require
-          # some curation of the release notes.
-          draft: ${{ fromJson(env.RELEASE_JSON).releaseType != 'patch' }}
 
           # Don't change the draft state when updating an existing release. This setting is not really necessary for us
           # in most cases because we don't pre-create releases, so this workflow always creates a new GH release. It's
