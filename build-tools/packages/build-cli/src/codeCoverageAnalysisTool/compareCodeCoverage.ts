@@ -69,9 +69,11 @@ export const compareCodeCoverage = (
 			return;
 		}
 		// Return if the package being updated in the PR is in the list of packages to be ignored
-		codeCoverageComparisonIgnoreList.forEach((ignorePackageName) => {
-			return packageName.startsWith(ignorePackageName);
-		});
+		for (const ignorePackageName of codeCoverageComparisonIgnoreList) {
+			if (packageName.startsWith(ignorePackageName)) {
+				return;
+			}
+		};
 
 		let lineCoverageInPr = 0;
 		let lineCoverageInBaseline = 0;
