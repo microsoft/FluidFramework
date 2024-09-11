@@ -214,7 +214,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			.use(admonitions, {
 				titleTextMap: (title) => ({
 					// By default the `[!` prefix and `]` suffix are removed; we don't want that, so we override the default and
-					// return he title as-is.
+					// return the title as-is.
 					displayTitle: title,
 					checkedTitle: title,
 				}),
