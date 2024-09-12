@@ -32,11 +32,9 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	TreeShape,
-	UniformChunk,
-// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	type TreeChunk,
