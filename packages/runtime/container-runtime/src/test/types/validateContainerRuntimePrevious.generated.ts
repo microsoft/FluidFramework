@@ -31,6 +31,7 @@ declare type current_as_old_for_Variable_AllowTombstoneRequestHeaderKey = requir
  * typeValidation.broken:
  * "Class_ChannelCollection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ChannelCollection = requireAssignableTo<TypeOnly<old.ChannelCollection>, TypeOnly<current.ChannelCollection>>
 
 /*
@@ -274,6 +275,7 @@ declare type current_as_old_for_TypeAlias_EnqueueSummarizeResult = requireAssign
  * typeValidation.broken:
  * "Class_FluidDataStoreContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_FluidDataStoreContext = requireAssignableTo<TypeOnly<old.FluidDataStoreContext>, TypeOnly<current.FluidDataStoreContext>>
 
 /*
@@ -823,6 +825,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreContextEvents = require
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextInternal": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDataStoreContextInternal = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextInternal>, TypeOnly<current.IFluidDataStoreContextInternal>>
 
 /*
@@ -841,6 +844,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreContextInternal = requi
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextProps>, TypeOnly<current.IFluidDataStoreContextProps>>
 
 /*
@@ -967,6 +971,7 @@ declare type current_as_old_for_Interface_IGeneratedSummaryStats = requireAssign
  * typeValidation.broken:
  * "Interface_ILocalDetachedFluidDataStoreContextProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ILocalDetachedFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.ILocalDetachedFluidDataStoreContextProps>, TypeOnly<current.ILocalDetachedFluidDataStoreContextProps>>
 
 /*
@@ -985,6 +990,7 @@ declare type current_as_old_for_Interface_ILocalDetachedFluidDataStoreContextPro
  * typeValidation.broken:
  * "Interface_ILocalFluidDataStoreContextProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ILocalFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.ILocalFluidDataStoreContextProps>, TypeOnly<current.ILocalFluidDataStoreContextProps>>
 
 /*
@@ -1606,6 +1612,7 @@ declare type current_as_old_for_Variable_InactiveResponseHeaderKey = requireAssi
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContext>, TypeOnly<current.LocalFluidDataStoreContext>>
 
 /*
@@ -1633,6 +1640,7 @@ declare type current_as_old_for_ClassStatics_LocalFluidDataStoreContext = requir
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContextBase": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContextBase>, TypeOnly<current.LocalFluidDataStoreContextBase>>
 
 /*

@@ -1,6 +1,6 @@
 # @fluid-experimental/presence
 
-A set of session focus utilities for lightweight data sharing and messaging.
+A set of session-focused utilities for lightweight data sharing and messaging.
 
 A session is a period of time when one or more clients are connected to a Fluid service. Session data and messages may be exchanged among clients, but will disappear once the no clients remain. (More specifically once no clients remain that have acquired the session `IPresence` interface.) Once fully implemented, no client will require container write permissions to use Presence features.
 
@@ -10,17 +10,17 @@ A session is a period of time when one or more clients are connected to a Fluid 
 
 For the lifetime of a session, each client connecting will be established as a unique and stable `ISessionClient`. The representation is stable because it will remain the same `ISessionClient` instance independent of connection drops and reconnections.
 
-Client Ids on maintained by `ISessionClient` may be used associate `ISessionClient` with qurom, audience, and service audience members.
+Client Ids maintained by `ISessionClient` may be used to associate `ISessionClient` with quorum, audience, and service audience members.
 
 ### Workspaces
 
-Within Presence data sharing and messaging is broken into workspaces with custom identifiers (workspace addresses). Clients must use the same address within a session to connect with others. Unique addresses enable logical components within a client runtime to remain isolated or work together (without other threading).
+Within Presence data sharing and messaging is broken into workspaces with custom identifiers (workspace addresses). Clients must use the same address within a session to connect with others. Unique addresses enable logical components within a client runtime to remain isolated or work together (without other piping between those components).
 
 There are two types of workspaces: States and Notifications.
 
 #### States Workspace
 
-A states workspace, `PresenceStates`, allows sharing of simple data across attendees where each attendee maintains their own [independent] data values that others may read. This is distinct from a Fluid DDS where data values might be manipulated by multiple clients and one ultimate value is derived. Shared [independent] values are maintained by value managers that specialize in incrementality and history of values.
+A states workspace, `PresenceStates`, allows sharing of simple data across attendees where each attendee maintains their own data values that others may read, but not change. This is distinct from a Fluid DDS where data values might be manipulated by multiple clients and one ultimate value is derived. Shared, independent values are maintained by value managers that specialize in incrementality and history of values.
 
 #### Notifications Workspace
 
@@ -35,12 +35,54 @@ Latest value manager retains the most recent atomic value each attendee has shar
 
 #### LatestMapValueManager
 
-Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as eleted). Use `LatestMap` to add one to `PresenceStates` workspace.
+Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as deleted). Use `LatestMap` to add one to `PresenceStates` workspace.
 
 #### NotificationsManager
 
-Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and recieved. Notifications may be mixed into a `PresenceStates` workspace for convenience, but the only value managers permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
+Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications value managers may be mixed into a `PresenceStates` workspace for convenience. They are the only type of value managers permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
 
+
+## Onboarding
+
+While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
+
+```typescript
+import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluid-experimental/presence";
+
+const containerSchema = {
+	initialObjects: {
+        presence: ExperimentalPresenceManager
+    }
+} satisfies ContainerSchema;
+
+const presence = await acquirePresenceViaDataObject(container.initialObjects.presence);
+```
+
+
+## Limitations
+
+### Compatibility and Versioning
+
+Current API does not provide a mechanism to validate that state and notification data received within session from other clients matches the types declared. The schema of workspace address, states and notifications names, and their types will only be consistent when all clients connected to the session are using the same types for a unique value/notification path (workspace address + name within workspace). In other words, don't mix versions or make sure to change identifiers when changing types in a non-compatible way.
+
+Example:
+
+```typescript
+presence.getStates("app:v1states", { myState: Latest({x: 0})});
+```
+ is incompatible with
+```typescript
+presence.getStates("app:v1states", { myState: Latest({x: "text"})});
+```
+as "app:v1states"+"myState" have different value type expectations: `{x: number}` versus `{x: string}`.
+
+```typescript
+presence.getStates("app:v1states", { myState2: Latest({x: true})});
+```
+ would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
+
+
+### Experimental
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 

@@ -170,7 +170,10 @@
 			"enable": true
 		},
 		"enableCollaborationSessionTracking": false,
-		"enableCollaborationSessionPruning": false
+		"enableCollaborationSessionPruning": false,
+		"redisCollaborationSessionManagerOptions": {
+			"maxScanBatchSize": 800
+		}
 	},
 	"client": {
 		"type": "browser",

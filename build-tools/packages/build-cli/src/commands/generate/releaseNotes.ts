@@ -26,7 +26,7 @@ import {
 	loadChangesets,
 } from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { remarkHeadingLinks } from "../../library/markdown.js";
+import { remarkHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
 
 /**
  * Generates release notes from individual changeset files.
@@ -194,7 +194,10 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 					const affectedPackages = Object.keys(change.metadata)
 						.map((pkg) => `- ${pkg}\n`)
 						.join("");
-					body.append(`Affected packages:\n\n${affectedPackages}`);
+					body.append(`Affected packages:\n\n${affectedPackages}\n\n`);
+					body.append(
+						`[⬆️ Table of contents](#${flags.headingLinks ? "user-content-" : ""}contents)\n\n`,
+					);
 				} else {
 					this.info(
 						`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${
@@ -207,14 +210,28 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 		const baseProcessor = remark()
 			.use(remarkGfm)
-			.use(admonitions)
+			.use(stripSoftBreaks)
+			.use(admonitions, {
+				titleTextMap: (title) => ({
+					// By default the `[!` prefix and `]` suffix are removed; we don't want that, so we override the default and
+					// return the title as-is.
+					displayTitle: title,
+					checkedTitle: title,
+				}),
+			})
+			.use(remarkToc, {
+				maxDepth: 3,
+				skip: ".*Start Building Today.*",
+				// Add the user-content- prefix to the links when we generate our own headingLinks, because GitHub will
+				// prepend that to all our custom anchor IDs.
+				prefix: flags.headingLinks ? "user-content-" : undefined,
+			})
 			.use(remarkGithub, {
 				buildUrl(values) {
 					// Disable linking mentions
 					return values.type === "mention" ? false : defaultBuildUrl(values);
 				},
-			})
-			.use(remarkToc, { maxDepth: 3, skip: ".*Start Building Today.*" });
+			});
 
 		const processor = flags.headingLinks
 			? baseProcessor.use(remarkHeadingLinks)

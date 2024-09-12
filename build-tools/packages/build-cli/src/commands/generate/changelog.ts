@@ -7,6 +7,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo, Package } from "@fluidframework/build-tools";
+import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
@@ -84,11 +85,17 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	}
 
 	/**
-	 * Removes any additional metadata from all changesets and writes the output back to the source files.
+	 * Removes any custom metadata from all changesets and writes the resulting changes back to the source files. This
+	 * metadata needs to be removed prior to running `changeset version` from the \@changesets/cli package. If it is not,
+	 * then the custom metadata is interpreted as part of the content and the changelogs end up with the metadata in them.
+	 *
+	 * For more information about the custom metadata we use in our changesets, see
+	 * https://github.com/microsoft/FluidFramework/wiki/Changesets#custom-metadata
+	 *
 	 * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
 	 * control so changes can usually be reverted.
 	 */
-	private async stripAdditionalMetadata(releaseGroupRootDir: string): Promise<void> {
+	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<void> {
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
 
@@ -99,6 +106,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 				return `"${packageName}": ${bump}`;
 			});
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
+			this.info(`Writing canonical changeset: ${changeset.sourceFile}`);
 			toWrite.push(writeFile(changeset.sourceFile, output));
 		}
 		await Promise.all(toWrite);
@@ -123,12 +131,14 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		const releaseGroupRoot = monorepo?.directory ?? gitRoot;
 
-		// Strip additional metadata from the source files before we call `changeset version`,
-		// because the changeset tools only work on canonical changesets.
-		await this.stripAdditionalMetadata(releaseGroupRoot);
+		// Strips additional custom metadata from the source files before we call `changeset version`,
+		// because the changeset tools - like @changesets/cli - only work on canonical changesets.
+		await this.canonicalizeChangesets(releaseGroupRoot);
 
 		// The `changeset version` command applies the changesets to the changelogs
+		ux.action.start("Running `changeset version`");
 		await execCommand("pnpm exec changeset version", { cwd: releaseGroupRoot });
+		ux.action.stop();
 
 		const packagesToCheck = isReleaseGroup(releaseGroup)
 			? context.packagesInReleaseGroup(releaseGroup)
@@ -152,6 +162,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		await this.repo.gitClient.raw("restore", "**package.json");
 
 		// Calls processPackage on all packages.
+		ux.action.start("Processing changelog updates");
 		const processPromises: Promise<void>[] = [];
 		for (const pkg of packagesToCheck) {
 			processPromises.push(this.processPackage(pkg));
@@ -175,6 +186,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		// Cleanup: git clean any untracked files
 		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
+		ux.action.stop();
 
 		this.log("Commit and open a PR!");
 	}
