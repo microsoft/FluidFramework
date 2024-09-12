@@ -86,7 +86,7 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
 // #endregion Custom re-exports
-// #endregion Public exports
+// #endregion
 
 // ===============================================================
 // #region Legacy exports
