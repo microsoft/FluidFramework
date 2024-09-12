@@ -205,10 +205,17 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		);
 	}
 
+	/**
+	 * Adds a summary handle that references a subtree, blob, or attachment in a previous summary.
+	 *
+	 * @param key - The key to store the handle at in the current summary tree being generated
+	 * @param handleType - the type of {@link @fluidframework/driver-definitions#SummaryObject} besides a SummaryHandle, i.e. {@link @fluidframework/driver-definitions#SummaryType.Tree}, {@link @fluidframework/driver-definitions#SummaryType.Blob}, {@link @fluidframework/driver-definitions#SummaryType.Attachment}
+	 * @param handle - The path pointing to the part of the previous summary being used to duplicate the data. Use {@link @fluidframework/driver-definitions#ISummaryHandle.handle} to help generate proper handle strings.
+	 */
 	public addHandle(
-		key: string,
+		key: string, // TODO: figure out character limitations
 		handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
-		handle: string,
+		handle: string, // TODO: figure out character limitations
 	): void {
 		this.summaryTree[key] = {
 			type: SummaryType.Handle,
