@@ -1931,7 +1931,7 @@ export class MergeTree {
 		const normalizedStartPos = startPos === "start" || startPos === undefined ? 0 : startPos;
 		const normalizedEndPos =
 			endPos === "end" || endPos === undefined
-				? this.root.mergeTree?.getLength(refSeq, clientId) ?? 0
+				? this.getLength(refSeq, clientId)
 				: endPos;
 
 		const { segment: startSeg } = this.getContainingSegment(
