@@ -109,6 +109,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"entrypoint": "legacy"
+		"entrypoint": "public"
 	}
 }
