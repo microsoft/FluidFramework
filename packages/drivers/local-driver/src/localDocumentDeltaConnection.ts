@@ -16,7 +16,6 @@ import { IWebSocketServer } from "@fluidframework/server-services-core";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
-const feature_submit_signals_v2 = "submit_signals_v2";
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
@@ -58,9 +57,6 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 			tenantId,
 			token, // Token is going to indicate tenant level information, etc...
 			versions: testProtocolVersions,
-			supportedFeatures: {
-				[feature_submit_signals_v2]: true,
-			},
 		};
 		await deltaConnection.initialize(connectMessage, timeoutMs);
 		return deltaConnection;

@@ -448,12 +448,12 @@ export interface IPerfSignalReport {
 	/**
 	 * Number of broadcast signals sent during latency event window.
 	 */
-	signalsSent: number;
+	broadcastSignalsSentDuringLatencyEventWindow: number;
 
 	/**
-	 * Counter for number of broadcast signals sent.
+	 * Counter for number of broadcast signals sent during latency event window.
 	 */
-	signalsSentCounter: number;
+	broadcastSignalCounterForLatencyEventWindow: number;
 
 	/**
 	 * Number of signals that were expected but not received.

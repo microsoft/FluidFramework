@@ -494,13 +494,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
 
-			const envelope = JSON.parse(message.content as string) as ISignalEnvelope;
-			const targetClientId = message.targetClientId ?? envelope.targetClientId ?? undefined;
-
 			this.handler.processSignal({
 				clientId: message.clientId,
-				content: envelope,
-				targetClientId,
+				content: JSON.parse(message.content as string) as ISignalEnvelope,
+				targetClientId: message.targetClientId,
 			});
 		});
 

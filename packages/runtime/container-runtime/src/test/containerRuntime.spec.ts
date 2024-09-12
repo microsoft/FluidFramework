@@ -117,7 +117,10 @@ const changeConnectionState = (
 	runtime.setConnectionState(connected, clientId);
 };
 
-type ISignalEnvelopeWithClientId = ISignalEnvelope & { clientId: string };
+type ISignalEnvelopeWithClientIds = ISignalEnvelope & {
+	clientId: string;
+	targetClientId?: string;
+};
 
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -125,7 +128,7 @@ describe("Runtime", () => {
 	});
 
 	let submittedOps: any[] = [];
-	let submittedSignals: ISignalEnvelopeWithClientId[] = [];
+	let submittedSignals: ISignalEnvelopeWithClientIds[] = [];
 	let opFakeSequenceNumber = 1;
 	let clock: SinonFakeTimers;
 
@@ -179,6 +182,7 @@ describe("Runtime", () => {
 			submitSignalFn: (content: unknown, targetClientId?: string) => {
 				submittedSignals.push({
 					clientId,
+					targetClientId,
 					...(content as ISignalEnvelope),
 				}); // Note: this object shape is for testing only. Not representative of real signals.
 			},
@@ -2534,7 +2538,7 @@ describe("Runtime", () => {
 		describe("Signal Telemetry", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
-			let droppedSignals: ISignalEnvelopeWithClientId[];
+			let droppedSignals: ISignalEnvelopeWithClientIds[];
 			let runtimes: Map<string | undefined, ContainerRuntime>;
 
 			beforeEach(async () => {
@@ -2562,7 +2566,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSignals(signals: ISignalEnvelopeWithClientId[], count: number) {
+			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number) {
 				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					if (signal.targetClientId === undefined) {
@@ -3111,36 +3115,6 @@ describe("Runtime", () => {
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
 					);
 				});
-				it("includes self targeted signal in signalLatency telemetry", () => {
-					// Send 1st signal and process it to prime the system
-					sendSignals(1);
-					processSubmittedSignals(1);
-
-					// Send 101 signals (one self-targeted)
-					sendSignals(50); //             50 outstanding; none tracked;
-					containerRuntime.submitSignal(
-						"TargetedSignalType",
-						"TargetedSignalContent",
-						containerRuntime.clientId,
-					); //                           51 outstanding; none tracked; one self-targeted
-					sendSignals(49); //            100 outstanding including 1 tracked signals (#101); one self-targeted
-
-					// Process all signals
-					processSubmittedSignals(100); // 0 outstanding; none tracked
-
-					// Check for logged SignalLatency event
-					logger.assertMatch(
-						[
-							{
-								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
-							},
-						],
-						"SignalLatency telemetry should log correct amount of sent and lost signals",
-					);
-				});
 				it("can detect dropped signal while ignoring non-self targeted signal in signalLatency telemetry", () => {
 					// Send 1st signal and process it to prime the system
 					sendSignals(1);
@@ -3176,7 +3150,7 @@ describe("Runtime", () => {
 					);
 				});
 
-				it("ignores targeted signals when there is no service support/when unexpected", () => {
+				it("ignores unexpected targeted signal for a remote client", () => {
 					// Send 1st signal and process it to prime the system
 					sendSignals(1);
 					processSubmittedSignals(1);

@@ -16,7 +16,6 @@ import type { io as SocketIOClientStatic } from "socket.io-client";
 import { IR11sSocketError, errorObjectFromSocketError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
-const feature_submit_signals_v2 = "submit_signals_v2";
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
@@ -52,9 +51,6 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			tenantId,
 			token, // Token is going to indicate tenant level information, etc...
 			versions: protocolVersions,
-			supportedFeatures: {
-				[feature_submit_signals_v2]: true,
-			},
 			relayUserAgent: [client.details.environment, ` driverVersion:${driverVersion}`].join(
 				";",
 			),

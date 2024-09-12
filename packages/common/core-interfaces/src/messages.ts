@@ -13,9 +13,9 @@ export interface ISignalEnvelope {
 	address?: string;
 
 	/**
-	 * Identifier for the signal being submitted.
+	 * Signal tracking identifier for self submitted broadcast signals.
 	 */
-	clientSignalSequenceNumber: number;
+	clientBroadcastSignalSequenceNumber?: number;
 
 	/**
 	 * The contents of the envelope
@@ -25,9 +25,4 @@ export interface ISignalEnvelope {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		content: any;
 	};
-
-	/**
-	 * Client ID of the singular client the signal is being (or has been) sent to.
-	 */
-	targetClientId?: string;
 }

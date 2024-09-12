@@ -25,7 +25,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
@@ -39,6 +39,8 @@ import type { Socket } from "socket.io-client";
 
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+
+const feature_submit_signals_v2 = "submit_signals_v2";
 
 /**
  * Represents a connection to a stream of delta updates.
@@ -354,6 +356,8 @@ export class DocumentDeltaConnection
 				signal.targetClientId = targetClientId;
 			}
 			this.emitMessages("submitSignal", [signal]);
+		} else if (targetClientId !== undefined) {
+			throw new UsageError("Sending signals to specific client ids is not supported.");
 		} else {
 			this.emitMessages("submitSignal", [[content]]);
 		}
@@ -441,6 +445,11 @@ export class DocumentDeltaConnection
 		this.socket.on("op", this.earlyOpHandler);
 		this.socket.on("signal", this.earlySignalHandler);
 		this.earlyOpHandlerAttached = true;
+
+		connectMessage.supportedFeatures = {
+			...connectMessage.supportedFeatures,
+			[feature_submit_signals_v2]: true,
+		};
 
 		// Socket.io's reconnect_attempt event is unreliable, so we track connect_error count instead.
 		let internalSocketConnectionFailureCount: number = 0;
