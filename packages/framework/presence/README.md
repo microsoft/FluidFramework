@@ -14,7 +14,7 @@ Client Ids maintained by `ISessionClient` may be used to associate `ISessionClie
 
 ### Workspaces
 
-Within Presence data sharing and messaging is broken into workspaces with custom identifiers (workspace addresses). Clients must use the same address within a session to connect with others. Unique addresses enable logical components within a client runtime to remain isolated or work together (without other threading).
+Within Presence data sharing and messaging is broken into workspaces with custom identifiers (workspace addresses). Clients must use the same address within a session to connect with others. Unique addresses enable logical components within a client runtime to remain isolated or work together (without other piping between those components).
 
 There are two types of workspaces: States and Notifications.
 
