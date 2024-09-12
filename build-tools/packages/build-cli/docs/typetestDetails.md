@@ -2,7 +2,7 @@
 
 _This documentation is accurate as of build-tools 0.45.0._
 
-The `typetests` `generate:typetests` commands are used to generate and manage type compatibility tests based on the
+The `typetests` and `generate:typetests` commands are used to generate and manage type compatibility tests based on the
 individual package settings in package.json.
 
 ## What are type compatibility tests?
