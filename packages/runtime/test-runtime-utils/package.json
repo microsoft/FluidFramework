@@ -137,7 +137,7 @@
 		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.2.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

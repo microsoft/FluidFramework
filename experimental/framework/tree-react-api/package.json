@@ -113,7 +113,7 @@
 		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/tinylicious-client": "workspace:~",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
