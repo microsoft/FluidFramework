@@ -53,6 +53,9 @@ trigger:
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
+    # Protocol-definitions references files from the patches folder at the root of the repo.
+    # Using the whole folder as dependency because when patch files are updated they might get new names.
+    - patches/*
 
 pr:
   branches:
@@ -75,6 +78,9 @@ pr:
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
+    # Protocol-definitions references files from the patches folder at the root of the repo.
+    # Using the whole folder as dependency because when patch files are updated they might get new names.
+    - patches/*
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
