@@ -26,9 +26,7 @@ export interface IPresence {
     getAttendee(clientId: ConnectedClientId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
-    getNotifications<NotificationsSchema extends {
-        [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
-    }>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceStates<NotificationsSchema, NotificationsManager<any>>;
+    getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceNotifications<NotificationsSchema>;
     getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema): PresenceStates<StatesSchema>;
 }
 
@@ -170,6 +168,15 @@ export interface PresenceEvents {
     // @eventProperty
     attendeeJoined: (attendee: ISessionClient) => void;
     workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
+}
+
+// @alpha @sealed
+export type PresenceNotifications<TSchema extends PresenceNotificationsSchema> = PresenceStates<TSchema, NotificationsManager<any>>;
+
+// @alpha
+export interface PresenceNotificationsSchema {
+    // (undocumented)
+    [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
 }
 
 // @alpha @sealed
