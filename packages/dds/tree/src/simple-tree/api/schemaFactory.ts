@@ -100,7 +100,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
  *
- * @public
+ * @system @public
  */
 export type ScopedSchemaName<
 	TScope extends string | undefined,

@@ -179,7 +179,7 @@ FLAGS
   -b, --branch=<value>         [default: main] The branch to compare the current changes against. The current changes
                                will be compared with this branch to populate the list of changed packages. You must have
                                a valid remote pointing to the microsoft/FluidFramework repo.
-  -g, --releaseGroup=<option>  Name of a release group.
+  -g, --releaseGroup=<option>  [default: client] Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
       --all                    Include ALL packages, including examples and other unpublished packages.
       --empty                  Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
