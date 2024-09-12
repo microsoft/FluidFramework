@@ -3,8 +3,7 @@
 
 Generate a report from input bundle stats collected through the collect bundleStats command.
 
-- [`flub run`](#flub-run)
-  - [`flub run bundleStats`](#flub-run-bundlestats)
+* [`flub run bundleStats`](#flub-run-bundlestats)
 
 ## `flub run bundleStats`
 
