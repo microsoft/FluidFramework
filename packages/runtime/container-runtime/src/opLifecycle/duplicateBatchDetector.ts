@@ -20,10 +20,10 @@ export class DuplicateBatchDetector {
 	private readonly batchIdsBySeqNum = new Map<number, string>();
 
 	/** Initialize from snapshot data if provided - otherwise initialize empty */
-	constructor(batchIdsFromSnapshot?: ReadonlyMap<number, string>) {
+	constructor(batchIdsFromSnapshot: [number, string][] | undefined) {
 		if (batchIdsFromSnapshot) {
 			this.batchIdsBySeqNum = new Map(batchIdsFromSnapshot);
-			for (const batchId of batchIdsFromSnapshot.values()) {
+			for (const batchId of this.batchIdsBySeqNum.values()) {
 				this.batchIdsAll.add(batchId);
 			}
 		}
@@ -91,13 +91,11 @@ export class DuplicateBatchDetector {
 	 * Returns a snapshot of the state of the detector which can be included in a summary
 	 * and used to "rehydrate" this class when loading from a snapshot.
 	 *
-	 * @remarks - Please do not modify the returned object. Typical usage would be to JSON.stringify it.
-	 *
 	 * @returns - A serializable object representing the state of the detector, or undefined if there is nothing to save.
 	 */
 	public getRecentBatchInfoForSummary(
 		telemetryContext?: ITelemetryContext,
-	): ReadonlyMap<number, string> | undefined {
+	): [number, string][] | undefined {
 		if (this.batchIdsBySeqNum.size === 0) {
 			return undefined;
 		}
@@ -108,6 +106,6 @@ export class DuplicateBatchDetector {
 			this.batchIdsAll.size,
 		);
 
-		return this.batchIdsBySeqNum;
+		return [...this.batchIdsBySeqNum.entries()];
 	}
 }

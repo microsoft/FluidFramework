@@ -1452,7 +1452,7 @@ export class ContainerRuntime
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
-		recentBatchInfo: ReadonlyMap<number, string> | undefined,
+		recentBatchInfo: [number, string][] | undefined,
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
@@ -1631,16 +1631,7 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		//* Test this
-		const disableDuplicateBatchDetection =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableDuplicateBatchDetection") ===
-			true;
-		this.duplicateBatchDetector = disableDuplicateBatchDetection
-			? new (class NoOpDuplicateBatchDetector extends DuplicateBatchDetector {
-					public processInboundBatch = () => ({ duplicate: false as const });
-					public getRecentBatchInfoForSummary = () => undefined;
-				})()
-			: new DuplicateBatchDetector(recentBatchInfo);
+		this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =
