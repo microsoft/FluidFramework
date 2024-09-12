@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Args } from "@oclif/core";
 import * as semver from "semver";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
@@ -10,7 +11,7 @@ import { BaseCommand, sortVersions } from "../../library/index.js";
 
 export default class LatestVersionsCommand extends BaseCommand<typeof LatestVersionsCommand> {
 	static readonly summary =
-		"Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.";
+		"Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only. Example: if the current latest release for each major version is 0.59.0, 1.4.0, and 2.3.0, the command will fail with an error if the input version does not match one of these versions. Exiting with an error will prompt the pipeline to skip the docs deployment step.";
 
 	static readonly description =
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
@@ -41,39 +42,30 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 
 		// Filter out pre-releases and versions with metadata
 		const stableVersions = versions.filter((v) => {
-			return semver.valid(v.version) !== null && semver.prerelease(v.version) === null;
+			return !isInternalVersionScheme(v.version);
 		});
 
 		const sortedByVersion = sortVersions(stableVersions, "version");
 
-		// Group by major version
-		const groupedVersions: { [key: number]: string[] } = {};
+		const latestVersions: Map<number, string> = new Map<number, string>();
 
 		for (const v of sortedByVersion) {
 			const majorVersion: number = semver.major(v.version);
-			if (!(majorVersion in groupedVersions)) {
-				groupedVersions[majorVersion] = [];
-			}
-			groupedVersions[majorVersion].push(v.version);
-		}
 
-		// Find the highest version in each group
-		const latestVersions = [];
-
-		for (const majorVersion of Object.keys(groupedVersions)) {
-			// Since grouped versions are sorted, the first element is the highest version
-			const versionInfo = stableVersions.find(
-				(v) => v.version === groupedVersions[Number(majorVersion)][0],
-			);
-			if (versionInfo) {
-				latestVersions.push(versionInfo);
+			// Check if the map already has the major version
+			// Since sortedByVersion is sorted, the first encountered version is the highest one
+			if (!latestVersions.has(majorVersion)) {
+				latestVersions.set(majorVersion, v.version);
 			}
 		}
 
-		const shouldDeploy = latestVersions.some((item) => item.version === versionInput);
+		// Extract the latest versions into an array
+		const latestVersionsArray = [...latestVersions.values()];
+
+		const shouldDeploy = latestVersionsArray.includes(versionInput);
 
 		if (!shouldDeploy) {
-			this.error("message", { exit: 1 });
+			this.error("skipping deployment stage", { exit: 1 });
 		}
 	}
 }
