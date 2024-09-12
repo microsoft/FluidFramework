@@ -1,6 +1,46 @@
 # @fluid-experimental/presence
 
-A session only DDS for lightweight data sharing.
+A set of session focus utilities for lightweight data sharing and messaging.
+
+A session is a period of time when one or more clients are connected to a Fluid service. Session data and messages may be exchanged among clients, but will disappear once the no clients remain. (More specifically once no clients remain that have acquired the session `IPresence` interface.) Once fully implemented, no client will require container write permissions to use Presence features.
+
+## Concepts
+
+### Attendees
+
+For the lifetime of a session, each client connecting will be established as a unique and stable `ISessionClient`. The representation is stable because it will remain the same `ISessionClient` instance independent of connection drops and reconnections.
+
+Client Ids on maintained by `ISessionClient` may be used associate `ISessionClient` with qurom, audience, and service audience members.
+
+### Workspaces
+
+Within Presence data sharing and messaging is broken into workspaces with custom identifiers (workspace addresses). Clients must use the same address within a session to connect with others. Unique addresses enable logical components within a client runtime to remain isolated or work together (without other threading).
+
+There are two types of workspaces: States and Notifications.
+
+#### States Workspace
+
+A states workspace, `PresenceStates`, allows sharing of simple data across attendees where each attendee maintains their own [independent] data values that others may read. This is distinct from a Fluid DDS where data values might be manipulated by multiple clients and one ultimate value is derived. Shared [independent] values are maintained by value managers that specialize in incrementality and history of values.
+
+#### Notifications Workspace
+
+A notifications workspace, `PresenceNotifications`, is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
+
+
+### Value Managers
+
+#### LatestValueManager
+
+Latest value manager retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `PresenceStates` workspace.
+
+#### LatestMapValueManager
+
+Latest map value manager retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified (appears as eleted). Use `LatestMap` to add one to `PresenceStates` workspace.
+
+#### NotificationsManager
+
+Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and recieved. Notifications may be mixed into a `PresenceStates` workspace for convenience, but the only value managers permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
+
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 

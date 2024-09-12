@@ -25,15 +25,17 @@
 export type { ConnectedClientId } from "./baseTypes.js";
 
 export type {
+	PresenceNotifications,
+	PresenceNotificationsSchema,
 	PresenceStates,
-	PresenceWorkspaceAddress,
 	PresenceStatesEntries,
 	PresenceStatesEntry,
 	PresenceStatesMethods,
 	PresenceStatesSchema,
+	PresenceWorkspaceAddress,
 } from "./types.js";
 
-export type { ISessionClient, IPresence, PresenceEvents } from "./presence.js";
+export type { IPresence, ISessionClient, PresenceEvents } from "./presence.js";
 
 export { acquirePresence } from "./experimentalAccess.js";
 
