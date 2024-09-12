@@ -1928,6 +1928,41 @@ export class MergeTree {
 			localSeq,
 			segmentGroup: undefined,
 		};
+		const normalizedStartPos = startPos === "start" || startPos === undefined ? 0 : startPos;
+		const normalizedEndPos =
+			endPos === "end" || endPos === undefined
+				? this.root.mergeTree?.getLength(refSeq, clientId) ?? 0
+				: endPos;
+
+		const { segment: startSeg } = this.getContainingSegment(
+			normalizedStartPos,
+			refSeq,
+			clientId,
+		);
+		const { segment: endSeg } = this.getContainingSegment(
+			normalizedEndPos - 1,
+			refSeq,
+			clientId,
+		);
+		assert(startSeg !== undefined && endSeg !== undefined, "segments cannot be undefined");
+
+		obliterate.start = this.createLocalReferencePosition(
+			startSeg,
+			0,
+			ReferenceType.StayOnRemove,
+			{
+				obliterate,
+			},
+		);
+
+		obliterate.end = this.createLocalReferencePosition(
+			endSeg,
+			endSeg.cachedLength - 1,
+			ReferenceType.StayOnRemove,
+			{
+				obliterate,
+			},
+		);
 
 		const markMoved = (
 			segment: ISegment,
@@ -1936,24 +1971,6 @@ export class MergeTree {
 			_end: number,
 		): boolean => {
 			const existingMoveInfo = toMoveInfo(segment);
-			if (startPos === pos || (startPos === "start" && pos === 0)) {
-				obliterate.start = this.createLocalReferencePosition(
-					segment,
-					0,
-					ReferenceType.StayOnRemove,
-					{ obliterate },
-				);
-			}
-			if (obliterate.end) {
-				this.removeLocalReferencePosition(obliterate.end);
-			}
-			obliterate.end = this.createLocalReferencePosition(
-				segment,
-				segment.cachedLength - 1,
-				ReferenceType.StayOnRemove,
-				{ obliterate },
-			);
-
 			if (
 				clientId !== segment.clientId &&
 				segment.seq !== undefined &&
