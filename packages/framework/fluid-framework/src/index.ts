@@ -11,7 +11,7 @@
  */
 
 // ===============================================================
-// #region Public (and Beta) exports
+// #region Public, Beta and Alpha (non-legacy) exports
 // #region Basic re-exports
 
 export type {
@@ -59,11 +59,11 @@ export type {
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
 
 // Let the tree package manage its own API surface.
-// Note: this only surfaces the `@public and @beta` API items from the tree package.
+// Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
 // eslint-disable-next-line no-restricted-syntax, import/no-internal-modules
-export * from "@fluidframework/tree/beta";
+export * from "@fluidframework/tree/alpha";
 
-// End of basic public+beta exports - nothing above this line should
+// End of basic public+beta+alpha exports - nothing above this line should
 // depend on an /internal path.
 // #endregion Basic re-exports
 // ---------------------------------------------------------------
@@ -86,7 +86,7 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
 // #endregion Custom re-exports
-// #endregion Public exports
+// #endregion
 
 // ===============================================================
 // #region Legacy exports
