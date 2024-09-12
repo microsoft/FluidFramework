@@ -6324,6 +6324,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.8.3
         version: 1.8.3
+      '@fluid-experimental/attributable-map-previous':
+        specifier: npm:@fluid-experimental/attributable-map@2.2.0
+        version: /@fluid-experimental/attributable-map@2.2.0
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -19029,6 +19032,24 @@ packages:
       react: 17.0.2
       tslib: 2.6.2
     dev: false
+
+  /@fluid-experimental/attributable-map@2.2.0:
+    resolution: {integrity: sha512-aJFdxf1d+GSeJnBs2orbVq6qEaQCRtRLi5DUs+I+m3mTs+XYKlf8Eaph0fVJrehVhwUlcTL1+00Wg/L9VdiDCw==}
+    dependencies:
+      '@fluid-internal/client-utils': 2.2.0
+      '@fluidframework/core-interfaces': 2.2.0
+      '@fluidframework/core-utils': 2.2.0
+      '@fluidframework/datastore-definitions': 2.2.0
+      '@fluidframework/driver-definitions': 2.2.0
+      '@fluidframework/driver-utils': 2.2.0
+      '@fluidframework/runtime-definitions': 2.2.0
+      '@fluidframework/runtime-utils': 2.2.0
+      '@fluidframework/shared-object-base': 2.2.0
+      path-browserify: 1.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
 
   /@fluid-internal/client-utils@2.2.0:
     resolution: {integrity: sha512-EfwSDsNMhWvVXRSaaU6m5i8aPBrupSvg0vPLlOmCyeXVfO0e4jERJoadkgP2uBMZFIgiKFVqP+E+35zrY5Ajqw==}
