@@ -252,7 +252,6 @@ export {
 
 export {
 	type KeyFinder,
-	type IndexableTreeStatus,
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,

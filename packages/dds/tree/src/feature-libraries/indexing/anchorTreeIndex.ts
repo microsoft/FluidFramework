@@ -17,22 +17,17 @@ import {
 	forEachNode,
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexNodes } from "./types.js";
-import type { TreeStatus } from "../flex-tree/index.js";
-
-/**
- * Specifies whether an indexable tree is currently in the document,
- * removed, or both (meaning it is in a detached state).
- */
-export type IndexableTreeStatus =
-	| keyof Pick<typeof TreeStatus, "InDocument" | "Removed">
-	| "InDocumentAndRemoved";
+import { TreeStatus } from "../flex-tree/index.js";
 
 /**
  * A function that returns some key given a cursor to a node where the key is what the node
  * is indexed on.
  *
- * This walks the cursor to find the key the node is indexed on but returns the cursor to the state it
- * was in before being passed to the function. It should also not be disposed by this function.
+ * @returns a value on the node that the index will key on
+ *
+ * @remarks
+ * This function does not own the cursor in any way, it walks the cursor to find the key the node is indexed on
+ * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function.
  */
 export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
 
@@ -43,6 +38,8 @@ export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) 
  * @remarks
  * Detached nodes are stored in the index but filtered out when any public facing apis are called. This means that
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
+ *
+ * TODO: need to make sure key finders are deterministic or have a way to invalidate them
  */
 export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	implements TreeIndex<TKey, TValue>
@@ -66,11 +63,13 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	 * @param forest - the forest that is being indexed
 	 * @param indexer - a function that retrieves the key finder based on a given schema or undefined if the schema does not have an associated key finder
 	 * @param getValue - a function that returns the value or undefined given at least one anchor node
+	 * @param checkTreeStatus - a function that gets the tree status from an anchor node, used for filtering out detached nodes
 	 */
 	public constructor(
 		private readonly forest: IForestSubscription,
 		indexer: (schemaId: TreeNodeSchemaIdentifier) => KeyFinder<TKey> | undefined,
 		private readonly getValue: (anchorNodes: TreeIndexNodes<AnchorNode>) => TValue | undefined,
+		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
 	) {
 		/**
 		 * Given a cursor in field mode, recursively indexes all nodes under the field.
@@ -250,13 +249,8 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		anchorNodes: TreeIndexNodes<AnchorNode> | undefined,
 	): TValue | undefined {
 		const attachedNodes = filterNodes(anchorNodes, (anchorNode) => {
-			// const node =
-			// 	tryGetCachedHydratedTreeNode(anchorNode) ??
-			// 	fail("nodes in index should not be cooked");
-			// if (Tree.status(node) !== TreeStatus.InDocument) {
-			// 	return false;
-			// }
-			return true;
+			const nodeStatus = this.checkTreeStatus(anchorNode);
+			return nodeStatus === TreeStatus.InDocument;
 		});
 
 		if (attachedNodes !== undefined) {

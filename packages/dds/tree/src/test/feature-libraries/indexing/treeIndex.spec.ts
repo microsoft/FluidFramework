@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 
 import { getView } from "../../utils.js";
-import { type FlexTreeNode, AnchorTreeIndex } from "../../../feature-libraries/index.js";
+import {
+	type FlexTreeNode,
+	AnchorTreeIndex,
+	flexTreeSlot,
+	isTreeValue,
+} from "../../../feature-libraries/index.js";
 import type { AnchorNode, FieldKey, ITreeSubscriptionCursor } from "../../../core/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
 import {
@@ -17,6 +22,10 @@ import {
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import/no-internal-modules
+import { treeApi } from "../../../shared-tree/treeApi.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getOrCreateNodeFromFlexTreeNode } from "../../../simple-tree/proxies.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -77,6 +86,14 @@ describe.only("tree indexes", () => {
 				return anchorNodes.map((a) =>
 					getOrCreate(anchorIds, a, () => indexedAnchorNodeCount++),
 				);
+			},
+			(anchorNode: AnchorNode) => {
+				const simpleTree = getOrCreateNodeFromFlexTreeNode(
+					anchorNode.slots.get(flexTreeSlot) ?? fail("todo node should be hydrated"),
+				);
+				if (!isTreeValue(simpleTree)) {
+					return treeApi.status(simpleTree);
+				}
 			},
 		);
 
@@ -157,22 +174,22 @@ describe.only("tree indexes", () => {
 	});
 
 	// todo: detached/removed nodes should be filtered out of the index
-	it("can look up nodes that are detached when the index is created", () => {
+	it("does not include nodes that are detached when the index is created", () => {
 		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
 		const { assertContents } = createIndex(view);
-		assertContents([parentId, parent], [childId, child]);
+		assertContents([parentId, parent]);
 	});
 
-	it("can look up a removed node", () => {
+	it("does not include a removed node", () => {
 		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
-		assertContents([parentId, parent], [childId, child]);
+		assertContents([parentId, parent]);
 	});
 
 	it("can look up multiple nodes with the same key", () => {

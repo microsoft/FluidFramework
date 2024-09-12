@@ -6,9 +6,9 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { AnchorNode, FieldKey, TreeValue } from "../core/index.js";
+import type { AnchorNode, FieldKey, TreeValue } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
+import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	Context,
 	AnchorTreeIndex,
@@ -20,39 +20,39 @@ import {
 	hasElement,
 	type TreeIndex,
 	type FlexTreeContext,
-} from "../feature-libraries/index.js";
-import { brand, fail } from "../util/index.js";
-import { FieldKind, type NodeFromSchema } from "./schemaTypes.js";
-import type { TreeNode, TreeNodeSchema } from "./index.js";
-import { getSimpleNodeSchema } from "./core/index.js";
-import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
-import { ObjectNodeSchema } from "./objectNodeTypes.js";
+} from "../../feature-libraries/index.js";
+import { brand, fail } from "../../util/index.js";
+import { FieldKind, type NodeFromSchema } from "../schemaTypes.js";
+import { getSimpleNodeSchema, type TreeNode, type TreeNodeSchema } from "../core/index.js";
+import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
+import { ObjectNodeSchema } from "../objectNodeTypes.js";
+import { treeNodeApi } from "./treeNodeApi.js";
 
 /**
  * A {@link TreeIndex} that returns tree nodes given their associated keys.
+ *
+ * @alpha
  */
-type SimpleTreeIndex<TKey extends TreeValue, TSchema extends TreeNodeSchema> =
-	| TreeIndex<TKey, TreeNode>
-	| TreeIndex<TKey, NodeFromSchema<TSchema>>;
+export type SimpleTreeIndex<TKey extends TreeValue, TValue> = TreeIndex<TKey, TValue>;
 
 /**
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
  *
- * NOTE: use Tree.is for downcasting
- *
- * @param context -
- * @param indexer -
- * @param getValue -
- * @param indexableSchema -
+ * @param context - the context for the tree being indexed
+ * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns a {@link KeyFinder} that works with the schema
+ * @param getValue - given at least one {@link TreeNode}, returns an associated value
+ * @param indexableSchema - a list of all the schema types that can be indexed
  *
  * @privateRemarks
  * This creates an anchor tree index that indexes the value of some simple tree nodes on some key.
+ *
+ * @alpha
  */
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
-): SimpleTreeIndex<TKey, TreeNodeSchema>;
+): SimpleTreeIndex<TKey, TValue>;
 export function createSimpleTreeIndex<
 	TKey extends TreeValue,
 	TValue,
@@ -62,7 +62,7 @@ export function createSimpleTreeIndex<
 	indexer: (schema: TSchema) => KeyFinder<TKey> | undefined,
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
 	indexableSchema: readonly TSchema[],
-): SimpleTreeIndex<TKey, TSchema>;
+): SimpleTreeIndex<TKey, TValue>;
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
@@ -70,7 +70,7 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 		| ((nodes: TreeIndexNodes<TreeNode>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
 	indexableSchema?: readonly TreeNodeSchema[],
-): SimpleTreeIndex<TKey, TreeNodeSchema> {
+): SimpleTreeIndex<TKey, TValue> {
 	assert(context instanceof Context, "unexpected context implementation");
 	const index = new AnchorTreeIndex<TKey, TValue>(
 		context.checkout.forest,
@@ -106,19 +106,29 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 				return getValue(simpleTreeNodes);
 			}
 		},
+		(anchorNode: AnchorNode) => {
+			const simpleTree = getOrCreateSimpleTree(context, anchorNode);
+			if (!isTreeValue(simpleTree)) {
+				return treeNodeApi.status(simpleTree);
+			}
+		},
 	);
 	// all the type checking guarantees that we put nodes of the correct type in the index
 	// but it's not captured in the type system
-	return index as SimpleTreeIndex<TKey, TreeNodeSchema>;
+	return index as SimpleTreeIndex<TKey, TValue>;
 }
 
 /**
  * An index that returns tree nodes given their associated identifiers.
+ *
+ * @alpha
  */
-type IdentifierIndex = SimpleTreeIndex<string, TreeNodeSchema>;
+export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
 
 /**
  * Creates an {@link IdentifierIndex} for a given {@link FlexTreeContext}.
+ *
+ * @alpha
  */
 export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex {
 	assert(context instanceof Context, "Unexpected context implementation");

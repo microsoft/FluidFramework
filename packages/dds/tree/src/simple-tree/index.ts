@@ -48,6 +48,10 @@ export {
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -106,7 +110,6 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { createSimpleTreeIndex, createIdentifierIndex } from "./identifierIndex.js";
 export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 export type { SimpleTreeSchema } from "./simpleSchema.js";
 export {

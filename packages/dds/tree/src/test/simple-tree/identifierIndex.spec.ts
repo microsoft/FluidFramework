@@ -16,7 +16,7 @@ import {
 } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { createSimpleTreeIndex } from "../../simple-tree/identifierIndex.js";
+import { createSimpleTreeIndex } from "../../simple-tree/api/identifierIndex.js";
 import type { FlexTreeNode, TreeIndexNodes } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
 import type { FieldKey, ITreeSubscriptionCursor } from "../../core/index.js";
@@ -53,9 +53,14 @@ describe.only("simple tree indexes", () => {
 	}
 
 	function makeKeyFinder(schema: TreeNodeSchema) {
-		if (schema.identifier === IndexableParent.identifier || schema.identifier === IndexableChild.identifier) {
+		if (
+			schema.identifier === IndexableParent.identifier ||
+			schema.identifier === IndexableChild.identifier
+		) {
 			return (node: ITreeSubscriptionCursor) => {
-				node.enterField(schema.identifier === IndexableParent.identifier ? parentKey : childKey);
+				node.enterField(
+					schema.identifier === IndexableParent.identifier ? parentKey : childKey,
+				);
 				node.enterNode(0);
 				const value = node.value;
 				node.exitNode();
@@ -64,9 +69,9 @@ describe.only("simple tree indexes", () => {
 				return value;
 			};
 		}
-		return 
+		return;
 	}
-	
+
 	it("can index nodes", () => {
 		const parent = hydrate(IndexableParent, {
 			[parentKey]: parentId,
@@ -81,24 +86,46 @@ describe.only("simple tree indexes", () => {
 			[IndexableParent, IndexableChild],
 		);
 		assert.equal(index.size, 2);
-		assert.equal(index.get(parentKey), 3);
-		assert.equal(index.get(childKey), 3);
+
+		// test that both keys have been indexed
+		assert.equal(index.get(parentId), 3);
+		assert.equal(index.get(childId), 3);
 	});
 
 	it("does not reify tree of nodes being scanned", () => {
-		// create simple tree with a child and make sure that the anchor to it doesn't have an actual node?
+		// TODO create simple tree with a child and make sure that the anchor to it doesn't have an actual node?
+		const parent = hydrate(IndexableParent, {
+			[parentKey]: parentId,
+			child: { [childKey]: childId },
+		});
+		const node = getOrCreateInnerNode(parent);
+		const context = node.context;
+		
+		const index = createSimpleTreeIndex(
+			context,
+			(s) => makeKeyFinder(s),
+			() => 3,
+			[IndexableParent, IndexableChild],
+		);
 	});
 
 	it("filters out removed nodes", () => {
 		const { parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const index = createSimpleTreeIndex<string, TreeIndexNodes<TreeNode>>(
-			getFlexNode(parent).context, 
+			getFlexNode(parent).context,
 			(schema) => makeKeyFinder(schema),
 			(nodes) => nodes,
-		)
+		);
+
 		assert.equal(index.size, 2);
-		assert.equal(index.get(parentKey).size, 1);
-		assert.equal(index.get(childKey).size, 1);
+		assert.equal(index.get(parentId)?.length, 1);
+		assert.equal(index.get(childId)?.length, 1);
+
+		parent.child = undefined;
+
+		assert.equal(index.size, 1);
+		assert.equal(index.get(parentId)?.length, 1);
+		assert.equal(index.get(childId), undefined);
 	});
 });
 
@@ -125,7 +152,7 @@ describe.only("identifier indexes", () => {
 		parent.child = new IndexableChild({ [childKey]: `${childId}2` });
 		assert.equal(index.get(parentId), parent);
 		assert.equal(index.get(`${childId}2`), parent.child);
-		assert.equal(index.size, 3);
+		assert.equal(index.get(childId), undefined);
 	});
 
 	it("does not index detached nodes", () => {
