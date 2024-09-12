@@ -58,6 +58,7 @@ declare type old_as_current_for_Class_AuthorizationError = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_AuthorizationError": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_AuthorizationError = requireAssignableTo<TypeOnly<current.AuthorizationError>, TypeOnly<old.AuthorizationError>>
 
 /*
@@ -67,6 +68,7 @@ declare type current_as_old_for_Class_AuthorizationError = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_AuthorizationError": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_AuthorizationError = requireAssignableTo<TypeOnly<typeof current.AuthorizationError>, TypeOnly<typeof old.AuthorizationError>>
 
 /*
@@ -463,6 +465,7 @@ declare type old_as_current_for_Class_PrefetchDocumentStorageService = requireAs
  * typeValidation.broken:
  * "Class_PrefetchDocumentStorageService": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_PrefetchDocumentStorageService = requireAssignableTo<TypeOnly<current.PrefetchDocumentStorageService>, TypeOnly<old.PrefetchDocumentStorageService>>
 
 /*
@@ -472,6 +475,7 @@ declare type current_as_old_for_Class_PrefetchDocumentStorageService = requireAs
  * typeValidation.broken:
  * "ClassStatics_PrefetchDocumentStorageService": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_PrefetchDocumentStorageService = requireAssignableTo<TypeOnly<typeof current.PrefetchDocumentStorageService>, TypeOnly<typeof old.PrefetchDocumentStorageService>>
 
 /*

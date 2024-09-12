@@ -8,7 +8,7 @@ import {
 	normalizeFieldSchema,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
-} from "./schemaTypes.js";
+} from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
@@ -18,10 +18,10 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import type { ValueSchema } from "../core/index.js";
-import { getOrCreate } from "../util/index.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
-import { NodeKind, type TreeNodeSchema } from "./core/index.js";
+import type { ValueSchema } from "../../core/index.js";
+import { getOrCreate } from "../../util/index.js";
+import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 
 /**
  * Converts a "view" schema to a "simple" schema representation.

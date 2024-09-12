@@ -174,11 +174,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const enableCollaborationSessionPruning: boolean | undefined = config.get(
 			"nexus:enableCollaborationSessionPruning",
 		);
+		const redisCollaborationSessionManagerOptions: Partial<services.IRedisCollaborationSessionManagerOptions> =
+			config.get("nexus:redisCollaborationSessionManagerOptions") ?? {};
 		const collaborationSessionManager =
 			enableCollaborationSessionTracking === true
 				? new services.RedisCollaborationSessionManager(
 						redisClientConnectionManager,
 						redisParams2,
+						redisCollaborationSessionManagerOptions,
 				  )
 				: undefined;
 		const collaborationSessionTracker =
