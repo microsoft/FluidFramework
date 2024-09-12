@@ -35,7 +35,12 @@ export type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-export type { IPresence, ISessionClient, PresenceEvents } from "./presence.js";
+export type {
+	ClientSessionId,
+	IPresence,
+	ISessionClient,
+	PresenceEvents,
+} from "./presence.js";
 
 export { acquirePresence } from "./experimentalAccess.js";
 

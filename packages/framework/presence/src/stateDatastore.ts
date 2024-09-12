@@ -6,7 +6,7 @@
 import type { ConnectedClientId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import type { ISessionClient } from "./presence.js";
+import type { ClientSessionId, ISessionClient } from "./presence.js";
 
 // type StateDatastoreSchemaNode<
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
@@ -37,9 +37,9 @@ export interface StateDatastore<
 		},
 		forceBroadcast: boolean,
 	): void;
-	update(key: TKey, clientId: ConnectedClientId, value: TValue): void;
+	update(key: TKey, clientSessionId: ClientSessionId, value: TValue): void;
 	knownValues(key: TKey): {
-		self: ConnectedClientId | undefined;
+		self: ClientSessionId | undefined;
 		states: ClientRecord<TValue>;
 	};
 	lookupClient(clientId: ConnectedClientId): ISessionClient;

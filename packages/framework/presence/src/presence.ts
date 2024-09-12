@@ -15,10 +15,24 @@ import type {
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
 
 /**
+ * A Fluid client session identifier.
+ *
+ * @remarks
+ * Each client once connected to a session is given a unique identifier for the
+ * duration of the session. If a client disconnects and reconnects, it will
+ * retain its identifier. Prefer use of {@link ISessionClient} as a way to
+ * identify clients in a session. {@link ISessionClient.sessionId} will provide
+ * the session id.
+ *
+ * @alpha
+ */
+export type ClientSessionId = string;
+
+/**
  * A client within a Fluid session (period of container connectivity to service).
  *
  * @remarks
- * Note: This is very preliminary session client represenation.
+ * Note: This is very preliminary session client representation.
  *
  * `ISessionClient` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
@@ -33,8 +47,10 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
  * @alpha
  */
 export interface ISessionClient<
-	SpecificClientId extends ConnectedClientId = ConnectedClientId,
+	SpecificSessionClientId extends ClientSessionId = ClientSessionId,
 > {
+	readonly sessionId: SpecificSessionClientId;
+
 	/**
 	 * Get current client connection id.
 	 *
@@ -43,17 +59,17 @@ export interface ISessionClient<
 	 * @remarks
 	 * Connection id will change on reconnection.
 	 */
-	currentClientId(): SpecificClientId;
+	currentClientId(): ConnectedClientId;
 }
 
 /**
  * Utility type limiting to a specific session client. (A session client with
- * a specific connection id - not just any connection id.)
+ * a specific session id - not just any session id.)
  *
  * @internal
  */
-export type SpecificSessionClient<SpecificClientId extends ConnectedClientId> =
-	string extends SpecificClientId ? never : ISessionClient<SpecificClientId>;
+export type SpecificSessionClient<SpecificSessionClientId extends ClientSessionId> =
+	string extends SpecificSessionClientId ? never : ISessionClient<SpecificSessionClientId>;
 
 /**
  * @sealed

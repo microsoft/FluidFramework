@@ -11,6 +11,9 @@ export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
 export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Promise<IPresence>;
 
 // @alpha
+export type ClientSessionId = string;
+
+// @alpha
 export type ConnectedClientId = string;
 
 // @alpha @sealed
@@ -31,8 +34,10 @@ export interface IPresence {
 }
 
 // @alpha @sealed
-export interface ISessionClient<SpecificClientId extends ConnectedClientId = ConnectedClientId> {
-    currentClientId(): SpecificClientId;
+export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
+    currentClientId(): ConnectedClientId;
+    // (undocumented)
+    readonly sessionId: SpecificSessionClientId;
 }
 
 // @alpha
@@ -60,8 +65,8 @@ export interface LatestMapItemValueClientData<T, K extends string | number> exte
 }
 
 // @alpha @sealed
-export interface LatestMapValueClientData<T, Keys extends string | number, SpecificClientId extends ConnectedClientId = ConnectedClientId> {
-    client: ISessionClient<SpecificClientId>;
+export interface LatestMapValueClientData<T, Keys extends string | number, SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
+    client: ISessionClient<SpecificSessionClientId>;
     // (undocumented)
     items: ReadonlyMap<Keys, LatestValueData<T>>;
 }
@@ -69,7 +74,7 @@ export interface LatestMapValueClientData<T, Keys extends string | number, Speci
 // @alpha @sealed
 export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
     clients(): ISessionClient[];
-    clientValue<SpecificClientId extends ConnectedClientId>(client: ISessionClient<SpecificClientId>): LatestMapValueClientData<T, Keys, SpecificClientId>;
+    clientValue<SpecificSessionClientId extends ClientSessionId>(client: ISessionClient<SpecificSessionClientId>): LatestMapValueClientData<T, Keys, SpecificSessionClientId>;
     clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
     readonly controls: LatestValueControls;
     readonly events: ISubscribable<LatestMapValueManagerEvents<T, Keys>>;
