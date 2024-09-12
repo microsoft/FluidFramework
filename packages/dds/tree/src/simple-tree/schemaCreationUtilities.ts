@@ -91,7 +91,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * 	mode: typedObjectValues(ModeNodes),
  * }) {}
  *
- * // Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
+ * // Example usage of enum-based nodes, showing what type to use and that `.value` can be used to read out the enum value.
  * function getValue(node: ModeNodes): Mode {
  * 	return node.value;
  * }
