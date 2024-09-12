@@ -1292,7 +1292,7 @@ export class ContainerRuntime
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
 		broadcastSignalCounterForLatencyEventWindow: 0,
-		signalSequenceNumber: 0,
+		broadcastSignalSequenceNumber: 0,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
@@ -3287,7 +3287,7 @@ export class ContainerRuntime
 		// so therefore we will only increment CSSN when the signal is expected to return.
 		// Targeted signals to remote clients will be ignored as they are not expected to come back.
 		const clientBroadcastSignalSequenceNumber = isBroadcastSignal
-			? ++this._signalTracking.signalSequenceNumber
+			? ++this._signalTracking.broadcastSignalSequenceNumber
 			: undefined;
 
 		if (isBroadcastSignal) {
