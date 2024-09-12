@@ -3281,17 +3281,19 @@ export class ContainerRuntime
 		content: any,
 		targetClientId?: string,
 	): ISignalEnvelope {
+		const newEnvelope: ISignalEnvelope = {
+			address,
+			contents: { type, content },
+		};
+
 		const isBroadcastSignal = targetClientId === undefined;
 
-		// clientBroadcastSignalSequenceNumber is solely used for local signal tracking/telemetry purposes,
-		// so therefore we will only increment CSSN when the signal is expected to return.
-		// Targeted signals to remote clients will be ignored as they are not expected to come back.
-		const clientBroadcastSignalSequenceNumber = isBroadcastSignal
-			? ++this._signalTracking.broadcastSignalSequenceNumber
-			: undefined;
-
 		if (isBroadcastSignal) {
+			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
+				.broadcastSignalSequenceNumber;
+			newEnvelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
 			this._signalTracking.broadcastSignalCounterForLatencyEventWindow++;
+
 			if (
 				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
 				this._signalTracking.trackingSignalSequenceNumber === undefined
@@ -3303,25 +3305,20 @@ export class ContainerRuntime
 				this._signalTracking.trackingSignalSequenceNumber =
 					clientBroadcastSignalSequenceNumber;
 			}
-		}
 
-		const newEnvelope: ISignalEnvelope = {
-			address,
-			clientBroadcastSignalSequenceNumber,
-			contents: { type, content },
-		};
-
-		// We should not track the round trip of a new signal in the case we are already tracking one.
-		if (
-			clientBroadcastSignalSequenceNumber !== undefined &&
-			clientBroadcastSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._signalTracking.roundTripSignalSequenceNumber === undefined
-		) {
-			this._signalTracking.signalTimestamp = Date.now();
-			this._signalTracking.roundTripSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
-			this._signalTracking.broadcastSignalsSentDuringLatencyEventWindow +=
-				this._signalTracking.broadcastSignalCounterForLatencyEventWindow;
-			this._signalTracking.broadcastSignalCounterForLatencyEventWindow = 0;
+			// We should not track the round trip of a new signal in the case we are already tracking one.
+			if (
+				clientBroadcastSignalSequenceNumber !== undefined &&
+				clientBroadcastSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+				this._signalTracking.roundTripSignalSequenceNumber === undefined
+			) {
+				this._signalTracking.signalTimestamp = Date.now();
+				this._signalTracking.roundTripSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+				this._signalTracking.broadcastSignalsSentDuringLatencyEventWindow +=
+					this._signalTracking.broadcastSignalCounterForLatencyEventWindow;
+				this._signalTracking.broadcastSignalCounterForLatencyEventWindow = 0;
+			}
 		}
 
 		return newEnvelope;

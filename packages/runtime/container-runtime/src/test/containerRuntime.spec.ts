@@ -2584,7 +2584,7 @@ describe("Runtime", () => {
 						if (runtime) {
 							runtime.processSignal(
 								{
-									clientId: containerRuntime.clientId as string,
+									clientId: signal.clientId,
 									content: signal,
 								},
 								true,
@@ -2600,7 +2600,7 @@ describe("Runtime", () => {
 					for (const runtime of runtimes.values()) {
 						runtime.processSignal(
 							{
-								clientId: containerRuntime.clientId as string,
+								clientId: signal.clientId,
 								content: signal,
 							},
 							true,
