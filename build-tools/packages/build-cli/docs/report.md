@@ -11,10 +11,10 @@ Run comparison of code coverage stats
 
 ```
 USAGE
-  $ flub report codeCoverageStats --dangerfile <value> [-v | --quiet]
+  $ flub report codeCoverageStats [-v | --quiet] [--dangerfile <value>]
 
 FLAGS
-  --dangerfile=<value>  (required) Path to dangerfile
+  --dangerfile=<value>  Path to dangerfile
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
