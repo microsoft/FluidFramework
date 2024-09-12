@@ -347,6 +347,9 @@ export interface ChunkPolicy {
 
 export interface ChunkCompressor {
 	readonly policy: ChunkPolicy;
+	/**
+	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
 }
 
