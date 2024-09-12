@@ -60,11 +60,19 @@ export async function codeCoverageCompare(): Promise<void> {
 		throw new Error("DANGER_GITHUB_API_TOKEN not provided in environment");
 	}
 
+	if (process.env.ADO_CI_BUILD_DEFINITION_ID === undefined) {
+		throw new Error("ADO_CI_BUILD_DEFINITION_ID not provided in environment");
+	}
+
+	if (process.env.CodeCoverageAnalysis_ArtifactName === undefined) {
+		throw new Error("CodeCoverageAnalysis_ArtifactName not provided in environment");
+	}
+
 	const codeCoverageConstants = {
 		orgUrl: "https://dev.azure.com/fluidframework",
 		projectName: "public",
-		ciBuildDefinitionId: 48,
-		codeCoverageAnalysisArtifactName: "codeCoverageAnalysis",
+		ciBuildDefinitionId: Number.parseInt(process.env.ADO_CI_BUILD_DEFINITION_ID, 10),
+		artifactName: process.env.CodeCoverageAnalysis_ArtifactName,
 		buildsToSearch: 50,
 	};
 	const { codeCoverageCli } = await import("../codeCoverage/codeCoverageCli.js");

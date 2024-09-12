@@ -41,6 +41,7 @@ module.exports = {
 					"**/handlers/index.js",
 					"**/machines/index.js",
 					"**/repoPolicyCheck/index.js",
+					"**/azureDevops/**",
 					"**/codeCoverage/**",
 					"azure-devops-node-api/**",
 				],

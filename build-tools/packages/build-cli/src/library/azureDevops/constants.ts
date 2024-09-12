@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export interface IADOCodeCoverageConstants {
+export interface IAzureDevopsBuildCoverageConstants {
 	// URL for the ADO org
 	orgUrl: string;
 
@@ -13,8 +13,8 @@ export interface IADOCodeCoverageConstants {
 	// The ADO ID of the pipeline (aka `definitionId`) that runs against main when PRs are merged and generates the baseline code coverage artifacts
 	ciBuildDefinitionId: number;
 
-	// The name of the build artifact that contains the bundle size artifacts
-	codeCoverageAnalysisArtifactName: string;
+	// The name of the build artifact that contains the artifact to be used as the baseline for analysis
+	artifactName: string;
 
 	// The number of most recent ADO builds to pull when searching for one associated
 	// with a specific commit, default 20.  Pulling more builds takes longer, but may

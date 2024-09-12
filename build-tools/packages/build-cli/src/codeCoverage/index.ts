@@ -4,4 +4,3 @@
  */
 
 export { codeCoverageCli, CodeCoverageSummary } from "./codeCoverageCli.js";
-export { IADOCodeCoverageConstants } from "./ADO/constants.js";

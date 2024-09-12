@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics.js";
+import type { IBaselineBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CodeCoverageSummary } from "./codeCoverageCli.js";
 import type { CodeCoverageComparison } from "./compareCodeCoverage.js";
 

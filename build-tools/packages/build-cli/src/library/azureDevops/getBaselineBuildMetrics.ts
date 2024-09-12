@@ -8,7 +8,7 @@ import type { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type JSZip from "jszip";
-import type { IADOCodeCoverageConstants } from "./constants.js";
+import type { IAzureDevopsBuildCoverageConstants } from "./constants.js";
 import {
 	Metric,
 	getBaselineCommit,
@@ -39,10 +39,10 @@ export interface IBaselineBuildMetrics {
  */
 function* naiveFallbackCommitGenerator(
 	startingCommit: string,
-	codeCoverageConstants: IADOCodeCoverageConstants,
+	buildsToSearch?: number,
 ): Generator<string> {
 	let currentCommit = startingCommit;
-	for (let i = 0; i < (codeCoverageConstants.buildsToSearch ?? 50); i++) {
+	for (let i = 0; i < (buildsToSearch ?? 50); i++) {
 		currentCommit = getPriorCommit(currentCommit);
 		yield currentCommit;
 	}
@@ -56,7 +56,7 @@ function* naiveFallbackCommitGenerator(
  */
 export async function getBaselineBuildMetrics(
 	metric: Metric,
-	codeCoverageConstants: IADOCodeCoverageConstants,
+	azureDevopsBuildCoverageConstants: IAzureDevopsBuildCoverageConstants,
 	adoConnection: WebApi,
 ): Promise<IBaselineBuildMetrics | string | undefined> {
 	let baselineCommit = getBaselineCommit();
@@ -64,11 +64,11 @@ export async function getBaselineBuildMetrics(
 
 	// Some circumstances may want us to try a fallback, such as when a commit does
 	// not trigger any CI loops.  Use fallback generator in that case.
-	const fallbackGen = naiveFallbackCommitGenerator(baselineCommit, codeCoverageConstants);
+	const fallbackGen = naiveFallbackCommitGenerator(baselineCommit, azureDevopsBuildCoverageConstants.buildsToSearch);
 	const recentBuilds = await getBuilds(adoConnection, {
-		project: codeCoverageConstants.projectName,
-		definitions: [codeCoverageConstants.ciBuildDefinitionId],
-		maxBuildsPerDefinition: codeCoverageConstants.buildsToSearch ?? 50,
+		project: azureDevopsBuildCoverageConstants.projectName,
+		definitions: [azureDevopsBuildCoverageConstants.ciBuildDefinitionId],
+		maxBuildsPerDefinition: azureDevopsBuildCoverageConstants.buildsToSearch ?? 50,
 	});
 
 	let baselineBuild: Build | undefined;
@@ -120,20 +120,20 @@ export async function getBaselineBuildMetrics(
 
 		// Baseline build succeeded
 		console.log(`Found baseline build with id: ${baselineBuild.id}`);
-		console.log(`projectName: ${codeCoverageConstants.projectName}`);
+		console.log(`projectName: ${azureDevopsBuildCoverageConstants.projectName}`);
 		console.log(
-			`codeCoverageAnalysisArtifactName: ${codeCoverageConstants.codeCoverageAnalysisArtifactName}`,
+			`codeCoverageAnalysisArtifactName: ${azureDevopsBuildCoverageConstants.artifactName}`,
 		);
 
 		// eslint-disable-next-line no-await-in-loop
 		baselineArtifactZip = await getZipObjectFromArtifact(
 			adoConnection,
-			codeCoverageConstants.projectName,
+			azureDevopsBuildCoverageConstants.projectName,
 			baselineBuild.id,
-			codeCoverageConstants.codeCoverageAnalysisArtifactName,
+			azureDevopsBuildCoverageConstants.artifactName,
 		).catch((error: Error) => {
 			console.log(
-				`Failed to fetch artifact: ${codeCoverageConstants.codeCoverageAnalysisArtifactName} from CI build. Cannot generate analysis at this time`,
+				`Failed to fetch artifact: ${azureDevopsBuildCoverageConstants.artifactName} from CI build. Cannot generate analysis at this time`,
 			);
 			console.log(`Error unzipping object from artifact: ${error.message}`);
 			console.log(`Error stack: ${error.stack}`);

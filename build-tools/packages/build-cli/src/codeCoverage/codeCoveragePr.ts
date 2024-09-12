@@ -4,8 +4,8 @@
  */
 
 import { getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
-import { type IADOCodeCoverageConstants } from "./ADO/constants.js";
-import { getBaselineBuildMetrics } from "./ADO/getBaselineBuildMetrics.js";
+import { type IAzureDevopsBuildCoverageConstants } from "../library/azureDevops/constants.js";
+import { getBaselineBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CodeCoverageSummary } from "./codeCoverageCli.js";
 import { compareCodeCoverage } from "./compareCodeCoverage.js";
 import { getCommentForCodeCoverageDiff } from "./getCommentForCodeCoverage.js";
@@ -23,7 +23,7 @@ import {
 export const postCodeCoverageSummary = async (
 	adoToken: string,
 	coverageReportsFolder: string,
-	codeCoverageConstants: IADOCodeCoverageConstants,
+	codeCoverageConstants: IAzureDevopsBuildCoverageConstants,
 ): Promise<CodeCoverageSummary> => {
 	const adoConnection = getAzureDevopsApi(adoToken, codeCoverageConstants.orgUrl);
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IADOCodeCoverageConstants } from "./ADO/constants.js";
+import type { IAzureDevopsBuildCoverageConstants } from "../library/azureDevops/constants.js";
 import { postCodeCoverageSummary } from "./codeCoveragePr.js";
 
 /**
@@ -30,7 +30,7 @@ export interface CodeCoverageSummary {
 export async function codeCoverageCli(
 	adoToken: string,
 	coverageReportsFolder: string,
-	codeCoverageConstants: IADOCodeCoverageConstants,
+	codeCoverageConstants: IAzureDevopsBuildCoverageConstants,
 ): Promise<CodeCoverageSummary> {
 	return postCodeCoverageSummary(adoToken, coverageReportsFolder, codeCoverageConstants);
 }
