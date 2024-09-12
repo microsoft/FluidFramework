@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import execa from "execa";
 import type { WebApi } from "azure-devops-node-api";
 import {
 	type Build,
 	BuildQueryOrder,
 } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
+import execa from "execa";
 
 export interface GetBuildOptions {
 	// The ADO project name

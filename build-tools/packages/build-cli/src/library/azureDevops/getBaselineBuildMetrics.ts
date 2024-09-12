@@ -64,7 +64,10 @@ export async function getBaselineBuildMetrics(
 
 	// Some circumstances may want us to try a fallback, such as when a commit does
 	// not trigger any CI loops.  Use fallback generator in that case.
-	const fallbackGen = naiveFallbackCommitGenerator(baselineCommit, azureDevopsBuildCoverageConstants.buildsToSearch);
+	const fallbackGen = naiveFallbackCommitGenerator(
+		baselineCommit,
+		azureDevopsBuildCoverageConstants.buildsToSearch,
+	);
 	const recentBuilds = await getBuilds(adoConnection, {
 		project: azureDevopsBuildCoverageConstants.projectName,
 		definitions: [azureDevopsBuildCoverageConstants.ciBuildDefinitionId],

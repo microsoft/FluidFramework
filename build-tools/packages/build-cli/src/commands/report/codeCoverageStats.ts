@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import execa from "execa";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Flags } from "@oclif/core";
+import execa from "execa";
 
 import { BaseCommand } from "../../library/index.js";
 
