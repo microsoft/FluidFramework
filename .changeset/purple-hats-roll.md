@@ -14,5 +14,5 @@ Fixing this bug appears to be impossible withing the current limitation of TypeS
 
 To reduce the risk of users of this the tree library using the problematic `RestrictiveReadonlyRecord` type it has been deprecated and replaced with a more specific type that avoids the bug, `RestrictiveStringRecord<TValue>`.
 
-To highlight that this new type is not intended for direct use by users of tree, and instead is just used as part of the typing of its public API, `RestrictiveStringRecord` as been tagged with `@system`.
+To highlight that this new type is not intended for direct use by users of tree, and instead is just used as part of the typing of its public API, `RestrictiveStringRecord` has been tagged with `@system`.
 See [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels) for more details.
