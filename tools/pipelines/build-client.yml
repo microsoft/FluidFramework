@@ -89,6 +89,7 @@ trigger:
     - packages
     - PACKAGES.md
     - package.json
+    - patches/*
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - prettier.config.cjs
@@ -149,6 +150,7 @@ pr:
     - packages
     - PACKAGES.md
     - package.json
+    - patches/*
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - prettier.config.cjs
