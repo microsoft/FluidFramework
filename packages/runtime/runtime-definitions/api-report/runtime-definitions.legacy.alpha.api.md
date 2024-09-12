@@ -120,9 +120,9 @@ export interface IEnvelope {
 
 // @alpha
 export interface IExperimentalIncrementalSummaryContext {
-    latestSummarySequenceNumber: number;
-    summaryPath: string;
-    summarySequenceNumber: number;
+    readonly latestSummarySequenceNumber: number;
+    readonly summaryPath: string;
+    readonly summarySequenceNumber: number;
 }
 
 // @alpha
