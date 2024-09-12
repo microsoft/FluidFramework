@@ -2477,10 +2477,14 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			return { type: "global" };
 		}
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
+		const chunkCompressor = {
+			policy: defaultChunkPolicy,
+			idCompressor,
+		};
 		const chunk =
 			content.mode === CursorLocationType.Fields
-				? chunkFieldSingle(content, { policy: defaultChunkPolicy })
-				: chunkTree(content, { policy: defaultChunkPolicy, idCompressor });
+				? chunkFieldSingle(content, chunkCompressor)
+				: chunkTree(content, chunkCompressor);
 		builds.set([undefined, firstId], chunk);
 
 		return {

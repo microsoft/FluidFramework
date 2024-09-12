@@ -228,7 +228,10 @@ export class ChunkedForest implements IEditableForest {
 					//
 					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
 					const newChunks = mapCursorField(found.cursor(), (cursor) =>
-						basicChunkTree(cursor, { policy: this.forest.chunker }),
+						basicChunkTree(cursor, {
+							policy: this.forest.chunker,
+							idCompressor: this.forest.idCompressor,
+						}),
 					);
 					// TODO: this could fail for really long chunks being split (due to argument count limits).
 					// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.

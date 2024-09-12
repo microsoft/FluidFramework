@@ -346,8 +346,8 @@ export interface ChunkPolicy {
 }
 
 export interface ChunkCompressor {
-	policy: ChunkPolicy;
-	idCompressor?: IIdCompressor;
+	readonly policy: ChunkPolicy;
+	readonly idCompressor: IIdCompressor | undefined;
 }
 
 function newBasicChunkTree(

@@ -45,7 +45,7 @@ const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);
 
 const testFieldChunks: TreeChunk[] = chunkField(
 	cursorForJsonableTreeField([{ type: brand(EmptyObject.identifier) }]),
-	{ policy: defaultChunkPolicy },
+	{ policy: defaultChunkPolicy, idCompressor: testIdCompressor },
 );
 assert(testFieldChunks.length === 1);
 const testFieldChunk: TreeChunk = testFieldChunks[0];
