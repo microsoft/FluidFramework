@@ -59,6 +59,7 @@
 # TODO: if we ever add `.internal` API reports, we will want to omit them here
 /**/api-report/*.api.md                        @microsoft/fluid-cr-api
 /build-tools/**/api-report/*.api.md            # Do not require API review for build-tools packages
+/packages/framework/presence/**/api-report/*.api.md # Do not require API review for experimental presence package
 /server/**/api-report/*.api.md                 # Do not require API review for server packages
 /tools/**/api-report/*.api.md                  # Do not require API review for tools packages
 
