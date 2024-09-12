@@ -7,7 +7,7 @@
 ---
 RestrictiveReadonlyRecord is deprecated
 
-`RestrictiveReadonlyRecord` was an attempt to implement a version of the built in `Record<TKey, TValue>` type that would prohibit (instead of leave unrestricted like Record does) values under keys that are to not extend `TKey`.
+`RestrictiveReadonlyRecord` was an attempt to implement a version of the built in `Record<TKey, TValue>` type that would prohibit (instead of leaving unrestricted like Record does) values under keys that are do not extend `TKey`.
 
 The implementation of `RestrictiveReadonlyRecord` failed to accomplish this except for the edge cases where `TKey` was exactly `string` or exactly `symbol`.
 Fixing this bug appears to be impossible withing the current limitation of TypeScript, however this library does not require any case other than `TKey` being exactly `string`.
