@@ -178,6 +178,24 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.status(object), TreeStatus.New);
 	});
 
+	it("preserve event subscriptions during hydration - minimal", () => {
+		const log: unknown[] = [];
+		const leafObject = new TestLeaf({ value: "value" });
+
+		Tree.on(leafObject, "nodeChanged", (data) => {
+			log.push(data);
+		});
+		Tree.on(leafObject, "treeChanged", () => {
+			log.push("treeChanged");
+		});
+
+		hydrate(TestLeaf, leafObject);
+		leafObject.value = "new value";
+		// Assert that the event fired
+		// TODO: Eventually the order of events should be documented, and an approach like this can test that they are ordered as documented.
+		assert.deepEqual(log, [{ changedProperties: new Set(["value"]) }, "treeChanged"]);
+	});
+
 	it("preserve events after hydration", () => {
 		function registerEvents(node: TreeNode): () => void {
 			let deepEvent = false;

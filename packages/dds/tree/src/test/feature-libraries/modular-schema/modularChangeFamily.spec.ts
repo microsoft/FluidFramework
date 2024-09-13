@@ -71,7 +71,7 @@ import {
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
-import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
+import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import type {
 	ChangeAtomIdBTree,
 	CrossFieldKeyTable,
@@ -422,10 +422,7 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 const node1 = singleJsonCursor(1);
 const objectNode = singleJsonCursor({});
 const node1Chunk = treeChunkFromCursor(node1);
-const nodesChunk = chunkFieldSingle(
-	cursorForJsonableTreeField([{ type: jsonObject.name }, { type: jsonObject.name }]),
-	defaultChunkPolicy,
-);
+const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), defaultChunkPolicy);
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {

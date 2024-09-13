@@ -1,20 +1,8 @@
 {
   "version": 1,
   "nodes": {
-    "com.fluidframework.leaf.boolean": {
-      "leaf": 2
-    },
-    "com.fluidframework.leaf.handle": {
-      "leaf": 3
-    },
-    "com.fluidframework.leaf.null": {
-      "leaf": 4
-    },
     "com.fluidframework.leaf.number": {
       "leaf": 0
-    },
-    "com.fluidframework.leaf.string": {
-      "leaf": 1
     },
     "test.allTheFields": {
       "object": {
@@ -35,31 +23,6 @@
           "types": [
             "com.fluidframework.leaf.number"
           ]
-        }
-      }
-    },
-    "test.anyFields": {
-      "object": {
-        "optional": {
-          "kind": "Optional"
-        },
-        "sequence": {
-          "kind": "Sequence"
-        },
-        "valueField": {
-          "kind": "Value"
-        }
-      }
-    },
-    "test.anyMap": {
-      "map": {
-        "kind": "Sequence"
-      }
-    },
-    "test.hasAnyValueField": {
-      "object": {
-        "field": {
-          "kind": "Value"
         }
       }
     },

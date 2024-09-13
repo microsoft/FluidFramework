@@ -38,7 +38,7 @@ export class RequestParser implements IRequest {
     createSubRequest(startingPathIndex: number): IRequest;
     static getPathParts(url: string): readonly string[];
     // (undocumented)
-    get headers(): IRequestHeader | undefined;
+    readonly headers?: IRequestHeader;
     isLeaf(elements: number): boolean;
     get pathParts(): readonly string[];
     // (undocumented)
@@ -65,7 +65,9 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 
 // @alpha (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
-    constructor();
+    constructor(params?: {
+        groupId?: string;
+    });
     // (undocumented)
     addAttachment(id: string): void;
     // (undocumented)

@@ -22,12 +22,12 @@ export {
 	type CheckoutEvents,
 	type ITransaction,
 	type ITreeCheckoutFork,
-	type RevertibleFactory,
 } from "./treeCheckout.js";
 
 export {
 	type SchematizeConfiguration,
 	type TreeContent,
+	type TreeStoredContent,
 	type InitializeAndSchematizeConfiguration,
 	type SchemaConfiguration,
 	buildTreeConfiguration,

@@ -9,6 +9,7 @@ import type { FlexTreeNodeSchema, TreeNodeSchemaBase } from "../../feature-libra
 import { fail } from "../../util/index.js";
 
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type { InnerNode } from "./treeNodeKernel.js";
 
 /**
  * A symbol for storing FlexTreeSchema on TreeNodeSchema.
@@ -59,4 +60,13 @@ export function tryGetSimpleNodeSchema(
  */
 export function getSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema {
 	return tryGetSimpleNodeSchema(flexSchema) ?? fail("missing simple schema");
+}
+
+/**
+ * Gets the {@link TreeNodeSchema} for the {@link InnerNode}.
+ */
+export function getSimpleNodeSchemaFromNode(innerNode: InnerNode): TreeNodeSchema {
+	// TODO: to make this work without depending on flex tree schema, a new caching/lookup mechanism will be required, likely leveraging the FlexTreeContext:
+	// A SimpleTreeContext could be defined and associated with the FlexTreeContext, and used to look up simple-tree schema by identifier.
+	return getSimpleNodeSchema(innerNode.flexSchema);
 }
