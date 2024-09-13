@@ -89,7 +89,7 @@ import {
 } from "./referencePositions.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
-import { endpointPosAndSide, normalizePlace, type SequencePlace } from "./sequencePlace.js";
+import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { zamboniSegments } from "./zamboni.js";
 
 export function wasRemovedAfter(seg: ISegment, seq: number): boolean {
@@ -1894,11 +1894,20 @@ export class MergeTree {
 	): void {
 		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
 
-		const startPlace = normalizePlace(start);
-		const endPlace = normalizePlace(end);
+		const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
 
-		this.ensureIntervalBoundary(startPlace.pos, refSeq, clientId);
-		this.ensureIntervalBoundary(endPlace.pos, refSeq, clientId);
+		assert(
+			startPos !== undefined &&
+				endPos !== undefined &&
+				startSide !== undefined &&
+				endSide !== undefined &&
+				startPos !== "end" &&
+				endPos !== "start",
+			0x9e2 /* start and end cannot be undefined because they were not passed in as undefined */,
+		);
+
+		this.ensureIntervalBoundary(startPos, refSeq, clientId);
+		this.ensureIntervalBoundary(endPos, refSeq, clientId);
 
 		let _overwrite = overwrite;
 		const localOverlapWithRefs: ISegment[] = [];
@@ -1919,11 +1928,11 @@ export class MergeTree {
 			localSeq,
 			segmentGroup: undefined,
 		};
-		const normalizedStartPos = startPlace.pos ?? 0;
+		const normalizedStartPos = startPos === "start" || startPos === undefined ? 0 : startPos;
 		const normalizedEndPos =
-			endPlace.pos === undefined || endPlace.pos > this.getLength(refSeq, clientId)
+			endPos === "end" || endPos === undefined || endPos > this.getLength(refSeq, clientId)
 				? this.getLength(refSeq, clientId)
-				: endPlace.pos;
+				: endPos;
 
 		const { segment: startSeg } = this.getContainingSegment(
 			normalizedStartPos,
