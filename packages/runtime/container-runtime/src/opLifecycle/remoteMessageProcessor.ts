@@ -189,9 +189,6 @@ export class RemoteMessageProcessor {
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
 
-		//* TODO: Actually implement the right semantics
-		//* But write tests first, because that's fun :)
-
 		if (!batchEnded) {
 			// batch not yet complete
 			return undefined;

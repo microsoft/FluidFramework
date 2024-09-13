@@ -180,37 +180,15 @@ describe("RemoteMessageProcessor", () => {
 				const result = messageProcessor.process(inboundMessage, () => {});
 				switch (result?.type) {
 					case "fullBatch":
-						//* WAIT: Only after the change
-						// assert(
-						// 	outboundMessages.length === 1,
-						// 	"Expected fullBatch for single-message batch only (includes Grouped Batches)",
-						// );
 						batchStart = result.batchStart;
 						inboundMessages.push(...result.messages);
 						break;
 					case "batchStartingMessage":
-						//* WAIT: Only after the change
-						// batchStart = result.batchStart;
-						// inboundMessages.push(result.nextMessage);
-						// break;
 						assert(false, "'batchStartingMessage' type not yet implemented");
 					case "nextBatchMessage":
-						//* WAIT: Only after the change
-						// assert(
-						// 	batchStart !== undefined,
-						// 	"batchStart should have been set from a prior message",
-						// );
-						// inboundMessages.push(result.nextMessage);
-						// break;
 						assert(false, "'nextBatchMessage' type not yet implemented");
 					default:
-						// These are leading chunks
 						assert(result === undefined, "unexpected result type");
-						//* WAIT: Only after the change
-						// assert(
-						// 	option.compressionAndChunking.chunking,
-						// 	"undefined result only expected with chunking",
-						// );
 						break;
 				}
 			}

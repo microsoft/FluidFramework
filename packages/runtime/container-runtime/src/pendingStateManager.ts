@@ -495,7 +495,7 @@ export class PendingStateManager implements IDisposable {
 		const firstMessage = batchStart.keyMessage;
 		// -1 length is for back compat, undefined length means we actually don't know it
 		const skipLengthCheck =
-			pendingMessage.batchInfo.length === -1 || batchLength === undefined; //* TEST CASE
+			pendingMessage.batchInfo.length === -1 || batchLength === undefined;
 		const expectedPendingBatchLength =
 			batchLength === 0
 				? 1 // For an empty batch, expect a singleton array with the empty batch marker
