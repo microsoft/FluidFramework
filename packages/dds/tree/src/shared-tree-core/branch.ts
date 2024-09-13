@@ -18,9 +18,9 @@ import {
 	makeAnonChange,
 	mintCommit,
 	rebaseBranch,
-	tagChange,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
+	tagChange,
 } from "../core/index.js";
 import { EventEmitter, type Listenable } from "../events/index.js";
 
@@ -224,7 +224,7 @@ export class SharedTreeBranch<
 		>,
 	) {
 		super();
-		this.editor = this.changeFamily.buildEditor((change) =>
+		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
 			this.apply(change, mintRevisionTag()),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
@@ -255,8 +255,14 @@ export class SharedTreeBranch<
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
+		const revision2 =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(change as any).changes?.[0]?.innerChange?.revisions?.[0]?.revision ?? revision;
 		// TODO: This should not be necessary when receiving changes from other clients.
-		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
+		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision2);
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		console.log((globalThis as any).merge(change, changeWithRevision));
 
 		const newHead = mintCommit(this.head, {
 			revision,

@@ -129,7 +129,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		testRevisionTagCodec,
 		testIdCompressor,
 	);
-	const builder = new DefaultEditBuilder(family, (change) => {
+	const builder = new DefaultEditBuilder(family, mintRevisionTag, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
 		const delta = intoDelta(taggedChange);

@@ -32,8 +32,11 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 	onError: (error: unknown) => void,
 ): ChangeFamily<TEditor, TChange> {
 	return {
-		buildEditor: (changeReceiver: (change: TChange) => void): TEditor => {
-			return unmitigatedChangeFamily.buildEditor(changeReceiver);
+		buildEditor: (
+			mintRevisionTag: () => RevisionTag,
+			changeReceiver: (change: TChange) => void,
+		): TEditor => {
+			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver);
 		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,

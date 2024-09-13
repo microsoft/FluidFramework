@@ -35,7 +35,7 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
+import { failCodecFamily, mintRevisionTag, testRevisionTagCodec } from "../utils.js";
 import { singleJsonCursor } from "../json/index.js";
 
 const dataChanges: ModularChangeset[] = [];
@@ -46,7 +46,7 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
+const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (change) =>
 	dataChanges.push(change),
 );
 

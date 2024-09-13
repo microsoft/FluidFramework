@@ -4,7 +4,7 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { ChangeFamilyEditor, TreeStoredSchema } from "../core/index.js";
+import type { ChangeFamilyEditor, RevisionTag, TreeStoredSchema } from "../core/index.js";
 import {
 	DefaultEditBuilder,
 	type IDefaultEditBuilder,
@@ -48,11 +48,13 @@ export class SharedTreeEditBuilder
 
 	public constructor(
 		modularChangeFamily: ModularChangeFamily,
+		mintRevisionTag: () => RevisionTag,
 		private readonly changeReceiver: (change: SharedTreeChange) => void,
 		idCompressor?: IIdCompressor,
 	) {
 		super(
 			modularChangeFamily,
+			mintRevisionTag,
 			(change) =>
 				changeReceiver({
 					changes: [{ type: "data", innerChange: change }],

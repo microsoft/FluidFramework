@@ -69,10 +69,13 @@ describe("defaultFieldKinds", () => {
 				Change.move(brand(41), "self"),
 			);
 			assertEqual(
-				valueFieldEditor.set({
-					detach: brand(1),
-					fill: brand(41),
-				}),
+				valueFieldEditor.set(
+					{
+						detach: brand(1),
+						fill: brand(41),
+					},
+					mintRevisionTag(),
+				),
 				expected,
 			);
 		});
@@ -90,11 +93,11 @@ describe("defaultFieldKinds", () => {
 		const childChange3 = Change.child(arbitraryChildChange);
 
 		const change1 = tagChangeInline(
-			fieldHandler.editor.set({ detach: brand(1), fill: brand(41) }),
+			fieldHandler.editor.set({ detach: brand(1), fill: brand(41) }, mintRevisionTag()),
 			mintRevisionTag(),
 		);
 		const change2 = tagChangeInline(
-			fieldHandler.editor.set({ detach: brand(2), fill: brand(42) }),
+			fieldHandler.editor.set({ detach: brand(2), fill: brand(42) }, mintRevisionTag()),
 			mintRevisionTag(),
 		);
 

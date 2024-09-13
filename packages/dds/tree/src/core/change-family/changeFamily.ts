@@ -11,7 +11,10 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag } from "../rebase/index.js";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
-	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
+	buildEditor(
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TChange) => void,
+	): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
 	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;

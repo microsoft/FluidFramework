@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ChangesetLocalId } from "../../core/index.js";
+import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import type { FieldEditor, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
@@ -22,9 +22,20 @@ import type {
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset;
-	remove(index: number, count: number, id: ChangesetLocalId): Changeset;
-	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset;
+	insert(
+		index: number,
+		count: number,
+		firstId: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset;
+	remove(index: number, count: number, id: ChangesetLocalId, revision: RevisionTag): Changeset;
+	revive(
+		index: number,
+		count: number,
+		detachEvent: CellId,
+		revision: RevisionTag,
+		isIntention?: true,
+	): Changeset;
 
 	/**
 	 *
@@ -40,14 +51,21 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		destIndex: number,
 		detachCellId: ChangesetLocalId,
 		attachCellId: ChangesetLocalId,
+		revision: RevisionTag,
 	): Changeset;
 
-	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset;
+	moveOut(
+		sourceIndex: number,
+		count: number,
+		id: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset;
 	moveIn(
 		destIndex: number,
 		count: number,
 		moveId: ChangesetLocalId,
 		attachCellId: ChangesetLocalId,
+		revision: RevisionTag,
 	): Changeset;
 
 	return(
@@ -56,31 +74,49 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		destIndex: number,
 		detachCellId: CellId,
 		attachCellId: CellId,
+		revision: RevisionTag,
 	): Changeset;
 }
 
 export const sequenceFieldEditor = {
 	buildChildChange: (index: number, change: NodeId): Changeset =>
 		markAtIndex(index, { count: 1, changes: change }),
-	insert: (index: number, count: number, firstId: ChangesetLocalId): Changeset => {
+	insert: (
+		index: number,
+		count: number,
+		firstId: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset => {
 		const mark: CellMark<Insert> = {
 			type: "Insert",
 			id: firstId,
 			count,
-			cellId: { localId: firstId },
+			cellId: { localId: firstId, revision },
+			revision,
 		};
 		return markAtIndex(index, mark);
 	},
-	remove: (index: number, count: number, id: ChangesetLocalId): Changeset =>
-		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id }),
+	remove: (
+		index: number,
+		count: number,
+		id: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset =>
+		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id, revision }),
 
-	revive: (index: number, count: number, detachEvent: CellId): Changeset => {
+	revive: (
+		index: number,
+		count: number,
+		detachEvent: CellId,
+		revision: RevisionTag,
+	): Changeset => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Insert> = {
 			type: "Insert",
 			id: detachEvent.localId,
 			count,
-			cellId: detachEvent,
+			cellId: { ...detachEvent, revision },
+			revision,
 		};
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
@@ -91,26 +127,35 @@ export const sequenceFieldEditor = {
 		destIndex: number,
 		detachCellId: ChangesetLocalId,
 		attachCellId: ChangesetLocalId,
+		revision: RevisionTag,
 	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
 			id: detachCellId,
 			count,
-			cellId: { localId: attachCellId },
+			cellId: { localId: attachCellId, revision },
+			revision,
 		};
 		const moveOut: Mark = {
 			type: "MoveOut",
 			id: detachCellId,
 			count,
+			revision,
 		};
 		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, moveIn);
 	},
 
-	moveOut(sourceIndex: number, count: number, detachCellId: ChangesetLocalId): Changeset {
+	moveOut(
+		sourceIndex: number,
+		count: number,
+		detachCellId: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset {
 		const moveOut: Mark = {
 			type: "MoveOut",
 			id: detachCellId,
 			count,
+			revision,
 		};
 		return markAtIndex(sourceIndex, moveOut);
 	},
@@ -120,12 +165,14 @@ export const sequenceFieldEditor = {
 		count: number,
 		moveId: ChangesetLocalId,
 		attachCellId: ChangesetLocalId,
+		revision: RevisionTag,
 	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
 			id: moveId,
 			count,
-			cellId: { localId: attachCellId },
+			cellId: { localId: attachCellId, revision },
+			revision,
 		};
 		return markAtIndex(destIndex, moveIn);
 	},
@@ -136,19 +183,22 @@ export const sequenceFieldEditor = {
 		destIndex: number,
 		detachCellId: CellId,
 		attachCellId: CellId,
+		revision: RevisionTag,
 	): Changeset {
 		const moveOut: CellMark<MoveOut> = {
 			type: "MoveOut",
 			id: attachCellId.localId,
-			idOverride: detachCellId,
+			idOverride: { ...detachCellId, revision },
 			count,
+			revision,
 		};
 
 		const returnTo: CellMark<MoveIn> = {
 			type: "MoveIn",
 			id: attachCellId.localId,
 			count,
-			cellId: attachCellId,
+			cellId: { ...attachCellId, revision },
+			revision,
 		};
 
 		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, returnTo);

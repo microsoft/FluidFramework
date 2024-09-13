@@ -79,10 +79,12 @@ export class SharedTreeChangeFamily
 	}
 
 	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: SharedTreeChange) => void,
 	): SharedTreeEditBuilder {
 		return new SharedTreeEditBuilder(
 			this.modularChangeFamily,
+			mintRevisionTag,
 			changeReceiver,
 			this.idCompressor,
 		);

@@ -12,6 +12,7 @@ import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { MarkMaker as Mark } from "./testEdits.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const id: ChangesetLocalId = brand(0);
 
@@ -26,19 +27,19 @@ export function testEditor() {
 		});
 
 		it("insert one node", () => {
-			const actual = SF.sequenceFieldEditor.insert(42, 1, id);
+			const actual = SF.sequenceFieldEditor.insert(42, 1, id, mintRevisionTag());
 			const expected: SF.Changeset = [{ count: 42 }, Mark.revive(1, { localId: id })];
 			assert.deepEqual(actual, expected);
 		});
 
 		it("insert multiple nodes", () => {
-			const actual = SF.sequenceFieldEditor.insert(42, 2, id);
+			const actual = SF.sequenceFieldEditor.insert(42, 2, id, mintRevisionTag());
 			const expected: SF.Changeset = [{ count: 42 }, Mark.insert(2, id)];
 			assert.deepEqual(actual, expected);
 		});
 
 		it("remove", () => {
-			const actual = SF.sequenceFieldEditor.remove(42, 3, id);
+			const actual = SF.sequenceFieldEditor.remove(42, 3, id, mintRevisionTag());
 			const expected: SF.Changeset = [{ count: 42 }, Mark.remove(3, id)];
 			assert.deepEqual(actual, expected);
 		});

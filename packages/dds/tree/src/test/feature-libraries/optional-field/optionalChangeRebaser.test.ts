@@ -85,11 +85,11 @@ const OptionalChange = {
 			detach: ChangesetLocalId;
 		},
 	) {
-		return optionalFieldEditor.set(wasEmpty, ids);
+		return optionalFieldEditor.set(wasEmpty, ids, tag1);
 	},
 
 	clear(wasEmpty: boolean, id: ChangesetLocalId) {
-		return optionalFieldEditor.clear(wasEmpty, id);
+		return optionalFieldEditor.clear(wasEmpty, id, tag1);
 	},
 
 	buildChildChange(childChange: NodeId) {

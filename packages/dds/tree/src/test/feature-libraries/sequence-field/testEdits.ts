@@ -75,7 +75,7 @@ function createInsertChangeset(
 	count: number,
 	id?: ChangesetLocalId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0));
+	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0), tag);
 }
 
 function createRemoveChangeset(
@@ -83,7 +83,7 @@ function createRemoveChangeset(
 	size: number,
 	id?: ChangesetLocalId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.remove(startIndex, size, id ?? brand(0));
+	return SF.sequenceFieldEditor.remove(startIndex, size, id ?? brand(0), tag);
 }
 
 function createRedundantRemoveChangeset(
@@ -101,7 +101,7 @@ function createPinChangeset(
 	count: number,
 	detachEvent: SF.CellId,
 ): SF.Changeset {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, tag);
 	const mark = markList[markList.length - 1];
 	delete mark.cellId;
 	return markList;
@@ -112,7 +112,7 @@ function createReviveChangeset(
 	count: number,
 	detachEvent: SF.CellId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
+	return SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, tag);
 }
 
 function createMoveChangeset(
@@ -121,7 +121,14 @@ function createMoveChangeset(
 	destIndex: number,
 	id: ChangesetLocalId = brand(0),
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id, brand(id + count));
+	return SF.sequenceFieldEditor.move(
+		sourceIndex,
+		count,
+		destIndex,
+		id,
+		brand(id + count),
+		tag,
+	);
 }
 
 function createReturnChangeset(
@@ -137,6 +144,7 @@ function createReturnChangeset(
 		destIndex,
 		detachCellId,
 		attachCellId,
+		tag,
 	);
 }
 

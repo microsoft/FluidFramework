@@ -31,7 +31,6 @@ import {
 	type TaggedChange,
 	type UpPath,
 	isEmptyFieldChanges,
-	makeAnonChange,
 	makeDetachedNodeId,
 	mapCursorField,
 	replaceAtomRevisions,
@@ -39,6 +38,7 @@ import {
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	areEqualChangeAtomIdOpts,
+	tagChange,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -1595,8 +1595,11 @@ export class ModularChangeFamily
 		}
 	}
 
-	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
+	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: ModularChangeset) => void,
+	): ModularEditBuilder {
+		return new ModularEditBuilder(this, this.fieldKinds, mintRevisionTag, changeReceiver);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2525,6 +2528,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: ModularChangeset) => void,
 	) {
 		super(family, changeReceiver);
@@ -2554,10 +2558,11 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public buildTrees(
 		firstId: ChangesetLocalId,
 		content: ITreeCursorSynchronous,
+		revision: RevisionTag,
 		idCompressor?: IIdCompressor,
 	): GlobalEditDescription {
 		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
-			return { type: "global" };
+			return { type: "global", revision };
 		}
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
 		const chunkCompressor = {
@@ -2573,6 +2578,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		return {
 			type: "global",
 			builds,
+			revision,
 		};
 	}
 
@@ -2581,12 +2587,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	 * @param field - the field which is being edited
 	 * @param fieldKind - the kind of the field
 	 * @param change - the change to the field
-	 * @param maxId - the highest `ChangesetLocalId` used in this change
 	 */
 	public submitChange(
 		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
+		revision: RevisionTag,
 	): void {
 		const crossFieldKeys = getChangeHandler(this.fieldKinds, fieldKind).getCrossFieldKeys(
 			change,
@@ -2600,6 +2606,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			newCrossFieldKeyTable(),
 			this.idAllocator,
 			crossFieldKeys,
+			undefined /* childId */,
+			revision,
 		);
 		this.applyChange(modularChange);
 	}
@@ -2610,18 +2618,18 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public buildChanges(changes: EditDescription[]): ModularChangeset {
-		const changeMaps = changes.map((change) =>
-			makeAnonChange(
+		const changeMaps = changes.map((change) => {
+			return tagChange(
 				change.type === "global"
 					? makeModularChangeset(
-							undefined,
-							undefined,
-							undefined,
-							undefined,
-							undefined,
+							undefined /* fieldChanges */,
+							undefined /* nodeChanges */,
+							undefined /* nodeToParent */,
+							undefined /* nodeAliases */,
+							undefined /* crossFieldKeys */,
 							this.idAllocator.getMaxId(),
-							undefined,
-							undefined,
+							[{ revision: change.revision }],
+							undefined /* constraintViolationCount */,
 							change.builds,
 						)
 					: buildModularChangesetFromField(
@@ -2637,9 +2645,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							getChangeHandler(this.fieldKinds, change.fieldKind).getCrossFieldKeys(
 								change.change,
 							),
+							undefined /* childId */,
+							change.revision,
 						),
-			),
-		);
+				change.revision,
+			);
+		});
 		const composedChange: Mutable<ModularChangeset> =
 			this.changeFamily.rebaser.compose(changeMaps);
 
@@ -2667,6 +2678,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				newTupleBTree(),
 				newCrossFieldKeyTable(),
 				this.idAllocator,
+				this.mintRevisionTag(),
 			),
 		);
 	}
@@ -2681,6 +2693,7 @@ function buildModularChangesetFromField(
 	idAllocator: IdAllocator = idAllocatorFromMaxId(),
 	localCrossFieldKeys: CrossFieldKeyRange[] = [],
 	childId: NodeId | undefined = undefined,
+	revision: RevisionTag,
 ): ModularChangeset {
 	const fieldChanges: FieldChangeMap = new Map([[path.field, fieldChange]]);
 
@@ -2700,9 +2713,10 @@ function buildModularChangesetFromField(
 			fieldChanges,
 			nodeChanges,
 			nodeToParent,
-			undefined,
+			undefined /* nodeAliases */,
 			crossFieldKeys,
 			idAllocator.getMaxId(),
+			[{ revision }],
 		);
 	}
 
@@ -2710,7 +2724,7 @@ function buildModularChangesetFromField(
 		fieldChanges,
 	};
 
-	const parentId: NodeId = { localId: brand(idAllocator.allocate()) };
+	const parentId: NodeId = { localId: brand(idAllocator.allocate()), revision };
 
 	for (const key of localCrossFieldKeys) {
 		crossFieldKeys.set(key, { nodeId: parentId, field: path.field });
@@ -2730,6 +2744,7 @@ function buildModularChangesetFromField(
 		nodeToParent,
 		crossFieldKeys,
 		idAllocator,
+		revision,
 		parentId,
 	);
 }
@@ -2741,7 +2756,8 @@ function buildModularChangesetFromNode(
 	nodeToParent: ChangeAtomIdBTree<FieldId>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
-	nodeId: NodeId = { localId: brand(idAllocator.allocate()) },
+	revision: RevisionTag,
+	nodeId: NodeId = { localId: brand(idAllocator.allocate()), revision },
 ): ModularChangeset {
 	setInChangeAtomIdMap(nodeChanges, nodeId, nodeChange);
 	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChange(
@@ -2763,6 +2779,7 @@ function buildModularChangesetFromNode(
 		idAllocator,
 		[],
 		nodeId,
+		revision,
 	);
 }
 
@@ -2773,12 +2790,14 @@ export interface FieldEditDescription {
 	field: FieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
+	revision: RevisionTag;
 }
 
 /**
  */
 export interface GlobalEditDescription {
 	type: "global";
+	revision: RevisionTag;
 	builds?: ChangeAtomIdBTree<TreeChunk>;
 }
 

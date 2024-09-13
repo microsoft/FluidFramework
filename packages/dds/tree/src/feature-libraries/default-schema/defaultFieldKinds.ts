@@ -10,6 +10,7 @@ import {
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
+	type RevisionTag,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
@@ -58,7 +59,10 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param changeId - the ID associated with the replacement of the current content.
 	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
-	set(ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset;
+	set(
+		ids: { fill: ChangesetLocalId; detach: ChangesetLocalId },
+		revision: RevisionTag,
+	): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -77,8 +81,13 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset =>
-		optionalFieldEditor.set(false, ids),
+	set: (
+		ids: {
+			fill: ChangesetLocalId;
+			detach: ChangesetLocalId;
+		},
+		revision: RevisionTag,
+	): OptionalChangeset => optionalFieldEditor.set(false, ids, revision),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {

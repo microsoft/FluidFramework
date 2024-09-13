@@ -76,7 +76,7 @@ const change1 = tagChangeInline(
 
 const change2Tag = mintRevisionTag();
 const change2: TaggedChange<OptionalChangeset> = tagChangeInline(
-	optionalFieldEditor.set(false, { fill: brand(42), detach: brand(2) }),
+	optionalFieldEditor.set(false, { fill: brand(42), detach: brand(2) }, tag),
 	change2Tag,
 );
 
@@ -89,7 +89,7 @@ const revertChange2: TaggedChange<OptionalChangeset> = tagChangeInline(
  * Represents what change2 would have been had it been concurrent with change1.
  */
 const change2PreChange1: TaggedChange<OptionalChangeset> = tagChangeInline(
-	optionalFieldEditor.set(true, { fill: brand(42), detach: brand(2) }),
+	optionalFieldEditor.set(true, { fill: brand(42), detach: brand(2) }, tag),
 	change2Tag,
 );
 
@@ -108,10 +108,14 @@ describe("optionalField", () => {
 	// TODO: more editor tests
 	describe("editor", () => {
 		it("can be created", () => {
-			const actual: OptionalChangeset = optionalFieldEditor.set(true, {
-				fill: brand(42),
-				detach: brand(43),
-			});
+			const actual: OptionalChangeset = optionalFieldEditor.set(
+				true,
+				{
+					fill: brand(42),
+					detach: brand(43),
+				},
+				tag,
+			);
 			const expected = Change.atOnce(
 				Change.reserve("self", brand(43)),
 				Change.move(brand(42), "self"),
@@ -501,7 +505,10 @@ describe("optionalField", () => {
 				const tag1 = mintRevisionTag();
 				const tag2 = mintRevisionTag();
 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
-				const deletion = tagChangeInline(optionalFieldEditor.clear(false, brand(1)), tag1);
+				const deletion = tagChangeInline(
+					optionalFieldEditor.clear(false, brand(1), tag1),
+					tag1,
+				);
 				const revive = tagChangeInline(
 					optionalChangeRebaser.invert(
 						deletion.change,
@@ -551,7 +558,7 @@ describe("optionalField", () => {
 			it("can rebase a child change over a reserved detach on empty field", () => {
 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
 				deepFreeze(changeToRebase);
-				const clear = tagChangeInline(optionalFieldEditor.clear(true, brand(42)), tag);
+				const clear = tagChangeInline(optionalFieldEditor.clear(true, brand(42), tag), tag);
 
 				const childRebaser = (
 					nodeChange: NodeId | undefined,
@@ -701,11 +708,11 @@ describe("optionalField", () => {
 
 	describe("relevantRemovedRoots", () => {
 		const fill = tagChangeInline(
-			optionalFieldEditor.set(true, { detach: brand(1), fill: brand(2) }),
+			optionalFieldEditor.set(true, { detach: brand(1), fill: brand(2) }, tag),
 			mintRevisionTag(),
 		);
 		const clear = tagChangeInline(
-			optionalFieldEditor.clear(false, brand(1)),
+			optionalFieldEditor.clear(false, brand(1), tag),
 			mintRevisionTag(),
 		);
 		const hasChildChanges = tagChangeInline(

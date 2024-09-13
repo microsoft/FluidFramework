@@ -58,6 +58,7 @@ import {
 	checkoutWithContent,
 	cursorFromInsertableTreeField,
 	forestWithContent,
+	mintRevisionTag,
 	testIdCompressor,
 	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
@@ -157,10 +158,12 @@ describe("End to end chunked encoding", () => {
 			fieldBatchCodec,
 			{ jsonValidator: typeboxValidator },
 		);
-		const dummyEditor = new DefaultEditBuilder(new DefaultChangeFamily(codec), changeReceiver);
-		const checkout = new MockTreeCheckout(forest, {
-			editor: dummyEditor as unknown as ISharedTreeEditor,
-		});
+		const dummyEditor = new DefaultEditBuilder(
+			new DefaultChangeFamily(codec),
+			mintRevisionTag,
+			changeReceiver,
+		);
+		const checkout = new MockTreeCheckout(forest, dummyEditor as unknown as ISharedTreeEditor);
 		checkout.editor
 			.sequenceField({ field: rootFieldKey, parent: undefined })
 			.insert(0, chunk.cursor());

@@ -47,6 +47,7 @@ import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.j
 import {
 	failCodecFamily,
 	jsonTreeFromForest,
+	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
@@ -56,12 +57,13 @@ const content: JsonCompatible = { x: 42 };
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
 
 const dataChanges: ModularChangeset[] = [];
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
+const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (change) =>
 	dataChanges.push(change),
 );
 const modularBuilder = new ModularEditBuilder(
 	modularFamily,
 	modularFamily.fieldKinds,
+	mintRevisionTag,
 	() => {},
 );
 
@@ -141,6 +143,7 @@ describe("SharedTreeChangeEnricher", () => {
 							field: { parent: undefined, field: rootFieldKey },
 							fieldKind: optional.identifier,
 							change: brand(restore),
+							revision: mintRevisionTag(),
 						},
 					]),
 				},

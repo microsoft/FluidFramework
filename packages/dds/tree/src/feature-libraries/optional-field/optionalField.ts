@@ -593,6 +593,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 			fill: ChangesetLocalId;
 			detach: ChangesetLocalId;
 		},
+		revision: RevisionTag,
 	): OptionalChangeset;
 
 	/**
@@ -600,7 +601,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 * @param changeId - the ID associated with the detach.
 	 */
-	clear(wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset;
+	clear(wasEmpty: boolean, id: ChangesetLocalId, revision: RevisionTag): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
@@ -611,22 +612,27 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 			// Should be interpreted as a set of an empty field if undefined.
 			detach: ChangesetLocalId;
 		},
+		revision: RevisionTag,
 	): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
 		valueReplace: {
 			isEmpty: wasEmpty,
-			src: { localId: ids.fill },
-			dst: { localId: ids.detach },
+			src: { localId: ids.fill, revision },
+			dst: { localId: ids.detach, revision },
 		},
 	}),
 
-	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset => ({
+	clear: (
+		wasEmpty: boolean,
+		detachId: ChangesetLocalId,
+		revision: RevisionTag,
+	): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
 		valueReplace: {
 			isEmpty: wasEmpty,
-			dst: { localId: detachId },
+			dst: { localId: detachId, revision },
 		},
 	}),
 

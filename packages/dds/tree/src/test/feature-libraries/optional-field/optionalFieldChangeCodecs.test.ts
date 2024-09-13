@@ -36,10 +36,14 @@ const change1 = inlineRevision(
 );
 
 const change2: OptionalChangeset = inlineRevision(
-	optionalFieldEditor.set(false, {
-		fill: brand(42),
-		detach: brand(2),
-	}),
+	optionalFieldEditor.set(
+		false,
+		{
+			fill: brand(42),
+			detach: brand(2),
+		},
+		tag1,
+	),
 	tag1,
 );
 
