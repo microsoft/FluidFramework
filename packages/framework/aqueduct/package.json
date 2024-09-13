@@ -160,6 +160,7 @@
 				"backCompat": false,
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }

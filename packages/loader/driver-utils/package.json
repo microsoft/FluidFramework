@@ -166,6 +166,7 @@
 			"ClassStatics_PrefetchDocumentStorageService": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }

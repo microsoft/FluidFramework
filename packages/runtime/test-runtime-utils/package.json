@@ -171,6 +171,7 @@
 			"ClassStatics_MockFluidDataStoreRuntime": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }
