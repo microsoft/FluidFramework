@@ -17,16 +17,18 @@ import {
 import { hydrate } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSimpleTreeIndex } from "../../simple-tree/api/identifierIndex.js";
-import type { Context, FlexTreeNode, TreeIndexNodes } from "../../feature-libraries/index.js";
+import {
+	flexTreeSlot,
+	type FlexTreeNode,
+	type TreeIndexNodes,
+} from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
 import {
-	moveToDetachedField,
-	rootField,
+	rootFieldKey,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
+	type UpPath,
 } from "../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { isAnchorNodeHydrated } from "../../simple-tree/core/treeNodeKernel.js";
 
 function getFlexNode(node: TreeNode): FlexTreeNode {
 	return getOrCreateInnerNode(node);
@@ -100,7 +102,6 @@ describe.only("simple tree indexes", () => {
 	});
 
 	it("does not reify tree of nodes being scanned", () => {
-		// TODO create simple tree with a child and make sure that the anchor to it doesn't have an actual node?
 		const parent = hydrate(IndexableParent, {
 			[parentKey]: parentId,
 			child: { [childKey]: childId },
@@ -111,23 +112,30 @@ describe.only("simple tree indexes", () => {
 		const index = createSimpleTreeIndex(
 			context,
 			(s) => makeKeyFinder(s),
-			() => 3,
+			(nodes) => nodes,
 			[IndexableParent, IndexableChild],
 		);
 
-		const { forest } = (context as Context).checkout;
-		const cursor = forest.allocateCursor();
-		moveToDetachedField(forest, cursor, rootField);
-		cursor.firstNode();
-		cursor.enterField(parentKey);
-		cursor.firstNode();
-		const anchor = cursor.buildAnchor();
+		assert(context.isHydrated());
+		const { forest } = context.checkout;
+		const path: UpPath = {
+			parent: {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			},
+			parentField: brand("child"),
+			parentIndex: 0,
+		};
+		const anchor = forest.anchors.track(path);
 		const anchorNode =
 			forest.anchors.locate(anchor) ?? fail("should be able to find anchor to child");
-		assert.equal(isAnchorNodeHydrated(anchorNode), false);
+		assert.equal(anchorNode.slots.has(flexTreeSlot), false);
 
-		index.get(childId);
-		assert.equal(isAnchorNodeHydrated(anchorNode), true);
+		const children = index.get(childId);
+		assert.equal(children?.length, 1);
+		assert.equal(children[0], parent.child);
+		assert.equal(anchorNode.slots.has(flexTreeSlot), true);
 	});
 
 	it("filters out removed nodes", () => {
