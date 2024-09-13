@@ -174,15 +174,6 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 		return this.flexSchema.kind === (kind as unknown);
 	}
 
-	public isExactly<TSchema extends FlexFieldSchema>(schema: TSchema): boolean {
-		assert(
-			this.context.flexSchema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
-			0x77c /* Narrowing must be done to a kind that exists in this context */,
-		);
-
-		return this.flexSchema.equals(schema);
-	}
-
 	public get parent(): FlexTreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
@@ -362,20 +353,6 @@ export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRe
 	}
 }
 
-export class LazyIdentifierField
-	extends ReadonlyLazyValueField
-	implements FlexTreeRequiredField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-}
-
 export class LazyOptionalField
 	extends LazyField<typeof FieldKinds.optional>
 	implements FlexTreeOptionalField
@@ -427,7 +404,7 @@ const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
-	[FieldKinds.identifier, LazyIdentifierField],
+	[FieldKinds.identifier, LazyValueField],
 ];
 
 const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);

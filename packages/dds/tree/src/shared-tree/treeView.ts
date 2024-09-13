@@ -10,6 +10,7 @@ import {
 	type FlexTreeSchema,
 	type NodeKeyManager,
 	getTreeContext,
+	type FlexTreeHydratedContext,
 } from "../feature-libraries/index.js";
 import { tryDisposeTreeNode } from "../simple-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../util/index.js";
@@ -94,4 +95,4 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
  * Maps the context of every {@link CheckoutFlexTreeView} to the view.
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
-export const contextToTreeView = new WeakMap<Context, FlexTreeView>();
+export const contextToTreeView = new WeakMap<FlexTreeHydratedContext, FlexTreeView>();

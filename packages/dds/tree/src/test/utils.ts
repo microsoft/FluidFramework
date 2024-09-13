@@ -86,6 +86,7 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
+	type RevertibleFactory,
 } from "../core/index.js";
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -113,7 +114,6 @@ import {
 	type ISharedTree,
 	type ITreeCheckout,
 	type InitializeAndSchematizeConfiguration,
-	type RevertibleFactory,
 	SharedTree,
 	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
