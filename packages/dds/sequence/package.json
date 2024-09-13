@@ -191,6 +191,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }

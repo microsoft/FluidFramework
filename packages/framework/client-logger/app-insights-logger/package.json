@@ -127,15 +127,9 @@
 			}
 		}
 	},
-	"fluidBuild": {
-		"tasks": {
-			"tsc": [
-				"typetests:gen"
-			]
-		}
-	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }
