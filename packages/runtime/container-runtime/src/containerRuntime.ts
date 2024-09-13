@@ -1628,7 +1628,7 @@ export class ContainerRuntime
 			? new (class NoOpDuplicateBatchDetector implements IDuplicateBatchDetector {
 					public processInboundBatch = () => ({ duplicate: false as const });
 				})()
-			: new DuplicateBatchDetector(this.mc);
+			: new DuplicateBatchDetector();
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =

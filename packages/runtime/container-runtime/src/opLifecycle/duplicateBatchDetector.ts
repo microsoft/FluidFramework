@@ -4,10 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	SampledTelemetryHelper,
-	type MonitoringContext,
-} from "@fluidframework/telemetry-utils/internal";
 
 import { getEffectiveBatchId } from "./batchManager.js";
 import { type InboundBatch } from "./remoteMessageProcessor.js";
@@ -28,22 +24,6 @@ export class DuplicateBatchDetector implements IDuplicateBatchDetector {
 	/** We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances */
 	private readonly batchIdsBySeqNum = new Map<number, string>();
 
-	/** For periodic logging of latency of this operation */
-	private readonly sampledLogger: SampledTelemetryHelper<
-		ReturnType<DuplicateBatchDetector["processInboundBatch"]>
-	>;
-
-	public constructor(mc: MonitoringContext) {
-		this.sampledLogger = new SampledTelemetryHelper<
-			ReturnType<DuplicateBatchDetector["processInboundBatch"]>
-		>(
-			{ eventName: "duplicateBatchDetection" },
-			mc.logger,
-			mc.config.getNumber("") ?? 1000,
-			true /* includeAggregateMetrics */,
-		);
-	}
-
 	/**
 	 * Records this batch's batchId, and checks if it's a duplicate of a batch we've already seen.
 	 * If it's a duplicate, also return the sequence number of the other batch for logging.
@@ -53,42 +33,40 @@ export class DuplicateBatchDetector implements IDuplicateBatchDetector {
 	public processInboundBatch(
 		inboundBatch: InboundBatch,
 	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false } {
-		return this.sampledLogger.measure(() => {
-			const { sequenceNumber, minimumSequenceNumber } = inboundBatch.keyMessage;
+		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.keyMessage;
 
-			// Glance at this batch's MSN. Any batchIds we're tracking with a lower sequence number are now safe to forget.
-			// Why? Because any other client holding the same batch locally would have seen the earlier batch and closed before submitting its duplicate.
-			this.clearOldBatchIds(minimumSequenceNumber);
+		// Glance at this batch's MSN. Any batchIds we're tracking with a lower sequence number are now safe to forget.
+		// Why? Because any other client holding the same batch locally would have seen the earlier batch and closed before submitting its duplicate.
+		this.clearOldBatchIds(minimumSequenceNumber);
 
-			// getEffectiveBatchId is only needed in the SUPER rare/surprising case where
-			// the original batch (not resubmitted, so no batchId) arrives in parallel with a resubmitted batch.
-			// In the presence of typical network conditions, this would not be possible
-			// (the original batch should roundtrip WAY before another container could rehydrate, connect, and resubmit)
-			const batchId = getEffectiveBatchId(inboundBatch);
+		// getEffectiveBatchId is only needed in the SUPER rare/surprising case where
+		// the original batch (not resubmitted, so no batchId) arrives in parallel with a resubmitted batch.
+		// In the presence of typical network conditions, this would not be possible
+		// (the original batch should roundtrip WAY before another container could rehydrate, connect, and resubmit)
+		const batchId = getEffectiveBatchId(inboundBatch);
 
-			// Check this batch against the tracked batchIds to see if it's a duplicate
-			if (this.batchIdsAll.has(batchId)) {
-				for (const [otherSequenceNumber, otherBatchId] of this.batchIdsBySeqNum.entries()) {
-					if (otherBatchId === batchId) {
-						return {
-							duplicate: true,
-							otherSequenceNumber,
-						};
-					}
+		// Check this batch against the tracked batchIds to see if it's a duplicate
+		if (this.batchIdsAll.has(batchId)) {
+			for (const [otherSequenceNumber, otherBatchId] of this.batchIdsBySeqNum.entries()) {
+				if (otherBatchId === batchId) {
+					return {
+						duplicate: true,
+						otherSequenceNumber,
+					};
 				}
-				assert(false, "Should have found the batchId in batchIdBySeqNum map");
 			}
+			assert(false, "Should have found the batchId in batchIdBySeqNum map");
+		}
 
-			// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
-			assert(
-				!this.batchIdsBySeqNum.has(sequenceNumber),
-				"batchIdsAll and batchIdsBySeqNum should be in sync",
-			);
-			this.batchIdsBySeqNum.set(sequenceNumber, batchId);
-			this.batchIdsAll.add(batchId);
+		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
+		assert(
+			!this.batchIdsBySeqNum.has(sequenceNumber),
+			"batchIdsAll and batchIdsBySeqNum should be in sync",
+		);
+		this.batchIdsBySeqNum.set(sequenceNumber, batchId);
+		this.batchIdsAll.add(batchId);
 
-			return { duplicate: false };
-		});
+		return { duplicate: false };
 	}
 
 	/**
