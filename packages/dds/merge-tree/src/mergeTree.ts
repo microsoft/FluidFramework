@@ -1930,7 +1930,7 @@ export class MergeTree {
 		};
 		const normalizedStartPos = startPos === "start" || startPos === undefined ? 0 : startPos;
 		const normalizedEndPos =
-			endPos === "end" || endPos === undefined
+			endPos === "end" || endPos === undefined || endPos > this.getLength(refSeq, clientId)
 				? this.getLength(refSeq, clientId)
 				: endPos;
 
