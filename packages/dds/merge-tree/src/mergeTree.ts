@@ -63,6 +63,7 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
+	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
 import {
@@ -474,15 +475,6 @@ class Obliterates {
 		}
 		return overlapping;
 	}
-}
-
-export interface ObliterateInfo {
-	start: LocalReferencePosition;
-	end: LocalReferencePosition;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	localSeq: number | undefined;
 }
 
 /**
