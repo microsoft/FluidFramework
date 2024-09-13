@@ -42,7 +42,7 @@ export interface IPresenceManager
 class PresenceManager implements IPresenceManager {
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly selfAttendee: ISessionClient = {
-		sessionId: createSessionId(),
+		sessionId: createSessionId() as ClientSessionId,
 		currentClientId: () => {
 			throw new Error("Client has never been connected");
 		},
@@ -83,7 +83,7 @@ class PresenceManager implements IPresenceManager {
 		return new Set(this.attendees.values());
 	}
 
-	public getAttendee(clientId: ConnectedClientId): ISessionClient {
+	public getAttendee(clientId: ConnectedClientId | ClientSessionId): ISessionClient {
 		const attendee = this.attendees.get(clientId);
 		if (attendee) {
 			return attendee;
@@ -91,9 +91,9 @@ class PresenceManager implements IPresenceManager {
 		// This is a major hack to enable basic operation.
 		// Missing attendees should be rejected.
 		const newAttendee = {
-			sessionId: clientId,
+			sessionId: clientId as ClientSessionId,
 			currentClientId: () => clientId,
-		};
+		} satisfies ISessionClient;
 		this.attendees.set(clientId, newAttendee);
 		return newAttendee;
 	}

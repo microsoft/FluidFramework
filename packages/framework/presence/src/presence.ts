@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { SessionId } from "@fluidframework/id-compressor";
+
 import type { ConnectedClientId } from "./baseTypes.js";
 import type {
 	PresenceNotifications,
@@ -26,7 +28,7 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
  *
  * @alpha
  */
-export type ClientSessionId = string;
+export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSessionId" };
 
 /**
  * A client within a Fluid session (period of container connectivity to service).

@@ -181,16 +181,23 @@ export function mergeUntrackedDatastore(
 		datastore[key] = {};
 	}
 	const localAllKnownState = datastore[key];
-	for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
+	for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
 		if (!("ignoreUnmonitored" in value)) {
-			localAllKnownState[clientId] = mergeValueDirectory(
-				localAllKnownState[clientId],
+			localAllKnownState[clientSessionId] = mergeValueDirectory(
+				localAllKnownState[clientSessionId],
 				value,
 				timeModifier,
 			);
 		}
 	}
 }
+
+/**
+ * Object.entries retyped to support branded string-based keys.
+ */
+const brandedObjectEntries = Object.entries as <K extends string, T>(
+	o: Record<K, T>,
+) => [K, T][];
 
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements
@@ -251,7 +258,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 
 	public update<Key extends keyof TSchema & string>(
 		key: Key,
-		clientId: string,
+		clientId: ClientSessionId,
 		value: MapSchemaElement<TSchema, "value", Key>,
 	): void {
 		const allKnownState = this.datastore[key];
@@ -301,7 +308,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 			if (key in this.nodes) {
 				const node = unbrandIVM(this.nodes[key]);
-				for (const [clientSessionId, value] of Object.entries(remoteAllKnownState)) {
+				for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
 					const client = this.runtime.lookupClient(clientSessionId);
 					node.update(client, received, value);
 				}

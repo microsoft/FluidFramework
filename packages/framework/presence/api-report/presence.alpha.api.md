@@ -11,7 +11,9 @@ export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
 export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): IPresence;
 
 // @alpha
-export type ClientSessionId = string;
+export type ClientSessionId = SessionId & {
+    readonly ClientSessionId: "ClientSessionId";
+};
 
 // @alpha
 export type ConnectedClientId = string;
