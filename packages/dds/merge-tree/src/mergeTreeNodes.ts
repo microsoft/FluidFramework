@@ -404,6 +404,7 @@ export interface ObliterateInfo {
 	clientId: number;
 	seq: number;
 	localSeq: number | undefined;
+	segmentGroup: SegmentGroup | undefined;
 }
 
 /**
