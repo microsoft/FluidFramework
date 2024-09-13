@@ -23,12 +23,6 @@ import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
 //* TODO: Rename to Inbox?
 
-/** Messages being received as a batch, with details needed to process the batch */
-interface InboundBatch extends BatchStartInfo {
-	/** Messages in this batch */
-	readonly messages: InboundSequencedContainerRuntimeMessage[];
-}
-
 /** Info about the batch we learn when we process the first message */
 export interface BatchStartInfo {
 	/** Batch ID, if present */
@@ -94,7 +88,9 @@ export class RemoteMessageProcessor {
 	 *
 	 * @remarks If undefined, we are expecting the next message to start a new batch.
 	 */
-	private batchInProgress: InboundBatch | undefined;
+	private batchInProgress:
+		| (BatchStartInfo & { messages: InboundSequencedContainerRuntimeMessage[] })
+		| undefined;
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -197,14 +193,14 @@ export class RemoteMessageProcessor {
 			return undefined;
 		}
 
-		const completedBatch = this.batchInProgress;
-		assert(completedBatch !== undefined, "Completed batch should be non-empty");
+		assert(this.batchInProgress !== undefined, "Completed batch should be non-empty");
+		const { messages, ...batchStart } = this.batchInProgress;
 		this.batchInProgress = undefined;
 		return {
 			type: "fullBatch",
-			messages: completedBatch.messages,
-			batchStart: completedBatch,
-			length: completedBatch.messages.length,
+			messages,
+			batchStart,
+			length: messages.length,
 		};
 	}
 

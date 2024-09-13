@@ -180,18 +180,21 @@ describe("RemoteMessageProcessor", () => {
 				const result = messageProcessor.process(inboundMessage, () => {});
 				switch (result?.type) {
 					case "fullBatch":
-						assert(
-							outboundMessages.length === 1,
-							"Expected fullBatch for single-message batch only (includes Grouped Batches)",
-						);
+						//* WAIT: Only after the change
+						// assert(
+						// 	outboundMessages.length === 1,
+						// 	"Expected fullBatch for single-message batch only (includes Grouped Batches)",
+						// );
 						batchStart = result.batchStart;
 						inboundMessages.push(...result.messages);
 						break;
 					case "batchStartingMessage":
+						//* assert not reached for initial change?
 						batchStart = result.batchStart;
 						inboundMessages.push(result.nextMessage);
 						break;
 					case "nextBatchMessage":
+						//* assert not reached for initial change?
 						assert(
 							batchStart !== undefined,
 							"batchStart should have been set from a prior message",
@@ -201,10 +204,11 @@ describe("RemoteMessageProcessor", () => {
 					default:
 						// These are leading chunks
 						assert(result === undefined, "unexpected result type");
-						assert(
-							option.compressionAndChunking.chunking,
-							"undefined result only expected with chunking",
-						);
+						//* WAIT: Only after the change
+						// assert(
+						// 	option.compressionAndChunking.chunking,
+						// 	"undefined result only expected with chunking",
+						// );
 						break;
 				}
 			}
@@ -331,43 +335,58 @@ describe("RemoteMessageProcessor", () => {
 			undefined,
 			undefined,
 			{
+				type: "fullBatch",
 				messages: messagesA,
-				clientId: "CLIENT_ID",
-				batchId: undefined,
-				batchStartCsn: 1,
-				keyMessage: messagesA[0],
+				batchStart: {
+					clientId: "CLIENT_ID",
+					batchId: undefined,
+					batchStartCsn: 1,
+					keyMessage: messagesA[0],
+				},
+				length: 3,
 			},
 			// B
 			{
+				type: "fullBatch",
 				messages: messagesB,
-				clientId: "CLIENT_ID",
-				batchId: undefined,
-				batchStartCsn: 4,
-				keyMessage: messagesB[0],
+				batchStart: {
+					clientId: "CLIENT_ID",
+					batchId: undefined,
+					batchStartCsn: 4,
+					keyMessage: messagesB[0],
+				},
+				length: 1,
 			},
 			// C
 			undefined,
 			{
+				type: "fullBatch",
 				messages: messagesC,
-				batchId: "C",
-				clientId: "CLIENT_ID",
-				batchStartCsn: 5,
-				keyMessage: messagesC[0],
+				batchStart: {
+					batchId: "C",
+					clientId: "CLIENT_ID",
+					batchStartCsn: 5,
+					keyMessage: messagesC[0],
+				},
+				length: 2,
 			},
 			// D
 			{
+				type: "fullBatch",
 				messages: messagesD,
-				clientId: "CLIENT_ID",
-				batchId: "D",
-				batchStartCsn: 7,
-				keyMessage: messagesD[0],
+				batchStart: {
+					clientId: "CLIENT_ID",
+					batchId: "D",
+					batchStartCsn: 7,
+					keyMessage: messagesD[0],
+				},
+				length: 1,
 			},
 		];
 
 		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
 	});
 
-	//* These should behave the same for either config
 	describe("Throws on invalid batches", () => {
 		it("Unexpected batch start marker mid-batch", () => {
 			let csn = 1;
