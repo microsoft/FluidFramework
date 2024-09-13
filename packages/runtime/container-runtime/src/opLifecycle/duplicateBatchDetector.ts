@@ -49,13 +49,13 @@ export class DuplicateBatchDetector {
 					};
 				}
 			}
-			assert(false, "Should have found the batchId in batchIdBySeqNum map");
+			assert(false, 0xa34 /* Should have found the batchId in batchIdBySeqNum map */);
 		}
 
 		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
 		assert(
 			!this.batchIdsBySeqNum.has(sequenceNumber),
-			"batchIdsAll and batchIdsBySeqNum should be in sync",
+			0xa35 /* batchIdsAll and batchIdsBySeqNum should be in sync */,
 		);
 		this.batchIdsBySeqNum.set(sequenceNumber, batchId);
 		this.batchIdsAll.add(batchId);

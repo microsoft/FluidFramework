@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ValueSchema } from "../core/index.js";
-import type { NodeKind } from "./core/index.js";
-import type { FieldKind } from "./schemaTypes.js";
+import type { ValueSchema } from "../../core/index.js";
+import type { NodeKind } from "../core/index.js";
+import type { FieldKind } from "../schemaTypes.js";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
