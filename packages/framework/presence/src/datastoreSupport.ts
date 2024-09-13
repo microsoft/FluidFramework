@@ -85,7 +85,7 @@ export class BasicDataStoreFactory<Type extends string> implements IFluidDataSto
  * @internal
  */
 export abstract class LoadableFluidObject implements FluidObject, IFluidLoadable {
-	public constructor(private readonly runtime: FluidDataStoreRuntime) {}
+	public constructor(protected readonly runtime: FluidDataStoreRuntime) {}
 
 	public get IFluidLoadable(): this {
 		return this;
