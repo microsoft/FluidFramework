@@ -21,6 +21,7 @@ import {
 	type BatchStartInfo,
 	ensureContentsDeserialized,
 	type IBatch,
+	type InboundMessageResult,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -180,11 +181,31 @@ describe("RemoteMessageProcessor", () => {
 				const result = messageProcessor.process(inboundMessage, () => {});
 				switch (result?.type) {
 					case "fullBatch":
+						assert(
+							option.compressionAndChunking.chunking || outboundMessages.length === 1,
+							"Apart from chunking, expected fullBatch for single-message batch only (includes Grouped Batches)",
+						);
 						batchStart = result.batchStart;
 						inboundMessages.push(...result.messages);
 						break;
+					case "batchStartingMessage":
+						batchStart = result.batchStart;
+						inboundMessages.push(result.nextMessage);
+						break;
+					case "nextBatchMessage":
+						assert(
+							batchStart !== undefined,
+							"batchStart should have been set from a prior message",
+						);
+						inboundMessages.push(result.nextMessage);
+						break;
 					default:
+						// These are leading chunks
 						assert(result === undefined, "unexpected result type");
+						assert(
+							option.compressionAndChunking.chunking,
+							"undefined result only expected with chunking",
+						);
 						break;
 				}
 			}
@@ -306,6 +327,20 @@ describe("RemoteMessageProcessor", () => {
 				"clientId": "CLIENT_ID",
 			},
 		];
+		const expectedTypes: InboundMessageResult["type"][] = [
+			// A
+			"batchStartingMessage",
+			"nextBatchMessage",
+			"nextBatchMessage",
+			// B
+			"fullBatch",
+			// C
+			"batchStartingMessage",
+			"nextBatchMessage",
+			// D
+			"fullBatch",
+		];
+		const expectedMessages = [...messagesA, ...messagesB, ...messagesC, ...messagesD];
 		const expectedResults = [
 			// A
 			undefined,
@@ -359,8 +394,21 @@ describe("RemoteMessageProcessor", () => {
 				length: 1,
 			},
 		];
+		console.log(expectedResults);
 
-		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
+		//* TODO: Check other props with the types thing
+		assert.deepStrictEqual(
+			processResults.map((result) => result?.type),
+			expectedTypes,
+			"unexpected result types process",
+		);
+		assert.deepStrictEqual(
+			processResults.flatMap((result) =>
+				result?.type === "fullBatch" ? [...result.messages] : [result?.nextMessage],
+			),
+			expectedMessages,
+			"unexpected output from process",
+		);
 	});
 
 	describe("Throws on invalid batches", () => {
