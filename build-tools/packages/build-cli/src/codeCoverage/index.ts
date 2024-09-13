@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { codeCoverageCli, CodeCoverageSummary } from "./codeCoverageCli.js";
+export { getCodeCoverageSummary, CodeCoverageSummary } from "./codeCoveragePr.js";

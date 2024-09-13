@@ -110,3 +110,58 @@ export async function isPrApprovedByUsers(
 	const approved = reviewers.some((user) => approvers.has(user));
 	return approved;
 }
+
+/**
+ * Create or Update a review comment on a PR.
+ *
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param prNumber - Pull request number.
+ * @param body - review comment body to be posted.
+ * @param comment_identifier - unique identifier for the comment to be updated.
+ *
+ * @returns id of the comment that was updated.
+ */
+export async function createOrUpdateCommentOnPr(
+	{ owner, repo, token }: GitHubProps,
+	prNumber: number,
+	body: string,
+	comment_identifier: string,
+): Promise<number> {
+	const octokit = new Octokit({ auth: token });
+
+	// List of review comments for the pull request
+	const { data: comments } = await octokit.pulls.listReviews({
+		owner,
+		repo,
+		pull_number: prNumber,
+	});
+
+	let comment_id: number | undefined;
+	// Log the comments to find the comment_id
+	for (const comment of comments) {
+		if (comment.body.startsWith(comment_identifier)) {
+			comment_id = comment.id;
+			break;
+		}
+	}
+
+	if (comment_id === undefined) {
+		const response = await octokit.pulls.createReview({
+			owner,
+			repo,
+			pull_number: prNumber,
+			event: "COMMENT",
+			body,
+		});
+		return response.data.id;
+	}
+	// Update PR review comment
+	const { data } = await octokit.pulls.updateReview({
+		owner,
+		repo,
+		pull_number: prNumber,
+		body,
+		review_id: comment_id,
+	});
+	return data.id;
+}

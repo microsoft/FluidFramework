@@ -38,6 +38,7 @@ module.exports = {
 					// These are all excluded because they're "submodules" used for organization.
 					// AB#8118 tracks removing the barrel files and importing directly from the submodules.
 					"**/library/index.js",
+					"**/library/githubRest.js",
 					"**/handlers/index.js",
 					"**/machines/index.js",
 					"**/repoPolicyCheck/index.js",

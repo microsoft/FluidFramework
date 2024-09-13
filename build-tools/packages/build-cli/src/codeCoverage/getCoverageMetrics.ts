@@ -40,9 +40,12 @@ interface TXmlCoverageReportSchemaForPackage {
 	];
 }
 
-const extractCoverageMetrics = (result: TXmlCoverageReportSchema): CoverageMetric[] => {
+const extractCoverageMetrics = (
+	xmlForCoverageReportFromArtifact: TXmlCoverageReportSchema,
+): CoverageMetric[] => {
 	const report: CoverageMetric[] = [];
-	const coverageForPackagesResult = result.coverage.packages[0]?.package;
+	const coverageForPackagesResult =
+		xmlForCoverageReportFromArtifact.coverage.packages[0]?.package;
 
 	for (const coverageForPackage of coverageForPackagesResult) {
 		const packagePath = coverageForPackage.$.name;

@@ -4,7 +4,7 @@
  */
 
 import type { IBaselineBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
-import type { CodeCoverageSummary } from "./codeCoverageCli.js";
+import type { CodeCoverageSummary } from "./codeCoveragePr.js";
 import type { CodeCoverageComparison } from "./compareCodeCoverage.js";
 
 const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline coverage</th><th>PR coverage</th><th>Coverage Diff</th></tr>`;
@@ -54,7 +54,6 @@ export const getCommentForCodeCoverageDiff = async (
 		failBuild = true;
 	}
 
-	const title = "## Code coverage summary";
 	let coverageSummaryForImpactedPackages = "";
 	let coverageSummaryForNewPackages = "";
 
@@ -78,7 +77,6 @@ export const getCommentForCodeCoverageDiff = async (
 	}
 	return {
 		commentMessage: [
-			title,
 			coverageSummaryForImpactedPackages,
 			coverageSummaryForNewPackages,
 			getSummaryFooter(baselineBuildInfo),
