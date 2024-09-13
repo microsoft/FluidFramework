@@ -137,9 +137,9 @@ export async function getBaselineBuildMetrics(
 			azureDevopsBuildCoverageConstants.artifactName,
 		).catch((error: Error) => {
 			console.log(
-				`Failed to fetch artifact: ${azureDevopsBuildCoverageConstants.artifactName} from CI build. Cannot generate analysis at this time`,
+				`Failed to fetch and/or unzip artifact '${azureDevopsBuildCoverageConstants.artifactName}' from CI build. Cannot generate analysis at this time`,
 			);
-			console.log(`Error unzipping object from artifact: ${error.message}`);
+			console.log(`Error: ${error.message}`);
 			console.log(`Error stack: ${error.stack}`);
 			return undefined;
 		});
