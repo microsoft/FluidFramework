@@ -69,11 +69,12 @@ import {
 import {
 	ContainerMessageType,
 	type ContainerRuntimeGCMessage,
+	type InboundSequencedContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage, InboundBatch } from "../opLifecycle/index.js";
+import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -823,11 +824,12 @@ describe("Runtime", () => {
 				return {
 					replayPendingStates: () => {},
 					hasPendingMessages: (): boolean => pendingMessages > 0,
-					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-						return { localAck: false, localOpMetadata: undefined };
-					},
-					processInboundBatch: (batch: InboundBatch, _local: boolean) => {
-						return batch.messages.map((message) => ({
+					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {
+						const messages = inbound.messages;
+						return messages.map<{
+							message: InboundSequencedContainerRuntimeMessage;
+							localOpMetadata?: unknown;
+						}>((message) => ({
 							message,
 							localOpMetadata: undefined,
 						}));
@@ -837,7 +839,7 @@ describe("Runtime", () => {
 					},
 					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
-				} as unknown as PendingStateManager;
+				} satisfies Partial<PendingStateManager> as any as PendingStateManager;
 			};
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
