@@ -36,6 +36,7 @@ export interface IBaselineBuildMetrics {
 /**
  * Naive fallback generator provided for convenience.  It yields the commit directly
  * prior to the previous commit.
+ * @remarks This duplicates a function in build-tools/packages/bundle-size-tools/src/ADO/AdoSizeComparator.ts, we should consolidate them.
  */
 function* naiveFallbackCommitGenerator(
 	startingCommit: string,
