@@ -154,6 +154,10 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"RemovedEnum_MessageType2": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"Class_AuthorizationError": {
 				"backCompat": false
 			},
@@ -166,6 +170,7 @@
 			"ClassStatics_PrefetchDocumentStorageService": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }

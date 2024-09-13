@@ -263,10 +263,9 @@ export function ensureContentsDeserialized(
 	hasModernRuntimeMessageEnvelope: boolean,
 	logLegacyCase: (codePath: string) => void,
 ): void {
-	// Currently the loader layer is parsing the contents of the message as JSON if it is a string,
-	// so we never expect to see this case.
-	// We intend to remove that logic from the Loader, at which point we will have it here.
-	// Only hasModernRuntimeMessageEnvelope true will be expected to have JSON contents.
+	// This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
+	// Note: Until that change is made in the loader, this case will never be hit.
+	// Then there will be a long time of needing both cases, until LTS catches up to the change.
 	let didParseJsonContents: boolean;
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);

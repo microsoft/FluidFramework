@@ -548,7 +548,7 @@ function getOrCreateChild(
 		return cached;
 	}
 
-	assert(isReadonlyArray(allowedTypes), "invalid types");
+	assert(isReadonlyArray(allowedTypes), 0xa25 /* invalid types */);
 	const nodeSchema =
 		allowedTypes
 			.map((t) => (isLazy(t) ? t() : t))
