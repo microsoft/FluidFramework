@@ -275,34 +275,13 @@ each merge block. We can also likely optimize the index to have a tree structure
 ### Local perspective
 
 Next, we move to the local handling of a move op while it's in flight.
-For consistency with the rest of merge tree's segment state machine, the state transitions of `{ localMovedSeq, movedSeq }` and `{ localRemovedSeq, removedSeq }` should align (`movedSeq` is set to `UnassignedSeqNumber` while the op is in flight with `localMovedSeq` recording the local seq at which the move happened, then on ack of the op `localMovedSeq` is cleared out and `movedSeq` is replaced with the op's seq).
+For consistency with the rest of merge tree's segment state machine, the state transitions of `{ localMovedSeq, movedSeq }` and `{ localRemovedSeq, removedSeq }` should align (`movedSeq` is set to `UnassignedSeqNumber` while the op is in flight, with `localMovedSeq` recording the local seq at which the move happened. Then, on ack of the op, `localMovedSeq` is cleared out and `movedSeq` is replaced with the op's seq).
 
 While a move op is in flight, any non-local insertions into a locally moved range need to be immediately moved to the range's current location
 (or removed, if it was obliterated).
-This can be accomplished by tweaking the `findAdjacentMovedSegment` function above to account for `localMovedSeq`:
+This is accomplished by normalizing the remote and local sequence numbers to the same spectrum, as described above.
 
-```typescript
-const findAdjacentMovedSegment = (seg) => {
-	if (
-		(seg.movedSeq && seg.movedSeq > op.referenceSequenceNumber) ||
-		seg.localMovedSeq !== undefined
-	) {
-		movedSegment = seg;
-		return false;
-	}
-
-	if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-		moveUpperBound = Math.min(moveUpperBound, seg.seq);
-	}
-	// If we've reached a segment that existed before any of our in-collab-window move ops
-	// happened, no need to continue.
-	return moveUpperBound > smallestSeqMoveOp;
-};
-```
-
-We don't need to worry about the analogous problem of extending the excursion as a result of segments between the insert location and a local move
-because any such segments would have also been marked as locally moved when they were inserted into the merge tree.
-In the sample code written for the remote segment, this will also necessitate `markSegmentMoved` to tolerate marking segments with local obliteration info.
+Segments between the insert location and the local move would have been marked as locally moved when they were inserted into the merge tree and will be counted as between the start and end local references of the obliterate range.
 
 Much of the same logic that goes into conflicting local + remote removal will need to be applied for move.
 Nothing stands out as a conceptual issue or hurdle in this realm, though. Just tricky conditionals.
@@ -576,8 +555,9 @@ The public API of sequence will need to be updated for users to leverage the obl
 `removeRange`:
 
 ```typescript
+/* See {@link SequencePlace} for context */
 class SharedSegmentSequence<TInterval extends IInterval> {
-	public obliterateRange(start: number, end: number);
+	public obliterateRange(start: SequencePlace, end: SequencePlace);
 }
 ```
 
