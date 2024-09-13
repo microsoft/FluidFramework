@@ -73,8 +73,8 @@ The generation process has three inputs:
 
 1. The previous version of the package, which is a devDependency of the package being tested.
 2. The `typeValidation` settings in package.json, most notably the `broken` and `entrypoint` settings.
-3. The `--entrypoint` flag in `flub generate:typetests`. If provided, this overrides the `version.entrypoint` setting in
-   package.json.
+3. The `--entrypoint` flag in `flub generate:typetests`. If provided, this overrides the `typeValidation.entrypoint`
+   setting in package.json.
 
 The generation process reads the configuration from package.json, most notably any known broken type tests, and
 generates test files that should be committed. Notably, the type tests only read the previous version of the package,
