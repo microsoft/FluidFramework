@@ -17,7 +17,7 @@ import {
 /**
  * Post the code coverage summary on the PRs
  * @param adoToken - ADO token
- * @param coverageReportsFolder - The path to where the coverage reports exist
+ * @param coverageReportsFolder - The path to where the "target" coverage reports (the ones to be compared against a baseline) exist.
  * @param codeCoverageConstants - The code coverage constants required for the code coverage analysis
  */
 export const postCodeCoverageSummary = async (
