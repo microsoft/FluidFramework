@@ -168,7 +168,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
 		assert(
 			this.context.flexSchema.policy.fieldKinds.get(kind.identifier) === kind,
-			"Narrowing must be done to a kind that exists in this context",
+			0xa26 /* Narrowing must be done to a kind that exists in this context */,
 		);
 
 		return this.flexSchema.kind === (kind as unknown);
