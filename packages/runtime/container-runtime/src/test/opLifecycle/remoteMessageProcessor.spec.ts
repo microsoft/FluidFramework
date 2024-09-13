@@ -289,9 +289,7 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const result = messageProcessor.process(
-			groupedBatch as ISequencedDocumentMessage,
-		);
+		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
 
 		const expected = [
 			{
