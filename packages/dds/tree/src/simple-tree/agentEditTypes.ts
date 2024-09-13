@@ -138,14 +138,17 @@ const jsonSchema = {
 		"__fluid_rootWrapper": {
 			type: "object",
 			properties: {
-				edit: {
-					anyOf: [
-						{ "$ref": "__fluid_setRoot" },
-						{ "$ref": "__fluid_insert" },
-						{ "$ref": "__fluid_modify" },
-						{ "$ref": "__fluid_remove" },
-						{ "$ref": "__fluid_move" },
-					],
+				edits: {
+					type: "array",
+					items: {
+						anyOf: [
+							{ "$ref": "__fluid_setRoot" },
+							{ "$ref": "__fluid_insert" },
+							{ "$ref": "__fluid_modify" },
+							{ "$ref": "__fluid_remove" },
+							{ "$ref": "__fluid_move" },
+						],
+					},
 				},
 			},
 			additionalProperties: false,
