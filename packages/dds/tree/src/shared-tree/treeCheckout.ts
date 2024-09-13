@@ -326,6 +326,8 @@ class Transaction implements ITransaction {
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link ITreeCheckout} that has forked off of the main trunk/branch.
+ *
+ * @internal
  */
 export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 	/**
