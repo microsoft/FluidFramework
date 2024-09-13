@@ -81,7 +81,7 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "typetests:gen"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
@@ -118,7 +118,7 @@ module.exports = {
 		// The package's local check:exports tasks may use the entrypoint from either CJS or ESM,
 		// therefore we need to build both before running these checks. These checks also depend on the entrypoints being
 		// gnerated, which is done in the api tasks (api-extractor:commonjs and api-extractor:esnext).
-		"check:exports": ["tsc", "build:esnext", "api"],
+		"check:exports": ["api"],
 
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
@@ -233,22 +233,7 @@ module.exports = {
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
 			],
-			"fluid-build-tasks-tsc": [
-				// The packages below are excluded because the policy expects the tsc task to depend on "typetests:gen",
-				// but that is not the case any longer, and the policy is out of date.
-				"^common/lib/protocol-definitions/package.json",
-				"^packages/common/driver-definitions/package.json",
-				"^packages/drivers/debugger/package.json",
-				"^packages/drivers/file-driver/package.json",
-				"^packages/drivers/replay-driver/package.json",
-				"^packages/framework/client-logger/app-insights-logger/package.json",
-				"^packages/framework/client-logger/fluid-telemetry/package.json",
-				"^packages/framework/fluid-framework/package.json",
-				"^packages/framework/oldest-client-observer/package.json",
-				"^packages/test/test-pairwise-generator/package.json",
-				"^packages/tools/devtools/devtools-core/package.json",
-				"^packages/tools/devtools/devtools/package.json",
-			],
+			"fluid-build-tasks-tsc": [],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",

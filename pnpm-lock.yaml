@@ -15771,6 +15771,9 @@ importers:
       '@fluid-tools/build-cli':
         specifier: ^0.46.0
         version: 0.46.0(@types/node@18.19.1)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluid-tools/fetch-tool-previous':
+        specifier: npm:@fluid-tools/fetch-tool@2.2.0
+        version: /@fluid-tools/fetch-tool@2.2.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -16419,14 +16422,12 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       tslib: 2.6.2
-    dev: false
 
   /@azure/abort-controller@2.1.2:
     resolution: {integrity: sha512-nBrLsEWm4J2u5LpAPjxADTlq3trDgVZZXHNKabeXZtpq3d3AbN/KGO82R87rdDz5/lYB024rtEf10/q0urNgsA==}
     engines: {node: '>=18.0.0'}
     dependencies:
       tslib: 2.6.2
-    dev: false
 
   /@azure/core-auth@1.5.0:
     resolution: {integrity: sha512-udzoBuYG1VBoHVohDTrvKjyzel34zt77Bhp7dQntVGGD0ehVq48owENbBG8fIgkHRNUBQH5k1r0hpoMu5L8+kw==}
@@ -16435,7 +16436,6 @@ packages:
       '@azure/abort-controller': 1.1.0
       '@azure/core-util': 1.2.0
       tslib: 2.6.2
-    dev: false
 
   /@azure/core-client@1.9.2:
     resolution: {integrity: sha512-kRdry/rav3fUKHl/aDLd/pDLcB+4pOFwPPTVEExuMyaI5r+JBbMWqRbCY1pn5BniDaU3lRxO9eaQ1AmSMehl/w==}
@@ -16450,7 +16450,6 @@ packages:
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@azure/core-rest-pipeline@1.10.1:
     resolution: {integrity: sha512-Kji9k6TOFRDB5ZMTw8qUf2IJ+CeJtsuMdAHox9eqpTf1cefiNMpzrfnF6sINEBZJsaVaWgQ0o48B6kcUH68niA==}
@@ -16468,14 +16467,12 @@ packages:
       uuid: 8.3.2
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@azure/core-tracing@1.0.1:
     resolution: {integrity: sha512-I5CGMoLtX+pI17ZdiFJZgxMJApsK6jjfm85hpgp3oazCdq5Wxgh4wMr7ge/TTWW1B5WBuvIOI1fMU/FrOAMKrw==}
     engines: {node: '>=12.0.0'}
     dependencies:
       tslib: 2.6.2
-    dev: false
 
   /@azure/core-util@1.2.0:
     resolution: {integrity: sha512-ffGIw+Qs8bNKNLxz5UPkz4/VBM/EZY07mPve1ZYFqYUdPwFqRj0RPk0U7LZMOfT7GCck9YjuT1Rfp1PApNl1ng==}
@@ -16483,7 +16480,6 @@ packages:
     dependencies:
       '@azure/abort-controller': 1.1.0
       tslib: 2.6.2
-    dev: false
 
   /@azure/core-util@1.9.0:
     resolution: {integrity: sha512-AfalUQ1ZppaKuxPPMsFEUdX6GZPB3d9paR9d/TTL7Ow2De8cJaC7ibi7kWVlFAVPCYo31OcnGymc0R89DX8Oaw==}
@@ -16491,7 +16487,6 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       tslib: 2.6.2
-    dev: false
 
   /@azure/identity-cache-persistence@1.1.1:
     resolution: {integrity: sha512-GqR8oDSk92aUl02XLDhJuvZFwtcefgTjTRi9gMIpI1rECsE8A7wIm3CdkBTNO5BMh0S/2TCYF+nSYb2HKOUyCA==}
@@ -16505,7 +16500,6 @@ packages:
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@azure/identity@4.3.0:
     resolution: {integrity: sha512-LHZ58/RsIpIWa4hrrE2YuJ/vzG1Jv9f774RfTTAVDZDriubvJ0/S5u4pnw4akJDlS0TiJb6VMphmVUFsWmgodQ==}
@@ -16527,14 +16521,12 @@ packages:
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@azure/logger@1.0.4:
     resolution: {integrity: sha512-ustrPY8MryhloQj7OWGe+HrYx+aoiOxzbXTtgblbV3xwCqpzUK36phH3XNHQKj3EPonyFUuDTfR3qFhTEAuZEg==}
     engines: {node: '>=14.0.0'}
     dependencies:
       tslib: 2.6.2
-    dev: false
 
   /@azure/msal-browser@2.38.3:
     resolution: {integrity: sha512-2WuLFnWWPR1IdvhhysT18cBbkXx1z0YIchVss5AwVA95g7CU5CpT3d+5BcgVGNXDXbUU7/5p0xYHV99V5z8C/A==}
@@ -16549,7 +16541,6 @@ packages:
     engines: {node: '>=0.8.0'}
     dependencies:
       '@azure/msal-common': 14.12.0
-    dev: false
 
   /@azure/msal-common@13.3.1:
     resolution: {integrity: sha512-Lrk1ozoAtaP/cp53May3v6HtcFSVxdFrg2Pa/1xu5oIvsIwhxW6zSPibKefCOVgd5osgykMi5jjcZHv8XkzZEQ==}
@@ -16559,7 +16550,6 @@ packages:
   /@azure/msal-common@14.12.0:
     resolution: {integrity: sha512-IDDXmzfdwmDkv4SSmMEyAniJf6fDu3FJ7ncOjlxkDuT85uSnLEhZi3fGZpoR7T4XZpOMx9teM9GXBgrfJgyeBw==}
     engines: {node: '>=0.8.0'}
-    dev: false
 
   /@azure/msal-node-extensions@1.0.19:
     resolution: {integrity: sha512-pGoaANDdCZ1Rjvzmnb+Bn63wdezg4dc7aETckFP6tfJwNcs0Wfay7JpJzuIT8aJLVLtGSGiWV8sH2Dhhp6InXw==}
@@ -16569,12 +16559,10 @@ packages:
       '@azure/msal-common': 14.12.0
       '@azure/msal-node-runtime': 0.13.6-alpha.0
       keytar: 7.9.0
-    dev: false
 
   /@azure/msal-node-runtime@0.13.6-alpha.0:
     resolution: {integrity: sha512-Tu5e4wBFiaiBLrOu7bsJF7FYknFH9XIOvUyCqCnmLJFMMOUnYULZ7fOFYuintFFcNPMOT2u8BVfSCPxETri5ng==}
     requiresBuild: true
-    dev: false
 
   /@azure/msal-node@2.9.2:
     resolution: {integrity: sha512-8tvi6Cos3m+0KmRbPjgkySXi+UQU/QiuVRFnrxIwt5xZlEEFa69O04RTaNESGgImyBBlYbo2mfE8/U8Bbdk1WQ==}
@@ -16583,7 +16571,6 @@ packages:
       '@azure/msal-common': 14.12.0
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
-    dev: false
 
   /@babel/code-frame@7.24.2:
     resolution: {integrity: sha512-y5+tLQyV8pg3fsiln67BVLD1P13Eg4lh5RW9mF0zUuvLrv9uIQ4MCL+CRT+FTsBlBjcIan6PGsLcBN0m3ClUyQ==}
@@ -19234,6 +19221,34 @@ packages:
       - typescript
       - uglify-js
       - webpack-cli
+    dev: true
+
+  /@fluid-tools/fetch-tool@2.2.0:
+    resolution: {integrity: sha512-LkdSt8g/2dFKCA8SHFMrTmuN6kfoBvY6UbXfnV0vHqnzB+Q8ZlHfJslXaCkS5hDcrUV+/i1zuVNuLB2ajrtpCg==}
+    hasBin: true
+    dependencies:
+      '@azure/identity': 4.3.0
+      '@azure/identity-cache-persistence': 1.1.1
+      '@fluid-internal/client-utils': 2.2.0
+      '@fluidframework/container-runtime': 2.2.0
+      '@fluidframework/core-interfaces': 2.2.0
+      '@fluidframework/core-utils': 2.2.0
+      '@fluidframework/datastore': 2.2.0
+      '@fluidframework/driver-definitions': 2.2.0
+      '@fluidframework/odsp-doclib-utils': 2.2.0
+      '@fluidframework/odsp-driver': 2.2.0
+      '@fluidframework/odsp-driver-definitions': 2.2.0
+      '@fluidframework/odsp-urlresolver': 2.2.0
+      '@fluidframework/routerlicious-driver': 2.2.0
+      '@fluidframework/routerlicious-urlresolver': 2.2.0
+      '@fluidframework/runtime-definitions': 2.2.0
+      '@fluidframework/tool-utils': 2.2.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
     dev: true
 
   /@fluid-tools/version-tools@0.46.0:
@@ -26029,7 +26044,6 @@ packages:
 
   /chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
-    dev: false
 
   /chownr@2.0.0:
     resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
@@ -27257,7 +27271,6 @@ packages:
   /detect-libc@2.0.3:
     resolution: {integrity: sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw==}
     engines: {node: '>=8'}
-    dev: false
 
   /detect-newline@2.1.0:
     resolution: {integrity: sha512-CwffZFvlJffUg9zZA0uqrjQayUTC8ob94pnr5sFwaVv3IOmkfUHcWH+jXaQK3askE51Cqe8/9Ql/0uXNwqZ8Zg==}
@@ -28416,7 +28429,6 @@ packages:
   /expand-template@2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
     engines: {node: '>=6'}
-    dev: false
 
   /expand-tilde@1.2.2:
     resolution: {integrity: sha512-rtmc+cjLZqnu9dSYosX9EWmSJhTwpACgJQTfj4hgg2JjOD/6SIQalZrt4a3aQeh++oNxkazcaxrhPUj6+g5G/Q==}
@@ -28988,7 +29000,6 @@ packages:
 
   /fs-constants@1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
-    dev: false
 
   /fs-exists-sync@0.1.0:
     resolution: {integrity: sha512-cR/vflFyPZtrN6b38ZyWxpWdhlXrzZEBawlpBQMq7033xVY7/kg0GDMBK5jg8lDYQckdJ5x/YC88lM3C7VMsLg==}
@@ -29237,7 +29248,6 @@ packages:
 
   /github-from-package@0.0.0:
     resolution: {integrity: sha512-SyHy3T1v2NUXn29OsWdxmK6RwHD+vkj3v8en8AOBZ1wBQ/hCAQ5bAQTD02kW4W9tUp/3Qh6J8r9EvntiyCmOOw==}
-    dev: false
 
   /github-slugger@2.0.0:
     resolution: {integrity: sha512-IaOQ9puYtjrkq7Y0Ygl9KDZnrf/aiUJYUpVf89y8kyaxbRG7Y1SrX/jaumrv81vc61+kiMempujsM3Yw7w5qcw==}
@@ -31694,7 +31704,6 @@ packages:
       buffer-equal-constant-time: 1.0.1
       ecdsa-sig-formatter: 1.0.11
       safe-buffer: 5.2.1
-    dev: false
 
   /jws@3.2.2:
     resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
@@ -31707,7 +31716,6 @@ packages:
     dependencies:
       jwa: 2.0.0
       safe-buffer: 5.2.1
-    dev: false
 
   /jwt-decode@3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
@@ -31727,7 +31735,6 @@ packages:
     dependencies:
       node-addon-api: 4.3.0
       prebuild-install: 7.1.2
-    dev: false
 
   /keyv@3.1.0:
     resolution: {integrity: sha512-9ykJ/46SN/9KPM/sichzQ7OvXyGDYKGTaDlKMGCAlg2UK8KRy4jb0d8sFc+0Tt0YYnThq8X2RZgCg74RPxgcVA==}
@@ -33161,7 +33168,6 @@ packages:
 
   /mkdirp-classic@0.5.3:
     resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
-    dev: false
 
   /mkdirp@0.5.6:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
@@ -33392,7 +33398,6 @@ packages:
 
   /napi-build-utils@1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}
-    dev: false
 
   /napi-macros@2.2.2:
     resolution: {integrity: sha512-hmEVtAGYzVQpCKdbQea4skABsdXW4RUh5t5mJ2zzqowJS2OyXZTU1KhDVFhx+NlWZ4ap9mqR9TcDO3LTTttd+g==}
@@ -33486,11 +33491,9 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       semver: 7.6.3
-    dev: false
 
   /node-addon-api@4.3.0:
     resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}
-    dev: false
 
   /node-cleanup@2.1.2:
     resolution: {integrity: sha512-qN8v/s2PAJwGUtr1/hYTpNKlD6Y9rc4p8KSmJXyGdYGZsDGKXrGThikLFP9OCHFeLeEpQzPwiAtdIvBLqm//Hw==}
@@ -34771,7 +34774,6 @@ packages:
       simple-get: 4.0.1
       tar-fs: 2.1.1
       tunnel-agent: 0.6.0
-    dev: false
 
   /prelude-ls@1.1.2:
     resolution: {integrity: sha512-ESF23V4SKG6lVSGZgYNpbsiaAkdab6ZgOxe52p7+Kid3W3u3bxR4Vfd/o21dmN7jSt0IwgZ4v5MUd26FEtXE9w==}
@@ -37055,7 +37057,6 @@ packages:
   /stoppable@1.1.0:
     resolution: {integrity: sha512-KXDYZ9dszj6bzvnEMRYvxgeTHU74QBFL54XKtP3nyMuJ81CFYtABZ3bAzL2EdFUaEwJOBOgENyFj3R7oTzDyyw==}
     engines: {node: '>=4', npm: '>=6'}
-    dev: false
 
   /stream-combiner@0.0.4:
     resolution: {integrity: sha512-rT00SPnTVyRsaSz5zgSPma/aHSOic5U1prhYdRy5HS2kTZviFpmDgzilbtsJsxiroqACmayynDN/9VzIbX5DOw==}
@@ -37490,7 +37491,6 @@ packages:
       mkdirp-classic: 0.5.3
       pump: 3.0.0
       tar-stream: 2.2.0
-    dev: false
 
   /tar-fs@3.0.5:
     resolution: {integrity: sha512-JOgGAmZyMgbqpLwct7ZV8VzkEB6pxXFBVErLtb+XCOqzc6w1xiWKI9GVd6bwk68EX7eJ4DWmfXVmq8K2ziZTGg==}
@@ -37511,7 +37511,6 @@ packages:
       fs-constants: 1.0.0
       inherits: 2.0.4
       readable-stream: 3.6.2
-    dev: false
 
   /tar-stream@3.1.7:
     resolution: {integrity: sha512-qJj60CXt7IU1Ffyc3NJMjh6EkuCFej46zUqJ4J7pqYlThyd9bO0XBTmcOIhSzZJVWfsLks0+nle/j538YAW9RQ==}

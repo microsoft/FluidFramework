@@ -129,7 +129,12 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:esnext": [
+				"...",
+				"typetests:gen"
+			],
 			"tsc": [
+				"...",
 				"typetests:gen"
 			]
 		}

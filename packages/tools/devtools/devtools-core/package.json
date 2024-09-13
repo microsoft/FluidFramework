@@ -158,9 +158,13 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:esnext": [
+				"...",
+				"typetests:gen"
+			],
 			"tsc": [
-				"typetests:gen",
-				"build:genver"
+				"...",
+				"typetests:gen"
 			]
 		}
 	},
