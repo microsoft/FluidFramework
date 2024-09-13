@@ -61,9 +61,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns `true` if there is a compression markup byte in the blob, otherwise `false`.
 	 */
 	private static hasPrefix(blob: ArrayBufferLike): boolean {
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const firstByte = IsoBuffer.from(blob)[0]!;
+		const firstByte = IsoBuffer.from(blob)[0];
 		// eslint-disable-next-line no-bitwise
 		return (firstByte & 0xf0) === 0xb0;
 	}
@@ -75,9 +73,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
 		return !this.hasPrefix(blob)
 			? SummaryCompressionAlgorithm.None
-			: // TODO why are we non null asserting here?
-				// eslint-disable-next-line no-bitwise, @typescript-eslint/no-non-null-assertion
-				IsoBuffer.from(blob)[0]! & 0x0f;
+			: // eslint-disable-next-line no-bitwise
+				IsoBuffer.from(blob)[0] & 0x0f;
 	}
 
 	/**
@@ -91,9 +88,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		algorithm: number,
 	): ArrayBufferLike {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const firstByte = IsoBuffer.from(blob)[0]!;
+			const firstByte = IsoBuffer.from(blob)[0];
 			// eslint-disable-next-line no-bitwise
 			if ((firstByte & 0xf0) !== 0xb0) {
 				return blob;
@@ -296,7 +291,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static findMetadataHolderSummary(summary: ISummaryTree): ISummaryTree | undefined {
 		assert(typeof summary === "object", 0x6f7 /* summary must be a non-null object */);
-		for (const [key, value] of Object.entries(summary.tree)) {
+		for (const key of Object.keys(summary.tree)) {
+			const value = summary.tree[key];
+
 			if (Boolean(value) && value.type === SummaryType.Tree) {
 				const found = this.findMetadataHolderSummary(value);
 				if (found) {

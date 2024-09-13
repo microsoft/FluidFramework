@@ -54,27 +54,14 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
 		return cached as LazyTreeNode;
 	}
-	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
-	return buildSubclass(context, schema, cursor, anchorNode, anchor);
+	const schema = context.flexSchema.nodeSchema.get(cursor.type) ?? fail("missing schema");
+	return new LazyTreeNode(context, schema, cursor, anchorNode, anchor);
 }
 
 function cleanupTree(anchor: AnchorNode): void {
 	const cached = anchor.slots.get(flexTreeSlot) ?? fail("tree should only be cleaned up once");
 	assert(cached instanceof LazyTreeNode, 0x92d /* Expected LazyTreeNode */);
 	cached[disposeSymbol]();
-}
-
-function buildSubclass(
-	context: Context,
-	schema: FlexTreeNodeSchema,
-	cursor: ITreeSubscriptionCursor,
-	anchorNode: AnchorNode,
-	anchor: Anchor,
-): LazyTreeNode {
-	return new LazyTreeNode(context, schema, cursor, anchorNode, anchor);
-
-	// TODO: there should be a common fallback that works for cases without a specialized implementation.
-	fail("unrecognized node kind");
 }
 
 /**
@@ -87,10 +74,10 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
 		return FlexTreeEntityKind.Node;
 	}
-	/**
-	 * Enumerable own property providing a more JS object friendly alternative to "schema".
-	 */
-	public readonly type: TreeNodeSchemaIdentifier;
+
+	public get schema(): TreeNodeSchemaIdentifier {
+		return this.flexSchema.name;
+	}
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
@@ -108,19 +95,17 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
-			this.context.schema.nodeSchema.get(this.schema.name) !== undefined,
+			this.context.flexSchema.nodeSchema.get(this.flexSchema.name) !== undefined,
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
-
-		this.type = schema.name;
 	}
 
 	public is(schema: FlexTreeNodeSchema): boolean {
 		assert(
-			this.context.schema.nodeSchema.get(schema.name) === schema,
+			this.context.flexSchema.nodeSchema.get(schema.name) === schema,
 			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
-		return this.schema === (schema as unknown);
+		return this.flexSchema === (schema as unknown);
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
@@ -143,7 +128,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 	}
 
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
-		const schema = this.schema.getFieldSchema(fieldKey);
+		const schema = this.flexSchema.getFieldSchema(fieldKey);
 		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
@@ -153,12 +138,15 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
-		return getBoxedField(this, key, this.schema.getFieldSchema(key));
+		const fieldSchema = this.flexSchema.getFieldSchema(key);
+		return inCursorField(this[cursorSymbol], key, (cursor) => {
+			return makeField(this.context, fieldSchema, cursor);
+		});
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
-			makeField(this.context, this.schema.getFieldSchema(cursor.getFieldKey()), cursor),
+			makeField(this.context, this.flexSchema.getFieldSchema(cursor.getFieldKey()), cursor),
 		).values();
 	}
 
@@ -177,7 +165,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 			// Parent field is a detached sequence, and thus needs special handling for its schema.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (key === rootFieldKey) {
-				fieldSchema = this.context.schema.rootFieldSchema;
+				fieldSchema = this.context.flexSchema.rootFieldSchema;
 			} else {
 				// All fields (in the flex tree API) have a schema.
 				// Since currently there is no known schema for detached field other than the special default root:
@@ -193,7 +181,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before sending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
 				fieldSchema = FlexFieldSchema.create(FieldKinds.sequence, [
-					...this.context.schema.nodeSchema.values(),
+					...this.context.flexSchema.nodeSchema.values(),
 				]);
 			}
 		} else {
@@ -201,7 +189,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 			const parentType = cursor.type;
 			cursor.enterField(key);
 			const nodeSchema =
-				this.context.schema.nodeSchema.get(parentType) ??
+				this.context.flexSchema.nodeSchema.get(parentType) ??
 				fail("requested schema that does not exist");
 			fieldSchema = nodeSchema.getFieldSchema(key);
 		}
@@ -215,14 +203,4 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 	public keys(): IterableIterator<FieldKey> {
 		return mapCursorFields(this[cursorSymbol], (cursor) => cursor.getFieldKey()).values();
 	}
-}
-
-function getBoxedField(
-	objectNode: LazyTreeNode,
-	key: FieldKey,
-	fieldSchema: FlexFieldSchema,
-): FlexTreeField {
-	return inCursorField(objectNode[cursorSymbol], key, (cursor) => {
-		return makeField(objectNode.context, fieldSchema, cursor);
-	});
 }

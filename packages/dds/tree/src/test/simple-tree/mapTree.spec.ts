@@ -27,10 +27,15 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
-import { SchemaFactory, type TreeNodeSchema } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { InsertableContent } from "../../simple-tree/proxies.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	type TreeNodeSchema,
+} from "../../simple-tree/index.js";
 import {
 	type ContextualFieldProvider,
 	type ConstantFieldProvider,
@@ -45,6 +50,7 @@ import {
 	addDefaultsToMapTree,
 	getPossibleTypes,
 	mapTreeFromNodeData,
+	type InsertableContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
@@ -81,7 +87,7 @@ describe("toMapTree", () => {
 		const actual = mapTreeFromNodeData(tree, [schemaFactory.string]);
 
 		const expected: MapTree = {
-			type: leaf.string.name,
+			type: brand(stringSchema.identifier),
 			value: "Hello world",
 			fields: new Map(),
 		};
@@ -96,7 +102,7 @@ describe("toMapTree", () => {
 		const actual = mapTreeFromNodeData(null, [schema]);
 
 		const expected: MapTree = {
-			type: leaf.null.name,
+			type: brand(nullSchema.identifier),
 			value: null,
 			fields: new Map(),
 		};
@@ -238,17 +244,17 @@ describe("toMapTree", () => {
 						EmptyKey,
 						[
 							{
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								value: 42,
 								fields: new Map(),
 							},
 							{
-								type: leaf.handle.name,
+								type: brand(handleSchema.identifier),
 								value: handle,
 								fields: new Map(),
 							},
 							{
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								value: 37,
 								fields: new Map(),
 							},
@@ -284,12 +290,12 @@ describe("toMapTree", () => {
 						EmptyKey,
 						[
 							{
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								value: 42,
 								fields: new Map(),
 							},
 							{
-								type: leaf.handle.name,
+								type: brand(handleSchema.identifier),
 								value: handle,
 								fields: new Map(),
 							},
@@ -300,7 +306,7 @@ describe("toMapTree", () => {
 										brand("name"),
 										[
 											{
-												type: leaf.string.name,
+												type: brand(stringSchema.identifier),
 												value: "Jack",
 												fields: new Map(),
 											},
@@ -310,7 +316,7 @@ describe("toMapTree", () => {
 										brand("age"),
 										[
 											{
-												type: leaf.number.name,
+												type: brand(numberSchema.identifier),
 												value: 37,
 												fields: new Map(),
 											},
@@ -344,7 +350,7 @@ describe("toMapTree", () => {
 						EmptyKey,
 						[
 							{
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								value: 42,
 								fields: new Map(),
 							},
@@ -355,12 +361,12 @@ describe("toMapTree", () => {
 										EmptyKey,
 										[
 											{
-												type: leaf.number.name,
+												type: brand(numberSchema.identifier),
 												value: 1,
 												fields: new Map(),
 											},
 											{
-												type: leaf.number.name,
+												type: brand(numberSchema.identifier),
 												value: 2,
 												fields: new Map(),
 											},
@@ -369,7 +375,7 @@ describe("toMapTree", () => {
 								]),
 							},
 							{
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								value: 37,
 								fields: new Map(),
 							},
@@ -440,9 +446,24 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.map"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[brand("b"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
-					[brand("c"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+					[
+						brand("a"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("b"),
+						[
+							{
+								type: brand(stringSchema.identifier),
+								value: "Hello world",
+								fields: new Map(),
+							},
+						],
+					],
+					[
+						brand("c"),
+						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+					],
 				]),
 			};
 
@@ -475,9 +496,24 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.map"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[brand("b"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
-					[brand("c"), [{ type: brand(leaf.null.name), value: null, fields: new Map() }]],
+					[
+						brand("a"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("b"),
+						[
+							{
+								type: brand(stringSchema.identifier),
+								value: "Hello world",
+								fields: new Map(),
+							},
+						],
+					],
+					[
+						brand("c"),
+						[{ type: brand(nullSchema.identifier), value: null, fields: new Map() }],
+					],
 					[
 						brand("d"),
 						[
@@ -488,7 +524,7 @@ describe("toMapTree", () => {
 										brand("name"),
 										[
 											{
-												type: leaf.string.name,
+												type: brand(stringSchema.identifier),
 												value: "Jill",
 												fields: new Map(),
 											},
@@ -498,7 +534,7 @@ describe("toMapTree", () => {
 										brand("age"),
 										[
 											{
-												type: leaf.number.name,
+												type: brand(numberSchema.identifier),
 												value: 37,
 												fields: new Map(),
 											},
@@ -530,8 +566,14 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.map"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[brand("c"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+					[
+						brand("a"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("c"),
+						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+					],
 				]),
 			};
 
@@ -611,9 +653,24 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.object"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
-					[brand("b"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
+					[
+						brand("a"),
+						[
+							{
+								type: brand(stringSchema.identifier),
+								value: "Hello world",
+								fields: new Map(),
+							},
+						],
+					],
+					[
+						brand("b"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("c"),
+						[{ type: brand(booleanSchema.identifier), value: false, fields: new Map() }],
+					],
 				]),
 			};
 
@@ -644,14 +701,26 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.object"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
+					[
+						brand("a"),
+						[
+							{
+								type: brand(stringSchema.identifier),
+								value: "Hello world",
+								fields: new Map(),
+							},
+						],
+					],
 					[
 						brand("b"),
 						[
 							{
 								type: brand("test.child-object"),
 								fields: new Map<FieldKey, MapTree[]>([
-									[brand("foo"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+									[
+										brand("foo"),
+										[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+									],
 								]),
 							},
 						],
@@ -666,12 +735,12 @@ describe("toMapTree", () => {
 										EmptyKey,
 										[
 											{
-												type: leaf.boolean.name,
+												type: brand(booleanSchema.identifier),
 												value: true,
 												fields: new Map(),
 											},
 											{
-												type: leaf.boolean.name,
+												type: brand(booleanSchema.identifier),
 												value: false,
 												fields: new Map(),
 											},
@@ -706,7 +775,10 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.object"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+					[
+						brand("a"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
 				]),
 			};
 
@@ -736,11 +808,26 @@ describe("toMapTree", () => {
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						brand("foo"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
+						[
+							{
+								type: brand(stringSchema.identifier),
+								value: "Hello world",
+								fields: new Map(),
+							},
+						],
 					],
-					[brand("bar"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
-					[brand("d"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+					[
+						brand("bar"),
+						[{ type: brand(numberSchema.identifier), value: 42, fields: new Map() }],
+					],
+					[
+						brand("c"),
+						[{ type: brand(booleanSchema.identifier), value: false, fields: new Map() }],
+					],
+					[
+						brand("d"),
+						[{ type: brand(numberSchema.identifier), value: 37, fields: new Map() }],
+					],
 				]),
 			};
 
@@ -764,7 +851,7 @@ describe("toMapTree", () => {
 						brand("a"),
 						[
 							{
-								type: leaf.string.name,
+								type: brand(stringSchema.identifier),
 								value: nodeKeyManager.getId(0),
 								fields: new Map(),
 							},
@@ -920,7 +1007,10 @@ describe("toMapTree", () => {
 		const expected: MapTree = {
 			type: brand("test.complex-object"),
 			fields: new Map<FieldKey, MapTree[]>([
-				[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
+				[
+					brand("a"),
+					[{ type: brand(stringSchema.identifier), value: "Hello world", fields: new Map() }],
+				],
 				[
 					brand("b"),
 					[
@@ -937,7 +1027,7 @@ describe("toMapTree", () => {
 													brand("name"),
 													[
 														{
-															type: leaf.string.name,
+															type: brand(stringSchema.identifier),
 															value: "Jack",
 															fields: new Map(),
 														},
@@ -947,7 +1037,7 @@ describe("toMapTree", () => {
 													brand("age"),
 													[
 														{
-															type: leaf.number.name,
+															type: brand(numberSchema.identifier),
 															value: 37,
 															fields: new Map(),
 														},
@@ -956,7 +1046,7 @@ describe("toMapTree", () => {
 											]),
 										},
 										{
-											type: leaf.null.name,
+											type: brand(nullSchema.identifier),
 											value: null,
 											fields: new Map(),
 										},
@@ -967,7 +1057,7 @@ describe("toMapTree", () => {
 													brand("name"),
 													[
 														{
-															type: leaf.string.name,
+															type: brand(stringSchema.identifier),
 															value: "Jill",
 															fields: new Map(),
 														},
@@ -977,7 +1067,7 @@ describe("toMapTree", () => {
 													brand("age"),
 													[
 														{
-															type: leaf.number.name,
+															type: brand(numberSchema.identifier),
 															value: 42,
 															fields: new Map(),
 														},
@@ -986,7 +1076,7 @@ describe("toMapTree", () => {
 											]),
 										},
 										{
-											type: leaf.handle.name,
+											type: brand(handleSchema.identifier),
 											value: handle,
 											fields: new Map(),
 										},
@@ -1012,7 +1102,7 @@ describe("toMapTree", () => {
 													brand("name"),
 													[
 														{
-															type: leaf.string.name,
+															type: brand(stringSchema.identifier),
 															value: "Foo",
 															fields: new Map(),
 														},
@@ -1022,7 +1112,7 @@ describe("toMapTree", () => {
 													brand("age"),
 													[
 														{
-															type: leaf.number.name,
+															type: brand(numberSchema.identifier),
 															value: 2,
 															fields: new Map(),
 														},
@@ -1036,13 +1126,16 @@ describe("toMapTree", () => {
 									brand("bar"),
 									[
 										{
-											type: leaf.string.name,
+											type: brand(stringSchema.identifier),
 											value: "1",
 											fields: new Map(),
 										},
 									],
 								],
-								[brand("baz"), [{ type: leaf.number.name, value: 2, fields: new Map() }]],
+								[
+									brand("baz"),
+									[{ type: brand(numberSchema.identifier), value: 2, fields: new Map() }],
+								],
 							]),
 						},
 					],
@@ -1147,22 +1240,22 @@ describe("toMapTree", () => {
 						[
 							{
 								value: 42,
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								fields: new Map(),
 							},
 							{
 								value: null,
-								type: leaf.null.name,
+								type: brand(nullSchema.identifier),
 								fields: new Map(),
 							},
 							{
 								value: 37,
-								type: leaf.number.name,
+								type: brand(numberSchema.identifier),
 								fields: new Map(),
 							},
 							{
 								value: null,
-								type: leaf.null.name,
+								type: brand(nullSchema.identifier),
 								fields: new Map(),
 							},
 						],
@@ -1233,7 +1326,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1246,7 +1339,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1288,7 +1381,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myObjectSchema, schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1300,7 +1393,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myObjectSchema, schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1335,7 +1428,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myMapSchema, schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1347,7 +1440,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myMapSchema, schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1382,7 +1475,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myArrayNodeSchema, schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1394,7 +1487,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myArrayNodeSchema, schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1462,6 +1555,53 @@ describe("toMapTree", () => {
 				assert.deepEqual(getPossibleTypes(new Set([mapSchema]), []), [mapSchema]);
 				// Map makes array
 				assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [arraySchema]);
+			});
+
+			it("inherited properties types", () => {
+				const f = new SchemaFactory("test");
+				class Optional extends f.object("x", {
+					constructor: f.optional(f.number),
+				}) {}
+				class Required extends f.object("x", {
+					constructor: f.number,
+				}) {}
+				class Other extends f.object("y", {
+					other: f.number,
+				}) {}
+				// Ignore inherited constructor field
+				assert.deepEqual(getPossibleTypes(new Set([Optional, Required, Other]), {}), [
+					Optional,
+				]);
+				// Allow overridden field
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), { constructor: 5 }),
+					[Optional, Required],
+				);
+				// Allow overridden undefined
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), { constructor: undefined }),
+					[Optional],
+				);
+				// Multiple Fields
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), {
+						constructor: undefined,
+						other: 6,
+					}),
+					[Optional, Other],
+				);
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), {
+						constructor: 5,
+						other: 6,
+					}),
+					[Optional, Required, Other],
+				);
+				// No properties
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), Object.create(null)),
+					[Optional],
+				);
 			});
 		});
 

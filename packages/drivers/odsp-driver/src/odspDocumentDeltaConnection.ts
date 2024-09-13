@@ -588,10 +588,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				if (messages !== undefined && messages.length > 0) {
 					this.logger.sendPerformanceEvent({
 						...common,
-						// Non null asserting here because of the length check above
-						first: messages[0]!.sequenceNumber,
-						// Non null asserting here because of the length check above
-						last: messages[messages.length - 1]!.sequenceNumber,
+						first: messages[0].sequenceNumber,
+						last: messages[messages.length - 1].sequenceNumber,
 						length: messages.length,
 					});
 					this.emit("op", this.documentId, messages);

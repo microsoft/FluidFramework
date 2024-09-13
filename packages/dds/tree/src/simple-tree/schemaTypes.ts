@@ -21,7 +21,7 @@ import type {
 	TreeNodeSchemaClass,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
-import type { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./toMapTree.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
@@ -76,15 +76,15 @@ export enum FieldKind {
 }
 
 /**
- * Maps from a view key to its corresponding {@link FieldProps.key | stored key} for the provided
+ * Maps from a property key to its corresponding {@link FieldProps.key | stored key} for the provided
  * {@link ImplicitFieldSchema | field schema}.
  *
  * @remarks
  * If an explicit stored key was specified in the schema, it will be used.
- * Otherwise, the stored key is the same as the view key.
+ * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
-	return brand(getExplicitStoredKey(fieldSchema) ?? viewKey);
+export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
 /**
@@ -187,7 +187,7 @@ export function isConstant(
  * Provides a default value for a field.
  * @remarks
  * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
@@ -360,7 +360,7 @@ export type InsertableTreeFieldFromImplicitField<
 /**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
- * @public
+ * @system @public
  */
 export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
 	[FieldKind.Required]: T;
@@ -420,7 +420,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * This could be changed if needed.
  *
  * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
- * @public
+ * @system @public
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,

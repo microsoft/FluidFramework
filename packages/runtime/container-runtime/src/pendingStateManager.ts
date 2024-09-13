@@ -20,7 +20,12 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
-import { BatchId, BatchMessage, generateBatchId, InboundBatch } from "./opLifecycle/index.js";
+import {
+	BatchId,
+	BatchMessage,
+	getEffectiveBatchId,
+	InboundBatch,
+} from "./opLifecycle/index.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -37,11 +42,14 @@ export interface IPendingMessage {
 	sequenceNumber?: number;
 	/** Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect */
 	batchInfo: {
-		/** The Batch's original clientId, from when it was first flushed to be submitted */
+		/**
+		 * The Batch's original clientId, from when it was first flushed to be submitted.
+		 * Or, a random uuid if it was never submitted (and batchStartCsn will be -1)
+		 */
 		clientId: string;
 		/**
 		 * The Batch's original clientSequenceNumber, from when it was first flushed to be submitted
-		 *	@remarks A negative value means it was not yet submitted when queued here (e.g. disconnected right before flush fired)
+		 * Or, -1 if it was never submitted (and clientId will be a random uuid)
 		 */
 		batchStartCsn: number;
 		/** length of the batch (how many runtime messages here) */
@@ -126,32 +134,6 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 }
 
 /**
- * Get the effective batch ID for the input argument.
- * Supports either an IPendingMessage or an InboundBatch.
- * If the batch ID is explicitly present, return it.
- * Otherwise, generate a new batch ID using the client ID and batch start CSN.
- */
-function getEffectiveBatchId(
-	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
-): string {
-	if ("localOpMetadata" in pendingMessageOrInboundBatch) {
-		const pendingMessage: IPendingMessage = pendingMessageOrInboundBatch;
-		return (
-			asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
-			generateBatchId(
-				pendingMessage.batchInfo.clientId,
-				pendingMessage.batchInfo.batchStartCsn,
-			)
-		);
-	}
-
-	const inboundBatch: InboundBatch = pendingMessageOrInboundBatch;
-	return (
-		inboundBatch.batchId ?? generateBatchId(inboundBatch.clientId, inboundBatch.batchStartCsn)
-	);
-}
-
-/**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
  * batches along with the messages.
@@ -170,9 +152,6 @@ export class PendingStateManager implements IDisposable {
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
 	 */
 	private savedOps: IPendingMessage[] = [];
-
-	/** Used to stand in for batchStartCsn for messages that weren't submitted (so no CSN) */
-	private negativeCounter: number = -1;
 
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
@@ -261,15 +240,19 @@ export class PendingStateManager implements IDisposable {
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 */
 	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
-		// If we're connected this is the client of the current connection,
-		// otherwise it's the clientId that just disconnected
-		// It's only undefined if we've NEVER connected. This is a tight corner case and we can
-		// simply make up a unique ID in this case.
-		const clientId = this.stateHandler.clientId() ?? uuid();
-
-		// If the batch was not yet sent, we need to assign a unique batchStartCsn
-		// Use a negative number to distinguish these from real CSNs
-		const batchStartCsn = clientSequenceNumber ?? this.negativeCounter--;
+		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
+		// where this batch was submitted by two different clients rehydrating from the same local state.
+		// In the typical case where the batch was actually sent, use the clientId and clientSequenceNumber.
+		// In the case where the batch was not sent, use a random uuid for clientId, and -1 for clientSequenceNumber to indicate this case.
+		// This will guarantee uniqueness of the batchId, and is a suitable fallback since clientId/CSN is only needed if the batch was actually sent/sequenced.
+		const batchWasSent = clientSequenceNumber !== undefined;
+		const [clientId, batchStartCsn] = batchWasSent
+			? [this.stateHandler.clientId(), clientSequenceNumber]
+			: [uuid(), -1]; // -1 will indicate not a real clientId/CSN pair
+		assert(
+			clientId !== undefined,
+			0xa33 /* clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case */,
+		);
 
 		for (const message of batch) {
 			const {
@@ -386,7 +369,7 @@ export class PendingStateManager implements IDisposable {
 			throw DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
 				"PendingStateManager.processInboundBatch",
-				batch.messages[0], // Note: if it's an empty batch, we won't get message metadata added to the error/log here
+				batch.keyMessage,
 			);
 		}
 
@@ -409,11 +392,7 @@ export class PendingStateManager implements IDisposable {
 
 		// Empty batch
 		if (batch.messages.length === 0) {
-			assert(
-				batch.emptyBatchSequenceNumber !== undefined,
-				0x9fb /* Expected sequence number for empty batch */,
-			);
-			const localOpMetadata = this.processNextPendingMessage(batch.emptyBatchSequenceNumber);
+			const localOpMetadata = this.processNextPendingMessage(batch.keyMessage.sequenceNumber);
 			assert(
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
 				0xa20 /* Expected empty batch marker */,

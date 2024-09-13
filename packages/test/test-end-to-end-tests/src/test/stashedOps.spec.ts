@@ -6,11 +6,7 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	describeCompat,
-	itExpects,
-	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
@@ -21,17 +17,17 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
-	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import { Deferred, delay } from "@fluidframework/core-utils/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -54,12 +50,14 @@ import type {
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
+	createSummarizer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	createAndAttachContainer,
 	createDocumentId,
+	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -67,24 +65,6 @@ import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tre
 import { SharedTree } from "@fluidframework/tree/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-
-/** For a negative test, takes in the ideal expectation (which should NOT be met), and the current wrong one, and asserts on them both */
-function assertCurrentAndIdealExpectations(
-	actual: any,
-	expected: { ideal: any; currentButWrong: any },
-	message?: string,
-) {
-	assert.equal(
-		actual,
-		expected.currentButWrong,
-		`Current (wrong) behavior is not as expected. ${message ?? ""}`,
-	);
-	assert.notEqual(
-		actual,
-		expected.ideal,
-		`Ideal behavior is unexpectedly met. ${message ?? ""}`,
-	);
-}
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -235,34 +215,30 @@ const assertIntervals = (
 };
 
 /**
- * Waits for a summary op and ack to be seen by the specified container.
+ * Waits for a summary op and ack to be seen.
  *
- * @remarks
- * IMPORTANT: timing of when this function is called and/or awaited is important to write tests that aren't flaky.
- * If you're going to `await` something else between the time when you make a change in a container that will result
- * in a summary and the time you want to wait for the summary, you should call this function, without `await`ing it,
- * *before* `await`ing anything else, and then `await` the returned promise when you actually need to wait for the
- * summary.
- * Otherwise it could happen that the summary is produced before this function is called, thus the listeners set up
- * by it aren't in place yet, they will miss the summary op, and the returned promise will never resolve.
+ * Manually summarizes the container
  *
- * @param container - A container, just for the purpose of setting up listeners for summary ops and acks.
+ * @param container - A container, just for the purpose of creating a summarizing container.
  * @returns A promise that resolves when a summary op and ack is received.
  */
-const waitForSummary = async (container: IContainer) =>
-	new Promise<void>((resolve, reject) => {
-		let summarized = false;
-		container.on("op", (op) => {
-			if (op.type === "summarize") {
-				summarized = true;
-			} else if (summarized && op.type === "summaryAck") {
-				resolve();
-			} else if (op.type === "summaryNack") {
-				reject(new Error("summaryNack"));
-			}
-		});
-	});
-
+const waitForSummary = async (
+	provider: ITestObjectProvider,
+	container: IContainer,
+	testContainerConfig: ITestContainerConfig,
+) => {
+	const testConfig = {
+		...testContainerConfig,
+		runtimeOptions: { ...testContainerConfig.runtimeOptions, summaryOptions: undefined },
+	};
+	const { summarizer, container: summarizingContainer } = await createSummarizer(
+		provider,
+		container,
+		testConfig,
+	);
+	await summarizeNow(summarizer);
+	summarizingContainer.close();
+};
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
@@ -289,13 +265,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 			summaryOptions: {
 				summaryConfigOverrides: {
-					...DefaultSummaryConfiguration,
-					...{
-						maxTime: 5000 * 12,
-						maxAckWaitTime: 120000,
-						maxOps: 1,
-						initialSummarizerDelayMs: 20,
-					},
+					state: "disabled",
 				},
 			},
 			enableRuntimeIdCompressor: "on",
@@ -1122,7 +1092,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// get new datastore from first container
 		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+		const containerRuntime = entryPoint.context
+			.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
@@ -1185,7 +1156,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// get new DDS from first container
 		await provider.ensureSynchronized();
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = dataStore1.context.containerRuntime as ContainerRuntime;
+		const containerRuntime = dataStore1.context
+			.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/default/${newMapId}` });
@@ -1280,7 +1252,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// 3: Join op [B]
 		// 4: " / First op" [B]
 		//
-		// Stashed Ops (ref seq num is 3) -- These are in ContainerRuntime's PendingStateManager.initialMessages
+		// Stashed Ops (ref seq num is 3) -- These are in IContainerRuntime's PendingStateManager.initialMessages
 		// 4: "First op" [B]
 		// _: " / Second op" [B]
 
@@ -1414,8 +1386,13 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
-		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
+		const { container: container2 } = await loadOffline(
+			testContainerConfig,
+			provider,
+			{ url },
+			pendingOps,
+		);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes should be applied
@@ -1429,16 +1406,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// make more changes while offline
 		[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
-		// get stashed ops from this container without connecting
-		const morePendingOps = await container2.container.closeAndGetPendingLocalState?.();
+		// get stashed ops from this container without connecting.  Superset of pendingOps
+		const morePendingOps = await container2.closeAndGetPendingLocalState?.();
 
-		const container3 = await loadOffline(
+		const { container: container3, connect: connect3 } = await loadOffline(
 			testContainerConfig,
 			provider,
 			{ url },
 			morePendingOps,
 		);
-		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes from both containers should be applied
@@ -1449,11 +1426,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				`map 3 ${map2.get(i.toString())} !== ${i}`,
 			),
 		);
-		// make more changes while offline
+		// make EVEN MORE changes while offline
 		[...Array(lots).keys()].map((i) => map3.set((i + lots * 2).toString(), i + lots * 2));
 
-		container3.connect();
-		await waitForContainerConnection(container3.container);
+		connect3();
+		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 		[...Array(lots * 3).keys()].map((i) =>
 			assert.strictEqual(
@@ -1639,33 +1616,26 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
-	itSkipsFailureOnSpecificDrivers(
-		"load offline with blob redirect table",
-		// We've seen this fail a few times against local server with a timeout
-		// TODO: AB#5482
-		["local"],
-		async function () {
-			// upload blob offline so an entry is added to redirect table
-			const container = await loadOffline(testContainerConfig, provider, { url });
-			const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+	it("load offline with blob redirect table", async function () {
+		// upload blob offline so an entry is added to redirect table
+		const container = await loadOffline(testContainerConfig, provider, { url });
+		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
-			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-			container.connect();
-			const handle = await handleP;
-			const waitForSummaryPromise = waitForSummary(container1);
-			map.set("blob handle", handle);
-			assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		container.connect();
+		const handle = await handleP;
+		map.set("blob handle", handle);
+		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 
-			// wait for summary with redirect table
-			await provider.ensureSynchronized();
-			await waitForSummaryPromise;
+		// wait for summary with redirect table
+		await provider.ensureSynchronized();
+		await waitForSummary(provider, container1, testContainerConfig);
 
-			// should be able to load entirely offline
-			const stashBlob = await getPendingOps(testContainerConfig, provider, true);
-			await loadOffline(testContainerConfig, provider, { url }, stashBlob);
-		},
-	);
+		// should be able to load entirely offline
+		const stashBlob = await getPendingOps(testContainerConfig, provider, true);
+		await loadOffline(testContainerConfig, provider, { url }, stashBlob);
+	});
 
 	it("load offline from stashed ops with pending blob", async function () {
 		const container = await loadOffline(testContainerConfig, provider, { url });
@@ -1770,7 +1740,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 		{
 			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
-			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			const containerRuntime = entryPoint.context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 			const map2 = response.value as ISharedMap;
@@ -1784,7 +1755,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// get new datastore from first container
 		{
 			const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
-			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			const containerRuntime = entryPoint.context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 			const map3 = response.value as ISharedMap;
@@ -1851,7 +1823,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
 		map1.set("test op 1", "test op 1");
-		await waitForSummary(container1);
+		await waitForSummary(provider, container1, testContainerConfig);
 
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -1864,7 +1836,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		map1.set("test op 2", "test op 2");
-		await waitForSummary(container1);
+		await waitForSummary(provider, container1, testContainerConfig);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -1881,6 +1853,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map1.set("test op 1", "test op 1");
 		const container: IContainerExperimental =
 			await provider.loadTestContainer(testContainerConfig);
+		const waitForSummaryPromise = waitForSummary(provider, container1, testContainerConfig);
 		const pendingOps = await new Promise<string | undefined>((resolve, reject) =>
 			container.on("op", (op) => {
 				if (op.type === "summarize") {
@@ -1888,6 +1861,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				}
 			}),
 		);
+		await waitForSummaryPromise;
 		assert.ok(pendingOps);
 
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -1989,14 +1963,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
-		// wait for summary
-		await new Promise<void>((resolve) =>
-			container1.on("op", (op) => {
-				if (op.type === "summaryAck") {
-					resolve();
-				}
-			}),
-		);
+		await waitForSummary(provider, container1, testContainerConfig);
 
 		// avoid our join op being saved
 		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
@@ -2023,10 +1990,67 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
+});
 
-	describe("Serializing without closing and/or multiple rehydration (aka Offline Phase 3)", () => {
+describeCompat(
+	"Serializing without closing and/or multiple rehydration (aka Offline Phase 3)",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedCounter } = apis.dds;
+		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+
+		// We disable summarization (so no summarizer container is loaded) due to challenges specifying the exact
+		// expected behavior of the summarizer container in these tests, in the presence of race conditions.
+		// We aren't testing anything about summmarization anyway, so no need for it.
+		const testContainerConfig_noSummarizer: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions: {
+				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+				compressionOptions: {
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+				enableRuntimeIdCompressor: "on",
+			},
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.Container.enableOfflineLoad": true,
+					"Fluid.Sequence.intervalStickinessEnabled": true,
+				}),
+			},
+		};
+
+		let provider: ITestObjectProvider;
+		let loader: IHostLoader;
+		let container1: IContainer;
+		let url: string;
+		let counter1: SharedCounter;
+
+		beforeEach("setup", async () => {
+			provider = getTestObjectProvider();
+			loader = provider.makeTestLoader(testContainerConfig_noSummarizer);
+
+			container1 = await createAndAttachContainer(
+				provider.defaultCodeDetails,
+				loader,
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			provider.updateDocumentId(container1.resolvedUrl);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Container is attached so it'll have a URL
+			url = (await container1.getAbsoluteUrl(""))!;
+
+			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
+		});
+
 		itExpects(
-			`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
+			`Single-Threaded Fork: Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
 			[
 				// Temp Container from getPendingOps
 				{
@@ -2043,7 +2067,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			async function () {
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
-					testContainerConfig,
+					testContainerConfig_noSummarizer,
 					provider,
 					true, // Do send ops from first container instance before closing
 					async (c, d) => {
@@ -2053,16 +2077,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
-				// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
-				// 2. container2 - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
+				// 1. first container - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
+				// 2. second container - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
 				//
 				// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
 				const obj = JSON.parse(pendingLocalState);
-				obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
+				obj.clientId = "2356461c-85d2-4002-b699-5e8a0defa60b"; // Different GUID to simulate reconnect after getPendingLocalState
 				const pendingLocalStateAdjusted = JSON.stringify(obj);
 
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
-				// when processing the ops submitted by container1 before closing, because we recognize them as the same content using batchId.
+				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
 				await assert.rejects(
 					async () => loader.resolve({ url }, pendingLocalStateAdjusted),
 					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
@@ -2075,32 +2099,29 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		itExpects(
-			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
+			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
-				// Temp Container from getPendingOps
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "generic",
-				},
-				// Loser of the race between Containers 2 and 3
+				// All containers close: contianer1, container2, container3
+				// container2 or container3 (the loser of the race) will close with "Forked Container Error",
+				// The other two will close with "Duplicate batch"
+				// Due to the race condition, we can't specify the order of the different errors here.
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
-					errorType: "dataProcessingError",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
 				},
 			],
 			async function () {
-				// The code below attempts to force both containers to submit the same op in parallel,
-				// but it is not correct.  It works out in Local Server but not real servers,
-				// so skip for now.
-				// This will be fixed when we also implement the logic to recognize and ignore duplicate ops.
-				if (provider.driver.type !== "local") {
-					this.skip();
-				}
-
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
-					testContainerConfig,
+					testContainerConfig_noSummarizer,
 					provider,
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
@@ -2109,63 +2130,82 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				);
 
-				// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
-				const container2 = await loader.resolve({ url }, pendingLocalState);
-				await container2.deltaManager.inbound.pause();
-				await container2.deltaManager.outbound.pause(); // To protect against container2 submitting the op before container3 pauses inbound.
-				const container3 = await loader.resolve({ url }, pendingLocalState);
-				await container3.deltaManager.inbound.pause();
-				container2.deltaManager.outbound.resume(); // Now that container3 is paused, container2 can submit the op.
+				async function rehydrateConnectAndPause(loggingId: string) {
+					// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
+					// Container won't be connected yet, so no race here.
+					const container = await loader.resolve({ url }, pendingLocalState);
+					await container.deltaManager.outbound.pause();
 
-				container2.deltaManager.flush();
-				container3.deltaManager.flush();
-				await delay(0); // Yield to allow the ops to be submitted before resuming
-				container2.deltaManager.inbound.resume();
-				container3.deltaManager.inbound.resume();
+					// Wait for the container to connect, and then pause the inbound queue
+					// This order matters - we need to process our inbound join op to finish connecting!
+					await waitForContainerConnection(container, true /* failOnContainerClose */, {
+						reject: true,
+						errorMsg: `${loggingId} didn't connect in time`,
+					});
+					await container.deltaManager.inbound.pause();
 
-				// At this point, both rehydrated containers should have submitted the same Counter op.
-				// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt,
-				// but that is not yet implemented.
-				await provider.ensureSynchronized();
+					// Now this container should submit the op when we resume the outbound queue
+					return container;
+				}
 
+				// Rehydrate twice, waiting for each to connect but blocking outgoing for both, to avoid submitting any ops yet
+				const container2 = await rehydrateConnectAndPause("container2");
+				const container3 = await rehydrateConnectAndPause("container3");
+
+				// Get these before any containers close
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-				// There's a race condition here; allow either Container2 or Container3 to win
-				// The winner will see its own ack first, and then accept the duplicate op from the loser.
-				// The loser will see the winner's ack first and close with Forked Container Error.
-				let winner: { container: IContainer; counter: SharedCounter };
-				let loser: { container: IContainer; counter: SharedCounter };
-				if (container2.closed) {
-					loser = { container: container2, counter: counter2 };
-					winner = { container: container3, counter: counter3 };
-				} else {
-					loser = { container: container3, counter: counter3 };
-					winner = { container: container2, counter: counter2 };
-				}
+				// Here's the "in parallel" part - resume both outbound queues at the same time,
+				// and then resume both inbound queues once the outbound queues are idle (done sending).
+				const allSentP = Promise.all([
+					timeoutPromise<unknown>(
+						(resolve) => {
+							container2.deltaManager.outbound.once("idle", resolve);
+						},
+						{ errorMsg: "container2 outbound queue never reached idle state" },
+					),
+					timeoutPromise<unknown>(
+						(resolve) => {
+							container3.deltaManager.outbound.once("idle", resolve);
+						},
+						{ errorMsg: "container3 outbound queue never reached idle state" },
+					),
+				]);
+				container2.deltaManager.outbound.resume();
+				container3.deltaManager.outbound.resume();
+				await allSentP;
+				container2.deltaManager.inbound.resume();
+				container3.deltaManager.inbound.resume();
 
-				assert.strictEqual(winner.container.closed, false, "winner should not close");
-				assert.strictEqual(loser.container.closed, true, "loser should be closed");
-				// The winner will have accepted the duplicate ops, so the counter should be double the increment value.
-				// The loser will have closed, so its counter should be the correct value.
-				assertCurrentAndIdealExpectations(winner.counter.value, {
-					ideal: incrementValue,
-					currentButWrong: 2 * incrementValue,
-				});
-				assert.strictEqual(loser.counter.value, incrementValue);
+				// At this point, both rehydrated containers should have submitted the same Counter op.
+				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
+				// - One will win the race and get their op sequenced first.
+				// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
+				// - All other clients (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will ignore it.
+				await provider.ensureSynchronized();
 
-				// The original container will also have accepted the duplicate ops.
-				assertCurrentAndIdealExpectations(counter1.value, {
-					ideal: incrementValue,
-					currentButWrong: 2 * incrementValue,
-				});
+				// Container1 is not used directly in this test, but is present and observing the session,
+				// so we can double-check eventual consistency - the container should have closed and the op should not have been duplicated
+				assert(container1.closed, "container1 should be closed");
+				assert.strictEqual(counter1.value, incrementValue);
+
+				// Both containers will close with the correct value for the counter.
+				// The container whose op is sequenced first will close with "Duplicate batch" error
+				// when it sees the other container's batch come in.
+				// The other container (that loses the race to be sequenced) will close with "Forked Container Error"
+				// when it sees the winner's batch come in.
+				assert(container2.closed, "container2 should be closed");
+				assert(container3.closed, "container3 should be closed");
+				assert.strictEqual(counter2.value, incrementValue);
+				assert.strictEqual(counter3.value, incrementValue);
 			},
 		);
 
 		itExpects(
-			`Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
+			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
 				// Temp Container from getPendingOps
 				{
@@ -2182,7 +2222,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			async function () {
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
-					testContainerConfig,
+					testContainerConfig_noSummarizer,
 					provider,
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
@@ -2206,11 +2246,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				await assert.rejects(
 					async () => {
 						// We expect either loader.resolve to throw or else the container to close right after load
-						const container = await loader.resolve({ url }, pendingLocalState);
+						const container3 = await loader.resolve({ url }, pendingLocalState);
 
 						// This is to workaround a race condition in Container.load where the container might close between microtasks
 						// such that it resolves to the closed container rather than rejecting as it's supposed to.
-						if (container.closed) {
+						if (container3.closed) {
 							// If the container is closed, assume it was due to the right error until the bug mentioned above is fixed
 							throw new Error(
 								"Forked Container Error! Matching batchIds but mismatched clientId",
@@ -2218,7 +2258,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 						}
 
 						await timeoutPromise((_resolve, reject) => {
-							container.once("closed", reject);
+							container3.once("closed", reject);
 						});
 					},
 					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
@@ -2231,8 +2271,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(counter2.value, incrementValue);
 			},
 		);
-	});
-});
+	},
+);
 
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;

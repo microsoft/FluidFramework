@@ -81,7 +81,7 @@ export interface IRuntimeSignaler {
  * Note: currently experimental and under development
  *
  * Helper class to assist common scenarios around working with signals.  InternalSignaler wraps a runtime
- * object with signaling functionality (e.g. ContainerRuntime or FluidDataStoreRuntime) and can
+ * object with signaling functionality (e.g. IContainerRuntime or FluidDataStoreRuntime) and can
  * then be used in place of the original signaler.  It uses a separate internal EventEmitter to
  * manage callbacks, and thus will reflect that behavior with regards to callback registration and
  * deregistration.

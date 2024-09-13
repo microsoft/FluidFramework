@@ -5,29 +5,31 @@
 
 import { unlinkSync } from "node:fs";
 import path from "node:path";
-import { IFluidBuildConfig, loadFluidBuildConfig } from "@fluidframework/build-tools";
+import type { IFluidBuildConfig } from "@fluidframework/build-tools";
+import { getFluidBuildConfig } from "@fluidframework/build-tools";
+import { FlubConfig, getFlubConfig } from "../../config.js";
 import { Handler } from "./common.js";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
 let _knownPaths: string[] | undefined;
 
-const getKnownPaths = (manifest: IFluidBuildConfig): string[] => {
+const getKnownPaths = (config: FlubConfig, repoConfig: IFluidBuildConfig): string[] => {
 	if (_knownPaths === undefined) {
 		// Add the root path (.) because a lockfile is expected there
 		_knownPaths = ["."];
 
 		// Add additional paths from the manifest
-		_knownPaths.push(...(manifest.policy?.additionalLockfilePaths ?? []));
+		_knownPaths.push(...(config.policy?.additionalLockfilePaths ?? []));
 
-		if (manifest.repoPackages) {
+		if (repoConfig.repoPackages) {
 			// Add paths to known monorepos and packages
-			const vals = Object.values(manifest.repoPackages).filter(
+			const vals = Object.values(repoConfig.repoPackages).filter(
 				(p) => typeof p === "string",
 			) as string[];
 			_knownPaths.push(...vals);
 
 			// Add paths from entries that are arrays
-			const arrayVals = Object.values(manifest.repoPackages).filter(
+			const arrayVals = Object.values(repoConfig.repoPackages).filter(
 				(p) => typeof p !== "string",
 			);
 			for (const arr of arrayVals) {
@@ -46,8 +48,9 @@ export const handlers: Handler[] = [
 		name: "extraneous-lockfiles",
 		match: lockFilePattern,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			const manifest = loadFluidBuildConfig(root);
-			const knownPaths: string[] = getKnownPaths(manifest);
+			const flubConfig = getFlubConfig(root);
+			const repoConfig = getFluidBuildConfig(root);
+			const knownPaths: string[] = getKnownPaths(flubConfig, repoConfig);
 
 			if (
 				path.basename(file) === "package-lock.json" &&
@@ -59,8 +62,9 @@ export const handlers: Handler[] = [
 			return undefined;
 		},
 		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
-			const manifest = loadFluidBuildConfig(root);
-			const knownPaths: string[] = getKnownPaths(manifest);
+			const flubConfig = getFlubConfig(root);
+			const repoConfig = getFluidBuildConfig(root);
+			const knownPaths: string[] = getKnownPaths(flubConfig, repoConfig);
 
 			if (
 				path.basename(file) === "package-lock.json" &&

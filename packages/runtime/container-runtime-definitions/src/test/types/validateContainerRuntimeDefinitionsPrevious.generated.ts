@@ -31,6 +31,7 @@ declare type old_as_current_for_Interface_IContainerRuntime = requireAssignableT
  * typeValidation.broken:
  * "Interface_IContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerRuntime = requireAssignableTo<TypeOnly<current.IContainerRuntime>, TypeOnly<old.IContainerRuntime>>
 
 /*
@@ -40,6 +41,7 @@ declare type current_as_old_for_Interface_IContainerRuntime = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>>
 
 /*
@@ -85,4 +87,5 @@ declare type old_as_current_for_Interface_IContainerRuntimeWithResolveHandle_Dep
  * typeValidation.broken:
  * "Interface_IContainerRuntimeWithResolveHandle_Deprecated": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>>

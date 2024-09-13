@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -319,7 +319,7 @@ describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvide
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let sharedCell: ISharedCell;
-	let containerRuntime: ContainerRuntime;
+	let containerRuntime: IContainerRuntime;
 	let changedEventData: Serializable<unknown>[];
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -340,7 +340,7 @@ describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvide
 		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedCell = await dataObject.getSharedObject<ISharedCell>(cellId);
-		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+		containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 		changedEventData = [];
 		sharedCell.on("valueChanged", (value) => {
 			changedEventData.push(value);

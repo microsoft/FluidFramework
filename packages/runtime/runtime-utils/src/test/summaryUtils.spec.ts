@@ -17,11 +17,13 @@ import { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/interna
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
 
 import {
+	SummaryTreeBuilder,
 	TelemetryContext,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
 	utf8ByteLength,
+	type SummaryTreeBuilderParams,
 } from "../summaryUtils.js";
 
 describe("Summary Utils", () => {
@@ -387,6 +389,109 @@ describe("Summary Utils", () => {
 			assert.strictEqual(obj.pre3_obj1_prop1, "1");
 			assert.strictEqual(obj.pre3_obj1_prop2, 2);
 			assert.strictEqual(obj.pre3_obj1_prop3, true);
+		});
+	});
+
+	describe("SummaryTreeBuilder", () => {
+		it("should initialize groupId correctly when set", () => {
+			const params: SummaryTreeBuilderParams = { groupId: "testGroupId" };
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			assert.strictEqual(summaryTreeBuilder.summary.groupId, "testGroupId");
+		});
+
+		it("should initialize groupId correctly when not set", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			assert.strictEqual(summaryTreeBuilder.summary.groupId, undefined);
+		});
+
+		it("should add a blob correctly", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			const blobContent = "testBlobContent";
+			summaryTreeBuilder.addBlob("testBlob", blobContent);
+			const summaryTree = summaryTreeBuilder.summary;
+			const blob = summaryTree.tree.testBlob;
+			assert.strictEqual(blob.type, SummaryType.Blob);
+			assert.strictEqual(blob.content, blobContent);
+		});
+
+		it("should update stats correctly when adding a blob", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			const blobContent = "testBlobContent";
+			summaryTreeBuilder.addBlob("testBlob", blobContent);
+			const stats = summaryTreeBuilder.stats;
+			assert.strictEqual(stats.blobNodeCount, 1);
+			assert.strictEqual(stats.totalBlobSize, blobContent.length);
+		});
+
+		it("should add a handle correctly", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			const handle = "testHandle";
+			summaryTreeBuilder.addHandle("testHandleKey", SummaryType.Tree, handle);
+			const summaryTree = summaryTreeBuilder.summary;
+			const handleObject = summaryTree.tree.testHandleKey;
+			assert.strictEqual(handleObject.type, SummaryType.Handle);
+			assert.strictEqual(handleObject.handleType, SummaryType.Tree);
+			assert.strictEqual(handleObject.handle, handle);
+		});
+
+		it("should update stats correctly when adding a handle", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			const handle = "testHandle";
+			summaryTreeBuilder.addHandle("testHandleKey", SummaryType.Tree, handle);
+			const stats = summaryTreeBuilder.stats;
+			assert.strictEqual(stats.handleNodeCount, 1);
+		});
+
+		it("should add an attachment correctly", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			const attachmentId = "testAttachmentId";
+			summaryTreeBuilder.addAttachment(attachmentId);
+			const summaryTree = summaryTreeBuilder.summary;
+			const attachment = summaryTree.tree["0"];
+			assert.strictEqual(attachment.type, SummaryType.Attachment);
+			assert.strictEqual(attachment.id, attachmentId);
+		});
+
+		it("should add summarize result to summary correctly", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			const summarizeResult = {
+				summary: { type: SummaryType.Tree, tree: {} },
+				stats: {
+					blobNodeCount: 1,
+					totalBlobSize: 10,
+					treeNodeCount: 1,
+					handleNodeCount: 0,
+					unreferencedBlobSize: 0,
+				},
+			};
+			summaryTreeBuilder.addWithStats("testKey", summarizeResult);
+			const summaryTree = summaryTreeBuilder.summary;
+			const subTree = summaryTree.tree.testKey;
+			assert.strictEqual(subTree.type, SummaryType.Tree);
+			const stats = summaryTreeBuilder.stats;
+			assert.strictEqual(stats.blobNodeCount, 1);
+			assert.strictEqual(stats.totalBlobSize, 10);
+			assert.strictEqual(stats.treeNodeCount, 2); // 1 for the root tree and 1 for the added tree
+		});
+
+		it("should get summary tree with correct stats", () => {
+			const params: SummaryTreeBuilderParams = {};
+			const summaryTreeBuilder = new SummaryTreeBuilder(params);
+			const blobContent = "testBlobContent";
+			summaryTreeBuilder.addBlob("testBlob", blobContent);
+			const summaryTreeWithStats = summaryTreeBuilder.getSummaryTree();
+			const summaryTree = summaryTreeWithStats.summary;
+			const stats = summaryTreeWithStats.stats;
+			assert.strictEqual(stats.blobNodeCount, 1);
+			assert.strictEqual(stats.totalBlobSize, blobContent.length);
+			assert.strictEqual(summaryTree.tree.testBlob.type, SummaryType.Blob);
 		});
 	});
 });

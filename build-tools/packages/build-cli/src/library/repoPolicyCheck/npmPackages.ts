@@ -11,21 +11,21 @@ import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import { writeJson } from "fs-extra/esm";
+import JSON5 from "json5";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
 import {
 	PackageJson,
-	PackageNamePolicyConfig,
-	ScriptRequirement,
 	getApiExtractorConfigFilePath,
-	loadFluidBuildConfig,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
 import { Handler, readFile, writeFile } from "./common.js";
+
+import { PackageNamePolicyConfig, ScriptRequirement, getFlubConfig } from "../../config.js";
 
 const require = createRequire(import.meta.url);
 
@@ -155,7 +155,7 @@ export function packageMayChooseToPublishToInternalFeedOnly(
  * private to prevent publishing.
  */
 export function packageMustBePrivate(name: string, root: string): boolean {
-	const config = loadFluidBuildConfig(root).policy?.packageNames;
+	const config = getFlubConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -174,7 +174,7 @@ export function packageMustBePrivate(name: string, root: string): boolean {
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
 export function packageMustNotBePrivate(name: string, root: string): boolean {
-	const config = loadFluidBuildConfig(root).policy?.packageNames;
+	const config = getFlubConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -190,7 +190,7 @@ export function packageMustNotBePrivate(name: string, root: string): boolean {
  * Whether the package either belongs to a known Fluid package scope or is a known unscoped package.
  */
 function packageIsFluidPackage(name: string, root: string): boolean {
-	const config = loadFluidBuildConfig(root).policy?.packageNames;
+	const config = getFlubConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages are considered Fluid packages
@@ -511,9 +511,9 @@ async function readConfigMainEntryPointFilePath(
 	return fs.promises
 		.readFile(configFileAbsPath, { encoding: "utf8" })
 		.then(async (configContent) => {
-			const { mainEntryPointFilePath } = JSON.parse(configContent) as {
+			const { mainEntryPointFilePath } = JSON5.parse<{
 				mainEntryPointFilePath?: string;
-			};
+			}>(configContent);
 			if (mainEntryPointFilePath === undefined) {
 				return undefined;
 			}
@@ -1201,7 +1201,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-dep",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			const manifest = loadFluidBuildConfig(root);
+			const manifest = getFlubConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
 				return;
@@ -1867,8 +1867,7 @@ export const handlers: Handler[] = [
 				return;
 			}
 
-			const requirements =
-				loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+			const requirements = getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 			if (requirements === undefined) {
 				// If no requirements have been specified, we have nothing to validate.
 				return;
@@ -1925,7 +1924,7 @@ export const handlers: Handler[] = [
 				}
 
 				const requirements =
-					loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+					getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 				if (requirements === undefined) {
 					// If no requirements have been specified, we have nothing to validate.
 					return;

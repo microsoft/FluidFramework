@@ -2,6 +2,8 @@
 
 A [tree](<https://en.wikipedia.org/wiki/Tree_(data_structure)>) data structure for the [Fluid Framework](https://fluidframework.com/).
 
+To get started working with `SharedTree` in your application, read this [quick start guide](https://fluidframework.com/docs/start/tree-start/).
+
 The contents of this package are also reported as part of the [`fluid-framework` package](https://www.npmjs.com/package/fluid-framework) which provides an alternative way to consume the functionality from this package.
 
 [SharedTree Philosophy](./docs/SharedTree%20Philosophy.md) covers the goals of the SharedTree project,
@@ -36,6 +38,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/tree` like normal.
 
 To access the `beta` APIs, import via `@fluidframework/tree/beta`.
+
+To access the `alpha` APIs, import via `@fluidframework/tree/alpha`.
+
+To access the `legacy` APIs, import via `@fluidframework/tree/legacy`.
 
 ## API Documentation
 

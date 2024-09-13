@@ -7,7 +7,6 @@ const path = require("path");
 const { merge } = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
-// const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = (env) => {
 	const isProduction = env?.production;
@@ -44,12 +43,11 @@ module.exports = (env) => {
 			},
 			plugins: [
 				new webpack.ProvidePlugin({
-					process: "process/browser",
+					process: "process/browser.js",
 				}),
 				new HtmlWebpackPlugin({
 					template: "./src/index.html",
 				}),
-				// new CleanWebpackPlugin(),
 			],
 		},
 		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
