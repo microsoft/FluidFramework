@@ -162,15 +162,19 @@ describe("Pending State Manager", () => {
 			batchStartCsn: number,
 			emptyBatchSequenceNumber?: number,
 		) =>
-			pendingStateManager.processInboundBatch(
+			pendingStateManager.processInboundMessages(
 				{
+					type: "fullBatch",
 					messages: messages as InboundSequencedContainerRuntimeMessage[],
-					batchStartCsn,
-					keyMessage: {
-						sequenceNumber: emptyBatchSequenceNumber,
-					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-					clientId,
-					batchId: generateBatchId(clientId, batchStartCsn),
+					batchStart: {
+						batchStartCsn,
+						keyMessage: {
+							sequenceNumber: emptyBatchSequenceNumber,
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						clientId,
+						batchId: generateBatchId(clientId, batchStartCsn),
+					},
+					length: messages.length,
 				},
 				true /* local */,
 			);
@@ -550,13 +554,17 @@ describe("Pending State Manager", () => {
 				);
 				const inboundMessage = futureRuntimeMessage as ISequencedDocumentMessage &
 					UnknownContainerRuntimeMessage;
-				pendingStateManager.processInboundBatch(
+				pendingStateManager.processInboundMessages(
 					{
+						type: "fullBatch",
 						messages: [inboundMessage],
-						batchStartCsn: 1 /* batchStartCsn */,
-						batchId: "batchId",
-						clientId: "clientId",
-						keyMessage: inboundMessage,
+						batchStart: {
+							batchStartCsn: 1 /* batchStartCsn */,
+							batchId: "batchId",
+							clientId: "clientId",
+							keyMessage: inboundMessage,
+						},
+						length: 1,
 					},
 					true /* local */,
 				);

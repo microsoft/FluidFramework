@@ -21,10 +21,8 @@ import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
-/** Messages being received as a batch, with details needed to process the batch */
-export interface InboundBatch {
-	/** Messages in this batch */
-	readonly messages: InboundSequencedContainerRuntimeMessage[];
+/** Info about the batch we learn when we process the first message */
+export interface BatchStartInfo {
 	/** Batch ID, if present */
 	readonly batchId: string | undefined;
 	/** clientId that sent this batch. Used to compute Batch ID if needed */
@@ -45,6 +43,18 @@ export interface InboundBatch {
 	 */
 	readonly keyMessage: ISequencedDocumentMessage;
 }
+
+/**
+ * Result of processing the next inbound message.
+ * Right now we only return full batches, but soon we will add support for individual messages within the batch too.
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- Preparing to add other union cases
+export type InboundMessageResult = {
+	type: "fullBatch";
+	messages: InboundSequencedContainerRuntimeMessage[];
+	batchStart: BatchStartInfo;
+	length: number;
+};
 
 function assertHasClientId(
 	message: ISequencedDocumentMessage,
@@ -67,7 +77,9 @@ export class RemoteMessageProcessor {
 	 *
 	 * @remarks If undefined, we are expecting the next message to start a new batch.
 	 */
-	private batchInProgress: InboundBatch | undefined;
+	private batchInProgress:
+		| (BatchStartInfo & { messages: InboundSequencedContainerRuntimeMessage[] })
+		| undefined;
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -105,7 +117,7 @@ export class RemoteMessageProcessor {
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
 		logLegacyCase: (codePath: string) => void,
-	): InboundBatch | undefined {
+	): InboundMessageResult | undefined {
 		let message = remoteMessageCopy;
 
 		assertHasClientId(message);
@@ -141,12 +153,17 @@ export class RemoteMessageProcessor {
 			);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+
 			return {
+				type: "fullBatch",
 				messages: groupedMessages, // Will be [] for an empty batch
-				batchStartCsn: message.clientSequenceNumber,
-				clientId,
-				batchId,
-				keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+				batchStart: {
+					batchStartCsn: message.clientSequenceNumber,
+					clientId,
+					batchId,
+					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+				},
+				length: groupedMessages.length, // Will be 0 for an empty batch
 			};
 		}
 
@@ -162,9 +179,15 @@ export class RemoteMessageProcessor {
 			return undefined;
 		}
 
-		const completedBatch = this.batchInProgress;
+		assert(this.batchInProgress !== undefined, "Completed batch should be non-empty");
+		const { messages, ...batchStart } = this.batchInProgress;
 		this.batchInProgress = undefined;
-		return completedBatch;
+		return {
+			type: "fullBatch",
+			messages,
+			batchStart,
+			length: messages.length,
+		};
 	}
 
 	/**
