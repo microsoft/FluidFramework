@@ -187,7 +187,7 @@ export function isConstant(
  * Provides a default value for a field.
  * @remarks
  * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
@@ -360,7 +360,7 @@ export type InsertableTreeFieldFromImplicitField<
 /**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
- * @public
+ * @system @public
  */
 export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
 	[FieldKind.Required]: T;
@@ -420,7 +420,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * This could be changed if needed.
  *
  * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
- * @public
+ * @system @public
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,

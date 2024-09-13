@@ -39,7 +39,7 @@ This is done by calling `viewWith` on the `SharedTree` with your tree configurat
 
 ```typescript
 const treeConfiguration = new TreeViewConfiguration(
-	{ schema: RootSchema }
+	{ schema: TodoList }
 )
 
 const appData = container.initialObjects.appData.viewWith(
@@ -48,6 +48,7 @@ const appData = container.initialObjects.appData.viewWith(
 ```
 
 The tree configuration takes in a schema for the root of the tree which will need to be defined by your application.
+This example uses the `TodoList` schema, which we define in the next section, as the root schema.
 
 ## Defining a Schema
 
@@ -238,4 +239,4 @@ useEffect(() => {
 
 Note that any `Revertible`s obtained should be disposed of by the app author in order to free up the resources that are required to revert an edit.
 
-See [undo redo support](../data-structures/tree) for more information.
+See [this blog post](https://devblogs.microsoft.com/microsoft365dev/fluid-framework-undo-redo-and-transactions-in-sharedtree/) or [undo redo support](../data-structures/tree) for more information.
