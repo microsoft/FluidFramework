@@ -156,7 +156,7 @@ describe("Runtime", () => {
 			return "fakeHandle";
 		},
 	};
-	const getMockContext2 = (
+	const getMockContext = (
 		params: {
 			settings?: Record<string, ConfigTypes>;
 			logger?;
@@ -207,14 +207,6 @@ describe("Runtime", () => {
 		};
 		return mockContext;
 	};
-	//* TODO: Update usages to use getMockContext2 and remove this function
-	const getMockContext = (
-		settings: Record<string, ConfigTypes> = {},
-		logger = new MockLogger(),
-		mockStorage: Partial<IDocumentStorageService> = defaultMockStorage,
-		loadedFromVersion?: IVersion,
-	): Partial<IContainerContext> =>
-		getMockContext2({ settings, logger, mockStorage, loadedFromVersion });
 
 	const mockProvideEntryPoint = async () => ({
 		myProp: "myValue",
@@ -225,7 +217,7 @@ describe("Runtime", () => {
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
 				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
+					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
@@ -284,7 +276,9 @@ describe("Runtime", () => {
 				let callsToEnsure = 0;
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
-						"Fluid.Container.enableOfflineLoad": true,
+						settings: {
+							"Fluid.Container.enableOfflineLoad": true,
+						},
 					}) as IContainerContext,
 					registryEntries: [],
 					existing: false,
@@ -329,7 +323,9 @@ describe("Runtime", () => {
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
-							"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
+							settings: {
+								"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
+							},
 						}) as IContainerContext,
 						registryEntries: [],
 						existing: false,
@@ -1885,12 +1881,10 @@ describe("Runtime", () => {
 					}
 				}
 
-				const mockContext = getMockContext(
-					{},
-					undefined,
-					new MockStorageService(),
-					latestVersion,
-				);
+				const mockContext = getMockContext({
+					mockStorage: new MockStorageService(),
+					loadedFromVersion: latestVersion,
+				});
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
 					registryEntries: [],
@@ -1921,7 +1915,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
+					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
@@ -1953,7 +1947,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
+					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
@@ -1995,7 +1989,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
+					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
@@ -2042,7 +2036,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
+					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
@@ -2064,7 +2058,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
+					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
@@ -2110,7 +2104,7 @@ describe("Runtime", () => {
 			[undefined, true].forEach((enableOfflineLoad) => {
 				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
-						context: getMockContext2({
+						context: getMockContext({
 							settings: { "Fluid.Container.enableOfflineLoad": enableOfflineLoad },
 						}) as IContainerContext,
 						registryEntries: [],
@@ -2262,7 +2256,7 @@ describe("Runtime", () => {
 				};
 
 				const logger = new MockLogger();
-				containerContext = getMockContext({}, logger) as IContainerContext;
+				containerContext = getMockContext({ logger }) as IContainerContext;
 
 				(containerContext as any).snapshotWithContents = snapshotWithContents;
 				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
@@ -2574,7 +2568,7 @@ describe("Runtime", () => {
 		it("Only log legacy codepath once", async () => {
 			const mockLogger = new MockLogger();
 			const containerRuntime = await ContainerRuntime.loadRuntime({
-				context: getMockContext({}, mockLogger) as IContainerContext,
+				context: getMockContext({ logger: mockLogger }) as IContainerContext,
 				registryEntries: [],
 				existing: false,
 				provideEntryPoint: mockProvideEntryPoint,
@@ -2619,7 +2613,7 @@ describe("Runtime", () => {
 				logger = new MockLogger();
 				droppedSignals = [];
 				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
+					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
