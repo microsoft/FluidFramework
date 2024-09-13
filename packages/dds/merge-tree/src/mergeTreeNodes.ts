@@ -100,10 +100,20 @@ export function toRemovalInfo(
  * Tracks information about each concurrent move operation which affected a segment.
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IConcurrentMoveInfo {
+	/**
+	 * The clientId at which this segment was obliterated.
+	 */
 	clientId: number;
+	/**
+	 * The sequence number at which this segment was obliterated.
+	 */
 	seq: number;
+	/**
+	 * The refSeq (perspective) from which this segment was obliterated.
+	 */
 	refSeq: number;
 }
 

@@ -304,7 +304,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		accum: TClientData,
 		splitRange?: boolean,
 	): void;
-	public walkSegments<T>(
+	public walkSegments<undefined>(
 		handler: ISegmentAction<undefined>,
 		start?: number,
 		end?: number,
