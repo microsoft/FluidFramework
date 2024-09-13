@@ -5,6 +5,7 @@
 
 import * as childProcess from "node:child_process";
 import { existsSync } from "node:fs";
+import { realpath } from "node:fs/promises";
 import * as path from "node:path";
 import { getPackages } from "@manypkg/get-packages";
 import { cosmiconfigSync } from "cosmiconfig";
@@ -12,7 +13,6 @@ import registerDebug from "debug";
 import { readJson } from "fs-extra";
 
 import { defaultLogger } from "../common/logging";
-import { realpathAsync } from "../common/utils";
 import { commonOptions } from "./commonOptions";
 import { FLUIDBUILD_CONFIG_VERSION, type IFluidBuildConfig } from "./fluidBuildConfig";
 
@@ -125,7 +125,7 @@ export async function getResolvedFluidRoot(buildRoot = false) {
 	}
 
 	// Use realpath.native to get the case-sensitive path on windows
-	return await realpathAsync(resolvedRoot);
+	return await realpath(resolvedRoot);
 }
 
 const configName = "fluidBuild";
