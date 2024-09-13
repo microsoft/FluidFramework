@@ -695,7 +695,7 @@ export const makeLegacySendBatchFn =
 type MessageWithContext = {
 	local: boolean;
 	savedOp?: boolean;
-	localOpMetadata?: unknown;
+	batchStartCsn: number;
 } & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
@@ -2634,38 +2634,34 @@ export class ContainerRuntime
 		const messageCopy = { ...messageArg };
 		// We expect runtime messages to have JSON contents - deserialize it in place.
 		ensureContentsDeserialized(messageCopy, modernRuntimeMessage, logLegacyCase);
-		if (modernRuntimeMessage) {
-			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (processResult === undefined) {
-				// This means the incoming message is an incomplete part of a message or batch
-				// and we need to process more messages before the rest of the system can understand it.
-				return;
-			}
-			const batchStartCsn = processResult.batchStartCsn;
-			const batch = processResult.messages;
-			const messages: {
-				message: InboundSequencedContainerRuntimeMessage;
-				localOpMetadata: unknown;
-			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
-				: batch.map((message) => ({ message, localOpMetadata: undefined }));
-			messages.forEach(({ message, localOpMetadata }) => {
-				const msg: MessageWithContext = {
-					message,
-					local,
-					modernRuntimeMessage,
-					savedOp,
-					localOpMetadata,
-				};
-				this.ensureNoDataModelChanges(() => this.processCore(msg));
-			});
-		} else {
-			const msg: MessageWithContext = {
-				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
-				local,
-				modernRuntimeMessage,
-				savedOp,
-			};
+		const processResult = this.remoteMessageProcessor.process(messageCopy);
+		if (processResult === undefined) {
+			// This means the incoming message is an incomplete part of a message or batch
+			// and we need to process more messages before the rest of the system can understand it.
+			return;
+		}
+		for (const message of processResult.messages) {
+			const msg: MessageWithContext = modernRuntimeMessage
+				? {
+						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
+						// There is nothing really ensuring that anytime original message.type is Operation that
+						// the result messages will be so. In the end modern bool being true only directs to
+						// throw error if ultimately unrecognized without compat details saying otherwise.
+						message: message as InboundSequencedContainerRuntimeMessage,
+						local,
+						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
+					}
+				: // Unrecognized message will be ignored.
+					{
+						message,
+						local,
+						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
+					};
+			msg.savedOp = savedOp;
+
+			// ensure that we observe any re-entrancy, and if needed, rebase ops
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
@@ -2676,7 +2672,7 @@ export class ContainerRuntime
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 */
 	private processCore(messageWithContext: MessageWithContext) {
-		const { message, local, localOpMetadata } = messageWithContext;
+		const { message, local } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
@@ -2696,11 +2692,22 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
-			// RemoteMessageProcessor would have already reconstituted Chunked Ops into the original op type
+			// See commit that added this assert for more details.
+			// These calls should be made for all but chunked ops:
+			// 1) this.pendingStateManager.processPendingLocalMessage() below
+			// 2) this.resetReconnectCount() below
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
 				0x93b /* we should never get here with chunked ops */,
 			);
+
+			let localOpMetadata: unknown;
+			if (local && messageWithContext.modernRuntimeMessage) {
+				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
+					messageWithContext.message,
+					messageWithContext.batchStartCsn,
+				);
+			}
 
 			// If there are no more pending messages after processing a local message,
 			// the document is no longer dirty.
