@@ -18,8 +18,8 @@ import {
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
+	type RevertibleFactory,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import {
 	FieldKinds,
 	cursorForJsonableTreeField,
@@ -30,7 +30,6 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
-	type RevertibleFactory,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -38,11 +37,10 @@ import {
 	expectSchemaEqual,
 	forkView,
 	getView,
-	numberSequenceRootSchema,
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
-import { disposeSymbol, fail } from "../../util/index.js";
+import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -53,7 +51,9 @@ import {
 import { getOrCreateInnerNode } from "../../simple-tree/proxyBinding.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { toFlexSchema } from "../../simple-tree/index.js";
+import { toFlexSchema, toStoredSchema } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -152,7 +152,7 @@ describe("sharedTreeView", () => {
 		describe("commitApplied", () => {
 			const sf1 = new SchemaFactory("commit applied schema");
 			const mixedSchema = sf1.optional([sf1.string, sf1.number]);
-			const stringSchema = sf1.optional([sf1.string]);
+			const OptionalString = sf1.optional([sf1.string]);
 
 			it("is fired for data and schema changes", () => {
 				const provider = new TestTreeProviderLite(1);
@@ -171,11 +171,14 @@ describe("sharedTreeView", () => {
 
 				checkout.editor
 					.optionalField(rootField)
-					.set(cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]), true);
+					.set(
+						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						true,
+					);
 
 				assert.equal(log.length, 2);
 
-				checkout.updateSchema(intoStoredSchema(toFlexSchema(stringSchema)));
+				checkout.updateSchema(intoStoredSchema(toFlexSchema(OptionalString)));
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -195,8 +198,11 @@ describe("sharedTreeView", () => {
 				checkout.updateSchema(intoStoredSchema(toFlexSchema(mixedSchema)));
 				checkout.editor
 					.optionalField(rootField)
-					.set(cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]), true);
-				checkout.updateSchema(intoStoredSchema(toFlexSchema(stringSchema)));
+					.set(
+						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
+						true,
+					);
+				checkout.updateSchema(intoStoredSchema(toFlexSchema(OptionalString)));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
@@ -753,9 +759,8 @@ describe("sharedTreeView", () => {
 			fork.checkout[disposeSymbol]();
 
 			assert.throws(() => fork.root.insertAtStart("A"));
-			assert.throws(() =>
-				fork.checkout.updateSchema(intoStoredSchema(numberSequenceRootSchema)),
-			);
+			const targetSchema = toStoredSchema(numberSchema);
+			assert.throws(() => fork.checkout.updateSchema(targetSchema));
 			assert.throws(() => fork.checkout[disposeSymbol]());
 		});
 

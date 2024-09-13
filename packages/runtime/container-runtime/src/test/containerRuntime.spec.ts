@@ -114,6 +114,9 @@ const changeConnectionState = (
 ) => {
 	const audience = runtime.getAudience() as MockAudience;
 	audience.setCurrentClientId(clientId);
+
+	(runtime as any)._getClientId = () => clientId;
+
 	runtime.setConnectionState(connected, clientId);
 };
 
@@ -324,7 +327,7 @@ describe("Runtime", () => {
 							type: "groupedBatch",
 							contents: [],
 						}),
-					} as any as ISequencedDocumentMessage,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 					true,
 				);
 				assert.strictEqual(callsToEnsure, 1);
@@ -374,14 +377,28 @@ describe("Runtime", () => {
 					assert.strictEqual(submittedOps.length, 2);
 					assert.strictEqual(submittedOps[0].contents.address, "1");
 					assert.strictEqual(submittedOps[1].contents.address, "2");
-					assert.strictEqual(
-						submittedOps[0].metadata?.batchId,
-						enableOfflineLoad ? "mockClientId_[-1]" : undefined,
-					);
-					assert.strictEqual(
-						submittedOps[1].metadata?.batchId,
-						enableOfflineLoad ? "mockClientId_[-2]" : undefined,
-					);
+
+					function batchIdMatchesUnsentFormat(batchId?: string) {
+						return (
+							batchId !== undefined &&
+							batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
+							batchId.endsWith("_[-1]")
+						);
+					}
+
+					if (enableOfflineLoad) {
+						assert(
+							batchIdMatchesUnsentFormat(submittedOps[0].metadata?.batchId),
+							"expected unsent batchId format (0)",
+						);
+						assert(
+							batchIdMatchesUnsentFormat(submittedOps[1].metadata?.batchId),
+							"expected unsent batchId format (0)",
+						);
+					} else {
+						assert(submittedOps[0].metadata?.batchId === undefined, "Expected no batchId (0)");
+						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
+					}
 				}),
 			);
 		});
@@ -801,7 +818,6 @@ describe("Runtime", () => {
 			const getMockContextForPendingStateProgressTracking = (): Partial<IContainerContext> => {
 				return {
 					connected: false,
-					clientId: fakeClientId,
 					attachState: AttachState.Attached,
 					deltaManager: new MockDeltaManager(),
 					audience: new MockAudience(),
@@ -880,13 +896,16 @@ describe("Runtime", () => {
 				return runtime as ContainerRuntime;
 			}
 
-			const toggleConnection = (runtime: ContainerRuntime) => {
-				changeConnectionState(runtime, true, fakeClientId);
-				changeConnectionState(runtime, false, fakeClientId);
+			/** Connects with a new clientId and then immediately disconnects, returning that brief connection's clientId */
+			const toggleConnection = (runtime: ContainerRuntime, salt: number) => {
+				const clientId = salt === undefined ? fakeClientId : `${fakeClientId}-${salt}`;
+				changeConnectionState(runtime, true, clientId);
+				changeConnectionState(runtime, false, clientId);
+				return clientId;
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 0);
+				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 1);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
@@ -897,7 +916,7 @@ describe("Runtime", () => {
 
 					for (let i = 0; i < maxReconnects; i++) {
 						addPendingMessage(pendingStateManager);
-						toggleConnection(containerRuntime);
+						toggleConnection(containerRuntime, i);
 					}
 
 					// NOTE: any errors returned by getFirstContainerError() are from a variable set in a mock closeFn function passed
@@ -929,8 +948,8 @@ describe("Runtime", () => {
 					patchRuntime(pendingStateManager);
 					addPendingMessage(pendingStateManager);
 
-					for (let i = 0; i < maxReconnects / 2; i++) {
-						toggleConnection(containerRuntime);
+					for (let i = 0; i < maxReconnects / 2 + 1; i++) {
+						toggleConnection(containerRuntime, i);
 					}
 
 					// The particulars of the setup for this test mean that no errors here indicate the container did not close.
@@ -954,7 +973,7 @@ describe("Runtime", () => {
 
 					for (let i = 0; i < maxReconnects; i++) {
 						addPendingMessage(pendingStateManager);
-						toggleConnection(containerRuntime);
+						toggleConnection(containerRuntime, i);
 					}
 
 					// The particulars of the setup for this test mean that no errors here indicate the container did not close.
@@ -975,7 +994,7 @@ describe("Runtime", () => {
 					patchRuntime(pendingStateManager);
 
 					for (let i = 0; i < maxReconnects; i++) {
-						toggleConnection(containerRuntime);
+						toggleConnection(containerRuntime, i);
 					}
 
 					// The particulars of the setup for this test mean that no errors here indicate the container did not close.
@@ -997,17 +1016,18 @@ describe("Runtime", () => {
 					addPendingMessage(pendingStateManager);
 
 					for (let i = 0; i < maxReconnects; i++) {
-						changeConnectionState(containerRuntime, !containerRuntime.connected, fakeClientId);
+						const clientId = toggleConnection(containerRuntime, i);
 						containerRuntime.process(
 							{
 								type: "op",
-								clientId: "clientId",
-								sequenceNumber: 0,
+								clientId,
+								sequenceNumber: i,
 								contents: {
 									address: "address",
 								},
 								clientSequenceNumber: 0,
-							} as any as ISequencedDocumentMessage,
+								minimumSequenceNumber: 0,
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							true /* local */,
 						);
 					}
@@ -1029,25 +1049,28 @@ describe("Runtime", () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
 
+					let seqNum = 1;
 					for (let i = 0; i < maxReconnects; i++) {
 						addPendingMessage(pendingStateManager);
-						toggleConnection(containerRuntime);
+						toggleConnection(containerRuntime, i);
 						containerRuntime.process(
 							{
 								type: "op",
-								clientId: "a unique, remote clientId",
-								sequenceNumber: 0,
+								clientId: `a unique, remote clientId - ${i}`,
+								sequenceNumber: seqNum++,
+								clientSequenceNumber: 1,
 								contents: {
 									address: "address",
 								},
-							} as any as ISequencedDocumentMessage,
+								minimumSequenceNumber: 0,
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							false /* local */,
 						);
 						containerRuntime.process(
 							{
 								type: "op",
 								clientId: "clientId",
-								sequenceNumber: 0,
+								sequenceNumber: seqNum++,
 								contents: {
 									address: "address",
 									contents: {
@@ -1056,7 +1079,8 @@ describe("Runtime", () => {
 									},
 									type: "chunkedOp",
 								},
-							} as any as ISequencedDocumentMessage,
+								minimumSequenceNumber: 0,
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							true /* local */,
 						);
 					}
@@ -1223,16 +1247,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
 			});
@@ -1247,16 +1268,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					type: MessageType.Operation,
 					contents: JSON.stringify(futureRuntimeMessage),
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				assert.throws(
 					() =>
@@ -1274,16 +1292,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				assert.throws(
 					() =>
@@ -1776,7 +1791,8 @@ describe("Runtime", () => {
 							type: ContainerMessageType.Rejoin,
 							contents: undefined,
 						},
-					} as any as ISequencedDocumentMessage,
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 					true /* local */,
 				);
 				// Advance the clock by the remaining time so that pending ops wait is completed.

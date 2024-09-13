@@ -64,7 +64,7 @@ export class SessionInfoManager {
 		const url = getDiscoverSessionUrl(params);
 		assert(
 			this.sessionInfoMap.has(url) === this.sessionLastDiscoveredMap.has(url),
-			"Session map state mismatch",
+			0xa2d /* Session map state mismatch */,
 		);
 
 		if (session !== undefined) {
@@ -88,7 +88,7 @@ export class SessionInfoManager {
 		const url = getDiscoverSessionUrl(params);
 		assert(
 			this.sessionInfoMap.has(url) && this.sessionLastDiscoveredMap.has(url),
-			"Unexpected discover session URL",
+			0xa2e /* Unexpected discover session URL */,
 		);
 
 		let refreshed = false;
@@ -96,15 +96,17 @@ export class SessionInfoManager {
 			Date.now() - this.sessionLastDiscoveredMap.get(url)! >
 			RediscoverAfterTimeSinceDiscoveryMs;
 		if (this.enableDiscovery && shouldRediscover) {
-			await this.fetchAndUpdateSessionInfo(params).catch(() => {
+			await this.fetchAndUpdateSessionInfo(params).catch((error) => {
 				// Undo discovery time set on failure, so that next check refreshes.
 				this.sessionLastDiscoveredMap.set(url, 0);
+				throw error;
 			});
 			refreshed = true;
 		}
 		return {
 			refreshed,
-			resolvedUrl: this.sessionInfoMap.get(url)!,
+			// ! Shallow copy is important as some mechanisms may rely on object comparison
+			resolvedUrl: { ...this.sessionInfoMap.get(url)! },
 		};
 	}
 

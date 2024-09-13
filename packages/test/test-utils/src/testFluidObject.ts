@@ -190,10 +190,10 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				// The provideEntryPoint callback below always returns FluidDataStoreRuntime, so this cast is safe
-				const dataObject = (await rt.entryPoint.get()) as FluidDataStoreRuntime;
+				// The provideEntryPoint callback below always returns TestFluidObject.
+				const dataObject = await rt.entryPoint.get();
 				assert(
-					dataObject.request !== undefined,
+					dataObject instanceof TestFluidObject,
 					"entryPoint should have been initialized by now",
 				);
 				return dataObject.request(request);

@@ -5,13 +5,12 @@
 
 import {
 	type Context,
-	type FlexFieldSchema,
 	type FlexTreeContext,
 	type FlexTreeField,
 	type FlexTreeSchema,
-	type FlexTreeTypedField,
 	type NodeKeyManager,
 	getTreeContext,
+	type FlexTreeHydratedContext,
 } from "../feature-libraries/index.js";
 import { tryDisposeTreeNode } from "../simple-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../util/index.js";
@@ -61,22 +60,20 @@ export interface ITreeViewFork extends FlexTreeView {
 /**
  * Implementation of FlexTreeView wrapping a ITreeCheckout.
  */
-export class CheckoutFlexTreeView<
-	in out TRoot extends FlexFieldSchema,
-	out TCheckout extends ITreeCheckout = ITreeCheckout,
-> implements FlexTreeView
+export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeCheckout>
+	implements FlexTreeView
 {
 	public readonly context: Context;
-	public readonly flexTree: FlexTreeTypedField<TRoot["kind"]>;
+	public readonly flexTree: FlexTreeField;
 	public constructor(
 		public readonly checkout: TCheckout,
-		public readonly schema: FlexTreeSchema<TRoot>,
+		public readonly schema: FlexTreeSchema,
 		public readonly nodeKeyManager: NodeKeyManager,
 		private readonly onDispose?: () => void,
 	) {
 		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);
 		contextToTreeView.set(this.context, this);
-		this.flexTree = this.context.root as FlexTreeTypedField<TRoot["kind"]>;
+		this.flexTree = this.context.root;
 	}
 
 	public [disposeSymbol](): void {
@@ -88,7 +85,7 @@ export class CheckoutFlexTreeView<
 		this.onDispose?.();
 	}
 
-	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckout & ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<ITreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}
@@ -98,4 +95,4 @@ export class CheckoutFlexTreeView<
  * Maps the context of every {@link CheckoutFlexTreeView} to the view.
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
-export const contextToTreeView = new WeakMap<Context, FlexTreeView>();
+export const contextToTreeView = new WeakMap<FlexTreeHydratedContext, FlexTreeView>();
