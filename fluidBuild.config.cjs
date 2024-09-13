@@ -114,12 +114,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-
-		// The package's local check:exports tasks may use the entrypoint from either CJS or ESM,
-		// therefore we need to build both before running these checks. These checks also depend on the entrypoints being
-		// gnerated, which is done in the api tasks (api-extractor:commonjs and api-extractor:esnext).
 		"check:exports": ["api"],
-
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
