@@ -137,7 +137,6 @@
 		"table": "^6.8.1",
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
-		"unified": "^11.0.5",
 		"unist-util-visit": "^5.0.0"
 	},
 	"devDependencies": {
