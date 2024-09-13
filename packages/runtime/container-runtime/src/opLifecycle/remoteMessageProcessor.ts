@@ -24,7 +24,7 @@ import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 //* TODO: Rename to Inbox?
 
 /** Messages being received as a batch, with details needed to process the batch */
-export interface InboundBatch extends BatchStartInfo {
+interface InboundBatch extends BatchStartInfo {
 	/** Messages in this batch */
 	readonly messages: InboundSequencedContainerRuntimeMessage[];
 }
@@ -100,7 +100,6 @@ export class RemoteMessageProcessor {
 		private readonly opSplitter: OpSplitter,
 		private readonly opDecompressor: OpDecompressor,
 		private readonly opGroupingManager: OpGroupingManager,
-		private readonly returnPartialBatches: boolean = false,
 	) {}
 
 	public get partialMessages(): ReadonlyMap<string, string[]> {
@@ -190,9 +189,8 @@ export class RemoteMessageProcessor {
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
 
-		//* TODO: Actually implement the right semantics based on this.returnPartialBatches.
+		//* TODO: Actually implement the right semantics
 		//* But write tests first, because that's fun :)
-		console.log(this.returnPartialBatches);
 
 		if (!batchEnded) {
 			// batch not yet complete

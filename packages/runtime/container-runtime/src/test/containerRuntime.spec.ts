@@ -73,7 +73,7 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage, BatchStartInfo } from "../opLifecycle/index.js";
+import type { BatchMessage, InboxResult } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -809,21 +809,29 @@ describe("Runtime", () => {
 				return {
 					replayPendingStates: () => {},
 					hasPendingMessages: (): boolean => pendingMessages > 0,
-					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-						return { localAck: false, localOpMetadata: undefined };
-					},
-					processInboundBatch: (batch: BatchStartInfo, _local: boolean) => {
-						return batch.messages.map((message) => ({
+					//* Unused?
+					// processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
+					// 	return { localAck: false, localOpMetadata: undefined };
+					// },
+					processInflux: (inboxResult: InboxResult, _local: boolean) => {
+						const messages =
+							inboxResult.type === "fullBatch"
+								? inboxResult.messages
+								: [inboxResult.nextMessage];
+						const x = messages.map((message) => ({
 							message,
 							localOpMetadata: undefined,
 						}));
+						//* Lint fix (?!)
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+						return x;
 					},
 					get pendingMessagesCount() {
 						return pendingMessages;
 					},
 					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
-				} as unknown as PendingStateManager;
+				} satisfies Partial<PendingStateManager> as any as PendingStateManager;
 			};
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

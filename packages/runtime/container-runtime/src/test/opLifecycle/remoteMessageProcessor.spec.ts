@@ -14,12 +14,13 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
+import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
 import {
 	BatchManager,
 	type BatchMessage,
+	type BatchStartInfo,
 	ensureContentsDeserialized,
 	type IBatch,
-	type InboundBatch,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -41,7 +42,6 @@ describe("RemoteMessageProcessor", () => {
 				},
 				logger,
 			),
-			true /* returnPartialBatches */, //* Test both...
 		);
 	}
 
@@ -109,7 +109,6 @@ describe("RemoteMessageProcessor", () => {
 		grouping: [true, false],
 	});
 
-	//* These just need dual logic for the loop
 	messageGenerationOptions.forEach((option) => {
 		it(`Correctly processes single batch: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
@@ -162,13 +161,10 @@ describe("RemoteMessageProcessor", () => {
 			outboundMessages.push(...batch.messages);
 
 			const messageProcessor = getMessageProcessor();
-			let actualBatch: InboundBatch | undefined;
+			let batchStart: BatchStartInfo | undefined;
+			const inboundMessages: InboundSequencedContainerRuntimeMessage[] = [];
 			let seqNum = 1;
 			for (const message of outboundMessages) {
-				assert(
-					actualBatch === undefined,
-					"actualBatch only should be set when we're done looping",
-				);
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
 					type: MessageType.Operation,
@@ -181,8 +177,36 @@ describe("RemoteMessageProcessor", () => {
 				} as ISequencedDocumentMessage;
 
 				ensureContentsDeserialized(inboundMessage, true, () => {});
-				// actualBatch will remain undefined every time except the last time through the loop
 				const result = messageProcessor.process(inboundMessage, () => {});
+				switch (result?.type) {
+					case "fullBatch":
+						assert(
+							outboundMessages.length === 1,
+							"Expected fullBatch for single-message batch only (includes Grouped Batches)",
+						);
+						batchStart = result.batchStart;
+						inboundMessages.push(...result.messages);
+						break;
+					case "batchStartingMessage":
+						batchStart = result.batchStart;
+						inboundMessages.push(result.nextMessage);
+						break;
+					case "nextBatchMessage":
+						assert(
+							batchStart !== undefined,
+							"batchStart should have been set from a prior message",
+						);
+						inboundMessages.push(result.nextMessage);
+						break;
+					default:
+						// These are leading chunks
+						assert(result === undefined, "unexpected result type");
+						assert(
+							option.compressionAndChunking.chunking,
+							"undefined result only expected with chunking",
+						);
+						break;
+				}
 			}
 
 			const expected = option.grouping
@@ -201,16 +225,15 @@ describe("RemoteMessageProcessor", () => {
 						getProcessedMessage("e", startSeqNum, startSeqNum, false),
 					];
 
-			assert.deepStrictEqual(actualBatch?.messages, expected, "unexpected output");
+			assert.deepStrictEqual(inboundMessages, expected, "unexpected output");
 			assert.equal(
-				actualBatch?.batchStartCsn,
+				batchStart?.batchStartCsn,
 				leadingChunkCount + 1,
 				"unexpected batchStartCsn",
 			);
 		});
 	});
 
-	//* Not sure what should happen here, it points out what about the rest of the InboundBatch info?
 	it("Processes multiple batches", () => {
 		let csn = 1;
 		const batchManager = new BatchManager({
@@ -419,7 +442,6 @@ describe("RemoteMessageProcessor", () => {
 		});
 	});
 
-	//* Single message, don't need to test both configs
 	it("Processes legacy string-content message", () => {
 		const messageProcessor = getMessageProcessor();
 		const contents = {
@@ -434,16 +456,20 @@ describe("RemoteMessageProcessor", () => {
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
 		ensureContentsDeserialized(documentMessage, true, () => {});
-		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
+		const processResult = messageProcessor.process(documentMessage, () => {});
 
+		assert.equal(
+			processResult?.type,
+			"fullBatch",
+			"Single message should yield a 'fullBatch' result",
+		);
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
+		const [inboundMessage] = processResult.messages;
 
-		assert.deepStrictEqual(result.contents, contents.contents);
-		assert.deepStrictEqual(result.type, contents.type);
+		assert.deepStrictEqual(inboundMessage.contents, contents.contents);
+		assert.deepStrictEqual(inboundMessage.type, contents.type);
 	});
 
-	//* Single message, don't need to test both configs
 	it("Don't unpack non-datastore messages", () => {
 		const messageProcessor = getMessageProcessor();
 		const message = {
@@ -453,17 +479,20 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
+		const processResult = messageProcessor.process(documentMessage, () => {});
 
+		assert.equal(
+			processResult?.type,
+			"fullBatch",
+			"Single message should yield a 'fullBatch' result",
+		);
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
+		const [inboundMessage] = processResult.messages;
 
-		assert.deepStrictEqual(result.contents, message.contents);
-		assert.deepStrictEqual(result.type, message.type);
+		assert.deepStrictEqual(inboundMessage.contents, message.contents);
+		assert.deepStrictEqual(inboundMessage.type, message.type);
 	});
 
-	//* Maybe don't need to test both? Might as well though
-	//* Interesting, even if returnPartialBatches is false, for singletons and grouped batches it will still return type: "fullBatch"
 	it("Processing groupedBatch works as expected", () => {
 		const groupedBatch = {
 			type: MessageType.Operation,
@@ -498,7 +527,7 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const inboundBatch = messageProcessor.process(
+		const processResult = messageProcessor.process(
 			groupedBatch as ISequencedDocumentMessage,
 			() => {},
 		);
@@ -528,19 +557,22 @@ describe("RemoteMessageProcessor", () => {
 			},
 		];
 		assert.deepStrictEqual(
-			inboundBatch,
+			processResult,
 			{
+				type: "fullBatch",
 				messages: expected,
-				batchStartCsn: 12,
-				clientId: "CLIENT_ID",
-				batchId: "BATCH_ID",
-				keyMessage: expected[0],
+				batchStart: {
+					batchStartCsn: 12,
+					clientId: "CLIENT_ID",
+					batchId: "BATCH_ID",
+					keyMessage: expected[0],
+				},
+				length: 2,
 			},
 			"unexpected processing of groupedBatch",
 		);
 	});
 
-	//* Maybe don't need to test both? Might as well though
 	it("Processing empty groupedBatch works as expected", () => {
 		const groupedBatch = {
 			type: MessageType.Operation,
@@ -563,11 +595,15 @@ describe("RemoteMessageProcessor", () => {
 		assert.deepStrictEqual(
 			processResult,
 			{
+				type: "fullBatch",
 				messages: [],
-				batchStartCsn: 8,
-				clientId: "CLIENT_ID",
-				batchId: "BATCH_ID",
-				keyMessage: groupedBatch,
+				batchStart: {
+					batchStartCsn: 8,
+					clientId: "CLIENT_ID",
+					batchId: "BATCH_ID",
+					keyMessage: groupedBatch,
+				},
+				length: 0,
 			},
 			"unexpected processing of empty groupedBatch",
 		);

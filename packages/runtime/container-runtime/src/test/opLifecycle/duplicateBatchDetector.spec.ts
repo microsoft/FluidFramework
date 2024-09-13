@@ -62,6 +62,8 @@ describe("DuplicateBatchDetector", () => {
 		);
 	});
 
+	//* TODO: Rename inboundBatch vars throughout
+
 	it("First inbound batch is not a duplicate", () => {
 		const inboundBatch = makeBatch({
 			sequenceNumber: seqNum++,

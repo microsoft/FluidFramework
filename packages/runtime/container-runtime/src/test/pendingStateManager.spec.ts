@@ -165,13 +165,17 @@ describe("Pending State Manager", () => {
 		) =>
 			pendingStateManager.processInflux(
 				{
+					type: "fullBatch",
 					messages: messages as InboundSequencedContainerRuntimeMessage[],
-					batchStartCsn,
-					keyMessage: {
-						sequenceNumber: emptyBatchSequenceNumber,
-					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-					clientId,
-					batchId: resubmittedBatchId,
+					batchStart: {
+						batchStartCsn,
+						keyMessage: {
+							sequenceNumber: emptyBatchSequenceNumber,
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						clientId,
+						batchId: resubmittedBatchId,
+					},
+					length: messages.length, //* ?
 				},
 				true /* local */,
 			);
@@ -558,11 +562,15 @@ describe("Pending State Manager", () => {
 					UnknownContainerRuntimeMessage;
 				pendingStateManager.processInflux(
 					{
+						type: "fullBatch",
 						messages: [inboundMessage],
-						batchStartCsn: 1 /* batchStartCsn */,
-						batchId: undefined,
-						clientId: "clientId",
-						keyMessage: inboundMessage,
+						batchStart: {
+							batchStartCsn: 1 /* batchStartCsn */,
+							batchId: undefined,
+							clientId: "clientId",
+							keyMessage: inboundMessage,
+						},
+						length: 1,
 					},
 					true /* local */,
 				);
