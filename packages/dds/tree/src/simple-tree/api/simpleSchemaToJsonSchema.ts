@@ -137,6 +137,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 
 		properties[key] = {
 			anyOf,
+			description: value.description,
 		};
 		if (value.kind === FieldKind.Required) {
 			required.push(key);
@@ -162,6 +163,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		patternProperties: {
 			"^.*$": {
 				anyOf: allowedTypes,
+				description: undefined, // There isn't currently a way to associate metadata with map value types.
 			},
 		},
 	};

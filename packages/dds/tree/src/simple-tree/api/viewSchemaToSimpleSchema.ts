@@ -129,6 +129,7 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 	const result = {
 		kind: schema.kind,
 		allowedTypes,
+		description: schema.metadata?.description,
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

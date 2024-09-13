@@ -215,6 +215,7 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, 
 // @alpha @sealed
 export interface JsonFieldSchema {
     readonly anyOf: JsonSchemaRef[];
+    readonly description?: string | undefined;
 }
 
 // @alpha @sealed
@@ -263,7 +264,7 @@ export interface JsonSchemaRef {
 export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 
 // @alpha @sealed
-export interface JsonTreeSchema extends JsonFieldSchema {
+export interface JsonTreeSchema extends Omit<JsonFieldSchema, "description"> {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 }
 

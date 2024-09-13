@@ -179,10 +179,12 @@ describe("simpleSchemaToJsonSchema", () => {
 							"foo": {
 								kind: FieldKind.Optional,
 								allowedTypes: new Set<string>(["test.number"]),
+								description: "A number representing the concept of Foo.",
 							},
 							"bar": {
 								kind: FieldKind.Required,
 								allowedTypes: new Set<string>(["test.string"]),
+								description: "A string representing the concept of Bar.",
 							},
 						},
 					},
@@ -203,9 +205,11 @@ describe("simpleSchemaToJsonSchema", () => {
 					properties: {
 						foo: {
 							anyOf: [{ $ref: "#/$defs/test.number" }],
+							description: "A number representing the concept of Foo.",
 						},
 						bar: {
 							anyOf: [{ $ref: "#/$defs/test.string" }],
+							description: "A string representing the concept of Bar.",
 						},
 					},
 					required: ["bar"],

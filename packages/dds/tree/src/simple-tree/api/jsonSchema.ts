@@ -198,6 +198,13 @@ export interface JsonFieldSchema {
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
 	 */
 	readonly anyOf: JsonSchemaRef[];
+
+	/**
+	 * Description of the field.
+	 * @remarks Derived from {@link FieldSchemaMetadata.description}.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-validation#name-title-and-description}
+	 */
+	readonly description?: string | undefined;
 }
 
 /**
@@ -221,7 +228,7 @@ export interface JsonFieldSchema {
  * @sealed
  * @alpha
  */
-export interface JsonTreeSchema extends JsonFieldSchema {
+export interface JsonTreeSchema extends Omit<JsonFieldSchema, "description"> {
 	/**
 	 * The set of definitions reachable from this schema's root.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-re-use-with-defs}
