@@ -555,11 +555,12 @@ The public API of sequence will need to be updated for users to leverage the obl
 `removeRange`:
 
 ```typescript
-/* See {@link SequencePlace} for context */
 class SharedSegmentSequence<TInterval extends IInterval> {
 	public obliterateRange(start: SequencePlace, end: SequencePlace);
 }
 ```
+
+For context, see [sequencePlace.ts](https://github.com/microsoft/FluidFramework/blob/de91c3a6b2671e63d624ce60404e7312f111d1ce/packages/dds/merge-tree/src/sequencePlace.ts).
 
 One interesting alternative is to align the public API of sequence with the idea that there are two conceptual kinds of ranges: slice ranges and set ranges (see the next section
 for details).
