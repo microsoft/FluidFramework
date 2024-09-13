@@ -109,14 +109,14 @@ export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > = FlattenKeys<
 	{
-		readonly [Property in keyof T & string]?: InsertableTreeFieldFromImplicitField<
-			T[Property]
+		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+			T[Property] & string
 		>;
 	} & {
 		// Field does not have a known default, make it required:
-		readonly [Property in keyof T & string as FieldHasDefault<T[Property]> extends false
+		readonly [Property in keyof T as FieldHasDefault<T[Property] & string> extends false
 			? Property
-			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+			: never]: InsertableTreeFieldFromImplicitField<T[Property] & string>;
 	}
 >;
 
