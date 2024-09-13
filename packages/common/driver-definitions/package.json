@@ -115,6 +115,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }
