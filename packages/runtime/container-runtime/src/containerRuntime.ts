@@ -2800,7 +2800,7 @@ export class ContainerRuntime
 		runtimeBatch: boolean,
 	) {
 		const firstMessage = batch[0]?.message;
-		assert(firstMessage !== undefined, "Batch must have at least one message");
+		assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
 		this.scheduleManager.batchBegin(firstMessage);
 
 		let error: unknown;
@@ -2824,7 +2824,7 @@ export class ContainerRuntime
 			throw error;
 		} finally {
 			const lastMessage = batch[batch.length - 1]?.message;
-			assert(lastMessage !== undefined, "Batch must have at least one message");
+			assert(lastMessage !== undefined, 0xa32 /* Batch must have at least one message */);
 			this.scheduleManager.batchEnd(error, lastMessage);
 		}
 	}
