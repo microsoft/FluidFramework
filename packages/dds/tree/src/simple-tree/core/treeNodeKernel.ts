@@ -37,6 +37,7 @@ import { fail } from "../../util/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
+import { SimpleContextSlot, type Context } from "./context.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -134,6 +135,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
 	 *
+	 * @param initialContext - context from when this node was originally crated.
 	 * @param innerNode - When unhydrated/raw or marinated the MapTreeNode. FlexTreeNode when cooked.
 	 * @remarks
 	 * Exactly one kernel per TreeNode should be created.
@@ -142,6 +144,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		public readonly node: TreeNode,
 		public readonly schema: TreeNodeSchema,
 		private innerNode: InnerNode,
+		private readonly initialContext: Context,
 	) {
 		assert(!treeNodeToKernel.has(node), 0xa1a /* only one kernel per node can be made */);
 		treeNodeToKernel.set(node, this);
@@ -157,6 +160,17 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 			);
 			this.hydrate(innerNode.anchorNode);
 		}
+	}
+
+	public get context(): Context {
+		if (this.#hydrated !== undefined) {
+			// This can't be cached on this.#hydrated during hydration since initial tree is hydrated before the context is cached on the anchorSet.
+			return (
+				this.#hydrated?.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
+				fail("missing simple-tree context")
+			);
+		}
+		return this.initialContext;
 	}
 
 	/**
@@ -177,7 +191,6 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 
 		// However, it's fine for an anchor node to rotate through different proxies when the content at that place in the tree is replaced.
 		anchorNode.slots.set(proxySlot, this.node);
-
 		this.#hydrated = {
 			anchorNode,
 			offAnchorNode: new Set([
@@ -362,7 +375,7 @@ export type InnerNode = FlexTreeNode | MapTreeNode;
 /**
  * {@inheritdoc proxyToMapTreeNode}
  */
-const mapTreeNodeToProxy = new WeakMap<MapTreeNode, TreeNode>();
+export const mapTreeNodeToProxy = new WeakMap<MapTreeNode, TreeNode>();
 
 /**
  * An anchor slot which associates an anchor with its corresponding TreeNode, if there is one.
@@ -370,18 +383,13 @@ const mapTreeNodeToProxy = new WeakMap<MapTreeNode, TreeNode>();
  * For this to work, we have to require that there is at most a single view using a given AnchorSet.
  * FlexTree already has this assumption, and we also assume there is a single simple-tree per FlexTree, so this is valid.
  */
-const proxySlot = anchorSlot<TreeNode>();
+export const proxySlot = anchorSlot<TreeNode>();
 
 /**
- * Retrieves the proxy associated with the given flex node via {@link setInnerNode}, if any.
+ * Retrieves the node associated with the given MapTreeNode node if any.
  */
-export function tryGetCachedTreeNode(flexNode: InnerNode): TreeNode | undefined {
-	if (isMapTreeNode(flexNode)) {
-		// Unhydrated case
-		return mapTreeNodeToProxy.get(flexNode);
-	}
-	// Hydrated case
-	return flexNode.anchorNode.slots.get(proxySlot);
+export function tryGetTreeNodeFromMapNode(flexNode: MapTreeNode): TreeNode | undefined {
+	return mapTreeNodeToProxy.get(flexNode);
 }
 
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
@@ -390,4 +398,17 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 		const kernel = getKernel(treeNode);
 		kernel.dispose();
 	}
+}
+
+export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): TreeNodeSchema {
+	assert(
+		flexNode.context.isHydrated(),
+		"getTreeNodeSchemaFromHydratedFlexNode only allows hydrated flex tree nodes",
+	);
+
+	const context =
+		flexNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
+		fail("Missing SimpleContextSlot");
+
+	return context.schema.get(flexNode.schema) ?? fail("Missing schema");
 }

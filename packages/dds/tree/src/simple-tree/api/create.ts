@@ -16,7 +16,7 @@ import type {
 	FieldSchema,
 	FieldKind,
 } from "../schemaTypes.js";
-import type { Unhydrated } from "../core/index.js";
+import { getOrCreateNodeFromInnerNode, type Unhydrated } from "../core/index.js";
 import {
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
@@ -26,7 +26,6 @@ import {
 	UnhydratedContext,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
 import { getOrCreateMapTreeNode, isFieldInSchema } from "../../feature-libraries/index.js";
 import { toFlexSchema } from "../toFlexSchema.js";
 import { inSchemaOrThrow, mapTreeFromNodeData, type InsertableContent } from "../toMapTree.js";
@@ -178,7 +177,6 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 		mapTree,
 	);
 
-	// TODO: ensure this works for InnerNodes to create unhydrated nodes
-	const result = getOrCreateNodeFromFlexTreeNode(mapTreeNode);
+	const result = getOrCreateNodeFromInnerNode(mapTreeNode);
 	return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 }

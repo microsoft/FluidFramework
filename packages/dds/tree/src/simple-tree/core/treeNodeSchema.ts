@@ -154,6 +154,18 @@ export interface TreeNodeSchemaCore<
 	 * Setting this to false adjusts the insertable types to disallow cases which could be impacted by these inconsistencies.
 	 */
 	readonly implicitlyConstructable: ImplicitlyConstructable;
+
+	/**
+	 * Schema children of this node can have.
+	 * @remarks
+	 * Some kinds of nodes may have additional restrictions on children:
+	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this set.
+	 */
+	readonly childTypes: ReadonlySet<TreeNodeSchema>;
 }
 
 /**

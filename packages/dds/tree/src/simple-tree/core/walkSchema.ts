@@ -3,16 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { type TreeNodeSchema, NodeKind } from "./core/index.js";
-import { LeafNodeSchema } from "./leafNodeSchema.js";
-import { isObjectNodeSchema } from "./objectNodeTypes.js";
-import {
-	type ImplicitAllowedTypes,
-	normalizeAllowedTypes,
-	type ImplicitFieldSchema,
-	normalizeFieldSchema,
-} from "./schemaTypes.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 export function walkNodeSchema(
 	schema: TreeNodeSchema,
@@ -23,20 +14,9 @@ export function walkNodeSchema(
 		return;
 	}
 	visitedSet.add(schema);
-	if (schema instanceof LeafNodeSchema) {
-		// nothing to do
-	} else if (isObjectNodeSchema(schema)) {
-		for (const field of schema.fields.values()) {
-			walkFieldSchema(field, visitor, visitedSet);
-		}
-	} else {
-		assert(
-			schema.kind === NodeKind.Array || schema.kind === NodeKind.Map,
-			0x9b3 /* invalid schema */,
-		);
-		const childTypes = schema.info as ImplicitAllowedTypes;
-		walkAllowedTypes(normalizeAllowedTypes(childTypes), visitor, visitedSet);
-	}
+
+	walkAllowedTypes(schema.childTypes, visitor, visitedSet);
+
 	// This visit is done at the end so the traversal order is most inner types first.
 	// This was picked since when fixing errors,
 	// working from the inner types out to the types that use them will probably go better than the reverse.
@@ -44,28 +24,20 @@ export function walkNodeSchema(
 	visitor.node?.(schema);
 }
 
-export function walkFieldSchema(
-	schema: ImplicitFieldSchema,
-	visitor: SchemaVisitor,
-	visitedSet: Set<TreeNodeSchema> = new Set(),
-): void {
-	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor, visitedSet);
-}
-
 export function walkAllowedTypes(
 	allowedTypes: Iterable<TreeNodeSchema>,
 	visitor: SchemaVisitor,
-	visitedSet: Set<TreeNodeSchema>,
+	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
 	for (const childType of allowedTypes) {
 		walkNodeSchema(childType, visitor, visitedSet);
 	}
 	visitor.allowedTypes?.(allowedTypes);
 }
+
 /**
  * Callbacks for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
  */
-
 export interface SchemaVisitor {
 	/**
 	 * Called once for each node schema.
