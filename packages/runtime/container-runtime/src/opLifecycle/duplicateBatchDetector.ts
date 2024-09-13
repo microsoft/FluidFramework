@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { getEffectiveBatchId } from "./batchManager.js";
-import { type InboundBatch } from "./remoteMessageProcessor.js";
+import { type BatchStartInfo } from "./remoteMessageProcessor.js";
 
 /**
  * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
@@ -25,9 +25,9 @@ export class DuplicateBatchDetector {
 	 * @remarks - We also use the minimumSequenceNumber to clear out old batchIds that are no longer at risk for duplicates.
 	 */
 	public processInboundBatch(
-		inboundBatch: InboundBatch,
+		batchStart: BatchStartInfo,
 	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false } {
-		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.keyMessage;
+		const { sequenceNumber, minimumSequenceNumber } = batchStart.keyMessage;
 
 		// Glance at this batch's MSN. Any batchIds we're tracking with a lower sequence number are now safe to forget.
 		// Why? Because any other client holding the same batch locally would have seen the earlier batch and closed before submitting its duplicate.
@@ -37,7 +37,7 @@ export class DuplicateBatchDetector {
 		// the original batch (not resubmitted, so no batchId) arrives in parallel with a resubmitted batch.
 		// In the presence of typical network conditions, this would not be possible
 		// (the original batch should roundtrip WAY before another container could rehydrate, connect, and resubmit)
-		const batchId = getEffectiveBatchId(inboundBatch);
+		const batchId = getEffectiveBatchId(batchStart);
 
 		// Check this batch against the tracked batchIds to see if it's a duplicate
 		if (this.batchIdsAll.has(batchId)) {

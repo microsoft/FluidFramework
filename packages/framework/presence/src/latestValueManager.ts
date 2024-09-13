@@ -110,15 +110,15 @@ class LatestValueManagerImpl<T, Key extends string>
 	public clients(): ISessionClient[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		return Object.keys(allKnownStates.states)
-			.filter((clientId) => clientId !== allKnownStates.self)
-			.map((clientId) => this.datastore.lookupClient(clientId));
+			.filter((clientSessionId) => clientSessionId !== allKnownStates.self)
+			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
 	}
 
 	public clientValue(client: ISessionClient): LatestValueData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientId = client.currentClientId();
-		if (clientId in allKnownStates.states) {
-			const { value, rev: revision } = allKnownStates.states[clientId];
+		const clientSessionId = client.sessionId;
+		if (clientSessionId in allKnownStates.states) {
+			const { value, rev: revision } = allKnownStates.states[clientSessionId];
 			return { value, metadata: { revision, timestamp: Date.now() } };
 		}
 		throw new Error("No entry for clientId");
@@ -130,14 +130,14 @@ class LatestValueManagerImpl<T, Key extends string>
 		value: InternalTypes.ValueRequiredState<T>,
 	): void {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientId = client.currentClientId();
-		if (clientId in allKnownStates.states) {
-			const currentState = allKnownStates.states[clientId];
+		const clientSessionId = client.sessionId;
+		if (clientSessionId in allKnownStates.states) {
+			const currentState = allKnownStates.states[clientSessionId];
 			if (currentState.rev >= value.rev) {
 				return;
 			}
 		}
-		this.datastore.update(this.key, clientId, value);
+		this.datastore.update(this.key, clientSessionId, value);
 		this.events.emit("updated", {
 			client,
 			value: value.value,
