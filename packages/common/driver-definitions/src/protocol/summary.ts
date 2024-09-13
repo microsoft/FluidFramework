@@ -98,6 +98,9 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * Special characters include '/'. '/' is used as a separator between different parts of the path as a way to traverse
  * different nodes in the previous summary/snapshot tree.
  *
+ * Note, our algorithms use encodeURIComponent and decodeURIComponent to handle special characters in the path. If a string
+ * causes this path to fail, the id will be invalid.
+ *
  * @example
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
