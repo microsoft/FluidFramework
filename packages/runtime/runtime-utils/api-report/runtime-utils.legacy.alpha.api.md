@@ -38,7 +38,7 @@ export class RequestParser implements IRequest {
     createSubRequest(startingPathIndex: number): IRequest;
     static getPathParts(url: string): readonly string[];
     // (undocumented)
-    get headers(): IRequestHeader | undefined;
+    readonly headers?: IRequestHeader;
     isLeaf(elements: number): boolean;
     get pathParts(): readonly string[];
     // (undocumented)

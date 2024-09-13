@@ -37,6 +37,7 @@ module.exports = {
 		},
 		"build": {
 			dependsOn: [
+				"check:format",
 				"compile",
 				"lint",
 				"build:api-reports",
@@ -55,14 +56,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: [
-				"check:format",
-				"eslint",
-				"good-fences",
-				"depcruise",
-				"check:exports",
-				"check:release-tags",
-			],
+			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -222,7 +216,7 @@ module.exports = {
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
-			"packages/common/client-utils/src/cjs/package.json",
+			"packages/framework/presence/src/cjs/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {

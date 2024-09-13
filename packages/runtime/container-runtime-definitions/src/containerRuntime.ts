@@ -8,7 +8,6 @@ import type { IDeltaManager } from "@fluidframework/container-definitions/intern
 import type {
 	FluidObject,
 	IEventProvider,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
@@ -40,6 +39,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
  * Events emitted by {@link IContainerRuntime}.
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
@@ -49,6 +49,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 /**
  * @legacy
  * @alpha
+ * @sealed
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 	IEventProvider<IContainerRuntimeEvents>;
@@ -57,6 +58,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
@@ -74,14 +76,6 @@ export interface IContainerRuntime
 	 * Indicates the attachment state of the container to a host service.
 	 */
 	readonly attachState: AttachState;
-
-	/**
-	 * Returns the aliased data store's entryPoint, given the alias.
-	 * @param alias - The alias for the data store.
-	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
-	 * Returns undefined if no data store has been assigned the given alias.
-	 */
-	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Returns true if document is dirty, i.e. there are some pending local changes that
