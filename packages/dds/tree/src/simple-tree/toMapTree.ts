@@ -177,7 +177,7 @@ function nodeDataToMapTree(
 		}
 	}
 
-	assert(!isTreeNode(data), "data without an inner node cannot be TreeNode");
+	assert(!isTreeNode(data), 0xa23 /* data without an inner node cannot be TreeNode */);
 
 	const schema = getType(data, allowedTypes);
 

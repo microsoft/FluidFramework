@@ -52,7 +52,7 @@ import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
  * @privateRemarks
  * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
- * @sealed @public
+ * @system @sealed @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,

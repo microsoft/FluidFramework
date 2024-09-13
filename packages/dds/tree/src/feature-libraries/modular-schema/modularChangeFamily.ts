@@ -87,6 +87,7 @@ import type {
 	NodeId,
 	TupleBTree,
 } from "./modularChangeTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2470,15 +2471,20 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public buildTrees(
 		firstId: ChangesetLocalId,
 		content: ITreeCursorSynchronous,
+		idCompressor?: IIdCompressor,
 	): GlobalEditDescription {
 		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
 			return { type: "global" };
 		}
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
+		const chunkCompressor = {
+			policy: defaultChunkPolicy,
+			idCompressor,
+		};
 		const chunk =
 			content.mode === CursorLocationType.Fields
-				? chunkFieldSingle(content, defaultChunkPolicy)
-				: chunkTree(content, defaultChunkPolicy);
+				? chunkFieldSingle(content, chunkCompressor)
+				: chunkTree(content, chunkCompressor);
 		builds.set([undefined, firstId], chunk);
 
 		return {

@@ -33,7 +33,7 @@ export type TreeNodeSchema<
  * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
  * @privateRemarks
  * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface TreeNodeSchemaNonClass<
 	out Name extends string = string,

@@ -5,8 +5,8 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { ValueSchema } from "../core/index.js";
-import { getOrCreate } from "../util/index.js";
+import { ValueSchema } from "../../core/index.js";
+import { getOrCreate } from "../../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -19,7 +19,7 @@ import type {
 	JsonTreeSchema,
 	JsonLeafSchemaType,
 } from "./jsonSchema.js";
-import { FieldKind } from "./schemaTypes.js";
+import { FieldKind } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
@@ -28,7 +28,7 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { NodeKind } from "./core/index.js";
+import { NodeKind } from "../core/index.js";
 
 /**
  * Generates a JSON Schema representation from a simple tree schema.
