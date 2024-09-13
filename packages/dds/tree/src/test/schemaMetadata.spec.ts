@@ -217,7 +217,11 @@ describe.only("Schema Metadata example patterns", () => {
 		}) {}
 
 		class Note extends schemaFactory.object("Note", {
-			position: schemaFactory.required(Point, { metadata: { searchHidden: true } }),
+			position: schemaFactory.required(Point, {
+				metadata: {
+					description: "The top-left corner of the note.",
+				},
+			}),
 			width: schemaFactory.required(schemaFactory.number, {
 				metadata: { numberType: NumberType.Float },
 			}),

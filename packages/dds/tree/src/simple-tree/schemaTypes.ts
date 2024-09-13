@@ -100,7 +100,7 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
  *
  * @public
  */
-export interface FieldProps<TMetadata = unknown> {
+export interface FieldProps<TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -206,12 +206,37 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
 }
 
 /**
+ * Default field schema metadata shape.
+ *
+ * @remarks
+ *
+ * All properties are strictly optional.
+ * These particular properties exist both as an example of what kinds of data can be associated with a field,
+ * and may also be used by the system and related tooling in some cases.
+ *
+ * @sealed
+ * @public
+ */
+export interface FieldSchemaMetadata extends Record<string, unknown> {
+	/**
+	 * The description of the field.
+	 *
+	 * @remarks
+	 *
+	 * If provided, will be used by the system in scenarios where a description of the field is useful.
+	 * E.g., when converting a node schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * used as the `description` field.
+	 */
+	description?: string | undefined;
+}
+
+/**
  * Package internal construction API.
  */
 export let createFieldSchema: <
 	Kind extends FieldKind = FieldKind,
 	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	TMetadata = unknown,
+	TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata,
 >(
 	kind: Kind,
 	allowedTypes: Types,
@@ -232,13 +257,13 @@ export let createFieldSchema: <
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	out TMetadata = unknown,
+	TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata,
 > {
 	static {
 		createFieldSchema = <
 			Kind2 extends FieldKind = FieldKind,
 			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-			TMetadata2 = unknown,
+			TMetadata2 extends FieldSchemaMetadata = FieldSchemaMetadata,
 		>(
 			kind: Kind2,
 			allowedTypes: Types2,
