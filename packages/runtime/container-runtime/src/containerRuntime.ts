@@ -1340,7 +1340,7 @@ export class ContainerRuntime
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
-	private readonly duplicateBatchDetector: DuplicateBatchDetector;
+	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1620,8 +1620,6 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		this.duplicateBatchDetector = new DuplicateBatchDetector();
-
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
@@ -1674,6 +1672,13 @@ export class ContainerRuntime
 			const error = new UsageError("Offline mode is only supported in turn-based mode");
 			this.closeFn(error);
 			throw error;
+		}
+
+		// DuplicateBatchDetection is only enabled if Offline Load is enabled
+		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
+		// Don't waste resources doing so if not needed.
+		if (this.offlineEnabled) {
+			this.duplicateBatchDetector = new DuplicateBatchDetector();
 		}
 
 		if (context.attachState === AttachState.Attached) {
@@ -2711,8 +2716,8 @@ export class ContainerRuntime
 				return;
 			}
 
-			const result = this.duplicateBatchDetector.processInboundBatch(inboundBatch);
-			if (result.duplicate) {
+			const result = this.duplicateBatchDetector?.processInboundBatch(inboundBatch);
+			if (result?.duplicate) {
 				const error = new DataCorruptionError(
 					"Duplicate batch - The same batch was sequenced twice",
 					{ batchId: inboundBatch.batchId },
