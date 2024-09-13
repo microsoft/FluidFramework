@@ -4,8 +4,9 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { Context, TreeStatus } from "../feature-libraries/index.js";
+import { TreeStatus } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
@@ -324,9 +325,7 @@ export interface RunTransaction {
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the public `Tree` export.
- * @privateRemarks
- * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface TreeApi extends TreeNodeApi {
 	/**
@@ -436,8 +435,11 @@ export function runTransaction<
 		const node = treeOrNode as TNode;
 		const t = transaction as (node: TNode) => TResult | typeof rollback;
 		const context = getOrCreateInnerNode(node).context;
-		// TODO: AB#14628: this can fail for unhydrated nodes.
-		assert(context instanceof Context, 0x901 /* Unsupported context */);
+		if (context.isHydrated() === false) {
+			throw new UsageError(
+				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
+			);
+		}
 		const treeView =
 			contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
 

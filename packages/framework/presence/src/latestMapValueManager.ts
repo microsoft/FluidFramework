@@ -182,20 +182,6 @@ export interface ValueMap<K extends string | number, V> {
 }
 
 /**
- * @sealed
- * @alpha
- */
-export interface MapValueState<T> {
-	rev: number;
-	items: {
-		// Caution: any particular item may or may not exist
-		// Typescript does not support absent keys without forcing type to also be undefined.
-		// See https://github.com/microsoft/TypeScript/issues/42810.
-		[name: string | number]: InternalTypes.ValueOptionalState<T>;
-	};
-}
-
-/**
  * Value manager that provides a `Map` of latest known values from this client to
  * others and read access to their values.
  * Entries in the map may vary over time and by client, but all values are expected to
@@ -254,7 +240,7 @@ export function LatestMap<
 	controls?: LatestValueControls,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
-	MapValueState<T>,
+	InternalTypes.MapValueState<T>,
 	LatestMapValueManager<T, Keys>
 > {
 	throw new Error("Method not implemented.");
