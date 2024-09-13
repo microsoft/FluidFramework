@@ -95,7 +95,8 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * Path to a summary tree object from the last successful summary indicating the summary object hasn't
  * changed since it was uploaded.
  *
- * Special characters include "/"
+ * Special characters include '/'. '/' is used as a separator between different parts of the path as a way to traverse
+ * different nodes in the previous summary/snapshot tree.
  *
  * @example
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
