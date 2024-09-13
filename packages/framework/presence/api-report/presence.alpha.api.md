@@ -8,7 +8,7 @@
 export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
 
 // @alpha
-export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): Promise<IPresence>;
+export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): IPresence;
 
 // @alpha
 export type ClientSessionId = string;
