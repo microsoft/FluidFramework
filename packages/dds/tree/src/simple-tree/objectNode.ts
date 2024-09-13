@@ -51,7 +51,7 @@ import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * Helper used to produce types for object nodes.
- * @public
+ * @system @public
  */
 export type ObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
@@ -82,7 +82,7 @@ export type TreeObjectNode<
  * TODO: Account for field schemas with default value providers.
  * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
  *
- * @public
+ * @system @public
  */
 export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
 	FieldKind.Optional | FieldKind.Identifier
@@ -94,6 +94,8 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  * Helper used to produce types for:
  *
  * 1. Insertable content which can be used to construct an object node.
+ * In this case, only own properties are considered.
+ * This reduces the risk of incorrectly interpreting data at the cost of occasionally requiring users to convert data into a compatible format.
  *
  * 2. Insertable content which is an unhydrated object node.
  *
@@ -101,7 +103,7 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  *
  * @privateRemarks TODO: consider separating these cases into different types.
  *
- * @public
+ * @system @public
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,

@@ -52,6 +52,22 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type SimpleTreeSchema,
+	type JsonSchemaId,
+	type JsonSchemaType,
+	type JsonObjectNodeSchema,
+	type JsonArrayNodeSchema,
+	type JsonMapNodeSchema,
+	type JsonLeafNodeSchema,
+	type JsonSchemaRef,
+	type JsonRefPath,
+	type JsonNodeSchema,
+	type JsonNodeSchemaBase,
+	type JsonTreeSchema,
+	type JsonFieldSchema,
+	type JsonLeafSchemaType,
+	getJsonSchema,
+	getSimpleSchema,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -111,24 +127,6 @@ export {
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-export type { SimpleTreeSchema } from "./simpleSchema.js";
-export {
-	type JsonSchemaId,
-	type JsonSchemaType,
-	type JsonObjectNodeSchema,
-	type JsonArrayNodeSchema,
-	type JsonMapNodeSchema,
-	type JsonLeafNodeSchema,
-	type JsonSchemaRef,
-	type JsonRefPath,
-	type JsonNodeSchema,
-	type JsonNodeSchemaBase,
-	type JsonTreeSchema,
-	type JsonFieldSchema,
-	type JsonLeafSchemaType,
-} from "./jsonSchema.js";
-export { getJsonSchema } from "./getJsonSchema.js";
-export { getSimpleSchema } from "./getSimpleSchema.js";
 export { toStoredSchema, getStoredSchema, getFlexSchema } from "./toFlexSchema.js";
 export {
 	numberSchema,

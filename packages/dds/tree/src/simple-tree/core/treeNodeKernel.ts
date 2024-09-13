@@ -167,8 +167,8 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	 * Cleans up mappings to {@link MapTreeNode} - it is assumed that they are no longer needed once the proxy has an anchor node.
 	 */
 	public hydrate(anchorNode: AnchorNode): void {
-		assert(!this.disposed, "cannot hydrate a disposed node");
-		assert(this.#hydrated === undefined, "hydration should only happen once");
+		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
+		assert(this.#hydrated === undefined, 0xa2b /* hydration should only happen once */);
 
 		// If the this node is raw and thus has a MapTreeNode, forget it:
 		if (isMapTreeNode(this.innerNode)) {
@@ -206,7 +206,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	}
 
 	public isHydrated(): boolean {
-		assert(!this.disposed, "cannot use a disposed node");
+		assert(!this.disposed, 0xa2c /* cannot use a disposed node */);
 		return this.#hydrated !== undefined;
 	}
 

@@ -89,7 +89,7 @@
 		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.2.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/nconf": "^0.10.0",
 		"@types/node": "^18.19.0",
@@ -107,6 +107,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

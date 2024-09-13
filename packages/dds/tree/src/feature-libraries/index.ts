@@ -203,6 +203,7 @@ export {
 	type FlexTreeSequenceField,
 	Skip,
 	type FlexTreeContext,
+	type FlexTreeHydratedContext,
 	type FlexTreeTypedField,
 	type FlexTreeEntity,
 	type FlexTreeField,
