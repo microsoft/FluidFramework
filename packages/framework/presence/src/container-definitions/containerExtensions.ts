@@ -89,7 +89,7 @@ export interface IExtensionRuntime {
 	 * @param content - Custom content of the signal. Should be a JSON serializable object or primitive via {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 *
-	 * Upon reciept of signal, {@link IContainerExtension.processSignal} will called with the same
+	 * Upon receipt of signal, {@link IContainerExtension.processSignal} will be called with the same
 	 * address, type, and content (less any non-{@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}-able data).
 	 */
 	submitAddressedSignal<T>(
@@ -129,13 +129,13 @@ export type ContainerExtensionFactory<T, TContext extends unknown[]> = new (
  *
  * @remarks
  * A string known to all clients working with a certain ContainerExtension and unique
- * among ContainerExtensions. Recommend using specifying concatenation of: type of
- * unique identifier, `:` (required), and unique identifier.
+ * among ContainerExtensions. Not `/` may be used in the string. Recommend using
+ * concatenation of: type of unique identifier, `:` (required), and unique identifier.
  *
  * @example Examples
  * ```typescript
  *   "guid:g0fl001d-1415-5000-c00l-g0fa54g0b1g1"
- *   "@foo-cope/bar:v1"
+ *   "name:@foo-scope_bar:v1"
  * ```
  *
  * @internal

@@ -20,15 +20,15 @@ import { createPresenceManager } from "./presenceManager.js";
 class PresenceManagerDataObject extends LoadableFluidObject {
 	// Creation of presence manager is deferred until first acquisition to avoid
 	// instantiations and stand-up by Summarizer that has no actual use.
-	private _psm: IPresence | undefined;
+	private _presenceManager: IPresence | undefined;
 
-	public psm(): IPresence {
-		if (!this._psm) {
+	public presenceManager(): IPresence {
+		if (!this._presenceManager) {
 			// TODO: investigate if ContainerExtensionStore (path-based address routing for
 			// Signals) is readily detectable here and use that presence manager directly.
-			this._psm = createPresenceManager(this.runtime);
+			this._presenceManager = createPresenceManager(this.runtime);
 		}
-		return this._psm;
+		return this._presenceManager;
 	}
 }
 
@@ -94,7 +94,7 @@ export async function acquirePresenceViaDataObject(
 	fluidLoadable: ExperimentalPresenceDO,
 ): Promise<IPresence> {
 	if (fluidLoadable instanceof PresenceManagerDataObject) {
-		return fluidLoadable.psm();
+		return fluidLoadable.presenceManager();
 	}
 
 	throw new Error("Incompatible loadable; make sure to use ExperimentalPresenceManager");

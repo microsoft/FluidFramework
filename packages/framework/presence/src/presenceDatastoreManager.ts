@@ -247,6 +247,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 		if (local) {
 			const deliveryDelta = received - message.content.sendTimestamp;
+			// Limit returnedMessages count to 256 such that newest message
+			// always contributes at least 1/256th to the average. Older
+			// messages have more weight, but that diminishes as new messages
+			// contribute.
 			this.returnedMessages = Math.min(this.returnedMessages + 1, 256);
 			this.averageLatency =
 				(this.averageLatency * (this.returnedMessages - 1) + deliveryDelta) /
