@@ -16,10 +16,7 @@ import {
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import {
-	IThrottlingWarning,
-	type ISignalEnvelope,
-} from "@fluidframework/core-interfaces/internal";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -496,7 +493,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 			this.handler.processSignal({
 				clientId: message.clientId,
-				content: JSON.parse(message.content as string) as ISignalEnvelope,
+				content: JSON.parse(message.content as string),
 				targetClientId: message.targetClientId,
 			});
 		});

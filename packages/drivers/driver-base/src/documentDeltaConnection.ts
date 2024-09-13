@@ -357,7 +357,9 @@ export class DocumentDeltaConnection
 			}
 			this.emitMessages("submitSignal", [signal]);
 		} else if (targetClientId !== undefined) {
-			throw new UsageError("Sending signals to specific client ids is not supported.");
+			throw new UsageError(
+				"Sending signals to specific client ids is not supported with this service.",
+			);
 		} else {
 			this.emitMessages("submitSignal", [[content]]);
 		}
