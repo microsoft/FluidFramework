@@ -25,7 +25,13 @@ const slugger = new GithubSlugger();
 export function addHeadingLinks(): (tree: Node) => void {
 	return (tree: Node): void => {
 		visit(tree, "heading", (node: Heading) => {
-			if (node.children?.length > 0 && node.children[0].type === "text") {
+			if (
+				node.children?.length > 0 &&
+				// This check ensures that we don't add links to headings that already have them. In such cases the first child
+				// node's type will be html, not text. Note that this check could ignore some node types other than text that
+				// would be fine to add headings to, but we've not come across any such cases.
+				node.children[0].type === "text"
+			) {
 				// Calling toString on the whole node ensures that embedded nodes (e.g. formatted text in the heading) are
 				// included in the slugged string.
 				const slug = slugger.slug(toString(node));
