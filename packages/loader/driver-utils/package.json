@@ -169,6 +169,10 @@
 			},
 			"ClassStatics_PrefetchDocumentStorageService": {
 				"backCompat": false
+			},
+			"Enum_MessageType2": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		},
 		"entrypoint": "internal"

@@ -179,31 +179,6 @@ declare type old_as_current_for_Class_LocationRedirectionError = requireAssignab
 declare type current_as_old_for_Class_LocationRedirectionError = requireAssignableTo<TypeOnly<current.LocationRedirectionError>, TypeOnly<old.LocationRedirectionError>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocationRedirectionError": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocationRedirectionError = requireAssignableTo<TypeOnly<typeof current.LocationRedirectionError>, TypeOnly<typeof old.LocationRedirectionError>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedEnum_MessageType2": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedEnum_MessageType2": {"backCompat": false}
- */
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -564,6 +539,7 @@ declare type current_as_old_for_ClassStatics_UsageError = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Enum_MessageType2": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Enum_MessageType2 = requireAssignableTo<TypeOnly<old.MessageType2>, TypeOnly<current.MessageType2>>
 
 /*
@@ -573,6 +549,7 @@ declare type old_as_current_for_Enum_MessageType2 = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Enum_MessageType2": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_MessageType2 = requireAssignableTo<TypeOnly<current.MessageType2>, TypeOnly<old.MessageType2>>
 
 /*
