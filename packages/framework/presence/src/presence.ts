@@ -47,6 +47,15 @@ export interface ISessionClient<
 }
 
 /**
+ * Utility type limiting to a specific session client. (A session client with
+ * a specific connection id - not just any connection id.)
+ *
+ * @internal
+ */
+export type SpecificSessionClient<SpecificClientId extends ConnectedClientId> =
+	string extends SpecificClientId ? never : ISessionClient<SpecificClientId>;
+
+/**
  * @sealed
  * @alpha
  */
@@ -122,6 +131,7 @@ export interface IPresence {
 	 * Acquires a PresenceStates workspace from store or adds new one.
 	 *
 	 * @param workspaceAddress - Address of the requested PresenceStates Workspace
+	 * @param requestedContent - Requested states for the workspace
 	 * @returns A PresenceStates workspace
 	 */
 	getStates<StatesSchema extends PresenceStatesSchema>(
@@ -133,6 +143,7 @@ export interface IPresence {
 	 * Acquires a Notifications workspace from store or adds new one.
 	 *
 	 * @param workspaceAddress - Address of the requested Notifications Workspace
+	 * @param requestedContent - Requested notifications for the workspace
 	 * @returns A Notifications workspace
 	 */
 	getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(

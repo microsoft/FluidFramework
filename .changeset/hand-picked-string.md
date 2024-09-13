@@ -1,4 +1,9 @@
 ---
+# This metadata needs to be removed before running generate:changelog
+"@fluid-experimental/property-shared-tree-interop": "minor"
+"@fluid-experimental/property-binder": "minor"
+"@fluid-experimental/property-proxy": "minor"
+"@fluid-experimental/property-inspector-table": "minor"
 ---
 ---
 "section": "other"

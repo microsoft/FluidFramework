@@ -143,7 +143,7 @@ describe("DuplicateBatchDetector", () => {
 		assert.deepEqual(
 			[...detector.batchIdsAll].sort(),
 			["batch1", "batch2"],
-			"Unexpected batchIds (after 2)",
+			"Incorrect batchIds (after 2)",
 		);
 
 		detector.processInboundBatch(inboundBatch3);
@@ -151,7 +151,7 @@ describe("DuplicateBatchDetector", () => {
 		assert.deepEqual(
 			[...detector.batchIdsAll].sort(),
 			["batch2", "batch3"],
-			"Unexpected batchIds (after 3)",
+			"Incorrect batchIds (after 3)",
 		);
 	});
 });
