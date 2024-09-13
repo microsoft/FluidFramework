@@ -69,11 +69,12 @@ import {
 import {
 	ContainerMessageType,
 	type ContainerRuntimeGCMessage,
+	type InboundSequencedContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage, InboxResult } from "../opLifecycle/index.js";
+import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -809,22 +810,16 @@ describe("Runtime", () => {
 				return {
 					replayPendingStates: () => {},
 					hasPendingMessages: (): boolean => pendingMessages > 0,
-					//* Unused?
-					// processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-					// 	return { localAck: false, localOpMetadata: undefined };
-					// },
-					processInflux: (inboxResult: InboxResult, _local: boolean) => {
+					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {
 						const messages =
-							inboxResult.type === "fullBatch"
-								? inboxResult.messages
-								: [inboxResult.nextMessage];
-						const x = messages.map((message) => ({
+							inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
+						return messages.map<{
+							message: InboundSequencedContainerRuntimeMessage;
+							localOpMetadata?: unknown;
+						}>((message) => ({
 							message,
 							localOpMetadata: undefined,
 						}));
-						//* Lint fix (?!)
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-						return x;
 					},
 					get pendingMessagesCount() {
 						return pendingMessages;

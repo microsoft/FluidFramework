@@ -12,7 +12,7 @@ import { DuplicateBatchDetector } from "../../opLifecycle/duplicateBatchDetector
 import type { BatchStartInfo } from "../../opLifecycle/index.js";
 
 /**
- * Helper function to create (enough of) an BatchStartInfo for testing.
+ * Helper function to create (enough of) a BatchStartInfo for testing.
  * Inbound batch may have explicit batchId, or merely clientId and batchStartCsn and batchId must be computed - allow either as inputs
  */
 function makeBatch({
@@ -61,8 +61,6 @@ describe("DuplicateBatchDetector", () => {
 			"Invariant: batchIdsAll and batchIdsBySeqNum should be in sync",
 		);
 	});
-
-	//* TODO: Rename inboundBatch vars throughout
 
 	it("First inbound batch is not a duplicate", () => {
 		const inboundBatch = makeBatch({

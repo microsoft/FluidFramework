@@ -163,7 +163,7 @@ describe("Pending State Manager", () => {
 			emptyBatchSequenceNumber?: number,
 			resubmittedBatchId?: string,
 		) =>
-			pendingStateManager.processInflux(
+			pendingStateManager.processInboundMessages(
 				{
 					type: "fullBatch",
 					messages: messages as InboundSequencedContainerRuntimeMessage[],
@@ -175,7 +175,7 @@ describe("Pending State Manager", () => {
 						clientId,
 						batchId: resubmittedBatchId,
 					},
-					length: messages.length, //* ?
+					length: messages.length,
 				},
 				true /* local */,
 			);
@@ -560,7 +560,7 @@ describe("Pending State Manager", () => {
 				);
 				const inboundMessage = futureRuntimeMessage as ISequencedDocumentMessage &
 					UnknownContainerRuntimeMessage;
-				pendingStateManager.processInflux(
+				pendingStateManager.processInboundMessages(
 					{
 						type: "fullBatch",
 						messages: [inboundMessage],

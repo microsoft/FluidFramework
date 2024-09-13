@@ -20,9 +20,13 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
-import { BatchId, BatchMessage, getEffectiveBatchId } from "./opLifecycle/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { BatchStartInfo, InboxResult } from "./opLifecycle/remoteMessageProcessor.js"; //* Fix lint
+import {
+	BatchId,
+	BatchMessage,
+	getEffectiveBatchId,
+	BatchStartInfo,
+	InboundMessageResult,
+} from "./opLifecycle/index.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -339,65 +343,61 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Processes an inbound batch of messages - May be local or remote.
+	 * Processes an inbound message or batch of messages - May be local or remote.
 	 *
-	 * @param batch - The inbound batch of messages to process. Could be local or remote.
-	 * @param local - true if we submitted this batch and expect corresponding pending messages
-	 * @returns The inbound batch's messages with localOpMetadata "zipped" in.
+	 * @param inbound - The inbound message(s) to process, with extra info (e.g. about the start of a batch). Could be local or remote.
+	 * @param local - true if we submitted these messages and expect corresponding pending messages
+	 * @returns The inbound messages with localOpMetadata "zipped" in.
 	 *
 	 * @throws a DataProcessingError in either of these cases:
-	 * - The pending message content doesn't match the incoming message content for any message in the batch
-	 * - The batch IDs *do match* but it's not a local batch (indicates Container forking).
+	 * - The pending message content doesn't match the incoming message content for any message here
+	 * - The batch IDs *do match* but it's not local (indicates Container forking).
 	 */
-	public processInflux(
-		inboxResult: InboxResult,
+	public processInboundMessages(
+		inbound: InboundMessageResult,
 		local: boolean,
 	): {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata?: unknown;
 	}[] {
 		if (local) {
-			return this.processPendingLocalInflux(inboxResult);
+			return this.processPendingLocalMessages(inbound);
 		}
 
 		// An inbound remote batch should not match the pending batch ID for this client.
 		// That would indicate the container forked (two instances trying to submit the same local state)
-		if (
-			"batchStart" in inboxResult &&
-			this.remoteBatchMatchesPendingBatch(inboxResult.batchStart)
-		) {
+		if ("batchStart" in inbound && this.remoteBatchMatchesPendingBatch(inbound.batchStart)) {
 			throw DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
 				"PendingStateManager.processInflux",
-				inboxResult.batchStart.keyMessage,
+				inbound.batchStart.keyMessage,
 			);
 		}
 
 		// No localOpMetadata for remote messages
-		const messages =
-			inboxResult.type === "fullBatch" ? inboxResult.messages : [inboxResult.nextMessage];
+		const messages = inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
 		return messages.map((message) => ({ message }));
 	}
 
 	/**
-	 * Processes the incoming batch from the server that was submitted by this client.
-	 * It verifies that messages are received in the right order and that the batch information is correct.
-	 * @param batch - The inbound batch (originating from this client) to correlate with the pending local state
-	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content for any message in the batch.
-	 * @returns The inbound batch's messages with localOpMetadata "zipped" in.
+	 * Processes the incoming message(s) from the server that were submitted by this client.
+	 * It verifies that messages are received in the right order and that any batch information is correct.
+	 * @param inbound - The inbound message(s) (originating from this client) to correlate with the pending local state
+	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content for any message here
+	 * @returns The inbound messages with localOpMetadata "zipped" in.
 	 */
-	private processPendingLocalInflux(inboxResult: InboxResult): {
+	private processPendingLocalMessages(inbound: InboundMessageResult): {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
-		if ("batchStart" in inboxResult) {
-			this.onLocalBatchBegin(inboxResult.batchStart, inboxResult.length);
+		if ("batchStart" in inbound) {
+			this.onLocalBatchBegin(inbound.batchStart, inbound.length);
 		}
 
 		// Empty batch
-		if (inboxResult.length === 0) {
+		if (inbound.length === 0) {
 			const localOpMetadata = this.processNextPendingMessage(
-				inboxResult.batchStart.keyMessage.sequenceNumber,
+				inbound.batchStart.keyMessage.sequenceNumber,
 			);
 			assert(
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
@@ -406,8 +406,7 @@ export class PendingStateManager implements IDisposable {
 			return [];
 		}
 
-		const messages =
-			inboxResult.type === "fullBatch" ? inboxResult.messages : [inboxResult.nextMessage];
+		const messages = inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
 
 		return messages.map((message) => ({
 			message,

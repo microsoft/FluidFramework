@@ -21,8 +21,6 @@ import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
-//* TODO: Rename to Inbox?
-
 /** Info about the batch we learn when we process the first message */
 export interface BatchStartInfo {
 	/** Batch ID, if present */
@@ -46,8 +44,14 @@ export interface BatchStartInfo {
 	readonly keyMessage: ISequencedDocumentMessage;
 }
 
-//* Commment and finalize name
-export type InboxResult =
+/**
+ * Result of processing the next inbound message.
+ * Depending on the message and configuration of RemoteMessageProcessor, the result may be:
+ * - A full batch of messages (including a single-message batch)
+ * - The first message of a multi-message batch
+ * - The next message in a multi-message batch
+ */
+export type InboundMessageResult =
 	| {
 			type: "fullBatch";
 			messages: InboundSequencedContainerRuntimeMessage[];
@@ -128,7 +132,7 @@ export class RemoteMessageProcessor {
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
 		logLegacyCase: (codePath: string) => void,
-	): InboxResult | undefined {
+	): InboundMessageResult | undefined {
 		let message = remoteMessageCopy;
 
 		assertHasClientId(message);

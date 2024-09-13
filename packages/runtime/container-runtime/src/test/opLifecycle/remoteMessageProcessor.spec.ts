@@ -189,18 +189,20 @@ describe("RemoteMessageProcessor", () => {
 						inboundMessages.push(...result.messages);
 						break;
 					case "batchStartingMessage":
-						//* assert not reached for initial change?
-						batchStart = result.batchStart;
-						inboundMessages.push(result.nextMessage);
-						break;
+						//* WAIT: Only after the change
+						// batchStart = result.batchStart;
+						// inboundMessages.push(result.nextMessage);
+						// break;
+						assert(false, "'batchStartingMessage' type not yet implemented");
 					case "nextBatchMessage":
-						//* assert not reached for initial change?
-						assert(
-							batchStart !== undefined,
-							"batchStart should have been set from a prior message",
-						);
-						inboundMessages.push(result.nextMessage);
-						break;
+						//* WAIT: Only after the change
+						// assert(
+						// 	batchStart !== undefined,
+						// 	"batchStart should have been set from a prior message",
+						// );
+						// inboundMessages.push(result.nextMessage);
+						// break;
+						assert(false, "'nextBatchMessage' type not yet implemented");
 					default:
 						// These are leading chunks
 						assert(result === undefined, "unexpected result type");
