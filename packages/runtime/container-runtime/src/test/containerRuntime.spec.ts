@@ -3145,10 +3145,7 @@ describe("Runtime", () => {
 					remoteLogger = new MockLogger();
 					remoteContainerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext(
-							{},
-							remoteLogger,
-							undefined,
-							undefined,
+							{ logger: remoteLogger },
 							"remoteMockClientId",
 						) as IContainerContext,
 						registryEntries: [],
