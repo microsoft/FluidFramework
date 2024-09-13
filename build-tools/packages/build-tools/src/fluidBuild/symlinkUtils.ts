@@ -18,6 +18,9 @@ const traceSymLink = registerDebug("fluid-build:symlink");
 
 const { warning } = defaultLogger;
 
+/**
+ * @deprecated symlink-related functionality will be removed in an upcoming release.
+ */
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
 	traceSymLink(`Writing ${outFile}`);
 	if (existsSync(`${outFile}`)) {
@@ -26,6 +29,9 @@ async function writeAndReplace(outFile: string, bakFile: string, content: string
 	return writeFile(`${outFile}`, content);
 }
 
+/**
+ * @deprecated symlink-related functionality will be removed in an upcoming release.
+ */
 async function writeBin(dir: string, binName: string, pkgName: string, binPath: string) {
 	const outFile = path.normalize(`${dir}/node_modules/.bin/${binName}`);
 	const bakFile = path.normalize(`${dir}/node_modules/.bin/_${binName}`);
@@ -63,6 +69,9 @@ exit $ret`;
 	await writeAndReplace(`${outFile}`, `${bakFile}`, sh);
 }
 
+/**
+ * @deprecated symlink-related functionality will be removed in an upcoming release.
+ */
 async function revertBin(dir: string, binName: string) {
 	const outFile = path.normalize(`${dir}/node_modules/.bin/${binName}`);
 	const bakFile = path.normalize(`${dir}/node_modules/.bin/_${binName}`);
@@ -77,6 +86,9 @@ async function revertBin(dir: string, binName: string) {
 	}
 }
 
+/**
+ * @deprecated symlink-related functionality will be removed in an upcoming release.
+ */
 async function fixSymlink(
 	stat: Stats | undefined,
 	symlinkPath: string,
@@ -129,11 +141,17 @@ async function revertSymlink(symlinkPath: string, pkg: Package, depBuildPackage:
 	}
 }
 
+/**
+ * @deprecated symlink-related functionality will be removed in an upcoming release.
+ */
 export interface ISymlinkOptions {
 	symlink: boolean;
 	fullSymlink: boolean | undefined;
 }
 
+/**
+ * @deprecated symlink-related functionality will be removed in an upcoming release.
+ */
 export async function symlinkPackage(
 	repo: FluidRepoBuild,
 	pkg: Package,

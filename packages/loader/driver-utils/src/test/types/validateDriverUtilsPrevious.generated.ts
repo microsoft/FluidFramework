@@ -58,6 +58,7 @@ declare type old_as_current_for_Class_AuthorizationError = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_AuthorizationError": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_AuthorizationError = requireAssignableTo<TypeOnly<current.AuthorizationError>, TypeOnly<old.AuthorizationError>>
 
 /*
@@ -67,6 +68,7 @@ declare type current_as_old_for_Class_AuthorizationError = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_AuthorizationError": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_AuthorizationError = requireAssignableTo<TypeOnly<typeof current.AuthorizationError>, TypeOnly<typeof old.AuthorizationError>>
 
 /*
@@ -335,18 +337,16 @@ declare type current_as_old_for_ClassStatics_LocationRedirectionError = requireA
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_MessageType2": {"forwardCompat": false}
+ * "RemovedEnum_MessageType2": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_MessageType2 = requireAssignableTo<TypeOnly<old.MessageType2>, TypeOnly<current.MessageType2>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_MessageType2": {"backCompat": false}
+ * "RemovedEnum_MessageType2": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_MessageType2 = requireAssignableTo<TypeOnly<current.MessageType2>, TypeOnly<old.MessageType2>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -463,6 +463,7 @@ declare type old_as_current_for_Class_PrefetchDocumentStorageService = requireAs
  * typeValidation.broken:
  * "Class_PrefetchDocumentStorageService": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_PrefetchDocumentStorageService = requireAssignableTo<TypeOnly<current.PrefetchDocumentStorageService>, TypeOnly<old.PrefetchDocumentStorageService>>
 
 /*
@@ -472,6 +473,7 @@ declare type current_as_old_for_Class_PrefetchDocumentStorageService = requireAs
  * typeValidation.broken:
  * "ClassStatics_PrefetchDocumentStorageService": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_PrefetchDocumentStorageService = requireAssignableTo<TypeOnly<typeof current.PrefetchDocumentStorageService>, TypeOnly<typeof old.PrefetchDocumentStorageService>>
 
 /*

@@ -100,6 +100,9 @@ export class FluidRepoBuild extends FluidRepo {
 		return true;
 	}
 
+	/**
+	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
+	 */
 	public async depcheck(fix: boolean) {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific
@@ -123,6 +126,9 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 	}
 
+	/**
+	 * @deprecated symlink-related functionality will be removed in an upcoming release.
+	 */
 	public async symlink(options: ISymlinkOptions) {
 		// Only do parallel if we are checking only
 		const result = await this.packages.forEachAsync(

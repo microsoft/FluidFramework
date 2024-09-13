@@ -166,6 +166,7 @@ declare type current_as_old_for_TypeAlias_IDeltaManagerErased = requireAssignabl
  * typeValidation.broken:
  * "Interface_IFluidDataStoreRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.IFluidDataStoreRuntime>, TypeOnly<old.IFluidDataStoreRuntime>>
 
 /*

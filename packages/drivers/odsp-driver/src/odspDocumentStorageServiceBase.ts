@@ -198,8 +198,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 				// eslint-disable-next-line unicorn/no-null
 				return null;
 			}
-			// Non null asserting here because of the length check above
-			id = versions[0]!.id;
+			id = versions[0].id;
 		}
 
 		const snapshotTree = await this.readTree(id, scenarioName);
@@ -258,8 +257,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	protected combineProtocolAndAppSnapshotTree(snapshotTree: ISnapshotTree): ISnapshotTree {
 		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
 		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-		// TODO Why are we non null asserting here?
-		const hierarchicalAppTree = snapshotTree.trees[".app"]!;
+		const hierarchicalAppTree = snapshotTree.trees[".app"];
 		const hierarchicalProtocolTree = snapshotTree.trees[".protocol"];
 		const summarySnapshotTree: ISnapshotTree = {
 			blobs: {

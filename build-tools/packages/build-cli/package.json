@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.45.0",
+	"version": "0.47.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -102,6 +102,7 @@
 		"execa": "^5.1.1",
 		"fflate": "^0.8.2",
 		"fs-extra": "^11.2.0",
+		"github-slugger": "^2.0.0",
 		"globby": "^11.1.0",
 		"gray-matter": "^4.0.3",
 		"human-id": "^4.0.0",
@@ -110,6 +111,8 @@
 		"json5": "^2.2.3",
 		"jssm": "5.98.2",
 		"latest-version": "^5.1.0",
+		"mdast": "^3.0.0",
+		"mdast-util-to-string": "^4.0.0",
 		"minimatch": "^7.4.6",
 		"node-fetch": "^3.3.2",
 		"npm-check-updates": "^16.14.20",
@@ -132,7 +135,8 @@
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.1",
 		"ts-morph": "^22.0.0",
-		"type-fest": "^2.19.0"
+		"type-fest": "^2.19.0",
+		"unist-util-visit": "^5.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
@@ -146,6 +150,7 @@
 		"@types/fs-extra": "^11.0.4",
 		"@types/inquirer": "^8.2.6",
 		"@types/issue-parser": "^3.0.5",
+		"@types/mdast": "^4.0.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.18.6",
 		"@types/node-fetch": "^2.5.10",
@@ -154,6 +159,7 @@
 		"@types/semver": "^7.5.0",
 		"@types/semver-utils": "^1.1.1",
 		"@types/sort-json": "^2.0.1",
+		"@types/unist": "^3.0.3",
 		"c8": "^7.14.0",
 		"chai": "^4.3.7",
 		"chai-arrays": "^2.2.0",
@@ -230,6 +236,9 @@
 			},
 			"publish": {
 				"description": "Publish commands are used to publish packages to an npm registry."
+			},
+			"promote": {
+				"description": "Promote commands are used to promote packages published to an npm registry."
 			}
 		}
 	}
