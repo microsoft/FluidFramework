@@ -2106,8 +2106,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		//* ONLY
-		describe.only("Duplicate Batch Detection", () => {
+		describe("Duplicate Batch Detection", () => {
 			[undefined, true].forEach((enableOfflineLoad) => {
 				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
