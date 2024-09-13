@@ -73,7 +73,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
 		"@types/debug": "^4.1.5",
 		"@types/lodash": "^4.14.118",
@@ -97,6 +97,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

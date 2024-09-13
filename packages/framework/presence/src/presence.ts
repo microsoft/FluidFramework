@@ -4,15 +4,15 @@
  */
 
 import type { ConnectedClientId } from "./baseTypes.js";
-import type { NotificationsManager } from "./notificationsManager.js";
 import type {
+	PresenceNotifications,
+	PresenceNotificationsSchema,
 	PresenceStates,
-	PresenceWorkspaceAddress,
 	PresenceStatesSchema,
+	PresenceWorkspaceAddress,
 } from "./types.js";
 
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 
 /**
  * A client within a Fluid session (period of container connectivity to service).
@@ -135,16 +135,8 @@ export interface IPresence {
 	 * @param workspaceAddress - Address of the requested Notifications Workspace
 	 * @returns A Notifications workspace
 	 */
-	getNotifications<
-		NotificationsSchema extends {
-			[key: string]: InternalTypes.ManagerFactory<
-				typeof key,
-				InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
-				NotificationsManager<any>
-			>;
-		},
-	>(
+	getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(
 		notificationsId: PresenceWorkspaceAddress,
 		requestedContent: NotificationsSchema,
-	): PresenceStates<NotificationsSchema, NotificationsManager<any>>;
+	): PresenceNotifications<NotificationsSchema>;
 }

@@ -60,6 +60,19 @@ export namespace InternalTypes {
 	/**
 	 * @system
 	 */
+	export interface MapValueState<T> {
+		rev: number;
+		items: {
+			// Caution: any particular item may or may not exist
+			// Typescript does not support absent keys without forcing type to also be undefined.
+			// See https://github.com/microsoft/TypeScript/issues/42810.
+			[name: string | number]: ValueOptionalState<T>;
+		};
+	}
+
+	/**
+	 * @system
+	 */
 	export declare class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
 		private readonly StateDatastoreHandle: StateDatastoreHandle<TKey, TValue>;
 	}
