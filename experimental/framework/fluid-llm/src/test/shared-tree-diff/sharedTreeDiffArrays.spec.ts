@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
@@ -819,9 +824,7 @@ describe("createMergableIdDiffSeries()", () => {
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
 				id: schemaFactory.identifier,
-				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [
-					SimpleObjectTreeNode,
-				]),
+				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [SimpleObjectTreeNode]),
 			},
 		) {}
 		class ComplexObjectTreeNode extends schemaFactory.object("ComplexObjectTreeNode", {
@@ -951,9 +954,7 @@ describe("createMergableIdDiffSeries()", () => {
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
 				id: schemaFactory.identifier,
-				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [
-					SimpleObjectTreeNode,
-				]),
+				innerArray: schemaFactory.array("NestedStringTreeArrayNode1", [SimpleObjectTreeNode]),
 			},
 		) {}
 		class ComplexObjectTreeNode extends schemaFactory.object("ComplexObjectTreeNode", {

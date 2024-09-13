@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
 import { isTreeMapNode, sharedTreeTraverse } from "./utils.js";
@@ -54,7 +59,11 @@ export interface DifferenceMove {
 /**
  * Union for all possible difference types.
  */
-export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
+export type Difference =
+	| DifferenceCreate
+	| DifferenceRemove
+	| DifferenceChange
+	| DifferenceMove;
 
 interface Options {
 	cyclesFix: boolean;
@@ -280,10 +289,10 @@ export function sharedTreeDiff(
 				areCompatibleObjects &&
 				(Number.isNaN(objValue)
 					? // eslint-disable-next-line prefer-template
-					  objValue + "" === newObjValue + ""
+						objValue + "" === newObjValue + ""
 					: // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					  // @ts-ignore
-					  +objValue === +newObjValue)
+						// @ts-ignore
+						+objValue === +newObjValue)
 			)
 		) {
 			diffs.push({
@@ -410,9 +419,7 @@ function createObjectArrayItemIdsToIndexMap(
 	for (let i = 0; i < obj.length; i++) {
 		const objArrayItem = obj[i];
 		if (typeof objArrayItem === "object" && objArrayItem !== null) {
-			const id = (objArrayItem as Record<string, unknown>)[idAttributeName] as
-				| string
-				| number;
+			const id = (objArrayItem as Record<string, unknown>)[idAttributeName] as string | number;
 			if (objArrayItemIdsToIndex.has(id)) {
 				throw new TypeError(`Duplicate object id found: ${id}`);
 			} else if (id !== undefined) {

@@ -1,5 +1,10 @@
-import { type TreeArrayNode } from "@fluidframework/tree";
-import type * as z from "zod";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { TreeArrayNode } from "@fluidframework/tree";
+import type { z } from "zod";
 
 import {
 	createMergableDiffSeries,

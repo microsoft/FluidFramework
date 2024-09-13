@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
 import type { ObjectPath } from "./sharedTreeDiff.js";
