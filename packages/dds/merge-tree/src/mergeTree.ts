@@ -93,13 +93,6 @@ import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
 
-export function wasRemovedAfter(seg: ISegment, seq: number): boolean {
-	return (
-		seg.removedSeq !== UnassignedSequenceNumber &&
-		(seg.removedSeq === undefined || seg.removedSeq > seq)
-	);
-}
-
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.moveDst = moveInfo.moveDst;
 	seg.movedClientIds = [...moveInfo.movedClientIds];
