@@ -98,13 +98,19 @@ export interface SchemaPolicy {
  * Object implementing this interface should never be modified.
  * @internal
  */
-export interface TreeFieldStoredSchema {
+export interface TreeFieldStoredSchema<TMetadata = unknown> {
 	readonly kind: FieldKindIdentifier;
+
 	/**
 	 * The set of allowed child types.
 	 * If not specified, types are unconstrained.
 	 */
 	readonly types: TreeTypeSet;
+
+	/**
+	 * TODO
+	 */
+	readonly metadata?: TMetadata | undefined;
 }
 
 /**

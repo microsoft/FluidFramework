@@ -226,7 +226,7 @@ export type FlexMapFieldSchema = FlexFieldSchema<
  */
 export class FlexFieldSchema<
 	out TKind extends FlexFieldKind = FlexFieldKind,
-	const out TMetadata = unknown
+	const out TMetadata = unknown,
 > {
 	/**
 	 * Schema for a field which must always be empty.

@@ -5,12 +5,15 @@
 
 import assert from "assert";
 
-import { SchemaFactory, treeNodeApi, TreeNode } from "../simple-tree/index.js";
+import {
+	isTreeNode,
+	SchemaFactory,
+	treeNodeApi,
+	type TreeNode,
+} from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "./simple-tree/utils.js";
 import { isTreeValue } from "../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../simple-tree/proxies.js";
 
 describe.only("Schema Metadata example patterns", () => {
 	// TODO: docs
@@ -66,12 +69,13 @@ describe.only("Schema Metadata example patterns", () => {
 
 						// If the parent isn't a TreeNode, then it is some other kind of object that can appear in a proxy,
 						// e.g. an array. Return it as is.
-						if (!(this instanceof TreeNode)) {
+						if (!isTreeNode(this)) {
 							return value;
 						}
 
 						const schema = treeNodeApi.schema(this);
 						// Omit the field if its metadata denotes it as AI-ignored
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						return (schema as any).fieldMetadata?.[key]?.aiIgnored === true
 							? undefined
 							: value;
