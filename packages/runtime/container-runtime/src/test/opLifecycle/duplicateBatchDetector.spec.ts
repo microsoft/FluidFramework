@@ -10,6 +10,9 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 // eslint-disable-next-line import/no-internal-modules
 import { DuplicateBatchDetector } from "../../opLifecycle/duplicateBatchDetector.js";
 import type { InboundBatch } from "../../opLifecycle/index.js";
+import { mixinMonitoringContext } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 /**
  * Helper function to create (enough of) an InboundBatch for testing.
@@ -39,6 +42,9 @@ function makeBatch({
 type Patch<T, U> = Omit<T, keyof U> & U;
 
 describe("DuplicateBatchDetector", () => {
+	//* Is there a shared thing like this?
+	const configProvider = createTestConfigProvider;
+
 	// expose private members for testing
 	let detector: Patch<
 		DuplicateBatchDetector,
@@ -51,7 +57,14 @@ describe("DuplicateBatchDetector", () => {
 
 	beforeEach("setup", () => {
 		seqNum = 1;
-		detector = new DuplicateBatchDetector() as any;
+		detector = new DuplicateBatchDetector(
+			mixinMonitoringContext(
+				new MockLogger(),
+				configProvider({
+					"Fluid.ContainerRuntime.EnableRollback": true,
+				}),
+			),
+		) as any;
 	});
 
 	afterEach("validation", () => {
