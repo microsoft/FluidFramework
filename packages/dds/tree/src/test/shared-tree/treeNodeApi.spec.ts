@@ -22,7 +22,12 @@ import {
 	type TreeNodeSchema,
 	type NodeFromSchema,
 } from "../../simple-tree/index.js";
-import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
+import {
+	TestTreeProviderLite,
+	createTestUndoRedoStacks,
+	getView,
+	validateUsageError,
+} from "../utils.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
@@ -242,6 +247,28 @@ describe("treeApi", () => {
 					return Tree.runTransaction.rollback;
 				});
 				assert.equal(eventCount, 2);
+			});
+
+			describe("unhydrated", () => {
+				it("transaction on unhydrated throws", () => {
+					assert.throws(
+						() => {
+							Tree.runTransaction(new ChildObject({}), (r) => {});
+						},
+						validateUsageError(/Transactions cannot be run on Unhydrated nodes/),
+					);
+				});
+
+				it("transaction on view modifies unhydrated - not rolled back", () => {
+					const view = getTestObjectView();
+					const node = new TestObject({ content: 5 });
+					Tree.runTransaction(view, (root) => {
+						node.content = 6;
+						return Tree.runTransaction.rollback;
+					});
+					// Changes to other tree, and unhydrated nodes are not rolled back.
+					assert.equal(node.content, 6);
+				});
 			});
 		});
 

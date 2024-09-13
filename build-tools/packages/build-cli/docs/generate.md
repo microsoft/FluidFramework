@@ -179,7 +179,7 @@ FLAGS
   -b, --branch=<value>         [default: main] The branch to compare the current changes against. The current changes
                                will be compared with this branch to populate the list of changed packages. You must have
                                a valid remote pointing to the microsoft/FluidFramework repo.
-  -g, --releaseGroup=<option>  Name of a release group.
+  -g, --releaseGroup=<option>  [default: client] Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
       --all                    Include ALL packages, including examples and other unpublished packages.
       --empty                  Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
@@ -319,17 +319,22 @@ Generates release notes from individual changeset files.
 
 ```
 USAGE
-  $ flub generate releaseNotes -g client|server|azure|build-tools|gitrest|historian -t major|minor --out <value> [--json]
-    [-v | --quiet] [--includeUnknown]
+  $ flub generate releaseNotes -g client|server|azure|build-tools|gitrest|historian -t major|minor --outFile <value>
+    [--json] [-v | --quiet] [--includeUnknown] [--headingLinks] [--excludeH1]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -t, --releaseType=<option>   (required) The type of release for which the release notes are being generated.
                                <options: major|minor>
+      --excludeH1              Pass this flag to omit the top H1 heading. This is useful when the Markdown output will
+                               be used as part of another document.
+      --headingLinks           Pass this flag to output HTML anchor anchor tags inline for every heading. This is useful
+                               when the Markdown output will be used in places like GitHub Releases, where headings
+                               don't automatically get links.
       --includeUnknown         Pass this flag to include changesets in unknown sections in the generated release notes.
                                By default, these are excluded.
-      --out=<value>            (required) [default: RELEASE_NOTES.md] Output the results to this file.
+      --outFile=<value>        (required) [default: RELEASE_NOTES.md] Output the results to this file.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -356,21 +361,22 @@ Generates type tests for a package or group of packages.
 
 ```
 USAGE
-  $ flub generate typetests [-v | --quiet] [--level public|alpha|beta|internal|legacy] [--outDir <value>] [--outFile
-    <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all | --dir <value> |
-    --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+  $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacy] [--outDir <value>]
+    [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all |
+    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
     <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
-  --level=<option>       [default: internal] What API level to generate tests for.
+  --entrypoint=<option>  What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is
+                         provided it will override the typeValidation.entrypoint setting in the package's package.json.
                          <options: public|alpha|beta|internal|legacy>
   --outDir=<value>       [default: ./src/test/types] Where to emit the type tests file.
   --outFile=<value>      [default: validate{@unscopedPackageName}Previous.generated.ts] File name for the generated type
                          tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped
                          name of this package in PascalCase.
-  --publicFallback       Use the public entrypoint as a fallback if the API at the requested level is not found.
+  --publicFallback       Use the public entrypoint as a fallback if the requested entrypoint is not found.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not

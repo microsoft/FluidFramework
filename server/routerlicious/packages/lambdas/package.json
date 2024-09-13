@@ -63,7 +63,7 @@
 		"@types/semver": "^7.5.0",
 		"assert": "^2.0.0",
 		"async": "^3.2.2",
-		"axios": "^1.6.2",
+		"axios": "^1.7.7",
 		"buffer": "^6.0.3",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",
@@ -97,9 +97,9 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"source-map-loader": "^5.0.0",
-		"ts-loader": "^9.3.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
 		"broken": {}

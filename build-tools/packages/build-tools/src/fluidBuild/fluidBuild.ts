@@ -5,12 +5,12 @@
 
 import chalk from "chalk";
 
-import { commonOptions } from "../common/commonOptions";
-import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
+import { commonOptions } from "./commonOptions";
 import { FluidRepoBuild } from "./fluidRepoBuild";
+import { getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;

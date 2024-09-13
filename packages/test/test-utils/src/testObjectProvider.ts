@@ -331,7 +331,7 @@ export class EventAndErrorTrackingLogger
 			downgrade: true,
 		},
 		// This log's category changes depending on the op latency. test results shouldn't be affected but if we see lots we'd like an alert from the logs.
-		{ eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
+		{ eventName: "fluid:telemetry:OpRoundtripTime" },
 	];
 
 	constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
