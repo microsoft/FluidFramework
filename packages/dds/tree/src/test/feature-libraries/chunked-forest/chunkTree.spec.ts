@@ -9,7 +9,6 @@ import {
 	CursorLocationType,
 	EmptyKey,
 	type FieldKey,
-	type JsonableTree,
 	type Value,
 	mapCursorField,
 } from "../../../core/index.js";
@@ -58,7 +57,7 @@ import {
 	stringSchema,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
-import { fieldJsonCursor, JsonObject } from "../../json/index.js";
+import { fieldJsonCursor, JsonObject, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
 
 const builder = new SchemaFactory("chunkTree");
@@ -153,16 +152,8 @@ describe("chunkTree", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
 
-			const initialTree = {
-				type: brand(JsonObject.identifier),
-				fields: {
-					identifierField: [
-						{ type: brand("com.fluidframework.leaf.string"), value: stableId },
-					],
-				},
-			} satisfies JsonableTree;
 			const chunk = uniformChunkFromCursor(
-				cursorForJsonableTreeNode(initialTree),
+				singleJsonCursor({ identifierField: stableId }),
 				identifierShape,
 				1,
 				true,

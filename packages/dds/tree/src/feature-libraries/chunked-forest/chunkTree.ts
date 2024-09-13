@@ -248,6 +248,10 @@ export function tryShapeFromSchema(
 	return getOrCreate(shapes, type, () => {
 		const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
 		if (treeSchema instanceof LeafNodeStoredSchema) {
+			// Allow all string values (but only string values) to be compressed by the id compressor.
+			// This allows compressing all compressible identifiers without requiring additional context to know which values could be identifiers.
+			// Attempting to compress other string shouldn't have significant overhead,
+			// and if any of them do end up compressing, that's a benefit not a bug.
 			return treeSchema.leafValue === ValueSchema.String
 				? new TreeShape(type, true, [], true)
 				: new TreeShape(type, true, [], false);
@@ -349,6 +353,9 @@ export interface ChunkCompressor {
 	readonly policy: ChunkPolicy;
 	/**
 	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
+	 * @remarks
+	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.maybeDecompressedStringAsNumber} is set.
+	 * If the `policy` does not use UniformChunks or does not set `maybeDecompressedStringAsNumber`, then no compression will be applied even when providing `idCompressor`.
 	 */
 	readonly idCompressor: IIdCompressor | undefined;
 }
