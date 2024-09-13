@@ -156,12 +156,22 @@ describe("Runtime", () => {
 			return "fakeHandle";
 		},
 	};
-	const getMockContext = (
-		settings: Record<string, ConfigTypes> = {},
-		logger = new MockLogger(),
-		mockStorage: Partial<IDocumentStorageService> = defaultMockStorage,
-		loadedFromVersion?: IVersion,
+	const getMockContext2 = (
+		params: {
+			settings?: Record<string, ConfigTypes>;
+			logger?;
+			mockStorage?: Partial<IDocumentStorageService>;
+			loadedFromVersion?: IVersion;
+			baseSnapshot?: ISnapshotTree;
+		} = {},
 	): Partial<IContainerContext> => {
+		const {
+			settings = {},
+			logger = new MockLogger(),
+			mockStorage = defaultMockStorage,
+			loadedFromVersion,
+		} = params;
+
 		const mockContext = {
 			attachState: AttachState.Attached,
 			deltaManager: new MockDeltaManager(),
@@ -182,7 +192,7 @@ describe("Runtime", () => {
 			clientId: mockClientId,
 			connected: true,
 			storage: mockStorage as IDocumentStorageService,
-		};
+		} satisfies Partial<IContainerContext>;
 
 		// Update the delta manager's last message which is used for validation during summarization.
 		mockContext.deltaManager.lastMessage = {
@@ -197,6 +207,14 @@ describe("Runtime", () => {
 		};
 		return mockContext;
 	};
+	//* TODO: Update usages to use getMockContext2 and remove this function
+	const getMockContext = (
+		settings: Record<string, ConfigTypes> = {},
+		logger = new MockLogger(),
+		mockStorage: Partial<IDocumentStorageService> = defaultMockStorage,
+		loadedFromVersion?: IVersion,
+	): Partial<IContainerContext> =>
+		getMockContext2({ settings, logger, mockStorage, loadedFromVersion });
 
 	const mockProvideEntryPoint = async () => ({
 		myProp: "myValue",
@@ -2085,6 +2103,58 @@ describe("Runtime", () => {
 					sessionExpiryTimerStarted: 100,
 				})) as Partial<IPendingRuntimeState>;
 				assert.strictEqual(state.sessionExpiryTimerStarted, 100);
+			});
+		});
+
+		//* ONLY
+		describe.only("Duplicate Batch Detection", () => {
+			[undefined, true].forEach((enableOfflineLoad) => {
+				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
+					const containerRuntime = await ContainerRuntime.loadRuntime({
+						context: getMockContext2({
+							settings: { "Fluid.Container.enableOfflineLoad": enableOfflineLoad },
+						}) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.TurnBased,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					// Process batch "batchId1" with seqNum 123
+					containerRuntime.process(
+						{
+							sequenceNumber: 123,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					);
+					// Process a duplicate batch "batchId1" with different seqNum 234
+					const assertThrowsOnlyIfExpected = enableOfflineLoad
+						? assert.throws
+						: assert.doesNotThrow;
+					const errorPredicate = (e: any) =>
+						e.message === "Duplicate batch - The same batch was sequenced twice";
+					assertThrowsOnlyIfExpected(
+						() => {
+							containerRuntime.process(
+								{
+									sequenceNumber: 234,
+									type: MessageType.Operation,
+									contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+									metadata: { batchId: "batchId1" },
+								} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+								false,
+							);
+						},
+						errorPredicate,
+						"Expected duplicate batch detection to match Offline Load enablement",
+					);
+				});
 			});
 		});
 

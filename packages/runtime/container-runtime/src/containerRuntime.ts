@@ -1620,16 +1620,6 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		//* Test this
-		const disableDuplicateBatchDetection =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableDuplicateBatchDetection") ===
-			true;
-		this.duplicateBatchDetector = disableDuplicateBatchDetection
-			? new (class NoOpDuplicateBatchDetector implements IDuplicateBatchDetector {
-					public processInboundBatch = () => ({ duplicate: false as const });
-				})()
-			: new DuplicateBatchDetector();
-
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
@@ -1683,6 +1673,15 @@ export class ContainerRuntime
 			this.closeFn(error);
 			throw error;
 		}
+
+		// DuplicateBatchDetection is only enabled if Offline Load is enabled
+		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
+		// Don't waste resources doing so if not needed.
+		this.duplicateBatchDetector = this.offlineEnabled
+			? new DuplicateBatchDetector()
+			: new (class NoOpDuplicateBatchDetector implements IDuplicateBatchDetector {
+					public processInboundBatch = () => ({ duplicate: false as const });
+				})();
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
