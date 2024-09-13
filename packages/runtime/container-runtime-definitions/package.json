@@ -113,6 +113,7 @@
 			"Interface_IContainerRuntimeWithResolveHandle_Deprecated": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }

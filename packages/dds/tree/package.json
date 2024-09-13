@@ -230,6 +230,7 @@
 			"TypeAlias_MapNodeInsertableData": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }

@@ -183,6 +183,7 @@
 			"ClassStatics_TestFluidObject": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }

@@ -118,6 +118,7 @@
 			"Interface_IContainerContext": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }
