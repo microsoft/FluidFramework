@@ -257,47 +257,49 @@ describe("MapTreeNodes", () => {
 			assert.equal(field.boxedAt(0)?.value, undefined);
 		});
 
-		it("arrays", () => {
-			const mutableFieldNode = getOrCreateMapTreeNode(
-				context,
-				arrayNodeSchema,
-				deepCopyMapTree(fieldNodeMapTree),
-			);
-			const field = mutableFieldNode.getBoxed(EmptyKey);
-			assert(field.is(FieldKinds.sequence));
-			const values = () => Array.from(field.boxedIterator(), (n) => n.value);
-			assert.deepEqual(values(), [childValue]);
-			field.editor.insert(1, [
-				{ ...mapChildMapTree, value: "c" },
-				{ ...mapChildMapTree, value: "d" },
-			]);
-			field.editor.insert(0, [
-				{ ...mapChildMapTree, value: "a" },
-				{ ...mapChildMapTree, value: "b" },
-			]);
-			assert.deepEqual(values(), ["a", "b", childValue, "c", "d"]);
-			field.editor.remove(2, 1);
-			assert.deepEqual(values(), ["a", "b", "c", "d"]);
-		});
-
-		it("arrays with a large sequence of new content", () => {
-			// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
-			const mutableFieldNode = getOrCreateMapTreeNode(context, arrayNodeSchema, {
-				...fieldNodeMapTree,
-				fields: new Map(),
+		describe("arrays", () => {
+			it("insert and remove", () => {
+				const mutableFieldNode = getOrCreateMapTreeNode(
+					context,
+					arrayNodeSchema,
+					deepCopyMapTree(fieldNodeMapTree),
+				);
+				const field = mutableFieldNode.getBoxed(EmptyKey);
+				assert(field.is(FieldKinds.sequence));
+				const values = () => Array.from(field.boxedIterator(), (n) => n.value);
+				assert.deepEqual(values(), [childValue]);
+				field.editor.insert(1, [
+					{ ...mapChildMapTree, value: "c" },
+					{ ...mapChildMapTree, value: "d" },
+				]);
+				field.editor.insert(0, [
+					{ ...mapChildMapTree, value: "a" },
+					{ ...mapChildMapTree, value: "b" },
+				]);
+				assert.deepEqual(values(), ["a", "b", childValue, "c", "d"]);
+				field.editor.remove(2, 1);
+				assert.deepEqual(values(), ["a", "b", "c", "d"]);
 			});
-			const field = mutableFieldNode.getBoxed(EmptyKey);
-			assert(field.is(FieldKinds.sequence));
-			const newContent: ExclusiveMapTree[] = [];
-			for (let i = 0; i < 10000; i++) {
-				newContent.push({ ...mapChildMapTree, value: String(i) });
-			}
-			field.editor.insert(0, newContent);
-			assert.equal(field.length, newContent.length);
-			assert.deepEqual(
-				Array.from(field.boxedIterator(), (n) => n.value),
-				newContent.map((c) => c.value),
-			);
+
+			it("with a large sequence of new content", () => {
+				// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
+				const mutableFieldNode = getOrCreateMapTreeNode(context, arrayNodeSchema, {
+					...fieldNodeMapTree,
+					fields: new Map(),
+				});
+				const field = mutableFieldNode.getBoxed(EmptyKey);
+				assert(field.is(FieldKinds.sequence));
+				const newContent: ExclusiveMapTree[] = [];
+				for (let i = 0; i < 10000; i++) {
+					newContent.push({ ...mapChildMapTree, value: String(i) });
+				}
+				field.editor.insert(0, newContent);
+				assert.equal(field.length, newContent.length);
+				assert.deepEqual(
+					Array.from(field.boxedIterator(), (n) => n.value),
+					newContent.map((c) => c.value),
+				);
+			});
 		});
 	});
 });

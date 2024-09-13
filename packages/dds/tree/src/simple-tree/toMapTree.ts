@@ -177,7 +177,7 @@ function nodeDataToMapTree(
 		}
 	}
 
-	assert(!isTreeNode(data), "data without an inner node cannot be TreeNode");
+	assert(!isTreeNode(data), 0xa23 /* data without an inner node cannot be TreeNode */);
 
 	const schema = getType(data, allowedTypes);
 
@@ -408,7 +408,7 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): Exclusiv
 	// Loop through field keys without data.
 	// This does NOT apply defaults.
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
-		if (Object.hasOwnProperty.call(data, key)) {
+		if (checkFieldProperty(data, key)) {
 			const value = (data as Record<string, InsertableContent>)[key as string];
 			setFieldValue(fields, value, fieldInfo.schema, fieldInfo.storedKey);
 		}
@@ -418,6 +418,24 @@ function objectToMapTree(data: FactoryContent, schema: TreeNodeSchema): Exclusiv
 		type: brand(schema.identifier),
 		fields,
 	};
+}
+
+/**
+ * Check {@link FactoryContentObject} for a property which could be store a field.
+ * @remarks
+ * The currently policy is to only consider own properties.
+ * See {@link InsertableObjectFromSchemaRecord} for where this policy is documented in the public API.
+ *
+ * Explicit undefined members are considered to exist, as long as they are own properties.
+ */
+function checkFieldProperty(
+	data: FactoryContentObject,
+	key: string | symbol,
+): data is {
+	readonly [P in string]: InsertableContent | undefined;
+} {
+	// This policy only allows own properties.
+	return Object.hasOwnProperty.call(data, key);
 }
 
 function setFieldValue(
@@ -587,8 +605,14 @@ function shallowCompatibilityTest(
 
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
-		if (data[fieldKey] === undefined && fieldSchema.requiresValue) {
-			return CompatibilityLevel.None;
+		if (fieldSchema.requiresValue) {
+			if (checkFieldProperty(data, fieldKey)) {
+				if (data[fieldKey] === undefined) {
+					return CompatibilityLevel.None;
+				}
+			} else {
+				return CompatibilityLevel.None;
+			}
 		}
 	}
 
