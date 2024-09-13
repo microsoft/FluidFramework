@@ -1679,9 +1679,9 @@ export class ContainerRuntime
 		// Don't waste resources doing so if not needed.
 		this.duplicateBatchDetector = this.offlineEnabled
 			? new DuplicateBatchDetector()
-			: new (class NoOpDuplicateBatchDetector implements IDuplicateBatchDetector {
-					public processInboundBatch = () => ({ duplicate: false as const });
-				})();
+			: ({
+					processInboundBatch: () => ({ duplicate: false as const }),
+				} satisfies IDuplicateBatchDetector);
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
