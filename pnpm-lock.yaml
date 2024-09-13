@@ -11337,7 +11337,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/datastore
       '@fluidframework/datastore-definitions':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../runtime/datastore-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
