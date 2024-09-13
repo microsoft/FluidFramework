@@ -52,7 +52,6 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-tools/build-cli": "^0.46.0",
-		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.2.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
@@ -64,6 +63,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {},
 		"entrypoint": "internal"
 	}
