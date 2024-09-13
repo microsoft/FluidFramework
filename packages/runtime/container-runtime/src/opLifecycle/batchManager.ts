@@ -55,10 +55,8 @@ export function getEffectiveBatchId(
 		);
 	}
 
-	const inboundBatch: BatchStartInfo = pendingMessageOrBatchStartInfo;
-	return (
-		inboundBatch.batchId ?? generateBatchId(inboundBatch.clientId, inboundBatch.batchStartCsn)
-	);
+	const batchStart: BatchStartInfo = pendingMessageOrBatchStartInfo;
+	return batchStart.batchId ?? generateBatchId(batchStart.clientId, batchStart.batchStartCsn);
 }
 
 /**

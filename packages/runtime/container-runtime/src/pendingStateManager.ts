@@ -320,10 +320,10 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Compares the batch ID of the incoming batch with the pending batch ID for this client.
 	 * They should not match, as that would indicate a forked container.
-	 * @param remoteBatch - An incoming batch *NOT* submitted by this client
+	 * @param remoteBatchStart - BatchStartInfo for an incoming batch *NOT* submitted by this client
 	 * @returns whether the batch IDs match
 	 */
-	private remoteBatchMatchesPendingBatch(remoteBatch: BatchStartInfo): boolean {
+	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
 		// We may have no pending changes - if so, no match, no problem.
 		const pendingMessage = this.pendingMessages.peekFront();
 		if (pendingMessage === undefined) {
@@ -333,7 +333,7 @@ export class PendingStateManager implements IDisposable {
 		// We must compare the effective batch IDs, since one of these ops
 		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
 		const pendingBatchId = getEffectiveBatchId(pendingMessage);
-		const inboundBatchId = getEffectiveBatchId(remoteBatch);
+		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
 		return pendingBatchId === inboundBatchId;
 	}
@@ -368,7 +368,7 @@ export class PendingStateManager implements IDisposable {
 		) {
 			throw DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
-				"PendingStateManager.processInboundBatch",
+				"PendingStateManager.processInflux",
 				inboxResult.batchStart.keyMessage,
 			);
 		}
@@ -481,7 +481,7 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Check if the incoming batch matches the batch info for the next pending message.
 	 */
-	private onLocalBatchBegin(batch: BatchStartInfo, length?: number) {
+	private onLocalBatchBegin(batchStart: BatchStartInfo, batchLength?: number) {
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
@@ -493,26 +493,27 @@ export class PendingStateManager implements IDisposable {
 		// and the next pending message should be an empty batch marker.
 		// More Info: We must submit empty batches and track them in case a different fork
 		// of this container also submitted the same batch (and it may not be empty for that fork).
-		const firstMessage = batch.keyMessage;
+		const firstMessage = batchStart.keyMessage;
 		// -1 length is for back compat, undefined length means we actually don't know it
-		const skipLengthCheck = pendingMessage.batchInfo.length === -1 || length === undefined; //* TEST CASE
+		const skipLengthCheck =
+			pendingMessage.batchInfo.length === -1 || batchLength === undefined; //* TEST CASE
 		const expectedPendingBatchLength =
-			length === 0
+			batchLength === 0
 				? 1 // For an empty batch, expect a singleton array with the empty batch marker
-				: length; // Otherwise, the lengths should actually match
+				: batchLength; // Otherwise, the lengths should actually match
 
 		// Note: We don't need to use getEffectiveBatchId here, just check the explicit stamped batchID
 		// That logic is needed only when comparing across potential container forks.
 		// Furthermore, we also are comparing the batch IDs constituent data - clientId (it's local) and batchStartCsn.
 		const pendingBatchId = asBatchMetadata(pendingMessage.opMetadata)?.batchId;
-		const inboundBatchId = batch.batchId;
+		const inboundBatchId = batchStart.batchId;
 
 		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
 		// as the batch we originally submitted. The batchIds should match as well, if set (or neither should be set)
 		// We have another later check to compare the message contents, which we'd expect to fail if this check does,
 		// so we don't throw here, merely log.  In a later release this check may replace that one since it's cheaper.
 		if (
-			pendingMessage.batchInfo.batchStartCsn !== batch.batchStartCsn ||
+			pendingMessage.batchInfo.batchStartCsn !== batchStart.batchStartCsn ||
 			(!skipLengthCheck && pendingMessage.batchInfo.length !== expectedPendingBatchLength) ||
 			pendingBatchId !== inboundBatchId
 		) {
@@ -520,10 +521,10 @@ export class PendingStateManager implements IDisposable {
 				eventName: "BatchInfoMismatch",
 				details: {
 					pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
-					batchStartCsn: batch.batchStartCsn,
+					batchStartCsn: batchStart.batchStartCsn,
 					pendingBatchLength: pendingMessage.batchInfo.length,
 					expectedPendingBatchLength,
-					batchLength: length,
+					batchLength,
 					pendingBatchId,
 					inboundBatchId,
 					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,

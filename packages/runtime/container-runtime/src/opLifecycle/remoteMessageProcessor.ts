@@ -55,6 +55,7 @@ export interface BatchStartInfo {
 	// readonly length?: number;
 }
 
+//* Commment and finalize name
 export type InboxResult =
 	| {
 			type: "fullBatch";
