@@ -172,6 +172,7 @@ import {
 	BatchId,
 	BatchMessage,
 	DuplicateBatchDetector,
+	IDuplicateBatchDetector,
 	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
@@ -1339,7 +1340,7 @@ export class ContainerRuntime
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
-	private readonly duplicateBatchDetector: DuplicateBatchDetector;
+	private readonly duplicateBatchDetector: IDuplicateBatchDetector;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1619,7 +1620,15 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		this.duplicateBatchDetector = new DuplicateBatchDetector();
+		//* Test this
+		const disableDuplicateBatchDetection =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableDuplicateBatchDetection") ===
+			true;
+		this.duplicateBatchDetector = disableDuplicateBatchDetection
+			? new (class NoOpDuplicateBatchDetector implements IDuplicateBatchDetector {
+					public processInboundBatch = () => ({ duplicate: false as const });
+				})()
+			: new DuplicateBatchDetector();
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =

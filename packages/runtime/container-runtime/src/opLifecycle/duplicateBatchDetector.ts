@@ -8,10 +8,16 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { getEffectiveBatchId } from "./batchManager.js";
 import { type InboundBatch } from "./remoteMessageProcessor.js";
 
+export interface IDuplicateBatchDetector {
+	processInboundBatch(
+		inboundBatch: InboundBatch,
+	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false };
+}
+
 /**
  * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
  */
-export class DuplicateBatchDetector {
+export class DuplicateBatchDetector implements IDuplicateBatchDetector {
 	/** All batchIds we've seen recently enough (based on MSN) that we need to watch for duplicates */
 	private readonly batchIdsAll = new Set<string>();
 
