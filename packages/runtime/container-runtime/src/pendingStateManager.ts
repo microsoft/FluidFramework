@@ -366,16 +366,16 @@ export class PendingStateManager implements IDisposable {
 
 		// An inbound remote batch should not match the pending batch ID for this client.
 		// That would indicate the container forked (two instances trying to submit the same local state)
-		if ("batchStart" in inbound && this.remoteBatchMatchesPendingBatch(inbound.batchStart)) {
+		if (this.remoteBatchMatchesPendingBatch(inbound.batchStart)) {
 			throw DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
-				"PendingStateManager.processInflux",
+				"PendingStateManager.processInboundMessages",
 				inbound.batchStart.keyMessage,
 			);
 		}
 
 		// No localOpMetadata for remote messages
-		const messages = inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
+		const messages = inbound.messages;
 		return messages.map((message) => ({ message }));
 	}
 
@@ -390,9 +390,7 @@ export class PendingStateManager implements IDisposable {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
-		if ("batchStart" in inbound) {
-			this.onLocalBatchBegin(inbound.batchStart, inbound.length);
-		}
+		this.onLocalBatchBegin(inbound.batchStart, inbound.length);
 
 		// Empty batch
 		if (inbound.length === 0) {
@@ -406,7 +404,7 @@ export class PendingStateManager implements IDisposable {
 			return [];
 		}
 
-		const messages = inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
+		const messages = inbound.messages;
 
 		return messages.map((message) => ({
 			message,

@@ -183,10 +183,6 @@ describe("RemoteMessageProcessor", () => {
 						batchStart = result.batchStart;
 						inboundMessages.push(...result.messages);
 						break;
-					case "batchStartingMessage":
-						assert(false, "'batchStartingMessage' type not yet implemented");
-					case "nextBatchMessage":
-						assert(false, "'nextBatchMessage' type not yet implemented");
 					default:
 						assert(result === undefined, "unexpected result type");
 						break;

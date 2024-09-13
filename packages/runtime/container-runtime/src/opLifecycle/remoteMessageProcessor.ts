@@ -46,30 +46,15 @@ export interface BatchStartInfo {
 
 /**
  * Result of processing the next inbound message.
- * Depending on the message and configuration of RemoteMessageProcessor, the result may be:
- * - A full batch of messages (including a single-message batch)
- * - The first message of a multi-message batch
- * - The next message in a multi-message batch
+ * Right now we only return full batches, but soon we will add support for individual messages within the batch too.
  */
-export type InboundMessageResult =
-	| {
-			type: "fullBatch";
-			messages: InboundSequencedContainerRuntimeMessage[];
-			batchStart: BatchStartInfo;
-			length: number;
-	  }
-	| {
-			type: "batchStartingMessage";
-			batchStart: BatchStartInfo;
-			nextMessage: InboundSequencedContainerRuntimeMessage;
-			length?: never;
-	  }
-	| {
-			type: "nextBatchMessage";
-			batchEnd?: true;
-			nextMessage: InboundSequencedContainerRuntimeMessage;
-			length?: never;
-	  };
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- Preparing to add other union cases
+export type InboundMessageResult = {
+	type: "fullBatch";
+	messages: InboundSequencedContainerRuntimeMessage[];
+	batchStart: BatchStartInfo;
+	length: number;
+};
 
 function assertHasClientId(
 	message: ISequencedDocumentMessage,
