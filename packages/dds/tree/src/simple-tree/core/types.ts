@@ -20,6 +20,11 @@ import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
+ * @remarks
+ * Nodes which are Unhydrated report {@link TreeStatus}.new from `Tree.status(node)`.
+ * @privateRemarks
+ * TODO: Linking tree status is failing in intellisense and linking directly to its .new item is failing in API extractor as well.
+ * WOuld be nice to have a working link here.
  * @public
  */
 export type Unhydrated<T> = T;

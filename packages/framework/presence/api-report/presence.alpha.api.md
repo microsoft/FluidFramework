@@ -26,9 +26,7 @@ export interface IPresence {
     getAttendee(clientId: ConnectedClientId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
-    getNotifications<NotificationsSchema extends {
-        [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
-    }>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceStates<NotificationsSchema, NotificationsManager<any>>;
+    getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceNotifications<NotificationsSchema>;
     getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema): PresenceStates<StatesSchema>;
 }
 
@@ -43,7 +41,7 @@ export function Latest<T extends object, Key extends string>(initialValue: JsonS
 // @alpha
 export function LatestMap<T extends object, RegistrationKey extends string, Keys extends string | number = string | number>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: LatestValueControls): InternalTypes.ManagerFactory<RegistrationKey, MapValueState<T>, LatestMapValueManager<T, Keys>>;
+}, controls?: LatestValueControls): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T>, LatestMapValueManager<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
@@ -131,16 +129,6 @@ export interface LatestValueMetadata {
     timestamp: number;
 }
 
-// @alpha @sealed (undocumented)
-export interface MapValueState<T> {
-    // (undocumented)
-    items: {
-        [name: string | number]: InternalTypes.ValueOptionalState<T>;
-    };
-    // (undocumented)
-    rev: number;
-}
-
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationEvents<E>> {
     broadcast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
@@ -180,6 +168,15 @@ export interface PresenceEvents {
     // @eventProperty
     attendeeJoined: (attendee: ISessionClient) => void;
     workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
+}
+
+// @alpha @sealed
+export type PresenceNotifications<TSchema extends PresenceNotificationsSchema> = PresenceStates<TSchema, NotificationsManager<any>>;
+
+// @alpha
+export interface PresenceNotificationsSchema {
+    // (undocumented)
+    [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
 }
 
 // @alpha @sealed
