@@ -33,7 +33,7 @@ export function markEager<T>(t: T): T {
 				configurable: true,
 				enumerable: false,
 				writable: false,
-		  })
+			})
 		: t;
 }
 
@@ -45,14 +45,16 @@ export function markEager<T>(t: T): T {
  * To force a `"function"` item to be treated as an eager item, call `markEager` before putting it in the list.
  * This is necessary e.g. when the eager list items are function types and the lazy items are functions that _return_ function types.
  * `FlexList`s are processed by `normalizeFlexList` and `normalizeFlexListEager`.
- * @public
+ * @system @public
  */
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 /**
  * Given a `FlexList` of eager and lazy items, return an equivalent list where all items are lazy.
  */
-export function normalizeFlexListLazy<List extends FlexList>(t: List): FlexListToLazyArray<List> {
+export function normalizeFlexListLazy<List extends FlexList>(
+	t: List,
+): FlexListToLazyArray<List> {
 	return t.map((value: LazyItem) => {
 		if (isLazy(value)) {
 			return value;
@@ -85,7 +87,6 @@ export function normalizeFlexListEager<List extends FlexList>(
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 /**
- * @internal
  */
 export type NormalizedFlexList<Item> = readonly Item[];
 
@@ -93,22 +94,18 @@ export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
 /**
  * Get the `Item` type from a `LazyItem<Item>`.
- * @public
+ * @system @public
  */
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result
 	? Result
 	: Item;
 
 /**
- * @internal
  */
 export type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item>
 	? Item
 	: unknown;
 
-/**
- * @public
- */
 export type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown
 	? List
 	: () => List;
@@ -116,19 +113,19 @@ export type NormalizeLazyItem<List extends LazyItem> = List extends () => unknow
 /**
  * Normalize FlexList type to a non-lazy array.
  */
-export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true
-	? ConstantFlexListToNonLazyArray<List>
-	: NormalizedFlexList<ExtractListItemType<List>>;
+export type FlexListToNonLazyArray<List extends FlexList> =
+	ArrayHasFixedLength<List> extends true
+		? ConstantFlexListToNonLazyArray<List>
+		: NormalizedFlexList<ExtractListItemType<List>>;
 
 /**
  * Normalize FlexList type to a union.
- * @public
+ * @system @public
  */
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 /**
  * Normalize FlexList type to a non-lazy array.
- * @internal
  */
 export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 	infer Head,
@@ -148,9 +145,8 @@ export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends
  * losing all the type information.
  */
 // This works by determining if the length is `number` (and not a specific number).
-export type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"]
-	? false
-	: true;
+export type ArrayHasFixedLength<List extends readonly unknown[]> =
+	number extends List["length"] ? false : true;
 
 /**
  * Normalize FlexList type to a lazy array.

@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export {
-	ApiLevel,
-	knownApiLevels,
-	isKnownApiLevel,
-} from "./apiLevel";
-export { ApiTag } from "./apiTag";
+export { ApiLevel, knownApiLevels, isKnownApiLevel } from "./apiLevel.js";
+export { ApiTag } from "./apiTag.js";
 export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
@@ -18,12 +14,25 @@ export {
 	getDefaultBumpTypeForBranch,
 	getReleaseSourceForReleaseGroup,
 	generateReleaseBranchName,
-} from "./branches";
-export { getDisplayDate, getDisplayDateRelative } from "./dates";
-export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
-export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
-export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
-export { Repository } from "./git";
+} from "./branches.js";
+export { getDisplayDate, getDisplayDateRelative } from "./dates.js";
+export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
+export {
+	DEFAULT_CHANGESET_PATH,
+	fluidCustomChangeSetMetadataDefaults,
+	groupByMainPackage,
+	groupBySection,
+	loadChangesets,
+	type FluidCustomChangesetMetadata,
+	UNKNOWN_SECTION,
+} from "./changesets.js";
+export {
+	unscopedPackageNameString,
+	BaseCommand,
+	GenerateEntrypointsCommand,
+} from "./commands/index.js";
+export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
+export { Repository } from "./git.js";
 export {
 	ensureDevDependencyExists,
 	filterVersionsOlderThan,
@@ -37,11 +46,11 @@ export {
 	PreReleaseDependencies,
 	setVersion,
 	sortVersions,
-} from "./package";
-export { difference } from "./sets";
-export { getIndent, indentString } from "./text";
-export { getApiExports } from "./typescriptApi";
-export { createPullRequest, getCommitInfo, pullRequestExists } from "./github";
+} from "./package.js";
+export { difference } from "./sets.js";
+export { getIndent, indentString, readLines } from "./text.js";
+export { getApiExports } from "./typescriptApi.js";
+export { createPullRequest, getCommitInfo, pullRequestExists } from "./github.js";
 export {
 	getRanges,
 	PackageVersionList,
@@ -49,6 +58,6 @@ export {
 	ReleaseReport,
 	ReportKind,
 	toReportKind,
-} from "./release";
-export { LayerGraph } from "./layerGraph";
-export { type Handler, policyHandlers } from "./repoPolicyCheck";
+} from "./release.js";
+export { LayerGraph } from "./layerGraph.js";
+export { type Handler, policyHandlers } from "./repoPolicyCheck/index.js";

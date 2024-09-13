@@ -5,8 +5,9 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { IBlob, ITree } from "@fluidframework/driver-definitions/internal";
 import {
 	convertSummaryTreeToITree,
 	listBlobsAtTreePath,
@@ -14,6 +15,7 @@ import {
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.
+ * @legacy
  * @alpha
  */
 export class MockStorage implements IChannelStorageService {

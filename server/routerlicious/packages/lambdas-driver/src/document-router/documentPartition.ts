@@ -161,6 +161,16 @@ export class DocumentPartition {
 	 * Future messages will be checkpointed but no real processing will happen
 	 */
 	private markAsCorrupt(error: any, message?: IQueuedMessage) {
+		if (this.closed) {
+			Lumberjack.info(
+				"Skipping marking document as corrupt since the document partition is already closed",
+				{
+					...getLumberBaseProperties(this.documentId, this.tenantId),
+					error: error.toString(),
+				},
+			);
+			return;
+		}
 		this.corrupt = true;
 		this.context.log?.error(`Marking document as corrupted due to error: ${inspect(error)}`, {
 			messageMetaData: {
@@ -185,8 +195,10 @@ export class DocumentPartition {
 		}
 	}
 
-	private updateActivityTime() {
-		this.activityTimeoutTime =
+	private updateActivityTime(activityTime?: number) {
+		const cacluatedActivityTimeout =
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
+		this.activityTimeoutTime =
+			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
 	}
 }

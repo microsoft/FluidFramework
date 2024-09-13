@@ -5,10 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import assert from "assert";
-import * as fs from "fs";
+import assert from "node:assert";
+import * as fs from "node:fs";
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { createGroupOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
@@ -22,12 +22,12 @@ describe("MergeTree.Client", () => {
 		it(`Replay ${filePath}`, async () => {
 			const file: ReplayGroup[] = JSON.parse(
 				fs.readFileSync(`${replayResultsPath}/${filePath}`).toString(),
-			);
+			) as ReplayGroup[];
 			const msgClients = new Map<
 				string,
 				{ client: TestClient; msgs: ISequencedDocumentMessage[] }
 			>();
-			const originalClient = new TestClient();
+			const originalClient = new TestClient({ mergeTreeEnableObliterate: true });
 			msgClients.set("A", { client: originalClient, msgs: [] });
 			originalClient.insertTextLocal(0, file[0].initialText);
 			originalClient.startOrUpdateCollaboration("A");
@@ -44,9 +44,7 @@ describe("MergeTree.Client", () => {
 				}
 			}
 			for (const group of file) {
-				const logger = new TestClientLogger(
-					[...msgClients.values()].map((mc) => mc.client),
-				);
+				const logger = new TestClientLogger([...msgClients.values()].map((mc) => mc.client));
 				const initialText = logger.validate();
 				assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
 				for (const msg of group.msgs) {
@@ -61,14 +59,14 @@ describe("MergeTree.Client", () => {
 					msgClient.client.localTransaction(
 						op.type === MergeTreeDeltaType.GROUP ? op : createGroupOp(op),
 					);
-					msgClients.forEach((mc) => mc.msgs.push(msg));
+					for (const mc of msgClients) mc[1].msgs.push(msg);
 				}
 
-				msgClients.forEach((mc) => {
-					while (mc.msgs.length > 0) {
-						mc.client.applyMsg(mc.msgs.shift()!);
+				for (const mc of msgClients) {
+					while (mc[1].msgs.length > 0) {
+						mc[1].client.applyMsg(mc[1].msgs.shift()!);
 					}
-				});
+				}
 				const result = logger.validate();
 				assert.strictEqual(result, group.resultText, "Result text not as expected");
 				logger.dispose();

@@ -5,10 +5,11 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IQuorumClients } from "@fluidframework/protocol-definitions";
+import { IQuorumClients } from "@fluidframework/driver-definitions";
 
 /**
  * Events emitted by {@link IOldestClientObservable}.
+ * @legacy
  * @alpha
  */
 export interface IOldestClientObservableEvents extends IEvent {
@@ -17,13 +18,15 @@ export interface IOldestClientObservableEvents extends IEvent {
 }
 
 /**
- * This is to make OldestClientObserver work with either a ContainerRuntime or an IFluidDataStoreRuntime
+ * This is to make OldestClientObserver work with either a IContainerRuntime or an IFluidDataStoreRuntime
  * (both expose the relevant API surface and eventing).  However, really this info probably shouldn't live on either,
  * since neither is really the source of truth (they are just the only currently-available plumbing options).
  * It's information about the connection, so the real source of truth is lower (at the connection layer).
+ * @legacy
  * @alpha
  */
-export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
+export interface IOldestClientObservable
+	extends IEventProvider<IOldestClientObservableEvents> {
 	getQuorum(): IQuorumClients;
 	// Generic usage of attachState is a little unusual here.  We will treat ourselves as "the oldest client that
 	// has information about this [container | data store]", which in the case of detached data store may disagree
@@ -37,6 +40,7 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
 
 /**
  * Events emitted by {@link IOldestClientObservable}.
+ * @legacy
  * @alpha
  */
 export interface IOldestClientObserverEvents extends IEvent {
@@ -44,6 +48,7 @@ export interface IOldestClientObserverEvents extends IEvent {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {

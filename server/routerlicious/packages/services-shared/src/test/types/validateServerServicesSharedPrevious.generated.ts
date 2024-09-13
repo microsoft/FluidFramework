@@ -362,6 +362,30 @@ use_old_ClassDeclaration_RestLessServer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SocketIoAdapterCreator": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_SocketIoAdapterCreator():
+    TypeOnly<old.SocketIoAdapterCreator>;
+declare function use_current_TypeAliasDeclaration_SocketIoAdapterCreator(
+    use: TypeOnly<current.SocketIoAdapterCreator>): void;
+use_current_TypeAliasDeclaration_SocketIoAdapterCreator(
+    get_old_TypeAliasDeclaration_SocketIoAdapterCreator());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SocketIoAdapterCreator": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_SocketIoAdapterCreator():
+    TypeOnly<current.SocketIoAdapterCreator>;
+declare function use_old_TypeAliasDeclaration_SocketIoAdapterCreator(
+    use: TypeOnly<old.SocketIoAdapterCreator>): void;
+use_old_TypeAliasDeclaration_SocketIoAdapterCreator(
+    get_current_TypeAliasDeclaration_SocketIoAdapterCreator());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SocketIoNodeClusterWebServerFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SocketIoNodeClusterWebServerFactory():

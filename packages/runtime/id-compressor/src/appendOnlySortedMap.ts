@@ -234,10 +234,7 @@ export class AppendOnlySortedMap<K, V> {
 		let prev: readonly [K, unknown] | undefined;
 		for (const kv of this.entries()) {
 			if (prev !== undefined) {
-				assert(
-					this.comparator(kv[0], prev[0]) > 0,
-					0x752 /* Keys in map must be sorted. */,
-				);
+				assert(this.comparator(kv[0], prev[0]) > 0, 0x752 /* Keys in map must be sorted. */);
 			}
 			prev = kv;
 		}

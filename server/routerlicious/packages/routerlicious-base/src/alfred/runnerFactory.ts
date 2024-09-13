@@ -99,6 +99,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			"kafka:lib:producerGlobalAdditionalConfig",
 		);
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -113,6 +114,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaSslCACertFilePath,
 			eventHubConnString,
 			kafkaProducerGlobalAdditionalConfig,
+			oauthBearerConfig,
 		);
 
 		const redisConfig = config.get("redis");
@@ -315,6 +317,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+			| number
+			| undefined;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
@@ -326,6 +331,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableWholeSummaryUpload,
 			opsCollection,
 			storageNameAllocator,
+			ephemeralDocumentTTLSec,
 		);
 
 		const enableClientIPLogging = config.get("alfred:enableClientIPLogging") ?? false;

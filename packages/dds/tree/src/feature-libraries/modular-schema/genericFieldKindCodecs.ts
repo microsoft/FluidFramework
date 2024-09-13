@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
-import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
-import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
-import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import { EncodedGenericChangeset } from "./genericFieldKindFormat.js";
+import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 export function makeGenericChangeCodec(): ICodecFamily<
@@ -27,21 +27,17 @@ function makeV1Codec(): IJsonCodec<
 			change: GenericChangeset,
 			context: FieldChangeEncodingContext,
 		): EncodedGenericChangeset => {
-			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => [
-				index,
-				context.encodeNode(nodeChange),
-			]);
+			const encoded: EncodedGenericChangeset = change
+				.toArray()
+				.map(([index, nodeChange]) => [index, context.encodeNode(nodeChange)]);
 			return encoded;
 		},
 		decode: (
 			encoded: EncodedGenericChangeset,
 			context: FieldChangeEncodingContext,
 		): GenericChangeset => {
-			return encoded.map(
-				([index, nodeChange]: EncodedGenericChange): GenericChange => ({
-					index,
-					nodeChange: context.decodeNode(nodeChange),
-				}),
+			return newGenericChangeset(
+				encoded.map(([index, nodeChange]) => [index, context.decodeNode(nodeChange)]),
 			);
 		},
 		encodedSchema: EncodedGenericChangeset(EncodedNodeChangeset),

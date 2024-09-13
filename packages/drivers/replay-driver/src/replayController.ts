@@ -3,34 +3,38 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	ICreateBlobResponse,
 	IDocumentService,
 	IDocumentStorageService,
+	ISnapshotTree,
 	ISummaryContext,
+	IVersion,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Partial implementation of IDocumentStorageService
  * @internal
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
-	public abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
-	public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
+	public abstract getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+	public abstract getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
 	public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
 	public async uploadSummaryWithContext(
-		summary: api.ISummaryTree,
+		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
 		throw new Error("Invalid operation");
 	}
 
-	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		throw new Error("Invalid operation");
 	}
 
-	public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
+	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		throw new Error("Invalid operation");
 	}
 }
@@ -81,7 +85,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 	 * @param fetchedOps - ops to process
 	 */
 	public abstract replay(
-		emitter: (op: api.ISequencedDocumentMessage[]) => void,
-		fetchedOps: api.ISequencedDocumentMessage[],
+		emitter: (op: ISequencedDocumentMessage[]) => void,
+		fetchedOps: ISequencedDocumentMessage[],
 	): Promise<void>;
 }

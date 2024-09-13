@@ -37,10 +37,7 @@ function testCompression<TPlaceholder extends DetachedSequenceId | never>(
 	idNormalizer: ContextualizedNodeIdNormalizer<OpSpaceNodeId>,
 	compressed?: CompressedPlaceholderTree<OpSpaceNodeId, TPlaceholder>,
 	roundTripAsserter?: (tree: PlaceholderTree<TPlaceholder>, roundTrippedTree: PlaceholderTree<TPlaceholder>) => void,
-	internStrings: (interner: MutableStringInterner, tree: PlaceholderTree<TPlaceholder>) => void = (
-		interner,
-		tree
-	) => {
+	internStrings: (interner: MutableStringInterner, tree: PlaceholderTree<TPlaceholder>) => void = (interner, tree) => {
 		walkTree<Exclude<PlaceholderTree<DetachedSequenceId>, DetachedSequenceId>, DetachedSequenceId>(
 			tree,
 			(node) => {
@@ -247,10 +244,7 @@ describe('TreeCompression', () => {
 			// SimpleTestTree contains extra properties, so deep compare as objects is insufficient. The revision view strategy
 			// only works for valid standalone trees (i.e. ones without placeholders).
 			(tree, treeAfterRoundTrip) => {
-				expect(
-					RevisionView.fromTree(tree).equals(RevisionView.fromTree(treeAfterRoundTrip)),
-					'Unequal revision views'
-				);
+				expect(RevisionView.fromTree(tree).equals(RevisionView.fromTree(treeAfterRoundTrip)), 'Unequal revision views');
 			}
 		);
 	});

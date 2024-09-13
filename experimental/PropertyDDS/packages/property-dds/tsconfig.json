@@ -9,6 +9,8 @@
 		// Types for 'node' are required by 'msgpackr', even though we avoid the
 		// node-specific functionality at runtime.
 		"types": ["node"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

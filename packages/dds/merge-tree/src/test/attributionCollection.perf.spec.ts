@@ -3,20 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	IAttributionCollection,
-	IAttributionCollectionSpec,
 	AttributionCollection as NewAttributionCollection,
 	SerializedAttributionCollection,
-	areEqualAttributionKeys,
 } from "../attributionCollection.js";
-import { RedBlackTree } from "../collections/index.js";
-import { ISegment, compareNumbers } from "../mergeTreeNodes.js";
+import { ISegment } from "../mergeTreeNodes.js";
 import { TextSegmentGranularity } from "../textSegment.js";
 
 interface IAttributionCollectionCtor {
@@ -30,7 +25,7 @@ interface IAttributionCollectionCtor {
 	): SerializedAttributionCollection;
 
 	populateAttributionCollections(
-		segments: Iterable<ISegment>,
+		segments: Iterable<Partial<ISegment>>,
 		summary: SerializedAttributionCollection,
 	): void;
 }
@@ -86,6 +81,24 @@ function runAttributionCollectionSuite(
 			});
 
 			benchmark({
+				title: "getKeysInOffsetRange from start to end",
+				benchmarkFn: () => collection.getKeysInOffsetRange(0),
+				type,
+			});
+
+			benchmark({
+				title: "getKeysInOffsetRange from start to mid",
+				benchmarkFn: () => collection.getKeysInOffsetRange(0, length / 2),
+				type,
+			});
+
+			benchmark({
+				title: "getKeysInOffsetRange from mid to end",
+				benchmarkFn: () => collection.getKeysInOffsetRange(length / 2, length - 1),
+				type,
+			});
+
+			benchmark({
 				title: "getAll",
 				benchmarkFn: () => collection.getAll(),
 				type,
@@ -126,10 +139,12 @@ function runAttributionCollectionSuite(
 	});
 
 	const summary = ctor.serializeAttributionCollections(segmentsToSerialize);
-	const segments: ISegment[] = Array.from({ length: 9 }, () => ({
+	const segments: Partial<ISegment>[] = Array.from({ length: 9 }, () => ({
 		cachedLength: Math.floor(summary.length / 10),
 	})) as ISegment[];
-	segments.push({ cachedLength: summary.length - 9 * Math.floor(summary.length / 10) } as any);
+	segments.push({
+		cachedLength: summary.length - 9 * Math.floor(summary.length / 10),
+	} satisfies Partial<ISegment>);
 	benchmark({
 		title: "deserialize into 10 segments",
 		benchmarkFn: () => {
@@ -139,185 +154,9 @@ function runAttributionCollectionSuite(
 	});
 }
 
-// Note: channel functionality is left unimplemented.
-class TreeAttributionCollection implements IAttributionCollection<AttributionKey> {
-	private readonly entries: RedBlackTree<number, AttributionKey | null> = new RedBlackTree(
-		compareNumbers,
-	);
-
-	public constructor(
-		private _length: number,
-		// eslint-disable-next-line @rushstack/no-new-null
-		baseEntry?: AttributionKey | null,
-	) {
-		if (baseEntry !== undefined) {
-			this.entries.put(0, baseEntry);
-		}
-	}
-
-	public get channelNames() {
-		return [];
-	}
-
-	public getAtOffset(offset: number): AttributionKey | undefined {
-		assert(offset >= 0 && offset < this._length, "Requested offset should be valid");
-		const node = this.entries.floor(offset);
-		assert(node !== undefined, "Collection should have at least one entry");
-		return node.data ?? undefined;
-	}
-
-	public get length(): number {
-		return this._length;
-	}
-
-	/**
-	 * Splits this attribution collection into two with entries for [0, pos) and [pos, length).
-	 */
-	public splitAt(pos: number): TreeAttributionCollection {
-		const splitBaseEntry = this.getAtOffset(pos);
-		const splitCollection = new TreeAttributionCollection(this.length - pos, splitBaseEntry);
-		for (
-			let current = this.entries.ceil(pos);
-			current !== undefined;
-			current = this.entries.ceil(pos)
-		) {
-			// If there happened to be an attribution change at exactly pos, it's already set in the base entry
-			if (current.key !== pos) {
-				splitCollection.entries.put(current.key - pos, current.data);
-			}
-			this.entries.remove(current.key);
-		}
-		this._length = pos;
-		return splitCollection;
-	}
-
-	public append(other: TreeAttributionCollection): void {
-		const lastEntry = this.getAtOffset(this.length - 1);
-		other.entries.map(({ key, data }) => {
-			if (key !== 0 || !areEqualAttributionKeys(lastEntry, data)) {
-				this.entries.put(key + this.length, data);
-			}
-			return true;
-		});
-		this._length += other.length;
-	}
-
-	public getAll(): IAttributionCollectionSpec<AttributionKey> {
-		const results: { offset: number; key: AttributionKey | null }[] = [];
-		this.entries.map(({ key, data }) => {
-			results.push({ offset: key, key: data });
-			return true;
-		});
-		return { root: results, length: this.length };
-	}
-
-	public clone(): TreeAttributionCollection {
-		const copy = new TreeAttributionCollection(this.length, this.getAtOffset(0));
-		this.entries.map(({ key, data }) => {
-			copy.entries.put(key, data);
-			return true;
-		});
-		return copy;
-	}
-
-	/**
-	 * Rehydrates attribution information from its serialized form into the provided iterable of consecutive segments.
-	 */
-	public static populateAttributionCollections(
-		segments: Iterable<ISegment>,
-		summary: SerializedAttributionCollection,
-	): void {
-		const { seqs, posBreakpoints } = summary;
-		assert(
-			seqs.length === posBreakpoints.length && seqs.length > 0,
-			"Invalid attribution summary blob provided",
-		);
-		let curIndex = 0;
-		let cumulativeSegPos = 0;
-		let currentInfo = seqs[curIndex];
-		const getCurrentKey = () =>
-			typeof currentInfo === "object"
-				? currentInfo
-				: ({ type: "op", seq: currentInfo } as const);
-
-		for (const segment of segments) {
-			const attribution = new TreeAttributionCollection(
-				segment.cachedLength,
-				getCurrentKey(),
-			);
-			while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
-				currentInfo = seqs[curIndex];
-				attribution.entries.put(
-					posBreakpoints[curIndex] - cumulativeSegPos,
-					getCurrentKey(),
-				);
-				curIndex++;
-			}
-
-			segment.attribution = attribution;
-			cumulativeSegPos += segment.cachedLength;
-		}
-	}
-
-	public update(): void {
-		throw new Error("unimplemented");
-	}
-
-	/**
-	 * Condenses attribution information on consecutive segments into a `SerializedAttributionCollection`
-	 */
-	public static serializeAttributionCollections(
-		segments: Iterable<{
-			attribution?: IAttributionCollection<AttributionKey>;
-			cachedLength: number;
-		}>,
-	): SerializedAttributionCollection {
-		const posBreakpoints: number[] = [];
-		const seqs: (number | AttributionKey | null)[] = [];
-		let mostRecentAttributionKey: AttributionKey | null | undefined;
-		let cumulativePos = 0;
-
-		let segmentsWithAttribution = 0;
-		let segmentsWithoutAttribution = 0;
-		for (const segment of segments) {
-			if (segment.attribution) {
-				segmentsWithAttribution++;
-				for (const { offset, key: info } of segment.attribution?.getAll()?.root ?? []) {
-					if (
-						mostRecentAttributionKey === undefined ||
-						!areEqualAttributionKeys(info, mostRecentAttributionKey)
-					) {
-						posBreakpoints.push(offset + cumulativePos);
-						seqs.push(!info ? null : info.type === "op" ? info.seq : info);
-					}
-					mostRecentAttributionKey = info;
-				}
-			} else {
-				segmentsWithoutAttribution++;
-			}
-
-			cumulativePos += segment.cachedLength;
-		}
-
-		assert(
-			segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0,
-			"Expected either all segments or no segments to have attribution information.",
-		);
-
-		const blobContents: SerializedAttributionCollection = {
-			seqs,
-			posBreakpoints,
-			length: cumulativePos,
-		};
-		return blobContents;
-	}
-}
-
 describe("IAttributionCollection perf", () => {
-	describe("tree implementation", () => {
-		runAttributionCollectionSuite(TreeAttributionCollection, BenchmarkType.Diagnostic);
-	});
-
+	// There was a RedBlack tree based implementation for the collection entries, but the linear array based one won due to constant
+	// factors/memory characteristics, so just kept the array based one.
 	describe("list-based implementation", () => {
 		runAttributionCollectionSuite(NewAttributionCollection, BenchmarkType.Measurement);
 	});

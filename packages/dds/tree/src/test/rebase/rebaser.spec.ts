@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { ChangeRebaser, RevisionTag } from "../../core/index.js";
+import type { ChangeRebaser, RevisionTag } from "../../core/index.js";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
+import { type GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
 import { fail } from "../../util/index.js";
 import { mintRevisionTag } from "../utils.js";
 

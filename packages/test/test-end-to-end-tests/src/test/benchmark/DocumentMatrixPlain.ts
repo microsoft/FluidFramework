@@ -79,7 +79,6 @@ const runtimeOptions: IContainerRuntimeOptions = {
 			state: "disabled",
 		},
 	},
-	gcOptions: { gcEnabled: false, disableGC: true, runGC: false },
 	compressionOptions: {
 		minimumBatchSizeInBytes: 1024 * 1024,
 		compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -102,7 +101,7 @@ const featureGates = {
 	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
 };
 const featureGatesWithGcOff = {
-	"Fluid.GarbageCollection.RunGC": false,
+	"Fluid.GarbageCollection.Test.RunGC": false,
 	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
 };
 
@@ -227,7 +226,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	public async initializeDocument(): Promise<void> {
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
+			{ logger: this.props.logger, configProvider: configProvider(featureGatesWithGcOff) },
 		);
 		this._mainContainer = await loader.createDetachedContainer(
 			this.props.provider.defaultCodeDetails,
@@ -287,7 +286,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
+			{ logger: this.props.logger, configProvider: configProvider(featureGatesWithGcOff) },
 		);
 		const container2 = await loader.resolve(request);
 

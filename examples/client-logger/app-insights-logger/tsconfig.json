@@ -4,6 +4,7 @@
 		"rootDir": "src",
 		"outDir": "./lib",
 		"types": ["jest"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

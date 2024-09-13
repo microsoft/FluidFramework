@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ObjectOptions } from "@sinclair/typebox";
+import type { ObjectOptions } from "@sinclair/typebox";
 
-import { _InlineTrick, fail, objectToMap } from "../util/index.js";
+import { type _InlineTrick, fail, objectToMap } from "../util/index.js";
 
 /**
  * This module contains utilities for an encoding of a discriminated union that is efficient to validate using
@@ -24,6 +24,25 @@ export const unionOptions: ObjectOptions = {
 	minProperties: 1,
 	maxProperties: 1,
 };
+
+/**
+ * An object containing functions for each member of the union.
+ *
+ * See {@link DiscriminatedUnionDispatcher}.
+ */
+export type DiscriminatedUnionLibrary<
+	TUnion extends object,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	TArgs extends any[],
+	TResult,
+> = [
+	{
+		readonly [Property in keyof TUnion]-?: (
+			value: Required<TUnion>[Property],
+			...args: TArgs
+		) => TResult;
+	},
+][_InlineTrick];
 
 /**
  * Applies a function to the content of a [discriminated union](https://en.wikipedia.org/wiki/Tagged_union)
@@ -80,22 +99,18 @@ export const unionOptions: ObjectOptions = {
  * ```
  * where only a single property of `EncodedOperation` is populated for a given encoded value.
  */
-export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends any[], TResult> {
+export class DiscriminatedUnionDispatcher<
+	TUnion extends object,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	TArgs extends any[],
+	TResult,
+> {
 	private readonly library: ReadonlyMap<
 		keyof TUnion,
 		(value: unknown, ...args: TArgs) => TResult
 	>;
 
-	public constructor(
-		library: [
-			{
-				readonly [Property in keyof TUnion]-?: (
-					value: Required<TUnion>[Property],
-					...args: TArgs
-				) => TResult;
-			},
-		][_InlineTrick],
-	) {
+	public constructor(library: DiscriminatedUnionLibrary<TUnion, TArgs, TResult>) {
 		this.library = objectToMap(
 			library as Record<keyof TUnion, (value: unknown, ...args: TArgs) => TResult>,
 		);

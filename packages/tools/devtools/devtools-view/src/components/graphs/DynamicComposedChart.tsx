@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { type Theme } from "@fluentui/react-components";
+import type { Theme } from "@fluentui/react-components";
 import React from "react";
 import {
 	Area,
@@ -54,7 +54,10 @@ interface DataPoint {
  * This method is necessary for showing composed graphs because Recharts expects data to be in a merged object format
  */
 const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
-	const xAxisDataPointToYAxisDataPointMap: Record<string, Record<string, number | string>> = {};
+	const xAxisDataPointToYAxisDataPointMap: Record<
+		string,
+		Record<string, number | string>
+	> = {};
 
 	for (const dataSet of dataSets) {
 		const { yAxisDataKey, xAxisDataKey, uuid } = dataSet.schema;
@@ -326,9 +329,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 						stroke={hexColor}
 						strokeWidth={3}
 						activeDot={{ r: 6 }}
-						strokeOpacity={
-							activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2
-						}
+						strokeOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
 					/>
 				);
 			}

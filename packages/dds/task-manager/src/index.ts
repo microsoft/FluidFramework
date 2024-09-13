@@ -11,4 +11,4 @@
  */
 
 export { ITaskManager, ITaskManagerEvents, TaskEventListener } from "./interfaces.js";
-export { TaskManager } from "./taskManager.js";
+export { TaskManager } from "./taskManagerFactory.js";

@@ -7,5 +7,7 @@
 		"outDir": "./lib",
 		"preserveConstEnums": true,
 		"noImplicitAny": true,
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 }

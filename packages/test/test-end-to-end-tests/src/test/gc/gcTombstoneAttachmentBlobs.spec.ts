@@ -8,9 +8,12 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	ContainerRuntime,
+	IGCRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -37,7 +40,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		gcThrowOnTombstoneLoad: true,
+		enableGCSweep: true,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -66,6 +69,9 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+		if (!driverSupportsBlobs(provider.driver)) {
+			this.skip();
+		}
 		configProvider.set(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
 			tombstoneTimeoutMs,
@@ -94,12 +100,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			return { dataStore, summarizer };
 		}
 
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"fails retrieval of tombstones attachment blobs",
 			[
@@ -115,8 +115,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
@@ -191,8 +190,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
@@ -266,8 +264,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
@@ -337,7 +334,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 		);
 
 		itExpects(
-			"logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneUsage is not enabled",
+			"logs tombstone event on retrieval of tombstones attachment blobs when ThrowOnTombstoneLoad is not enabled",
 			[
 				{
 					eventName:
@@ -346,11 +343,10 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				// Override ThrowOnTombstoneLoad setting to off.
-				configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", false);
+				// Disable ThrowOnTombstoneLoad setting.
+				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoad", true);
 
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
@@ -472,12 +468,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach("conditionalSkip", async function () {
-			if (!driverSupportsBlobs(provider.driver)) {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"tombstones blobs uploaded in detached container",
 			[
@@ -488,8 +478,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { mainContainer, mainDataStore } =
-					await createDetachedContainerAndDataStore();
+				const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
 				// Upload an attachment blob and mark it referenced by storing its handle in a DDS.
 				const blobContents = "Blob contents";
@@ -545,10 +534,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(
-					response.value.startsWith("Blob was tombstoned:"),
-					`Unexpected response value`,
-				);
+				assert(response.value.startsWith("Blob was tombstoned:"), `Unexpected response value`);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);
@@ -568,8 +554,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { mainContainer, mainDataStore } =
-					await createDetachedContainerAndDataStore();
+				const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
 				// Upload an attachment blob. We should get a handle with a localId for the blob. Mark it referenced by
 				// storing its handle in a DDS.
@@ -683,8 +668,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { mainContainer, mainDataStore } =
-					await createDetachedContainerAndDataStore();
+				const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
 				// Upload couple of attachment blobs with the same content. When these blobs are uploaded to the server,
 				// they will be de-duped and redirect to the same storageId.
@@ -826,12 +810,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			return summarizer;
 		}
 
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"tombstones blobs uploaded in disconnected container",
 			[
@@ -889,10 +867,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(
-					response.value.startsWith("Blob was tombstoned:"),
-					`Unexpected response value`,
-				);
+				assert(response.value.startsWith("Blob was tombstoned:"), `Unexpected response value`);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);

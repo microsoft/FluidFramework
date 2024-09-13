@@ -7,23 +7,22 @@ import { strict as assert } from "assert";
 
 import {
 	EmptyKey,
-	FieldKey,
+	type FieldKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
+	type FlexTreeNodeSchema,
 	LeafNodeSchema,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";
@@ -37,12 +36,12 @@ import { brand } from "../../util/index.js";
 
 describe("storedToViewSchema", () => {
 	describe("fieldSchemaFromStoredSchema", () => {
-		const schemaX = LeafNodeSchema.create(
+		const schemaX = new LeafNodeSchema(
 			{ name: "z" },
 			brand<TreeNodeSchemaIdentifier>("x"),
 			ValueSchema.Number,
 		);
-		const schemaY = LeafNodeSchema.create(
+		const schemaY = new LeafNodeSchema(
 			{ name: "z" },
 			brand<TreeNodeSchemaIdentifier>("y"),
 			ValueSchema.Number,
@@ -52,8 +51,7 @@ describe("storedToViewSchema", () => {
 			[schemaY.name, schemaY],
 		]);
 		const roundTrip = [
-			["any", FlexFieldSchema.create(FieldKinds.optional, [Any])],
-			["forbidden", FlexFieldSchema.create(FieldKinds.forbidden, [Any])],
+			["forbidden", FlexFieldSchema.create(FieldKinds.forbidden, [])],
 			["no types", FlexFieldSchema.create(FieldKinds.optional, [])],
 			["one type", FlexFieldSchema.create(FieldKinds.optional, [schemaX])],
 			["lazy", FlexFieldSchema.create(FieldKinds.optional, [() => schemaX])],
@@ -148,7 +146,7 @@ describe("storedToViewSchema", () => {
 				}
 
 				assert.equal(
-					(nodeSchema as Partial<LeafNodeSchema>).leafValue,
+					nodeSchema instanceof LeafNodeSchema ? nodeSchema.info : undefined,
 					(storedNodeSchema as Partial<LeafNodeStoredSchema>).leafValue,
 				);
 

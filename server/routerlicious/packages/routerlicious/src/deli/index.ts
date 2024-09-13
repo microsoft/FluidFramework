@@ -36,6 +36,7 @@ export async function deliCreate(
 		"kafka:lib:producerGlobalAdditionalConfig",
 	);
 	const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+	const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 
 	const kafkaForwardClientId = config.get("deli:kafkaClientId");
 	const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -56,6 +57,8 @@ export async function deliCreate(
 
 	const enableLeaveOpNoClientServerMetadata =
 		(config.get("deli:enableLeaveOpNoClientServerMetadata") as boolean) ?? false;
+
+	const noOpConsolidationTimeout = config.get("deli:noOpConsolidationTimeout");
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -117,6 +120,7 @@ export async function deliCreate(
 		kafkaSslCACertFilePath,
 		eventHubConnString,
 		kafkaProducerGlobalAdditionalConfig,
+		oauthBearerConfig,
 	);
 	const reverseProducer = services.createProducer(
 		kafkaLibrary,
@@ -131,6 +135,7 @@ export async function deliCreate(
 		kafkaSslCACertFilePath,
 		eventHubConnString,
 		kafkaProducerGlobalAdditionalConfig,
+		oauthBearerConfig,
 	);
 
 	const redisConfig = config.get("redis");
@@ -184,6 +189,7 @@ export async function deliCreate(
 			restartOnCheckpointFailure,
 			kafkaCheckpointOnReprocessingOp,
 			enableLeaveOpNoClientServerMetadata,
+			noOpConsolidationTimeout,
 		},
 	};
 

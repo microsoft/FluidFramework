@@ -59,9 +59,16 @@ nexus:
     shouldDisableDefaultNamespace: false
   socketIo:
     perMessageDeflate: true
+    gracefulShutdownEnabled: false
+    pingPongLatencyTrackingEnabled: false
+  enableCollaborationSessionTracking: false
+  enableCollaborationSessionPruning: false
+  redisCollaborationSessionManagerOptions:
+    maxScanBatchSize: 800
 
 storage:
   enableWholeSummaryUpload: false
+  ephemeralDocumentTTLSec: 86400
   storageUrl: storage_url
 
 checkpoints:
@@ -83,6 +90,7 @@ deli:
   restartOnCheckpointFailure: true
   enableEphemeralContainerSummaryCleanup: true
   enableLeaveOpNoClientServerMetadata: false
+  noOpConsolidationTimeout: 250
 
 scriptorium:
   name: scriptorium

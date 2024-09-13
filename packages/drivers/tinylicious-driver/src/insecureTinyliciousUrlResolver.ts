@@ -74,7 +74,10 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 		};
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		const documentId = decodeURIComponent(
 			resolvedUrl.url.replace(`${this.tinyliciousEndpoint}/tinylicious/`, ""),
 		);

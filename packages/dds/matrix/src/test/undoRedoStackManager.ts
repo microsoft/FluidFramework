@@ -25,7 +25,7 @@ class Stack<T> {
 	private readonly items: T[] = [];
 	constructor(...items: T[]) {
 		if (items !== undefined) {
-			items.forEach((item) => this.push(item));
+			for (const item of items) this.push(item);
 		}
 	}
 
@@ -42,7 +42,7 @@ class Stack<T> {
 		return this.items.shift();
 	}
 
-	public push(item: T) {
+	public push(item: T): void {
 		this.items.unshift(item);
 		if (this.itemPushedCallback !== undefined) {
 			this.itemPushedCallback();
@@ -54,22 +54,22 @@ class Stack<T> {
  * Helper class for creating the Undo and Redo stacks
  */
 class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
-	public push(item: Stack<IRevertible> | undefined) {
+	public push(item: Stack<IRevertible> | undefined): void {
 		if (item !== undefined) {
-			item.itemPushedCallback = () => this.callItemPushedCallback;
+			item.itemPushedCallback = (): void => this.callItemPushedCallback();
 		}
 		super.push(item);
 	}
 
-	public closeCurrentOperationIfInProgress() {
-		if (this.top() !== undefined) {
-			this.push(undefined);
-		} else {
+	public closeCurrentOperationIfInProgress(): void {
+		if (this.top() === undefined) {
 			this.callItemPushedCallback();
+		} else {
+			this.push(undefined);
 		}
 	}
 
-	private callItemPushedCallback() {
+	private callItemPushedCallback(): void {
 		if (this.itemPushedCallback !== undefined) {
 			this.itemPushedCallback();
 		}
@@ -82,7 +82,7 @@ class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
  * and issuing and undo or a redo.
  */
 export class UndoRedoStackManager {
-	private static revert(revertStack: UndoRedoStack, pushStack: UndoRedoStack) {
+	private static revert(revertStack: UndoRedoStack, pushStack: UndoRedoStack): void {
 		// Close the pushStack, as it could get  new ops
 		// from the revert, and we don't want those combined
 		// with any existing operation
@@ -119,20 +119,20 @@ export class UndoRedoStackManager {
 	private readonly eventEmitter = new EventEmitter();
 
 	constructor() {
-		this.undoStack.itemPushedCallback = () => this.eventEmitter.emit("changePushed");
-		this.redoStack.itemPushedCallback = () => this.eventEmitter.emit("changePushed");
+		this.undoStack.itemPushedCallback = (): boolean => this.eventEmitter.emit("changePushed");
+		this.redoStack.itemPushedCallback = (): boolean => this.eventEmitter.emit("changePushed");
 	}
 
-	public closeCurrentOperation() {
+	public closeCurrentOperation(): void {
 		if (this.mode === UndoRedoMode.None) {
 			this.undoStack.closeCurrentOperationIfInProgress();
 		}
 	}
 
-	public on(event: "changePushed", listener: () => void) {
+	public on(event: "changePushed", listener: () => void): void {
 		this.eventEmitter.on(event, listener);
 	}
-	public removeListener(event: "changePushed", listener: () => void) {
+	public removeListener(event: "changePushed", listener: () => void): void {
 		this.eventEmitter.removeListener(event, listener);
 	}
 
@@ -156,25 +156,29 @@ export class UndoRedoStackManager {
 		return true;
 	}
 
-	public pushToCurrentOperation(revertible: IRevertible) {
+	public pushToCurrentOperation(revertible: IRevertible): void {
 		let currentStack: UndoRedoStack;
 
 		switch (this.mode) {
-			case UndoRedoMode.None:
+			case UndoRedoMode.None: {
 				currentStack = this.undoStack;
 				this.clearRedoStack();
 				break;
+			}
 
-			case UndoRedoMode.Redo:
+			case UndoRedoMode.Redo: {
 				currentStack = this.undoStack;
 				break;
+			}
 
-			case UndoRedoMode.Undo:
+			case UndoRedoMode.Undo: {
 				currentStack = this.redoStack;
 				break;
+			}
 
-			default:
+			default: {
 				throw new Error("unknown mode");
+			}
 		}
 		const operationStack = currentStack.top();
 		if (operationStack === undefined) {
@@ -184,7 +188,7 @@ export class UndoRedoStackManager {
 		}
 	}
 
-	private clearRedoStack() {
+	private clearRedoStack(): void {
 		while (!this.redoStack.empty()) {
 			const redoOpertionStack = this.redoStack.pop();
 			if (redoOpertionStack !== undefined) {

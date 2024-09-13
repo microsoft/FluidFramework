@@ -8,6 +8,7 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Different error types the ClientSession may report out to the Host.
+ * @legacy
  * @alpha
  */
 export const ContainerErrorTypes = {
@@ -21,9 +22,11 @@ export const ContainerErrorTypes = {
 
 /**
  * {@inheritDoc (ContainerErrorTypes:variable)}
+ * @legacy
  * @alpha
  */
-export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
+export type ContainerErrorTypes =
+	(typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 /**
  * Different error types the Container may report out to the Host.
@@ -66,6 +69,7 @@ export enum ContainerErrorType {
 
 /**
  * Represents warnings raised on container.
+ * @legacy
  * @alpha
  */
 export interface ContainerWarning extends IErrorBase {

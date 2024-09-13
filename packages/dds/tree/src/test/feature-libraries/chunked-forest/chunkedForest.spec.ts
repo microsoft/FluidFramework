@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TreeStoredSchemaSubscription } from "../../../core/index.js";
+import type { TreeStoredSchemaSubscription } from "../../../core/index.js";
 import {
 	Chunker,
-	IChunker,
-	ShapeInfo,
+	type IChunker,
+	type ShapeInfo,
 	defaultChunkPolicy,
 	makeTreeChunker,
 	polymorphic,

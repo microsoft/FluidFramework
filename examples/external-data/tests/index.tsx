@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-
-import type { IAppModel, ITaskList } from "../src/model-interface/index.js";
 import { BaseDocumentContainerRuntimeFactory } from "../src/model/index.js";
+import type { IAppModel, ITaskList } from "../src/model-interface/index.js";
 import { TaskListView } from "../src/view/index.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
 		new StaticCodeLoader(new BaseDocumentContainerRuntimeFactory()),
 	);

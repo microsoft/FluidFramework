@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
 import { IOrderedCollection } from "./interfaces.js";
@@ -29,6 +32,7 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  * Implementation of a consensus stack
  *
  * An derived type of ConsensusOrderedCollection with a queue as the backing data and order.
+ * @legacy
  * @alpha
  */
 export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {

@@ -10,6 +10,7 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
+// eslint-disable-next-line import/no-deprecated
 import { ILoaderOptions } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
@@ -20,15 +21,23 @@ import {
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
+import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
-const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
+// eslint-disable-next-line import/no-deprecated
+interface ILoaderOptionsExperimental extends ILoaderOptions {
+	enableOfflineSnapshotRefresh?: boolean;
+	snapshotRefreshTimeoutMs?: number;
+}
+
+const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	cache: booleanCases,
 	client: [undefined],
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
 	enableOfflineLoad: booleanCases,
+	enableOfflineSnapshotRefresh: booleanCases,
+	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
 };
 
 export function applyOverrides<T extends Record<string, any>>(
@@ -57,17 +66,15 @@ export function applyOverrides<T extends Record<string, any>>(
 
 export const generateLoaderOptions = (
 	seed: number,
-	overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined,
-): ILoaderOptions[] => {
-	return generatePairwiseOptions<ILoaderOptions>(
+	overrides: Partial<OptionsMatrix<ILoaderOptionsExperimental>> | undefined,
+): ILoaderOptionsExperimental[] => {
+	return generatePairwiseOptions<ILoaderOptionsExperimental>(
 		applyOverrides(loaderOptionsMatrix, overrides),
 		seed,
 	);
 };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-	disableGC: booleanCases,
-	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
 	sessionExpiryTimeoutMs: [undefined], // Don't want sessions to expire at a fixed time
 	enableGCSweep: [undefined], // Don't need coverage here, GC sweep is tested separately
@@ -137,7 +144,7 @@ export function generateConfigurations(
  * @returns an option override
  */
 export function getOptionOverride(
-	testConfig: ILoadTestConfig | undefined,
+	testConfig: TestConfiguration | undefined,
 	driverType: TestDriverTypes,
 	endpoint: string | undefined,
 ): OptionOverride | undefined {

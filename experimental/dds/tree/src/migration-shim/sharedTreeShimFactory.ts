@@ -7,9 +7,10 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	type IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
+import type { ITree } from '@fluidframework/tree';
 
 import { SharedTreeShim } from './sharedTreeShim.js';
 import { attributesMatch } from './utils.js';
@@ -28,7 +29,7 @@ import { attributesMatch } from './utils.js';
  * @internal
  */
 export class SharedTreeShimFactory implements IChannelFactory {
-	public constructor(private readonly factory: IChannelFactory) {}
+	public constructor(private readonly factory: IChannelFactory<ITree>) {}
 
 	/**
 	 * Can only load the new SharedTree - this allows our snapshots to be simple. We do not have to consider any new

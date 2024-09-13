@@ -23,7 +23,10 @@ import { shortCodeMap } from "./assertionShortCodesMap.js";
  * message. Otherwise it throws an error.
  * @internal
  */
-export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
+export function validateAssertionError(
+	error: Error,
+	expectedErrorMsg: string | RegExp,
+): boolean {
 	const mappedMsg = (shortCodeMap[error.message] as string) ?? error.message;
 	if (
 		typeof expectedErrorMsg === "string"

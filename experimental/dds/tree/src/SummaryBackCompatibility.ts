@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import type { IFluidSerializer } from '@fluidframework/shared-object-base';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 
 import { fail } from './Common.js';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog.js';

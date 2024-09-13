@@ -4,8 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { Serializable } from "@fluidframework/datastore-definitions/internal";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	Serializable,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment,
 	IJSONSegment,
@@ -36,19 +39,18 @@ export class SubSequence<T> extends BaseSegment {
 	}
 	public static fromJSONObject<U>(spec: any) {
 		if (spec && typeof spec === "object" && "items" in spec) {
-			const segment = new SubSequence<U>(spec.items);
-			if (spec.props) {
-				segment.addProperties(spec.props);
-			}
-			return segment;
+			return new SubSequence<U>(spec.items, spec.props);
 		}
 		return undefined;
 	}
 
 	public readonly type = SubSequence.typeString;
 
-	constructor(public items: Serializable<T>[]) {
-		super();
+	constructor(
+		public items: Serializable<T>[],
+		props?: PropertySet,
+	) {
+		super(props);
 		this.cachedLength = items.length;
 	}
 
@@ -132,10 +134,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	 * @param props - Optional. Properties to set on the inserted items.
 	 */
 	public insert(pos: number, items: Serializable<T>[], props?: PropertySet) {
-		const segment = new SubSequence<T>(items);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = new SubSequence<T>(items, props);
 		this.client.insertSegmentLocal(pos, segment);
 	}
 

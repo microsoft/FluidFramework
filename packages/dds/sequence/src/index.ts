@@ -39,9 +39,6 @@ export {
 	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
-	Side,
-	InteriorSequencePlace,
-	SequencePlace,
 } from "./intervalCollection.js";
 export {
 	IntervalIndex,
@@ -69,7 +66,11 @@ export {
 	revertSharedStringRevertibles,
 	SharedStringRevertible,
 } from "./revertibles.js";
-export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence.js";
+export {
+	ISharedSegmentSequenceEvents,
+	SharedSegmentSequence,
+	ISharedSegmentSequence,
+} from "./sequence.js";
 export {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,
@@ -105,4 +106,7 @@ export {
 	reservedRangeLabelsKey,
 	TrackingGroup,
 	LocalReferencePosition,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
 } from "@fluidframework/merge-tree/internal";

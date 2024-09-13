@@ -34,8 +34,8 @@ export namespace TokenList {
 		return !tokenList // If the list is empty
 			? token // ...the token becomes the new list.
 			: !token || findToken(tokenList, token)
-			? tokenList // If the token is empty or already in the list, return the list as-is
-			: `${tokenList} ${token}`; // ...otherwise append the token to the list.
+				? tokenList // If the token is empty or already in the list, return the list as-is
+				: `${tokenList} ${token}`; // ...otherwise append the token to the list.
 	}
 
 	export function unset(tokenList: string, token: string) {

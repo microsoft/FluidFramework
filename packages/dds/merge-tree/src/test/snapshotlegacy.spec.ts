@@ -5,10 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -149,8 +149,7 @@ describe("snapshot", () => {
 				options: {
 					attribution: {
 						track: true,
-						policyFactory:
-							createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+						policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 					},
 				},
 			},
@@ -159,10 +158,13 @@ describe("snapshot", () => {
 		);
 
 		const ops: ISequencedDocumentMessage[] = [];
-		const applyAllOps = () =>
-			ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
+		const applyAllOps = (): void => {
+			for (const op of ops.splice(0)) clients.all.map((client) => client.applyMsg(op));
+		};
 
-		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
+		ops.push(
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
+		);
 
 		applyAllOps();
 
@@ -172,9 +174,6 @@ describe("snapshot", () => {
 				/* seq */ 2,
 				/* refSeq */ 1,
 			),
-		);
-
-		ops.push(
 			clients.B.makeOpMessage(
 				clients.B.annotateRangeLocal(0, 14, { foo: "bar" }),
 				/* seq */ 3,
@@ -205,10 +204,13 @@ describe("snapshot", () => {
 		);
 
 		const ops: ISequencedDocumentMessage[] = [];
-		const applyAllOps = () =>
-			ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
+		const applyAllOps = (): void => {
+			for (const op of ops.splice(0)) clients.all.map((client) => client.applyMsg(op));
+		};
 
-		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
+		ops.push(
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
+		);
 
 		applyAllOps();
 

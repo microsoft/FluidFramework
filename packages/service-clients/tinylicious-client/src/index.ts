@@ -14,11 +14,7 @@
  * @packageDocumentation
  */
 
-import { TinyliciousClient } from "./TinyliciousClient.js";
-
 export {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
 	type ITinyliciousAudience,
 	type TinyliciousClientProps,
 	type TinyliciousConnectionConfig,
@@ -28,5 +24,5 @@ export {
 } from "./interfaces.js";
 export { TinyliciousClient } from "./TinyliciousClient.js";
 
-// eslint-disable-next-line import/no-default-export, unicorn/prefer-export-from
-export default TinyliciousClient;
+// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
+export type { CompatibilityMode } from "@fluidframework/fluid-static";

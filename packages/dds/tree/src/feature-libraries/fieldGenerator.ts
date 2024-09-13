@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, MapTree, TreeFieldStoredSchema } from "../core/index.js";
+import type { FieldKey, MapTree, TreeFieldStoredSchema } from "../core/index.js";
 
-import { FlexTreeSchema } from "./typed-schema/index.js";
+import type { FlexTreeSchema } from "./typed-schema/index.js";
 
 /**
  * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
- * @internal
  */
 export interface TreeDataContext {
 	/**
@@ -38,7 +37,6 @@ export interface TreeDataContext {
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
- * @internal
  */
 export type FieldGenerator = () => MapTree[];
 /**
@@ -46,5 +44,4 @@ export type FieldGenerator = () => MapTree[];
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
- * @internal
  */

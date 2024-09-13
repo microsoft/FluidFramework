@@ -6,11 +6,14 @@
 import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Package } from "@fluidframework/build-tools";
-import { readJsonSync } from "fs-extra";
+import { readJsonSync } from "fs-extra/esm";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface ILayerInfo {
 	deps?: string[];
@@ -33,7 +36,6 @@ interface ILayerInfoFile {
 }
 
 class BaseNode {
-	// eslint-disable-next-line no-useless-constructor
 	constructor(public readonly name: string) {}
 
 	public get dotName(): string {
@@ -591,7 +593,6 @@ ${lines.join(newline)}
 	}
 
 	public static load(root: string, packages: Package[], info?: string): LayerGraph {
-		// eslint-disable-next-line unicorn/prefer-module
 		const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
 		const layerData = readJsonSync(layerInfoFile) as ILayerInfoFile;
 		return new LayerGraph(root, layerData, packages);

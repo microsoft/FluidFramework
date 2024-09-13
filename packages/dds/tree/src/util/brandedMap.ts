@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "./typeCheck.js";
+import type { Brand } from "./brand.js";
+import type { Opaque } from "./opaque.js";
+import type { Invariant } from "./typeCheck.js";
 import { getOrCreate } from "./utils.js";
 
 /**
  * Key in a {@link BrandedMapSubset}.
- * @internal
+ * @remarks
+ * Due to the `TContent` type parameter being invariant (which it has to be since keys are used to both read and write data),
+ * generic collections end up needing to constrain their key's `TContent` to `any`.
  */
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 
 /**
- * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
 	unknown,
 	infer TContent
@@ -35,9 +39,8 @@ export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey exte
  *
  * @remarks
  * These APIs are designed so that a Map can be used to implement this type.
- *
- * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
 	has(key: K): boolean;
@@ -47,14 +50,15 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 
 /**
  * Version of {@link getOrCreate} with better typing for {@link BrandedMapSubset}.
+ * @privateRemarks
+ * Only infers type from key to avoid inferring `any` from map's key.
  */
-export function getOrCreateSlotContent<
-	M extends BrandedMapSubset<BrandedKey<unknown, any>>,
-	K extends BrandedKey<unknown, any>,
->(map: M, key: K, defaultValue: (key: K) => BrandedKeyContent<K>): BrandedKeyContent<K> {
-	const result: BrandedKeyContent<K> = getOrCreate(map, key, defaultValue);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return result;
+export function getOrCreateSlotContent<K, V>(
+	map: NoInfer<BrandedMapSubset<BrandedKey<K, V>>>,
+	key: BrandedKey<K, V>,
+	defaultValue: NoInfer<(key: BrandedKey<K, V>) => V>,
+): V {
+	return getOrCreate<BrandedKey<K, V>, V>(map, key, defaultValue);
 }
 
 /**
@@ -66,8 +70,11 @@ let slotCounter = 0;
 
 /**
  * Define a strongly typed slot in which data can be stored in a {@link BrandedMapSubset}.
- * @internal
  */
-export function brandedSlot<TSlot extends BrandedKey<any, any>>(): TSlot {
+export function brandedSlot<
+	// See note on BrandedKey.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	TSlot extends BrandedKey<number | Opaque<Brand<number, string>>, any>,
+>(): TSlot {
 	return slotCounter++ as TSlot;
 }

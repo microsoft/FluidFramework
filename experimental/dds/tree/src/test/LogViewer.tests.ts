@@ -102,7 +102,11 @@ function getLogWithNumEdits(nodeIdContext: NodeIdContext, numEdits: number): Edi
  * @param testTree - Test tree to work from
  */
 function getSimpleLogBaseView(testTree: TestTree): RevisionView {
-	const node: ChangeNode = { definition: testTree.definition, identifier: testTree.identifier, traits: {} };
+	const node: ChangeNode = {
+		definition: testTree.definition,
+		identifier: testTree.identifier,
+		traits: {},
+	};
 	copyPropertyIfDefined(testTree, node, 'payload');
 	return RevisionView.fromTree(node);
 }
@@ -210,7 +214,10 @@ function runLogViewerCorrectnessTests(
 				// Revisions are from [0, simpleLog.length], edits are at indices [0, simpleLog.length)
 				if (i < simpleLog.length) {
 					const edit = simpleLog.tryGetEditAtIndex(i) ?? fail('edit not found');
-					mutableLog.addSequencedEdit(edit, { sequenceNumber: i + 1, referenceSequenceNumber: i });
+					mutableLog.addSequencedEdit(edit, {
+						sequenceNumber: i + 1,
+						referenceSequenceNumber: i,
+					});
 				}
 			}
 		});
@@ -254,8 +261,7 @@ function runLogViewerCorrectnessTests(
 				expectViewsAreEqual(logWithLocalEdits, viewer);
 				// Sequence a local edit
 				logWithLocalEdits.addSequencedEdit(
-					logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits) ??
-						fail('edit not found'),
+					logWithLocalEdits.tryGetEditAtIndex(logWithLocalEdits.numberOfSequencedEdits) ?? fail('edit not found'),
 					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 				);
 				++seqNumber;
@@ -466,11 +472,7 @@ describe('CachingLogViewer', () => {
 	it('caches revision views for local revisions', async () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits(testTree);
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewerAssumeAppliedEdits(
-			logWithLocalEdits,
-			simpleLogBaseView,
-			() => editsProcessed++
-		);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(logWithLocalEdits, simpleLogBaseView, () => editsProcessed++);
 		assert(logWithLocalEdits.length < CachingLogViewer.sequencedCacheSizeMax);
 
 		requestAllRevisionViews(viewer, logWithLocalEdits);
@@ -514,11 +516,7 @@ describe('CachingLogViewer', () => {
 	it('invalidates cached revision views for local revisions when remote edits are received', () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits(testTree);
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewerAssumeAppliedEdits(
-			logWithLocalEdits,
-			simpleLogBaseView,
-			() => editsProcessed++
-		);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(logWithLocalEdits, simpleLogBaseView, () => editsProcessed++);
 
 		// Request twice, should only process edits once
 		viewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
@@ -634,13 +632,7 @@ describe('CachingLogViewer', () => {
 	it('caches the oldest in memory revision when edits are evicted', async () => {
 		let retainedRevision = 0;
 		const targetEditLogSize = 10;
-		const log = new EditLog<ChangeInternal>(
-			undefined,
-			undefined,
-			undefined,
-			targetEditLogSize,
-			targetEditLogSize * 2
-		);
+		const log = new EditLog<ChangeInternal>(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleLogBaseView);
 
 		viewer.on(CachingLogViewerDiagnosticEvents.RevisionRetained, (revision) => {
@@ -683,12 +675,8 @@ describe('CachingLogViewer', () => {
 		} {
 			const log = getTestTreeLog(testTree);
 			const events: SequencedEditResult[] = [];
-			const viewer = new CachingLogViewer(
-				log,
-				simpleLogBaseView,
-				undefined,
-				undefined,
-				(args: SequencedEditResult) => events.push(args)
+			const viewer = new CachingLogViewer(log, simpleLogBaseView, undefined, undefined, (args: SequencedEditResult) =>
+				events.push(args)
 			);
 			return { log, viewer, events };
 		}

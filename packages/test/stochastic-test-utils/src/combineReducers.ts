@@ -13,9 +13,11 @@ import { AsyncReducer, BaseFuzzTestState, Reducer } from "./types.js";
 export function combineReducers<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,
->(reducerMap: {
-	[K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState>;
-}): Reducer<TOperation, TState> {
+>(
+	reducerMap: {
+		[K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState>;
+	},
+): Reducer<TOperation, TState> {
 	return (state, op) => {
 		const childReducer = reducerMap[op.type];
 		assert(
@@ -33,9 +35,11 @@ export function combineReducers<
 export function combineReducersAsync<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,
->(reducerMap: {
-	[K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState>;
-}): AsyncReducer<TOperation, TState> {
+>(
+	reducerMap: {
+		[K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState>;
+	},
+): AsyncReducer<TOperation, TState> {
 	return async (state, op) => {
 		const childReducer = reducerMap[op.type];
 		assert(

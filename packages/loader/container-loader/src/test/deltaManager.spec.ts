@@ -3,17 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions/internal";
 import {
-	IClient,
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-private/test-loader-utils";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	IDocumentDeltaStorageService,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+	type IStream,
+	type IStreamResult,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MockLogger,
@@ -36,7 +41,7 @@ describe("Loader", () => {
 			let clientSeqNumber = 0;
 			let emitter: EventEmitter;
 			let seq: number;
-			let expectedError: any;
+			let expectedError: Error | undefined;
 			const docId = "docId";
 			const submitEvent = "test-submit";
 			const expectedTimeout = 2000;
@@ -48,7 +53,7 @@ describe("Loader", () => {
 				reconnectAllowed = true,
 				dmLogger: ITelemetryLoggerExt = logger,
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
-			) {
+			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
 					// Forces DM into infinite reconnection loop.
@@ -111,10 +116,10 @@ describe("Loader", () => {
 					minimumSequenceNumber: 0,
 					sequenceNumber: seq++,
 					type,
-				} as any as ISequencedDocumentMessage;
+				} as unknown as ISequencedDocumentMessage;
 			}
 
-			async function sendAndReceiveOps(count: number, type: MessageType) {
+			async function sendAndReceiveOps(count: number, type: MessageType): Promise<void> {
 				for (let num = 0; num < count; ++num) {
 					assert(!deltaConnection.disposed, "disposed");
 					deltaManager.submit(type);
@@ -125,7 +130,7 @@ describe("Loader", () => {
 							minimumSequenceNumber: 0,
 							sequenceNumber: seq++,
 							type,
-						} as any as ISequencedDocumentMessage,
+						} as unknown as ISequencedDocumentMessage,
 					]);
 				}
 
@@ -133,7 +138,7 @@ describe("Loader", () => {
 				await yieldEventLoop();
 			}
 
-			async function emitSequentialOps(count: number) {
+			async function emitSequentialOps(count: number): Promise<void> {
 				for (let num = 0; num < count; ++num) {
 					assert(!deltaConnection.disposed, "disposed");
 					deltaConnection.emitOp(docId, [generateOp()]);
@@ -143,14 +148,15 @@ describe("Loader", () => {
 				await yieldEventLoop();
 			}
 
-			async function tickClock(tickValue: number) {
+			async function tickClock(tickValue: number): Promise<void> {
 				clock.tick(tickValue);
 
 				// Yield the event loop because the outbound op will be processed asynchronously.
 				await yieldEventLoop();
 			}
 
-			const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+			const flushPromises = async (): Promise<void> =>
+				new Promise((resolve) => process.nextTick(resolve));
 
 			before(() => {
 				clock = useFakeTimers();
@@ -175,14 +181,17 @@ describe("Loader", () => {
 
 			describe("Update Minimum Sequence Number", () => {
 				// helper function asserting that there is exactly one well-formed no-op
-				function assertOneValidNoOp(messages: IDocumentMessage[]) {
+				function assertOneValidNoOp(messages: IDocumentMessage[]): void {
 					assert.strictEqual(1, messages.length);
 					assert.strictEqual(MessageType.NoOp, messages[0].type);
 					assert.strictEqual(undefined, messages[0].contents);
 				}
 
 				it("Infinite frequency parameters disables periodic noops completely", async () => {
-					const noopHeuristic = new NoopHeuristic(Infinity, Infinity);
+					const noopHeuristic = new NoopHeuristic(
+						Number.POSITIVE_INFINITY,
+						Number.POSITIVE_INFINITY,
+					);
 
 					noopHeuristic.on("wantsNoop", () => {
 						assert.fail("Heuristic shouldn't request noops with Infinite thresholds");
@@ -197,7 +206,7 @@ describe("Loader", () => {
 
 				it("Infinite time frequency will not generate noops at time intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(Infinity, 100);
+					const noopHeuristic = new NoopHeuristic(Number.POSITIVE_INFINITY, 100);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -214,7 +223,7 @@ describe("Loader", () => {
 
 				it("Infinite op frequency will not generate noops at op intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(100, Infinity);
+					const noopHeuristic = new NoopHeuristic(100, Number.POSITIVE_INFINITY);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -229,7 +238,7 @@ describe("Loader", () => {
 
 				it("1k op frequency will generate noop at op intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(Infinity, 1000);
+					const noopHeuristic = new NoopHeuristic(Number.POSITIVE_INFINITY, 1000);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -328,7 +337,7 @@ describe("Loader", () => {
 				it("Should throw error with gap in client seq num", async () => {
 					await startDeltaManager();
 
-					deltaManager.inbound.on("error", (error) => {
+					deltaManager.inbound.on("error", (error: Error) => {
 						expectedError = error;
 					});
 
@@ -342,17 +351,17 @@ describe("Loader", () => {
 							minimumSequenceNumber: 0,
 							sequenceNumber: seq++,
 							type: MessageType.Operation,
-						} as any as ISequencedDocumentMessage,
+						} as unknown as ISequencedDocumentMessage,
 					]);
 
 					await yieldEventLoop();
-					assert.strictEqual(expectedError.message, "gap in client sequence number: 1");
+					assert.strictEqual(expectedError?.message, "gap in client sequence number: 1");
 				});
 
 				it("Should pass with one noop sent, 0 received and one gap", async () => {
 					await startDeltaManager();
 
-					deltaManager.inbound.on("error", (error) => {
+					deltaManager.inbound.on("error", (error: Error) => {
 						expectedError = error;
 					});
 
@@ -370,7 +379,7 @@ describe("Loader", () => {
 							minimumSequenceNumber: 0,
 							sequenceNumber: seq,
 							type: MessageType.Operation,
-						} as any as ISequencedDocumentMessage,
+						} as unknown as ISequencedDocumentMessage,
 					]);
 
 					await yieldEventLoop();
@@ -389,7 +398,7 @@ describe("Loader", () => {
 				it("Should throw error with one noop sent and received, gap = 1", async () => {
 					await startDeltaManager();
 
-					deltaManager.inbound.on("error", (error) => {
+					deltaManager.inbound.on("error", (error: Error) => {
 						expectedError = error;
 					});
 
@@ -404,16 +413,16 @@ describe("Loader", () => {
 							minimumSequenceNumber: 0,
 							sequenceNumber: seq,
 							type: MessageType.Operation,
-						} as any as ISequencedDocumentMessage,
+						} as unknown as ISequencedDocumentMessage,
 					]);
 
 					await yieldEventLoop();
-					assert.strictEqual(expectedError.message, "gap in client sequence number: 1");
+					assert.strictEqual(expectedError?.message, "gap in client sequence number: 1");
 				});
 
 				it("Should pass with 2 noop sent, 1 received, gap = 1", async () => {
 					await startDeltaManager();
-					deltaManager.inbound.on("error", (error) => {
+					deltaManager.inbound.on("error", (error: Error) => {
 						expectedError = error;
 					});
 
@@ -432,7 +441,7 @@ describe("Loader", () => {
 							minimumSequenceNumber: 0,
 							sequenceNumber: seq,
 							type: MessageType.Operation,
-						} as any as ISequencedDocumentMessage,
+						} as unknown as ISequencedDocumentMessage,
 					]);
 
 					await yieldEventLoop();
@@ -458,7 +467,7 @@ describe("Loader", () => {
 					//           After observering that 'forceReadonly' has been asserted to be both true and
 					//           false, TypeScript coerces 'connectionManager' to 'never'.  Wrapping the
 					//           assertion in lambda avoids this.
-					const assertReadonlyIs = (expected: boolean) => {
+					const assertReadonlyIs = (expected: boolean): void => {
 						assert.strictEqual(deltaManager.readOnlyInfo.readonly, expected);
 					};
 
@@ -507,16 +516,17 @@ describe("Loader", () => {
 						_to: number | undefined,
 						abortSignal?: AbortSignal,
 						_cachedOnly?: boolean,
-					) => {
+					): IStream<ISequencedDocumentMessage[]> => {
 						return {
-							read: async () => {
+							read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
 								await new Promise<void>((resolve) => {
 									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									abortSignal!.onabort = () => {
+									abortSignal!.addEventListener("abort", () => {
 										resolve();
-									};
+									});
 								});
 
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 								throw new Error(abortSignal?.reason);
 							},
 						};

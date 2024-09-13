@@ -270,9 +270,7 @@ describe("BaseProperty", function () {
 
 			expect(myProp.get("simple_property").getAbsolutePath()).to.equal("/simple_property");
 			expect(myProp.get("test.property").getAbsolutePath()).to.equal('/"test.property"');
-			expect(myProp.get('test"property"').getAbsolutePath()).to.equal(
-				'/"test\\"property\\""',
-			);
+			expect(myProp.get('test"property"').getAbsolutePath()).to.equal('/"test\\"property\\""');
 			expect(myProp.get("test[property]").getAbsolutePath()).to.equal('/"test[property]"');
 			expect(myProp.get("test[property]").get(".property.").getAbsolutePath()).to.equal(
 				'/"test[property]".".property."',

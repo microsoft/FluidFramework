@@ -5,22 +5,24 @@
 
 /**
  * Bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client
- * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
+ * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluidframework/odsp-client (BETA)`).
  *
  * @packageDocumentation
  */
+
+// ===============================================================
+// #region Public, Beta and Alpha (non-legacy) exports
+// #region Basic re-exports
 
 export type {
 	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 export { AttachState } from "@fluidframework/container-definitions";
-export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
 	ContainerAttachProps,
 	ContainerSchema,
-	DataObjectClass,
 	IConnection,
 	IFluidContainer,
 	IFluidContainerEvents,
@@ -28,23 +30,66 @@ export type {
 	InitialObjects,
 	IServiceAudience,
 	IServiceAudienceEvents,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
 	MemberChangedListener,
 	Myself,
 } from "@fluidframework/fluid-static";
+export type { SharedObjectKind } from "@fluidframework/shared-object-base";
+export type {
+	IErrorBase,
+	IEventProvider,
+	IDisposable,
+	IEvent,
+	IEventThisPlaceHolder,
+	IErrorEvent,
+	ErasedType,
+	IFluidHandle,
+	IFluidLoadable,
+	ITelemetryBaseProperties,
+	IEventTransformer,
+	IProvideFluidLoadable,
+	IFluidHandleErased,
+	TransformedEvent,
+	TelemetryBaseEventPropertyType,
+	Tagged,
+	ReplaceIEventThisPlaceHolder,
+	FluidObject, // Linked in doc comment
+	FluidObjectProviderKeys, // Used by FluidObject
+} from "@fluidframework/core-interfaces";
 
-// Let the tree package manage its own API surface, we will simply reflect it here.
-// Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
-// desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree
-// alpha` to surface everything `@alpha` and higher).
-// eslint-disable-next-line no-restricted-syntax
-export * from "@fluidframework/tree";
+export type { isFluidHandle } from "@fluidframework/runtime-utils";
+
+// Let the tree package manage its own API surface.
+// Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
+// eslint-disable-next-line no-restricted-syntax, import/no-internal-modules
+export * from "@fluidframework/tree/alpha";
+
+// End of basic public+beta+alpha exports - nothing above this line should
+// depend on an /internal path.
+// #endregion Basic re-exports
+// ---------------------------------------------------------------
+// #region Custom re-exports
+
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ITree } from "@fluidframework/tree";
+import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
+
+/**
+ * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
+ * of objects, arrays, and other data types.
+ * @privateRemarks
+ * Here we reexport SharedTree, but with the `@alpha` types (`ISharedObjectKind`) removed, just keeping the `SharedObjectKind`.
+ * Doing this requires creating this new typed export rather than relying on a reexport directly from the tree package.
+ * The tree package itself does not do this because it's API needs to be usable from the encapsulated API which requires `ISharedObjectKind`.
+ * This package however is not intended for use by users of the encapsulated API, and therefor it can discard that interface.
+ * @public
+ */
+export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
+
+// #endregion Custom re-exports
+// #endregion
 
 // ===============================================================
-// Legacy exports
-
-export { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+// #region Legacy exports
 
 export type {
 	IDirectory,
@@ -57,12 +102,7 @@ export type {
 	IValueChanged,
 } from "@fluidframework/map/internal";
 
-export {
-	DirectoryFactory,
-	MapFactory,
-	SharedDirectory,
-	SharedMap,
-} from "@fluidframework/map/internal";
+export { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 
 export type {
 	DeserializeCallback,
@@ -81,6 +121,7 @@ export type {
 	SequencePlace,
 	SharedStringSegment,
 	Side,
+	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
 export {
@@ -89,6 +130,18 @@ export {
 	SequenceEvent,
 	SequenceInterval,
 	SequenceMaintenanceEvent,
-	SharedSegmentSequence,
 	SharedString,
 } from "@fluidframework/sequence/internal";
+
+export type {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
+
+export type {
+	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
+	IBranchOrigin, // Required for ISequencedDocumentMessage
+	ITrace, // Required for ISequencedDocumentMessage
+} from "@fluidframework/driver-definitions/internal";
+
+// #endregion Legacy exports

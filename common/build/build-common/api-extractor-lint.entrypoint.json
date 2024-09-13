@@ -1,0 +1,24 @@
+/*
+    This configuration is specifically constructed to be used as a "linter" configuration.
+    Here we are specifically looking to ensure that generated entrypoints are correct.
+*/
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "./api-extractor-base.json",
+	"apiReport": {
+		// Don't generate API report in lint pass
+		"enabled": false
+	},
+	"docModel": {
+		// Don't generate doc-model in lint pass
+		"enabled": false
+	},
+	"dtsRollup": {
+		// Don't generate rollups in lint pass
+		"enabled": false
+	},
+	"tsdocMetadata": {
+		// Don't generate docs metadata in lint pass
+		"enabled": false
+	}
+}

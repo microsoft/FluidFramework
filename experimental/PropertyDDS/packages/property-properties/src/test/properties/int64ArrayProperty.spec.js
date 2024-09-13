@@ -521,9 +521,7 @@ describe("Int64ArrayProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(changeSet["array<Int64>"].int64Property.modify[0][1]).to.deep.equal([
-						[0, 2],
-					]);
+					expect(changeSet["array<Int64>"].int64Property.modify[0][1]).to.deep.equal([[0, 2]]);
 					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
 					expect(conflicts[0].path).to.be.equal("int64Property");
 				},
@@ -541,14 +539,9 @@ describe("Int64ArrayProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
 					expect(conflicts[0].path).to.be.equal("int64Property");
-					expect(changeSet["array<Int64>"].int64Property).to.have.all.keys(
-						"remove",
-						"insert",
-					);
+					expect(changeSet["array<Int64>"].int64Property).to.have.all.keys("remove", "insert");
 				},
 			});
 		});

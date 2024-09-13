@@ -8,6 +8,7 @@ export {
 	SharedObject,
 	SharedObjectCore,
 	ISharedObjectKind,
+	SharedObjectKind,
 	createSharedObjectKind,
 } from "./sharedObject.js";
 export { SummarySerializer } from "./summarySerializer.js";

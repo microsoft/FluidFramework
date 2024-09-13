@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 
-import { ISummaryBlob, SummaryType } from '@fluidframework/protocol-definitions';
+import { ISummaryBlob, SummaryType } from '@fluidframework/driver-definitions';
 import { assert, expect } from 'chai';
 import { v5 } from 'uuid';
 
@@ -143,7 +143,7 @@ export async function createSummaryTestTree(writeFormat: WriteFormat, summarizeH
 				? [
 						interner.getOrCreateInternedId(initialTree.definition),
 						normalizer.normalizeToOpSpace(context.convertToNodeId(initialTree.identifier)),
-				  ]
+					]
 				: undefined,
 			editHistory: {
 				editIds: [],
@@ -194,9 +194,7 @@ export function runSummaryTests(title: string): void {
 
 				const { tree: expectedTree } = await setUp002Tree({});
 				expectedTree.loadSerializedSummary(summaryFileWithHistory_0_0_2);
-				expect(getChangeNodeFromView(tree.currentView)).deep.equals(
-					getChangeNodeFromView(expectedTree.currentView)
-				);
+				expect(getChangeNodeFromView(tree.currentView)).deep.equals(getChangeNodeFromView(expectedTree.currentView));
 			});
 
 			it('writes 0.0.2 files without history', async () => {
@@ -216,9 +214,7 @@ export function runSummaryTests(title: string): void {
 
 			it('writes 0.0.2 files with history', async () => {
 				const tree = await setUp002SummaryTestTree(true);
-				expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(
-					JSON.parse(summaryFileWithHistory_0_0_2)
-				);
+				expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(JSON.parse(summaryFileWithHistory_0_0_2));
 			});
 
 			describe('reading the same version', () => {
@@ -287,9 +283,7 @@ export function runSummaryTests(title: string): void {
 
 			it('writes 0.1.1 files with history', async () => {
 				const tree = await setUp011SummaryTestTree(true);
-				expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(
-					JSON.parse(summaryFileWithHistory_0_1_1)
-				);
+				expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(JSON.parse(summaryFileWithHistory_0_1_1));
 			});
 
 			describe('reading the same version', () => {
@@ -319,9 +313,7 @@ export function runSummaryTests(title: string): void {
 					const { tree } = await setUp011Tree({});
 					tree.loadSerializedSummary(summaryFileWithHistory_0_0_2);
 					await expectSharedTreesEqual(tree, expectedTree);
-					expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(
-						JSON.parse(summaryFileWithHistory_0_0_2)
-					);
+					expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(JSON.parse(summaryFileWithHistory_0_0_2));
 				});
 
 				it('upgrades 0.0.2', async () => {
@@ -331,9 +323,7 @@ export function runSummaryTests(title: string): void {
 					await testObjectProvider.ensureSynchronized();
 					const expectedTree = await setUp011SummaryTestTree(true);
 					await expectSharedTreesEqual(tree, expectedTree);
-					expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(
-						JSON.parse(summaryFileUpgrade_0_1_1)
-					);
+					expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(JSON.parse(summaryFileUpgrade_0_1_1));
 				});
 
 				it('upgrades 0.0.2 that has several stale ops that it resubmits', async () => {
@@ -356,14 +346,7 @@ export function runSummaryTests(title: string): void {
 
 					const { tree: expectedTree } = await setUp011Tree({});
 					expectedTree.loadSerializedSummary(summaryFileWithHistory_0_0_2);
-					expect(
-						areRevisionViewsSemanticallyEqual(
-							tree.currentView,
-							tree,
-							expectedTree.currentView,
-							expectedTree
-						)
-					);
+					expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, expectedTree.currentView, expectedTree));
 				});
 			});
 
@@ -391,9 +374,7 @@ async function expectSharedTreesEqual(
 	sharedTreeB: SharedTree,
 	compareEditIds = true
 ): Promise<void> {
-	if (
-		!areRevisionViewsSemanticallyEqual(sharedTreeA.currentView, sharedTreeA, sharedTreeB.currentView, sharedTreeB)
-	) {
+	if (!areRevisionViewsSemanticallyEqual(sharedTreeA.currentView, sharedTreeA, sharedTreeB.currentView, sharedTreeB)) {
 		expect.fail('trees have different current views');
 	}
 

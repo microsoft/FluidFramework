@@ -24,9 +24,6 @@ import { ISharedString } from "../sharedString.js";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 
-/**
- * @public
- */
 class OverlappingSequenceIntervalsIndex
 	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { MapGetSet } from "./utils.js";
+import { oob } from "@fluidframework/core-utils/internal";
+import type { MapGetSet } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
@@ -11,15 +12,16 @@ import { MapGetSet } from "./utils.js";
  * If you need constant-time access to the number of values, use SizedNestedMap instead.
  *
  * This code assumes values will not be undefined (keys can be undefined).
- *
- * @internal
  */
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
+ * A read-only version of {@link NestedMap}.
+ */
+export type ReadonlyNestedMap<Key1, Key2, Value> = ReadonlyMap<Key1, ReadonlyMap<Key2, Value>>;
+
+/**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
- *
- * @internal
  */
 export function tryAddToNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -42,31 +44,36 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 /**
  * Copies over all entries from the source map into the destination map.
  *
- * @internal
+ * @param source - The map to copy data from. Not mutated.
+ * @param destination - The map to copy data into. Both the outer and inner map may be mutated.
+ * @param override - Whether existing entries in `destination` should be replaced by corresponding entries in `source`.
+ *
+ * @remarks - This function performs deep copying when necessary.
+ * This ensures that mutating `destination` after this call will not result in unexpected mutations to `source`.
  */
 export function populateNestedMap<Key1, Key2, Value>(
-	source: NestedMap<Key1, Key2, Value>,
+	source: ReadonlyNestedMap<Key1, Key2, Value>,
 	destination: NestedMap<Key1, Key2, Value>,
 	override: boolean,
 ): void {
-	for (const [key1, innerMap] of source) {
-		const newInner = new Map(destination.get(key1));
-
-		for (const [key2, value] of innerMap) {
-			if (override || !newInner.has(key2)) {
-				newInner.set(key2, value);
+	for (const [key1, sourceInner] of source) {
+		let destinationInner = destination.get(key1);
+		if (destinationInner === undefined) {
+			destinationInner = new Map(sourceInner);
+			destination.set(key1, destinationInner);
+		} else {
+			for (const [key2, value] of sourceInner) {
+				if (override || !destinationInner.has(key2)) {
+					destinationInner.set(key2, value);
+				}
 			}
 		}
-
-		destination.set(key1, newInner);
 	}
 }
 
 /**
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.
- *
- * @internal
  */
 export function setInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -97,9 +104,26 @@ export function getOrAddInMap<Key, Value>(
 }
 
 /**
+ * Sets the value at `key` in `map` to `generateValue()` if not already present.
+ * Returns the value at `key` after setting it.
+ */
+export function getOrAddInMapLazy<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	generateValue: () => Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+
+	const value = generateValue();
+	map.set(key, value);
+	return value;
+}
+
+/**
  * Returns the value at (key1, key2) in map, or undefined if not present.
- *
- * @internal
  */
 export function tryGetFromNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -116,8 +140,6 @@ export function tryGetFromNestedMap<Key1, Key2, Value>(
 /**
  * If (key1, key2) is not in the map, add value to the map.
  * Returns whatever is at (key1, key2) in map (which will be value if it was empty before).
- *
- * @internal
  */
 export function getOrAddInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -136,8 +158,6 @@ export function getOrAddInNestedMap<Key1, Key2, Value>(
  * Does not change map.
  * If (key1, key2) is not in map, returns value.
  * If (key1, key2) is in map, return its entry.
- *
- * @internal
  */
 export function getOrDefaultInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -156,8 +176,6 @@ export function getOrDefaultInNestedMap<Key1, Key2, Value>(
  * Removes the value at (key1, key2) from the map.
  *
  * @returns true iff found.
- *
- * @internal
  */
 export function deleteFromNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -179,7 +197,7 @@ export function deleteFromNestedMap<Key1, Key2, Value>(
  * Converts a nested map to a flat list of triplets.
  */
 export function nestedMapToFlatList<Key1, Key2, Value>(
-	map: NestedMap<Key1, Key2, Value>,
+	map: ReadonlyNestedMap<Key1, Key2, Value>,
 ): [Key1, Key2, Value][] {
 	const list: [Key1, Key2, Value][] = [];
 	map.forEach((innerMap, key1) => {
@@ -204,7 +222,7 @@ export function nestedMapFromFlatList<Key1, Key2, Value>(
 }
 
 export function forEachInNestedMap<Key1, Key2, Value>(
-	map: NestedMap<Key1, Key2, Value>,
+	map: ReadonlyNestedMap<Key1, Key2, Value>,
 	delegate: (value: Value, key1: Key1, key2: Key2) => void,
 ): void {
 	map.forEach((innerMap, keyFirst) => {
@@ -215,10 +233,31 @@ export function forEachInNestedMap<Key1, Key2, Value>(
 }
 
 /**
+ * Maps the `input` map values using the provided `delegate`.
+ *
+ * @param input - The `NestedMap` whose contents are being mapped.
+ * @param delegate - The delegate to use for mapping values,
+ * @returns A new `NestedMap` with the same keys as `input`, but with the values produced by `delegate`.
+ */
+export function mapNestedMap<Key1, Key2, ValueIn, ValueOut = ValueIn>(
+	input: ReadonlyNestedMap<Key1, Key2, ValueIn>,
+	delegate: (value: ValueIn, key1: Key1, key2: Key2) => ValueOut,
+): NestedMap<Key1, Key2, ValueOut> {
+	const output = new Map<Key1, Map<Key2, ValueOut>>();
+	input.forEach((inputInnerMap, keyFirst) => {
+		const outputInnerMap = new Map<Key2, ValueOut>();
+		inputInnerMap.forEach((val, keySecond) => {
+			const mappedValue = delegate(val, keyFirst, keySecond);
+			outputInnerMap.set(keySecond, mappedValue);
+		});
+		output.set(keyFirst, outputInnerMap);
+	});
+	return output;
+}
+
+/**
  * Map with two keys; same semantics as NestedMap, but maintains a size count for the entire collection.
  * Note: undefined is not supported as a value, and will cause incorrect behavior.
- *
- * @internal
  */
 export class SizedNestedMap<Key1, Key2, Value> {
 	private readonly nestedMap: NestedMap<Key1, Key2, Value> = new Map();
@@ -298,10 +337,12 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	}
 
 	public values(): IterableIterator<Value> {
-		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0];
+		return (
+			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ?? oob()
+		);
 	}
 
-	public [Symbol.iterator]() {
+	public [Symbol.iterator](): IterableIterator<[Key1, Map<Key2, Value>]> {
 		return this.nestedMap[Symbol.iterator]();
 	}
 }

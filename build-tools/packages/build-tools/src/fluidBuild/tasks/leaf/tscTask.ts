@@ -10,9 +10,9 @@ import isEqual from "lodash.isequal";
 import * as tsTypes from "typescript";
 
 import { readFileSync } from "fs-extra";
-import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
-import { TscUtil, getTscUtils } from "../../../common/tscUtils";
 import { existsSync, readFileAsync } from "../../../common/utils";
+import { TscUtil, getTscUtils } from "../../tscUtils";
+import { getInstalledPackageVersion, getRecursiveFiles } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
@@ -52,6 +52,7 @@ export class TscTask extends LeafTask {
 			// `tsc -b` by design doesn't rebuild if dependent packages changed
 			// but not a referenced project. Just force it if we detected the change and
 			// invoke the build.
+			// `--force` is not fully supported, due to workaround in createTscUtil, so this may not actually work.
 			return `${this.command} --force`;
 		}
 		return this.command;

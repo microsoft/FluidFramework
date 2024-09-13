@@ -10,6 +10,13 @@
 		}
 	],
 	"settings": {
-		"search.followSymlinks": false
+		"search.followSymlinks": false,
+		"typescript.preferences.autoImportFileExcludePatterns": [
+			// Avoid suggesting autoimports for the 'previous' version packages which are used for typetesting.
+			"**/node_modules/**/@fluid*/*-previous",
+			"**/node_modules/**/@fluid*/*-previous/*"
+		],
+		"typescript.preferences.importModuleSpecifier": "project-relative",
+		"typescript.preferences.preferTypeOnlyAutoImports": true
 	}
 }

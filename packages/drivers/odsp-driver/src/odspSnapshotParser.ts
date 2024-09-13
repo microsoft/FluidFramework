@@ -5,8 +5,7 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
 
@@ -17,10 +16,10 @@ import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
  * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
  * @returns the hierarchical tree
  */
-function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
-	const lookup: { [path: string]: api.ISnapshotTree } = {};
+function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
+	const lookup: { [path: string]: ISnapshotTree } = {};
 	// id is required for root tree as it will be used to determine the version we loaded from.
-	const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
+	const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
 	lookup[""] = root;
 
 	for (const entry of flatTree.entries) {
@@ -33,16 +32,16 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
-			const newTree: api.ISnapshotTree = {
+			const newTree: ISnapshotTree = {
 				blobs: {},
 				trees: {},
 				unreferenced: entry.unreferenced,
 				groupId: entry.groupId,
 			};
-			node.trees[decodeURIComponent(entryPathBase)] = newTree;
+			node.trees[entryPathBase] = newTree;
 			lookup[entry.path] = newTree;
 		} else if (entry.type === "blob") {
-			node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
+			node.blobs[entryPathBase] = entry.id;
 		}
 	}
 
@@ -53,7 +52,9 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapshotTreeAndBlobs(odspSnapshot: IOdspSnapshot): ISnapshot {
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(
+	odspSnapshot: IOdspSnapshot,
+): ISnapshot {
 	const blobsWithBufferContent = new Map<string, ArrayBuffer>();
 	if (odspSnapshot.blobs) {
 		for (const blob of odspSnapshot.blobs) {

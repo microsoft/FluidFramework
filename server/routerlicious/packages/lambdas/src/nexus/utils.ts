@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectionMode, ISentSignalMessage } from "@fluidframework/protocol-definitions";
+import type {
+	ConnectionMode,
+	IClientDetails,
+	ISentSignalMessage,
+} from "@fluidframework/protocol-definitions";
 import { NetworkError, canSummarize, canWrite } from "@fluidframework/server-services-client";
 import type { ILogger } from "@fluidframework/server-services-core";
 import {
@@ -17,6 +21,8 @@ export const getMessageMetadata = (
 	documentId: string,
 	tenantId: string,
 	correlationId?: string,
+	// TODO: add a type for this
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 ) => ({
 	documentId,
 	tenantId,
@@ -28,7 +34,7 @@ export function handleServerErrorAndConvertToNetworkError(
 	errorMessage: string,
 	documentId: string,
 	tenantId: string,
-	error: any,
+	error: unknown,
 ): NetworkError {
 	const errMsgWithPrefix = `Connect Server Error - ${errorMessage}`;
 	const correlationId = getGlobalTelemetryContext().getProperties().correlationId;
@@ -43,15 +49,15 @@ export function handleServerErrorAndConvertToNetworkError(
 }
 
 export class ExpirationTimer {
-	private timer: NodeJS.Timer | undefined;
+	private timer: ReturnType<typeof setInterval> | undefined;
 	constructor(private readonly onTimeout: () => void) {}
-	public clear() {
+	public clear(): void {
 		if (this.timer !== undefined) {
 			clearTimeout(this.timer);
 			this.timer = undefined;
 		}
 	}
-	public set(mSecUntilExpiration: number) {
+	public set(mSecUntilExpiration: number): void {
 		this.clear();
 		this.timer = setTimeout(() => {
 			this.onTimeout();
@@ -60,12 +66,16 @@ export class ExpirationTimer {
 	}
 }
 
-export const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
-export const isWriter = (scopes: string[], mode: ConnectionMode) =>
+export const hasWriteAccess = (scopes: string[]): boolean =>
+	canWrite(scopes) || canSummarize(scopes);
+export const isWriter = (scopes: string[], mode: ConnectionMode): boolean =>
 	hasWriteAccess(scopes) && mode === "write";
+export const SummarizerClientType = "summarizer";
+export const isSummarizer = (clientDetails: IClientDetails): boolean =>
+	clientDetails.type === SummarizerClientType || clientDetails.capabilities.interactive === false;
 
-export const getRoomId = (room: IRoom) => `${room.tenantId}/${room.documentId}`;
-export const getClientSpecificRoomId = (clientId: string) => `client#${clientId}`;
+export const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;
+export const getClientSpecificRoomId = (clientId: string): string => `client#${clientId}`;
 
 export function isSentSignalMessage(obj: unknown): obj is ISentSignalMessage {
 	return (

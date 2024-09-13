@@ -19,7 +19,10 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import {
 	ISnapshotNormalizerConfig,
@@ -71,7 +74,10 @@ export function compareWithReferenceSnapshot(
 	errorHandler: (description: string, error?: any) => void,
 ) {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
-	const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
+	const referenceSnapshotString = fs.readFileSync(
+		`${referenceSnapshotFilename}.json`,
+		"utf-8",
+	);
 	const referenceSnapshot = JSON.parse(referenceSnapshotString);
 
 	/**
@@ -208,12 +214,12 @@ export async function loadContainer(
  * @internal
  */
 export async function uploadSummary(container: IContainer) {
-	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
+	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
+		await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
 	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
-		trackState: false,
 		fullGC: true,
 	});
 	return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {

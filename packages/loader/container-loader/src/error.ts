@@ -16,7 +16,10 @@ import {
 /**
  * Warning emitted when requests to storage are being throttled.
  */
-export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+export class ThrottlingWarning
+	extends LoggingError
+	implements IThrottlingWarning, IFluidErrorBase
+{
 	/**
 	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
 	 */
@@ -39,7 +42,8 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 		retryAfterSeconds: number,
 		logger: ITelemetryLoggerExt,
 	): IThrottlingWarning {
-		const newErrorFn = (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
+		const newErrorFn = (errMsg: string): ThrottlingWarning =>
+			new ThrottlingWarning(errMsg, retryAfterSeconds);
 		return wrapErrorAndLog(error, newErrorFn, logger);
 	}
 }

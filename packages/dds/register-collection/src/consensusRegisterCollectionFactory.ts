@@ -5,10 +5,10 @@
 
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
 	type IChannelFactory,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
@@ -17,6 +17,7 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the consensus queue.
+ * @legacy
  * @alpha
  */
 export class ConsensusRegisterCollectionFactory
@@ -65,6 +66,7 @@ export class ConsensusRegisterCollectionFactory
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @legacy
  * @alpha
  */
 export const ConsensusRegisterCollection = createSharedObjectKind(
@@ -72,6 +74,7 @@ export const ConsensusRegisterCollection = createSharedObjectKind(
 );
 /**
  * Compatibility alias for {@link IConsensusRegisterCollection}.
+ * @legacy
  * @alpha
  */
 export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;

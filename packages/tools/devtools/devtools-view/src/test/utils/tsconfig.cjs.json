@@ -1,9 +1,0 @@
-{
-	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
-	"extends": "../../../../../../../common/build/build-common/tsconfig.node16.json",
-	"include": ["./**/*"],
-	"compilerOptions": {
-		"rootDir": "./",
-		"outDir": "../../../dist/test/utils",
-	},
-}

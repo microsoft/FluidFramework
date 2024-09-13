@@ -6,12 +6,16 @@
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-/** @see CatchUpMonitor for usage */
+/**
+ * @see {@link CatchUpMonitor} for usage.
+ */
 type CaughtUpListener = () => void;
 
-/** Monitor that emits an event when a Container has caught up to a given point in the op stream */
+/**
+ * Monitor that emits an event when a Container has caught up to a given point in the op stream
+ */
 export type ICatchUpMonitor = IDisposable;
 
 /**
@@ -22,7 +26,9 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 	private readonly targetSeqNumber: number;
 	private caughtUp: boolean = false;
 
-	private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+	private readonly opHandler = (
+		message: Pick<ISequencedDocumentMessage, "sequenceNumber">,
+	): void => {
 		if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
 			this.caughtUp = true;
 			this.listener();
@@ -33,7 +39,7 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 	 * Create the CatchUpMonitor, setting the target sequence number to wait for based on DeltaManager's current state.
 	 */
 	constructor(
-		private readonly deltaManager: IDeltaManager<any, any>,
+		private readonly deltaManager: IDeltaManager<unknown, unknown>,
 		private readonly listener: CaughtUpListener,
 	) {
 		this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
@@ -49,12 +55,23 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 		this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
 	}
 
-	public disposed: boolean = false;
-	public dispose() {
-		if (this.disposed) {
+	private _disposed: boolean = false;
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
+	 */
+	public dispose(): void {
+		if (this._disposed) {
 			return;
 		}
-		this.disposed = true;
+		this._disposed = true;
 
 		this.deltaManager.off("op", this.opHandler);
 	}

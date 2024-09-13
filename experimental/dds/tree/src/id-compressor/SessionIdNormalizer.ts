@@ -259,12 +259,11 @@ export class SessionIdNormalizer<TRangeObject> {
 			finalRangesObj[1] = [firstFinal, lastFinal, rangeObject];
 			nextLocal = Math.min(this.nextLocalId, firstLocal - (lastFinal - firstFinal) - 1) as LocalCompressedId;
 		} else {
-			const [firstAlignedLocal, lastAlignedLocal, lastAlignedFinal, lastFinalRange] =
-				this.getAlignmentOfLastRange(firstLocal, finalRanges);
-			nextLocal = Math.min(
-				this.nextLocalId,
-				lastAlignedLocal - (lastFinal - firstFinal) - 2
-			) as LocalCompressedId;
+			const [firstAlignedLocal, lastAlignedLocal, lastAlignedFinal, lastFinalRange] = this.getAlignmentOfLastRange(
+				firstLocal,
+				finalRanges
+			);
+			nextLocal = Math.min(this.nextLocalId, lastAlignedLocal - (lastFinal - firstFinal) - 2) as LocalCompressedId;
 			if (firstFinal === lastAlignedFinal + 1) {
 				lastFinalRange[1] = lastFinal;
 			} else {
@@ -384,7 +383,10 @@ export class SessionIdNormalizer<TRangeObject> {
 	}
 
 	public serialize(): SerializedSessionIdNormalizer {
-		const serialized: Mutable<SerializedSessionIdNormalizer> = { localRanges: [], nextLocalId: this.nextLocalId };
+		const serialized: Mutable<SerializedSessionIdNormalizer> = {
+			localRanges: [],
+			nextLocalId: this.nextLocalId,
+		};
 		const localRanges = serialized.localRanges as Mutable<typeof serialized.localRanges>;
 		for (const [firstLocal, finalRanges] of this.idRanges.entries()) {
 			const [lastLocal, finalRangesTable] = finalRanges;
@@ -444,9 +446,7 @@ export class SessionIdNormalizer<TRangeObject> {
 					const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
 					const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
 					return (
-						firstFinalA === firstFinalB &&
-						lastFinalA === lastFinalB &&
-						compareRangeObjects(rangeObjectA, rangeObjectB)
+						firstFinalA === firstFinalB && lastFinalA === lastFinalB && compareRangeObjects(rangeObjectA, rangeObjectB)
 					);
 				};
 

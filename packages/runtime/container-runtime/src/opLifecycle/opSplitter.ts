@@ -6,7 +6,7 @@
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
 	createChildLogger,
@@ -53,7 +53,9 @@ export class OpSplitter {
 	}
 
 	public get isBatchChunkingEnabled(): boolean {
-		return this.chunkSizeInBytes < Number.POSITIVE_INFINITY && this.submitBatchFn !== undefined;
+		return (
+			this.chunkSizeInBytes < Number.POSITIVE_INFINITY && this.submitBatchFn !== undefined
+		);
 	}
 
 	public get chunks(): ReadonlyMap<string, string[]> {
@@ -111,13 +113,15 @@ export class OpSplitter {
 	 * To illustrate, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
 	 *
+	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 *
 	 * @param batch - the compressed batch which needs to be processed
-	 * @returns A new adjusted batch which can be sent over the wire
+	 * @returns A new adjusted batch (last chunk + empty placeholders) which can be sent over the wire
 	 */
 	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
-			batch.contentSizeInBytes > 0 && batch.content.length > 0,
+			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
 			0x514 /* Batch needs to be non-empty */,
 		);
 		assert(
@@ -130,13 +134,13 @@ export class OpSplitter {
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
 		);
 
-		const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
+		const firstMessage = batch.messages[0]; // we expect this to be the large compressed op, which needs to be split
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
 		);
 
-		const restOfMessages = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
+		const restOfMessages = batch.messages.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
 		const socketSize = estimateSocketSize(batch);
 		const chunks = splitOp(
 			firstMessage,
@@ -167,7 +171,7 @@ export class OpSplitter {
 		this.logger.sendPerformanceEvent({
 			// Used to be "Chunked compressed batch"
 			eventName: "CompressedChunkedBatch",
-			length: batch.content.length,
+			length: batch.messages.length,
 			sizeInBytes: batch.contentSizeInBytes,
 			chunks: chunks.length,
 			chunkSizeInBytes: this.chunkSizeInBytes,
@@ -175,7 +179,7 @@ export class OpSplitter {
 		});
 
 		return {
-			content: [lastChunk, ...restOfMessages],
+			messages: [lastChunk, ...restOfMessages],
 			contentSizeInBytes: lastChunk.contents?.length ?? 0,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};
@@ -203,16 +207,19 @@ export class OpSplitter {
 		const serializedContent = this.chunkMap.get(clientId)!.join("");
 		this.clearPartialChunks(clientId);
 
-		const newMessage = { ...message };
-		newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
+		// The final/complete message will contain the data from all the chunks.
+		// It will have the sequenceNumber of the last chunk
+		const completeMessage = { ...message };
+		completeMessage.contents =
+			serializedContent === "" ? undefined : JSON.parse(serializedContent);
 		// back-compat with 1.x builds
 		// This is only required / present for non-compressed, chunked ops
 		// For compressed ops, we have op grouping enabled, and type of each op is preserved within compressed content.
-		newMessage.type = (chunkedContent as any).originalType;
-		newMessage.metadata = chunkedContent.originalMetadata;
-		newMessage.compression = chunkedContent.originalCompression;
+		completeMessage.type = (chunkedContent as any).originalType;
+		completeMessage.metadata = chunkedContent.originalMetadata;
+		completeMessage.compression = chunkedContent.originalCompression;
 		return {
-			message: newMessage,
+			message: completeMessage,
 			isFinalChunk: true,
 		};
 	}
@@ -267,7 +274,8 @@ export const splitOp = (
 	);
 
 	const contentLength = op.contents.length;
-	const chunkCount = Math.floor((contentLength - 1) / chunkSizeInBytes) + 1 + (extraOp ? 1 : 0);
+	const chunkCount =
+		Math.floor((contentLength - 1) / chunkSizeInBytes) + 1 + (extraOp ? 1 : 0);
 	let offset = 0;
 	for (let chunkId = 1; chunkId <= chunkCount; chunkId++) {
 		const chunk: IChunkedOp = {
@@ -301,7 +309,10 @@ export const splitOp = (
 		);
 	}
 
-	assert(offset >= contentLength, 0x58c /* Content offset equal or larger than content length */);
+	assert(
+		offset >= contentLength,
+		0x58c /* Content offset equal or larger than content length */,
+	);
 	assert(chunks.length === chunkCount, 0x5a5 /* Expected number of chunks */);
 	return chunks;
 };

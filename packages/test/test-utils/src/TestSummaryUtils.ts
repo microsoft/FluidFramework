@@ -21,8 +21,8 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
@@ -187,11 +187,10 @@ export async function summarizeNow(
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);
 
-	const submitResult = await timeoutAwait(result.summarySubmitted);
+	const submitResult = await timeoutAwait(result.summarySubmitted, {
+		errorMsg: "Promise timed out: summarySubmitted",
+	});
 	if (!submitResult.success) {
-		if (typeof submitResult.error !== "string") {
-			submitResult.error.data = submitResult.data;
-		}
 		throw submitResult.error;
 	}
 	assert(
@@ -200,12 +199,16 @@ export async function summarizeNow(
 	);
 	assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
-	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
+	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted, {
+		errorMsg: "Promise timed out: summaryOpBroadcasted",
+	});
 	if (!broadcastResult.success) {
 		throw broadcastResult.error;
 	}
 
-	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
+	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack, {
+		errorMsg: "Promise timed out: receivedSummaryAckOrNack",
+	});
 	if (!ackNackResult.success) {
 		throw ackNackResult.error;
 	}

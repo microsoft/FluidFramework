@@ -7,15 +7,15 @@ import { Command } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { Context } from "../library";
+import { Context } from "../library/index.js";
 
 import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 
-import { InstructionalPromptWriter } from "../instructionalPromptWriter";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { ReleaseGroup, ReleasePackage } from "../releaseGroups";
-import { askForReleaseType } from "./askFunctions";
+import { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
+import { CommandLogger } from "../logging.js";
+import { MachineState } from "../machines/index.js";
+import { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
+import { askForReleaseType } from "./askFunctions.js";
 import {
 	checkAssertTagging,
 	checkBranchName,
@@ -36,9 +36,9 @@ import {
 	checkTypeTestGenerate,
 	checkTypeTestPrepare,
 	checkValidReleaseGroup,
-} from "./checkFunctions";
-import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions";
-import { InitFailedStateHandler } from "./initFailedStateHandler";
+} from "./checkFunctions.js";
+import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions.js";
+import { InitFailedStateHandler } from "./initFailedStateHandler.js";
 import {
 	promptToCommitChanges,
 	promptToCreateReleaseBranch,
@@ -49,8 +49,8 @@ import {
 	promptToReleaseDeps,
 	promptToRunMinorReleaseCommand,
 	promptToRunTypeTests,
-} from "./promptFunctions";
-import { BaseStateHandler } from "./stateHandlers";
+} from "./promptFunctions.js";
+import { BaseStateHandler } from "./stateHandlers.js";
 
 /**
  * Data that is passed to all the handling functions for the {@link FluidReleaseMachine}. This data is intended to be

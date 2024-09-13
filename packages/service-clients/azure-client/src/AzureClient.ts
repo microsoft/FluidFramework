@@ -10,32 +10,42 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
-import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type {
+	ContainerSchema,
+	IFluidContainer,
+	CompatibilityMode,
+} from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
-import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
-import {
-	type AzureClientProps,
-	type AzureConnectionConfig,
-	type AzureContainerServices,
-	type AzureContainerVersion,
-	type AzureGetVersionsOptions,
+import type {
+	AzureClientProps,
+	AzureConnectionConfig,
+	AzureContainerServices,
+	AzureContainerVersion,
+	AzureGetVersionsOptions,
+	AzureLocalConnectionConfig,
+	AzureRemoteConnectionConfig,
 } from "./interfaces.js";
 import { isAzureRemoteConnectionConfig } from "./utils.js";
 
@@ -61,26 +71,12 @@ const azureClientFeatureGates = {
 };
 
 /**
- * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
- */
-const azureClientV1CompatFeatureGates = {
-	// Disable Garbage Collection
-	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
-	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
-	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
-};
-
-/**
  * Wrap the config provider to fall back on the appropriate defaults for Azure Client.
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
 function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	const defaults = {
-		...azureClientFeatureGates,
-		...azureClientV1CompatFeatureGates,
-	};
-	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+	return wrapConfigProviderWithDefaults(baseConfigProvider, azureClientFeatureGates);
 }
 
 /**
@@ -92,20 +88,24 @@ export class AzureClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
 	private readonly configProvider: IConfigProviderBase | undefined;
+	private readonly connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+	private readonly logger: ITelemetryBaseLogger | undefined;
 
 	/**
 	 * Creates a new client instance using configuration parameters.
 	 * @param properties - Properties for initializing a new AzureClient instance
 	 */
-	public constructor(private readonly properties: AzureClientProps) {
+	public constructor(properties: AzureClientProps) {
+		this.connectionConfig = properties.connection;
+		this.logger = properties.logger;
 		// remove trailing slash from URL if any
-		properties.connection.endpoint = properties.connection.endpoint.replace(/\/$/, "");
+		this.connectionConfig.endpoint = this.connectionConfig.endpoint.replace(/\/$/, "");
 		this.urlResolver = new AzureUrlResolver();
 		// The local service implementation differs from the Azure Fluid Relay in blob
 		// storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
-		const isRemoteConnection = isAzureRemoteConnectionConfig(this.properties.connection);
+		const isRemoteConnection = isAzureRemoteConnectionConfig(this.connectionConfig);
 		const origDocumentServiceFactory: IDocumentServiceFactory =
-			new RouterliciousDocumentServiceFactory(this.properties.connection.tokenProvider, {
+			new RouterliciousDocumentServiceFactory(this.connectionConfig.tokenProvider, {
 				enableWholeSummaryUpload: isRemoteConnection,
 				enableDiscovery: isRemoteConnection,
 			});
@@ -122,15 +122,17 @@ export class AzureClient {
 	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
 	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
+	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
+		compatibilityMode: CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatibilityMode);
 
 		const container = await loader.createDetachedContainer({
 			package: "no-dynamic-package",
@@ -139,7 +141,7 @@ export class AzureClient {
 
 		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
 			container,
-			this.properties.connection,
+			this.connectionConfig,
 		);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -151,21 +153,23 @@ export class AzureClient {
 	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
+		compatibilityMode: CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		const loader = this.createLoader(containerSchema, compatibilityMode);
+		const url = new URL(this.connectionConfig.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
 			"tenantId",
-			encodeURIComponent(getTenantId(this.properties.connection)),
+			encodeURIComponent(getTenantId(this.connectionConfig)),
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
@@ -185,21 +189,23 @@ export class AzureClient {
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
+	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Loaded container instance at the specified version.
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
+		compatibilityMode: CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
-		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		const loader = this.createLoader(containerSchema, compatibilityMode);
+		const url = new URL(this.connectionConfig.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
 			"tenantId",
-			encodeURIComponent(getTenantId(this.properties.connection)),
+			encodeURIComponent(getTenantId(this.connectionConfig)),
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loadContainerPaused(loader, {
@@ -225,11 +231,11 @@ export class AzureClient {
 		id: string,
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
-		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		const url = new URL(this.connectionConfig.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
 			"tenantId",
-			encodeURIComponent(getTenantId(this.properties.connection)),
+			encodeURIComponent(getTenantId(this.connectionConfig)),
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 
@@ -259,8 +265,11 @@ export class AzureClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+	private createLoader(schema: ContainerSchema, compatibilityMode: CompatibilityMode): Loader {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			compatibilityMode,
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -283,7 +292,7 @@ export class AzureClient {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
-			logger: this.properties.logger,
+			logger: this.logger,
 			options: { client },
 			configProvider: this.configProvider,
 		});
@@ -304,7 +313,6 @@ export class AzureClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}

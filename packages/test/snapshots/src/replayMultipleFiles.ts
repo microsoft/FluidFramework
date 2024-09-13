@@ -9,7 +9,7 @@ import nodePath from "path";
 
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { _dirname } from "./dirname.cjs";
 import { getMetadata, writeMetadataFile } from "./metadata.js";
@@ -253,7 +253,10 @@ async function processNodeForUpdatingSnapshots(
 	limiter: ConcurrencyLimiter,
 ) {
 	const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
-	assert(fs.existsSync(currentSnapshotsDir), `Directory ${currentSnapshotsDir} does not exist!`);
+	assert(
+		fs.existsSync(currentSnapshotsDir),
+		`Directory ${currentSnapshotsDir} does not exist!`,
+	);
 
 	const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
 	assert(fs.existsSync(versionFileName), `Version file ${versionFileName} does not exist`);
@@ -425,9 +428,7 @@ async function processNode(
 					if (code !== 0) {
 						reject(
 							new Error(
-								`${JSON.stringify(
-									workerData,
-								)}\nWorker stopped with exit code ${code}`,
+								`${JSON.stringify(workerData)}\nWorker stopped with exit code ${code}`,
 							),
 						);
 					}

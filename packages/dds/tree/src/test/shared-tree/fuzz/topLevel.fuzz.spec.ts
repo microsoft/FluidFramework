@@ -5,19 +5,24 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
-import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import {
+	createOnCreate,
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	onCreate,
+} from "./fuzzUtils.js";
+import type { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -42,6 +47,7 @@ describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
+	// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		set: 3,
 		clear: 1,
@@ -51,12 +57,10 @@ describe("Fuzz - Top-Level", () => {
 		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
-		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
-		// repair data content in places it already exists. This should be fixed by pending work to generate forest deltas
-		// which destroy trees for rollbacks. See AB#6456 for more information.
-		abort: 0,
+		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
-		schema: 1,
+		schema: 0,
+		nodeConstraint: 3,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -70,7 +74,7 @@ describe("Fuzz - Top-Level", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

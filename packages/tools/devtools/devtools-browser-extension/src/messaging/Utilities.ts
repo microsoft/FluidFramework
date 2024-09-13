@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ISourcedDevtoolsMessage,
-	type MessageLoggingOptions,
+import type {
+	ISourcedDevtoolsMessage,
+	MessageLoggingOptions,
 } from "@fluidframework/devtools-core/internal";
 
-import { type TypedPortConnection } from "./TypedPortConnection.js";
+import type { TypedPortConnection } from "./TypedPortConnection.js";
 
-function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOptions): string {
+function formatMessageForLogging(
+	text: string,
+	loggingOptions?: MessageLoggingOptions,
+): string {
 	const loggingPreamble =
 		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 	return `${loggingPreamble}${text}`;

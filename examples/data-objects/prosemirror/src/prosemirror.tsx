@@ -6,13 +6,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreContext,
@@ -55,7 +60,10 @@ function insertMarkers(
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  * @internal
  */
-export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
+export class ProseMirror
+	extends EventEmitter
+	implements IFluidLoadable, IProvideRichTextEditor
+{
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
 		const collection = new ProseMirror(runtime);
 		await collection.initialize(existing);

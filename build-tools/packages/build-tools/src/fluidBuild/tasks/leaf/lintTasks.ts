@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getEsLintConfigFilePath,
-	getInstalledPackageVersion,
-} from "../../../common/taskUtils";
+import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class TsLintTask extends TscDependentTask {

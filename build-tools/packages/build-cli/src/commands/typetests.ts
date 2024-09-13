@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITypeValidationConfig,
-	Package,
-	PackageJson,
-	updatePackageJsonFile,
-} from "@fluidframework/build-tools";
+import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
-import { PackageCommand } from "../BasePackageCommand";
-import type { PackageSelectionDefault } from "../flags";
+import { PackageCommand } from "../BasePackageCommand.js";
+import type { PackageSelectionDefault } from "../flags.js";
+import {
+	type ITypeValidationConfig,
+	type PackageWithTypeTestSettings,
+	defaultTypeValidationConfig,
+	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../typeValidator/typeValidatorConfig.js";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
@@ -54,15 +56,15 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			exclusive: ["remove", "previous", "disable"],
 		}),
 		enable: Flags.boolean({
-			description: `Remove the "typeValidation.disabled" setting in the package.json`,
+			description: `Remove the "typeValidation.disabled" setting in the package.json.`,
 		}),
 		disable: Flags.boolean({
-			description: `Set the "typeValidation.disabled" setting to "true" in the package.json`,
+			description: `Set the "typeValidation.disabled" setting to "true" in the package.json.`,
 			exclusive: ["enable"],
 		}),
 		normalize: Flags.boolean({
 			char: "n",
-			description: `Removes any unrecognized data from "typeValidation" in the package.json`,
+			description: `Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.`,
 			exclusive: ["enable"],
 		}),
 		...PackageCommand.flags,
@@ -91,9 +93,10 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				: this.flags.previous
 					? VersionOptions.Previous
 					: VersionOptions.ClearIfDisabled);
-		updatePackageJsonFile(pkg.directory, (json) => {
+		updatePackageJsonFile(pkg.directory, (jsonIn) => {
+			const json: PackageWithTypeTestSettings = jsonIn;
 			if (this.flags.disable) {
-				json.typeValidation ??= { broken: {} };
+				json.typeValidation ??= defaultTypeValidationConfig;
 				json.typeValidation.disabled = true;
 			} else if (this.flags.enable && json.typeValidation !== undefined) {
 				delete json.typeValidation.disabled;
@@ -109,8 +112,13 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 
 			if (this.flags.normalize) {
 				json.typeValidation = {
-					disabled: json.typeValidation?.disabled === true ? true : undefined,
-					broken: json.typeValidation?.broken ?? {},
+					disabled:
+						json.typeValidation?.disabled === true
+							? true
+							: defaultTypeValidationConfig.disabled,
+					broken: json.typeValidation?.broken ?? defaultTypeValidationConfig.broken,
+					entrypoint:
+						json.typeValidation?.entrypoint ?? defaultTypeValidationConfig.entrypoint,
 				};
 			}
 		});
@@ -157,7 +165,7 @@ export function previousVersion(version: string): string {
  *
  */
 export function updateTypeTestDependency(
-	pkgJson: PackageJson,
+	pkgJson: PackageWithTypeTestSettings,
 	versionOptions: string | VersionOptions,
 ): void {
 	const oldDepName = `${pkgJson.name}-previous`;

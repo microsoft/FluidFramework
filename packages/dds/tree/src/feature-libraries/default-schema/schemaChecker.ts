@@ -12,7 +12,6 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	type SchemaAndPolicy,
-	getMapTreeField,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
 import { fail } from "../../util/index.js";
@@ -30,10 +29,21 @@ export const enum SchemaValidationErrors {
 	UnknownError,
 }
 
+/**
+ * Deeply checks that the provided node complies with the schema based on its identifier.
+ */
 export function isNodeInSchema(
 	node: MapTree,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {
+	// If the stored schema is completely empty it _probably_ (in almost all cases?) means the tree is brand new and we
+	// shouldn't validate the data.
+	// TODO: AB#8197
+	// See https://github.com/microsoft/FluidFramework/pull/21305#discussion_r1626595991 for further discussion.
+	if (schemaAndPolicy.schema.nodeSchema.size === 0) {
+		return SchemaValidationErrors.NoError;
+	}
+
 	// Validate the schema declared by the node exists
 	const schema = schemaAndPolicy.schema.nodeSchema.get(node.type);
 	if (schema === undefined) {
@@ -55,7 +65,7 @@ export function isNodeInSchema(
 		}
 		const uncheckedFieldsFromNode = new Set(node.fields.keys());
 		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
-			const nodeField = getMapTreeField(node, fieldKey, false);
+			const nodeField = node.fields.get(fieldKey) ?? [];
 			const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
@@ -83,8 +93,11 @@ export function isNodeInSchema(
 	return SchemaValidationErrors.NoError;
 }
 
+/**
+ * Deeply checks that the nodes comply with the field schema and included schema.
+ */
 export function isFieldInSchema(
-	childNodes: MapTree[],
+	childNodes: readonly MapTree[],
 	schema: TreeFieldStoredSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {

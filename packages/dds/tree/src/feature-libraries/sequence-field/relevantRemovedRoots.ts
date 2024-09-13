@@ -5,12 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { DeltaDetachedNodeId, offsetDetachId } from "../../core/index.js";
+import { type DeltaDetachedNodeId, offsetDetachId } from "../../core/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
-import { Changeset, Mark } from "./types.js";
+import type { Changeset, Mark } from "./types.js";
 import { isAttachAndDetachEffect, isDetachOfRemovedNodes, isInsert } from "./utils.js";
-import { RelevantRemovedRootsFromChild } from "../modular-schema/index.js";
+import type { RelevantRemovedRootsFromChild } from "../modular-schema/index.js";
 
 export function* relevantRemovedRoots(
 	change: Changeset,

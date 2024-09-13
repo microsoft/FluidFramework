@@ -8,7 +8,7 @@ import {
 	type IClient,
 	type IQuorumClients,
 	type ISequencedClient,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 /**

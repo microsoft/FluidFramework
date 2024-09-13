@@ -4,13 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IAudienceEvents,
-	IAudienceOwner,
-	ISelf,
-} from "@fluidframework/container-definitions/internal";
+import { IAudienceEvents, ISelf } from "@fluidframework/container-definitions";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.
@@ -31,7 +28,7 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 			: {
 					clientId: this._currentClientId,
 					client: this.getMember(this._currentClientId),
-			  };
+				};
 	}
 
 	public setCurrentClientId(clientId: string): void {
@@ -52,7 +49,7 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	/**
 	 * Adds a new client to the audience
 	 */
-	public addMember(clientId: string, details: IClient) {
+	public addMember(clientId: string, details: IClient): void {
 		// Given that signal delivery is unreliable process, we might observe same client being added twice
 		// In such case we should see exactly same payload (IClient), and should not raise event twice!
 		if (this.members.has(clientId)) {
@@ -73,12 +70,12 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	 */
 	public removeMember(clientId: string): boolean {
 		const removedClient = this.members.get(clientId);
-		if (removedClient !== undefined) {
+		if (removedClient === undefined) {
+			return false;
+		} else {
 			this.members.delete(clientId);
 			this.emit("removeMember", clientId, removedClient);
 			return true;
-		} else {
-			return false;
 		}
 	}
 

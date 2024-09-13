@@ -10,8 +10,7 @@ import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
-import { BaseCommand } from "../../base";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import {
 	checkFlags,
 	dependencyUpdateTypeFlag,
@@ -19,8 +18,9 @@ import {
 	releaseGroupFlag,
 	skipCheckFlag,
 	testModeFlag,
-} from "../../flags";
+} from "../../flags.js";
 import {
+	BaseCommand,
 	// eslint-disable-next-line import/no-deprecated
 	MonoRepoKind,
 	generateBumpDepsBranchName,
@@ -28,10 +28,10 @@ import {
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
-} from "../../library";
+} from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { npmCheckUpdatesHomegrown } from "../../library/package";
-import { ReleaseGroup } from "../../releaseGroups";
+import { npmCheckUpdatesHomegrown } from "../../library/package.js";
+import { ReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

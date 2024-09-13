@@ -69,7 +69,6 @@ const DefaultDeli: IDeliState = {
 	signalClientConnectionNumber: 0,
 	lastSentMSN: 0,
 	nackMessages: undefined,
-	successfullyStartedLambdas: [],
 	checkpointTimestamp: undefined,
 };
 
@@ -292,7 +291,6 @@ export class LocalOrderer implements IOrderer {
 					undefined,
 					this.rawDeltasKafka,
 					this.serviceConfiguration,
-					undefined,
 					undefined,
 					checkpointService,
 				);

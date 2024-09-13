@@ -32,7 +32,7 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 
 	constructor() {}
 
-	public updateCheckpointMessages(message: IQueuedMessage) {
+	public updateCheckpointMessages(message: IQueuedMessage): void {
 		// updates checkpoint message
 		this.checkpointInfo.currentCheckpointMessage = message;
 
@@ -47,14 +47,14 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 		}
 	}
 
-	public clearCheckpointIdleTimer() {
+	public clearCheckpointIdleTimer(): void {
 		if (this.checkpointInfo.idleTimer !== undefined) {
 			clearTimeout(this.checkpointInfo.idleTimer);
 			this.checkpointInfo.idleTimer = undefined;
 		}
 	}
 
-	public resetCheckpointTimer() {
+	public resetCheckpointTimer(): void {
 		this.clearCheckpointIdleTimer();
 		this.checkpointInfo.lastCheckpointTime = Date.now();
 		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
@@ -64,7 +64,7 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 		timeout: number,
 		idleTimeCheckpoint: (message: IQueuedMessage) => void,
 		isDocumentCorrupt: boolean = false,
-	) {
+	): void {
 		this.clearCheckpointIdleTimer();
 
 		const initalCheckpointMessage = this.checkpointInfo.currentCheckpointMessage;
@@ -86,11 +86,11 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 		}, timeout);
 	}
 
-	public incrementRawMessageCounter() {
+	public incrementRawMessageCounter(): void {
 		this.checkpointInfo.rawMessagesSinceCheckpoint++;
 	}
 
-	public resetRawMessageCounter() {
+	public resetRawMessageCounter(): void {
 		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
 	}
 
@@ -102,15 +102,15 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 		this.noActiveClients = noActiveClients;
 	}
 
-	public getCheckpointInfo() {
+	public getCheckpointInfo(): ICheckpoint {
 		return this.checkpointInfo;
 	}
 
-	public setLastCheckpointTime(timestamp: number) {
+	public setLastCheckpointTime(timestamp: number): void {
 		this.checkpointInfo.lastCheckpointTime = timestamp;
 	}
 
-	public getLastCheckpointTime() {
+	public getLastCheckpointTime(): number {
 		return this.checkpointInfo.lastCheckpointTime;
 	}
 }

@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	type ICreateBlobResponse,
+} from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -27,17 +30,18 @@ const emptySummary = combineAppAndProtocolSummary(
 	{ tree: {}, type: SummaryType.Tree },
 );
 
-type ObjectWithCallCounts<T extends Record<string, any>> = T &
+type ObjectWithCallCounts<T extends Record<string, unknown>> = T &
 	Record<"calls", Record<keyof T, number>>;
 
-const addCallCounts = <T extends Record<string, any>>(obj: T): ObjectWithCallCounts<T> => {
+const addCallCounts = <T extends Record<string, unknown>>(obj: T): ObjectWithCallCounts<T> => {
+	// eslint-disable-next-line unicorn/no-array-reduce
 	const calls = Object.keys(obj).reduce((pv, cv) => {
 		pv[cv] = 0;
 		return pv;
 	}, {}) as Record<keyof T, number>;
 
 	return new Proxy<ObjectWithCallCounts<T>>(obj as ObjectWithCallCounts<T>, {
-		get: (t, p, r): any => {
+		get: (t, p, r): unknown => {
 			if (p === "calls") {
 				return calls;
 			} else {
@@ -54,7 +58,7 @@ const createDetachStorage = (
 	const blobs = new Map<string, ArrayBufferLike>(
 		Array.from({ length: blobCount }).map((_, i) => [
 			i.toString(),
-			stringToBuffer(`${i}-content`, "utf-8"),
+			stringToBuffer(`${i}-content`, "utf8"),
 		]),
 	);
 
@@ -73,11 +77,12 @@ const createDetachStorage = (
 	});
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createProxyWithFailDefault = <T extends Record<string, any> | undefined>(
 	partial: Partial<T> = {},
 ): T => {
 	return new Proxy(partial, {
-		get: (t, p, r): any => {
+		get: (t, p, r): unknown => {
 			if (p in t) {
 				return Reflect.get(t, p, r);
 			}
@@ -128,8 +133,9 @@ describe("runRetriableAttachProcess", () => {
 					return emptySummary;
 				},
 				createOrGetStorageService: async () => ({
-					createBlob: async () => assert.fail("no blobs should be created"),
-					uploadSummaryWithContext: async () =>
+					createBlob: async (): Promise<ICreateBlobResponse> =>
+						assert.fail("no blobs should be created"),
+					uploadSummaryWithContext: async (): Promise<string> =>
 						assert.fail("no summary should be uploaded outside of create"),
 				}),
 			});
@@ -146,8 +152,8 @@ describe("runRetriableAttachProcess", () => {
 			const blobCount = 10;
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const storageAdapter = addCallCounts({
-				createBlob: async () => Promise.resolve({ id: uuid() }),
-				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+				createBlob: async () => ({ id: uuid() }),
+				uploadSummaryWithContext: async () => uuid(),
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
@@ -226,8 +232,8 @@ describe("runRetriableAttachProcess", () => {
 					}),
 				);
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual(
@@ -256,8 +262,8 @@ describe("runRetriableAttachProcess", () => {
 					}),
 				);
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<AttachingDataWithoutBlobs>(
@@ -294,8 +300,8 @@ describe("runRetriableAttachProcess", () => {
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<DetachedDataWithOutstandingBlobs>(
@@ -327,13 +333,13 @@ describe("runRetriableAttachProcess", () => {
 					},
 					createOrGetStorageService: async () =>
 						createProxyWithFailDefault<IDocumentStorageService>({
-							createBlob: async () => Promise.resolve({ id: uuid() }),
+							createBlob: async () => ({ id: uuid() }),
 						}),
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<DetachedDataWithOutstandingBlobs>(
@@ -370,16 +376,16 @@ describe("runRetriableAttachProcess", () => {
 						return emptySummary;
 					},
 					createOrGetStorageService: async () => ({
-						createBlob: async () => Promise.resolve({ id: uuid() }),
-						uploadSummaryWithContext: () => {
+						createBlob: async (): Promise<ICreateBlobResponse> => ({ id: uuid() }),
+						uploadSummaryWithContext: async (): Promise<string> => {
 							throw error;
 						},
 					}),
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<AttachingDataWithBlobs>(
@@ -405,8 +411,8 @@ describe("runRetriableAttachProcess", () => {
 			const blobCount = 10;
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const storageAdapter = addCallCounts({
-				createBlob: async () => Promise.resolve({ id: uuid() }),
-				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+				createBlob: async () => ({ id: uuid() }),
+				uploadSummaryWithContext: async () => uuid(),
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
@@ -459,7 +465,7 @@ describe("runRetriableAttachProcess", () => {
 					createOrGetStorageService: async () =>
 						// only the summary should be left to upload
 						createProxyWithFailDefault<IDocumentStorageService>({
-							uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+							uploadSummaryWithContext: async () => uuid(),
 						}),
 				}),
 			);

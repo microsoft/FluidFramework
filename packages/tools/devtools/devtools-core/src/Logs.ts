@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 
-import { type ContainerStateChangeKind } from "./Container.js";
+import type { ContainerStateChangeKind } from "./Container.js";
 
 /**
  * Base interface for data logs, associating data with a timestamp at which the data was recorded by the devtools.

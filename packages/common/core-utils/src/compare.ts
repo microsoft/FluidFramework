@@ -6,6 +6,7 @@
 /**
  * Compare two arrays.  Returns true if their elements are equivalent and in the same order.
  *
+ * @legacy
  * @alpha
  *
  * @param left - The first array to compare

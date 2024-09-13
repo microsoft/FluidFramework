@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { after, before, devServerConfig } from "./routes.js";
-export { defaultWebpackConfig } from "./defaultWebpackConfig.js";
+export { devServerConfig } from "./routes.js";

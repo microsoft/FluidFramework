@@ -56,7 +56,7 @@ export namespace MockTransaction {
 				: Result.error({
 						status: this.options.statusOnClose,
 						failure: undefined as unknown as TransactionInternal.Failure,
-				  });
+					});
 		}
 
 		public dispatchChange(state): ChangeResult {

@@ -9,11 +9,11 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	ITelemetryLoggerExt,
 	UsageError,
@@ -26,7 +26,11 @@ import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
-import { IJSONSegmentWithMergeInfo, MergeTreeChunkV1, hasMergeInfo } from "./snapshotChunks.js";
+import {
+	IJSONSegmentWithMergeInfo,
+	MergeTreeChunkV1,
+	hasMergeInfo,
+} from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 
@@ -54,8 +58,8 @@ export class SnapshotLoader {
 
 		const catchupOpsP = this.loadBodyAndCatchupOps(headerLoadedP, services);
 
-		catchupOpsP.catch((err) =>
-			this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, err),
+		catchupOpsP.catch((error) =>
+			this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, error),
 		);
 
 		await headerLoadedP;
@@ -76,9 +80,8 @@ export class SnapshotLoader {
 
 		const blobs = await blobsP;
 		if (blobs.length === headerChunk.headerMetadata!.orderedChunkMetadata.length + 1) {
-			headerChunk.headerMetadata!.orderedChunkMetadata.forEach((md) =>
-				blobs.splice(blobs.indexOf(md.id), 1),
-			);
+			for (const md of headerChunk.headerMetadata!.orderedChunkMetadata)
+				blobs.splice(blobs.indexOf(md.id), 1);
 			assert(blobs.length === 1, 0x060 /* There should be only one blob with catch up ops */);
 
 			// TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
@@ -91,7 +94,9 @@ export class SnapshotLoader {
 		return [];
 	}
 
-	private readonly specToSegment = (spec: IJSONSegment | IJSONSegmentWithMergeInfo) => {
+	private readonly specToSegment = (
+		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
+	): ISegment => {
 		let seg: ISegment;
 
 		if (hasMergeInfo(spec)) {
@@ -100,9 +105,9 @@ export class SnapshotLoader {
 			// `specToSegment()` initializes `seg` with the LocalClientId.  Overwrite this with
 			// the `spec` client (if specified).  Otherwise overwrite with `NonCollabClient`.
 			seg.clientId =
-				spec.client !== undefined
-					? this.client.getOrAddShortClientId(spec.client)
-					: NonCollabClient;
+				spec.client === undefined
+					? NonCollabClient
+					: this.client.getOrAddShortClientId(spec.client);
 
 			seg.seq = spec.seq ?? UniversalSequenceNumber;
 
@@ -155,7 +160,7 @@ export class SnapshotLoader {
 			this.mergeTree.options,
 			this.serializer,
 		);
-		const segs = chunk.segments.map(this.specToSegment);
+		const segs = chunk.segments.map((element) => this.specToSegment(element));
 		this.extractAttribution(segs, chunk);
 
 		this.mergeTree.reloadFromSegments(segs);
@@ -201,7 +206,7 @@ export class SnapshotLoader {
 			return;
 		}
 
-		let chunksWithAttribution = chunk1.attribution !== undefined ? 1 : 0;
+		let chunksWithAttribution = chunk1.attribution === undefined ? 0 : 1;
 		const segs: ISegment[] = [];
 		let lengthSofar = chunk1.length;
 		for (
@@ -218,9 +223,9 @@ export class SnapshotLoader {
 			);
 			lengthSofar += chunk.length;
 			// Deserialize each chunk segment and append it to the end of the MergeTree.
-			const newSegs = chunk.segments.map(this.specToSegment);
+			const newSegs = chunk.segments.map((element) => this.specToSegment(element));
 			this.extractAttribution(newSegs, chunk);
-			chunksWithAttribution += chunk.attribution !== undefined ? 1 : 0;
+			chunksWithAttribution += chunk.attribution === undefined ? 0 : 1;
 			segs.push(...newSegs);
 		}
 
@@ -239,7 +244,7 @@ export class SnapshotLoader {
 
 		// Helper to insert segments at the end of the MergeTree.
 		const mergeTree = this.mergeTree;
-		const append = (segments: ISegment[], cli: number, seq: number) => {
+		const append = (segments: ISegment[], cli: number, seq: number): void => {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
@@ -252,7 +257,7 @@ export class SnapshotLoader {
 
 		// Helpers to batch-insert segments that are below the min seq
 		const batch: ISegment[] = [];
-		const flushBatch = () => {
+		const flushBatch = (): void => {
 			if (batch.length > 0) {
 				append(batch, NonCollabClient, UniversalSequenceNumber);
 			}
@@ -276,8 +281,6 @@ export class SnapshotLoader {
 	}
 
 	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
-		this.mergeTree.options ??= {};
-		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {

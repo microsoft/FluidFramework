@@ -1,0 +1,1675 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "schema": {
+                            "new": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
+                                },
+                                "test trees.Recursive Map": {
+                                  "map": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "test trees.Recursive Map",
+                                      "test trees.String Array"
+                                    ]
+                                  }
+                                },
+                                "test trees.String Array": {
+                                  "object": {
+                                    "": {
+                                      "kind": "Sequence",
+                                      "types": [
+                                        "com.fluidframework.leaf.string"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "root": {
+                                "kind": "Optional",
+                                "types": [
+                                  "test trees.Recursive Map",
+                                  "test trees.String Array"
+                                ]
+                              }
+                            },
+                            "old": {
+                              "version": 1,
+                              "nodes": {},
+                              "root": {
+                                "kind": "Forbidden",
+                                "types": []
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "r": {
+                                    "e": true,
+                                    "d": 0,
+                                    "s": 1
+                                  }
+                                }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "test trees.Recursive Map",
+                                      false,
+                                      [
+                                        "FieldA",
+                                        [
+                                          "test trees.Recursive Map",
+                                          false,
+                                          [
+                                            "FieldA",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "1",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "2",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "3",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "4",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "5",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "6",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "7",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "8",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "9",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "FieldB",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "10",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "11",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "12",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "13",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "14",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "15",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "16",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "17",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "18",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "FieldC",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "19",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "20",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "21",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "22",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "23",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "24",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "25",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "26",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "27",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "FieldB",
+                                        [
+                                          "test trees.Recursive Map",
+                                          false,
+                                          [
+                                            "FieldA",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "28",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "29",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "30",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "31",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "32",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "33",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "34",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "35",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "36",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "FieldB",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "37",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "38",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "39",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "40",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "41",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "42",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "43",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "44",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "45",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "FieldC",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "46",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "47",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "48",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "49",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "50",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "51",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "52",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "53",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "54",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ],
+                                        "FieldC",
+                                        [
+                                          "test trees.Recursive Map",
+                                          false,
+                                          [
+                                            "FieldA",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "55",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "56",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "57",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "58",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "59",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "60",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "61",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "62",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "63",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "FieldB",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "64",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "65",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "66",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "67",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "68",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "69",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "70",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "71",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "72",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ],
+                                            "FieldC",
+                                            [
+                                              "test trees.Recursive Map",
+                                              false,
+                                              [
+                                                "FieldA",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "73",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "74",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "75",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldB",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "76",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "77",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "78",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ],
+                                                "FieldC",
+                                                [
+                                                  "test trees.String Array",
+                                                  false,
+                                                  [
+                                                    "",
+                                                    [
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "79",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "80",
+                                                      [],
+                                                      "com.fluidframework.leaf.string",
+                                                      true,
+                                                      "81",
+                                                      []
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "schema": {
+                            "new": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
+                                },
+                                "test trees.Recursive Map": {
+                                  "map": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "test trees.Recursive Map",
+                                      "test trees.String Array"
+                                    ]
+                                  }
+                                },
+                                "test trees.String Array": {
+                                  "object": {
+                                    "": {
+                                      "kind": "Sequence",
+                                      "types": [
+                                        "com.fluidframework.leaf.string"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "root": {
+                                "kind": "Value",
+                                "types": [
+                                  "test trees.Recursive Map",
+                                  "test trees.String Array"
+                                ]
+                              }
+                            },
+                            "old": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
+                                },
+                                "test trees.Recursive Map": {
+                                  "map": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "test trees.Recursive Map",
+                                      "test trees.String Array"
+                                    ]
+                                  }
+                                },
+                                "test trees.String Array": {
+                                  "object": {
+                                    "": {
+                                      "kind": "Sequence",
+                                      "types": [
+                                        "com.fluidframework.leaf.string"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "root": {
+                                "kind": "Optional",
+                                "types": [
+                                  "test trees.Recursive Map",
+                                  "test trees.String Array"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 3,
+                      "sequenceNumber": 2,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    }
+                  ],
+                  "branches": [],
+                  "version": 2
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "test trees.Recursive Map": {
+                      "map": {
+                        "kind": "Optional",
+                        "types": [
+                          "test trees.Recursive Map",
+                          "test trees.String Array"
+                        ]
+                      }
+                    },
+                    "test trees.String Array": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "com.fluidframework.leaf.string"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Value",
+                    "types": [
+                      "test trees.Recursive Map",
+                      "test trees.String Array"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "extraFields": 1
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "test trees.Recursive Map",
+                          false,
+                          [
+                            "FieldA",
+                            [
+                              "test trees.Recursive Map",
+                              false,
+                              [
+                                "FieldA",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "1",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "2",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "3",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "4",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "5",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "6",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "7",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "8",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "9",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "FieldB",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "10",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "11",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "12",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "13",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "14",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "15",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "16",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "17",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "18",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "FieldC",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "19",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "20",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "21",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "22",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "23",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "24",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "25",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "26",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "27",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "FieldB",
+                            [
+                              "test trees.Recursive Map",
+                              false,
+                              [
+                                "FieldA",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "28",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "29",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "30",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "31",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "32",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "33",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "34",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "35",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "36",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "FieldB",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "37",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "38",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "39",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "40",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "41",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "42",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "43",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "44",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "45",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "FieldC",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "46",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "47",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "48",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "49",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "50",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "51",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "52",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "53",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "54",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ],
+                            "FieldC",
+                            [
+                              "test trees.Recursive Map",
+                              false,
+                              [
+                                "FieldA",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "55",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "56",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "57",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "58",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "59",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "60",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "61",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "62",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "63",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "FieldB",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "64",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "65",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "66",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "67",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "68",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "69",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "70",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "71",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "72",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ],
+                                "FieldC",
+                                [
+                                  "test trees.Recursive Map",
+                                  false,
+                                  [
+                                    "FieldA",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "73",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "74",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "75",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldB",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "76",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "77",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "78",
+                                          []
+                                        ]
+                                      ]
+                                    ],
+                                    "FieldC",
+                                    [
+                                      "test trees.String Array",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "79",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "80",
+                                          [],
+                                          "com.fluidframework.leaf.string",
+                                          true,
+                                          "81",
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [],
+                  "maxId": 0
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

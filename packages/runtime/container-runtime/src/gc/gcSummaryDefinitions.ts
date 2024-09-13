@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * The garbage collection data of each node in the reference graph. Each node's GC data is written in the summary

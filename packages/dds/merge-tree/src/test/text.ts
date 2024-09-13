@@ -14,14 +14,14 @@ export function loadSegments(
 	segLimit: number,
 	markers: boolean = false,
 	withProps: boolean = true,
-) {
+): ISegment[] {
 	const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
 	const paragraphs = BOMFreeContent.split(/\r?\n/);
 	for (let i = 0, len = paragraphs.length; i < len; i++) {
 		paragraphs[i] = paragraphs[i]
 			.replace(/\r?\n/g, " ")
-			.replace(/\u201c|\u201d/g, '"')
+			.replace(/\u201C|\u201D/g, '"')
 			.replace(/\u2019/g, "'");
 		if (!markers && i !== paragraphs.length - 1) {
 			paragraphs[i] += "\n";
@@ -37,12 +37,10 @@ export function loadSegments(
 		if (withProps) {
 			if (paragraph.includes("Chapter") || paragraph.includes("PRIDE AND PREJ")) {
 				if (pgMarker) {
-					pgMarker.addProperties({ header: 2 });
+					pgMarker.properties = { header: 2 };
 					segments.push(new TextSegment(paragraph));
 				} else {
-					segments.push(
-						TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }),
-					);
+					segments.push(TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }));
 				}
 			} else {
 				const emphStrings = paragraph.split("_");
@@ -50,9 +48,7 @@ export function loadSegments(
 					// eslint-disable-next-line no-bitwise
 					if (i & 1) {
 						if (emphStrings[i].length > 0) {
-							segments.push(
-								TextSegment.make(emphStrings[i], { fontStyle: "italic" }),
-							);
+							segments.push(TextSegment.make(emphStrings[i], { fontStyle: "italic" }));
 						}
 					} else {
 						if (emphStrings[i].length > 0) {
@@ -76,7 +72,12 @@ export function loadSegments(
 	return segments;
 }
 
-export function loadText(content: string, mergeTree: MergeTree, segLimit: number, markers = false) {
+export function loadText(
+	content: string,
+	mergeTree: MergeTree,
+	segLimit: number,
+	markers = false,
+): MergeTree {
 	const segments = loadSegments(content, segLimit, markers);
 	mergeTree.reloadFromSegments(segments);
 	return mergeTree;

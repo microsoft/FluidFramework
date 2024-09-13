@@ -4,7 +4,7 @@
  */
 
 import { minimatch } from "minimatch";
-import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
+import { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
 
 // Mapping of branch to a list of release groups/packages that should run policy by default.
 // TODO: This should be configured in the fluid-build config, like type test defaults are.

@@ -71,8 +71,10 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 		const automaticConsume = config.get("kafka:lib:rdkafkaAutomaticConsume");
 		const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
 		const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
+		const consumeLoopTimeoutDelay = config.get("kafka:lib:rdkafkaConsumeLoopTimeoutDelay");
 		const sslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 		const customRestartOnKafkaErrorCodes = config.get("kafka:customRestartOnKafkaErrorCodes");
 		const consumerGlobalAdditionalConfig = config.get(
 			"kafka:lib:consumerGlobalAdditionalConfig",
@@ -98,9 +100,11 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 			automaticConsume,
 			consumeTimeout,
 			maxConsumerCommitRetries,
+			consumeLoopTimeoutDelay,
 			sslCACertFilePath,
 			zooKeeperClientConstructor: this.zookeeperClientConstructor,
 			eventHubConnString,
+			oauthBearerConfig,
 			restartOnKafkaErrorCodes: customRestartOnKafkaErrorCodes,
 			additionalOptions: consumerGlobalAdditionalConfig,
 		};

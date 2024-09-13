@@ -32,6 +32,7 @@ export function createProducer(
 	sslCACertFilePath?: string,
 	eventHubConnString?: string,
 	additionalOptions?: object,
+	oauthBearerConfig?: any,
 ): IProducer {
 	let producer: IProducer;
 
@@ -45,6 +46,7 @@ export function createProducer(
 			sslCACertFilePath,
 			eventHubConnString,
 			additionalOptions,
+			oauthBearerConfig,
 		});
 
 		producer.on("error", (error, errorData: IContextErrorData) => {

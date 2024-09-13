@@ -6,9 +6,15 @@
 import { strict as assert } from "assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import {
+	BenchmarkType,
+	benchmarkCustom,
+	benchmark,
+	type IMeasurementReporter,
+} from "@fluid-tools/benchmark";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
@@ -17,8 +23,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { AllowedUpdateType } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
+import { SharedTreeFactory, type TreeContent } from "../../shared-tree/index.js";
 import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
 import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
 
@@ -49,22 +54,40 @@ describe("Summary benchmarks", () => {
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize < 700);
 		});
+
+		function processSummary(
+			summaryTree: ISummaryTree,
+			reporter: IMeasurementReporter,
+			minLength: number,
+			maxLength: number,
+		) {
+			const summaryString = JSON.stringify(summaryTree);
+			const summarySize = IsoBuffer.from(summaryString).byteLength;
+			reporter.addMeasurement("summarySize", summarySize);
+			assert(summarySize > minLength);
+			assert(summarySize < maxLength);
+		}
+
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
-			it(`a wide tree with ${numberOfNodes} nodes.`, async () => {
-				const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
-				const summaryString = JSON.stringify(summaryTree);
-				const summarySize = IsoBuffer.from(summaryString).byteLength;
-				assert(summarySize > minLength);
-				assert(summarySize < maxLength);
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `a wide tree with ${numberOfNodes} nodes.`,
+				run: async (reporter) => {
+					const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
+					processSummary(summaryTree, reporter, minLength, maxLength);
+				},
 			});
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
-			it(`a deep tree with ${numberOfNodes} nodes.`, async () => {
-				const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
-				const summaryString = JSON.stringify(summaryTree);
-				const summarySize = IsoBuffer.from(summaryString).byteLength;
-				assert(summarySize > minLength);
-				assert(summarySize < maxLength);
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `a deep tree with ${numberOfNodes} nodes.`,
+				run: async (reporter) => {
+					const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
+					processSummary(summaryTree, reporter, minLength, maxLength);
+				},
 			});
 		}
 	});
@@ -72,11 +95,11 @@ describe("Summary benchmarks", () => {
 	describe("load speed of", () => {
 		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+			const factory = new SharedTreeFactory();
 			benchmark({
 				title,
 				type,
-				before: async () => {
+				before: () => {
 					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
 				},
 				benchmarkFnAsync: async () => {

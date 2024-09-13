@@ -3,88 +3,51 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import {
+	EmptyKey,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+} from "../core/index.js";
 import {
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexFieldKind,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
-	NodeKeyManager,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
+	intoStoredSchemaCollection,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
-import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { TreeContent } from "../shared-tree/index.js";
+// TODO: once flex schema is gone, this code can move into simple-tree
+// eslint-disable-next-line import/no-internal-modules
+import { normalizeFlexListEager } from "../feature-libraries/typed-schema/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
-
-import { InsertableContent, extractFactoryContent } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
-} from "./schemaCaching.js";
+	NodeKind,
+	type TreeNodeSchema,
+} from "./core/index.js";
 import {
 	FieldKind,
 	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	TreeNodeSchema,
-	normalizeFieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
-import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeConfiguration } from "./tree.js";
-
-/**
- * Returns a cursor (in nodes mode) for the root node.
- *
- * @privateRemarks
- * Ideally this would work on any node, not just the root,
- * and the schema would come from the unhydrated node.
- * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
- */
-function cursorFromUnhydratedRoot(
-	schema: ImplicitFieldSchema,
-	tree: InsertableTreeNodeFromImplicitAllowedTypes,
-	nodeKeyManager: NodeKeyManager,
-): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
-	const normalizedFieldSchema = normalizeFieldSchema(schema);
-	return (
-		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes, nodeKeyManager) ??
-		fail("failed to decode tree")
-	);
-}
-
-export function toFlexConfig(
-	config: TreeConfiguration,
-	nodeKeyManager: NodeKeyManager,
-): TreeContent {
-	const unhydrated = config.initialTree();
-	const initialTree =
-		unhydrated === undefined
-			? undefined
-			: [cursorFromUnhydratedRoot(config.schema, unhydrated, nodeKeyManager)];
-	return {
-		schema: toFlexSchema(config.schema),
-		initialTree,
-	};
-}
 
 interface SchemaInfo {
-	toFlex: () => FlexTreeNodeSchema;
-	original: TreeNodeSchema;
+	readonly toFlex: () => FlexTreeNodeSchema;
+	readonly original: TreeNodeSchema;
 }
 
 type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
@@ -123,6 +86,17 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 }
 
 /**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ */
+export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+	const flex = toFlexSchema(root);
+	return {
+		rootFieldSchema: flex.rootFieldSchema.stored,
+		...intoStoredSchemaCollection(flex),
+	};
+}
+
+/**
  * Return a flex schema for the provided class schema.
  *
  * This also has the side effect of populating the cached view schema on the class based schema.
@@ -133,9 +107,21 @@ export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 }
 
 /**
+ * Return a stored schema for the provided class schema.
+ *
+ * This also has the side effect of populating the cached view schema on the class based schema.
+ */
+export function getStoredSchema(root: TreeNodeSchema): TreeNodeStoredSchema {
+	return getFlexSchema(root).stored;
+}
+
+/**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
-export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema): FlexFieldSchema {
+export function convertField(
+	schemaMap: SchemaMap,
+	schema: ImplicitFieldSchema,
+): FlexFieldSchema {
 	let kind: FlexFieldKind;
 	let types: ImplicitAllowedTypes;
 	let metadata: unknown;
@@ -187,8 +173,8 @@ export function convertNodeSchema(
 	const fromMap = schemaMap.get(brand(schema.identifier));
 	if (fromMap !== undefined) {
 		if (fromMap.original !== schema) {
-			// Use JSON.stringify to quote and escape string.
-			throw new Error(
+			// Use JSON.stringify to quote and escape identifier string.
+			throw new UsageError(
 				`Multiple schema encountered with the identifier ${JSON.stringify(
 					schema.identifier,
 				)}. Remove or rename them to avoid the collision.`,
@@ -197,14 +183,13 @@ export function convertNodeSchema(
 		return fromMap.toFlex;
 	}
 
-	const toFlex = () => {
+	const toFlex = (): FlexTreeNodeSchema => {
 		let out: FlexTreeNodeSchema;
 		const kind = schema.kind;
 		switch (kind) {
 			case NodeKind.Leaf: {
 				const cached =
-					cachedFlexSchemaFromClassSchema(schema) ??
-					fail("leaf schema should be pre-cached");
+					cachedFlexSchemaFromClassSchema(schema) ?? fail("leaf schema should be pre-cached");
 				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
@@ -216,7 +201,13 @@ export function convertNodeSchema(
 				);
 				// Lookup of cached schema is done here instead of before since walking the schema recursively to populate schemaMap is still required.
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
+				out =
+					cached ??
+					FlexMapNodeSchema.create(
+						builder,
+						brand<TreeNodeSchemaIdentifier>(schema.identifier),
+						field,
+					);
 				break;
 			}
 			case NodeKind.Array: {
@@ -227,16 +218,19 @@ export function convertNodeSchema(
 				);
 				const cached = cachedFlexSchemaFromClassSchema(schema);
 				out =
-					cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
+					cached ??
+					FlexObjectNodeSchema.create(builder, brand(schema.identifier), {
+						[EmptyKey]: field,
+					});
 				break;
 			}
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
-				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
+				for (const [propertyKey, implicitFieldSchema] of Object.entries(info)) {
 					// If a `stored key` was provided, use it as the key in the flex schema.
-					// Otherwise, use the view key.
-					const flexKey = getStoredKey(viewKey, implicitFieldSchema);
+					// Otherwise, use the property key.
+					const flexKey = getStoredKey(propertyKey, implicitFieldSchema);
 
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
 					Object.defineProperty(fields, flexKey, {
@@ -247,9 +241,7 @@ export function convertNodeSchema(
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ??
-					FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
+				out = cached ?? FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
 				break;
 			}
 			default:

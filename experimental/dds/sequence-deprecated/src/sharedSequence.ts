@@ -9,4 +9,8 @@
  * @deprecated SharedSequence is not recommended for use and will be removed in an upcoming release.
  * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
  */
-export { SubSequence, SharedSequence, IJSONRunSegment } from "@fluidframework/sequence/internal";
+export {
+	SubSequence,
+	SharedSequence,
+	IJSONRunSegment,
+} from "@fluidframework/sequence/internal";

@@ -102,9 +102,9 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
 				const newPosition =
 					oldPosition <= changeStartPosition
 						? // Position is unmoved by the insertion if it is before the insertion's start
-						  oldPosition
+							oldPosition
 						: // Position is moved by the length of the insertion if it is after the insertion's start
-						  oldPosition + changeLength;
+							oldPosition + changeLength;
 				// console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeStartPosition + changeLength}, Transform: ${oldPosition} -> ${newPosition}`);
 				// console.log(op);
 				return newPosition;

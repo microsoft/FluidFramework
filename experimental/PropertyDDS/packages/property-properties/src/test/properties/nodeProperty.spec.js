@@ -200,27 +200,19 @@ describe("NodeProperty", function () {
 			changeSetWithTwoMapEntries = myNode.serialize({ dirtyOnly: true });
 			expect(
 				changeSetWithTwoMapEntries.insert &&
-					changeSetWithTwoMapEntries.insert[
-						"autodesk.tests:MixedNodeTestProperty-1.0.0"
-					] &&
+					changeSetWithTwoMapEntries.insert["autodesk.tests:MixedNodeTestProperty-1.0.0"] &&
 					_.keys(
-						changeSetWithTwoMapEntries.insert[
-							"autodesk.tests:MixedNodeTestProperty-1.0.0"
-						],
+						changeSetWithTwoMapEntries.insert["autodesk.tests:MixedNodeTestProperty-1.0.0"],
 					).length === 2 &&
 					_.includes(
 						_.keys(
-							changeSetWithTwoMapEntries.insert[
-								"autodesk.tests:MixedNodeTestProperty-1.0.0"
-							],
+							changeSetWithTwoMapEntries.insert["autodesk.tests:MixedNodeTestProperty-1.0.0"],
 						),
 						"node1",
 					) &&
 					_.includes(
 						_.keys(
-							changeSetWithTwoMapEntries.insert[
-								"autodesk.tests:MixedNodeTestProperty-1.0.0"
-							],
+							changeSetWithTwoMapEntries.insert["autodesk.tests:MixedNodeTestProperty-1.0.0"],
 						),
 						"node2",
 					),
@@ -947,14 +939,12 @@ describe("NodeProperty", function () {
 					root.insert("node1", node1);
 				},
 				op1: function (root) {
-					_.values(
-						root._getDynamicChildrenReadOnly(),
-					)[0]._properties.stringProperty.value = "a";
+					_.values(root._getDynamicChildrenReadOnly())[0]._properties.stringProperty.value =
+						"a";
 				},
 				op2: function (root) {
-					_.values(
-						root._getDynamicChildrenReadOnly(),
-					)[0]._properties.stringProperty2.value = "a";
+					_.values(root._getDynamicChildrenReadOnly())[0]._properties.stringProperty2.value =
+						"a";
 				},
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
@@ -971,14 +961,12 @@ describe("NodeProperty", function () {
 					root.insert("node1", node1);
 				},
 				op1: function (root) {
-					_.values(
-						root._getDynamicChildrenReadOnly(),
-					)[0]._properties.stringProperty.value = "b";
+					_.values(root._getDynamicChildrenReadOnly())[0]._properties.stringProperty.value =
+						"b";
 				},
 				op2: function (root) {
-					_.values(
-						root._getDynamicChildrenReadOnly(),
-					)[0]._properties.stringProperty.value = "a";
+					_.values(root._getDynamicChildrenReadOnly())[0]._properties.stringProperty.value =
+						"a";
 				},
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
@@ -1002,18 +990,14 @@ describe("NodeProperty", function () {
 				},
 				op1: modifyLeaf,
 				op2: function (root) {
-					var node2 = PropertyFactory.create(
-						"autodesk.tests:MixedNodeTestProperty-1.0.0",
-					);
+					var node2 = PropertyFactory.create("autodesk.tests:MixedNodeTestProperty-1.0.0");
 					root.remove("node1");
 					root.insert("node1", node2);
 				},
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
 					expect(conflicts[0].path).to.be.equal("node1");
 					expect(changeSet).to.have.all.keys("remove", "insert");
 				},
@@ -1028,9 +1012,7 @@ describe("NodeProperty", function () {
 					root.insert("node1", node1);
 				},
 				op1: function (root) {
-					var node2 = PropertyFactory.create(
-						"autodesk.tests:MixedNodeTestProperty-1.0.0",
-					);
+					var node2 = PropertyFactory.create("autodesk.tests:MixedNodeTestProperty-1.0.0");
 					root.remove("node1");
 					root.insert("node1", node2);
 				},
@@ -1207,15 +1189,11 @@ describe("NodeProperty", function () {
 					root.insert("node", node);
 				},
 				op1: function (root) {
-					var node1 = PropertyFactory.create(
-						"autodesk.tests:MixedNodeTestProperty-1.0.0",
-					);
+					var node1 = PropertyFactory.create("autodesk.tests:MixedNodeTestProperty-1.0.0");
 					root.resolvePath("node").insert("node2", node1);
 				},
 				op2: function (root) {
-					var node2 = PropertyFactory.create(
-						"autodesk.tests:MixedNodeTestProperty-1.0.0",
-					);
+					var node2 = PropertyFactory.create("autodesk.tests:MixedNodeTestProperty-1.0.0");
 					root.resolvePath("node").insert("node2", node2);
 				},
 				compareToSequential: false,
@@ -1709,9 +1687,7 @@ describe("NodeProperty", function () {
 
 			// Check paths
 			expect(positionProperty.getAbsolutePath()).to.equal('/"new\\"Position"');
-			expect(positionProperty._properties.x.getAbsolutePath()).to.equal(
-				'/"new\\"Position".x',
-			);
+			expect(positionProperty._properties.x.getAbsolutePath()).to.equal('/"new\\"Position".x');
 			expect(newRoot.resolvePath('"new\\"Position".x')).to.equal(
 				positionProperty._properties.x,
 			);

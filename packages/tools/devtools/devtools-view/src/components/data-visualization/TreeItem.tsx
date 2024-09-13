@@ -33,7 +33,7 @@ export function TreeItem(props: TreeItemProps): React.ReactElement {
 	const itemType = React.Children.count(children) === 0 ? "leaf" : "branch";
 
 	return (
-		<FluentTreeItem itemType={itemType}>
+		<FluentTreeItem itemType={itemType} tabIndex={0}>
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
 
 			<FluentTree>{children}</FluentTree>

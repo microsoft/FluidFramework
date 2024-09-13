@@ -226,7 +226,8 @@ export class InkCanvas {
 		// Draw the requested stroke
 		const current = stroke.points[operationIndex];
 		const previous = stroke.points[Math.max(0, operationIndex - 1)];
-		const time = operationIndex === 0 ? current.time - startTime : current.time - previous.time;
+		const time =
+			operationIndex === 0 ? current.time - startTime : current.time - previous.time;
 
 		setTimeout(() => {
 			this.drawStrokeSegment(stroke.pen, current, previous);
@@ -267,7 +268,8 @@ export class InkCanvas {
 		const dirtyStrokeId = operation.id;
 		const stroke = this.model.getStroke(dirtyStrokeId);
 		// If this is the only point in the stroke, we'll use it for both the start and end of the segment
-		const prevPoint = stroke.points[stroke.points.length - (stroke.points.length >= 2 ? 2 : 1)];
+		const prevPoint =
+			stroke.points[stroke.points.length - (stroke.points.length >= 2 ? 2 : 1)];
 		this.drawStrokeSegment(stroke.pen, prevPoint, operation.point);
 	}
 }

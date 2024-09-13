@@ -32,67 +32,14 @@ parameters:
   type: string
   default: none
 
-- name: STORAGE_ACCOUNT
-  type: string
-  default: none
-
-- name: STORAGE_KEY
-  type: string
-  default: none
-
 # Set version
 steps:
-- ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-  - task: Bash@3
-    name: PrependPath
-    displayName: Prepend build-tools CLI to path
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        # Prepend the cli bin dir to the path. See
-        # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
-        # more information.
-        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
-  - template: include-install-pnpm.yml
-    parameters:
-      buildDirectory: $(Build.SourcesDirectory)/build-tools
-      pnpmStorePath: ${{ parameters.pnpmStorePath }}
-      enableCache: false
-
-  - task: Bash@3
-    name: InstallBuildTools
-    displayName: Install Fluid Build Tools (from repo)
-    inputs:
-      targetType: 'inline'
-      workingDirectory: $(Build.SourcesDirectory)/build-tools
-      script: |
-        pnpm i --frozen-lockfile
-        pnpm build:compile
-
-- ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
-  - task: Bash@3
-    name: InstallBuildTools
-    displayName: Install Fluid Build Tools (from npm)
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        echo "${{ parameters.buildToolsVersionToInstall }}"
-        npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
-
-- task: Bash@3
-  name: BuildToolsInstallCheck
-  displayName: Check Build Tools Installation
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      # Output the help and full command list for debugging purposes
-      which flub
-      flub --help
-      flub commands
+- template: include-install-build-tools.yml
+  parameters:
+    buildDirectory: ${{ parameters.buildDirectory }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
 - task: Bash@3
   name: SetVersion
@@ -144,16 +91,6 @@ steps:
     targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
-
-# Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main branch, and
-# for the build of the client release group (we don't need manifests for anything else).
-# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main branch.
-- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.tagName, 'client')) }}:
-  - template: /tools/pipelines/templates/upload-dev-manifest.yml
-    parameters:
-      buildDirectory: '${{ parameters.buildDirectory }}'
-      STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
-      STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.

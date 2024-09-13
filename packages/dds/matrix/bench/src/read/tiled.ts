@@ -38,8 +38,7 @@ function getCell<T>(r: number, c: number, grid: SparseGrid<T>): T | undefined {
 		if (t3) {
 			const t4 =
 				t3[
-					(((c >> Consts.logW) & Consts.mw) << Consts.logH) |
-						((r >> Consts.logH) & Consts.mh)
+					(((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh)
 				];
 			if (t4) {
 				return t4[((c & Consts.mw) << Consts.logH) | (r & Consts.mh)];
@@ -70,7 +69,8 @@ function setCell<T>(r: number, c: number, grid: SparseGrid<T>, value: T) {
 		t3 = t2[i3] = [];
 	}
 
-	const i4 = (((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh);
+	const i4 =
+		(((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh);
 	let t4 = t3[i4];
 	if (t4 === undefined) {
 		t4 = t3[i4] = [];
@@ -99,7 +99,8 @@ function clearCell<T>(r: number, c: number, grid: SparseGrid<T>) {
 		return;
 	}
 
-	const i4 = (((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh);
+	const i4 =
+		(((c >> Consts.logW) & Consts.mw) << Consts.logH) | ((r >> Consts.logH) & Consts.mh);
 	const t4 = t3[i4];
 	if (t4 === undefined) {
 		return;
@@ -107,7 +108,10 @@ function clearCell<T>(r: number, c: number, grid: SparseGrid<T>) {
 	delete t4[((c & Consts.mw) << Consts.logH) | (r & Consts.mh)];
 }
 
-function forEachCell<T>(grid: SparseGrid<T>, cb: (r: number, c: number, value: T) => void): void {
+function forEachCell<T>(
+	grid: SparseGrid<T>,
+	cb: (r: number, c: number, value: T) => void,
+): void {
 	let i1 = 0;
 	for (const t1 of grid) {
 		if (t1 !== undefined) {

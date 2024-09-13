@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SparseArray2D } from "../sparsearray2d.js";
 
@@ -16,7 +16,7 @@ function expectEqual<T>(
 	colStart: number,
 	rowCount: number,
 	colCount: number,
-) {
+): void {
 	assert.deepEqual(
 		extract(actual, rowStart, colStart, rowCount, colCount),
 		extract(expected, rowStart, colStart, rowCount, colCount),
@@ -60,7 +60,7 @@ describe("SparseArray2D", () => {
 				colCount: number,
 				clearStart: number,
 				clearCount: number,
-			) {
+			): IClearTestConfig {
 				return clearRows
 					? {
 							rowStart,
@@ -71,7 +71,7 @@ describe("SparseArray2D", () => {
 							rowClearCount: clearCount,
 							colClearStart: 0,
 							colClearCount: 0,
-					  }
+						}
 					: {
 							rowStart,
 							colStart,
@@ -81,7 +81,7 @@ describe("SparseArray2D", () => {
 							rowClearCount: 0,
 							colClearStart: clearStart,
 							colClearCount: clearCount,
-					  };
+						};
 			}
 
 			const cases = [
@@ -150,7 +150,7 @@ describe("SparseArray2D", () => {
 			rowClearCount,
 			colClearStart,
 			colClearCount,
-		}: IClearTestConfig) {
+		}: IClearTestConfig): void {
 			const fillRange = `(${rowStart},${colStart})-(${rowStart + rowCount},${
 				rowStart + colCount
 			})`;

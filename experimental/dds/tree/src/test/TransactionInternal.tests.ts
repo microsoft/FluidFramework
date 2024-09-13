@@ -227,8 +227,8 @@ describe('Transaction', () => {
 			transaction.applyChange(ChangeInternal.clearPayload(testTree.identifier));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect({}.hasOwnProperty.call(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
-			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload'))
-				.to.be.false;
+			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload')).to.be
+				.false;
 		});
 
 		it('can clear a set payload', () => {
@@ -243,8 +243,8 @@ describe('Transaction', () => {
 			transaction.applyChange(ChangeInternal.clearPayload(testTree.identifier));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect({}.hasOwnProperty.call(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
-			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload'))
-				.to.be.false;
+			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload')).to.be
+				.false;
 		});
 	});
 
@@ -347,7 +347,10 @@ describe('Transaction', () => {
 				const newNode = testTree.buildLeafInternal();
 
 				transaction.applyChanges(
-					ChangeInternal.insertTree([newNode], { referenceSibling: testTree.left.identifier, side })
+					ChangeInternal.insertTree([newNode], {
+						referenceSibling: testTree.left.identifier,
+						side,
+					})
 				);
 				expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals(
 					side === Side.Before
@@ -384,9 +387,7 @@ describe('Transaction', () => {
 					{
 						...testTree.buildLeafInternal(),
 						traits: {
-							[testTree.left.traitLabel]: [
-								{ ...testTree.buildLeafInternal(), identifier: newNode.identifier },
-							],
+							[testTree.left.traitLabel]: [{ ...testTree.buildLeafInternal(), identifier: newNode.identifier }],
 						},
 					},
 				],
@@ -453,8 +454,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect(transaction.view.hasNode(newNode.identifier)).is.true;
 			expect(transaction.view.tryGetParentViewNode(newNode.identifier)).is.undefined;
-			expect(deepCompareNodes(getChangeNodeFromViewNode(transaction.view, newNode.identifier), newNode)).to.be
-				.true;
+			expect(deepCompareNodes(getChangeNodeFromViewNode(transaction.view, newNode.identifier), newNode)).to.be.true;
 		});
 
 		it("can be malformed if detached sequence id doesn't exist", () => {
@@ -519,9 +519,7 @@ describe('Transaction', () => {
 			});
 		});
 		it('can be malformed if the destination sequence id is already in use', () => {
-			transaction.applyChange(
-				ChangeInternal.detach(StableRangeInternal.only(testTree.left), 0 as DetachedSequenceId)
-			);
+			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.left), 0 as DetachedSequenceId));
 			const change = ChangeInternal.detach(StableRangeInternal.only(testTree.right), 0 as DetachedSequenceId);
 			// Supplied StableRange is malformed
 			transaction.applyChange(change);
@@ -606,9 +604,7 @@ describe('Transaction', () => {
 			const rightNodeDetachedId = 1 as DetachedSequenceId;
 			const detachedIdSubtree = 2 as DetachedSequenceId;
 			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.left), leftNodeDetachedId));
-			transaction.applyChange(
-				ChangeInternal.detach(StableRangeInternal.only(testTree.right), rightNodeDetachedId)
-			);
+			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.right), rightNodeDetachedId));
 
 			const detachedNodeId = testTree.generateNodeId();
 			const detachedSubtree = {

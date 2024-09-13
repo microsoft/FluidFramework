@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
-import { TSchema, Type } from "@sinclair/typebox";
+import type { SessionId } from "@fluidframework/id-compressor";
+import { type TSchema, Type } from "@sinclair/typebox";
 
-import { EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import { JsonCompatibleReadOnly } from "../util/index.js";
+import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * The format of messages that SharedTree sends and receives.
@@ -35,6 +35,8 @@ export interface Message {
 	readonly version?: number;
 }
 
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,

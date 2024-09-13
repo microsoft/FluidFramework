@@ -20,13 +20,13 @@ import {
 	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
 	isReleased,
-} from "../library";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { ReleaseSource, isReleaseGroup } from "../releaseGroups";
-import { getRunPolicyCheckDefault } from "../repoConfig";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+} from "../library/index.js";
+import { CommandLogger } from "../logging.js";
+import { MachineState } from "../machines/index.js";
+import { ReleaseSource, isReleaseGroup } from "../releaseGroups.js";
+import { getRunPolicyCheckDefault } from "../repoConfig.js";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Checks that the current branch matches the expected branch for a release.

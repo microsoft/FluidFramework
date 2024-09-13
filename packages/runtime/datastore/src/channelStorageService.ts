@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -15,14 +18,12 @@ export class ChannelStorageService implements IChannelStorageService {
 		tree: ISnapshotTree,
 		results: { [path: string]: string },
 	) {
-		// eslint-disable-next-line guard-for-in, no-restricted-syntax
-		for (const path in tree.trees) {
-			ChannelStorageService.flattenTree(`${base}${path}/`, tree.trees[path], results);
+		for (const [path, subtree] of Object.entries(tree.trees)) {
+			ChannelStorageService.flattenTree(`${base}${path}/`, subtree, results);
 		}
 
-		// eslint-disable-next-line guard-for-in, no-restricted-syntax
-		for (const blob in tree.blobs) {
-			results[`${base}${blob}`] = tree.blobs[blob];
+		for (const [blobName, blobId] of Object.entries(tree.blobs)) {
+			results[`${base}${blobName}`] = blobId;
 		}
 	}
 
@@ -47,6 +48,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		const id = await this.getIdForPath(path);
+		assert(id !== undefined, 0x9d7 /* id is undefined in ChannelStorageService.readBlob() */);
 		const blob = this.extraBlobs !== undefined ? this.extraBlobs.get(id) : undefined;
 
 		if (blob !== undefined) {
@@ -75,7 +77,7 @@ export class ChannelStorageService implements IChannelStorageService {
 		return Object.keys(tree?.blobs ?? {});
 	}
 
-	private async getIdForPath(path: string): Promise<string> {
+	private async getIdForPath(path: string): Promise<string | undefined> {
 		return this.flattenedTree[path];
 	}
 }

@@ -1,0 +1,197 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 3,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "remove": {
+                                                  "id": 2
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 5,
+                      "sequenceNumber": 6,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    }
+                  ],
+                  "branches": [
+                    [
+                      "8f95be09-8376-4ff7-8755-ccd7e8124b06",
+                      {
+                        "base": 5,
+                        "commits": []
+                      }
+                    ]
+                  ],
+                  "version": 3
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "insert-and-remove.Array<[\"com.fluidframework.leaf.string\"]>": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "com.fluidframework.leaf.string"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Value",
+                    "types": [
+                      "insert-and-remove.Array<[\"com.fluidframework.leaf.string\"]>"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey",
+                    "repair-2"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "type": "com.fluidframework.leaf.string",
+                          "value": true
+                        }
+                      },
+                      {
+                        "c": {
+                          "type": "insert-and-remove.Array<[\"com.fluidframework.leaf.string\"]>",
+                          "value": false,
+                          "fields": [
+                            [
+                              "",
+                              2
+                            ]
+                          ]
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        0
+                      ],
+                      [
+                        0,
+                        "42"
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      5,
+                      2,
+                      2
+                    ]
+                  ],
+                  "maxId": 2
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,10 +1,13 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../biome.json"],
+	"extends": ["../biome.jsonc"],
 	"organizeImports": {
-		"enabled": true,
+		"enabled": true
 	},
 	"formatter": {
-		"enabled": true,
+		"enabled": true
 	},
+	"files": {
+		"ignore": ["packages/build-tools/src/test/data/biome/empty.jsonc"]
+	}
 }

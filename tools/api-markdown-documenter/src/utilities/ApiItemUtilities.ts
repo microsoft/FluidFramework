@@ -12,9 +12,10 @@ import {
 	type ApiFunction,
 	type ApiIndexSignature,
 	type ApiItem,
-	type ApiItemKind,
+	ApiItemKind,
 	type ApiMethod,
 	type ApiMethodSignature,
+	type ApiModel,
 	type ApiNamespace,
 	ApiOptionalMixin,
 	type ApiPackage,
@@ -22,9 +23,16 @@ import {
 	ApiReadonlyMixin,
 	ApiReleaseTagMixin,
 	ApiStaticMixin,
-	ReleaseTag,
+	type Excerpt,
+	type IResolveDeclarationReferenceResult,
+	type ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { type DocSection, StandardTags } from "@microsoft/tsdoc";
+import {
+	type DocDeclarationReference,
+	type DocSection,
+	StandardTags,
+	TSDocTagDefinition,
+} from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import { type Logger } from "../Logging.js";
 
@@ -170,29 +178,78 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
 }
 
 /**
- * Creates a string representation of the provided release tag.
+ * Gets all {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tags} associated with the provided API item.
  *
- * @remarks If `None`, this will return an empty string.
+ * @remarks Note that this will include both standard and any preserved custom tags.
+ *
+ * @public
  */
-export function releaseTagToString(releaseTag: ReleaseTag): string {
-	// eslint-disable-next-line default-case
-	switch (releaseTag) {
-		case ReleaseTag.Alpha: {
-			return "Alpha";
-		}
-		case ReleaseTag.Beta: {
-			return "Beta";
-		}
-		case ReleaseTag.Internal: {
-			return "Internal";
-		}
-		case ReleaseTag.Public: {
-			return "Public";
-		}
-		case ReleaseTag.None: {
-			return "";
+export function getModifierTags(apiItem: ApiItem): ReadonlySet<string> {
+	const modifierTags = new Set<string>();
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		for (const tag of apiItem.tsdocComment.modifierTagSet.nodes) {
+			modifierTags.add(tag.tagName);
 		}
 	}
+	return modifierTags;
+}
+
+/**
+ * Checks if the provided API item is tagged with the specified {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tag}.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must be a valid TSDoc tag (including starting with `@`).
+ *
+ * @throws If the provided TSDoc tag name is invalid.
+ *
+ * @public
+ */
+export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
+	TSDocTagDefinition.validateTSDocTagName(tagName);
+	return getModifierTags(apiItem).has(tagName);
+}
+
+/**
+ * Checks if the provided API item or any ancestors is tagged with the specified
+ * {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tag}.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must be a valid TSDoc tag (including starting with `@`).
+ *
+ * @throws If the provided TSDoc tag name is invalid.
+ *
+ * @public
+ */
+export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
+	return (
+		hasModifierTag(apiItem, tagName) ||
+		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
+	);
+}
+
+/**
+ * Gets all custom {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags | block comments} associated with the provided API item.
+ * @returns A mapping from tag name to the associated block contents.
+ *
+ * @public
+ */
+export function getCustomBlockComments(
+	apiItem: ApiItem,
+): ReadonlyMap<string, readonly DocSection[]> {
+	const customBlockComments = new Map<string, DocSection[]>();
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
+		for (const block of apiItem.tsdocComment.customBlocks) {
+			let sections = customBlockComments.get(block.blockTag.tagName);
+			if (sections === undefined) {
+				sections = [];
+				customBlockComments.set(block.blockTag.tagName, sections);
+			}
+			sections.push(block.content);
+		}
+	}
+	return customBlockComments;
 }
 
 /**
@@ -202,24 +259,20 @@ export function releaseTagToString(releaseTag: ReleaseTag): string {
  *
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
- * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ * Must be a valid TSDoc tag (including starting with `@`).
+ * See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ *
+ * @throws If the provided TSDoc tag name is invalid.
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
 function getCustomBlockSectionsForMultiInstanceTags(
 	apiItem: ApiItem,
 	tagName: string,
-): DocSection[] | undefined {
-	if (!tagName.startsWith("@")) {
-		throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
-	}
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
-		const defaultValueBlocks = apiItem.tsdocComment.customBlocks.filter(
-			(block) => block.blockTag.tagName === tagName,
-		);
-		return defaultValueBlocks.map((block) => block.content);
-	}
-	return undefined;
+): readonly DocSection[] | undefined {
+	TSDocTagDefinition.validateTSDocTagName(tagName);
+	const allBlocks = getCustomBlockComments(apiItem);
+	return allBlocks.get(tagName);
 }
 
 /**
@@ -233,7 +286,6 @@ function getCustomBlockSectionsForMultiInstanceTags(
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
  * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
- * @param config - See {@link ApiItemTransformationConfiguration}
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
@@ -265,7 +317,7 @@ function getCustomBlockSectionForSingleInstanceTag(
  *
  * @public
  */
-export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
+export function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
 	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.example.tagName);
 }
 
@@ -278,7 +330,7 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
  *
  * @public
  */
-export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
+export function getSeeBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
 		const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
 		return seeBlocks.length === 0 ? undefined : seeBlocks;
@@ -295,7 +347,7 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
  *
  * @public
  */
-export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
+export function getThrowsBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
 	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
 }
 
@@ -352,8 +404,7 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
 }
 
 /**
- * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
- * indeed optional.
+ * Returns whether or not the provided API item is tagged as `@deprecated`.
  *
  * @public
  */
@@ -464,4 +515,78 @@ export function getSafeFilenameForName(apiItemName: string): string {
 	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
 	// https://github.com/microsoft/rushstack/issues/1308
 	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
+}
+
+/**
+ * Extracts the text from the provided excerpt and adjusts it to be on a single line.
+ *
+ * @remarks
+ * Useful when a shortened version of a code excerpt is wanted, or if you don't want code formatting to affect
+ * the presentation in the documentation.
+ * This is especially valuable if the contents need to fit on a single line.
+ *
+ * @example
+ * An excerpt of TypeScript code like...
+ *
+ * ```typescript
+ * export interface Foo {
+ * 	bar: string;
+ * 	baz: number;
+ * }
+ * ```
+ *
+ * would become...
+ *
+ * ```typescript
+ *  export interface Foo { bar: string; baz: number; }
+ * ```
+ *
+ * @public
+ */
+export function getSingleLineExcerptText(excerpt: Excerpt): string {
+	// Regex replaces line breaks with spaces to ensure everything ends up on a single line.
+	return excerpt.text.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Resolves a symbolic link and creates a URL to the target.
+ *
+ * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
+ * @param codeDestination - The link reference target.
+ * @param apiModel - The API model to which the API item and destination belong.
+ *
+ * @throws If the reference cannot be resolved.
+ */
+export function resolveSymbolicReference(
+	contextApiItem: ApiItem,
+	codeDestination: DocDeclarationReference,
+	apiModel: ApiModel,
+): ApiItem {
+	const resolvedReference: IResolveDeclarationReferenceResult =
+		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
+
+	const resolvedApiItem = resolvedReference.resolvedApiItem;
+	if (resolvedApiItem === undefined) {
+		throw new Error(
+			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
+				contextApiItem,
+			)}": ${resolvedReference.errorMessage}`,
+		);
+	}
+
+	return resolvedApiItem;
+}
+
+/**
+ * Creates a scoped member specifier for the provided API item, including the name of the package the item belongs to
+ * if applicable.
+ *
+ * Intended for use in diagnostic messaging.
+ */
+export function getScopedMemberNameForDiagnostics(apiItem: ApiItem): string {
+	return apiItem.kind === ApiItemKind.Package
+		? (apiItem as ApiPackage).displayName
+		: `${
+				apiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
+		  }#${apiItem.getScopedNameWithinPackage()}`;
 }

@@ -4,12 +4,13 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
 import {
 	IAuthorizationError,
 	ILocationRedirectionError,
 	IResolvedUrl,
 	IThrottlingWarning,
+	DriverErrorTypes,
+	IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
@@ -51,7 +52,10 @@ export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
  * Generic network error class.
  * @internal
  */
-export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+export class GenericNetworkError
+	extends LoggingError
+	implements IDriverErrorBase, IFluidErrorBase
+{
 	/**
 	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
 	 */
@@ -108,14 +112,22 @@ export class AuthorizationError
 	implements IAuthorizationError, IFluidErrorBase
 {
 	readonly errorType = DriverErrorTypes.authorizationError;
+	readonly claims?: string;
+	readonly tenantId?: string;
 	readonly canRetry = false;
 
 	constructor(
 		message: string,
-		readonly claims: string | undefined,
-		readonly tenantId: string | undefined,
+		claims: string | undefined,
+		tenantId: string | undefined,
 		props: DriverErrorTelemetryProps,
 	) {
+		if (claims !== undefined) {
+			props.claims = claims;
+		}
+		if (tenantId !== undefined) {
+			props.tenantId = tenantId;
+		}
 		// don't log claims or tenantId
 		super(message, props, new Set(["claims", "tenantId"]));
 	}
@@ -144,7 +156,10 @@ export class LocationRedirectionError
 /**
  * @internal
  */
-export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
+export class NetworkErrorBasic<T extends string>
+	extends LoggingError
+	implements IFluidErrorBase
+{
 	constructor(
 		message: string,
 		readonly errorType: T,
@@ -185,7 +200,10 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
  * Throttling error class - used to communicate all throttling errors
  * @internal
  */
-export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+export class ThrottlingError
+	extends LoggingError
+	implements IThrottlingWarning, IFluidErrorBase
+{
 	readonly errorType = DriverErrorTypes.throttlingError;
 	readonly canRetry = true;
 

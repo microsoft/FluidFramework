@@ -1,13 +1,17 @@
 {
 	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"compilerOptions": {
-		"lib": ["ES2019", "ES2018.Promise", "DOM", "DOM.Iterable"],
 		"noImplicitAny": true,
 		"noUnusedLocals": false,
 		"noImplicitOverride": true,
+		// ES2022 code can do more things with schema classes than es2020 code, including hit the defineProperty hook in our proxies.
+		// To be able to test that this works properly (including that ArrayNodes give their improved errors), these tests target ES2022.
+		"target": "ES2022",
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [

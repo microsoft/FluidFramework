@@ -15,6 +15,6 @@
  * @packageDocumentation
  */
 
-export type { IUser } from "@fluidframework/protocol-definitions";
-export { ScopeType } from "@fluidframework/protocol-definitions";
+export type { IUser } from "@fluidframework/driver-definitions";
+export { ScopeType } from "@fluidframework/driver-definitions/internal";
 export { generateToken } from "./generateToken.js";

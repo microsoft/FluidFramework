@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { ICodecOptions } from "../../codec/index.js";
-import { GraphCommit, RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
+import { RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
@@ -20,13 +23,12 @@ import {
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import {
-	ICommitEnricher,
-	SharedTreeBranch,
+	type ChangeEnricherReadonlyCheckout,
+	type ResubmitMachine,
+	type SharedTreeBranch,
 	SharedTreeCore,
-	Summarizable,
+	type Summarizable,
 } from "../../shared-tree-core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ClonableSchemaAndPolicy } from "../../shared-tree-core/sharedTreeCore.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert } from "assert";
 
@@ -50,7 +52,8 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		summarizables: readonly Summarizable[] = [],
 		schema: TreeStoredSchemaRepository = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
-		enricher?: ICommitEnricher<DefaultChangeset>,
+		resubmitMachine?: ResubmitMachine<DefaultChangeset>,
+		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	) {
 		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
 		const codecOptions: ICodecOptions = {
@@ -75,6 +78,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			id,
 			schema,
 			defaultSchemaPolicy,
+			resubmitMachine,
 			enricher,
 		);
 	}
@@ -83,17 +87,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		return super.getLocalBranch();
 	}
 
-	public readonly submitted: GraphCommit<DefaultChangeset>[] = [];
-
-	protected override submitCommit(
-		commit: GraphCommit<DefaultChangeset>,
-		schemaAndPolicy: ClonableSchemaAndPolicy,
-		isResubmit = false,
-	): GraphCommit<DefaultChangeset> | undefined {
-		const submitted = super.submitCommit(commit, schemaAndPolicy, isResubmit);
-		if (submitted !== undefined) {
-			this.submitted.push(submitted);
-		}
-		return submitted;
+	public get preparedCommitsCount(): number {
+		return this.commitEnricher.preparedCommitsCount;
 	}
 }

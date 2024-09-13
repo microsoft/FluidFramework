@@ -3,35 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/protocol-definitions";
-import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
-// Re-export so developers can build loggers without pulling in core-interfaces
-export {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IUser } from "@fluidframework/driver-definitions";
+import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
- * Props for initializing a {@link TinyliciousClient}
- * @internal
+ * Properties for initializing a {@link TinyliciousClient}.
+ * @sealed
+ * @public
  */
 export interface TinyliciousClientProps {
 	/**
 	 * Optional. Configuration for establishing a connection with the Tinylicious.
 	 * If not specified, will use {@link TinyliciousConnectionConfig}'s default values.
 	 */
-	connection?: TinyliciousConnectionConfig;
+	readonly connection?: TinyliciousConnectionConfig;
+
 	/**
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
-	logger?: ITelemetryBaseLogger;
+	readonly logger?: ITelemetryBaseLogger;
 }
 
 /**
  * Parameters for establishing a connection with the a Tinylicious service.
- * @internal
+ * @sealed
+ * @public
  */
 export interface TinyliciousConnectionConfig {
 	/**
@@ -39,14 +37,14 @@ export interface TinyliciousConnectionConfig {
 	 *
 	 * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
 	 */
-	port?: number;
+	readonly port?: number;
 
 	/**
 	 * Optional. Override of the domain.
 	 *
 	 * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
 	 */
-	domain?: string;
+	readonly domain?: string;
 
 	/**
 	 * Optional. Override of tokenProvider. If a param is not provided, TinyliciousConnectionConfig
@@ -55,51 +53,57 @@ export interface TinyliciousConnectionConfig {
 	 *
 	 * @defaultValue {@link @fluidframework/tinylicious-driver#InsecureTinyliciousTokenProvider}
 	 */
-	tokenProvider?: ITokenProvider;
+	readonly tokenProvider?: ITokenProvider;
 }
 
 /**
- * TinyliciousContainerServices is returned by the TinyliciousClient alongside a FluidContainer.
- * It holds the functionality specifically tied to the Tinylicious service, and how the data stored in
- * the FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
- * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to use,
- * will not be included here but rather on the FluidContainer class itself.
- * @internal
+ * Holds the functionality specifically tied to the Tinylicious service, and how the data stored in
+ * the {@link @fluidframework/fluid-static#IFluidContainer} is persisted in the backend and consumed by users.
+ *
+ * @remarks
+ * Any functionality regarding how the data is handled within the FluidContainer itself (e.g., which data objects or
+ * DDSes to use) will not be included here but rather on the FluidContainer class itself.
+ *
+ * Returned by {@link TinyliciousClient.createContainer} and {@link TinyliciousClient.getContainer} alongside the FluidContainer.
+ *
+ * @sealed
+ * @public
  */
 export interface TinyliciousContainerServices {
 	/**
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
-	 * listeners for when the roster has any changes from users joining/leaving the session
+	 * listeners for when the roster has any changes from users joining/leaving the session.
 	 */
-	audience: ITinyliciousAudience;
+	readonly audience: ITinyliciousAudience;
 }
 
 /**
- * Since Tinylicious provides user names for all of its members, we extend the `IUser` interface to include
- * this service-specific value.
- * @internal
+ * Tinylicious {@link @fluidframework/fluid-static#IUser}.
+ * @sealed
+ * @public
  */
 export interface TinyliciousUser extends IUser {
 	/**
 	 * The user's name
 	 */
-	name: string;
+	readonly name: string;
 }
 
 /**
- * Since Tinylicious provides user names for all of its members, we extend the `IMember` interface to include
- * this service-specific value. It will be returned for all audience members connected to Tinylicious.
- * @internal
+ * Tinylicious {@link @fluidframework/fluid-static#IMember}.
+ * @sealed
+ * @public
  */
 export interface TinyliciousMember extends IMember {
 	/**
 	 * {@inheritDoc TinyliciousUser.name}
 	 */
-	name: string;
+	readonly name: string;
 }
 
 /**
- * Tinylicious-specific {@link @fluidframework/fluid-static#IServiceAudience} implementation.
- * @internal
+ * Tinylicious {@link @fluidframework/fluid-static#IServiceAudience}.
+ * @sealed
+ * @public
  */
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;

@@ -49,7 +49,7 @@ export class CheckpointManager implements ICheckpointManager {
 		noActiveClients: boolean,
 		globalCheckpointOnly: boolean,
 		markAsCorrupt: boolean = false,
-	) {
+	): Promise<void> {
 		const isLocal = isLocalCheckpoint(noActiveClients, globalCheckpointOnly);
 		if (this.getDeltasViaAlfred) {
 			if (pending.length > 0 && this.verifyLastOpPersistence) {
@@ -166,7 +166,7 @@ export class CheckpointManager implements ICheckpointManager {
 	/**
 	 * Removes the checkpoint information from MongoDB
 	 */
-	public async delete(sequenceNumber: number, lte: boolean) {
+	public async delete(sequenceNumber: number, lte: boolean): Promise<void> {
 		// Clears the checkpoint information from mongodb.
 		await this.documentRepository.updateOne(
 			{

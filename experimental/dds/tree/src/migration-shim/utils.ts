@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { type IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 
 import { type IMigrationOp } from './migrationShim.js';
 import { type IOpContents, type IStampedContents } from './types.js';
