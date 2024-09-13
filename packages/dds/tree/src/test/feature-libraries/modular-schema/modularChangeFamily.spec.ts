@@ -422,7 +422,10 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 const node1 = singleJsonCursor(1);
 const objectNode = singleJsonCursor({});
 const node1Chunk = treeChunkFromCursor(node1);
-const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), defaultChunkPolicy);
+const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
+	policy: defaultChunkPolicy,
+	idCompressor: testIdCompressor,
+});
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -1407,13 +1410,16 @@ describe("ModularChangeFamily", () => {
 });
 
 function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
-	return chunkTree(cursor, defaultChunkPolicy);
+	return chunkTree(cursor, { policy: defaultChunkPolicy, idCompressor: testIdCompressor });
 }
 
 function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
 	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
 	const cursor = cursorForJsonableTreeField(jsonable);
-	const clone = chunkFieldSingle(cursor, defaultChunkPolicy);
+	const clone = chunkFieldSingle(cursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
 	return clone;
 }
 

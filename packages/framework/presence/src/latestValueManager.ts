@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import type { ValueManager } from "./internalTypes.js";
 import type { LatestValueControls } from "./latestValueControls.js";
+import { LatestValueControl } from "./latestValueControls.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
+import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
+import { brandIVM } from "./valueManager.js";
 
 import type {
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluid-experimental/presence/internal/core-interfaces";
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import { createEmitter } from "@fluid-experimental/presence/internal/events";
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
 
@@ -72,6 +77,75 @@ export interface LatestValueManager<T> {
 	clientValue(client: ISessionClient): LatestValueData<T>;
 }
 
+class LatestValueManagerImpl<T, Key extends string>
+	implements LatestValueManager<T>, ValueManager<T, InternalTypes.ValueRequiredState<T>>
+{
+	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
+	public readonly controls: LatestValueControl;
+
+	public constructor(
+		private readonly key: Key,
+		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
+		public readonly value: InternalTypes.ValueRequiredState<T>,
+		controlSettings: LatestValueControls,
+	) {
+		this.controls = new LatestValueControl(controlSettings);
+	}
+
+	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
+		return this.value.value;
+	}
+
+	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
+		this.value.rev += 1;
+		this.value.timestamp = Date.now();
+		this.value.value = value;
+		this.datastore.localUpdate(this.key, this.value, /* forceUpdate */ false);
+	}
+
+	public clientValues(): IterableIterator<LatestValueClientData<T>> {
+		throw new Error("Method not implemented.");
+	}
+
+	public clients(): ISessionClient[] {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		return Object.keys(allKnownStates.states)
+			.filter((clientId) => clientId !== allKnownStates.self)
+			.map((clientId) => this.datastore.lookupClient(clientId));
+	}
+
+	public clientValue(client: ISessionClient): LatestValueData<T> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		const clientId = client.currentClientId();
+		if (clientId in allKnownStates.states) {
+			const { value, rev: revision } = allKnownStates.states[clientId];
+			return { value, metadata: { revision, timestamp: Date.now() } };
+		}
+		throw new Error("No entry for clientId");
+	}
+
+	public update(
+		client: ISessionClient,
+		_received: number,
+		value: InternalTypes.ValueRequiredState<T>,
+	): void {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		const clientId = client.currentClientId();
+		if (clientId in allKnownStates.states) {
+			const currentState = allKnownStates.states[clientId];
+			if (currentState.rev >= value.rev) {
+				return;
+			}
+		}
+		this.datastore.update(this.key, clientId, value);
+		this.events.emit("updated", {
+			client,
+			value: value.value,
+			metadata: { revision: value.rev, timestamp: value.timestamp },
+		});
+	}
+}
+
 /**
  * Factory for creating a {@link LatestValueManager}.
  *
@@ -85,5 +159,34 @@ export function Latest<T extends object, Key extends string>(
 	InternalTypes.ValueRequiredState<T>,
 	LatestValueManager<T>
 > {
-	throw new Error("Method not implemented.");
+	// LatestValueManager takes ownership of initialValue but makes a shallow
+	// copy for basic protection.
+	const value: InternalTypes.ValueRequiredState<T> = {
+		rev: 0,
+		timestamp: Date.now(),
+		value: { ...initialValue },
+	};
+	const controlSettings = controls
+		? { ...controls }
+		: {
+				allowableUpdateLatency: 60,
+				forcedRefreshInterval: 0,
+			};
+	return (
+		key: Key,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<
+			Key,
+			InternalTypes.ValueRequiredState<T>
+		>,
+	) => ({
+		value,
+		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
+			new LatestValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				controlSettings,
+			),
+		),
+	});
 }
