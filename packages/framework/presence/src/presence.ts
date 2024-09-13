@@ -134,9 +134,9 @@ export interface IPresence {
 	/**
 	 * Lookup a specific attendee in the session.
 	 *
-	 * @param clientId - Client connection id
+	 * @param clientId - Client connection or session id
 	 */
-	getAttendee(clientId: ClientConnectionId): ISessionClient;
+	getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
 
 	/**
 	 * Get this client's session client.

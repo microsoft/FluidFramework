@@ -28,7 +28,7 @@ export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & Expe
 // @alpha @sealed
 export interface IPresence {
     readonly events: ISubscribable<PresenceEvents>;
-    getAttendee(clientId: ClientConnectionId): ISessionClient;
+    getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
     getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceNotifications<NotificationsSchema>;
