@@ -50,9 +50,6 @@ export interface BatchStartInfo {
 	 * @remarks Do not use clientSequenceNumber here, use batchStartCsn instead.
 	 */
 	readonly keyMessage: ISequencedDocumentMessage;
-	//* Maybe move from InboxResult to here
-	// /** Number of messages in the batch, if known */
-	// readonly length?: number;
 }
 
 //* Commment and finalize name
@@ -104,10 +101,7 @@ export class RemoteMessageProcessor {
 		private readonly opDecompressor: OpDecompressor,
 		private readonly opGroupingManager: OpGroupingManager,
 		private readonly returnPartialBatches: boolean = false,
-	) {
-		//* build!
-		console.log(this.returnPartialBatches);
-	}
+	) {}
 
 	public get partialMessages(): ReadonlyMap<string, string[]> {
 		return this.opSplitter.chunks;
@@ -175,19 +169,17 @@ export class RemoteMessageProcessor {
 			);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
-			//* clean up
-			const batch = {
-				messages: groupedMessages, // Will be [] for an empty batch
-				batchStartCsn: message.clientSequenceNumber,
-				clientId,
-				batchId,
-				keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
-			};
+
 			return {
 				type: "fullBatch",
-				messages: batch.messages,
-				batchStart: batch, //* Redundant
-				length: groupedMessages.length,
+				messages: groupedMessages, // Will be [] for an empty batch
+				batchStart: {
+					batchStartCsn: message.clientSequenceNumber,
+					clientId,
+					batchId,
+					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+				},
+				length: groupedMessages.length, // Will be 0 for an empty batch
 			};
 		}
 
@@ -200,6 +192,7 @@ export class RemoteMessageProcessor {
 
 		//* TODO: Actually implement the right semantics based on this.returnPartialBatches.
 		//* But write tests first, because that's fun :)
+		console.log(this.returnPartialBatches);
 
 		if (!batchEnded) {
 			// batch not yet complete
