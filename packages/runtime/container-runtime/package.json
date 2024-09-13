@@ -255,6 +255,7 @@
 			"Class_LocalFluidDataStoreContextBase": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }

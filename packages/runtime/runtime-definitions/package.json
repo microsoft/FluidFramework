@@ -127,6 +127,7 @@
 				"forwardCompat": false,
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "internal"
 	}
 }
