@@ -17,9 +17,16 @@ import {
 import { hydrate } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSimpleTreeIndex } from "../../simple-tree/api/identifierIndex.js";
-import type { FlexTreeNode, TreeIndexNodes } from "../../feature-libraries/index.js";
+import type { Context, FlexTreeNode, TreeIndexNodes } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
-import type { FieldKey, ITreeSubscriptionCursor } from "../../core/index.js";
+import {
+	moveToDetachedField,
+	rootField,
+	type FieldKey,
+	type ITreeSubscriptionCursor,
+} from "../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isAnchorNodeHydrated } from "../../simple-tree/core/treeNodeKernel.js";
 
 function getFlexNode(node: TreeNode): FlexTreeNode {
 	return getOrCreateInnerNode(node);
@@ -100,13 +107,27 @@ describe.only("simple tree indexes", () => {
 		});
 		const node = getOrCreateInnerNode(parent);
 		const context = node.context;
-		
+
 		const index = createSimpleTreeIndex(
 			context,
 			(s) => makeKeyFinder(s),
 			() => 3,
 			[IndexableParent, IndexableChild],
 		);
+
+		const { forest } = (context as Context).checkout;
+		const cursor = forest.allocateCursor();
+		moveToDetachedField(forest, cursor, rootField);
+		cursor.firstNode();
+		cursor.enterField(parentKey);
+		cursor.firstNode();
+		const anchor = cursor.buildAnchor();
+		const anchorNode =
+			forest.anchors.locate(anchor) ?? fail("should be able to find anchor to child");
+		assert.equal(isAnchorNodeHydrated(anchorNode), false);
+
+		index.get(childId);
+		assert.equal(isAnchorNodeHydrated(anchorNode), true);
 	});
 
 	it("filters out removed nodes", () => {

@@ -20,14 +20,15 @@ import type { TreeIndex, TreeIndexNodes } from "./types.js";
 import { TreeStatus } from "../flex-tree/index.js";
 
 /**
- * A function that returns some key given a cursor to a node where the key is what the node
- * is indexed on.
+ * A function that gets the value to index a node on.
+ * The given cursor should point to the node that will be indexed.
  *
- * @returns a value on the node that the index will key on
+ * @returns a value on the node that the index will use as
  *
  * @remarks
  * This function does not own the cursor in any way, it walks the cursor to find the key the node is indexed on
- * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function.
+ * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
+ * and must be disposed elsewhere.
  */
 export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
 

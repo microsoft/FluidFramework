@@ -384,6 +384,13 @@ export function tryGetCachedTreeNode(flexNode: InnerNode): TreeNode | undefined 
 	return flexNode.anchorNode.slots.get(proxySlot);
 }
 
+/**
+ * For test use, checks if an anchor node points to a hydrated node.
+ */
+export function isAnchorNodeHydrated(anchorNode: AnchorNode): boolean {
+	return anchorNode.slots.get(proxySlot) !== undefined;
+}
+
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);
 	if (treeNode !== undefined) {
