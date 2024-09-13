@@ -71,6 +71,22 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"check:exports:cjs:index": [
+				"...",
+				"tsc"
+			],
+			"check:exports:esm:index": [
+				"...",
+				"build:esnext"
+			],
+			"check:exports:bundle-release-tags": [
+				"...",
+				"build:esnext"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},
