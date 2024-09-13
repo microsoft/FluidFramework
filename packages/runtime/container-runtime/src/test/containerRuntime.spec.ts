@@ -122,6 +122,24 @@ type ISignalEnvelopeWithClientIds = ISignalEnvelope & {
 	targetClientId?: string;
 };
 
+function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
+	return (
+		typeof obj === "object" &&
+		obj !== null &&
+		"contents" in obj &&
+		typeof obj.contents === "object" &&
+		obj.contents !== null &&
+		"content" in obj.contents &&
+		"type" in obj.contents &&
+		typeof obj.contents.type === "string" &&
+		(!("address" in obj) ||
+			typeof obj.address === "string" ||
+			typeof obj.address === "undefined") &&
+		(!("clientBroadcastSignalSequenceNumber" in obj) ||
+			typeof obj.clientBroadcastSignalSequenceNumber === "number")
+	);
+}
+
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -180,10 +198,11 @@ describe("Runtime", () => {
 				return opFakeSequenceNumber++;
 			},
 			submitSignalFn: (content: unknown, targetClientId?: string) => {
+				assert(isSignalEnvelope(content), "Invalid signal envelope");
 				submittedSignals.push({
 					clientId,
 					targetClientId,
-					...(content as ISignalEnvelope),
+					...content,
 				}); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId,
@@ -2563,6 +2582,15 @@ describe("Runtime", () => {
 			function sendSignals(count: number) {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
+					assert(
+						submittedSignals[submittedSignals.length - 1].contents.type === "TestSignalType",
+						"Signal type should match",
+					);
+					assert(
+						submittedSignals[submittedSignals.length - 1].contents.content ===
+							`TestSignalContent ${i + 1}`,
+						"Signal content should match",
+					);
 				}
 			}
 
@@ -2574,7 +2602,12 @@ describe("Runtime", () => {
 							runtime.processSignal(
 								{
 									clientId: signal.clientId,
-									content: signal,
+									content: {
+										clientBroadcastSignalSequenceNumber:
+											signal.clientBroadcastSignalSequenceNumber,
+										contents: signal.contents,
+									},
+									targetClientId: signal.targetClientId,
 								},
 								true,
 							);
@@ -2585,7 +2618,12 @@ describe("Runtime", () => {
 							runtime.processSignal(
 								{
 									clientId: signal.clientId,
-									content: signal,
+									content: {
+										clientBroadcastSignalSequenceNumber:
+											signal.clientBroadcastSignalSequenceNumber,
+										contents: signal.contents,
+									},
+									targetClientId: signal.targetClientId,
 								},
 								true,
 							);
@@ -2969,7 +3007,7 @@ describe("Runtime", () => {
 				processSubmittedSignals(1);
 
 				// Send 150 signals and temporarily lose 1
-				sendSignals(150); //            150 outstanding including 1 tracked signal (#101); max #151
+				sendSignals(150); //           150 outstanding including 1 tracked signal (#101); max #151
 				processSubmittedSignals(95); // 55 outstanding including 1 tracked signal (#101)
 				dropSignals(1); //              54 outstanding including 1 tracked signal (#101)
 				processSubmittedSignals(14); // 40 outstanding; none tracked
@@ -3049,6 +3087,7 @@ describe("Runtime", () => {
 						"TargetedSignalContent",
 						remoteContainerRuntime.clientId,
 					); //                           51 outstanding; none tracked; one remote targeted
+
 					sendSignals(49); //            100 outstanding including 1 tracked signals (#101); one targeted
 					processSubmittedSignals(100); // 0 outstanding; none tracked
 
