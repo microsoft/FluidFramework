@@ -79,7 +79,7 @@ async function waitForTargetedSignal(
 			timeoutPromise(
 				({ reject }) =>
 					signaller.once("signal", () =>
-						reject(`Signaller[${index}] should not have recieved a signal`),
+						reject(`Signaller[${index}] should not have received a signal`),
 					),
 				{
 					durationMs: 100,

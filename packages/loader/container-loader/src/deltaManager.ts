@@ -485,11 +485,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
 
-			this.handler.processSignal({
-				clientId: message.clientId,
-				content: JSON.parse(message.content as string),
-				targetClientId: message.targetClientId,
-			});
+			this.handler.processSignal({ ...message, content: JSON.parse(message.content as string)});
 		});
 
 		this._inboundSignal.on("error", (error) => {

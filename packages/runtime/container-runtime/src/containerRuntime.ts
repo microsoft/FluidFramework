@@ -2988,7 +2988,6 @@ export class ContainerRuntime
 		if (
 			message.clientId === this.clientId &&
 			this.connected &&
-			message.targetClientId === undefined &&
 			envelope.clientBroadcastSignalSequenceNumber !== undefined
 		) {
 			if (
@@ -3321,7 +3320,6 @@ export class ContainerRuntime
 
 			// We should not track the round trip of a new signal in the case we are already tracking one.
 			if (
-				clientBroadcastSignalSequenceNumber !== undefined &&
 				clientBroadcastSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
 				this._signalTracking.roundTripSignalSequenceNumber === undefined
 			) {
