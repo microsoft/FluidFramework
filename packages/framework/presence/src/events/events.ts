@@ -288,7 +288,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 			fail("Event has no listeners. Event deregistration functions may only be invoked once.");
 		assert(
 			listeners.delete(listener),
-			"Listener does not exist. Event deregistration functions may only be invoked once.",
+			0xa30 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
 		);
 		if (listeners.size === 0) {
 			this.listeners.delete(eventName);

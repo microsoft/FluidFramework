@@ -2,7 +2,7 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": "fix"
+"section": "tree"
 ---
 Make SharedTree usable with legacy APIs
 

@@ -10,7 +10,41 @@
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
+import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
 import type { IPresence } from "./presence.js";
+import { createPresenceManager } from "./presenceManager.js";
+
+/**
+ * Simple FluidObject holding Presence Manager.
+ */
+class PresenceManagerDataObject extends LoadableFluidObject {
+	// Creation of presence manager is deferred until first acquisition to avoid
+	// instantiations and stand-up by Summarizer that has no actual use.
+	private _presenceManager: IPresence | undefined;
+
+	public presenceManager(): IPresence {
+		if (!this._presenceManager) {
+			// TODO: investigate if ContainerExtensionStore (path-based address routing for
+			// Signals) is readily detectable here and use that presence manager directly.
+			this._presenceManager = createPresenceManager(this.runtime);
+		}
+		return this._presenceManager;
+	}
+}
+
+/**
+ * Factory class to create {@link IPresence} in own data store.
+ */
+class PresenceManagerFactory {
+	public is(value: IFluidLoadable | ExperimentalPresenceDO): value is ExperimentalPresenceDO {
+		return value instanceof PresenceManagerDataObject;
+	}
+
+	public readonly factory = new BasicDataStoreFactory(
+		"@fluid-experimental/presence",
+		PresenceManagerDataObject,
+	);
+}
 
 /**
  * Brand for Experimental Presence Data Object.
@@ -32,7 +66,7 @@ export declare class ExperimentalPresenceDO {
  * @alpha
  */
 export const ExperimentalPresenceManager =
-	undefined /* new PresenceManagerFactory() */ as unknown as SharedObjectKind<
+	new PresenceManagerFactory() as unknown as SharedObjectKind<
 		IFluidLoadable & ExperimentalPresenceDO
 	>;
 
@@ -59,5 +93,9 @@ export const ExperimentalPresenceManager =
 export async function acquirePresenceViaDataObject(
 	fluidLoadable: ExperimentalPresenceDO,
 ): Promise<IPresence> {
-	throw new Error("Not implemented");
+	if (fluidLoadable instanceof PresenceManagerDataObject) {
+		return fluidLoadable.presenceManager();
+	}
+
+	throw new Error("Incompatible loadable; make sure to use ExperimentalPresenceManager");
 }
