@@ -24,7 +24,7 @@ export interface IBaselineBuildMetrics {
 	 */
 	baselineCommit: string;
 	/**
-	 * The artifact that was required from the baseline build in zip format
+	 * The artifact that was published by the baseline build in zip format
 	 */
 	baselineArtifactZip: JSZip;
 	/**
