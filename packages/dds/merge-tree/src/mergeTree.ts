@@ -1957,9 +1957,6 @@ export class MergeTree {
 				seq !== UnassignedSequenceNumber &&
 				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
 			) {
-				// why do we need this? we don't need it for the insert + remove case?
-				// there are subtle differences in the visibility of the client doing to remove
-				// however, i'm not aware of invariants in the code that would break due to that
 				segment.wasMovedOnInsert = true;
 			}
 
