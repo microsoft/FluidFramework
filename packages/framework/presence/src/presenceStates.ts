@@ -223,8 +223,10 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				(acc, [key, nodeFactory]) => {
 					const newNodeData = nodeFactory(key, handleFromDatastore(this));
 					acc.nodes[key as keyof TSchema] = newNodeData.manager;
-					acc.datastore[key] = acc.datastore[key] ?? {};
-					acc.datastore[key][clientSessionId] = newNodeData.value;
+					if ("value" in newNodeData) {
+						acc.datastore[key] = acc.datastore[key] ?? {};
+						acc.datastore[key][clientSessionId] = newNodeData.value;
+					}
 					return acc;
 				},
 				{
@@ -259,7 +261,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	public update<Key extends keyof TSchema & string>(
 		key: Key,
 		clientId: ClientSessionId,
-		value: MapSchemaElement<TSchema, "value", Key>,
+		value: Exclude<MapSchemaElement<TSchema, "value", Key>, undefined>,
 	): void {
 		const allKnownState = this.datastore[key];
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
@@ -282,13 +284,15 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		assert(!(key in this.nodes), "Already have entry for key in map");
 		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
-		if (key in this.datastore) {
-			// Already have received state from other clients. Kept in `all`.
-			// TODO: Send current `all` state to state manager.
-		} else {
-			this.datastore[key] = {};
+		if ("value" in nodeData) {
+			if (key in this.datastore) {
+				// Already have received state from other clients. Kept in `all`.
+				// TODO: Send current `all` state to state manager.
+			} else {
+				this.datastore[key] = {};
+			}
+			this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
 		}
-		this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
 	}
 
 	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(

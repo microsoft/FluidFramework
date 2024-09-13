@@ -78,7 +78,9 @@ export interface LatestValueManager<T> {
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements LatestValueManager<T>, ValueManager<T, InternalTypes.ValueRequiredState<T>>
+	implements
+		LatestValueManager<T>,
+		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
 	public readonly controls: LatestValueControl;
