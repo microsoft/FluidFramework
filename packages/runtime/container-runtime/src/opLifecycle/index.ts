@@ -13,7 +13,7 @@ export {
 	IBatchManagerOptions,
 } from "./batchManager.js";
 export { BatchMessage, IBatch, IBatchCheckpoint, IChunkedOp } from "./definitions.js";
-export { DuplicateBatchDetector, IDuplicateBatchDetector } from "./duplicateBatchDetector.js";
+export { DuplicateBatchDetector } from "./duplicateBatchDetector.js";
 export { Outbox, getLongStack } from "./outbox.js";
 export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";

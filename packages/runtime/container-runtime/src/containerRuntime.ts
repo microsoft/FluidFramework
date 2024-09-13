@@ -172,7 +172,6 @@ import {
 	BatchId,
 	BatchMessage,
 	DuplicateBatchDetector,
-	IDuplicateBatchDetector,
 	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
@@ -1340,7 +1339,7 @@ export class ContainerRuntime
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
-	private readonly duplicateBatchDetector: IDuplicateBatchDetector;
+	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1677,11 +1676,9 @@ export class ContainerRuntime
 		// DuplicateBatchDetection is only enabled if Offline Load is enabled
 		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
 		// Don't waste resources doing so if not needed.
-		this.duplicateBatchDetector = this.offlineEnabled
-			? new DuplicateBatchDetector()
-			: ({
-					processInboundBatch: () => ({ duplicate: false as const }),
-				} satisfies IDuplicateBatchDetector);
+		if (this.offlineEnabled) {
+			this.duplicateBatchDetector = new DuplicateBatchDetector();
+		}
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
@@ -2717,8 +2714,8 @@ export class ContainerRuntime
 				return;
 			}
 
-			const result = this.duplicateBatchDetector.processInboundBatch(inboundBatch);
-			if (result.duplicate) {
+			const result = this.duplicateBatchDetector?.processInboundBatch(inboundBatch);
+			if (result?.duplicate) {
 				const error = new DataCorruptionError(
 					"Duplicate batch - The same batch was sequenced twice",
 					{ batchId: inboundBatch.batchId },
