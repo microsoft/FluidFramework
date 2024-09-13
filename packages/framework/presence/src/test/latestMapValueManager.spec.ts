@@ -66,7 +66,7 @@ export function checkCompiles(): void {
 		LatestMapItemValueClientData<T, string | number>,
 		"client" | "key" | "value"
 	>): void {
-		console.log(client.currentClientId(), key, value);
+		console.log(client.sessionId, key, value);
 	}
 
 	localPointers.set("pen", { x: 1, y: 2 });

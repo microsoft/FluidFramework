@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import type { ISessionClient } from "./presence.js";
+import type { ClientSessionId, ISessionClient } from "./presence.js";
 import { handleFromDatastore, type StateDatastore } from "./stateDatastore.js";
 import type { PresenceStates, PresenceStatesMethods, PresenceStatesSchema } from "./types.js";
 import { unbrandIVM } from "./valueManager.js";
@@ -26,8 +26,8 @@ export type MapSchemaElement<
  * @internal
  */
 export interface PresenceRuntime {
-	clientId(): ConnectedClientId | undefined;
-	lookupClient(clientId: ConnectedClientId): ISessionClient;
+	readonly clientSessionId: ClientSessionId;
+	lookupClient(clientId: ClientConnectionId): ISessionClient;
 	localUpdate(stateKey: string, value: ClientUpdateEntry, forceBroadcast: boolean): void;
 }
 
@@ -64,7 +64,7 @@ export interface ValueElementMap<_TSchema extends PresenceStatesSchema> {
 // type ValueElementMap<TSchema extends PresenceStatesNodeSchema> =
 // 	| {
 // 			[Key in keyof TSchema & string]?: {
-// 				[ClientId: ClientId]: InternalTypes.ValueDirectoryOrState<MapSchemaElement<TSchema,"value",Key>>;
+// 				[ClientSessionId: ClientSessionId]: InternalTypes.ValueDirectoryOrState<MapSchemaElement<TSchema,"value",Key>>;
 // 			};
 // 	  }
 // 	| {
@@ -99,7 +99,6 @@ export interface PresenceStatesInternal {
 	ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
 		content: TSchemaAdditional,
 	): PresenceStates<TSchemaAdditional>;
-	onConnect(clientId: ConnectedClientId): void;
 	processUpdate(
 		received: number,
 		timeModifier: number,
@@ -182,16 +181,23 @@ export function mergeUntrackedDatastore(
 		datastore[key] = {};
 	}
 	const localAllKnownState = datastore[key];
-	for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
+	for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
 		if (!("ignoreUnmonitored" in value)) {
-			localAllKnownState[clientId] = mergeValueDirectory(
-				localAllKnownState[clientId],
+			localAllKnownState[clientSessionId] = mergeValueDirectory(
+				localAllKnownState[clientSessionId],
 				value,
 				timeModifier,
 			);
 		}
 	}
 }
+
+/**
+ * Object.entries retyped to support branded string-based keys.
+ */
+const brandedObjectEntries = Object.entries as <K extends string, T>(
+	o: Record<K, T>,
+) => [K, T][];
 
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements
@@ -211,16 +217,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	) {
 		// Prepare initial map content from initial state
 		{
-			const clientId = this.runtime.clientId();
+			const clientSessionId = this.runtime.clientSessionId;
 			// eslint-disable-next-line unicorn/no-array-reduce
 			const initial = Object.entries(initialContent).reduce(
 				(acc, [key, nodeFactory]) => {
 					const newNodeData = nodeFactory(key, handleFromDatastore(this));
 					acc.nodes[key as keyof TSchema] = newNodeData.manager;
 					acc.datastore[key] = acc.datastore[key] ?? {};
-					if (clientId !== undefined && clientId) {
-						acc.datastore[key][clientId] = newNodeData.value;
-					}
+					acc.datastore[key][clientSessionId] = newNodeData.value;
 					return acc;
 				},
 				{
@@ -232,22 +236,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		}
 	}
 
-	public onConnect(clientId: ConnectedClientId): void {
-		for (const [key, allKnownState] of Object.entries(this.datastore)) {
-			if (key in this.nodes) {
-				allKnownState[clientId] = unbrandIVM(this.nodes[key]).value;
-			}
-		}
-	}
-
 	public knownValues<Key extends keyof TSchema & string>(
 		key: Key,
 	): {
-		self: string | undefined;
+		self: ClientSessionId | undefined;
 		states: ClientRecord<MapSchemaElement<TSchema, "value", Key>>;
 	} {
 		return {
-			self: this.runtime.clientId(),
+			self: this.runtime.clientSessionId,
 			states: this.datastore[key],
 		};
 	}
@@ -262,14 +258,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 
 	public update<Key extends keyof TSchema & string>(
 		key: Key,
-		clientId: string,
+		clientId: ClientSessionId,
 		value: MapSchemaElement<TSchema, "value", Key>,
 	): void {
 		const allKnownState = this.datastore[key];
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
 	}
 
-	public lookupClient(clientId: ConnectedClientId): ISessionClient {
+	public lookupClient(clientId: ClientConnectionId): ISessionClient {
 		return this.runtime.lookupClient(clientId);
 	}
 
@@ -292,11 +288,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		} else {
 			this.datastore[key] = {};
 		}
-		// If we have a clientId, then add the local state entry to the all state.
-		const clientId = this.runtime.clientId();
-		if (clientId !== undefined && clientId) {
-			this.datastore[key][clientId] = nodeData.value;
-		}
+		this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
 	}
 
 	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
@@ -316,8 +308,8 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 			if (key in this.nodes) {
 				const node = unbrandIVM(this.nodes[key]);
-				for (const [clientId, value] of Object.entries(remoteAllKnownState)) {
-					const client = this.runtime.lookupClient(clientId);
+				for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
+					const client = this.runtime.lookupClient(clientSessionId);
 					node.update(client, received, value);
 				}
 			} else {
