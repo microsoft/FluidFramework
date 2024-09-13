@@ -11,16 +11,24 @@ import { BaseCommand, sortVersions } from "../../library/index.js";
 
 export default class LatestVersionsCommand extends BaseCommand<typeof LatestVersionsCommand> {
 	static readonly summary =
-		"Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only. Example: if the current latest release for each major version is 0.59.0, 1.4.0, and 2.3.0, the command will fail with an error if the input version does not match one of these versions. Exiting with an error will prompt the pipeline to skip the docs deployment step.";
+		"Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.";
 
 	static readonly description =
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
 
+	static semverArg = Args.custom({
+		required: true,
+		description: "The version corresponding to the pipeline trigger branch.",
+		parse: async (input: string) => {
+			if (semver.valid(input) === null || semver.valid(input) === undefined) {
+				throw new Error(`Invalid version: ${input}. Please provide a valid SemVer version.`);
+			}
+			return input;
+		},
+	});
+
 	static readonly args = {
-		version: Args.string({
-			required: true,
-			description: "The version corresponding to the pipeline trigger branch.",
-		}),
+		version: this.semverArg(),
 		package_or_release_group: packageOrReleaseGroupArg({ required: true }),
 	} as const;
 
@@ -28,6 +36,11 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		const { args } = this;
 		const context = await this.getContext();
 		const versionInput = this.args.version;
+
+		// adding check since the custom parser return type is string | undefined
+		if (versionInput === undefined) {
+			throw new Error("Version input is undefined.");
+		}
 
 		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {

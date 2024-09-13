@@ -100,7 +100,7 @@ _See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidF
 
 ## `flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
 
-Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only. Example: if the current latest release for each major version is 0.59.0, 1.4.0, and 2.3.0, the command will fail with an error if the input version does not match one of these versions. Exiting with an error will prompt the pipeline to skip the docs deployment step.
+Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
 
 ```
 USAGE
@@ -116,9 +116,7 @@ LOGGING FLAGS
 
 DESCRIPTION
   Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI
-  pipeline only. Example: if the current latest release for each major version is 0.59.0, 1.4.0, and 2.3.0, the command
-  will fail with an error if the input version does not match one of these versions. Exiting with an error will prompt
-  the pipeline to skip the docs deployment step.
+  pipeline only.
 
   This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version
   of a major version.
