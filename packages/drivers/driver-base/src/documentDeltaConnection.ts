@@ -315,8 +315,20 @@ export class DocumentDeltaConnection
 		this.checkNotDisposed();
 		return this.details.initialClients;
 	}
-
+	/**
+	 * Emits 'submitOp' messages.
+	 * @param type - Must be 'submitOp'.
+	 * @param messages - An array of document messages to submit.
+	 */
 	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+
+	/**
+	 * Emits 'submitSignal' messages.
+	 *
+	 * **Note:** When using `ISentSignalMessage[]`, the service must support the `submit_signals_v2` feature.
+	 * @param type - Must be 'submitSignal'.
+	 * @param messages - An array of signals to submit. Can be either `string[][]` or `ISentSignalMessage[]`.
+	 */
 	protected emitMessages(
 		type: "submitSignal",
 		messages: string[][] | ISentSignalMessage[],

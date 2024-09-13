@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-
- // Note: IRuntimeSignalEnvelope is an interface that mirrors ISignalEnvelope for signals that come from an external
- // caller (not sent by a client (so no 'clientBroadcastSignalSequenceNumber') and are always addressed
- // to the Container (so no 'address'):
+// Note: IRuntimeSignalEnvelope is an interface that mirrors ISignalEnvelope for signals that come from an external
+// caller (not sent by a client (so no 'clientBroadcastSignalSequenceNumber') and are always addressed
+// to the Container (so no 'address'):
 
 //  interface IRuntimeSignalEnvelope {
 // 		contents: {
@@ -17,9 +16,9 @@
 //
 // Make sure to reflect changes at 'server/routerlicious/packages/lambdas/src/utils/messageGenerator.ts'.
 
- /**
-  * @internal
-  */
+/**
+ * @internal
+ */
 export interface ISignalEnvelope {
 	/**
 	 * The target for the envelope, undefined for the container

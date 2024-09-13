@@ -446,14 +446,18 @@ export interface IPerfSignalReport {
 	broadcastSignalSequenceNumber: number;
 
 	/**
-	 * Number of broadcast signals sent during latency event window.
+	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
+	 * This value represents the total number of signals sent since the latency measurement began and is used
+	 * logged in telemetry when the latency measurement completes.
 	 */
-	broadcastSignalsSentDuringLatencyEventWindow: number;
+	totalSignalsSentInLatencyWindow: number;
 
 	/**
-	 * Counter for number of broadcast signals sent during latency event window.
+	 * Counts the number of broadcast signals sent since the last latency measurement was initiated.
+	 * This counter increments with each broadcast signal sent. When a new latency measurement starts,
+	 * this counter is added to `totalSignalsSentInLatencyWindow` and then reset to zero.
 	 */
-	broadcastSignalCounterForLatencyEventWindow: number;
+	signalsSentSinceLastLatencyMeasurement: number;
 
 	/**
 	 * Number of signals that were expected but not received.

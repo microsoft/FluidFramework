@@ -120,10 +120,11 @@ const changeConnectionState = (
 	runtime.setConnectionState(connected, clientId);
 };
 
-type ISignalEnvelopeWithClientIds = ISignalEnvelope & {
+interface ISignalEnvelopeWithClientIds {
+	envelope: ISignalEnvelope;
 	clientId: string;
 	targetClientId?: string;
-};
+}
 
 function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 	return (
@@ -203,9 +204,9 @@ describe("Runtime", () => {
 			submitSignalFn: (content: unknown, targetClientId?: string) => {
 				assert(isSignalEnvelope(content), "Invalid signal envelope");
 				submittedSignals.push({
+					envelope: content,
 					clientId,
 					targetClientId,
-					...content,
 				}); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId,
@@ -2574,10 +2575,10 @@ describe("Runtime", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelopeWithClientIds[];
-			let runtimes: Map<string | undefined, ContainerRuntime>;
+			let runtimes: Map<string, ContainerRuntime>;
 
 			beforeEach(async () => {
-				runtimes = new Map<string | undefined, ContainerRuntime>();
+				runtimes = new Map<string, ContainerRuntime>();
 				logger = new MockLogger();
 				droppedSignals = [];
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -2591,6 +2592,9 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
+				// Assert that clientId is not undefined
+				assert(containerRuntime.clientId !== undefined, "clientId should not be undefined");
+
 				runtimes.set(containerRuntime.clientId, containerRuntime);
 				logger.clear();
 			});
@@ -2599,11 +2603,12 @@ describe("Runtime", () => {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
 					assert(
-						submittedSignals[submittedSignals.length - 1].contents.type === "TestSignalType",
+						submittedSignals[submittedSignals.length - 1].envelope.contents.type ===
+							"TestSignalType",
 						"Signal type should match",
 					);
 					assert(
-						submittedSignals[submittedSignals.length - 1].contents.content ===
+						submittedSignals[submittedSignals.length - 1].envelope.contents.content ===
 							`TestSignalContent ${i + 1}`,
 						"Signal content should match",
 					);
@@ -2620,8 +2625,8 @@ describe("Runtime", () => {
 									clientId: signal.clientId,
 									content: {
 										clientBroadcastSignalSequenceNumber:
-											signal.clientBroadcastSignalSequenceNumber,
-										contents: signal.contents,
+											signal.envelope.clientBroadcastSignalSequenceNumber,
+										contents: signal.envelope.contents,
 									},
 									targetClientId: signal.targetClientId,
 								},
@@ -2636,8 +2641,8 @@ describe("Runtime", () => {
 									clientId: signal.clientId,
 									content: {
 										clientBroadcastSignalSequenceNumber:
-											signal.clientBroadcastSignalSequenceNumber,
-										contents: signal.contents,
+											signal.envelope.clientBroadcastSignalSequenceNumber,
+										contents: signal.envelope.contents,
 									},
 									targetClientId: signal.targetClientId,
 								},
@@ -2655,7 +2660,11 @@ describe("Runtime", () => {
 						runtime.processSignal(
 							{
 								clientId: signal.clientId,
-								content: signal,
+								content: {
+									clientBroadcastSignalSequenceNumber:
+										signal.envelope.clientBroadcastSignalSequenceNumber,
+									contents: signal.envelope.contents,
+								},
 							},
 							true,
 						);
@@ -3088,6 +3097,12 @@ describe("Runtime", () => {
 						},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
+					// Assert that clientId is not undefined
+					assert(
+						remoteContainerRuntime.clientId !== undefined,
+						"clientId should not be undefined",
+					);
+
 					runtimes.set(remoteContainerRuntime.clientId, remoteContainerRuntime);
 				});
 

@@ -1320,10 +1320,10 @@ export class ContainerRuntime
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
-		broadcastSignalsSentDuringLatencyEventWindow: 0,
+		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
-		broadcastSignalCounterForLatencyEventWindow: 0,
+		signalsSentSinceLastLatencyMeasurement: 0,
 		broadcastSignalSequenceNumber: 0,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
@@ -2634,8 +2634,8 @@ export class ContainerRuntime
 			this._signalTracking.signalsLost = 0;
 			this._signalTracking.signalsOutOfOrder = 0;
 			this._signalTracking.signalTimestamp = 0;
-			this._signalTracking.broadcastSignalCounterForLatencyEventWindow = 0;
-			this._signalTracking.broadcastSignalsSentDuringLatencyEventWindow = 0;
+			this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+			this._signalTracking.totalSignalsSentInLatencyWindow = 0;
 			this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
 			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
@@ -2964,7 +2964,7 @@ export class ContainerRuntime
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration, // Roundtrip duration of the tracked signal in milliseconds.
-			signalsSent: this._signalTracking.broadcastSignalsSentDuringLatencyEventWindow, // Signals sent since the last logged SignalLatency event.
+			signalsSent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
 			signalsLost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
 			outOfOrderSignals: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
 			reconnectCount: this.consecutiveReconnects, // Container reconnect count.
@@ -2972,7 +2972,7 @@ export class ContainerRuntime
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalsOutOfOrder = 0;
 		this._signalTracking.signalTimestamp = 0;
-		this._signalTracking.broadcastSignalsSentDuringLatencyEventWindow = 0;
+		this._signalTracking.totalSignalsSentInLatencyWindow = 0;
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -3304,7 +3304,7 @@ export class ContainerRuntime
 			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
 				.broadcastSignalSequenceNumber;
 			newEnvelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
-			this._signalTracking.broadcastSignalCounterForLatencyEventWindow++;
+			this._signalTracking.signalsSentSinceLastLatencyMeasurement++;
 
 			if (
 				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
@@ -3326,9 +3326,9 @@ export class ContainerRuntime
 				this._signalTracking.signalTimestamp = Date.now();
 				this._signalTracking.roundTripSignalSequenceNumber =
 					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.broadcastSignalsSentDuringLatencyEventWindow +=
-					this._signalTracking.broadcastSignalCounterForLatencyEventWindow;
-				this._signalTracking.broadcastSignalCounterForLatencyEventWindow = 0;
+				this._signalTracking.totalSignalsSentInLatencyWindow +=
+					this._signalTracking.signalsSentSinceLastLatencyMeasurement;
+				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
 			}
 		}
 
