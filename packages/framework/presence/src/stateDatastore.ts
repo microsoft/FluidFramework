@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
@@ -42,7 +42,7 @@ export interface StateDatastore<
 		self: ClientSessionId | undefined;
 		states: ClientRecord<TValue>;
 	};
-	lookupClient(clientId: ConnectedClientId): ISessionClient;
+	lookupClient(clientId: ClientConnectionId): ISessionClient;
 }
 
 /**

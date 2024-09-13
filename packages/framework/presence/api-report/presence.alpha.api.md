@@ -11,12 +11,12 @@ export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
 export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): IPresence;
 
 // @alpha
+export type ClientConnectionId = string;
+
+// @alpha
 export type ClientSessionId = SessionId & {
     readonly ClientSessionId: "ClientSessionId";
 };
-
-// @alpha
-export type ConnectedClientId = string;
 
 // @alpha @sealed
 export class ExperimentalPresenceDO {
@@ -28,7 +28,7 @@ export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & Expe
 // @alpha @sealed
 export interface IPresence {
     readonly events: ISubscribable<PresenceEvents>;
-    getAttendee(clientId: ConnectedClientId): ISessionClient;
+    getAttendee(clientId: ClientConnectionId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
     getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceNotifications<NotificationsSchema>;
@@ -37,7 +37,7 @@ export interface IPresence {
 
 // @alpha @sealed
 export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    currentClientId(): ConnectedClientId;
+    currentConnectionId(): ClientConnectionId;
     // (undocumented)
     readonly sessionId: SpecificSessionClientId;
 }

@@ -5,7 +5,7 @@
 
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ClientConnectionId } from "./baseTypes.js";
 import type {
 	ClientSessionId,
 	IPresence,
@@ -43,11 +43,11 @@ class PresenceManager implements IPresenceManager {
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly selfAttendee: ISessionClient = {
 		sessionId: createSessionId() as ClientSessionId,
-		currentClientId: () => {
+		currentConnectionId: () => {
 			throw new Error("Client has never been connected");
 		},
 	};
-	private readonly attendees = new Map<ConnectedClientId | ClientSessionId, ISessionClient>([
+	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, ISessionClient>([
 		[this.selfAttendee.sessionId, this.selfAttendee],
 	]);
 
@@ -55,7 +55,7 @@ class PresenceManager implements IPresenceManager {
 		// If already connected, populate self and attendees.
 		const originalClientId = runtime.clientId;
 		if (originalClientId !== undefined) {
-			this.selfAttendee.currentClientId = () => originalClientId;
+			this.selfAttendee.currentConnectionId = () => originalClientId;
 			this.attendees.set(originalClientId, this.selfAttendee);
 		}
 
@@ -65,8 +65,8 @@ class PresenceManager implements IPresenceManager {
 		// might possibly try to use it. (Datastore manager is expected to
 		// use connected clientId more directly and no order dependence should
 		// be relied upon, but helps with debugging consistency.)
-		runtime.on("connected", (clientId: ConnectedClientId) => {
-			this.selfAttendee.currentClientId = () => clientId;
+		runtime.on("connected", (clientId: ClientConnectionId) => {
+			this.selfAttendee.currentConnectionId = () => clientId;
 			this.attendees.set(clientId, this.selfAttendee);
 		});
 
@@ -83,7 +83,7 @@ class PresenceManager implements IPresenceManager {
 		return new Set(this.attendees.values());
 	}
 
-	public getAttendee(clientId: ConnectedClientId | ClientSessionId): ISessionClient {
+	public getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
 		const attendee = this.attendees.get(clientId);
 		if (attendee) {
 			return attendee;
@@ -92,7 +92,7 @@ class PresenceManager implements IPresenceManager {
 		// Missing attendees should be rejected.
 		const newAttendee = {
 			sessionId: clientId as ClientSessionId,
-			currentClientId: () => clientId,
+			currentConnectionId: () => clientId,
 		} satisfies ISessionClient;
 		this.attendees.set(clientId, newAttendee);
 		return newAttendee;

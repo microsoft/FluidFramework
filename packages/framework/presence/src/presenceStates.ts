@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
@@ -27,7 +27,7 @@ export type MapSchemaElement<
  */
 export interface PresenceRuntime {
 	readonly clientSessionId: ClientSessionId;
-	lookupClient(clientId: ConnectedClientId): ISessionClient;
+	lookupClient(clientId: ClientConnectionId): ISessionClient;
 	localUpdate(stateKey: string, value: ClientUpdateEntry, forceBroadcast: boolean): void;
 }
 
@@ -265,7 +265,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
 	}
 
-	public lookupClient(clientId: ConnectedClientId): ISessionClient {
+	public lookupClient(clientId: ClientConnectionId): ISessionClient {
 		return this.runtime.lookupClient(clientId);
 	}
 

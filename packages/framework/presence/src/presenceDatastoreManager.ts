@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientSessionId, IPresence } from "./presence.js";
 import type {
@@ -30,7 +30,7 @@ interface SystemDatastore {
 	"system:presence": {
 		clientToSessionId: {
 			[
-				ConnectedClientId: ConnectedClientId
+				ClientConnectionId: ClientConnectionId
 			]: InternalTypes.ValueRequiredState<ClientSessionId>;
 		};
 	};
@@ -65,7 +65,7 @@ const joinMessageType = "Pres:ClientJoin";
 interface ClientJoinMessage extends IInboundSignalMessage {
 	type: typeof joinMessageType;
 	content: {
-		updateProviders: ConnectedClientId[];
+		updateProviders: ClientConnectionId[];
 		sendTimestamp: number;
 		avgLatency: number;
 		data: DatastoreMessageContent;
@@ -135,7 +135,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 	}
 
-	private onConnect(clientId: ConnectedClientId): void {
+	private onConnect(clientId: ClientConnectionId): void {
 		this.datastore["system:presence"].clientToSessionId[clientId] = {
 			rev: 0,
 			timestamp: Date.now(),

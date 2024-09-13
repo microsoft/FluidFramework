@@ -22,7 +22,7 @@
 // 	ISubscribable,
 // } from "@fluid-experimental/presence/internal/events";
 
-export type { ConnectedClientId } from "./baseTypes.js";
+export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
 	PresenceNotifications,

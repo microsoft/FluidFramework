@@ -5,7 +5,7 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { ClientConnectionId } from "./baseTypes.js";
 import type {
 	PresenceNotifications,
 	PresenceNotificationsSchema,
@@ -38,7 +38,7 @@ export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSes
  *
  * `ISessionClient` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
- * client's {@link ConnectedClientId} may change over time `ISessionClient`
+ * client's {@link ClientConnectionId} may change over time `ISessionClient`
  * will be fixed.
  *
  * @privateRemarks
@@ -59,9 +59,9 @@ export interface ISessionClient<
 	 * @returns Current client connection id.
 	 *
 	 * @remarks
-	 * Connection id will change on reconnection.
+	 * Connection id will change on reconnect.
 	 */
-	currentClientId(): ConnectedClientId;
+	currentConnectionId(): ClientConnectionId;
 }
 
 /**
@@ -136,7 +136,7 @@ export interface IPresence {
 	 *
 	 * @param clientId - Client connection id
 	 */
-	getAttendee(clientId: ConnectedClientId): ISessionClient;
+	getAttendee(clientId: ClientConnectionId): ISessionClient;
 
 	/**
 	 * Get this client's session client.
