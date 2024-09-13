@@ -1083,18 +1083,6 @@ export class MergeTree {
 			this.collabWindow.minSeq = minSeq;
 			this.obliterates.setMinSeq(minSeq);
 			if (MergeTree.options.zamboniSegments) {
-				walkAllChildSegments(this.root, (seg) => {
-					const refs = seg.localRefs ?? [];
-					for (const obliterateRef of refs) {
-						const oblInfo = obliterateRef.properties?.obliterate as ObliterateInfo | undefined;
-						if (oblInfo?.start !== undefined) {
-							this.removeLocalReferencePosition(oblInfo.start);
-						}
-						if (oblInfo?.end !== undefined) {
-							this.removeLocalReferencePosition(oblInfo.end);
-						}
-					}
-				});
 				zamboniSegments(this);
 			}
 		}

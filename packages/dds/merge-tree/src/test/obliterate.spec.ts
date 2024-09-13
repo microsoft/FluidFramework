@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ObliterateInfo } from "../mergeTree.js";
+import type { ObliterateInfo } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
