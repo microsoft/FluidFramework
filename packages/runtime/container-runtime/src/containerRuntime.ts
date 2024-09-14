@@ -3349,7 +3349,7 @@ export class ContainerRuntime
 	 * @remarks
 	 *
 	 * The `targetClientId` parameter here is currently intended for internal testing purposes only.
-	 * Support for this feature is planned to be deprecated in the future.
+	 * Support for this option at container runtime is planned to be deprecated in the future.
 	 *
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string) {
