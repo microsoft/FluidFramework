@@ -28,7 +28,7 @@ export type MapSchemaElement<
 export interface PresenceRuntime {
 	readonly clientSessionId: ClientSessionId;
 	lookupClient(clientId: ClientConnectionId): ISessionClient;
-	localUpdate(stateKey: string, value: ClientUpdateEntry, forceBroadcast: boolean): void;
+	localUpdate(states: { [key: string]: ClientUpdateEntry }, forceBroadcast: boolean): void;
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
@@ -218,6 +218,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		// Prepare initial map content from initial state
 		{
 			const clientSessionId = this.runtime.clientSessionId;
+			let anyInitialValues = false;
 			// eslint-disable-next-line unicorn/no-array-reduce
 			const initial = Object.entries(initialContent).reduce(
 				(acc, [key, nodeFactory]) => {
@@ -226,15 +227,23 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 					if ("value" in newNodeData) {
 						acc.datastore[key] = acc.datastore[key] ?? {};
 						acc.datastore[key][clientSessionId] = newNodeData.value;
+						acc.newValues[key] = newNodeData.value;
+						anyInitialValues = true;
 					}
 					return acc;
 				},
 				{
-					nodes: {} as unknown as MapEntries<TSchema>,
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					nodes: {} as MapEntries<TSchema>,
 					datastore,
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					newValues: {} as { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> },
 				},
 			);
 			this.nodes = initial.nodes;
+			if (anyInitialValues) {
+				this.runtime.localUpdate(initial.newValues, false);
+			}
 		}
 	}
 
@@ -253,9 +262,9 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	public localUpdate<Key extends keyof TSchema & string>(
 		key: Key,
 		value: MapSchemaElement<TSchema, "value", Key> & ClientUpdateEntry,
-		_forceBroadcast: boolean,
+		forceBroadcast: boolean,
 	): void {
-		this.runtime.localUpdate(key, value, _forceBroadcast);
+		this.runtime.localUpdate({ [key]: value }, forceBroadcast);
 	}
 
 	public update<Key extends keyof TSchema & string>(
@@ -292,6 +301,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				this.datastore[key] = {};
 			}
 			this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
+			this.runtime.localUpdate({ [key]: nodeData.value }, false);
 		}
 	}
 
