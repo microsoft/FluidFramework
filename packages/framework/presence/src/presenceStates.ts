@@ -28,7 +28,7 @@ export type MapSchemaElement<
 export interface PresenceRuntime {
 	readonly clientSessionId: ClientSessionId;
 	lookupClient(clientId: ClientConnectionId): ISessionClient;
-	localUpdate(stateKey: string, value: ClientUpdateEntry, forceBroadcast: boolean): void;
+	localUpdate(states: { [key: string]: ClientUpdateEntry }, forceBroadcast: boolean): void;
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
@@ -218,21 +218,32 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		// Prepare initial map content from initial state
 		{
 			const clientSessionId = this.runtime.clientSessionId;
+			let anyInitialValues = false;
 			// eslint-disable-next-line unicorn/no-array-reduce
 			const initial = Object.entries(initialContent).reduce(
 				(acc, [key, nodeFactory]) => {
 					const newNodeData = nodeFactory(key, handleFromDatastore(this));
 					acc.nodes[key as keyof TSchema] = newNodeData.manager;
-					acc.datastore[key] = acc.datastore[key] ?? {};
-					acc.datastore[key][clientSessionId] = newNodeData.value;
+					if ("value" in newNodeData) {
+						acc.datastore[key] = acc.datastore[key] ?? {};
+						acc.datastore[key][clientSessionId] = newNodeData.value;
+						acc.newValues[key] = newNodeData.value;
+						anyInitialValues = true;
+					}
 					return acc;
 				},
 				{
-					nodes: {} as unknown as MapEntries<TSchema>,
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					nodes: {} as MapEntries<TSchema>,
 					datastore,
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					newValues: {} as { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> },
 				},
 			);
 			this.nodes = initial.nodes;
+			if (anyInitialValues) {
+				this.runtime.localUpdate(initial.newValues, false);
+			}
 		}
 	}
 
@@ -251,15 +262,15 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	public localUpdate<Key extends keyof TSchema & string>(
 		key: Key,
 		value: MapSchemaElement<TSchema, "value", Key> & ClientUpdateEntry,
-		_forceBroadcast: boolean,
+		forceBroadcast: boolean,
 	): void {
-		this.runtime.localUpdate(key, value, _forceBroadcast);
+		this.runtime.localUpdate({ [key]: value }, forceBroadcast);
 	}
 
 	public update<Key extends keyof TSchema & string>(
 		key: Key,
 		clientId: ClientSessionId,
-		value: MapSchemaElement<TSchema, "value", Key>,
+		value: Exclude<MapSchemaElement<TSchema, "value", Key>, undefined>,
 	): void {
 		const allKnownState = this.datastore[key];
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
@@ -282,13 +293,16 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		assert(!(key in this.nodes), "Already have entry for key in map");
 		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
-		if (key in this.datastore) {
-			// Already have received state from other clients. Kept in `all`.
-			// TODO: Send current `all` state to state manager.
-		} else {
-			this.datastore[key] = {};
+		if ("value" in nodeData) {
+			if (key in this.datastore) {
+				// Already have received state from other clients. Kept in `all`.
+				// TODO: Send current `all` state to state manager.
+			} else {
+				this.datastore[key] = {};
+			}
+			this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
+			this.runtime.localUpdate({ [key]: nodeData.value }, false);
 		}
-		this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
 	}
 
 	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
