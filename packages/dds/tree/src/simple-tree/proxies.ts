@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -25,9 +23,13 @@ import {
 	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
-
-import { anchorProxy, tryGetCachedTreeNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema, type TreeNode, type Unhydrated } from "./core/index.js";
+import {
+	getKernel,
+	tryGetCachedTreeNode,
+	type TreeNode,
+	getSimpleNodeSchemaFromNode,
+	type InternalTreeNode,
+} from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.
@@ -66,14 +68,13 @@ export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNod
 		return cachedProxy;
 	}
 
-	const schema = flexNode.flexSchema;
-	const classSchema = tryGetSimpleNodeSchema(schema);
-	assert(classSchema !== undefined, 0x91b /* node without schema */);
+	const classSchema = getSimpleNodeSchemaFromNode(flexNode);
+	const node = flexNode as unknown as InternalTreeNode;
+	// eslint-disable-next-line unicorn/prefer-ternary
 	if (typeof classSchema === "function") {
-		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-		return new simpleSchema(flexNode);
+		return new classSchema(node) as TreeNode;
 	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
+		return (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
 	}
 }
 
@@ -196,7 +197,7 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (const { path, proxy } of proxies[i]!.proxyPaths) {
-				anchorProxy(forest.anchors, path, proxy);
+				getKernel(proxy).anchorProxy(forest.anchors, path);
 			}
 			if (++i === proxies.length) {
 				off();
@@ -206,26 +207,3 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 }
 
 // #endregion Content insertion and proxy binding
-
-/**
- * Content which can be used to build a node.
- * @remarks
- * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
- */
-export type FactoryContent =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| Iterable<readonly [string, InsertableContent]>
-	| readonly InsertableContent[]
-	| {
-			readonly [P in string]?: InsertableContent;
-	  };
-
-/**
- * Content which can be inserted into a tree.
- */
-export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;

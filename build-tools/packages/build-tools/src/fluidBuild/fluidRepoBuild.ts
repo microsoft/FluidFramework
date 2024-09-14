@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 import chalk from "chalk";
 import registerDebug from "debug";
 
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
-import { ExecAsyncResult, existsSync, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
 import { BuildGraph } from "./buildGraph";
 import type { IFluidBuildDirs } from "./fluidBuildConfig";
 import { FluidRepo } from "./fluidRepo";
@@ -99,6 +100,9 @@ export class FluidRepoBuild extends FluidRepo {
 		return true;
 	}
 
+	/**
+	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
+	 */
 	public async depcheck(fix: boolean) {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific
@@ -122,6 +126,9 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 	}
 
+	/**
+	 * @deprecated symlink-related functionality will be removed in an upcoming release.
+	 */
 	public async symlink(options: ISymlinkOptions) {
 		// Only do parallel if we are checking only
 		const result = await this.packages.forEachAsync(

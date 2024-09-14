@@ -11,6 +11,7 @@ import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import { writeJson } from "fs-extra/esm";
+import JSON5 from "json5";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
@@ -510,9 +511,9 @@ async function readConfigMainEntryPointFilePath(
 	return fs.promises
 		.readFile(configFileAbsPath, { encoding: "utf8" })
 		.then(async (configContent) => {
-			const { mainEntryPointFilePath } = JSON.parse(configContent) as {
+			const { mainEntryPointFilePath } = JSON5.parse<{
 				mainEntryPointFilePath?: string;
-			};
+			}>(configContent);
 			if (mainEntryPointFilePath === undefined) {
 				return undefined;
 			}
