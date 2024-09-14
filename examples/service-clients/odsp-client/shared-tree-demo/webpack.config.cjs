@@ -61,6 +61,7 @@ module.exports = (env) => {
 					title: "Hello Demo",
 					favicon: "",
 				}),
+				// new CleanWebpackPlugin(),
 			],
 		},
 		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),

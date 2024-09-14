@@ -62,5 +62,5 @@ describe("Routerlicious.Lambdas", () => {
 				}
 			});
 		});
-	}).timeout(10000);
+	}).timeout(5000);
 });
