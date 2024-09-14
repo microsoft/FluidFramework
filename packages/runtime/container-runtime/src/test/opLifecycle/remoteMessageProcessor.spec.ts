@@ -235,8 +235,10 @@ describe("RemoteMessageProcessor", () => {
 		});
 	});
 
-	it("Processes multiple batches", () => {
+	it("Processes multiple batches (No Grouped Batching)", () => {
 		let csn = 1;
+
+		// Use BatchManager.popBatch to get the right batch metadata included
 		const batchManager = new BatchManager({
 			canRebase: false,
 			hardLimit: Number.MAX_VALUE,
@@ -327,87 +329,73 @@ describe("RemoteMessageProcessor", () => {
 				"clientId": "CLIENT_ID",
 			},
 		];
-		const expectedTypes: InboundMessageResult["type"][] = [
+		const expectedInfo: Partial<InboundMessageResult>[] = [
 			// A
-			"batchStartingMessage",
-			"nextBatchMessage",
-			"nextBatchMessage",
-			// B
-			"fullBatch",
-			// C
-			"batchStartingMessage",
-			"nextBatchMessage",
-			// D
-			"fullBatch",
-		];
-		const expectedMessages = [...messagesA, ...messagesB, ...messagesC, ...messagesD];
-		const expectedResults = [
-			// A
-			undefined,
-			undefined,
 			{
-				type: "fullBatch",
-				messages: messagesA,
+				type: "batchStartingMessage",
 				batchStart: {
-					clientId: "CLIENT_ID",
 					batchId: undefined,
+					clientId: "CLIENT_ID",
+					keyMessage: messagesA[0] as ISequencedDocumentMessage,
 					batchStartCsn: 1,
-					keyMessage: messagesA[0],
 				},
-				length: 3,
 			},
+			{ type: "nextBatchMessage", batchEnd: false },
+			{ type: "nextBatchMessage", batchEnd: true },
 			// B
 			{
 				type: "fullBatch",
-				messages: messagesB,
 				batchStart: {
 					clientId: "CLIENT_ID",
 					batchId: undefined,
 					batchStartCsn: 4,
-					keyMessage: messagesB[0],
+					keyMessage: messagesB[0] as ISequencedDocumentMessage,
 				},
 				length: 1,
 			},
 			// C
-			undefined,
 			{
-				type: "fullBatch",
-				messages: messagesC,
+				type: "batchStartingMessage",
 				batchStart: {
 					batchId: "C",
 					clientId: "CLIENT_ID",
 					batchStartCsn: 5,
-					keyMessage: messagesC[0],
+					keyMessage: messagesC[0] as ISequencedDocumentMessage,
 				},
-				length: 2,
 			},
+			{ type: "nextBatchMessage", batchEnd: true },
 			// D
 			{
 				type: "fullBatch",
-				messages: messagesD,
 				batchStart: {
 					clientId: "CLIENT_ID",
 					batchId: "D",
 					batchStartCsn: 7,
-					keyMessage: messagesD[0],
+					keyMessage: messagesD[0] as ISequencedDocumentMessage,
 				},
 				length: 1,
 			},
 		];
-		console.log(expectedResults);
+		const expectedMessages = [...messagesA, ...messagesB, ...messagesC, ...messagesD];
 
-		//* TODO: Check other props with the types thing
-		assert.deepStrictEqual(
-			processResults.map((result) => result?.type),
-			expectedTypes,
-			"unexpected result types process",
-		);
 		assert.deepStrictEqual(
 			processResults.flatMap((result) =>
 				result?.type === "fullBatch" ? [...result.messages] : [result?.nextMessage],
 			),
 			expectedMessages,
 			"unexpected output from process",
+		);
+
+		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
+		const clearMessages = (result: any) => {
+			delete result.messages;
+			delete result.nextMessage;
+			return result as InboundMessageResult;
+		};
+		assert.deepStrictEqual(
+			processResults.map(clearMessages),
+			expectedInfo,
+			"unexpected result info",
 		);
 	});
 
