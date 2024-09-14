@@ -81,6 +81,7 @@ export interface Move extends Edit {
 const sf = new SchemaFactory("agentSchema");
 
 class Vector extends sf.object("Vector", {
+	id: sf.identifier, // will be omitted from the generated JSON schema
 	x: sf.number,
 	y: sf.number,
 	z: sf.optional(sf.number),
