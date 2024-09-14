@@ -174,8 +174,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		const localUpdate = (
-			stateKey: string,
-			value: ClientUpdateEntry,
+			states: { [key: string]: ClientUpdateEntry },
 			forceBroadcast: boolean,
 		): void => {
 			// Check for connectivity before sending updates.
@@ -183,11 +182,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				return;
 			}
 
+			const updates: GeneralDatastoreMessageContent[string] = {};
+			for (const [key, value] of Object.entries(states)) {
+				updates[key] = { [this.clientSessionId]: value };
+			}
 			this.localUpdate(
 				{
-					[internalWorkspaceAddress]: {
-						[stateKey]: { [this.clientSessionId]: value },
-					},
+					[internalWorkspaceAddress]: updates,
 				},
 				forceBroadcast,
 			);

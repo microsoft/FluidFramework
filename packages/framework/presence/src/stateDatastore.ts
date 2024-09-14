@@ -28,7 +28,7 @@ export interface StateDatastoreSchema {
  */
 export interface StateDatastore<
 	TKey extends string,
-	TValue extends InternalTypes.ValueDirectoryOrState<any>,
+	TValue extends InternalTypes.ValueDirectoryOrState<any> | undefined,
 > {
 	localUpdate(
 		key: TKey,
@@ -55,9 +55,14 @@ export function handleFromDatastore<
 	// TSchema as `unknown` still provides some type safety.
 	// TSchema extends StateDatastoreSchema,
 	TKey extends string /* & keyof TSchema */,
-	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
->(datastore: StateDatastore<TKey, TValue>): InternalTypes.StateDatastoreHandle<TKey, TValue> {
-	return datastore as unknown as InternalTypes.StateDatastoreHandle<TKey, TValue>;
+	TValue extends InternalTypes.ValueDirectoryOrState<unknown> | undefined,
+>(
+	datastore: StateDatastore<TKey, TValue>,
+): InternalTypes.StateDatastoreHandle<TKey, Exclude<TValue, undefined>> {
+	return datastore as unknown as InternalTypes.StateDatastoreHandle<
+		TKey,
+		Exclude<TValue, undefined>
+	>;
 }
 
 /**

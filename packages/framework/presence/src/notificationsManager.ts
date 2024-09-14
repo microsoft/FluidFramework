@@ -168,7 +168,6 @@ class NotificationsManagerImpl<
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
 		_initialSubscriptions: NotificationSubscriptions<T>,
-		public readonly value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	) {}
 
 	public update(
@@ -195,11 +194,6 @@ export function Notifications<
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	NotificationsManager<T>
 > {
-	const value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType> = {
-		rev: 0,
-		timestamp: Date.now(),
-		value: { name: "", args: [] },
-	};
 	return (
 		key: Key,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
@@ -207,7 +201,6 @@ export function Notifications<
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
 	) => ({
-		value,
 		manager: brandIVM<
 			NotificationsManagerImpl<T, Key>,
 			InternalTypes.NotificationType,
@@ -217,7 +210,6 @@ export function Notifications<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				initialSubscriptions,
-				value,
 			),
 		),
 	});

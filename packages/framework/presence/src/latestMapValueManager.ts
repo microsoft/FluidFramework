@@ -315,7 +315,9 @@ class LatestMapValueManagerImpl<
 	T,
 	RegistrationKey extends string,
 	Keys extends string | number = string | number,
-> implements LatestMapValueManager<T, Keys>, ValueManager<T, InternalTypes.MapValueState<T>>
+> implements
+		LatestMapValueManager<T, Keys>,
+		Required<ValueManager<T, InternalTypes.MapValueState<T>>>
 {
 	public readonly events = createEmitter<LatestMapValueManagerEvents<T, Keys>>();
 	public readonly controls: LatestValueControl;
