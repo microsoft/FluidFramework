@@ -156,6 +156,44 @@ describe.only("simple tree indexes", () => {
 		assert.equal(index.get(parentId)?.length, 1);
 		assert.equal(index.get(childId), undefined);
 	});
+
+	// TODO change the event we're using to update the index so that this works
+	it.skip("updates when values fields are updated", () => {
+		class OtherIndexableChild extends schemaFactory.object("IndexableChild", {
+			other: schemaFactory.string,
+		}) {}
+		class OtherIndexableParent extends schemaFactory.object("IndexableParent", {
+			child: schemaFactory.optional(OtherIndexableChild),
+			other: schemaFactory.string,
+		}) {}
+		const config = new TreeViewConfiguration({ schema: OtherIndexableParent });
+		const view = getView(config);
+		view.initialize({ other: parentId, child: new OtherIndexableChild({ other: childId }) });
+		const parent = view.root;
+		const index = createSimpleTreeIndex(
+			getFlexNode(parent).context,
+			(schema) => (node: ITreeSubscriptionCursor) => {
+				node.enterField(brand("other"));
+				node.firstNode();
+				const value = node.value;
+				node.exitNode();
+				node.exitField();
+				assert(typeof value === "string");
+				return value;
+			},
+			(nodes) => nodes.length,
+			[OtherIndexableChild, OtherIndexableParent],
+		);
+
+		const child = parent.child;
+		assert(child !== undefined);
+		assert.equal(index.get(childId), 1);
+		assert.equal(index.size, 2);
+
+		child.other = parentId;
+		assert.equal(index.get(parentId), 2);
+		assert.equal(index.size, 1);
+	});
 });
 
 describe.only("identifier indexes", () => {

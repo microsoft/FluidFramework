@@ -41,6 +41,7 @@ export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) 
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
  *
  * TODO: need to make sure key finders are deterministic or have a way to invalidate them
+ * TODO: the index does not update on leaf node changes
  */
 export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	implements TreeIndex<TKey, TValue>
@@ -139,6 +140,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		}
 
 		// index any new trees that are created later
+		// TODO this event isn't fired when leaf values are changed
 		forest.on("afterRootFieldCreated", (fieldKey) => {
 			const cursor = forest.allocateCursor();
 			forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
