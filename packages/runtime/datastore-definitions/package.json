@@ -109,6 +109,6 @@
 				"backCompat": false
 			}
 		},
-		"entrypoint": "internal"
+		"entrypoint": "legacy"
 	}
 }

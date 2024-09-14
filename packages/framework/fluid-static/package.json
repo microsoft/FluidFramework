@@ -140,6 +140,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"entrypoint": "internal"
+		"entrypoint": "public"
 	}
 }
