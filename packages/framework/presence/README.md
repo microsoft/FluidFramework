@@ -82,6 +82,11 @@ presence.getStates("app:v1states", { myState2: Latest({x: true})});
  would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
 
 
+### Notifications
+
+Notifications API is not well connected. All messages are always broadcast even if `unicast` API is used and all are emitted as `unattendedNotification` event rather than the appropriate custom event.
+
+
 ### Experimental
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
