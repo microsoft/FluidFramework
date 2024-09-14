@@ -12,4 +12,4 @@
 ---
 Targeted signals support
 
-Clients may now have the ability to send unicast signals to each other by specifying the optional `targetClientId` parameter.
+Clients now have the ability to send unicast signals to each other by specifying the optional `targetClientId` parameter.
