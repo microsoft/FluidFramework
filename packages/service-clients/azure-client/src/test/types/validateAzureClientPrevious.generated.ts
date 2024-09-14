@@ -209,24 +209,6 @@ declare type current_as_old_for_Interface_AzureRemoteConnectionConfig = requireA
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_AzureUser": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_AzureUser = requireAssignableTo<TypeOnly<old.AzureUser>, TypeOnly<current.AzureUser>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_AzureUser": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_AzureUser = requireAssignableTo<TypeOnly<current.AzureUser>, TypeOnly<old.AzureUser>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ITelemetryBaseEvent": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ITelemetryBaseEvent = requireAssignableTo<TypeOnly<old.ITelemetryBaseEvent>, TypeOnly<current.ITelemetryBaseEvent>>
