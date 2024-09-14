@@ -953,7 +953,8 @@ export function testChangeReceiver<TChange>(
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
-	const changeReceiver = (change: TChange): number => changes.push(change);
+	const changeReceiver = (taggedChange: TaggedChange<TChange>): number =>
+		changes.push(taggedChange.change);
 	return [changeReceiver, () => [...changes]];
 }
 

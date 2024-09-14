@@ -1597,7 +1597,7 @@ export class ModularChangeFamily
 
 	public buildEditor(
 		mintRevisionTag: () => RevisionTag,
-		changeReceiver: (change: ModularChangeset) => void,
+		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
 		return new ModularEditBuilder(this, this.fieldKinds, mintRevisionTag, changeReceiver);
 	}
@@ -2529,7 +2529,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		private readonly mintRevisionTag: () => RevisionTag,
-		changeReceiver: (change: ModularChangeset) => void,
+		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
@@ -2609,12 +2609,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			undefined /* childId */,
 			revision,
 		);
-		this.applyChange(modularChange);
+		this.applyChange(tagChange(modularChange, revision));
 	}
 
-	public submitChanges(changes: EditDescription[]): void {
+	public submitChanges(changes: EditDescription[], revision: RevisionTag): void {
 		const modularChange = this.buildChanges(changes);
-		this.applyChange(modularChange);
+		this.applyChange(tagChange(modularChange, revision));
 	}
 
 	public buildChanges(changes: EditDescription[]): ModularChangeset {
@@ -2670,15 +2670,19 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			nodeExistsConstraint: { violated: false },
 		};
 
+		const revision = this.mintRevisionTag();
 		this.applyChange(
-			buildModularChangesetFromNode(
-				path,
-				nodeChange,
-				newTupleBTree(),
-				newTupleBTree(),
-				newCrossFieldKeyTable(),
-				this.idAllocator,
-				this.mintRevisionTag(),
+			tagChange(
+				buildModularChangesetFromNode(
+					path,
+					nodeChange,
+					newTupleBTree(),
+					newTupleBTree(),
+					newCrossFieldKeyTable(),
+					this.idAllocator,
+					revision,
+				),
+				revision,
 			),
 		);
 	}

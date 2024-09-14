@@ -446,7 +446,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const {
 			commit: { revision, change },
 		} = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
-		this.editManager.localBranch.apply(change, revision);
+		this.editManager.localBranch.apply({ change, revision }, revision);
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {

@@ -20,7 +20,6 @@ import {
 	rebaseBranch,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
-	tagChange,
 } from "../core/index.js";
 import { EventEmitter, type Listenable } from "../events/index.js";
 
@@ -243,43 +242,46 @@ export class SharedTreeBranch<
 
 	/**
 	 * Apply a change to this branch.
-	 * @param change - the change to apply
+	 * @param taggedChange - the change to apply
 	 * @param revision - the revision of the new head commit of the branch that contains `change`
 	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
 	public apply(
-		change: TChange,
-		revision: RevisionTag,
+		taggedChange: TaggedChange<TChange>,
+		revision: RevisionTag, // This can be removed once we make revision required on taggedChange?
 		kind: CommitKind = CommitKind.Default,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
-		const revision2 =
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			(change as any).changes?.[0]?.innerChange?.revisions?.[0]?.revision ?? revision;
+		const revisionTag = taggedChange.revision;
+		assert(revisionTag !== undefined, "Revision tag must be provided");
+
 		// TODO: This should not be necessary when receiving changes from other clients.
-		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision2);
+		const changeWithRevision = this.changeFamily.rebaser.changeRevision(
+			taggedChange.change,
+			revisionTag,
+		);
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		console.log((globalThis as any).merge(change, changeWithRevision));
+		console.log((globalThis as any).merge(taggedChange.change, changeWithRevision));
 
 		const newHead = mintCommit(this.head, {
-			revision,
-			change: changeWithRevision,
+			revision: revisionTag,
+			change: taggedChange.change,
 		});
 
 		const changeEvent = {
 			type: "append",
 			kind,
-			change: tagChange(changeWithRevision, revision),
+			change: taggedChange,
 			newCommits: [newHead],
 		} as const;
 
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
 		this.emit("afterChange", changeEvent);
-		return [changeWithRevision, newHead];
+		return [taggedChange.change, newHead];
 	}
 
 	/**

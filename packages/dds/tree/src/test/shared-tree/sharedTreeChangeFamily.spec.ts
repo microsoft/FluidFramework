@@ -46,8 +46,8 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (change) =>
-	dataChanges.push(change),
+const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
+	dataChanges.push(taggedChange.change),
 );
 
 // Side effects results in `dataChanges` being populated

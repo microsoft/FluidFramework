@@ -34,7 +34,7 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 	return {
 		buildEditor: (
 			mintRevisionTag: () => RevisionTag,
-			changeReceiver: (change: TChange) => void,
+			changeReceiver: (change: TaggedChange<TChange>) => void,
 		): TEditor => {
 			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver);
 		},

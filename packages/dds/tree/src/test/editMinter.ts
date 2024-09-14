@@ -19,9 +19,9 @@ export function makeEditMinter(
 	editor: Editor,
 ): () => DefaultChangeset {
 	let builtChangeset: DefaultChangeset | undefined;
-	const innerEditor = family.buildEditor(mintRevisionTag, (change) => {
+	const innerEditor = family.buildEditor(mintRevisionTag, (taggedChange) => {
 		assert(builtChangeset === undefined);
-		builtChangeset = change;
+		builtChangeset = taggedChange.change;
 	});
 	return (): DefaultChangeset => {
 		assert(builtChangeset === undefined);

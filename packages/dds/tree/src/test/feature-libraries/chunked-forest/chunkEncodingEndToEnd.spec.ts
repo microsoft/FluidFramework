@@ -14,6 +14,7 @@ import {
 	mapCursorField,
 	RevisionTagCodec,
 	rootFieldKey,
+	type TaggedChange,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
@@ -149,8 +150,8 @@ describe("End to end chunked encoding", () => {
 		assert(!chunk.isShared());
 		const changeLog: ModularChangeset[] = [];
 
-		const changeReceiver = (change: ModularChangeset) => {
-			changeLog.push(change);
+		const changeReceiver = (taggedChange: TaggedChange<ModularChangeset>) => {
+			changeLog.push(taggedChange.change);
 		};
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,

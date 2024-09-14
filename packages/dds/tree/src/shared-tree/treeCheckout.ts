@@ -804,9 +804,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			);
 		}
 
+		const revisionForApply = this.mintRevisionTag();
 		this._branch.apply(
-			change.change,
-			this.mintRevisionTag(),
+			{ change: change.change, revision: revisionForApply },
+			revisionForApply,
 			kind === CommitKind.Default || kind === CommitKind.Redo
 				? CommitKind.Undo
 				: CommitKind.Redo,

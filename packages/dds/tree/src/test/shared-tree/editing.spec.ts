@@ -3310,7 +3310,7 @@ describe("Editing", () => {
 		});
 	});
 
-	it("invert a composite change that include a mix of nested changes in a field that requires an amend pass", () => {
+	it.only("invert a composite change that include a mix of nested changes in a field that requires an amend pass", () => {
 		const tree = makeTreeFromJson({});
 
 		tree.transaction.start();

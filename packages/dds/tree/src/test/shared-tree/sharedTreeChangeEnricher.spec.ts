@@ -57,8 +57,8 @@ const content: JsonCompatible = { x: 42 };
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
 
 const dataChanges: ModularChangeset[] = [];
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (change) =>
-	dataChanges.push(change),
+const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
+	dataChanges.push(taggedChange.change),
 );
 const modularBuilder = new ModularEditBuilder(
 	modularFamily,

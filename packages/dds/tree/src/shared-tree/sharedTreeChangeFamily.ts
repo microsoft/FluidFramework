@@ -80,7 +80,7 @@ export class SharedTreeChangeFamily
 
 	public buildEditor(
 		mintRevisionTag: () => RevisionTag,
-		changeReceiver: (change: SharedTreeChange) => void,
+		changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
 	): SharedTreeEditBuilder {
 		return new SharedTreeEditBuilder(
 			this.modularChangeFamily,

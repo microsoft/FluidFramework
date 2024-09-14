@@ -71,7 +71,7 @@ export class DefaultChangeFamily
 
 	public buildEditor(
 		mintRevisionTag: () => RevisionTag,
-		changeReceiver: (change: DefaultChangeset) => void,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 	): DefaultEditBuilder {
 		return new DefaultEditBuilder(this, mintRevisionTag, changeReceiver);
 	}
@@ -173,7 +173,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
-		changeReceiver: (change: DefaultChangeset) => void,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 		private readonly idCompressor?: IIdCompressor,
 	) {
 		this.modularBuilder = new ModularEditBuilder(
@@ -224,7 +224,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					change,
 					revision,
 				};
-				this.modularBuilder.submitChanges([build, edit]);
+				this.modularBuilder.submitChanges([build, edit], revision);
 			},
 		};
 	}
@@ -269,7 +269,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				edits.push(edit);
 
-				this.modularBuilder.submitChanges(edits);
+				this.modularBuilder.submitChanges(edits, revision);
 			},
 		};
 	}
@@ -358,22 +358,25 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				attachId,
 				revision,
 			);
-			this.modularBuilder.submitChanges([
-				{
-					type: "field",
-					field: sourceField,
-					fieldKind: sequence.identifier,
-					change: brand(moveOut),
-					revision,
-				},
-				{
-					type: "field",
-					field: adjustedAttachField,
-					fieldKind: sequence.identifier,
-					change: brand(moveIn),
-					revision,
-				},
-			]);
+			this.modularBuilder.submitChanges(
+				[
+					{
+						type: "field",
+						field: sourceField,
+						fieldKind: sequence.identifier,
+						change: brand(moveOut),
+						revision,
+					},
+					{
+						type: "field",
+						field: adjustedAttachField,
+						fieldKind: sequence.identifier,
+						change: brand(moveIn),
+						revision,
+					},
+				],
+				revision,
+			);
 		}
 	}
 
@@ -405,7 +408,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				// The changes have to be submitted together, otherwise they will be assigned different revisions,
 				// which will prevent the build ID and the insert ID from matching.
-				this.modularBuilder.submitChanges([build, attach]);
+				this.modularBuilder.submitChanges([build, attach], revision);
 			},
 			remove: (index: number, count: number): void => {
 				if (count === 0) {

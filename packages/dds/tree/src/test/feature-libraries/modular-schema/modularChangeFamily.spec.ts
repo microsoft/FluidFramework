@@ -1564,7 +1564,9 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 
 function buildExistsConstraint(path: UpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
-	const editor = family.buildEditor(mintRevisionTag, (change) => edits.push(change));
+	const editor = family.buildEditor(mintRevisionTag, (taggedChange) =>
+		edits.push(taggedChange.change),
+	);
 	editor.addNodeExistsConstraint(path);
 	return edits[0];
 }
