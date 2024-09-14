@@ -20,24 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ConsensusCallback": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<old.ConsensusCallback<any>>, TypeOnly<current.ConsensusCallback<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ConsensusCallback": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<current.ConsensusCallback<any>>, TypeOnly<old.ConsensusCallback<any>>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Class_ConsensusOrderedCollection": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<old.ConsensusOrderedCollection>, TypeOnly<current.ConsensusOrderedCollection>>
@@ -50,42 +32,6 @@ declare type old_as_current_for_Class_ConsensusOrderedCollection = requireAssign
  * "Class_ConsensusOrderedCollection": {"backCompat": false}
  */
 declare type current_as_old_for_Class_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<current.ConsensusOrderedCollection>, TypeOnly<old.ConsensusOrderedCollection>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_ConsensusOrderedCollection": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<typeof current.ConsensusOrderedCollection>, TypeOnly<typeof old.ConsensusOrderedCollection>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_ConsensusQueue": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_ConsensusQueue = requireAssignableTo<TypeOnly<typeof current.ConsensusQueue>, TypeOnly<typeof old.ConsensusQueue>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ConsensusQueue": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<old.ConsensusQueue>, TypeOnly<current.ConsensusQueue>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ConsensusQueue": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<current.ConsensusQueue>, TypeOnly<old.ConsensusQueue>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -106,15 +52,6 @@ declare type old_as_current_for_Class_ConsensusQueueClass = requireAssignableTo<
 declare type current_as_old_for_Class_ConsensusQueueClass = requireAssignableTo<TypeOnly<current.ConsensusQueueClass>, TypeOnly<old.ConsensusQueueClass>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_ConsensusQueueClass": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_ConsensusQueueClass = requireAssignableTo<TypeOnly<typeof current.ConsensusQueueClass>, TypeOnly<typeof old.ConsensusQueueClass>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -131,6 +68,24 @@ declare type old_as_current_for_Class_ConsensusQueueFactory = requireAssignableT
  * "Class_ConsensusQueueFactory": {"backCompat": false}
  */
 declare type current_as_old_for_Class_ConsensusQueueFactory = requireAssignableTo<TypeOnly<current.ConsensusQueueFactory>, TypeOnly<old.ConsensusQueueFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ConsensusOrderedCollection": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<typeof current.ConsensusOrderedCollection>, TypeOnly<typeof old.ConsensusOrderedCollection>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ConsensusQueueClass": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ConsensusQueueClass = requireAssignableTo<TypeOnly<typeof current.ConsensusQueueClass>, TypeOnly<typeof old.ConsensusQueueClass>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -158,6 +113,24 @@ declare type old_as_current_for_Enum_ConsensusResult = requireAssignableTo<TypeO
  * "Enum_ConsensusResult": {"backCompat": false}
  */
 declare type current_as_old_for_Enum_ConsensusResult = requireAssignableTo<TypeOnly<current.ConsensusResult>, TypeOnly<old.ConsensusResult>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_acquireAndComplete": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_acquireAndComplete = requireAssignableTo<TypeOnly<typeof current.acquireAndComplete>, TypeOnly<typeof old.acquireAndComplete>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_waitAcquireAndComplete": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_waitAcquireAndComplete = requireAssignableTo<TypeOnly<typeof current.waitAcquireAndComplete>, TypeOnly<typeof old.waitAcquireAndComplete>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -250,19 +223,46 @@ declare type old_as_current_for_Interface_ISnapshotable = requireAssignableTo<Ty
 declare type current_as_old_for_Interface_ISnapshotable = requireAssignableTo<TypeOnly<current.ISnapshotable<any>>, TypeOnly<old.ISnapshotable<any>>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_acquireAndComplete": {"backCompat": false}
+ * "TypeAlias_ConsensusCallback": {"forwardCompat": false}
  */
-declare type current_as_old_for_Function_acquireAndComplete = requireAssignableTo<TypeOnly<typeof current.acquireAndComplete>, TypeOnly<typeof old.acquireAndComplete>>
+declare type old_as_current_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<old.ConsensusCallback<any>>, TypeOnly<current.ConsensusCallback<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_waitAcquireAndComplete": {"backCompat": false}
+ * "TypeAlias_ConsensusCallback": {"backCompat": false}
  */
-declare type current_as_old_for_Function_waitAcquireAndComplete = requireAssignableTo<TypeOnly<typeof current.waitAcquireAndComplete>, TypeOnly<typeof old.waitAcquireAndComplete>>
+declare type current_as_old_for_TypeAlias_ConsensusCallback = requireAssignableTo<TypeOnly<current.ConsensusCallback<any>>, TypeOnly<old.ConsensusCallback<any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ConsensusQueue": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<old.ConsensusQueue>, TypeOnly<current.ConsensusQueue>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ConsensusQueue": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<current.ConsensusQueue>, TypeOnly<old.ConsensusQueue>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_ConsensusQueue": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_ConsensusQueue = requireAssignableTo<TypeOnly<typeof current.ConsensusQueue>, TypeOnly<typeof old.ConsensusQueue>>
