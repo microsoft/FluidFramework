@@ -11342,6 +11342,9 @@ importers:
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../fluid-static
+      '@fluidframework/id-compressor':
+        specifier: workspace:~
+        version: link:../../runtime/id-compressor
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
