@@ -137,7 +137,8 @@
 		"table": "^6.8.1",
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
-		"unist-util-visit": "^5.0.0"
+		"unist-util-visit": "^5.0.0",
+		"depcheck": "^1.4.7"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
