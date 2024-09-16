@@ -4,7 +4,7 @@
  */
 
 import path from "path";
-import { getResolvedFluidRoot } from "../../../common/fluidUtils";
+import { getResolvedFluidRoot } from "../../fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
