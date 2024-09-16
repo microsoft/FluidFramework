@@ -162,7 +162,7 @@ export interface FieldProps<TMetadata extends FieldSchemaMetadata = FieldSchemaM
 
 	/**
 	 * Optional metadata to associate with the field.
-	 * @remarks Note: this metadata is not persisted in the document. It only exists at runtime.
+	 * @remarks Note: this metadata is not persisted in the document.
 	 */
 	readonly metadata?: TMetadata;
 }
