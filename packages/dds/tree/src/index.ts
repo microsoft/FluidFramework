@@ -144,7 +144,7 @@ export {
 	type JsonLeafSchemaType,
 	getJsonSchema,
 } from "./simple-tree/index.js";
-export { SharedTree, configuredSharedTree } from "./treeFactory.js";
+export { SharedTree, configuredSharedTree, independentView } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";

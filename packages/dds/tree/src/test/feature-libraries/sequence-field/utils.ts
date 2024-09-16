@@ -6,7 +6,7 @@
 import { strict } from "assert";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
 	type ChangeAtomId,
