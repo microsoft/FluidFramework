@@ -284,7 +284,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	): asserts this is PresenceStates<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TValueManager>>
 	> {
-		assert(!(key in this.nodes), "Already have entry for key in map");
+		assert(!(key in this.nodes), 0xa3c /* Already have entry for key in map */);
 		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
 		if ("value" in nodeData) {

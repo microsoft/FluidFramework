@@ -2756,14 +2756,14 @@ export class ContainerRuntime
 			if (inboundResult.type !== "fullBatch") {
 				assert(
 					messagesWithPendingState.length === 1,
-					"Partial batch should have exactly one message",
+					0xa3d /* Partial batch should have exactly one message */,
 				);
 			}
 
 			if (messagesWithPendingState.length === 0) {
 				assert(
 					inboundResult.type === "fullBatch",
-					"Empty batch is always considered a full batch",
+					0xa3e /* Empty batch is always considered a full batch */,
 				);
 				/**
 				 * We need to process an empty batch, which will execute expected actions while processing even if there
