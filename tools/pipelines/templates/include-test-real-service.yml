@@ -77,6 +77,10 @@ parameters:
   type: boolean
   default: false
 
+- name: preSteps
+  type: stepList
+  default: []
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -173,6 +177,8 @@ jobs:
             "
 
       - template: include-use-node-version.yml
+
+      - ${{ parameters.preSteps }}
 
       # Download artifact
       - task: DownloadPipelineArtifact@2
