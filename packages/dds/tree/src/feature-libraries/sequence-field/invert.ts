@@ -115,6 +115,7 @@ function invertMark(
 					id: mark.id,
 					cellId: outputId,
 					count: mark.count,
+					revision: mark.revision,
 				};
 			} else {
 				inverse = {
@@ -122,6 +123,7 @@ function invertMark(
 					id: mark.id,
 					cellId: outputId,
 					count: mark.count,
+					revision: mark.revision,
 				};
 				if (isRollback) {
 					inverse.idOverride = inputId;
@@ -136,6 +138,7 @@ function invertMark(
 				type: "Remove",
 				count: mark.count,
 				id: inputId.localId,
+				revision: mark.revision,
 			};
 
 			if (isRollback) {
@@ -168,10 +171,14 @@ function invertMark(
 			const moveIn: MoveIn = {
 				type: "MoveIn",
 				id: mark.id,
+				revision: mark.revision,
 			};
 
 			if (mark.finalEndpoint !== undefined) {
-				moveIn.finalEndpoint = { localId: mark.finalEndpoint.localId };
+				moveIn.finalEndpoint = {
+					localId: mark.finalEndpoint.localId,
+					revision: mark.revision,
+				};
 			}
 			let effect: MarkEffect = moveIn;
 			const inputId = getInputCellId(mark);
@@ -179,6 +186,7 @@ function invertMark(
 				const detach: Mutable<Detach> = {
 					type: "Remove",
 					id: mark.id,
+					revision: mark.revision,
 				};
 				if (isRollback) {
 					detach.idOverride = inputId;
@@ -198,6 +206,7 @@ function invertMark(
 				type: "MoveOut",
 				id: mark.id,
 				count: mark.count,
+				revision: mark.revision,
 			};
 
 			if (isRollback) {
@@ -205,7 +214,10 @@ function invertMark(
 			}
 
 			if (mark.finalEndpoint) {
-				invertedMark.finalEndpoint = { localId: mark.finalEndpoint.localId };
+				invertedMark.finalEndpoint = {
+					localId: mark.finalEndpoint.localId,
+					revision: mark.revision,
+				};
 			}
 			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
 		}

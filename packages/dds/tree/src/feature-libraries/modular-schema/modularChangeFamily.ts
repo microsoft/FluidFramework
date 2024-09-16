@@ -39,6 +39,7 @@ import {
 	type ChangeAtomId,
 	areEqualChangeAtomIdOpts,
 	tagChange,
+	makeAnonChange,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -234,7 +235,7 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			idState.maxId,
 			revInfos,
-			undefined,
+			undefined /* slices */,
 			allBuilds,
 			allDestroys,
 			allRefreshers,
@@ -690,18 +691,19 @@ export class ModularChangeFamily
 			change.change.destroys === undefined,
 			0x89a /* Unexpected destroys in change to invert */,
 		);
+		const { revInfos } = getRevInfoFromTaggedChanges([change]);
 
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset(
-				undefined,
-				undefined,
-				undefined,
-				undefined,
-				undefined,
+				undefined /* fieldChanges */,
+				undefined /* nodeChanges */,
+				undefined /* nodeToParent */,
+				undefined /* nodeAliases */,
+				undefined /* crossFieldKeys */,
 				change.change.maxId,
-				[],
-				undefined,
-				undefined,
+				revInfos,
+				undefined /* slices */,
+				undefined /* builds */,
 				destroys,
 			);
 		}
@@ -713,8 +715,6 @@ export class ModularChangeFamily
 			originalFieldToContext: new Map(),
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
 		};
-
-		const { revInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 
 		const invertedFields = this.invertFieldMap(
@@ -724,6 +724,7 @@ export class ModularChangeFamily
 			genId,
 			crossFieldTable,
 			revisionMetadata,
+			change.revision,
 		);
 
 		const invertedNodes: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
@@ -737,6 +738,7 @@ export class ModularChangeFamily
 					genId,
 					crossFieldTable,
 					revisionMetadata,
+					revision,
 				),
 			);
 		});
@@ -776,9 +778,9 @@ export class ModularChangeFamily
 			change.change.nodeAliases,
 			crossFieldKeys,
 			genId.getMaxId(),
-			[],
+			revInfos,
 			change.change.constraintViolationCount,
-			undefined,
+			undefined /* builds */,
 			destroys,
 		);
 	}
@@ -790,6 +792,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
+		revision: RevisionTag | undefined,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
 
@@ -823,6 +826,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
+		revision: RevisionTag | undefined,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -834,6 +838,7 @@ export class ModularChangeFamily
 				genId,
 				crossFieldTable,
 				revisionMetadata,
+				revision,
 			);
 		}
 
@@ -2573,7 +2578,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			content.mode === CursorLocationType.Fields
 				? chunkFieldSingle(content, chunkCompressor)
 				: chunkTree(content, chunkCompressor);
-		builds.set([undefined, firstId], chunk);
+		builds.set([revision, firstId], chunk);
 
 		return {
 			type: "global",
@@ -2619,7 +2624,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	public buildChanges(changes: EditDescription[]): ModularChangeset {
 		const changeMaps = changes.map((change) => {
-			return tagChange(
+			return makeAnonChange(
 				change.type === "global"
 					? makeModularChangeset(
 							undefined /* fieldChanges */,
@@ -2648,7 +2653,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							undefined /* childId */,
 							change.revision,
 						),
-				change.revision,
 			);
 		});
 		const composedChange: Mutable<ModularChangeset> =
