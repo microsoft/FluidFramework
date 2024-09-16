@@ -1982,21 +1982,22 @@ export const handlers: Handler[] = [
 			const currentDirectory = path.dirname(file);
 			try {
 				console.log(`Running depcheck for ${currentDirectory}...`);
-				const result = await depcheck(currentDirectory, options);
 				let logResult = "";
-				if (result.dependencies.length === 0 && result.devDependencies.length === 0) {
-					logResult = "No unused dependencies found.";
-				} else {
-					if (result.dependencies.length > 0) {
-						logResult = `Unused dependencies:\n${result.dependencies}`;
+				await depcheck(currentDirectory, options, (result) => {
+					if (result.dependencies.length === 0 && result.devDependencies.length === 0) {
+						logResult = "No unused dependencies found.";
+					} else {
+						if (result.dependencies.length > 0) {
+							logResult = `Unused dependencies:\n${result.dependencies}`;
+						}
+						if (result.devDependencies.length > 0) {
+							logResult = `Unused devDependencies:\n${result.devDependencies}`;
+						}
 					}
-					if (result.devDependencies.length > 0) {
-						logResult = `Unused devDependencies:\n${result.devDependencies}`;
-					}
-				}
+				});
 				return logResult;
 			} catch (error) {
-				return `Error running depcheck for ${currentDirectory}: ${error}`;
+				throw new Error(`Error running depcheck for ${currentDirectory}: ${error}`);
 			}
 		},
 	},
