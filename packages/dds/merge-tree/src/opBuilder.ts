@@ -16,6 +16,7 @@ import {
 	MergeTreeDeltaType,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
+import type { InteriorSequencePlace } from "./sequencePlace.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties
@@ -88,11 +89,14 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
-export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
+export function createObliterateRangeOp(
+	start: number | InteriorSequencePlace,
+	end: number | InteriorSequencePlace,
+	// eslint-disable-next-line import/no-deprecated
+): IMergeTreeObliterateMsg {
 	return {
-		pos1: start,
-		pos2: end,
+		pos1: typeof start === "number" ? start : start.pos,
+		pos2: typeof end === "number" ? end : end.pos,
 		type: MergeTreeDeltaType.OBLITERATE,
 	};
 }

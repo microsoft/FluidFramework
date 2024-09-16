@@ -127,6 +127,7 @@ export {
 	Side,
 	SequencePlace,
 	endpointPosAndSide,
+	normalizePlace,
 } from "./sequencePlace.js";
 export { SortedSet } from "./sortedSet.js";
 export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet.js";

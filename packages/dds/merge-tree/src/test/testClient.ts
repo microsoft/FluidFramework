@@ -23,10 +23,10 @@ import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
 import {
-	endpointPosAndSide,
 	IMergeTreeOptions,
 	ReferencePosition,
 	type SequencePlace,
+	normalizePlace,
 } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
@@ -45,6 +45,7 @@ import {
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
+	createObliterateRangeOp,
 	createRemoveRangeOp,
 } from "../opBuilder.js";
 import {
@@ -211,29 +212,13 @@ export class TestClient extends Client {
 		overwrite?: boolean;
 		opArgs: IMergeTreeDeltaOpArgs;
 	}): void {
-		const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
-
-		assert(
-			startPos !== undefined &&
-				endPos !== undefined &&
-				startSide !== undefined &&
-				endSide !== undefined &&
-				startPos !== "end" &&
-				endPos !== "start",
-			"start and end cannot be undefined because they were not passed in as undefined",
-		);
-		const numericalStart = startPos === "start" ? 0 : startPos;
-		const numericalEnd = endPos === "end" ? this.getLength() - 1 : endPos;
-
-		this.mergeTree.obliterateRange(
-			numericalStart,
-			numericalEnd,
+		this.obliterateRangeRemote({
+			start,
+			end,
 			refSeq,
-			clientId,
+			longClientId: this.getLongClientId(clientId),
 			seq,
-			overwrite,
-			opArgs,
-		);
+		});
 	}
 
 	public getText(start?: number, end?: number): string {
@@ -287,6 +272,32 @@ export class TestClient extends Client {
 		const segment = TextSegment.make(text, props);
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
+		);
+	}
+
+	public obliterateRangeRemote({
+		start,
+		end,
+		refSeq,
+		longClientId,
+		seq,
+	}: {
+		start: SequencePlace;
+		end: SequencePlace;
+		refSeq: number;
+		longClientId: string;
+		seq: number;
+	}): void {
+		const startPlace = normalizePlace(start);
+		const endPlace = normalizePlace(end);
+
+		this.applyMsg(
+			this.makeOpMessage(
+				createObliterateRangeOp(startPlace, endPlace),
+				seq,
+				refSeq,
+				longClientId,
+			),
 		);
 	}
 
