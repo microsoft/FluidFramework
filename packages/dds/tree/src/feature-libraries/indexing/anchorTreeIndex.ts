@@ -80,15 +80,16 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 			forEachNode(fieldCursor, (nodeCursor) => {
 				const keyFinder = getOrCreate(
 					this.keyFinders,
-					fieldCursor.type,
+					// the node schema type to look up
+					nodeCursor.type,
 					// if the indexer does not return a key finder for this schema, we cache a null value to indicate the indexer
 					// does not need to be called if this schema is encountered in the future
 					(schema) => indexer(schema) ?? null,
 				);
 
 				if (keyFinder !== null) {
-					const key = keyFinder(fieldCursor);
-					const anchor = fieldCursor.buildAnchor();
+					const key = keyFinder(nodeCursor);
+					const anchor = nodeCursor.buildAnchor();
 					const anchorNode = forest.anchors.locate(anchor) ?? fail("expected anchor node");
 
 					const nodes = this.nodes.get(key);
@@ -103,7 +104,10 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 					// when the anchor node is destroyed, delete it from the index
 					anchorNode.on("afterDestroy", () => {
 						const indexedNodes = this.nodes.get(key);
-						assert(indexedNodes !== undefined, "destroyed anchor node should be tracked by index");
+						assert(
+							indexedNodes !== undefined,
+							"destroyed anchor node should be tracked by index",
+						);
 						const index = indexedNodes.indexOf(anchorNode);
 						assert(index !== -1, "destroyed anchor node should be tracked by index");
 						const newNodes = filterNodes(nodes, (n) => n !== anchorNode);
