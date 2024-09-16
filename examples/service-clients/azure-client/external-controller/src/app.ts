@@ -75,6 +75,8 @@ const containerSchema = {
 		/* [id]: DataObject */
 		map1: SharedMap,
 		map2: SharedMap,
+		// A Presence Manager object temporarily needs to be placed within container schema
+		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
 		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;

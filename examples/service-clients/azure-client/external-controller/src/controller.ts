@@ -88,6 +88,8 @@ export class DiceRollerController
 	public readonly roll = (): void => {
 		const rollValue = (Math.floor(Math.random() * 6) + 1) as DieValue;
 		this.props.set(diceValueKey, rollValue);
+
+		// Also notify the caller of the local roll (local value setting).
 		this.onSet(rollValue);
 	};
 }
