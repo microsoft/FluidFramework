@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/data-objects",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"description": "A collection of ready to use Fluid Data Objects",
 	"homepage": "https://fluidframework.com",
 	"repository": {

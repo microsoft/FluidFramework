@@ -4105,6 +4105,9 @@ importers:
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
+      '@fluid-experimental/presence':
+        specifier: workspace:~
+        version: link:../../../../packages/framework/presence
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
@@ -4220,6 +4223,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      source-map-loader:
+        specifier: ^5.0.0
+        version: 5.0.0(webpack@5.94.0)
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.3

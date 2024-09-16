@@ -1933,7 +1933,10 @@ export class MergeTree {
 			refSeq,
 			clientId,
 		);
-		assert(startSeg !== undefined && endSeg !== undefined, "segments cannot be undefined");
+		assert(
+			startSeg !== undefined && endSeg !== undefined,
+			0xa3f /* segments cannot be undefined */,
+		);
 
 		obliterate.start = this.createLocalReferencePosition(
 			startSeg,
