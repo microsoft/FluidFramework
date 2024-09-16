@@ -47,7 +47,7 @@ export interface BatchStartInfo {
 /**
  * Result of processing the next inbound message.
  * Depending on the message and configuration of RemoteMessageProcessor, the result may be:
- * - A full batch of messages (including a single-message batch)
+ * - A full batch of messages (e.g. from a grouped batch or a single-message batch)
  * - The first message of a multi-message batch
  * - The next message in a multi-message batch
  */
@@ -181,8 +181,9 @@ export class RemoteMessageProcessor {
 	}
 
 	/**
-	 * Now that the message has been "unwrapped" as to any virtualization (grouping, compression, chunking),
+	 * Now that the message has been unchunked and decompressed (and was not Grouped - would have returned above),
 	 * inspect the batch metadata flag and determine what kind of result to return.
+	 * Could be a single-message batch, the start of a new batch, or the next message in the batch (maybe the last).
 	 */
 	private getResultBasedOnBatchMetadata(
 		message: InboundSequencedContainerRuntimeMessage & { clientId: string },

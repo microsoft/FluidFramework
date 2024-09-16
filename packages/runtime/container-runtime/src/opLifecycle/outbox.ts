@@ -327,8 +327,8 @@ export class Outbox {
 			);
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
-				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
-				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
+				clientSequenceNumber !== undefined && clientSequenceNumber >= 0,
+				0x9d2 /* unexpected negative clientSequenceNumber */,
 			);
 		}
 
@@ -422,14 +422,12 @@ export class Outbox {
 	/**
 	 * Sends the batch object to the container context to be sent over the wire.
 	 *
-	 * @param batch - batch to be sent
-	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
+	 * @param batch - batch to be sent. Must not be empty
+	 * @returns the clientSequenceNumber of the start of the batch
 	 */
-	private sendBatch(batch: IBatch) {
+	private sendBatch(batch: IBatch): number {
 		const length = batch.messages.length;
-		if (length === 0) {
-			return undefined; // Nothing submitted
-		}
+		assert(length > 0, "This function expects a non-empty batch");
 
 		const socketSize = estimateSocketSize(batch);
 		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
@@ -466,7 +464,10 @@ export class Outbox {
 
 		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
 		clientSequenceNumber -= length - 1;
+
+		// Negative CSN would indicate the batch wasn't sent, but we only call this if shouldSend is true.
 		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
+
 		return clientSequenceNumber;
 	}
 

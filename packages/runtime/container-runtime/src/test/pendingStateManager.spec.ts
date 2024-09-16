@@ -157,14 +157,14 @@ describe("Pending State Manager", () => {
 					metadata: message.metadata as any as Record<string, unknown> | undefined,
 					localOpMetadata,
 				})),
-				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
+				clientSequenceNumber ?? messages[0]?.clientSequenceNumber, // shortcut to avoid having to pass csn to this helper in most cases
 			);
 		};
 
 		const processFullBatch = (
 			messages: Partial<ISequencedDocumentMessage>[],
 			batchStartCsn: number,
-			emptyBatchSequenceNumber?: number,
+			keyMessage?: Partial<ISequencedDocumentMessage>,
 			resubmittedBatchId?: string,
 		) =>
 			pendingStateManager.processInboundMessages(
@@ -173,9 +173,7 @@ describe("Pending State Manager", () => {
 					messages: messages as InboundSequencedContainerRuntimeMessage[],
 					batchStart: {
 						batchStartCsn,
-						keyMessage: {
-							sequenceNumber: emptyBatchSequenceNumber,
-						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						keyMessage: (keyMessage ?? messages[0]) as ISequencedDocumentMessage,
 						clientId,
 						batchId: resubmittedBatchId,
 					},
@@ -187,29 +185,64 @@ describe("Pending State Manager", () => {
 		it("Grouped batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
 				{
-					clientId,
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					referenceSequenceNumber: 0,
 					metadata: { batch: true },
+					sequenceNumber: 1,
 				},
 				{
-					clientId,
 					type: MessageType.Operation,
 					clientSequenceNumber: 1,
 					referenceSequenceNumber: 0,
+					sequenceNumber: 2,
 				},
 				{
-					clientId,
 					type: MessageType.Operation,
 					metadata: { batch: false },
 					clientSequenceNumber: 2,
 					referenceSequenceNumber: 0,
+					sequenceNumber: 3,
 				},
 			];
 
+			// Note: sequenceNumber is ignored by submitBatch, it's included on messages for the process call below
 			submitBatch(messages);
-			processFullBatch(messages, 0 /* batchStartCsn */);
+			<<<<<<< HEAD
+
+			const [pendingMessage0, pendingMessage1, pendingMessage2, ...nothingA] =
+				pendingStateManager.getLocalState().pendingStates;
+			assert.equal(
+				pendingMessage0.batchInfo.batchStartCsn,
+				0,
+				"Incorrect batchStartCsn on first pending message",
+			);
+			assert.deepEqual(
+				[pendingMessage0, pendingMessage1, pendingMessage2].map(
+					(m) => m?.referenceSequenceNumber,
+				),
+				[0, 0, 0],
+				"Incorrect referenceSequenceNumbers on pending messages",
+			);
+			assert.equal(nothingA.length, 0, "Unexpected extra pending messages");
+
+			process(messages, 0 /* batchStartCsn */);
+
+			const [savedMessage0, savedMessage1, savedMessage2, ...nothingB] =
+				pendingStateManager.getLocalState().pendingStates;
+			assert.equal(
+				savedMessage0.batchInfo.batchStartCsn,
+				0,
+				"Incorrect batchStartCsn on first saved message",
+			);
+			assert.deepEqual(
+				[savedMessage0, savedMessage1, savedMessage2].map((m) => m?.sequenceNumber),
+				[1, 2, 3],
+				"Incorrect sequenceNumbers on pending messages",
+			);
+			assert.equal(nothingB.length, 0, "Unexpected extra saved messages");
+			=======
+			processFullBatch(messages, 0 /* batchStartCsn */)
 		});
 
 		it("Ungrouped batch is processed correctly", () => {
@@ -265,31 +298,45 @@ describe("Pending State Manager", () => {
 				} satisfies InboundMessageResult,
 				true /* local */,
 			);
+			>>>>>>> main
 		});
 
 		it("empty batch is processed correctly", () => {
 			// Empty batch is reflected in the pending state manager as a single message
 			// with the following metadata:
+			const emptyBatch = {
+				contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
+				referenceSequenceNumber: 0,
+				metadata: { batchId: "batchId" },
+				sequenceNumber: 3,
+			};
+
+			// Note: sequenceNumber is ignored by submitBatch, it's included on the message for the process call below
 			submitBatch(
-				[
-					{
-						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
-						referenceSequenceNumber: 0,
-						metadata: { batchId: "batchId" },
-					},
-				],
+				[emptyBatch],
 				1 /* clientSequenceNumber */,
-				{ emptyBatch: true },
+				{ emptyBatch: true } /* localOpMetadata */,
 			);
+
+			const [pendingEmptyBatch, ...nothingA] =
+				pendingStateManager.getLocalState().pendingStates;
+			assert.equal(pendingEmptyBatch.batchInfo.batchStartCsn, 1);
+			assert.equal(nothingA.length, 0);
+
 			// A groupedBatch is supposed to have nested messages inside its contents,
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
 			// the psm will expect the next pending message to be an "empty" message as portrayed above.
 			processFullBatch(
 				[],
 				1 /* batchStartCsn */,
-				3 /* emptyBatchSequenceNumber */,
+				emptyBatch /* keyMessage */,
 				"batchId" /* resubmittedBatchId */,
 			);
+
+			const [savedEmptyBatch, ...nothingB] = pendingStateManager.getLocalState().pendingStates;
+			assert.deepEqual(savedEmptyBatch.batchInfo.batchStartCsn, 1);
+			assert.equal(savedEmptyBatch.sequenceNumber, 3);
+			assert.equal(nothingB.length, 0);
 		});
 
 		describe("processing out of sync messages will throw and log", () => {
