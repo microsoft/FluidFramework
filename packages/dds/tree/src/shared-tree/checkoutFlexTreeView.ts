@@ -36,7 +36,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 
 	public constructor(
 		/**
-		 * Access non-view schema specific aspects of of this branch.
+		 * Access non-view schema specific aspects of this branch.
 		 *
 		 * @remarks
 		 * This is a non-owning reference: disposing of this view does not impact the branch.
