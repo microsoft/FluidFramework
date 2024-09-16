@@ -68,7 +68,7 @@ describe("obliterate", () => {
 	});
 });
 
-describe.skip("overlapping edits", () => {
+describe("overlapping edits", () => {
 	itCorrectlyObliterates({
 		title: "overlapping obliterate and obliterate",
 		action: (helper) => {
@@ -79,12 +79,12 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange(
 				"A",
 				{ pos: 0, side: Side.Before },
-				{ pos: text.length, side: Side.After },
+				{ pos: text.length - 1, side: Side.After },
 			);
 			helper.obliterateRange(
 				"B",
 				{ pos: 0, side: Side.Before },
-				{ pos: text.length, side: Side.After },
+				{ pos: text.length - 1, side: Side.After },
 			);
 		},
 		expectedText: "",
@@ -95,11 +95,11 @@ describe.skip("overlapping edits", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
-			helper.obliterateRange("B", { pos: 4, side: Side.Before }, { pos: 6, side: Side.After });
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 3, side: Side.After });
+			helper.obliterateRange("B", { pos: 4, side: Side.Before }, { pos: 5, side: Side.After });
 		},
 		expectedText: "heworld",
-		expectedEventCount: 2,
+		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "remove within obliterated range",
@@ -109,7 +109,7 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 5, side: Side.After });
 			helper.removeRange("B", 3, 4);
 		},
-		expectedText: "he world",
+		expectedText: "heworld",
 		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
@@ -120,8 +120,8 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange("A", { pos: 1, side: Side.After }, { pos: 5, side: Side.After });
 			helper.removeRange("B", 1, 2);
 		},
-		expectedText: "he world",
-		expectedEventCount: 2,
+		expectedText: "hworld",
+		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "obliterate, then remove adjacent to range end",
@@ -131,8 +131,8 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			helper.removeRange("B", 4, 6);
 		},
-		expectedText: "he world",
-		expectedEventCount: 2,
+		expectedText: "heworld",
+		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "remove, then obliterate adjacent to range start",
@@ -153,7 +153,7 @@ describe.skip("overlapping edits", () => {
 			helper.removeRange("A", 2, 4);
 			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 6, side: Side.After });
 		},
-		expectedText: "heworld",
+		expectedText: "heorld",
 		expectedEventCount: 3,
 	});
 });
