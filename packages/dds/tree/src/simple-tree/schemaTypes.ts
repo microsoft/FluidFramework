@@ -261,6 +261,10 @@ export let createFieldSchema: <
  * @privateRemarks
  * Public access to the constructor is removed to prevent creating expressible but unsupported (or not stable) configurations.
  * {@link createFieldSchema} can be used internally to create instances.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
  * @sealed @public
  */
 export class FieldSchema<
