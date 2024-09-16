@@ -1556,6 +1556,53 @@ describe("toMapTree", () => {
 				// Map makes array
 				assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [arraySchema]);
 			});
+
+			it("inherited properties types", () => {
+				const f = new SchemaFactory("test");
+				class Optional extends f.object("x", {
+					constructor: f.optional(f.number),
+				}) {}
+				class Required extends f.object("x", {
+					constructor: f.number,
+				}) {}
+				class Other extends f.object("y", {
+					other: f.number,
+				}) {}
+				// Ignore inherited constructor field
+				assert.deepEqual(getPossibleTypes(new Set([Optional, Required, Other]), {}), [
+					Optional,
+				]);
+				// Allow overridden field
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), { constructor: 5 }),
+					[Optional, Required],
+				);
+				// Allow overridden undefined
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), { constructor: undefined }),
+					[Optional],
+				);
+				// Multiple Fields
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), {
+						constructor: undefined,
+						other: 6,
+					}),
+					[Optional, Other],
+				);
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), {
+						constructor: 5,
+						other: 6,
+					}),
+					[Optional, Required, Other],
+				);
+				// No properties
+				assert.deepEqual(
+					getPossibleTypes(new Set([Optional, Required, Other]), Object.create(null)),
+					[Optional],
+				);
+			});
 		});
 
 		describe("addDefaultsToMapTree", () => {

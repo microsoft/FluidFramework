@@ -1,79 +1,78 @@
 {
-	"name": "fluidframework-docs",
-	"version": "0.25.0",
+	"name": "fluid-framework-docs-site",
+	"version": "0.0.0",
 	"private": true,
-	"description": "Fluid Framework documentation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "docs"
+		"directory": "docusaurus"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"type": "module",
 	"scripts": {
-		"build": "concurrently npm:build:api npm:build:md-magic && npm run hugo",
-		"build:api": "npm run download:api && npm run build:api-documentation && npm run build:redirects",
-		"build:api-documentation": "node ./api-markdown-documenter/index.js",
-		"build:md-magic": "markdown-magic",
-		"build:md-magic:code": "markdown-magic --files \"**/*.md\" !docs --workingDirectory ..",
-		"build:redirects": "node ./build-redirects.js",
-		"build:repo-docs": "npm run build:md-magic:code",
-		"ci:build": "npm run build",
-		"ci:linkcheck": "start-server-and-test ci:start 1313 linkcheck:full",
-		"ci:start": "http-server ./public --port 1313 --silent",
-		"clean": "rimraf --glob public content/docs/api _api-extractor-temp _doc-models",
-		"download:api": "node ./download-apis.js",
-		"format": "npm run prettier:fix",
-		"hugo": "hugo",
-		"linkcheck": "start-server-and-test start 1313 linkcheck:full",
-		"linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
-		"linkcheck:full": "npm run linkcheck:fast -- --external",
-		"lint": "npm run markdownlint && npm run prettier",
-		"lint:fix": "npm run markdownlint:fix && npm run prettier:fix",
-		"markdownlint": "markdownlint-cli2",
-		"markdownlint:fix": "markdownlint-cli2 --fix",
-		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
-		"start": "hugo server"
+		"api-markdown-documenter": "node ./infra/generate-api-documentation.mjs",
+		"build": "npm run build:api-documentation && npm run build:docusaurus",
+		"build:api-documentation": "npm run download-doc-models && npm run api-markdown-documenter",
+		"build:docusaurus": "docusaurus build",
+		"clean": "concurrently \"npm:clean:*\"",
+		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\"",
+		"clean:doc-models": "rimraf --glob .doc-models",
+		"clean:docusaurus": "docusaurus clear",
+		"deploy": "docusaurus deploy",
+		"docusaurus": "docusaurus",
+		"download-doc-models": "node ./infra/download-doc-models.mjs",
+		"rebuild": "npm run clean && npm run build",
+		"serve": "docusaurus serve",
+		"start": "docusaurus start",
+		"swizzle": "docusaurus swizzle",
+		"tsc": "tsc",
+		"write-heading-ids": "docusaurus write-heading-ids",
+		"write-translations": "docusaurus write-translations"
+	},
+	"browserslist": {
+		"production": [
+			">0.5%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 3 chrome version",
+			"last 3 firefox version",
+			"last 5 safari version"
+		]
 	},
 	"dependencies": {
+		"@docusaurus/core": "^3.5.2",
+		"@docusaurus/module-type-aliases": "^3.5.2",
+		"@docusaurus/plugin-content-docs": "^3.5.2",
+		"@docusaurus/preset-classic": "^3.5.2",
+		"@docusaurus/theme-common": "^3.5.2",
+		"@docusaurus/theme-mermaid": "^3.5.2",
+		"@docusaurus/tsconfig": "^3.5.2",
+		"@docusaurus/types": "^3.5.2",
+		"@fluentui/react-components": "^9.47.5",
+		"@fluentui/react-icons": "^2.0.233",
 		"@fluid-tools/api-markdown-documenter": "^0.16.0",
-		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
-		"@fluidframework/build-common": "^2.0.3",
-		"@rushstack/node-core-library": "^4.0.2",
-		"@vscode/codicons": "0.0.35",
+		"@mdx-js/react": "^3.0.0",
+		"@rushstack/node-core-library": "^5.7.0",
 		"chalk": "^5.3.0",
+		"clsx": "^2.0.0",
 		"concurrently": "^8.2.2",
-		"deepdash": "^5.3.9",
+		"docusaurus-lunr-search": "^3.4.0",
+		"docusaurus-plugin-sass": "^0.2.5",
 		"download": "8.0.0",
 		"fs-extra": "^11.2.0",
-		"glob": "^10.3.12",
-		"http-server": "^14.1.1",
-		"hugo-extended": "^0.113.0",
-		"js-yaml": "^4.1.0",
-		"linkcheck-bin": "3.0.0-1",
-		"markdown-magic-package-json": "^2.0.2",
-		"markdown-magic-package-scripts": "^1.2.2",
-		"markdown-magic-template": "^1.0.1",
-		"markdownlint-cli2": "^0.12.1",
-		"markdownlint-rule-emphasis-style": "^1.0.1",
-		"markdownlint-rule-github-internal-links": "^0.1.0",
-		"markdownlint-rule-helpers": "^0.25.0",
-		"node-fetch": "^3.3.2",
-		"prettier": "~3.2.5",
-		"prettier-plugin-go-template": "^0.0.15",
-		"rimraf": "^5.0.5",
-		"start-server-and-test": "^2.0.3"
+		"lunr": "^2.3.9",
+		"prettier": "^3.2.5",
+		"prism-react-renderer": "^2.3.0",
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0",
+		"rimraf": "^6.0.1",
+		"sass": "^1.77.8",
+		"typescript": "~5.5.2"
 	},
-	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
-	"pnpm": {
-		"peerDependencyRules": {
-			"ignoreMissing": [
-				"eslint",
-				"typescript"
-			]
-		}
+	"engines": {
+		"node": ">=18.0"
 	}
 }

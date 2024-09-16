@@ -1,7 +1,0 @@
-{{- $issueNum := .Get 0 -}}
-{{- $url := path.Join .Site.Params.Githubrepo "issues" $issueNum -}}
-{{- $url = delimit (slice "https://github.com/" $url) "" -}}
-
-<a href="{{ $url }}">#{{- $issueNum -}}</a>
-
-{{- /* Strip trailing newline. */ -}}

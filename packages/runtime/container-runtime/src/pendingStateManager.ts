@@ -251,7 +251,7 @@ export class PendingStateManager implements IDisposable {
 			: [uuid(), -1]; // -1 will indicate not a real clientId/CSN pair
 		assert(
 			clientId !== undefined,
-			"clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case",
+			0xa33 /* clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case */,
 		);
 
 		for (const message of batch) {
