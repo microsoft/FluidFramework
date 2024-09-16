@@ -41,7 +41,6 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
-	type FieldSchemaMetadata,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -553,14 +552,17 @@ export class SchemaFactory<
 	 *
 	 * @param t - The types allowed under the field.
 	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
 	public optional<
 		const T extends ImplicitAllowedTypes,
-		const TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata,
+		const TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
 	>(
 		t: T,
-		props?: Omit<FieldProps<TMetadata>, "defaultProvider">,
-	): FieldSchema<FieldKind.Optional, T, TMetadata> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
 		});
@@ -579,14 +581,17 @@ export class SchemaFactory<
 	 * @remarks
 	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
 	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
 	public required<
 		const T extends ImplicitAllowedTypes,
-		const TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata,
+		const TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
 	>(
 		t: T,
-		props?: Omit<FieldProps<TMetadata>, "defaultProvider">,
-	): FieldSchema<FieldKind.Required, T, TMetadata> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
 

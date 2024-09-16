@@ -98,9 +98,14 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
 /**
  * Additional information to provide to a {@link FieldSchema}.
  *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
  * @public
  */
-export interface FieldProps<TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata> {
+export interface FieldProps<
+	TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
+> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -164,7 +169,7 @@ export interface FieldProps<TMetadata extends FieldSchemaMetadata = FieldSchemaM
 	 * Optional metadata to associate with the field.
 	 * @remarks Note: this metadata is not persisted in the document.
 	 */
-	readonly metadata?: TMetadata;
+	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
 
 /**
@@ -218,7 +223,14 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
  * @sealed
  * @public
  */
-export interface FieldSchemaMetadata extends Record<string, unknown> {
+export interface FieldSchemaMetadata<
+	TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
+> {
+	/**
+	 * User-defined metadata.
+	 */
+	custom?: TCustomMetadata;
+
 	/**
 	 * The description of the field.
 	 *
@@ -237,12 +249,12 @@ export interface FieldSchemaMetadata extends Record<string, unknown> {
 export let createFieldSchema: <
 	Kind extends FieldKind = FieldKind,
 	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata,
+	TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
 >(
 	kind: Kind,
 	allowedTypes: Types,
-	props?: FieldProps<TMetadata>,
-) => FieldSchema<Kind, Types, TMetadata>;
+	props?: FieldProps<TCustomMetadata>,
+) => FieldSchema<Kind, Types, TCustomMetadata>;
 
 /**
  * All policy for a specific field,
@@ -258,17 +270,17 @@ export let createFieldSchema: <
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-	TMetadata extends FieldSchemaMetadata = FieldSchemaMetadata,
+	out TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
 > {
 	static {
 		createFieldSchema = <
 			Kind2 extends FieldKind = FieldKind,
 			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-			TMetadata2 extends FieldSchemaMetadata = FieldSchemaMetadata,
+			TCustomMetadata2 extends Record<string, unknown> = Record<string, unknown>,
 		>(
 			kind: Kind2,
 			allowedTypes: Types2,
-			props?: FieldProps<TMetadata2>,
+			props?: FieldProps<TCustomMetadata2>,
 		) => new FieldSchema(kind, allowedTypes, props);
 	}
 	/**
@@ -295,7 +307,7 @@ export class FieldSchema<
 	/**
 	 * {@inheritDoc FieldProps.metadata}
 	 */
-	public get metadata(): TMetadata | undefined {
+	public get metadata(): FieldSchemaMetadata<TCustomMetadata> | undefined {
 		return this.props?.metadata;
 	}
 
@@ -312,7 +324,7 @@ export class FieldSchema<
 		/**
 		 * Optional properties associated with the field.
 		 */
-		public readonly props?: FieldProps<TMetadata>,
+		public readonly props?: FieldProps<TCustomMetadata>,
 	) {
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
 		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
