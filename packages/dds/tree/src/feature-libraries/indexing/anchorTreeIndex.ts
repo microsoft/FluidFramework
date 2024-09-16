@@ -102,9 +102,9 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 					this.anchors.set(anchorNode, anchor);
 					// when the anchor node is destroyed, delete it from the index
 					anchorNode.on("afterDestroy", () => {
-						const ns = this.nodes.get(key);
-						assert(ns !== undefined, "destroyed anchor node should be tracked by index");
-						const index = ns.indexOf(anchorNode);
+						const indexedNodes = this.nodes.get(key);
+						assert(indexedNodes !== undefined, "destroyed anchor node should be tracked by index");
+						const index = indexedNodes.indexOf(anchorNode);
 						assert(index !== -1, "destroyed anchor node should be tracked by index");
 						const newNodes = filterNodes(nodes, (n) => n !== anchorNode);
 						if (newNodes !== undefined) {
