@@ -12107,7 +12107,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       depcheck:
-        specifier: 1.4.7
+        specifier: ^1.4.7
         version: 1.4.7
       eslint:
         specifier: ~8.55.0
