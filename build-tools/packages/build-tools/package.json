@@ -63,7 +63,8 @@
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5",
-		"yaml": "^2.3.1"
+		"yaml": "^2.3.1",
+		"depcheck": "^1.4.7"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
