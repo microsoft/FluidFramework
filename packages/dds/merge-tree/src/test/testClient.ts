@@ -216,7 +216,7 @@ export class TestClient extends Client {
 			start,
 			end,
 			refSeq,
-			longClientId: this.getLongClientId(clientId),
+			longClientId: "remote",
 			seq,
 		});
 	}
