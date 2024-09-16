@@ -28,6 +28,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
+	type RevertibleFactory,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
@@ -50,7 +51,6 @@ export {
 	type SharedTreeOptions,
 	ForestType,
 	type SharedTreeContentSnapshot,
-	type RevertibleFactory,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -93,6 +93,7 @@ export {
 	type FieldProps,
 	type InternalTreeNode,
 	type WithType,
+	type NodeChangedData,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -124,6 +125,9 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
+	// Beta APIs
+	TreeBeta,
+	type TreeChangeEventsBeta,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,

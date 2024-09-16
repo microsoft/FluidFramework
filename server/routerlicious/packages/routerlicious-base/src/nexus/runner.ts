@@ -20,6 +20,7 @@ import {
 	ITokenRevocationManager,
 	IWebSocketTracker,
 	IRevokedTokenChecker,
+	ICollaborationSessionTracker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -58,6 +59,7 @@ export class NexusRunner implements IRunner {
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
+		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -111,6 +113,7 @@ export class NexusRunner implements IRunner {
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
+				this.collaborationSessionTracker,
 			);
 
 			if (this.tokenRevocationManager) {

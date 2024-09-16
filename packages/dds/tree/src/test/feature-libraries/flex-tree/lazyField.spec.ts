@@ -43,7 +43,6 @@ import {
 import {
 	booleanSchema,
 	cursorFromInsertable,
-	nullSchema,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
@@ -120,24 +119,9 @@ describe("LazyField", () => {
 			detachedFieldAnchor,
 		);
 
-		assert(
-			booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(booleanSchema)]),
-			),
-		);
-
-		// Different types
-		assert(
-			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(nullSchema)]),
-			),
-		);
+		assert(booleanOptionalField.is(FieldKinds.optional));
 		// Different kinds
-		assert(
-			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.required, [getFlexSchema(booleanSchema)]),
-			),
-		);
+		assert(!booleanOptionalField.is(FieldKinds.required));
 		// #endregion
 	});
 
@@ -272,7 +256,7 @@ describe("LazyOptionalField", () => {
 
 		it("boxedAt", () => {
 			const boxedResult = field.boxedAt(0) ?? assert.fail();
-			assert.equal(boxedResult.schema, getFlexSchema(numberSchema));
+			assert.equal(boxedResult.schema, numberSchema.identifier);
 			assert.equal(boxedResult.value, 42);
 		});
 
@@ -362,7 +346,7 @@ describe("LazyValueField", () => {
 
 	it("boxedAt", () => {
 		const boxedResult = field.boxedAt(0) ?? assert.fail();
-		assert.equal(boxedResult.schema, getFlexSchema(stringSchema));
+		assert.equal(boxedResult.schema, stringSchema.identifier);
 		assert.equal(boxedResult.value, initialTree);
 	});
 
@@ -439,15 +423,15 @@ describe("LazySequence", () => {
 	it("boxedAt", () => {
 		const sequence = testSequence([37, 42]);
 		const boxedResult0 = sequence.boxedAt(0) ?? assert.fail();
-		assert.equal(boxedResult0.schema, getFlexSchema(numberSchema));
+		assert.equal(boxedResult0.schema, numberSchema.identifier);
 		assert.equal(boxedResult0.value, 37);
 
 		const boxedResult1 = sequence.boxedAt(1) ?? assert.fail();
-		assert.equal(boxedResult1.schema, getFlexSchema(numberSchema));
+		assert.equal(boxedResult1.schema, numberSchema.identifier);
 		assert.equal(boxedResult1.value, 42);
 
 		const boxedResultNeg1 = sequence.boxedAt(-1) ?? assert.fail();
-		assert.equal(boxedResultNeg1.schema, getFlexSchema(numberSchema));
+		assert.equal(boxedResultNeg1.schema, numberSchema.identifier);
 		assert.equal(boxedResultNeg1.value, 42);
 
 		assert.equal(sequence.boxedAt(2), undefined);

@@ -13,11 +13,10 @@ import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
+import { type IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
 import { options } from "../fluidBuild/options";
-import { type IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, PackageManager } from "./monoRepo";
-import { type ITypeValidationConfig } from "./typeValidatorConfig";
 import {
 	ExecAsyncResult,
 	execWithErrorAsync,
@@ -40,12 +39,6 @@ export type FluidPackageJson = {
 	 * nyc config
 	 */
 	nyc?: any;
-
-	/**
-	 * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
-	 * it at the root of the repo or release group has no effect.
-	 */
-	typeValidation?: ITypeValidationConfig;
 
 	/**
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.

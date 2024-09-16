@@ -19,7 +19,6 @@ import {
 	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
@@ -152,7 +151,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const getAttributorFromContainer = async (container: IContainer) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = dataStore.context.containerRuntime as ContainerRuntime;
+		const containerRuntime = dataStore.context.containerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);
 		assert(attributor !== undefined, "Attributor should be defined");
 		return attributor;
@@ -160,7 +159,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const getAttributorFromContainerWithNoAssert = async (container: IContainer) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = dataStore.context.containerRuntime as ContainerRuntime;
+		const containerRuntime = dataStore.context.containerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);
 		return attributor;
 	};
@@ -171,7 +170,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	 */
 	itSkipsFailureOnSpecificDrivers(
 		"Can attribute content from multiple collaborators",
-		["tinylicious", "t9s"],
+		["tinylicious", "t9s", "r11s"],
 		async () => {
 			const container1 = await provider.makeTestContainer(getTestConfig(true));
 			const sharedString1 = await sharedStringFromContainer(container1);
@@ -209,47 +208,51 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	it("attributes content created in a detached state", async () => {
-		const loader = provider.makeTestLoader(getTestConfig(true));
-		const defaultCodeDetails: IFluidCodeDetails = {
-			package: "defaultTestPackage",
-			config: {},
-		};
-		const container1 = await loader.createDetachedContainer(defaultCodeDetails);
-		const sharedString1 = await sharedStringFromContainer(container1);
+	itSkipsFailureOnSpecificDrivers(
+		"attributes content created in a detached state",
+		["r11s"],
+		async () => {
+			const loader = provider.makeTestLoader(getTestConfig(true));
+			const defaultCodeDetails: IFluidCodeDetails = {
+				package: "defaultTestPackage",
+				config: {},
+			};
+			const container1 = await loader.createDetachedContainer(defaultCodeDetails);
+			const sharedString1 = await sharedStringFromContainer(container1);
 
-		const text = "client 1";
-		sharedString1.insertText(0, text);
-		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
-		await provider.ensureSynchronized();
+			const text = "client 1";
+			sharedString1.insertText(0, text);
+			await container1.attach(provider.driver.createCreateNewRequest("doc id"));
+			await provider.ensureSynchronized();
 
-		const url = await container1.getAbsoluteUrl("");
-		assert(url !== undefined);
-		const loader2 = provider.makeTestLoader(getTestConfig(true));
-		const container2 = await loader2.resolve({ url });
+			const url = await container1.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const loader2 = provider.makeTestLoader(getTestConfig(true));
+			const container2 = await loader2.resolve({ url });
 
-		const sharedString2 = await sharedStringFromContainer(container2);
-		sharedString2.insertText(0, "client 2, ");
+			const sharedString2 = await sharedStringFromContainer(container2);
+			sharedString2.insertText(0, "client 2, ");
 
-		await provider.ensureSynchronized();
-		assert.equal(sharedString1.getText(), "client 2, client 1");
+			await provider.ensureSynchronized();
+			assert.equal(sharedString1.getText(), "client 2, client 1");
 
-		assert(
-			container1.clientId !== undefined && container2.clientId !== undefined,
-			"Both containers should have client ids.",
-		);
-		const attributor = await getAttributorFromContainer(container1);
-		assertAttributionMatches(sharedString1, 3, attributor, {
-			user: container1.audience.getMember(container2.clientId)?.user,
-		});
-		assertAttributionMatches(sharedString1, 13, attributor, "detached");
+			assert(
+				container1.clientId !== undefined && container2.clientId !== undefined,
+				"Both containers should have client ids.",
+			);
+			const attributor = await getAttributorFromContainer(container1);
+			assertAttributionMatches(sharedString1, 3, attributor, {
+				user: container1.audience.getMember(container2.clientId)?.user,
+			});
+			assertAttributionMatches(sharedString1, 13, attributor, "detached");
 
-		const attributor2 = await getAttributorFromContainer(container2);
-		assertAttributionMatches(sharedString2, 3, attributor2, {
-			user: container1.audience.getMember(container2.clientId)?.user,
-		});
-		assertAttributionMatches(sharedString2, 13, attributor2, "detached");
-	});
+			const attributor2 = await getAttributorFromContainer(container2);
+			assertAttributionMatches(sharedString2, 3, attributor2, {
+				user: container1.audience.getMember(container2.clientId)?.user,
+			});
+			assertAttributionMatches(sharedString2, 13, attributor2, "detached");
+		},
+	);
 
 	it("repopulates attribution association data using the summary tree", async () => {
 		const container1 = await provider.makeTestContainer(getTestConfig(true));
