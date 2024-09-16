@@ -103,7 +103,6 @@ export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
 	/**
 	 * The kinds of items allowed under the array.
-	 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
 	 *
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-items}.
 	 */
