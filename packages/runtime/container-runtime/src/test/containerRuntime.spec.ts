@@ -789,7 +789,8 @@ describe("Runtime", () => {
 					replayPendingStates: () => {},
 					hasPendingMessages: (): boolean => pendingMessages > 0,
 					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {
-						const messages = inbound.messages;
+						const messages =
+							inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
 						return messages.map<{
 							message: InboundSequencedContainerRuntimeMessage;
 							localOpMetadata?: unknown;

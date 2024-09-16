@@ -353,7 +353,7 @@ export class PendingStateManager implements IDisposable {
 		}
 
 		// No localOpMetadata for remote messages
-		const messages = inbound.messages;
+		const messages = inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
 		return messages.map((message) => ({ message }));
 	}
 
@@ -368,7 +368,9 @@ export class PendingStateManager implements IDisposable {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
-		this.onLocalBatchBegin(inbound.batchStart, inbound.length);
+		if ("batchStart" in inbound) {
+			this.onLocalBatchBegin(inbound.batchStart, inbound.length);
+		}
 
 		// Empty batch
 		if (inbound.length === 0) {
@@ -382,7 +384,7 @@ export class PendingStateManager implements IDisposable {
 			return [];
 		}
 
-		const messages = inbound.messages;
+		const messages = inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
 
 		return messages.map((message) => ({
 			message,
