@@ -18,12 +18,29 @@ import { disposeSymbol } from "../util/index.js";
 import type { ITreeCheckout, ITreeCheckoutFork } from "./treeCheckout.js";
 
 /**
- * Implementation of FlexTreeView wrapping a ITreeCheckout.
+ * An editable view of a (version control style) branch of a shared tree.
  */
 export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeCheckout> {
+	/**
+	 * Context for controlling the FlexTree nodes produced from {@link FlexTreeView.flexTree}.
+	 *
+	 * @remarks
+	 * This is an owning reference: disposing of this view disposes its context.
+	 */
 	public readonly context: Context;
+
+	/**
+	 * Get a typed view of the tree content using the flex-tree API.
+	 */
 	public readonly flexTree: FlexTreeField;
+
 	public constructor(
+		/**
+		 * Access non-view schema specific aspects of of this branch.
+		 *
+		 * @remarks
+		 * This is a non-owning reference: disposing of this view does not impact the branch.
+		 */
 		public readonly checkout: TCheckout,
 		public readonly schema: FlexTreeSchema,
 		public readonly nodeKeyManager: NodeKeyManager,
@@ -43,6 +60,10 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 		this.onDispose?.();
 	}
 
+	/**
+	 * Spawn a new view which is based off of the current state of this view.
+	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
+	 */
 	public fork(): CheckoutFlexTreeView<ITreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
