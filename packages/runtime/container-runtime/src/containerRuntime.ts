@@ -2709,11 +2709,12 @@ export class ContainerRuntime
 		ensureContentsDeserialized(messageCopy, hasModernRuntimeMessageEnvelope, logLegacyCase);
 		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
-			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
+			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a message or batch of messages with ContainerMessageType
 			const inboundResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
 			if (inboundResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
+				// e.g. a leading chunk of a chunked message
 				return;
 			}
 
@@ -2761,10 +2762,7 @@ export class ContainerRuntime
 			}
 
 			if (messagesWithPendingState.length === 0) {
-				assert(
-					inboundResult.type === "fullBatch",
-					"Empty batch is always considered a full batch",
-				);
+				assert(inboundResult.type === "fullBatch", "Empty batch is considered a full batch");
 				/**
 				 * We need to process an empty batch, which will execute expected actions while processing even if there
 				 * are no inner runtime messages.
