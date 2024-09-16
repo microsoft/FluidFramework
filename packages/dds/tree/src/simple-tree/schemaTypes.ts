@@ -212,13 +212,9 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
 }
 
 /**
- * Default field schema metadata shape.
+ * Metadata associated with a {@link FieldSchema}.
  *
- * @remarks
- *
- * All properties are strictly optional.
- * These particular properties exist both as an example of what kinds of data can be associated with a field,
- * and may also be used by the system and related tooling in some cases.
+ * @remarks Specified via {@link FieldProps.metadata}.
  *
  * @sealed
  * @public
