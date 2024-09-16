@@ -52,7 +52,7 @@ class IndexableParent extends schemaFactory.object("IndexableParent", {
 	child: schemaFactory.optional(IndexableChild),
 }) {}
 
-describe.only("simple tree indexes", () => {
+describe("simple tree indexes", () => {
 	function createView(child?: IndexableChild) {
 		const config = new TreeViewConfiguration({ schema: IndexableParent });
 		const view = getView(config);
