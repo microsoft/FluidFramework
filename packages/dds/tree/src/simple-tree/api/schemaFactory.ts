@@ -48,6 +48,7 @@ import type {
 	WithType,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
 } from "../core/index.js";
 import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
@@ -331,7 +332,7 @@ export class SchemaFactory<
 	 */
 	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
