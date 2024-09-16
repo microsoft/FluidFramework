@@ -224,10 +224,7 @@ export type FlexMapFieldSchema = FlexFieldSchema<
  *
  * @sealed
  */
-export class FlexFieldSchema<
-	out TKind extends FlexFieldKind = FlexFieldKind,
-	const out TMetadata = unknown,
-> {
+export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
@@ -266,7 +263,7 @@ export class FlexFieldSchema<
 	private constructor(
 		public readonly kind: TKind,
 		public readonly allowedTypes: FlexAllowedTypes,
-		public readonly metadata?: TMetadata | undefined,
+		public readonly metadata?: unknown | undefined,
 	) {
 		// Since this class can't have the desired extends clause, do some extra runtime validation:
 		assert(Array.isArray(allowedTypes), 0x7bc /* Invalid allowedTypes */);

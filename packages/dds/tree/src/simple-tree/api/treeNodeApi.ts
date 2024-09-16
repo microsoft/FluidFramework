@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { EmptyKey, rootFieldKey, type FieldKey } from "../../core/index.js";
+import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import {
 	type LazyItem,
 	type TreeStatus,
@@ -129,12 +129,6 @@ export interface TreeNodeApi {
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
-
-	/**
-	 * Gets the metadata for the field associated with the provided key under the provided node.
-	 * Will return `undefined` if no metadata was provided for the field.
-	 */
-	fieldMetadata(node: TreeNode, key: string | number): unknown | undefined;
 }
 
 /**
@@ -270,11 +264,6 @@ export const treeNodeApi: TreeNodeApi = {
 					"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
 				);
 		}
-	},
-	fieldMetadata(node: TreeNode, key: string | number): unknown | undefined {
-		const flexNode = getOrCreateInnerNode(node);
-		const field = flexNode.tryGetField(key as FieldKey);
-		return field?.schema.metadata;
 	},
 };
 
