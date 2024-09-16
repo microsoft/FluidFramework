@@ -71,7 +71,7 @@
 		"storageUrl": "http://gitrest:3000"
 	},
 	"checkpoints": {
-		"localCheckpointEnabled": true,
+		"localCheckpointEnabled": false,
 		"checkpointsTTLInSeconds": -1,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
@@ -162,7 +162,7 @@
 			"shouldDisableDefaultNamespace": false
 		},
 		"socketIo": {
-			"perMessageDeflate": false,
+			"perMessageDeflate": true,
 			"gracefulShutdownEnabled": false,
 			"pingPongLatencyTrackingEnabled": false
 		},
@@ -189,7 +189,7 @@
 		"checkpointBatchSize": 10,
 		"checkpointTimeIntervalMsec": 1000,
 		"checkpointHeuristics": {
-			"enable": true,
+			"enable": false,
 			"idleTime": 10000,
 			"maxTime": 60000,
 			"maxMessages": 500
@@ -202,7 +202,7 @@
 	"scribe": {
 		"kafkaClientId": "scribe",
 		"checkpointHeuristics": {
-			"enable": true,
+			"enable": false,
 			"idleTime": 10000,
 			"maxTime": 60000,
 			"maxMessages": 500
