@@ -38,7 +38,7 @@ class BasicFluidDataStoreRuntime extends FluidDataStoreRuntime {
 			const dataObject = await this.entryPoint.get();
 			assert(
 				dataObject instanceof LoadableFluidObject,
-				"Data store runtime entryPoint is not expected type",
+				0xa36 /* Data store runtime entryPoint is not expected type */,
 			);
 			return { mimeType: "fluid/object", status: 200, value: dataObject };
 		}
@@ -70,7 +70,7 @@ export class BasicDataStoreFactory<Type extends string> implements IFluidDataSto
 			/* ISharedObjectRegistry */ new Map(),
 			existing,
 			/* provideEntryPoint */ async () => {
-				assert(instance !== undefined, "Intended entryPoint is undefined");
+				assert(instance !== undefined, 0xa37 /* Intended entryPoint is undefined */);
 				return instance;
 			},
 		);
@@ -98,7 +98,7 @@ export abstract class LoadableFluidObject implements FluidObject, IFluidLoadable
 		// BasicDataStoreFactory provides an entryPoint initialization function
 		// to the data store runtime; so, this object should always have access to a
 		// non-null entryPoint.
-		assert(this.runtime.entryPoint !== undefined, "EntryPoint was undefined");
+		assert(this.runtime.entryPoint !== undefined, 0xa38 /* EntryPoint was undefined */);
 		return this.runtime.entryPoint;
 	}
 }

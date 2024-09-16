@@ -1619,5 +1619,14 @@ export const shortCodeMap = {
 	"0xa32": "Batch must have at least one message",
 	"0xa33": "clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case",
 	"0xa34": "Should have found the batchId in batchIdBySeqNum map",
-	"0xa35": "batchIdsAll and batchIdsBySeqNum should be in sync"
+	"0xa35": "batchIdsAll and batchIdsBySeqNum should be in sync",
+	"0xa36": "Data store runtime entryPoint is not expected type",
+	"0xa37": "Intended entryPoint is undefined",
+	"0xa38": "EntryPoint was undefined",
+	"0xa39": "Container does not support extensions. Use acquirePresenceViaDataObject.",
+	"0xa3a": "Map received signal without clientId",
+	"0xa3b": "Unexpected message type",
+	"0xa3c": "Already have entry for key in map",
+	"0xa3d": "Partial batch should have exactly one message",
+	"0xa3e": "Empty batch is always considered a full batch"
 };
