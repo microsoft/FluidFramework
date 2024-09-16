@@ -1969,37 +1969,37 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
-	name: "npm-check-unused-dependencies",
-	match,
-	handler: async (file: string): Promise<string | undefined> => {
-		// const depcheckConfigFile = ".depcheckrc";
-		// const configFileAbsPath = path.resolve(path.dirname(file), depcheckConfigFile);
-		const options = {
-			ignoreBinPackage: false, // ignore packages used in the "scripts" section of package.json
-			skipMissing: false, // skip calculation of missing dependencies
-			ignorePatterns: [],
+		name: "npm-check-unused-dependencies",
+		match,
+		handler: async (file: string): Promise<string | undefined> => {
+			// const depcheckConfigFile = ".depcheckrc";
+			// const configFileAbsPath = path.resolve(path.dirname(file), depcheckConfigFile);
+			const options = {
+				ignoreBinPackage: false, // ignore packages used in the "scripts" section of package.json
+				skipMissing: false, // skip calculation of missing dependencies
+				ignorePatterns: [],
 			};
-		const currentDirectory = path.dirname(file);
-		try {
-			console.log(`Running depcheck for ${currentDirectory}...`);
-			const result = await depcheck(currentDirectory, options);
-			let logResult = '';
-			if (result.dependencies.length === 0 && result.devDependencies.length === 0) {
-				logResult = "No unused dependencies found.";
-			} else {
-				if (result.dependencies.length > 0) {
-					logResult = `Unused dependencies:\n${result.dependencies}`;
+			const currentDirectory = path.dirname(file);
+			try {
+				console.log(`Running depcheck for ${currentDirectory}...`);
+				const result = await depcheck(currentDirectory, options);
+				let logResult = "";
+				if (result.dependencies.length === 0 && result.devDependencies.length === 0) {
+					logResult = "No unused dependencies found.";
+				} else {
+					if (result.dependencies.length > 0) {
+						logResult = `Unused dependencies:\n${result.dependencies}`;
+					}
+					if (result.devDependencies.length > 0) {
+						logResult = `Unused devDependencies:\n${result.devDependencies}`;
+					}
 				}
-				if (result.devDependencies.length > 0) {
-					logResult = `Unused devDependencies:\n${result.devDependencies}`;
-				}
+				return logResult;
+			} catch (error) {
+				return `Error running depcheck for ${currentDirectory}: ${error}`;
 			}
-			return logResult;
-		} catch (error) {
-			return `Error running depcheck for ${currentDirectory}: ${error}`;
-		}
-	}
- }
+		},
+	},
 ];
 
 function missingCleanDirectories(scripts: { [key: string]: string | undefined }): string[] {

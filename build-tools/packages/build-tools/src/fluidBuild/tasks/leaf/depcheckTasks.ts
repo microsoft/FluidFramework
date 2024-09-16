@@ -4,8 +4,8 @@
  */
 
 import path from "path";
-import { getResolvedFluidRoot } from "../../fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
+import { getResolvedFluidRoot } from "../../fluidUtils";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 // switch to regular import once building ESM
