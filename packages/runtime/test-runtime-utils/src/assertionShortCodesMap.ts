@@ -1236,9 +1236,6 @@ export const shortCodeMap = {
 	"0x865": "addChannel() with existing ID",
 	"0x866": "Unexpected op type on range obliterate!",
 	"0x867": "expected segment group localSeq to be defined",
-	"0x869": "expected client id to exist",
-	"0x86a": "expected client id to exist",
-	"0x86b": "movedClientIds should be set if local/moved seq is set",
 	"0x86c": "expected segment group to exist",
 	"0x86d": "movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set",
 	"0x86e": "On obliterate ack, missing move info!",
@@ -1628,5 +1625,7 @@ export const shortCodeMap = {
 	"0xa3b": "Unexpected message type",
 	"0xa3c": "Already have entry for key in map",
 	"0xa3d": "Partial batch should have exactly one message",
-	"0xa3e": "Empty batch is always considered a full batch"
+	"0xa3e": "Empty batch is always considered a full batch",
+	"0xa3f": "segments cannot be undefined",
+	"0xa40": "must have obliterate info"
 };
