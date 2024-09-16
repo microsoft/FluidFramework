@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
+import { brandedObjectEntries } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import { handleFromDatastore, type StateDatastore } from "./stateDatastore.js";
 import type { PresenceStates, PresenceStatesMethods, PresenceStatesSchema } from "./types.js";
@@ -191,13 +192,6 @@ export function mergeUntrackedDatastore(
 		}
 	}
 }
-
-/**
- * Object.entries retyped to support branded string-based keys.
- */
-const brandedObjectEntries = Object.entries as <K extends string, T>(
-	o: Record<K, T>,
-) => [K, T][];
 
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements

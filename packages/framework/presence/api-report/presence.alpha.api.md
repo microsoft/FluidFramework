@@ -43,10 +43,10 @@ export interface ISessionClient<SpecificSessionClientId extends ClientSessionId 
 }
 
 // @alpha
-export function Latest<T extends object, Key extends string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: LatestValueControls): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
+export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: LatestValueControls): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
 
 // @alpha
-export function LatestMap<T extends object, RegistrationKey extends string, Keys extends string | number = string | number>(initialValues?: {
+export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 }, controls?: LatestValueControls): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T>, LatestMapValueManager<T, Keys>>;
 
@@ -76,7 +76,7 @@ export interface LatestMapValueClientData<T, Keys extends string | number, Speci
 // @alpha @sealed
 export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
     clients(): ISessionClient[];
-    clientValue<SpecificSessionClientId extends ClientSessionId>(client: ISessionClient<SpecificSessionClientId>): LatestMapValueClientData<T, Keys, SpecificSessionClientId>;
+    clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
     clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
     readonly controls: LatestValueControls;
     readonly events: ISubscribable<LatestMapValueManagerEvents<T, Keys>>;
@@ -143,7 +143,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 }
 
 // @alpha
-export function Notifications<T extends InternalUtilityTypes.NotificationEvents<T>, Key extends string>(initialSubscriptions: NotificationSubscriptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
+export function Notifications<T extends InternalUtilityTypes.NotificationEvents<T>, Key extends string = string>(initialSubscriptions: NotificationSubscriptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
 
 // @alpha @sealed
 export interface NotificationsManager<T extends InternalUtilityTypes.NotificationEvents<T>> {

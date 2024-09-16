@@ -19,6 +19,15 @@ export interface ClientRecord<
 }
 
 /**
+ * Object.entries retyped to support branded string-based keys.
+ *
+ * @internal
+ */
+export const brandedObjectEntries = Object.entries as <K extends string, T>(
+	o: Record<K, T>,
+) => [K, T][];
+
+/**
  * @internal
  */
 export interface ValueManager<
