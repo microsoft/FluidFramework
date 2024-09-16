@@ -22,7 +22,7 @@ import { SchemaFactory, TreeViewConfiguration } from "./index.js";
 
 // For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
 export interface EditWrapper {
-	edit: Edit;
+	edits: Edit[];
 }
 
 export interface Edit {
