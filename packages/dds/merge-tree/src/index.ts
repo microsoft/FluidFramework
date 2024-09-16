@@ -56,6 +56,7 @@ export {
 } from "./mergeTreeDeltaCallback.js";
 export {
 	BaseSegment,
+	IConcurrentMoveInfo,
 	CollaborationWindow,
 	debugMarkerToString,
 	IJSONMarkerSegment,

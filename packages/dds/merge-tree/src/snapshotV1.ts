@@ -319,8 +319,13 @@ export class SnapshotV1 {
 						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
 					);
 					raw.movedSeq = segment.movedSeq;
-					raw.movedSeqs = segment.movedSeqs;
-					raw.movedClientIds = segment.movedClientIds?.map((id) => this.getLongClientId(id));
+					raw.concurrentMoves = segment.concurrentMoves?.map(
+						({ seq, refSeq, clientId: id }) => ({
+							seq,
+							refSeq,
+							clientId: this.getLongClientId(id),
+						}),
+					);
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.
@@ -328,10 +333,8 @@ export class SnapshotV1 {
 					(raw.seq !== undefined && raw.client !== undefined) ||
 						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined) ||
 						(raw.movedSeq !== undefined &&
-							raw.movedClientIds !== undefined &&
-							raw.movedClientIds.length > 0 &&
-							raw.movedSeqs !== undefined &&
-							raw.movedSeqs.length > 0),
+							raw.concurrentMoves !== undefined &&
+							raw.concurrentMoves.length > 0),
 					0x066 /* "Corrupted preservation of segment metadata!" */,
 				);
 

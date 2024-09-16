@@ -40,6 +40,8 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     protected cloneInto(b: ISegment): void;
     // (undocumented)
+    concurrentMoves?: IConcurrentMoveInfo[];
+    // (undocumented)
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
     hasProperty(key: string): boolean;
@@ -56,11 +58,7 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     localSeq?: number;
     // (undocumented)
-    movedClientIds?: number[];
-    // (undocumented)
     movedSeq?: number;
-    // (undocumented)
-    movedSeqs?: number[];
     // (undocumented)
     ordinal: string;
     // (undocumented)
@@ -169,7 +167,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
-    walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+    walkSegments<T>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
 // @alpha @deprecated (undocumented)
@@ -252,6 +250,16 @@ export interface IClientEvents {
     (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void): void;
     // (undocumented)
     (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): void;
+}
+
+// @alpha
+export interface IConcurrentMoveInfo {
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    seq: number;
 }
 
 // @alpha (undocumented)
@@ -413,10 +421,9 @@ export interface IMergeTreeTextHelper {
 
 // @alpha
 export interface IMoveInfo {
+    concurrentMoves: IConcurrentMoveInfo[];
     localMovedSeq?: number;
-    movedClientIds: number[];
     movedSeq: number;
-    movedSeqs: number[];
     moveDst?: ReferencePosition;
     wasMovedOnInsert: boolean;
 }

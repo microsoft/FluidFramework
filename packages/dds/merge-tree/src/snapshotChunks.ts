@@ -68,9 +68,12 @@ export interface IJSONSegmentWithMergeInfo {
 	seq?: number;
 	removedClientIds?: string[];
 	removedSeq?: number;
-	movedClientIds?: string[];
 	movedSeq?: number;
-	movedSeqs?: number[];
+	concurrentMoves?: {
+		seq: number;
+		refSeq: number;
+		clientId: string;
+	}[];
 }
 
 /**
