@@ -21,6 +21,7 @@ import {
 	type BatchStartInfo,
 	ensureContentsDeserialized,
 	type IBatch,
+	type InboundMessageResult,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -180,11 +181,31 @@ describe("RemoteMessageProcessor", () => {
 				const result = messageProcessor.process(inboundMessage, () => {});
 				switch (result?.type) {
 					case "fullBatch":
+						assert(
+							option.compressionAndChunking.chunking || outboundMessages.length === 1,
+							"Apart from chunking, expected fullBatch for single-message batch only (includes Grouped Batches)",
+						);
 						batchStart = result.batchStart;
 						inboundMessages.push(...result.messages);
 						break;
+					case "batchStartingMessage":
+						batchStart = result.batchStart;
+						inboundMessages.push(result.nextMessage);
+						break;
+					case "nextBatchMessage":
+						assert(
+							batchStart !== undefined,
+							"batchStart should have been set from a prior message",
+						);
+						inboundMessages.push(result.nextMessage);
+						break;
 					default:
+						// These are leading chunks
 						assert(result === undefined, "unexpected result type");
+						assert(
+							option.compressionAndChunking.chunking,
+							"undefined result only expected with chunking",
+						);
 						break;
 				}
 			}
@@ -214,8 +235,10 @@ describe("RemoteMessageProcessor", () => {
 		});
 	});
 
-	it("Processes multiple batches", () => {
+	it("Processes multiple batches (No Grouped Batching)", () => {
 		let csn = 1;
+
+		// Use BatchManager.popBatch to get the right batch metadata included
 		const batchManager = new BatchManager({
 			canRebase: false,
 			hardLimit: Number.MAX_VALUE,
@@ -306,61 +329,74 @@ describe("RemoteMessageProcessor", () => {
 				"clientId": "CLIENT_ID",
 			},
 		];
-		const expectedResults = [
+		const expectedInfo: Partial<InboundMessageResult>[] = [
 			// A
-			undefined,
-			undefined,
 			{
-				type: "fullBatch",
-				messages: messagesA,
+				type: "batchStartingMessage",
 				batchStart: {
-					clientId: "CLIENT_ID",
 					batchId: undefined,
+					clientId: "CLIENT_ID",
+					keyMessage: messagesA[0] as ISequencedDocumentMessage,
 					batchStartCsn: 1,
-					keyMessage: messagesA[0],
 				},
-				length: 3,
 			},
+			{ type: "nextBatchMessage", batchEnd: false },
+			{ type: "nextBatchMessage", batchEnd: true },
 			// B
 			{
 				type: "fullBatch",
-				messages: messagesB,
 				batchStart: {
 					clientId: "CLIENT_ID",
 					batchId: undefined,
 					batchStartCsn: 4,
-					keyMessage: messagesB[0],
+					keyMessage: messagesB[0] as ISequencedDocumentMessage,
 				},
 				length: 1,
 			},
 			// C
-			undefined,
 			{
-				type: "fullBatch",
-				messages: messagesC,
+				type: "batchStartingMessage",
 				batchStart: {
 					batchId: "C",
 					clientId: "CLIENT_ID",
 					batchStartCsn: 5,
-					keyMessage: messagesC[0],
+					keyMessage: messagesC[0] as ISequencedDocumentMessage,
 				},
-				length: 2,
 			},
+			{ type: "nextBatchMessage", batchEnd: true },
 			// D
 			{
 				type: "fullBatch",
-				messages: messagesD,
 				batchStart: {
 					clientId: "CLIENT_ID",
 					batchId: "D",
 					batchStartCsn: 7,
-					keyMessage: messagesD[0],
+					keyMessage: messagesD[0] as ISequencedDocumentMessage,
 				},
 				length: 1,
 			},
 		];
+		const expectedMessages = [...messagesA, ...messagesB, ...messagesC, ...messagesD];
 
-		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
+		assert.deepStrictEqual(
+			processResults.flatMap((result) =>
+				result?.type === "fullBatch" ? [...result.messages] : [result?.nextMessage],
+			),
+			expectedMessages,
+			"unexpected output from process",
+		);
+
+		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
+		const clearMessages = (result: any) => {
+			delete result.messages;
+			delete result.nextMessage;
+			return result as InboundMessageResult;
+		};
+		assert.deepStrictEqual(
+			processResults.map(clearMessages),
+			expectedInfo,
+			"unexpected result info",
+		);
 	});
 
 	describe("Throws on invalid batches", () => {
