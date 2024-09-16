@@ -80,9 +80,6 @@ importers:
       danger:
         specifier: ^11.3.0
         version: 11.3.0
-      depcheck:
-        specifier: 1.4.7
-        version: 1.4.7
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
