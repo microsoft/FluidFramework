@@ -4,6 +4,7 @@
  */
 
 import type { ValueManager } from "./internalTypes.js";
+import { brandedObjectEntries } from "./internalTypes.js";
 import type { LatestValueControls } from "./latestValueControls.js";
 import { LatestValueControl } from "./latestValueControls.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
@@ -105,8 +106,17 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.datastore.localUpdate(this.key, this.value, /* forceUpdate */ false);
 	}
 
-	public clientValues(): IterableIterator<LatestValueClientData<T>> {
-		throw new Error("Method not implemented.");
+	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		for (const [clientSessionId, value] of brandedObjectEntries(allKnownStates.states)) {
+			if (clientSessionId !== allKnownStates.self) {
+				yield {
+					client: this.datastore.lookupClient(clientSessionId),
+					value: value.value,
+					metadata: { revision: value.rev, timestamp: value.timestamp },
+				};
+			}
+		}
 	}
 
 	public clients(): ISessionClient[] {
@@ -153,7 +163,7 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @alpha
  */
-export function Latest<T extends object, Key extends string>(
+export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 	controls?: LatestValueControls,
 ): InternalTypes.ManagerFactory<
