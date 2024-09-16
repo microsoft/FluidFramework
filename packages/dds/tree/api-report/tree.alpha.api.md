@@ -27,6 +27,15 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
+// @alpha
+export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex;
+
+// @alpha
+export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(context: FlexTreeContext, indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue): SimpleTreeIndex<TKey, TValue>;
+
+// @public (undocumented)
+export function createSimpleTreeIndex<TKey extends TreeValue, TValue, TSchema extends TreeNodeSchema>(context: FlexTreeContext, indexer: (schema: TSchema) => KeyFinder<TKey> | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
+
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -86,6 +95,9 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
+
+// @alpha
+export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -426,6 +438,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+
+// @alpha
+export type SimpleTreeIndex<TKey extends TreeValue, TValue> = TreeIndex<TKey, TValue>;
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -6,7 +5,12 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { AnchorNode, FieldKey, TreeValue } from "../../core/index.js";
+import type {
+	AnchorNode,
+	FieldKey,
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+} from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
@@ -72,27 +76,35 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	indexableSchema?: readonly TreeNodeSchema[],
 ): SimpleTreeIndex<TKey, TValue> {
 	assert(context instanceof Context, "unexpected context implementation");
-	const index = new AnchorTreeIndex<TKey, TValue>(
-		context.checkout.forest,
-		(schemaIdentifier) => {
-			if (indexableSchema !== undefined) {
-				// todo: fix this lookup
-				for (const schemus of indexableSchema) {
-					if (schemus.identifier === schemaIdentifier) {
+	const indexableSchemaMap = new Map();
+	if (indexableSchema !== undefined) {
+		for (const schemus of indexableSchema) {
+			indexableSchemaMap.set(schemus.identifier, schemus);
+		}
+	}
+
+	const schemaIndexer =
+		indexableSchema === undefined
+			? (schemaIdentifier: TreeNodeSchemaIdentifier) => {
+					const storedSchema = context.flexSchema.nodeSchema.get(schemaIdentifier);
+					if (storedSchema !== undefined) {
+						const schemus = getSimpleNodeSchema(storedSchema);
 						return indexer(schemus);
+					} else {
+						// else: the node is out of schema. TODO: do we error, or allow that?
+						fail("node is out of schema");
 					}
 				}
-			} else {
-				const storedSchema = context.flexSchema.nodeSchema.get(schemaIdentifier);
-				if (storedSchema !== undefined) {
-					const schemus = getSimpleNodeSchema(storedSchema);
-					return indexer(schemus);
-				} else {
-					// else: the node is out of schema. TODO: do we error, or allow that?
-					fail("node is out of schema");
-				}
-			}
-		},
+			: (schemaIdentifier: TreeNodeSchemaIdentifier) => {
+					const schemus = indexableSchemaMap.get(schemaIdentifier);
+					if (schemus !== undefined) {
+						return indexer(schemus);
+					}
+				};
+
+	const index = new AnchorTreeIndex<TKey, TValue>(
+		context.checkout.forest,
+		schemaIndexer,
 		(anchorNodes) => {
 			const simpleTreeNodes: TreeNode[] = [];
 			for (const a of anchorNodes) {
@@ -113,6 +125,7 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 			}
 		},
 	);
+
 	// all the type checking guarantees that we put nodes of the correct type in the index
 	// but it's not captured in the type system
 	return index as SimpleTreeIndex<TKey, TValue>;

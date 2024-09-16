@@ -27,6 +27,9 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
+// @public (undocumented)
+export function createSimpleTreeIndex<TKey extends TreeValue, TValue, TSchema extends TreeNodeSchema>(context: FlexTreeContext, indexer: (schema: TSchema) => KeyFinder<TKey> | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
+
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }

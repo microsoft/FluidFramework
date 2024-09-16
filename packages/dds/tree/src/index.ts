@@ -128,6 +128,10 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
