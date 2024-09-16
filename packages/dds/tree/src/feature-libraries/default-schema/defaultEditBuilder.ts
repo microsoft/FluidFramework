@@ -42,6 +42,7 @@ import {
 	sequence,
 	required as valueFieldKind,
 } from "./defaultFieldKinds.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -168,6 +169,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
+		private readonly idCompressor?: IIdCompressor,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}
@@ -188,7 +190,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			set: (newContent: ITreeCursorSynchronous): void => {
 				const fillId = this.modularBuilder.generateId();
 
-				const build = this.modularBuilder.buildTrees(fillId, newContent);
+				const build = this.modularBuilder.buildTrees(fillId, newContent, this.idCompressor);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set({
 						fill: fillId,
@@ -216,7 +218,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				let optionalChange: OptionalChangeset;
 				if (newContent !== undefined) {
 					fillId = this.modularBuilder.generateId();
-					const build = this.modularBuilder.buildTrees(fillId, newContent);
+					const build = this.modularBuilder.buildTrees(fillId, newContent, this.idCompressor);
 					edits.push(build);
 
 					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
@@ -339,7 +341,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				}
 
 				const firstId = this.modularBuilder.generateId(length);
-				const build = this.modularBuilder.buildTrees(firstId, content);
+				const build = this.modularBuilder.buildTrees(firstId, content, this.idCompressor);
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(index, length, firstId),
 				);

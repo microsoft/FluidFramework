@@ -64,7 +64,7 @@ export class SessionInfoManager {
 		const url = getDiscoverSessionUrl(params);
 		assert(
 			this.sessionInfoMap.has(url) === this.sessionLastDiscoveredMap.has(url),
-			"Session map state mismatch",
+			0xa2d /* Session map state mismatch */,
 		);
 
 		if (session !== undefined) {
@@ -88,7 +88,7 @@ export class SessionInfoManager {
 		const url = getDiscoverSessionUrl(params);
 		assert(
 			this.sessionInfoMap.has(url) && this.sessionLastDiscoveredMap.has(url),
-			"Unexpected discover session URL",
+			0xa2e /* Unexpected discover session URL */,
 		);
 
 		let refreshed = false;

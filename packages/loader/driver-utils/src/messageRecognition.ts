@@ -20,15 +20,6 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 }
 
 /**
- * @privateRemarks ADO #1385: staging code changes across layers.
- * Eventually to be replaced by MessageType.accept
- * @internal
- */
-export enum MessageType2 {
-	Accept = "accept",
-}
-
-/**
  * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
  * @internal
  */
@@ -37,5 +28,5 @@ export function canBeCoalescedByService(
 ): boolean {
 	// This assumes that in the future relay service may implement coalescing of accept messages,
 	// same way it was doing coalescing of immediate noops in the past.
-	return message.type === MessageType.NoOp || message.type === MessageType2.Accept;
+	return message.type === MessageType.NoOp || message.type === MessageType.Accept;
 }
