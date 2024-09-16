@@ -37,10 +37,6 @@ import {
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import { SchemaFactory, stringSchema, toStoredSchema } from "../../simple-tree/index.js";
 import { JsonUnion, singleJsonCursor } from "../json/index.js";
-import { merge } from "../objMerge.js";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(globalThis as any).merge = merge;
 
 const rootField: FieldUpPath = {
 	parent: undefined,

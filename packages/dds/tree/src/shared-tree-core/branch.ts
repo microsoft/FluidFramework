@@ -257,15 +257,6 @@ export class SharedTreeBranch<
 		const revisionTag = taggedChange.revision;
 		assert(revisionTag !== undefined, "Revision tag must be provided");
 
-		// TODO: This should not be necessary when receiving changes from other clients.
-		const changeWithRevision = this.changeFamily.rebaser.changeRevision(
-			taggedChange.change,
-			revisionTag,
-		);
-
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		console.log((globalThis as any).merge(taggedChange.change, changeWithRevision));
-
 		const newHead = mintCommit(this.head, {
 			revision: revisionTag,
 			change: taggedChange.change,
