@@ -1251,6 +1251,7 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
+	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _perfSignalData: IPerfSignalReport = {
@@ -1542,8 +1543,8 @@ export class ContainerRuntime
 		);
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-		const useDeltaManagerOpsProxy =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
+		this.useDeltaManagerOpsProxy =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
 		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
 			this.innerDeltaManager,
@@ -1552,7 +1553,7 @@ export class ContainerRuntime
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
-		if (useDeltaManagerOpsProxy) {
+		if (this.useDeltaManagerOpsProxy) {
 			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
 				summarizerDeltaManagerProxy,
 				this.pendingStateManager,
@@ -2633,8 +2634,9 @@ export class ContainerRuntime
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
 		if (
+			this.useDeltaManagerOpsProxy &&
 			this.deltaManager.minimumSequenceNumber <
-			messageWithContext.message.minimumSequenceNumber
+				messageWithContext.message.minimumSequenceNumber
 		) {
 			messageWithContext.message.minimumSequenceNumber =
 				this.deltaManager.minimumSequenceNumber;
