@@ -642,6 +642,24 @@ export interface MergeTreeRevertibleDriver {
 }
 
 // @alpha @deprecated (undocumented)
+export interface ObliterateInfo {
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    end: LocalReferencePosition;
+    // (undocumented)
+    localSeq: number | undefined;
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    segmentGroup: SegmentGroup | undefined;
+    // (undocumented)
+    seq: number;
+    // (undocumented)
+    start: LocalReferencePosition;
+}
+
+// @alpha @deprecated (undocumented)
 export class PropertiesManager {
     // (undocumented)
     ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
@@ -705,6 +723,8 @@ export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDrive
 export interface SegmentGroup {
     // (undocumented)
     localSeq?: number;
+    // (undocumented)
+    obliterateInfo?: ObliterateInfo;
     // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)
