@@ -7,7 +7,12 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { SegmentGroup, endpointPosAndSide, type SequencePlace } from "../index.js";
+import {
+	SegmentGroup,
+	endpointPosAndSide,
+	normalizePlace,
+	type SequencePlace,
+} from "../index.js";
 import {
 	IMergeTreeDeltaOp,
 	type IMergeTreeInsertMsg,
@@ -56,17 +61,10 @@ export class ReconnectTestHelper {
 		end: SequencePlace,
 	): void {
 		const client = this.clients[clientName];
-		let { startPos, endPos } = endpointPosAndSide(start, end);
-		assert(
-			startPos !== undefined && endPos !== undefined,
-			"start and end positions must be defined",
-		);
-		startPos = startPos === "start" ? 0 : startPos;
-		endPos = endPos === "end" ? client.getLength() : endPos;
-		assert(
-			startPos !== "end" && endPos !== "start",
-			"start cannot be end and end cannot be start",
-		);
+
+		const startPos = normalizePlace(start);
+		const endPos = normalizePlace(end);
+
 		this.ops.push(
 			client.makeOpMessage(client.obliterateRangeLocal(startPos, endPos), ++this.seq),
 		);
