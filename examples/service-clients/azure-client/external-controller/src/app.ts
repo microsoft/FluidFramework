@@ -4,6 +4,10 @@
  */
 
 import {
+	acquirePresenceViaDataObject,
+	ExperimentalPresenceManager,
+} from "@fluid-experimental/presence";
+import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
@@ -18,7 +22,12 @@ import { IFluidContainer } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
-import { DiceRollerController, DiceRollerControllerProps } from "./controller.js";
+import {
+	DiceRollerController,
+	DiceRollerControllerProps,
+	type DieValue,
+} from "./controller.js";
+import { buildDicePresence } from "./presence.js";
 import { makeAppView } from "./view.js";
 
 export interface ICustomUserDetails {
@@ -66,6 +75,9 @@ const containerSchema = {
 		/* [id]: DataObject */
 		map1: SharedMap,
 		map2: SharedMap,
+		// A Presence Manager object temporarily needs to be placed within container schema
+		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
+		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;
@@ -167,6 +179,12 @@ async function start(): Promise<void> {
 
 	document.title = id;
 
+	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
+	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
+	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
+	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
+	const states = buildDicePresence(presence);
+
 	// Initialize Devtools
 	initializeDevtools({
 		logger: devtoolsLogger,
@@ -179,12 +197,38 @@ async function start(): Promise<void> {
 	});
 
 	// Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
-	const diceRollerController1 = new DiceRollerController(diceRollerController1Props);
-	const diceRollerController2 = new DiceRollerController(diceRollerController2Props);
+	const diceRollerController1 = new DiceRollerController(
+		diceRollerController1Props,
+		(value) => {
+			lastRoll.die1 = value;
+			states.lastRoll.local = lastRoll;
+			states.lastDiceRolls.local.set("die1", { value });
+		},
+	);
+	const diceRollerController2 = new DiceRollerController(
+		diceRollerController2Props,
+		(value) => {
+			lastRoll.die2 = value;
+			states.lastRoll.local = lastRoll;
+			states.lastDiceRolls.local.set("die2", { value });
+		},
+	);
+
+	// lastDiceRolls is here just to demonstrate an example of LatestMap
+	// Its updates are only logged to the console.
+	states.lastDiceRolls.events.on("itemUpdated", (update) => {
+		console.log(
+			`Client ${update.client.sessionId.slice(0, 8)}'s ${update.key} rolled to ${update.value.value}`,
+		);
+	});
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	contentDiv.append(
-		makeAppView([diceRollerController1, diceRollerController2], services.audience),
+		makeAppView(
+			[diceRollerController1, diceRollerController2],
+			{ presence, lastRoll: states.lastRoll },
+			services.audience,
+		),
 	);
 }
 
