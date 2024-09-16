@@ -101,7 +101,7 @@ const config = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
 // TODO: add descriptions to fluid-generated types
 
 const jsonSchema = {
-	type: { "$ref": "#/$defs/__fluid_rootWrapper" },
+	$ref: "#/$defs/__fluid_rootWrapper",
 	$defs: {
 		"agentSchema.Vector": {
 			type: "object",
