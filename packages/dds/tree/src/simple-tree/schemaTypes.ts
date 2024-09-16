@@ -233,7 +233,7 @@ export interface FieldSchemaMetadata<
 	 * @remarks
 	 *
 	 * If provided, will be used by the system in scenarios where a description of the field is useful.
-	 * E.g., when converting a node schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * E.g., when converting a field schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
 	 * used as the `description` field.
 	 */
 	description?: string | undefined;
