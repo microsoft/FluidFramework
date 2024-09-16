@@ -556,10 +556,7 @@ export class SchemaFactory<
 	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
 	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public optional<
-		const T extends ImplicitAllowedTypes,
-		const TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
-	>(
+	public optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
@@ -585,10 +582,7 @@ export class SchemaFactory<
 	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
 	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public required<
-		const T extends ImplicitAllowedTypes,
-		const TCustomMetadata extends Record<string, unknown> = Record<string, unknown>,
-	>(
+	public required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {

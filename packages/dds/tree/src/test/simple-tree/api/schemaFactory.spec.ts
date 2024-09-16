@@ -39,7 +39,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
-	FieldSchemaMetadata,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -366,7 +365,7 @@ describe("schemaFactory", () => {
 
 		it("Field Metadata", () => {
 			const schemaFactory = new SchemaFactory("com.example");
-			const barMetadata: FieldSchemaMetadata = {
+			const barMetadata = {
 				description: "Bar",
 				custom: { prop1: "Custom metadata property." },
 			};
