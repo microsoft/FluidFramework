@@ -20,6 +20,24 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_DebuggerUI": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_DebuggerUI = requireAssignableTo<TypeOnly<old.DebuggerUI>, TypeOnly<current.DebuggerUI>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DebuggerUI": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_DebuggerUI = requireAssignableTo<TypeOnly<current.DebuggerUI>, TypeOnly<old.DebuggerUI>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Class_DebugReplayController": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_DebugReplayController = requireAssignableTo<TypeOnly<old.DebugReplayController>, TypeOnly<current.DebugReplayController>>
@@ -38,36 +56,18 @@ declare type current_as_old_for_Class_DebugReplayController = requireAssignableT
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassStatics_DebugReplayController": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_DebugReplayController = requireAssignableTo<TypeOnly<typeof current.DebugReplayController>, TypeOnly<typeof old.DebugReplayController>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DebuggerUI": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_DebuggerUI = requireAssignableTo<TypeOnly<old.DebuggerUI>, TypeOnly<current.DebuggerUI>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DebuggerUI": {"backCompat": false}
- */
-declare type current_as_old_for_Class_DebuggerUI = requireAssignableTo<TypeOnly<current.DebuggerUI>, TypeOnly<old.DebuggerUI>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "ClassStatics_DebuggerUI": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_DebuggerUI = requireAssignableTo<TypeOnly<typeof current.DebuggerUI>, TypeOnly<typeof old.DebuggerUI>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DebugReplayController": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DebugReplayController = requireAssignableTo<TypeOnly<typeof current.DebugReplayController>, TypeOnly<typeof old.DebugReplayController>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

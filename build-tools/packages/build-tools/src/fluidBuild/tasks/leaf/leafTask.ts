@@ -10,17 +10,10 @@ import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
 import registerDebug from "debug";
 
+import { existsSync } from "node:fs";
+import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { defaultLogger } from "../../../common/logging";
-import {
-	ExecAsyncResult,
-	execAsync,
-	existsSync,
-	getExecutableFromCommand,
-	readFileAsync,
-	statAsync,
-	unlinkAsync,
-	writeFileAsync,
-} from "../../../common/utils";
+import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
 import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
@@ -457,7 +450,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			const doneFileFullPath = this.doneFileFullPath;
 			try {
 				if (existsSync(doneFileFullPath)) {
-					await unlinkAsync(doneFileFullPath);
+					await unlink(doneFileFullPath);
 				}
 			} catch {
 				console.warn(
@@ -473,7 +466,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		try {
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
-				await writeFileAsync(doneFileFullPath, content);
+				await writeFile(doneFileFullPath, content);
 			} else {
 				this._isIncremental = false;
 				console.warn(
@@ -493,7 +486,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
 			if (doneFileExpectedContent !== undefined) {
-				const doneFileContent = await readFileAsync(doneFileFullPath, "utf8");
+				const doneFileContent = await readFile(doneFileFullPath, "utf8");
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
@@ -590,12 +583,12 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const srcTimesP = Promise.all(
 				srcFiles
 					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => statAsync(match)),
+					.map((match) => stat(match)),
 			);
 			const dstTimesP = Promise.all(
 				dstFiles
 					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => statAsync(match)),
+					.map((match) => stat(match)),
 			);
 			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 

@@ -20,6 +20,285 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_OdspRedirectError": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_OdspRedirectError = requireAssignableTo<TypeOnly<old.OdspRedirectError>, TypeOnly<current.OdspRedirectError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_OdspRedirectError": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_OdspRedirectError = requireAssignableTo<TypeOnly<current.OdspRedirectError>, TypeOnly<old.OdspRedirectError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_OdspRedirectError": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_OdspRedirectError = requireAssignableTo<TypeOnly<typeof current.OdspRedirectError>, TypeOnly<typeof old.OdspRedirectError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_authRequestWithRetry": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_authRequestWithRetry = requireAssignableTo<TypeOnly<typeof current.authRequestWithRetry>, TypeOnly<typeof old.authRequestWithRetry>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_createOdspNetworkError": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_createOdspNetworkError = requireAssignableTo<TypeOnly<typeof current.createOdspNetworkError>, TypeOnly<typeof old.createOdspNetworkError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_enrichOdspError": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_enrichOdspError = requireAssignableTo<TypeOnly<typeof current.enrichOdspError>, TypeOnly<typeof old.enrichOdspError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_fetchTokens": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_fetchTokens = requireAssignableTo<TypeOnly<typeof current.fetchTokens>, TypeOnly<typeof old.fetchTokens>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getAadTenant": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getAadTenant = requireAssignableTo<TypeOnly<typeof current.getAadTenant>, TypeOnly<typeof old.getAadTenant>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getAadUrl": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getAadUrl = requireAssignableTo<TypeOnly<typeof current.getAadUrl>, TypeOnly<typeof old.getAadUrl>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getAsync": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getAsync = requireAssignableTo<TypeOnly<typeof current.getAsync>, TypeOnly<typeof old.getAsync>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getChildrenByDriveItem": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getChildrenByDriveItem = requireAssignableTo<TypeOnly<typeof current.getChildrenByDriveItem>, TypeOnly<typeof old.getChildrenByDriveItem>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getDriveId": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getDriveId = requireAssignableTo<TypeOnly<typeof current.getDriveId>, TypeOnly<typeof old.getDriveId>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getDriveItemByRootFileName": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getDriveItemByRootFileName = requireAssignableTo<TypeOnly<typeof current.getDriveItemByRootFileName>, TypeOnly<typeof old.getDriveItemByRootFileName>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getDriveItemByServerRelativePath": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getDriveItemByServerRelativePath = requireAssignableTo<TypeOnly<typeof current.getDriveItemByServerRelativePath>, TypeOnly<typeof old.getDriveItemByServerRelativePath>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getDriveItemFromDriveAndItem": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getDriveItemFromDriveAndItem = requireAssignableTo<TypeOnly<typeof current.getDriveItemFromDriveAndItem>, TypeOnly<typeof old.getDriveItemFromDriveAndItem>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getFetchTokenUrl": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getFetchTokenUrl = requireAssignableTo<TypeOnly<typeof current.getFetchTokenUrl>, TypeOnly<typeof old.getFetchTokenUrl>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getLoginPageUrl": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getLoginPageUrl = requireAssignableTo<TypeOnly<typeof current.getLoginPageUrl>, TypeOnly<typeof old.getLoginPageUrl>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getServer": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getServer = requireAssignableTo<TypeOnly<typeof current.getServer>, TypeOnly<typeof old.getServer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getSiteUrl": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getSiteUrl = requireAssignableTo<TypeOnly<typeof current.getSiteUrl>, TypeOnly<typeof old.getSiteUrl>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getSPOAndGraphRequestIdsFromResponse": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getSPOAndGraphRequestIdsFromResponse = requireAssignableTo<TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>, TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_hasFacetCodes": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_hasFacetCodes = requireAssignableTo<TypeOnly<typeof current.hasFacetCodes>, TypeOnly<typeof old.hasFacetCodes>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_hasRedirectionLocation": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_hasRedirectionLocation = requireAssignableTo<TypeOnly<typeof current.hasRedirectionLocation>, TypeOnly<typeof old.hasRedirectionLocation>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isOdspHostname": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isOdspHostname = requireAssignableTo<TypeOnly<typeof current.isOdspHostname>, TypeOnly<typeof old.isOdspHostname>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isPushChannelHostname": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isPushChannelHostname = requireAssignableTo<TypeOnly<typeof current.isPushChannelHostname>, TypeOnly<typeof old.isPushChannelHostname>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_parseFacetCodes": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_parseFacetCodes = requireAssignableTo<TypeOnly<typeof current.parseFacetCodes>, TypeOnly<typeof old.parseFacetCodes>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_postAsync": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_postAsync = requireAssignableTo<TypeOnly<typeof current.postAsync>, TypeOnly<typeof old.postAsync>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_putAsync": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_putAsync = requireAssignableTo<TypeOnly<typeof current.putAsync>, TypeOnly<typeof old.putAsync>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_refreshTokens": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_refreshTokens = requireAssignableTo<TypeOnly<typeof current.refreshTokens>, TypeOnly<typeof old.refreshTokens>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_throwOdspNetworkError": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_throwOdspNetworkError = requireAssignableTo<TypeOnly<typeof current.throwOdspNetworkError>, TypeOnly<typeof old.throwOdspNetworkError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_tryParseErrorResponse": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_tryParseErrorResponse = requireAssignableTo<TypeOnly<typeof current.tryParseErrorResponse>, TypeOnly<typeof old.tryParseErrorResponse>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_unauthPostAsync": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_unauthPostAsync = requireAssignableTo<TypeOnly<typeof current.unauthPostAsync>, TypeOnly<typeof old.unauthPostAsync>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IOdspAuthRequestInfo": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IOdspAuthRequestInfo = requireAssignableTo<TypeOnly<old.IOdspAuthRequestInfo>, TypeOnly<current.IOdspAuthRequestInfo>>
@@ -128,42 +407,6 @@ declare type current_as_old_for_Interface_OdspErrorResponseInnerError = requireA
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_OdspRedirectError": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_OdspRedirectError = requireAssignableTo<TypeOnly<old.OdspRedirectError>, TypeOnly<current.OdspRedirectError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_OdspRedirectError": {"backCompat": false}
- */
-declare type current_as_old_for_Class_OdspRedirectError = requireAssignableTo<TypeOnly<current.OdspRedirectError>, TypeOnly<old.OdspRedirectError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_OdspRedirectError": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_OdspRedirectError = requireAssignableTo<TypeOnly<typeof current.OdspRedirectError>, TypeOnly<typeof old.OdspRedirectError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_OdspServiceReadOnlyErrorCode": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_OdspServiceReadOnlyErrorCode = requireAssignableTo<TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>, TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "TypeAlias_TokenRequestCredentials": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_TokenRequestCredentials = requireAssignableTo<TypeOnly<old.TokenRequestCredentials>, TypeOnly<current.TokenRequestCredentials>>
@@ -182,135 +425,9 @@ declare type current_as_old_for_TypeAlias_TokenRequestCredentials = requireAssig
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_authRequestWithRetry": {"backCompat": false}
- */
-declare type current_as_old_for_Function_authRequestWithRetry = requireAssignableTo<TypeOnly<typeof current.authRequestWithRetry>, TypeOnly<typeof old.authRequestWithRetry>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_createOdspNetworkError": {"backCompat": false}
- */
-declare type current_as_old_for_Function_createOdspNetworkError = requireAssignableTo<TypeOnly<typeof current.createOdspNetworkError>, TypeOnly<typeof old.createOdspNetworkError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_enrichOdspError": {"backCompat": false}
- */
-declare type current_as_old_for_Function_enrichOdspError = requireAssignableTo<TypeOnly<typeof current.enrichOdspError>, TypeOnly<typeof old.enrichOdspError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Variable_fetchIncorrectResponse": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_fetchIncorrectResponse = requireAssignableTo<TypeOnly<typeof current.fetchIncorrectResponse>, TypeOnly<typeof old.fetchIncorrectResponse>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_fetchTokens": {"backCompat": false}
- */
-declare type current_as_old_for_Function_fetchTokens = requireAssignableTo<TypeOnly<typeof current.fetchTokens>, TypeOnly<typeof old.fetchTokens>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getAadTenant": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getAadTenant = requireAssignableTo<TypeOnly<typeof current.getAadTenant>, TypeOnly<typeof old.getAadTenant>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getAadUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getAadUrl = requireAssignableTo<TypeOnly<typeof current.getAadUrl>, TypeOnly<typeof old.getAadUrl>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getAsync": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getAsync = requireAssignableTo<TypeOnly<typeof current.getAsync>, TypeOnly<typeof old.getAsync>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getChildrenByDriveItem": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getChildrenByDriveItem = requireAssignableTo<TypeOnly<typeof current.getChildrenByDriveItem>, TypeOnly<typeof old.getChildrenByDriveItem>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getDriveId": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getDriveId = requireAssignableTo<TypeOnly<typeof current.getDriveId>, TypeOnly<typeof old.getDriveId>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getDriveItemByRootFileName": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getDriveItemByRootFileName = requireAssignableTo<TypeOnly<typeof current.getDriveItemByRootFileName>, TypeOnly<typeof old.getDriveItemByRootFileName>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getDriveItemByServerRelativePath": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getDriveItemByServerRelativePath = requireAssignableTo<TypeOnly<typeof current.getDriveItemByServerRelativePath>, TypeOnly<typeof old.getDriveItemByServerRelativePath>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getDriveItemFromDriveAndItem": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getDriveItemFromDriveAndItem = requireAssignableTo<TypeOnly<typeof current.getDriveItemFromDriveAndItem>, TypeOnly<typeof old.getDriveItemFromDriveAndItem>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getFetchTokenUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getFetchTokenUrl = requireAssignableTo<TypeOnly<typeof current.getFetchTokenUrl>, TypeOnly<typeof old.getFetchTokenUrl>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getLoginPageUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getLoginPageUrl = requireAssignableTo<TypeOnly<typeof current.getLoginPageUrl>, TypeOnly<typeof old.getLoginPageUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -353,81 +470,9 @@ declare type current_as_old_for_Variable_getRefreshTokenFn = requireAssignableTo
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_getSPOAndGraphRequestIdsFromResponse": {"backCompat": false}
+ * "Variable_OdspServiceReadOnlyErrorCode": {"backCompat": false}
  */
-declare type current_as_old_for_Function_getSPOAndGraphRequestIdsFromResponse = requireAssignableTo<TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>, TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getServer": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getServer = requireAssignableTo<TypeOnly<typeof current.getServer>, TypeOnly<typeof old.getServer>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getSiteUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getSiteUrl = requireAssignableTo<TypeOnly<typeof current.getSiteUrl>, TypeOnly<typeof old.getSiteUrl>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_hasFacetCodes": {"backCompat": false}
- */
-declare type current_as_old_for_Function_hasFacetCodes = requireAssignableTo<TypeOnly<typeof current.hasFacetCodes>, TypeOnly<typeof old.hasFacetCodes>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_hasRedirectionLocation": {"backCompat": false}
- */
-declare type current_as_old_for_Function_hasRedirectionLocation = requireAssignableTo<TypeOnly<typeof current.hasRedirectionLocation>, TypeOnly<typeof old.hasRedirectionLocation>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_isOdspHostname": {"backCompat": false}
- */
-declare type current_as_old_for_Function_isOdspHostname = requireAssignableTo<TypeOnly<typeof current.isOdspHostname>, TypeOnly<typeof old.isOdspHostname>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_isPushChannelHostname": {"backCompat": false}
- */
-declare type current_as_old_for_Function_isPushChannelHostname = requireAssignableTo<TypeOnly<typeof current.isPushChannelHostname>, TypeOnly<typeof old.isPushChannelHostname>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_parseFacetCodes": {"backCompat": false}
- */
-declare type current_as_old_for_Function_parseFacetCodes = requireAssignableTo<TypeOnly<typeof current.parseFacetCodes>, TypeOnly<typeof old.parseFacetCodes>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_postAsync": {"backCompat": false}
- */
-declare type current_as_old_for_Function_postAsync = requireAssignableTo<TypeOnly<typeof current.postAsync>, TypeOnly<typeof old.postAsync>>
+declare type current_as_old_for_Variable_OdspServiceReadOnlyErrorCode = requireAssignableTo<TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>, TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -437,48 +482,3 @@ declare type current_as_old_for_Function_postAsync = requireAssignableTo<TypeOnl
  * "Variable_pushScope": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_pushScope = requireAssignableTo<TypeOnly<typeof current.pushScope>, TypeOnly<typeof old.pushScope>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_putAsync": {"backCompat": false}
- */
-declare type current_as_old_for_Function_putAsync = requireAssignableTo<TypeOnly<typeof current.putAsync>, TypeOnly<typeof old.putAsync>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_refreshTokens": {"backCompat": false}
- */
-declare type current_as_old_for_Function_refreshTokens = requireAssignableTo<TypeOnly<typeof current.refreshTokens>, TypeOnly<typeof old.refreshTokens>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_throwOdspNetworkError": {"backCompat": false}
- */
-declare type current_as_old_for_Function_throwOdspNetworkError = requireAssignableTo<TypeOnly<typeof current.throwOdspNetworkError>, TypeOnly<typeof old.throwOdspNetworkError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_tryParseErrorResponse": {"backCompat": false}
- */
-declare type current_as_old_for_Function_tryParseErrorResponse = requireAssignableTo<TypeOnly<typeof current.tryParseErrorResponse>, TypeOnly<typeof old.tryParseErrorResponse>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_unauthPostAsync": {"backCompat": false}
- */
-declare type current_as_old_for_Function_unauthPostAsync = requireAssignableTo<TypeOnly<typeof current.unauthPostAsync>, TypeOnly<typeof old.unauthPostAsync>>

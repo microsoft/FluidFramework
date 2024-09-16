@@ -128,9 +128,9 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@fluid-tools/build-cli": "^0.46.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@2.2.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@microsoft/api-extractor": "7.47.8",
@@ -154,6 +154,10 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"RemovedEnum_MessageType2": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"Class_AuthorizationError": {
 				"backCompat": false
 			},
@@ -164,6 +168,10 @@
 				"backCompat": false
 			},
 			"ClassStatics_PrefetchDocumentStorageService": {
+				"backCompat": false
+			},
+			"Enum_MessageType2": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		},
