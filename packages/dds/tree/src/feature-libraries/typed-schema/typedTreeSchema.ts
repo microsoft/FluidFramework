@@ -235,12 +235,11 @@ export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind> {
 	 * @privateRemarks
 	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FlexFieldSchema} can not have (due to recursive type issues).
 	 */
-	public static create<TKind extends FlexFieldKind, const TMetadata = unknown>(
+	public static create<TKind extends FlexFieldKind>(
 		kind: TKind,
 		allowedTypes: FlexAllowedTypes,
-		metadata?: TMetadata | undefined,
 	): FlexFieldSchema<TKind> {
-		return new FlexFieldSchema(kind, allowedTypes, metadata);
+		return new FlexFieldSchema(kind, allowedTypes);
 	}
 
 	protected _typeCheck!: MakeNominal;
@@ -258,12 +257,10 @@ export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind> {
 	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
-	 * @param metadata - Optional metadata to associate with the field.
 	 */
 	private constructor(
 		public readonly kind: TKind,
 		public readonly allowedTypes: FlexAllowedTypes,
-		public readonly metadata?: unknown | undefined,
 	) {
 		// Since this class can't have the desired extends clause, do some extra runtime validation:
 		assert(Array.isArray(allowedTypes), 0x7bc /* Invalid allowedTypes */);

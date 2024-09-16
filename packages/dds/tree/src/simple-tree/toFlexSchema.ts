@@ -124,17 +124,15 @@ export function convertField(
 ): FlexFieldSchema {
 	let kind: FlexFieldKind;
 	let types: ImplicitAllowedTypes;
-	let metadata: unknown;
 	if (schema instanceof FieldSchema) {
 		kind = convertFieldKind.get(schema.kind) ?? fail("Invalid field kind");
 		types = schema.allowedTypes;
-		metadata = schema.metadata;
 	} else {
 		kind = FieldKinds.required;
 		types = schema;
 	}
 	const allowedTypes = convertAllowedTypes(schemaMap, types);
-	return FlexFieldSchema.create(kind, allowedTypes, metadata);
+	return FlexFieldSchema.create(kind, allowedTypes);
 }
 
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
