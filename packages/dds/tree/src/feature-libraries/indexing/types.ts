@@ -2,12 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import type { TreeValue } from "../../core/index.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * an array of nodes that is guaranteed to have at least one element
+ *
+ * @alpha
  */
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
-export interface TreeIndex<TKey extends TreeValue, TValue> extends ReadonlyMap<TKey, TValue> {}
+/**
+ * Value that may be used as keys in a {@link TreeIndex}.
+ *
+ * @alpha
+ */
+export type TreeIndexKey = number | string | boolean | IFluidHandle | null;
+
+/**
+ * A index where values are keyed on {@link TreeIndexKey}s.
+ *
+ * @alpha
+ */
+export interface TreeIndex<TKey extends TreeIndexKey, TValue>
+	extends ReadonlyMap<TKey, TValue> {}

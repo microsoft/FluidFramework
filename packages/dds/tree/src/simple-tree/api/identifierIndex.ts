@@ -5,12 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	AnchorNode,
-	FieldKey,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-} from "../../core/index.js";
+import type { AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
@@ -24,6 +19,7 @@ import {
 	hasElement,
 	type TreeIndex,
 	type FlexTreeContext,
+	type TreeIndexKey,
 } from "../../feature-libraries/index.js";
 import { brand, fail } from "../../util/index.js";
 import { FieldKind, type NodeFromSchema } from "../schemaTypes.js";
@@ -37,8 +33,22 @@ import { treeNodeApi } from "./treeNodeApi.js";
  *
  * @alpha
  */
-export type SimpleTreeIndex<TKey extends TreeValue, TValue> = TreeIndex<TKey, TValue>;
+export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey, TValue>;
 
+/**
+ * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ *
+ * @param context - the context for the tree being indexed
+ * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns a {@link KeyFinder} that works with the schema
+ * @param getValue - given at least one {@link TreeNode}, returns an associated value
+ *
+ * @alpha
+ */
+export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(
+	context: FlexTreeContext,
+	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
+	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
+): SimpleTreeIndex<TKey, TValue>;
 /**
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
  *
@@ -47,18 +57,10 @@ export type SimpleTreeIndex<TKey extends TreeValue, TValue> = TreeIndex<TKey, TV
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
  * @param indexableSchema - a list of all the schema types that can be indexed
  *
- * @privateRemarks
- * This creates an anchor tree index that indexes the value of some simple tree nodes on some key.
- *
  * @alpha
  */
-export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
-	context: FlexTreeContext,
-	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
-	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
-): SimpleTreeIndex<TKey, TValue>;
 export function createSimpleTreeIndex<
-	TKey extends TreeValue,
+	TKey extends TreeIndexKey,
 	TValue,
 	TSchema extends TreeNodeSchema,
 >(
@@ -67,7 +69,12 @@ export function createSimpleTreeIndex<
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
 	indexableSchema: readonly TSchema[],
 ): SimpleTreeIndex<TKey, TValue>;
-export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
+/**
+ * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ *
+ * @alpha
+ */
+export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue:
@@ -194,7 +201,7 @@ export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex
 function getOrCreateSimpleTree(
 	context: Context,
 	anchorNode: AnchorNode,
-): TreeNode | TreeValue {
+): TreeNode | TreeIndexKey {
 	return getOrCreateNodeFromFlexTreeNode(
 		anchorNode.slots.get(flexTreeSlot) ?? makeFlexNode(context, anchorNode),
 	);

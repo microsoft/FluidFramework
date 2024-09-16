@@ -12,11 +12,10 @@ import {
 	type IForestSubscription,
 	type ITreeSubscriptionCursor,
 	type TreeNodeSchemaIdentifier,
-	type TreeValue,
 	forEachField,
 	forEachNode,
 } from "../../core/index.js";
-import type { TreeIndex, TreeIndexNodes } from "./types.js";
+import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
 import { TreeStatus } from "../flex-tree/index.js";
 
 /**
@@ -29,8 +28,10 @@ import { TreeStatus } from "../flex-tree/index.js";
  * This function does not own the cursor in any way, it walks the cursor to find the key the node is indexed on
  * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
  * and must be disposed elsewhere.
+ *
+ * @alpha
  */
-export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
+export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCursor) => TKey;
 
 /**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
@@ -43,7 +44,7 @@ export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) 
  * TODO: need to make sure key finders are deterministic or have a way to invalidate them
  * TODO: the index does not update on leaf node changes
  */
-export class AnchorTreeIndex<TKey extends TreeValue, TValue>
+export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	implements TreeIndex<TKey, TValue>
 {
 	/**
@@ -55,7 +56,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	/**
 	 * The actual index from keys to anchor nodes.
 	 */
-	private readonly nodes = new Map<TKey, TreeIndexNodes<AnchorNode>>();
+	private readonly nodes = new Map<TKey, AnchorNode[]>();
 	/**
 	 * Keeps track of anchors for disposal.
 	 */
@@ -95,7 +96,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 					const nodes = this.nodes.get(key);
 					if (nodes !== undefined) {
 						// if the key already exists in the index, the anchor node is appended to its list of nodes
-						this.nodes.set(key, [...nodes, anchorNode]);
+						nodes.push(anchorNode);
 					} else {
 						this.nodes.set(key, [anchorNode]);
 					}
@@ -252,16 +253,14 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	/**
 	 * Filters out any anchor nodes that are detached and returns the value for the remaining nodes.
 	 */
-	private getFilteredValue(
-		anchorNodes: TreeIndexNodes<AnchorNode> | undefined,
-	): TValue | undefined {
+	private getFilteredValue(anchorNodes: AnchorNode[] | undefined): TValue | undefined {
 		const attachedNodes = filterNodes(anchorNodes, (anchorNode) => {
 			const nodeStatus = this.checkTreeStatus(anchorNode);
 			return nodeStatus === TreeStatus.InDocument;
 		});
 
-		if (attachedNodes !== undefined) {
-			return this.getValue(attachedNodes as unknown as TreeIndexNodes<AnchorNode>);
+		if (attachedNodes !== undefined && hasElement(attachedNodes)) {
+			return this.getValue(attachedNodes);
 		}
 	}
 }
@@ -272,12 +271,9 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 function filterNodes(
 	anchorNodes: readonly AnchorNode[] | undefined,
 	filter: (node: AnchorNode) => boolean,
-): TreeIndexNodes<AnchorNode> | undefined {
+): AnchorNode[] | undefined {
 	if (anchorNodes !== undefined) {
-		const filteredNodes: readonly AnchorNode[] = anchorNodes.filter(filter);
-		if (hasElement(filteredNodes)) {
-			return filteredNodes;
-		}
+		return anchorNodes.filter(filter);
 	}
 
 	return undefined;

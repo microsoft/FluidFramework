@@ -44,6 +44,9 @@ export {
 	TreeStatus,
 	type Unenforced,
 	TreeCompressionStrategy,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
 } from "./feature-libraries/index.js";
 
 export {
@@ -115,6 +118,11 @@ export {
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
+	// Index APIs
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -128,10 +136,6 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	type SimpleTreeIndex,
-	type IdentifierIndex,
-	createSimpleTreeIndex,
-	createIdentifierIndex,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
