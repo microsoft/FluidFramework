@@ -33,10 +33,7 @@ export {
 	buildTreeConfiguration,
 } from "./schematizeTree.js";
 
-export {
-	CheckoutFlexTreeView,
-	type FlexTreeView,
-} from "./treeView.js";
+export { CheckoutFlexTreeView } from "./treeView.js";
 
 export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
 
