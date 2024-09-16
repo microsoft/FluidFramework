@@ -70,9 +70,6 @@ export interface FlexTreeHydratedContext extends FlexTreeContext, Listenable<For
 /**
  * Creating multiple flex tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
  * This slot is used to detect if one already exists and error if creating a second.
- *
- * TODO:
- * 1. API docs need to reflect this limitation or the limitation has to be removed.
  */
 export const ContextSlot = anchorSlot<Context>();
 

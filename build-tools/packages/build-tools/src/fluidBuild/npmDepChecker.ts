@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { readFile } from "node:fs/promises";
 import { Package } from "../common/npmPackage";
-import { readFileAsync } from "../common/utils";
 
 import registerDebug from "debug";
 const traceDepCheck = registerDebug("fluid-build:depCheck");
@@ -89,7 +89,7 @@ export class NpmDepChecker {
 	private async check() {
 		let count = 0;
 		for (const tsFile of this.checkFiles) {
-			const content = await readFileAsync(tsFile, "utf-8");
+			const content = await readFile(tsFile, "utf-8");
 			for (const record of this.records) {
 				if (record.found) {
 					continue;
