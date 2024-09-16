@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type Context,
 	type FlexTreeField,
@@ -29,7 +30,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 		private readonly onDispose?: () => void,
 	) {
 		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);
-		contextToTreeView.set(this.context, this);
+		contextToTreeViewMap.set(this.context, this);
 		this.flexTree = this.context.root;
 	}
 
@@ -52,4 +53,16 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
  * Maps the context of every {@link CheckoutFlexTreeView} to the view.
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
-export const contextToTreeView = new WeakMap<FlexTreeHydratedContext, CheckoutFlexTreeView>();
+const contextToTreeViewMap = new WeakMap<FlexTreeHydratedContext, CheckoutFlexTreeView>();
+
+/**
+ * Retrieve the {@link CheckoutFlexTreeView | view} for the given {@link FlexTreeHydratedContext | context}.
+ * @remarks Every {@link CheckoutFlexTreeView} is associated with its context upon creation.
+ */
+export function getCheckoutFlexTreeView(
+	context: FlexTreeHydratedContext,
+): CheckoutFlexTreeView {
+	const view = contextToTreeViewMap.get(context);
+	assert(view !== undefined, "Expected view to be registered for context");
+	return view;
+}
