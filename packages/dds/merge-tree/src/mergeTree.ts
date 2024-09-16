@@ -63,6 +63,7 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
+	// eslint-disable-next-line import/no-deprecated
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
@@ -420,6 +421,7 @@ class Obliterates {
 	 * See https://github.com/microsoft/FluidFramework/blob/main/packages/dds/merge-tree/docs/Obliterate.md#remote-perspective
 	 * for additional context
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private readonly seqOrdered = new DoublyLinkedList<ObliterateInfo>();
 
 	/**
@@ -441,6 +443,7 @@ class Obliterates {
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public addOrUpdate(obliterateInfo: ObliterateInfo): void {
 		const { seq, start } = obliterateInfo;
 		if (seq !== UnassignedSequenceNumber) {
@@ -453,10 +456,13 @@ class Obliterates {
 		return this.startOrdered.size === 0;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public findOverlapping(seg: ISegment): Iterable<ObliterateInfo> {
+		// eslint-disable-next-line import/no-deprecated
 		const overlapping: ObliterateInfo[] = [];
 		for (const start of this.startOrdered.items) {
 			if (start.getSegment()!.ordinal <= seg.ordinal) {
+				// eslint-disable-next-line import/no-deprecated
 				const ob = start.properties?.obliterate as ObliterateInfo;
 				if (ob.end.getSegment()!.ordinal >= seg.ordinal) {
 					overlapping.push(ob);
@@ -1513,8 +1519,10 @@ export class MergeTree {
 					continue;
 				}
 
+				// eslint-disable-next-line import/no-deprecated
 				let oldest: ObliterateInfo | undefined;
 				let normalizedOldestSeq: number = 0;
+				// eslint-disable-next-line import/no-deprecated
 				let newest: ObliterateInfo | undefined;
 				let normalizedNewestSeq: number = 0;
 				const movedClientIds: number[] = [];
@@ -1901,6 +1909,7 @@ export class MergeTree {
 		const movedSegments: IMergeTreeSegmentDelta[] = [];
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+		// eslint-disable-next-line import/no-deprecated
 		const obliterate: ObliterateInfo = {
 			clientId,
 			end: createDetachedLocalReferencePosition(undefined),
