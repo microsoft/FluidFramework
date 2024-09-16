@@ -101,6 +101,7 @@
 		"danger": "^12.3.3",
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.7",
+		"depcheck": "^1.4.7",
 		"execa": "^5.1.1",
 		"fflate": "^0.8.2",
 		"fs-extra": "^11.2.0",
@@ -140,8 +141,7 @@
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"unist-util-visit": "^5.0.0",
-		"xml2js": "^0.5.0",
-		"depcheck": "^1.4.7"
+		"xml2js": "^0.5.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
