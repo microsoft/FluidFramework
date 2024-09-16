@@ -84,6 +84,6 @@ export function getCheckoutFlexTreeView(
 	context: FlexTreeHydratedContext,
 ): CheckoutFlexTreeView {
 	const view = contextToTreeViewMap.get(context);
-	assert(view !== undefined, "Expected view to be registered for context");
+	assert(view !== undefined, 0xa41 /* Expected view to be registered for context */);
 	return view;
 }

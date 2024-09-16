@@ -1627,5 +1627,6 @@ export const shortCodeMap = {
 	"0xa3d": "Partial batch should have exactly one message",
 	"0xa3e": "Empty batch is always considered a full batch",
 	"0xa3f": "segments cannot be undefined",
-	"0xa40": "must have obliterate info"
+	"0xa40": "must have obliterate info",
+	"0xa41": "Expected view to be registered for context"
 };
