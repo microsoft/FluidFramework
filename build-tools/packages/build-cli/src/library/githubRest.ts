@@ -165,3 +165,19 @@ export async function createOrUpdateCommentOnPr(
 	});
 	return data.id;
 }
+
+export async function getChangedFilenames(
+	{ owner, repo, token }: GitHubProps,
+	prNumber: number,
+): Promise<string[]> {
+	const octokit = new Octokit({ auth: token });
+
+	// List of files changed in the pull request
+	const { data: files } = await octokit.pulls.listFiles({
+		owner,
+		repo,
+		pull_number: prNumber,
+	});
+	const fileNames = files.map((file) => file.filename);
+	return fileNames;
+}

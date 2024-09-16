@@ -3,21 +3,14 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
-import globby from "globby";
 import JSZip from "jszip";
 import { Parser } from "xml2js";
+import type { CommandLogger } from "../logging.js";
 
 /**
- * The type for the coverage report, containing the name of the package, line coverage and branch coverage
+ * The type for the coverage report, containing the line coverage and branch coverage
  */
 export interface CoverageMetric {
-	packagePath: string;
 	lineCoverage: number;
 	branchCoverage: number;
 }
@@ -42,8 +35,8 @@ interface TXmlCoverageReportSchemaForPackage {
 
 const extractCoverageMetrics = (
 	xmlForCoverageReportFromArtifact: TXmlCoverageReportSchema,
-): CoverageMetric[] => {
-	const report: CoverageMetric[] = [];
+): Map<string, CoverageMetric> => {
+	const report: Map<string, CoverageMetric> = new Map();
 	const coverageForPackagesResult =
 		xmlForCoverageReportFromArtifact.coverage.packages[0]?.package;
 
@@ -51,113 +44,68 @@ const extractCoverageMetrics = (
 		const packagePath = coverageForPackage.$.name;
 		const lineCoverage = Number.parseFloat(coverageForPackage.$["line-rate"]) * 100;
 		const branchCoverage = Number.parseFloat(coverageForPackage.$["branch-rate"]) * 100;
-		report.push({
-			packagePath,
-			lineCoverage,
-			branchCoverage,
-		});
+		if (packagePath && !Number.isNaN(lineCoverage) && !Number.isNaN(branchCoverage)) {
+			report.set(packagePath, {
+				lineCoverage,
+				branchCoverage,
+			});
+		}
 	}
-
 	return report;
 };
 
 /**
- * Method that returns the coverage report for the baseline build
- * @param baselineZip - zipped coverage files for the baseline build
- * @returns an array of coverage metrics for baseline containing packageName, lineCoverage and branchCoverage
+ * Method that returns the coverage report for the build from the artifact.
+ * @param baselineZip - zipped coverage files for the build
+ * @param logger - The logger to log messages.
+ * @returns an map of coverage metrics for build containing packageName, lineCoverage and branchCoverage
  */
 export const getCoverageMetricsForBaseline = async (
-	baselineZip: JSZip,
-): Promise<CoverageMetric[]> => {
+	artifactZip: JSZip,
+	logger?: CommandLogger,
+): Promise<Map<string, CoverageMetric>> => {
 	const coverageReportsFiles: string[] = [];
-	// eslint-disable-next-line unicorn/no-array-for-each
-	baselineZip.forEach((filePath) => {
+	// eslint-disable-next-line unicorn/no-array-for-each -- required as the for..of does not return what for each does here.
+	artifactZip.forEach((filePath) => {
 		if (filePath.endsWith("cobertura-coverage-patched.xml"))
 			coverageReportsFiles.push(filePath);
 	});
 
-	const coverageMetricsForBaseline: CoverageMetric[] = [];
+	let coverageMetricsForBaseline: Map<string, CoverageMetric> = new Map();
 	const xmlParser = new Parser();
 
 	try {
-		console.log(`${coverageReportsFiles.length} coverage files found in baseline`);
+		logger?.info(`${coverageReportsFiles.length} coverage files found.`);
 
 		for (const coverageReportFile of coverageReportsFiles) {
-			const jsZipObject = baselineZip.file(coverageReportFile);
+			const jsZipObject = artifactZip.file(coverageReportFile);
 			if (!jsZipObject) {
-				console.log(`could not find file ${coverageReportFile} in baseline`);
+				logger?.warning(
+					`could not find file ${coverageReportFile} in the code coverage artifact`,
+				);
 			}
 
+			// eslint-disable-next-line no-await-in-loop
 			const coverageReportXML = await jsZipObject?.async("nodebuffer");
 			if (coverageReportXML !== undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- missing type for XML output
 				xmlParser.parseString(coverageReportXML, (err: Error | null, result: any): void => {
 					if (err) {
-						console.warn(`Error processing file ${coverageReportFile}: ${err} in baseline`);
+						console.warn(`Error processing file ${coverageReportFile}: ${err}`);
 						return;
 					}
-					extractCoverageMetricsUtil(result, coverageMetricsForBaseline);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					coverageMetricsForBaseline = extractCoverageMetrics(result);
 				});
 			}
-			if (coverageMetricsForBaseline.length > 0) {
+			if (coverageMetricsForBaseline.size > 0) {
 				break;
 			}
 		}
 	} catch (error) {
-		console.log(`Error encountered with reading files: ${error} in baseline`);
+		logger?.warning(`Error encountered with reading files: ${error}`);
 	}
 
-	console.log(`${coverageMetricsForBaseline.length} coverage reports generated`);
+	logger?.info(`${coverageMetricsForBaseline.size} coverage reports generated`);
 	return coverageMetricsForBaseline;
 };
-
-/**
- * Method that returns the coverage metrics for the pr
- * @param coverageReportsFolder - The folder where the coverage reports for the pr can be found
- * @returns an array of coverage metrics for baseline containing packageName, lineCoverage and branchCoverage
- */
-export const getCoverageMetricsForPr = async (
-	coverageReportsFolder: string,
-): Promise<CoverageMetric[]> => {
-	const coverageMetricsForPr: CoverageMetric[] = [];
-	const coverageReportsFiles = await globby(
-		path.posix.join(coverageReportsFolder, "cobertura-coverage-patched.xml"),
-	);
-
-	const xmlParser = new Parser();
-
-	console.log(`${coverageReportsFiles.length} coverage files found in PR`);
-
-	for (const coverageReportFile of coverageReportsFiles) {
-		const coverageReportXML = await fs.readFile(coverageReportFile, "utf8");
-		try {
-			const result = await xmlParser.parseStringPromise(coverageReportXML);
-			extractCoverageMetricsUtil(result, coverageMetricsForPr);
-			if (coverageMetricsForPr.length > 0) {
-				break;
-			}
-		} catch (error) {
-			console.warn(`Error processing file ${coverageReportFile}: ${error} in PR`);
-			continue;
-		}
-	}
-
-	return coverageMetricsForPr;
-};
-
-function extractCoverageMetricsUtil(
-	result: TXmlCoverageReportSchema,
-	coverageMetrics: CoverageMetric[],
-): void {
-	const metrics = extractCoverageMetrics(result);
-	for (const metric of metrics) {
-		if (
-			metric.packagePath &&
-			!Number.isNaN(metric.lineCoverage) &&
-			!Number.isNaN(metric.branchCoverage) &&
-			metric.lineCoverage < 1
-		) {
-			coverageMetrics.push(metric);
-		}
-	}
-}

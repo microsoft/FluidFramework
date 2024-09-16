@@ -10,8 +10,6 @@ import type { CoverageMetric } from "./getCoverageMetrics.js";
 // prefix helps. If we want to ignore a specific package, we can add the package name directly. Also, the coverage report generates paths using dots as a
 // separator for the path.
 const codeCoverageComparisonIgnoreList: string[] = [
-	"experimental",
-	"examples",
 	"packages.common.core-interfaces",
 	"packages.common.core-utils",
 	"packages.common.driver-definitions",
@@ -62,20 +60,26 @@ export interface CodeCoverageComparison {
  * one per package.
  */
 export const compareCodeCoverage = (
-	baselineCoverageReport: CoverageMetric[],
-	prCoverageReport: CoverageMetric[],
+	baselineCoverageReport: Map<string, CoverageMetric>,
+	prCoverageReport: Map<string, CoverageMetric>,
+	changedFiles: string[],
 ): CodeCoverageComparison[] => {
 	const results: CodeCoverageComparison[] = [];
 
-	for (const packageInPrReport of prCoverageReport) {
-		const { packagePath } = packageInPrReport;
-		if (packagePath.length === 0) {
-			continue;
-		}
+	const changedPackagesList = changedFiles.map((fileName) => {
+		const packagePath = fileName.split("/").slice(0, -1).join(".");
+		return packagePath;
+	});
+	const changedPackages = new Set(changedPackagesList);
+	for (const changedPackage of changedPackages) {
 		let skip = false;
-		// Return if the package being updated in the PR is in the list of packages to be ignored
+		// Return if the package being updated in the PR is in the list of packages to be ignored.
+		// Also, ignore for now if the package is not in the packages folder.
 		for (const ignorePackageName of codeCoverageComparisonIgnoreList) {
-			if (packagePath.startsWith(ignorePackageName)) {
+			if (
+				changedPackage.startsWith(ignorePackageName) ||
+				!changedPackage.startsWith("packages.")
+			) {
 				skip = true;
 				break;
 			}
@@ -85,23 +89,25 @@ export const compareCodeCoverage = (
 			continue;
 		}
 
-		const lineCoverageInPr = packageInPrReport.lineCoverage;
-		let lineCoverageInBaseline = 0;
-		const branchCoverageInPr = packageInPrReport.branchCoverage;
-		let branchCoverageInBaseline = 0;
+		const prCoverageMetrics = prCoverageReport.get(changedPackage);
+		const baselineCoverageMetrics = baselineCoverageReport.get(changedPackage);
+		const isNewPackage = baselineCoverageMetrics === undefined;
+		if (prCoverageMetrics === undefined) {
+			continue;
+		}
 
-		// Find the package in baseline report and update metrics
-		const packageInBaselineReport = baselineCoverageReport.find(
-			(report) => report.packagePath === packagePath,
-		);
-		const isNewPackage = packageInBaselineReport === undefined;
-		if (packageInBaselineReport) {
-			lineCoverageInBaseline = packageInBaselineReport.lineCoverage;
-			branchCoverageInBaseline = packageInBaselineReport.branchCoverage;
+		let lineCoverageInBaseline = 0;
+		let branchCoverageInBaseline = 0;
+		const lineCoverageInPr = prCoverageMetrics.lineCoverage;
+		const branchCoverageInPr = prCoverageMetrics.branchCoverage;
+
+		if (baselineCoverageMetrics) {
+			lineCoverageInBaseline = baselineCoverageMetrics.lineCoverage;
+			branchCoverageInBaseline = baselineCoverageMetrics.branchCoverage;
 		}
 
 		results.push({
-			packagePath,
+			packagePath: changedPackage,
 			lineCoverageInBaseline,
 			lineCoverageInPr,
 			lineCoverageDiff: lineCoverageInPr - lineCoverageInBaseline,

@@ -1,7 +1,7 @@
 `flub report`
 =============
 
-Run comparison of code coverage stats
+Report analysis about the codebase, like code coverage and bundle size measurements.
 
 * [`flub report codeCoverageStats`](#flub-report-codecoveragestats)
 

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IBaselineBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
+import type { IPRBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
+import type { CommandLogger } from "../logging.js";
 import type { CodeCoverageSummary } from "./codeCoveragePr.js";
 import type { CodeCoverageComparison } from "./compareCodeCoverage.js";
 
@@ -12,27 +13,27 @@ const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline c
 /**
  * Method that returns the comment to be posted on PRs about code coverage
  * @param codeCoverageComparisonReport - The comparison report between baseline and pr test coverage
+ * @param baselineBuildInfo - The baseline build information.
+ * @param logger - The logger to log messages.
  * @returns Comment to be posted on the PR, and whether the code coverage comparison check passed or not
  */
 export const getCommentForCodeCoverageDiff = async (
 	codeCoverageComparisonReport: CodeCoverageComparison[],
-	baselineBuildInfo: IBaselineBuildMetrics,
+	baselineBuildInfo: IPRBuildMetrics,
+	logger?: CommandLogger,
 ): Promise<CodeCoverageSummary> => {
 	// Find new packages that do not have test setup and are being impacted by changes in the PR
 	const newPackagesIdentifiedByCodeCoverage = codeCoverageComparisonReport.filter(
-		(codeCoverageReport) =>
-			(codeCoverageReport.lineCoverageInPr === 0 &&
-				codeCoverageReport.lineCoverageInBaseline === 0) ||
-			codeCoverageReport.isNewPackage,
+		(codeCoverageReport) => codeCoverageReport.isNewPackage,
 	);
-	console.log(`Found ${newPackagesIdentifiedByCodeCoverage.length} new packages`);
+	logger?.verbose(`Found ${newPackagesIdentifiedByCodeCoverage.length} new packages`);
 
 	// Find existing packages that have reported a change in coverage for the current PR
 	const existingPackagesWithCoverageChange = codeCoverageComparisonReport.filter(
 		(codeCoverageReport) =>
 			codeCoverageReport.branchCoverageDiff !== 0 || codeCoverageReport.lineCoverageDiff !== 0,
 	);
-	console.log(
+	logger?.verbose(
 		`Found ${existingPackagesWithCoverageChange.length} packages with code coverage changes`,
 	);
 
@@ -41,10 +42,18 @@ export const getCommentForCodeCoverageDiff = async (
 			codeCoverageReport.branchCoverageDiff < -1 || codeCoverageReport.lineCoverageDiff < -1,
 	);
 
+	logger?.verbose(
+		`Found ${packagesWithNotableRegressions.length} existing packages with notable regressions`,
+	);
+
 	// Code coverage for the newly added package should be less than 50% to fail the build
 	const newPackagesWithNotableRegressions = newPackagesIdentifiedByCodeCoverage.filter(
 		(codeCoverageReport) =>
 			codeCoverageReport.branchCoverageInPr < 50 || codeCoverageReport.lineCoverageInPr < 50,
+	);
+
+	logger?.verbose(
+		`Found ${newPackagesWithNotableRegressions.length} new packages with notable regressions`,
 	);
 	let failBuild: boolean = false;
 	if (
@@ -85,12 +94,12 @@ export const getCommentForCodeCoverageDiff = async (
 	};
 };
 
-const getSummaryFooter = (baselineBuildInfo: IBaselineBuildMetrics): string => {
+const getSummaryFooter = (baselineBuildInfo: IPRBuildMetrics): string => {
 	return `<hr><p>Baseline commit: ${
-		baselineBuildInfo.baselineCommit
+		baselineBuildInfo.build.sourceVersion
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	} <br>Baseline build: <a target="_blank" href=${baselineBuildInfo.baselineBuild._links?.web.href as string}> ${
-		baselineBuildInfo.baselineBuild.id
+	} <br>Baseline build: <a target="_blank" href=${baselineBuildInfo.build._links?.web.href as string}> ${
+		baselineBuildInfo.build.id
 	} </a><br> Happy Coding!!</p>`;
 };
 
@@ -125,11 +134,11 @@ const getColorGlyph = (codeCoverageBranchDiff: number): string => {
 	return '<span style="color: red">⯆</span>';
 };
 
-const formatDiff = (branchCoverageDiff: number): string => {
-	if (branchCoverageDiff === 0) {
+const formatDiff = (coverageDiff: number): string => {
+	if (coverageDiff === 0) {
 		return "No change";
 	}
-	return `${(branchCoverageDiff * 100).toFixed(2)}%`;
+	return `${coverageDiff.toFixed(2)}%`;
 };
 
 const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): string => {
@@ -141,15 +150,15 @@ const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): st
 	return (
 		`<tr>
     <td>Branch Coverage</td>
-    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInBaseline)}%</td>
-    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInPr)}%</td>
-    <td>${glyphForBranchCoverage} ${formatDiff(codeCoverageComparisonReport.branchCoverageDiff)}%</td>
+    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInBaseline)}</td>
+    <td>${formatDiff(codeCoverageComparisonReport.branchCoverageInPr)}</td>
+    <td>${glyphForBranchCoverage} ${formatDiff(codeCoverageComparisonReport.branchCoverageDiff)}</td>
   </tr>` +
 		`<tr>
     <td>Line Coverage</td>
-    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInBaseline)}%</td>
-    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInPr)}%</td>
-    <td>${glyphForLineCoverage} ${formatDiff(codeCoverageComparisonReport.lineCoverageDiff)}%</td>
+    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInBaseline)}</td>
+    <td>${formatDiff(codeCoverageComparisonReport.lineCoverageInPr)}</td>
+    <td>${glyphForLineCoverage} ${formatDiff(codeCoverageComparisonReport.lineCoverageDiff)}</td>
     </tr>`
 	);
 };

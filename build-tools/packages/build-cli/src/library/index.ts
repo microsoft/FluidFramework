@@ -62,4 +62,7 @@ export {
 export { LayerGraph } from "./layerGraph.js";
 export { type Handler, policyHandlers } from "./repoPolicyCheck/index.js";
 export { IAzureDevopsBuildCoverageConstants } from "./azureDevops/constants.js";
-export { getBaselineBuildMetrics } from "./azureDevops/getBaselineBuildMetrics.js";
+export {
+	getBaselineBuildMetrics,
+	getBuildArtifactForSpecificBuild,
+} from "./azureDevops/getBaselineBuildMetrics.js";

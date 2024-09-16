@@ -242,6 +242,9 @@
 			},
 			"promote": {
 				"description": "Promote commands are used to promote packages published to an npm registry."
+			},
+			"report": {
+				"description": "Report analysis about the codebase, like code coverage and bundle size measurements."
 			}
 		}
 	}
