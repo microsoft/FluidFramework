@@ -13,7 +13,7 @@ import {
 } from "../../simple-tree/index.js";
 import { ValueSchema } from "../../core/index.js";
 
-describe("getSimpleSchema", () => {
+describe.only("getSimpleSchema", () => {
 	it("Leaf node", async () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.string;

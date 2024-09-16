@@ -126,11 +126,16 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 	}
 
 	const allowedTypes = allowedTypesFromFieldSchema(schema);
-	const result = {
+	const result: SimpleFieldSchema = {
 		kind: schema.kind,
 		allowedTypes,
-		description: schema.metadata?.description,
 	};
+
+	// Don't include "description" property at all if it's not present.
+	if (schema.metadata?.description !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(result as any).description = schema.metadata.description;
+	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(schema as any)[simpleFieldSchemaCacheSymbol] = result;
