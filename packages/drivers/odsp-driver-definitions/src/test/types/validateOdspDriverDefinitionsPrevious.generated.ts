@@ -20,18 +20,45 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_CacheContentType": {"forwardCompat": false}
+ * "Enum_SharingLinkRole": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_CacheContentType = requireAssignableTo<TypeOnly<old.CacheContentType>, TypeOnly<current.CacheContentType>>
+declare type old_as_current_for_Enum_SharingLinkRole = requireAssignableTo<TypeOnly<old.SharingLinkRole>, TypeOnly<current.SharingLinkRole>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_CacheContentType": {"backCompat": false}
+ * "Enum_SharingLinkRole": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_CacheContentType = requireAssignableTo<TypeOnly<current.CacheContentType>, TypeOnly<old.CacheContentType>>
+declare type current_as_old_for_Enum_SharingLinkRole = requireAssignableTo<TypeOnly<current.SharingLinkRole>, TypeOnly<old.SharingLinkRole>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_SharingLinkScope": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_SharingLinkScope = requireAssignableTo<TypeOnly<old.SharingLinkScope>, TypeOnly<current.SharingLinkScope>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_SharingLinkScope": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_SharingLinkScope = requireAssignableTo<TypeOnly<current.SharingLinkScope>, TypeOnly<old.SharingLinkScope>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getKeyForCacheEntry": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getKeyForCacheEntry = requireAssignableTo<TypeOnly<typeof current.getKeyForCacheEntry>, TypeOnly<typeof old.getKeyForCacheEntry>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -344,6 +371,96 @@ declare type current_as_old_for_Interface_ISocketStorageDiscovery = requireAssig
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_OdspResourceTokenFetchOptions": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_OdspResourceTokenFetchOptions = requireAssignableTo<TypeOnly<old.OdspResourceTokenFetchOptions>, TypeOnly<current.OdspResourceTokenFetchOptions>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_OdspResourceTokenFetchOptions": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_OdspResourceTokenFetchOptions = requireAssignableTo<TypeOnly<current.OdspResourceTokenFetchOptions>, TypeOnly<old.OdspResourceTokenFetchOptions>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ShareLinkInfoType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ShareLinkInfoType = requireAssignableTo<TypeOnly<old.ShareLinkInfoType>, TypeOnly<current.ShareLinkInfoType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ShareLinkInfoType": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ShareLinkInfoType = requireAssignableTo<TypeOnly<current.ShareLinkInfoType>, TypeOnly<old.ShareLinkInfoType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_TokenFetchOptions": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_TokenFetchOptions = requireAssignableTo<TypeOnly<old.TokenFetchOptions>, TypeOnly<current.TokenFetchOptions>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_TokenFetchOptions": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_TokenFetchOptions = requireAssignableTo<TypeOnly<current.TokenFetchOptions>, TypeOnly<old.TokenFetchOptions>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_TokenResponse": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_TokenResponse = requireAssignableTo<TypeOnly<old.TokenResponse>, TypeOnly<current.TokenResponse>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_TokenResponse": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_TokenResponse = requireAssignableTo<TypeOnly<current.TokenResponse>, TypeOnly<old.TokenResponse>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CacheContentType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_CacheContentType = requireAssignableTo<TypeOnly<old.CacheContentType>, TypeOnly<current.CacheContentType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CacheContentType": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_CacheContentType = requireAssignableTo<TypeOnly<current.CacheContentType>, TypeOnly<old.CacheContentType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_IdentityType": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_IdentityType = requireAssignableTo<TypeOnly<old.IdentityType>, TypeOnly<current.IdentityType>>
@@ -412,15 +529,6 @@ declare type old_as_current_for_TypeAlias_OdspError = requireAssignableTo<TypeOn
 declare type current_as_old_for_TypeAlias_OdspError = requireAssignableTo<TypeOnly<current.OdspError>, TypeOnly<old.OdspError>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_OdspErrorTypes": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_OdspErrorTypes = requireAssignableTo<TypeOnly<typeof current.OdspErrorTypes>, TypeOnly<typeof old.OdspErrorTypes>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -443,96 +551,6 @@ declare type current_as_old_for_TypeAlias_OdspErrorTypes = requireAssignableTo<T
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_OdspResourceTokenFetchOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_OdspResourceTokenFetchOptions = requireAssignableTo<TypeOnly<old.OdspResourceTokenFetchOptions>, TypeOnly<current.OdspResourceTokenFetchOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_OdspResourceTokenFetchOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_OdspResourceTokenFetchOptions = requireAssignableTo<TypeOnly<current.OdspResourceTokenFetchOptions>, TypeOnly<old.OdspResourceTokenFetchOptions>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ShareLinkInfoType": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ShareLinkInfoType = requireAssignableTo<TypeOnly<old.ShareLinkInfoType>, TypeOnly<current.ShareLinkInfoType>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ShareLinkInfoType": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ShareLinkInfoType = requireAssignableTo<TypeOnly<current.ShareLinkInfoType>, TypeOnly<old.ShareLinkInfoType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SharingLinkRole": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_SharingLinkRole = requireAssignableTo<TypeOnly<old.SharingLinkRole>, TypeOnly<current.SharingLinkRole>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SharingLinkRole": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_SharingLinkRole = requireAssignableTo<TypeOnly<current.SharingLinkRole>, TypeOnly<old.SharingLinkRole>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SharingLinkScope": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_SharingLinkScope = requireAssignableTo<TypeOnly<old.SharingLinkScope>, TypeOnly<current.SharingLinkScope>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SharingLinkScope": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_SharingLinkScope = requireAssignableTo<TypeOnly<current.SharingLinkScope>, TypeOnly<old.SharingLinkScope>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TokenFetchOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_TokenFetchOptions = requireAssignableTo<TypeOnly<old.TokenFetchOptions>, TypeOnly<current.TokenFetchOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TokenFetchOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_TokenFetchOptions = requireAssignableTo<TypeOnly<current.TokenFetchOptions>, TypeOnly<old.TokenFetchOptions>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "TypeAlias_TokenFetcher": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<old.TokenFetcher<any>>, TypeOnly<current.TokenFetcher<any>>>
@@ -547,24 +565,6 @@ declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<Typ
 declare type current_as_old_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<current.TokenFetcher<any>>, TypeOnly<old.TokenFetcher<any>>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TokenResponse": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_TokenResponse = requireAssignableTo<TypeOnly<old.TokenResponse>, TypeOnly<current.TokenResponse>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TokenResponse": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_TokenResponse = requireAssignableTo<TypeOnly<current.TokenResponse>, TypeOnly<old.TokenResponse>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -572,15 +572,6 @@ declare type current_as_old_for_Interface_TokenResponse = requireAssignableTo<Ty
  * "Variable_authHeaderFromTokenResponse": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_authHeaderFromTokenResponse = requireAssignableTo<TypeOnly<typeof current.authHeaderFromTokenResponse>, TypeOnly<typeof old.authHeaderFromTokenResponse>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getKeyForCacheEntry": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getKeyForCacheEntry = requireAssignableTo<TypeOnly<typeof current.getKeyForCacheEntry>, TypeOnly<typeof old.getKeyForCacheEntry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -599,6 +590,15 @@ declare type current_as_old_for_Variable_isTokenFromCache = requireAssignableTo<
  * "Variable_maximumCacheDurationMs": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_maximumCacheDurationMs = requireAssignableTo<TypeOnly<typeof current.maximumCacheDurationMs>, TypeOnly<typeof old.maximumCacheDurationMs>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_OdspErrorTypes": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_OdspErrorTypes = requireAssignableTo<TypeOnly<typeof current.OdspErrorTypes>, TypeOnly<typeof old.OdspErrorTypes>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

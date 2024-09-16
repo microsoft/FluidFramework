@@ -440,10 +440,24 @@ class OpPerfTelemetry {
 }
 export interface IPerfSignalReport {
 	/**
-	 * Identifier for the signal being submitted in order to
+	 * Identifier to track broadcast signals being submitted in order to
 	 * allow collection of data around the roundtrip of signal messages.
 	 */
-	signalSequenceNumber: number;
+	broadcastSignalSequenceNumber: number;
+
+	/**
+	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
+	 * This value represents the total number of signals sent since the latency measurement began and is used
+	 * logged in telemetry when the latency measurement completes.
+	 */
+	totalSignalsSentInLatencyWindow: number;
+
+	/**
+	 * Counts the number of broadcast signals sent since the last latency measurement was initiated.
+	 * This counter increments with each broadcast signal sent. When a new latency measurement starts,
+	 * this counter is added to `totalSignalsSentInLatencyWindow` and then reset to zero.
+	 */
+	signalsSentSinceLastLatencyMeasurement: number;
 
 	/**
 	 * Number of signals that were expected but not received.
@@ -464,11 +478,6 @@ export interface IPerfSignalReport {
 	 * Signal we will trace for roundtrip latency.
 	 */
 	roundTripSignalSequenceNumber: number | undefined;
-
-	/**
-	 * The lower bound of the upcoming (now current) tracking group
-	 */
-	baseSignalTrackingGroupSequenceNumber: number | undefined;
 
 	/**
 	 * Next expected signal sequence number to be received.

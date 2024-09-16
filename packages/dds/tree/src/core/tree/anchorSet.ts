@@ -792,7 +792,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					(p) => {
 						assert(
 							this.parentField !== undefined,
-							"Must be in a field to modify its contents",
+							0xa24 /* Must be in a field to modify its contents */,
 						);
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({

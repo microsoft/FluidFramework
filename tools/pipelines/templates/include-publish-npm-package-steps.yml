@@ -70,19 +70,12 @@ steps:
       --retry $maximumRetryIfNetworkError \
       --verbose
 
-      flub promote package \
-      --version "$(SetVersion.version)" \
-      --orderFile $orderFile \
-      --release "$(release)" \
-      --feedKind ${{ parameters.feedKind }} \
-      --verbose
-
       # Clean up; remove the npmrc
       rm ~/.npmrc
       exit 0
 - task: Bash@3
   displayName: Promote Packages for ${{ parameters.artifactPath }}
-  condition: and(succeeded(), eq(variables.release, "release"), eq(${{ parameters.feedKind }}, "internal-build"))
+  condition: and(succeeded(), eq(variables['release'], 'release'), eq('${{ parameters.feedKind }}', 'internal-build'))
   env:
     ADO_API_TOKEN: $(System.AccessToken)
   inputs:

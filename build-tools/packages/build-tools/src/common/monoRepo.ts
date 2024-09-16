@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import YAML from "yaml";
 
-import { IFluidBuildDir } from "./fluidRepo";
+import { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
 import { Logger, defaultLogger } from "./logging";
 import { Package } from "./npmPackage";
-import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
+import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
 
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");

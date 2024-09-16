@@ -25,6 +25,10 @@ import {
 	groupBySection,
 	loadChangesets,
 } from "../../library/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 
 /**
  * Generates release notes from individual changeset files.
@@ -54,15 +58,30 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				throw new Error(`Invalid release type: ${input}`);
 			},
 		})(),
-		out: Flags.file({
+		outFile: Flags.file({
 			description: `Output the results to this file.`,
 			required: true,
 			default: "RELEASE_NOTES.md",
+			deprecateAliases: true,
+			aliases: [
+				// Can be removed in 0.46+
+				"out",
+			],
 		}),
 		includeUnknown: Flags.boolean({
 			default: false,
 			description:
 				"Pass this flag to include changesets in unknown sections in the generated release notes. By default, these are excluded.",
+		}),
+		headingLinks: Flags.boolean({
+			default: false,
+			description:
+				"Pass this flag to output HTML anchor anchor tags inline for every heading. This is useful when the Markdown output will be used in places like GitHub Releases, where headings don't automatically get links.",
+		}),
+		excludeH1: Flags.boolean({
+			default: false,
+			description:
+				"Pass this flag to omit the top H1 heading. This is useful when the Markdown output will be used as part of another document.",
 		}),
 		...BaseCommand.flags,
 	} as const;
@@ -105,7 +124,9 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 [Discussion](https://github.com/microsoft/FluidFramework/discussions) and
 [Issue](https://github.com/microsoft/FluidFramework/issues) pages as you adopt Fluid Framework!
 `;
-		const intro = `# Fluid Framework v${version}\n\n## Contents`;
+		const intro = flags.excludeH1
+			? "## Contents"
+			: `# Fluid Framework v${version}\n\n## Contents`;
 
 		this.info(`Loaded ${changesets.length} changes.`);
 
@@ -175,7 +196,10 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 					const affectedPackages = Object.keys(change.metadata)
 						.map((pkg) => `- ${pkg}\n`)
 						.join("");
-					body.append(`Affected packages:\n\n${affectedPackages}`);
+					body.append(`Affected packages:\n\n${affectedPackages}\n\n`);
+					body.append(
+						`[${RELEASE_NOTES_TOC_LINK_TEXT}](#${flags.headingLinks ? "user-content-" : ""}contents)\n\n`,
+					);
 				} else {
 					this.info(
 						`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${
@@ -186,21 +210,38 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 		}
 
+		const baseProcessor = remark()
+			.use(remarkGfm)
+			.use(stripSoftBreaks)
+			.use(admonitions, {
+				titleTextMap: (title) => ({
+					// By default the `[!` prefix and `]` suffix are removed; we don't want that, so we override the default and
+					// return the title as-is.
+					displayTitle: title,
+					checkedTitle: title,
+				}),
+			})
+			.use(remarkToc, {
+				maxDepth: 3,
+				skip: ".*Start Building Today.*",
+				// Add the user-content- prefix to the links when we generate our own headingLinks, because GitHub will
+				// prepend that to all our custom anchor IDs.
+				prefix: flags.headingLinks ? "user-content-" : undefined,
+			})
+			.use(remarkGithub, {
+				buildUrl(values) {
+					// Disable linking mentions
+					return values.type === "mention" ? false : defaultBuildUrl(values);
+				},
+			});
+
+		const processor = flags.headingLinks ? baseProcessor.use(addHeadingLinks) : baseProcessor;
+
 		const contents = String(
-			await remark()
-				.use(remarkGfm)
-				.use(admonitions)
-				.use(remarkGithub, {
-					buildUrl(values) {
-						// Disable linking mentions
-						return values.type === "mention" ? false : defaultBuildUrl(values);
-					},
-				})
-				.use(remarkToc, { maxDepth: 3, skip: ".*Start Building Today.*" })
-				.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),
+			await processor.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),
 		);
 
-		const outputPath = path.join(context.repo.resolvedRoot, flags.out);
+		const outputPath = path.join(context.repo.resolvedRoot, flags.outFile);
 		this.info(`Writing output file: ${outputPath}`);
 		await writeFile(
 			outputPath,

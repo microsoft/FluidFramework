@@ -16,7 +16,13 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
-import { Marker, seqLTE, toRemovalInfo } from "../mergeTreeNodes.js";
+import {
+	Marker,
+	seqLTE,
+	toMoveInfo,
+	toRemovalInfo,
+	type ISegment,
+} from "../mergeTreeNodes.js";
 import { IMergeTreeOp } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
@@ -36,9 +42,8 @@ function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 			: // eslint-disable-next-line @typescript-eslint/dot-notation
 				`@${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}`}`;
 
-	const seq =
-		msg.sequenceNumber < 0 ? "L" : (msg.sequenceNumber - msg.minimumSequenceNumber).toString();
-	const ref = (msg.referenceSequenceNumber - msg.minimumSequenceNumber).toString();
+	const seq = msg.sequenceNumber < 0 ? "L" : msg.sequenceNumber.toString();
+	const ref = msg.referenceSequenceNumber.toString();
 	const client = msg.clientId;
 	return `${seq}:${ref}:${client}${opType}${opPos}`;
 }
@@ -265,7 +270,7 @@ export class TestClientLogger {
 			}
 			let pos = 0;
 			depthFirstNodeWalk(c.mergeTree.root, c.mergeTree.root.children[0], undefined, (seg) => {
-				if (toRemovalInfo(seg) === undefined) {
+				if (toMoveOrRemove(seg) === undefined) {
 					const segProps = seg.properties;
 					for (let i = 0; i < seg.cachedLength; i++) {
 						if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
@@ -310,7 +315,7 @@ export class TestClientLogger {
 				`${this.clients[0].getCollabWindow().minSeq}: msn/offset\n` +
 				`Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>\n` +
 				`sequence number represented as offset from msn. L means local.\n` +
-				`op types: 0) insert 1) remove 2) annotate\n`;
+				`op types: 0) insert 1) remove 2) annotate 4) obliterate\n`;
 
 			if (this.title) {
 				str += `${this.title}\n`;
@@ -350,7 +355,7 @@ export class TestClientLogger {
 					}
 					const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
 					if (text !== undefined) {
-						const removedNode = toRemovalInfo(node);
+						const removedNode = toMoveOrRemove(node);
 						if (removedNode === undefined) {
 							if (node.seq === UnassignedSequenceNumber) {
 								acked += "_".repeat(text.length);
@@ -360,17 +365,14 @@ export class TestClientLogger {
 								local += " ".repeat(text.length);
 							}
 						} else {
-							if (removedNode.removedSeq === UnassignedSequenceNumber) {
+							if (removedNode.seq === UnassignedSequenceNumber) {
 								acked += "_".repeat(text.length);
 								local +=
 									node.seq === UnassignedSequenceNumber
 										? "*".repeat(text.length)
 										: "-".repeat(text.length);
 							} else {
-								const removedSymbol = seqLTE(
-									removedNode.removedSeq,
-									client.getCollabWindow().minSeq,
-								)
+								const removedSymbol = seqLTE(removedNode.seq, client.getCollabWindow().minSeq)
 									? "~"
 									: "-";
 								acked += removedSymbol.repeat(text.length);
@@ -384,5 +386,16 @@ export class TestClientLogger {
 			}
 		}
 		return { acked, local };
+	}
+}
+
+function toMoveOrRemove(segment: ISegment): { seq: number } | undefined {
+	const mi = toMoveInfo(segment);
+	const ri = toRemovalInfo(segment);
+	if (mi !== undefined || ri !== undefined) {
+		return {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
+			seq: mi?.movedSeq ?? ri?.removedSeq!,
+		};
 	}
 }
