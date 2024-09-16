@@ -641,7 +641,7 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ObliterateInfo {
     // (undocumented)
     clientId: number;
