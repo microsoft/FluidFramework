@@ -38,6 +38,7 @@ import {
 	revisionMetadataSourceFromInfo,
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
+	areEqualChangeAtomIdOpts,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -2466,8 +2467,7 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 		id: ChangesetLocalId,
 		count: number,
 	): void {
-		// TODO: Message should explain why this is not implemented.
-		throw new Error("Method not implemented.");
+		throw new Error("Moving cross-field keys during compose is currently unsupported");
 	}
 
 	private get table(): ComposeTable {
@@ -3102,15 +3102,4 @@ function setInChangeAtomIdMap<T>(map: ChangeAtomIdBTree<T>, id: ChangeAtomId, va
 
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
-}
-
-function areEqualChangeAtomIdOpts(
-	a: ChangeAtomId | undefined,
-	b: ChangeAtomId | undefined,
-): boolean {
-	if (a === undefined || b === undefined) {
-		return a === b;
-	}
-
-	return areEqualChangeAtomIds(a, b);
 }
