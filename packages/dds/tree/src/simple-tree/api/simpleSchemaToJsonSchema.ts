@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
@@ -37,15 +37,20 @@ import { NodeKind } from "../core/index.js";
 export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 	const definitions = convertDefinitions(schema.definitions);
 
-	const anyOf: JsonSchemaRef[] = [];
+	const allowedTypes: JsonSchemaRef[] = [];
 	for (const allowedType of schema.allowedTypes) {
-		anyOf.push(createSchemaRef(allowedType));
+		allowedTypes.push(createSchemaRef(allowedType));
 	}
 
-	return {
-		$defs: definitions,
-		anyOf,
-	};
+	return allowedTypes.length === 1
+		? {
+				...(allowedTypes[0] ?? oob()),
+				$defs: definitions,
+			}
+		: {
+				$defs: definitions,
+				anyOf: allowedTypes,
+			};
 }
 
 function convertDefinitions(
@@ -90,12 +95,14 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	schema.allowedTypes.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
+
+	const items: JsonFieldSchema =
+		allowedTypes.length === 1 ? allowedTypes[0] ?? oob() : { anyOf: allowedTypes };
+
 	return {
 		type: "array",
 		_treeNodeSchemaKind: NodeKind.Array,
-		items: {
-			anyOf: allowedTypes,
-		},
+		items,
 	};
 }
 
@@ -130,14 +137,17 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
 	for (const [key, value] of Object.entries(schema.fields)) {
-		const anyOf: JsonSchemaRef[] = [];
+		const allowedTypes: JsonSchemaRef[] = [];
 		for (const allowedType of value.allowedTypes) {
-			anyOf.push(createSchemaRef(allowedType));
+			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
-		properties[key] = {
-			anyOf,
-		};
+		properties[key] =
+			allowedTypes.length === 1
+				? allowedTypes[0] ?? oob()
+				: {
+						anyOf: allowedTypes,
+					};
 		if (value.kind === FieldKind.Required) {
 			required.push(key);
 		}
@@ -160,9 +170,12 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
-			"^.*$": {
-				anyOf: allowedTypes,
-			},
+			"^.*$":
+				allowedTypes.length === 1
+					? allowedTypes[0] ?? oob()
+					: {
+							anyOf: allowedTypes,
+						},
 		},
 	};
 }
