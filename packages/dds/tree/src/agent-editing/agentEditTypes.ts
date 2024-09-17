@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @rushstack/no-new-null */
 
@@ -8,12 +13,12 @@ import {
 	NodeKind,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeView,
-} from "./index.js";
-import { toSimpleTreeSchema, type SimpleTreeSchema } from "./api/index.js";
+} from "../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toSimpleTreeSchema, type SimpleTreeSchema } from "../simple-tree/api/index.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -88,9 +93,10 @@ export interface Move extends Edit {
 	destination: Place;
 }
 
-export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(
-	root: TreeFieldFromImplicitField<TRootSchema>,
-): { stringified: string; idMap: Map<number, unknown> } {
+export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSchema>): {
+	stringified: string;
+	idMap: Map<number, unknown>;
+} {
 	const idMap = new Map<number, unknown>();
 	let idCount = 0;
 	const stringified: string = JSON.stringify(root, (_, value) => {
@@ -110,12 +116,11 @@ export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(
 	return { stringified, idMap };
 }
 
-export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(
-	view: TreeView<TRootSchema>,
-): string {
+export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	assert(!(view.schema instanceof FieldSchema), "Root cannot be a FieldSchema.");
 	const simpleTreeSchema = toSimpleTreeSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
+	const decoratedJson = toDecoratedJson(view.root);
 
 	/*
 	-- Dynamic pieces:
