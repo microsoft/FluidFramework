@@ -111,6 +111,8 @@ stages:
   - stage: e2e_docker
     displayName: e2e - docker
     dependsOn: []
+    variables:
+      - group: container-registry-info
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
