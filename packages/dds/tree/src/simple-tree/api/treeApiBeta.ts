@@ -3,8 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeKind, TreeChangeEvents, TreeNode, WithType } from "../core/index.js";
+import type {
+	NodeKind,
+	TreeChangeEvents,
+	TreeNode,
+	Unhydrated,
+	WithType,
+} from "../core/index.js";
 import { treeNodeApi } from "./treeNodeApi.js";
+import { createFromInsertable, createFromVerbose } from "./create.js";
+import { clone, cloneToJSON, cloneToJSONVerbose } from "./clone.js";
+import type {
+	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
+	TreeFieldFromImplicitField,
+} from "../schemaTypes.js";
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
@@ -98,4 +111,15 @@ export const TreeBeta = {
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
+
+	create<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: InsertableTreeFieldFromImplicitField<TSchema>,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		return createFromInsertable(schema, data);
+	},
+	createFromVerbose,
+	clone,
+	cloneToJSONVerbose,
+	cloneToJSON,
 } as const;

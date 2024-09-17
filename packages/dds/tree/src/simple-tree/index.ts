@@ -64,6 +64,14 @@ export {
 	type JsonLeafSchemaType,
 	getJsonSchema,
 	getSimpleSchema,
+	type createFromVerbose,
+	type clone,
+	type cloneToJSON,
+	type cloneToJSONVerbose,
+	type VerboseTreeNode,
+	type EncodeOptions,
+	type ParseOptions,
+	type VerboseTree,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

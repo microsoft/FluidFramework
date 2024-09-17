@@ -25,7 +25,8 @@ export {
 	type EmptyObject,
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
-export { createFromInsertable, cursorFromInsertable } from "./create.js";
+export { createFromInsertable, cursorFromInsertable, createFromVerbose } from "./create.js";
+export { clone, cloneToJSON, cloneToJSONVerbose } from "./clone.js";
 export type { SimpleTreeSchema } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
@@ -44,6 +45,13 @@ export {
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
+
+export type {
+	VerboseTreeNode,
+	EncodeOptions,
+	ParseOptions,
+	VerboseTree,
+} from "./verboseTree.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
 

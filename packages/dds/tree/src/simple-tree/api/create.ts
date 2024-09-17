@@ -107,6 +107,7 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
  * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
  * @privateRemarks
  * This could be exposed as a public `Tree.createFromVerbose` function.
+ * @beta
  */
 export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	schema: TSchema,
@@ -118,6 +119,7 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
  * Construct tree content compatible with a field defined by the provided `schema`.
  * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
  * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+ * @beta
  */
 export function createFromVerbose<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,

@@ -14,6 +14,35 @@ type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> =
     [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
 }[Kind];
 
+// @beta
+export function clone<TSchema extends ImplicitFieldSchema>(original: TreeFieldFromImplicitField<TSchema>, options?: {
+    replaceIdentifiers?: true;
+}): TreeFieldFromImplicitField<TSchema>;
+
+// @beta
+export function cloneToJSON<T>(node: TreeNode, options?: {
+    handleConverter(handle: IFluidHandle): T;
+    readonly useStableFieldKeys?: boolean;
+}): JsonCompatible<T>;
+
+// @beta
+export function cloneToJSON(node: TreeNode, options?: {
+    handleConverter?: undefined;
+    useStableFieldKeys?: boolean;
+}): JsonCompatible<IFluidHandle>;
+
+// @beta
+export function cloneToJSONVerbose<T>(node: TreeNode, options?: {
+    handleConverter(handle: IFluidHandle): T;
+    readonly useStableFieldKeys?: boolean;
+}): VerboseTreeNode<T>;
+
+// @beta
+export function cloneToJSONVerbose(node: TreeNode, options?: {
+    readonly handleConverter?: undefined;
+    readonly useStableFieldKeys?: boolean;
+}): VerboseTreeNode;
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -27,8 +56,20 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
+// @beta
+export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTreeNode<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+// @beta
+export function createFromVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTreeNode | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
+}
+
+// @beta
+export interface EncodeOptions<TCustom> {
+    readonly useStoredKeys?: boolean;
+    valueConverter(data: IFluidHandle): TCustom;
 }
 
 // @public
@@ -200,6 +241,14 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
+// @beta
+export type JsonCompatible<TExtra = never> = string | number | boolean | null | JsonCompatible<TExtra>[] | JsonCompatibleObject<TExtra> | TExtra;
+
+// @beta
+export type JsonCompatibleObject<TExtra = never> = {
+    [P in string]?: JsonCompatible<TExtra>;
+};
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -265,6 +314,12 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord
 
 // @public
 export type Off = () => void;
+
+// @beta
+export interface ParseOptions<TCustom> {
+    readonly useStoredKeys?: boolean;
+    valueConverter(data: VerboseTree<TCustom>): TreeLeafValue | VerboseTreeNode<TCustom>;
+}
 
 // @public @sealed
 interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
@@ -417,6 +472,11 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 // @beta @sealed
 export const TreeBeta: {
     readonly on: <K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>) => () => void;
+    readonly create: <TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>) => Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    readonly createFromVerbose: typeof createFromVerbose;
+    readonly clone: typeof clone;
+    readonly cloneToJSONVerbose: typeof cloneToJSONVerbose;
+    readonly cloneToJSON: typeof cloneToJSON;
 };
 
 // @public @sealed
@@ -569,6 +629,17 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
 }[T["kind"]]>> = true;
+
+// @beta
+export type VerboseTree<THandle = IFluidHandle> = VerboseTreeNode<THandle> | Exclude<TreeLeafValue, IFluidHandle> | THandle;
+
+// @beta
+export interface VerboseTreeNode<THandle = IFluidHandle> {
+    fields: VerboseTree<THandle>[] | {
+        [key: string]: VerboseTree<THandle>;
+    };
+    type: string;
+}
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
