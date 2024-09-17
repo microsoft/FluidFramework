@@ -59,6 +59,7 @@ import {
 	createDocumentId,
 	summarizeNow,
 	timeoutPromise,
+	timeoutAwait,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
@@ -484,6 +485,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(directory2.get(directoryDecompressedId), testValue);
 	});
 
+	// 276907, 280540
 	it("connects in write mode and resends op when loaded with no delta connection", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -526,6 +528,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		{ name: "tree map", getMap: getTreeBackedMap },
 		{ name: "map", getMap: getMapBackedMap },
 	].forEach(({ name, getMap }) => {
+		// tree map: 276178
+		// map: 278715 (Timeout on waiting for containers with pending incoming ops up to sequence number 24: 1,2 (1985ms)), 277269
 		it(`doesn't resend successful op (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(
@@ -569,6 +573,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.strictEqual(directory2.get(testKey), testValue);
 		});
 
+		// map: 276108, 278804, 277279
+		// tree map: 276907
 		it(`resends delete op and can set after (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(
@@ -595,6 +601,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.strictEqual(map2.get("clear"), "test1");
 		});
 
+		// tree map: 278451
 		it(`resends a lot of ops (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(
@@ -629,28 +636,31 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 		});
 
+		// tree map: 278715
 		it(`doesn't resend a lot of successful ops (${name})`, async function () {
-			const map = await getMapFromProvider(getMap);
-			const pendingOps = await getPendingOps(
-				testContainerConfig,
-				provider,
-				true, // Do send ops from first container instance before closing
-				async (c, d) => {
-					const mapPre = await getMap(d);
-					[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
-				},
+			const map = await timeoutAwait(getMapFromProvider(getMap));
+			const pendingOps = await timeoutAwait(
+				getPendingOps(
+					testContainerConfig,
+					provider,
+					true, // Do send ops from first container instance before closing
+					async (c, d) => {
+						const mapPre = await timeoutAwait(getMap(d));
+						[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
+					},
+				),
 			);
 
 			// send a bunch from first container that should not be overwritten
 			[...Array(lots).keys()].map((i) => map.set(i.toString(), testValue));
-			await provider.ensureSynchronized();
+			await timeoutAwait(provider.ensureSynchronized());
 
 			// load container with pending ops, which should not resend the ops sent by previous container
-			const container2 = await loader.resolve({ url }, pendingOps);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const map2 = await getMap(dataStore2);
-			await waitForContainerConnection(container2);
-			await provider.ensureSynchronized();
+			const container2 = await timeoutAwait(loader.resolve({ url }, pendingOps));
+			const dataStore2 = (await timeoutAwait(container2.getEntryPoint())) as ITestFluidObject;
+			const map2 = await timeoutAwait(getMap(dataStore2));
+			await timeoutAwait(waitForContainerConnection(container2));
+			await timeoutAwait(provider.ensureSynchronized());
 			[...Array(lots).keys()].map((i) => assert.strictEqual(map.get(i.toString()), testValue));
 			[...Array(lots).keys()].map((i) =>
 				assert.strictEqual(map2.get(i.toString()), testValue),
@@ -690,6 +700,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(directory2.getSubDirectory("subdir2"), undefined);
 	});
 
+	// 277074, 277279
 	it("resends batched ops", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -725,6 +736,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// 277801
 	it("doesn't resend successful batched ops", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -750,6 +762,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
 	});
 
+	// 278262
 	it("resends chunked op", async function () {
 		const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
@@ -810,6 +823,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey2), testValue);
 	});
 
+	// 280888
 	it("pending map clear resend", async function () {
 		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
 		await provider.ensureSynchronized();
@@ -931,6 +945,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(string2.getText(), "");
 	});
 
+	// 280712
 	it("doesn't resend successful string remove op", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -954,6 +969,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(string2.getText(), "goodbye cruel world");
 	});
 
+	// 277284, 280712
 	it("resends string annotate op", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -998,6 +1014,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(string2.getPropertiesAtPosition(0)?.bold, false);
 	});
 
+	// 277629
 	it("resends marker ops", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -1060,6 +1077,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// 275416
 	it("resends attach op", async function () {
 		const newMapId = "newMap";
 		let id;
@@ -1310,6 +1328,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
+	// 278813, 276975, 277047, 277226
 	it("can make changes offline and resubmit them", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -1375,6 +1394,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// 277820
 	it("can make changes offline and stash them", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -1448,6 +1468,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// 277615, 276671
 	itExpects(
 		"waits for previous container's leave message after rehydration",
 		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
@@ -1513,6 +1534,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
+	// 278630
 	it("offline blob upload", async function () {
 		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
@@ -1586,6 +1608,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// 278093
 	it("close while uploading multiple blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1678,6 +1701,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// 280623, 280725
 	it("stashed changes with blobs", async function () {
 		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
@@ -1708,6 +1732,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// 276476, 278602, 276961
 	it("offline attach", async function () {
 		const newMapId = "newMap";
 		let id;
@@ -1821,6 +1846,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
+	// 276519, 276912, 281394
 	it("works with summary while offline", async function () {
 		map1.set("test op 1", "test op 1");
 		await waitForSummary(provider, container1, testContainerConfig);
