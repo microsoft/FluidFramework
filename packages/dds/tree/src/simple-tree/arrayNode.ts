@@ -27,6 +27,8 @@ import { getOrCreateInnerNode } from "./proxyBinding.js";
 import type {
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	NodeSchemaMetadata,
+	NodeSchemaProps,
 	TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -904,11 +906,13 @@ export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
+	props?: NodeSchemaProps<TCustomMetadata>,
 ) {
 	type Output = TreeNodeSchemaClass<
 		TName,
@@ -993,6 +997,8 @@ export function arraySchema<
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			props?.metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

@@ -107,10 +107,18 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 	for (const [key, field] of schema.fields) {
 		fields[key] = fieldSchemaToSimpleSchema(field);
 	}
-	return {
+
+	const output: Mutable<SimpleObjectNodeSchema> = {
 		kind: NodeKind.Object,
 		fields,
 	};
+
+	// Don't include "description" property at all if it's not present.
+	if (schema.metadata?.description !== undefined) {
+		output.description = schema.metadata.description;
+	}
+
+	return output;
 }
 
 /**

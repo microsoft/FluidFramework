@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { NodeSchemaMetadata } from "../schemaTypes.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -23,9 +24,26 @@ export type TreeNodeSchema<
 	TBuild = never,
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
+	TCustomMetadata = unknown,
 > =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
+	| TreeNodeSchemaClass<
+			Name,
+			Kind,
+			TNode,
+			TBuild,
+			ImplicitlyConstructable,
+			Info,
+			TCustomMetadata
+	  >
+	| TreeNodeSchemaNonClass<
+			Name,
+			Kind,
+			TNode,
+			TBuild,
+			ImplicitlyConstructable,
+			Info,
+			TCustomMetadata
+	  >;
 
 /**
  * Schema which is not a class.
@@ -42,7 +60,8 @@ export interface TreeNodeSchemaNonClass<
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
 	out Info = unknown,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+	out TCustomMetadata = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, TCustomMetadata> {
 	create(data: TInsertable): TNode;
 }
 
@@ -98,7 +117,8 @@ export interface TreeNodeSchemaClass<
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
 	out Info = unknown,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+	out TCustomMetadata = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, TCustomMetadata> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
@@ -120,6 +140,7 @@ export interface TreeNodeSchemaCore<
 	out Kind extends NodeKind,
 	out ImplicitlyConstructable extends boolean,
 	out Info = unknown,
+	out TCustomMetadata = unknown,
 > {
 	/**
 	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
@@ -154,6 +175,11 @@ export interface TreeNodeSchemaCore<
 	 * Setting this to false adjusts the insertable types to disallow cases which could be impacted by these inconsistencies.
 	 */
 	readonly implicitlyConstructable: ImplicitlyConstructable;
+
+	/**
+	 * Gets the user-provided {@link NodeSchemaMetadata} for this node.
+	 */
+	readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
 
 /**

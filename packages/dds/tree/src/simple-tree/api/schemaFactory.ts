@@ -41,6 +41,7 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaProps,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -292,9 +293,11 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -303,7 +306,7 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(this.scoped(name), fields, true);
+		return objectSchema(this.scoped(name), fields, true, props);
 	}
 
 	/**

@@ -136,13 +136,13 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema
 function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNodeSchema {
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
-	for (const [key, value] of Object.entries(schema.fields)) {
+	for (const [key, fieldSchema] of Object.entries(schema.fields)) {
 		const allowedTypes: JsonSchemaRef[] = [];
-		for (const allowedType of value.allowedTypes) {
+		for (const allowedType of fieldSchema.allowedTypes) {
 			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
-		const output: Mutable<JsonFieldSchema> =
+		const transformedField: Mutable<JsonFieldSchema> =
 			allowedTypes.length === 1
 				? allowedTypes[0] ?? oob()
 				: {
@@ -150,23 +150,31 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 					};
 
 		// Don't include "description" property at all if it's not present in the input.
-		if (value.description !== undefined) {
-			output.description = value.description;
+		if (fieldSchema.description !== undefined) {
+			transformedField.description = fieldSchema.description;
 		}
 
-		properties[key] = output;
+		properties[key] = transformedField;
 
-		if (value.kind === FieldKind.Required) {
+		if (fieldSchema.kind === FieldKind.Required) {
 			required.push(key);
 		}
 	}
-	return {
+
+	const transformedNode: Mutable<JsonObjectNodeSchema> = {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Object,
 		properties,
 		required,
 		additionalProperties: false,
 	};
+
+	// Don't include "description" property at all if it's not present in the input.
+	if (schema.description !== undefined) {
+		transformedNode.description = schema.description;
+	}
+
+	return transformedNode;
 }
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {

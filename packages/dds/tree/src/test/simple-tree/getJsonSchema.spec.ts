@@ -189,14 +189,20 @@ describe("getJsonSchema", () => {
 
 	it("Object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.object("object", {
-			foo: schemaFactory.optional(schemaFactory.number, {
-				metadata: { description: "A number representing the concept of Foo." },
-			}),
-			bar: schemaFactory.required(schemaFactory.string, {
-				metadata: { description: "A string representing the concept of Bar." },
-			}),
-		});
+		const Schema = schemaFactory.object(
+			"object",
+			{
+				foo: schemaFactory.optional(schemaFactory.number, {
+					metadata: { description: "A number representing the concept of Foo." },
+				}),
+				bar: schemaFactory.required(schemaFactory.string, {
+					metadata: { description: "A string representing the concept of Bar." },
+				}),
+			},
+			{
+				metadata: { description: "An object with Foo and Bar." },
+			},
+		);
 
 		const actual = getJsonSchema(Schema);
 
@@ -205,6 +211,7 @@ describe("getJsonSchema", () => {
 				"test.object": {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Object,
+					description: "An object with Foo and Bar.",
 					properties: {
 						foo: {
 							$ref: "#/$defs/com.fluidframework.leaf.number",

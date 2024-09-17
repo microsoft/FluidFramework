@@ -83,6 +83,8 @@ export {
 	FieldKind,
 	FieldSchema,
 	type FieldSchemaMetadata,
+	type NodeSchemaProps,
+	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
