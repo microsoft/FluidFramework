@@ -1,9 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @rushstack/no-new-null */
 
-import { assert } from '@fluidframework/core-utils/internal';
-import { FieldKind, NodeKind, SchemaFactory, TreeViewConfiguration, type ImplicitAllowedTypes, type ImplicitFieldSchema, type TreeFieldFromImplicitField, type TreeView } from "./index.js";
-import { toSimpleTreeSchema, type SimpleTreeSchema, type SimpleObjectNodeSchema, type SimpleFieldSchema } from './api/index.js';
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	FieldKind,
+	NodeKind,
+	SchemaFactory,
+	TreeViewConfiguration,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type TreeFieldFromImplicitField,
+	type TreeView,
+} from "./index.js";
+import { toSimpleTreeSchema, type SimpleTreeSchema } from "./api/index.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -78,13 +87,18 @@ export interface Move extends Edit {
 	destination: Place;
 }
 
-export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(root: TreeFieldFromImplicitField<TRootSchema>): {stringified: string, idMap: Map<number, unknown>} {
+export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(
+	root: TreeFieldFromImplicitField<TRootSchema>,
+): { stringified: string; idMap: Map<number, unknown> } {
 	const idMap = new Map<number, unknown>();
 	let idCount = 0;
 	const stringified: string = JSON.stringify(root, (_, value) => {
 		if (typeof value === "object") {
 			idMap.set(idCount, value);
-			assert(!{}.hasOwnProperty.call(value, "__fluid_id"), "Collision of property '__fluid_id'.");
+			assert(
+				!{}.hasOwnProperty.call(value, "__fluid_id"),
+				"Collision of property '__fluid_id'.",
+			);
 			return {
 				__fluid_id: idCount++,
 				...value,
@@ -92,10 +106,13 @@ export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(root: T
 		}
 		return value as unknown;
 	});
-	return {stringified, idMap};
+	return { stringified, idMap };
 }
 
-export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(view: TreeView<TRootSchema>, schema: ImplicitAllowedTypes): string {
+export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(
+	view: TreeView<TRootSchema>,
+	schema: ImplicitAllowedTypes,
+): string {
 	const simpleTreeSchema = toSimpleTreeSchema(schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
 
@@ -106,17 +123,18 @@ export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(view: T
 	3.? TypeScripty version of the edits it's allowed to make (Json schema); depends on Structured Output requirements.
 	4.? If it performs poorly, potentially dynamically generate some examples based on the passed schema.
 	*/
+	return "";
 }
 
 function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string {
-	let stringifiedSchema = '';
+	let stringifiedSchema = "";
 	simpleTreeSchema.definitions.forEach((nodeSchemaDef, nodeSchemaName) => {
 		if (nodeSchemaDef.kind !== NodeKind.Object) {
 			return;
 		}
 
-		const friendlyNodeType = getFriendlySchemaName(nodeSchemaName)
-		if (friendlyNodeType === null || friendlyNodeType === '') {
+		const friendlyNodeType = getFriendlySchemaName(nodeSchemaName);
+		if (friendlyNodeType === null || friendlyNodeType === "") {
 			return; // null or empty schema node description. This would likely be a throw instead.
 		}
 		let stringifiedEntry = `interface ${friendlyNodeType} {`;
@@ -124,16 +142,18 @@ function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string
 		Object.entries(nodeSchemaDef.fields).forEach(([fieldName, fieldSchema]) => {
 			const mappedAllowedTypes = [...fieldSchema.allowedTypes]
 				.map((allowedType) => getFriendlySchemaName(allowedType))
-				.filter((allowedType): allowedType is string => allowedType !== null && allowedType !== ''); // as above, null or empty schema node descriptions should likely throw?
+				.filter(
+					(allowedType): allowedType is string => allowedType !== null && allowedType !== "",
+				); // as above, null or empty schema node descriptions should likely throw?
 			if (fieldSchema.kind === FieldKind.Optional) {
-				mappedAllowedTypes.push('undefined');
+				mappedAllowedTypes.push("undefined");
 			}
-			const allowedTypesString = mappedAllowedTypes.join(' | ');
-			stringifiedEntry += `${fieldName}: ${allowedTypesString}, `
+			const allowedTypesString = mappedAllowedTypes.join(" | ");
+			stringifiedEntry += `${fieldName}: ${allowedTypesString}, `;
 		});
-		stringifiedEntry += '}, ';
+		stringifiedEntry += "}, ";
 
-		stringifiedSchema += stringifiedEntry
+		stringifiedSchema += stringifiedEntry;
 	});
 	return stringifiedSchema;
 }
