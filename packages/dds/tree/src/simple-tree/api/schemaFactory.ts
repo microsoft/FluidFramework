@@ -304,7 +304,8 @@ export class SchemaFactory<
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	> {
 		return objectSchema(this.scoped(name), fields, true, props);
 	}
@@ -332,7 +333,10 @@ export class SchemaFactory<
 	 * @privateRemarks
 	 * See note on array.
 	 */
-	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
+	public map<
+		const T extends TreeNodeSchema | readonly TreeNodeSchema[],
+		const TCustomMetadata = unknown,
+	>(
 		allowedTypes: T,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
@@ -340,7 +344,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	>;
 
 	/**
@@ -353,7 +358,11 @@ export class SchemaFactory<
 	 * class NamedMap extends factory.map("name", factory.number) {}
 	 * ```
 	 */
-	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
+	public map<
+		Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
 	): TreeNodeSchemaClass<
@@ -362,7 +371,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(

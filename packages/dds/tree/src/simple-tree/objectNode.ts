@@ -308,13 +308,14 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
-	const TCustomMetadata = unknown,
+	const TCustomMetadata,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	props?: NodeSchemaProps<TCustomMetadata>,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+	ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);

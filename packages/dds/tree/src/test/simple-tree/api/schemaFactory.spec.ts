@@ -110,7 +110,7 @@ import { validateUsageError } from "../../utils.js";
 	}
 }
 
-describe("schemaFactory", () => {
+describe.only("schemaFactory", () => {
 	it("leaf", () => {
 		const schema = new SchemaFactory("com.example");
 
@@ -379,6 +379,19 @@ describe("schemaFactory", () => {
 			const schema = Tree.schema(foo) as ObjectNodeSchema;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Obj extends factory.object(
+				"O",
+				{ a: factory.number },
+				{ metadata: { description: "An object", custom: { foo: true } } },
+			) {}
+
+			assert.equal(Obj.metadata?.description, "An object");
+			assert.equal(Obj.metadata?.custom?.foo, true);
 		});
 
 		describe("deep equality", () => {
