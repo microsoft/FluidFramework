@@ -1895,20 +1895,9 @@ export class MergeTree {
 			localSeq,
 			segmentGroup: undefined,
 		};
-		const normalizedStartPos = startPos === "start" || startPos === undefined ? 0 : startPos;
-		const normalizedEndPos =
-			endPos === "end" || endPos === undefined ? this.getLength(refSeq, clientId) : endPos;
 
-		const { segment: startSeg } = this.getContainingSegment(
-			normalizedStartPos,
-			refSeq,
-			clientId,
-		);
-		const { segment: endSeg } = this.getContainingSegment(
-			normalizedEndPos - 1,
-			refSeq,
-			clientId,
-		);
+		const { segment: startSeg } = this.getContainingSegment(start, refSeq, clientId);
+		const { segment: endSeg } = this.getContainingSegment(end - 1, refSeq, clientId);
 		assert(
 			startSeg !== undefined && endSeg !== undefined,
 			0xa3f /* segments cannot be undefined */,

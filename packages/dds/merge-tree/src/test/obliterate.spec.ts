@@ -210,7 +210,8 @@ describe("obliterate", () => {
 			const obliterateEnd = client.getLength();
 			const startSeg = client.getContainingSegment(obliterateStart);
 			const endSeg = client.getContainingSegment(obliterateEnd);
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: obliterateStart,
 				end: obliterateEnd,
 				refSeq,
@@ -232,11 +233,11 @@ describe("obliterate", () => {
 			assert.equal(client.getText(), "");
 
 			startSeg.segment?.localRefs?.walkReferences((ref) => {
-				const oblProps = ref.properties?.obliterate;
+				const oblProps = ref.properties?.obliterate as ObliterateInfo;
 				assert(oblProps?.start !== undefined, "start ref should NOT be removed");
 			});
 			endSeg.segment?.localRefs?.walkReferences((ref) => {
-				const oblProps = ref.properties?.obliterate;
+				const oblProps = ref.properties?.obliterate as ObliterateInfo;
 				assert(oblProps?.end !== undefined, "end ref should NOT be removed");
 			});
 
