@@ -31,7 +31,7 @@ describe("toDecoratedJson", () => {
 		const vector = new Vector({ id: "1", x: 1, y: 2 });
 		const hydratedObject = hydrate(Vector, vector);
 		assert.equal(
-			toDecoratedJson(hydratedObject),
+			toDecoratedJson(hydratedObject).stringified,
 			JSON.stringify({
 				__fluid_id: 0,
 				id: "1",
