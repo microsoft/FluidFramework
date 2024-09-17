@@ -504,6 +504,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
     initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
+    readonly schema: TSchema;
     upgradeSchema(): void;
 }
 
