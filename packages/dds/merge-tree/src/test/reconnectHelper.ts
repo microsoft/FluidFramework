@@ -11,6 +11,7 @@ import {
 	SegmentGroup,
 	endpointPosAndSide,
 	type IMergeTreeOptions,
+	type InteriorSequencePlace,
 	type SequencePlace,
 } from "../index.js";
 import {
@@ -68,8 +69,8 @@ export class ReconnectTestHelper {
 
 	public obliterateRange(
 		clientName: ClientName,
-		start: SequencePlace,
-		end: SequencePlace,
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
 	): void {
 		const client = this.clients[clientName];
 		this.ops.push(client.makeOpMessage(client.obliterateRangeLocal(start, end), ++this.seq));

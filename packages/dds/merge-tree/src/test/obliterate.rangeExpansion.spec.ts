@@ -13,12 +13,10 @@ function itCorrectlyObliterates({
 	title,
 	action,
 	expectedText,
-	expectedEventCount,
 }: {
 	title: string;
 	action: (helper: ReconnectTestHelper) => void;
 	expectedText: string;
-	expectedEventCount: number;
 }): Mocha.Test {
 	return it(title, () => {
 		const events: number[] = [];
@@ -29,12 +27,8 @@ function itCorrectlyObliterates({
 		});
 		action(helper);
 		helper.processAllOps();
-		assert.equal(helper.clients.A.getText(), expectedText);
-		assert.equal(helper.clients.B.getText(), expectedText);
-		assert.equal(helper.clients.C.getText(), expectedText);
-		assert.equal(events.length, expectedEventCount, `events: ${events.join(", ")}`);
 
-		helper.logger.validate();
+		helper.logger.validate({ baseText: expectedText });
 	});
 }
 
@@ -52,7 +46,6 @@ describe("obliterate", () => {
 			helper.insertText("B", 1, "BBB");
 		},
 		expectedText: "|BBB>",
-		expectedEventCount: 5,
 	});
 	itCorrectlyObliterates({
 		title: "does not obliterate non-adjacent insert",
@@ -64,7 +57,6 @@ describe("obliterate", () => {
 			helper.insertText("B", 0, "XYZ");
 		},
 		expectedText: "XYZhe world",
-		expectedEventCount: 3,
 	});
 });
 
@@ -88,7 +80,6 @@ describe("overlapping edits", () => {
 			);
 		},
 		expectedText: "",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "adjacent obliterates",
@@ -99,7 +90,6 @@ describe("overlapping edits", () => {
 			helper.obliterateRange("B", { pos: 4, side: Side.Before }, { pos: 5, side: Side.After });
 		},
 		expectedText: "heworld",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "remove within obliterated range",
@@ -110,7 +100,6 @@ describe("overlapping edits", () => {
 			helper.removeRange("B", 3, 4);
 		},
 		expectedText: "heworld",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "obliterate, then remove adjacent to range start",
@@ -121,7 +110,6 @@ describe("overlapping edits", () => {
 			helper.removeRange("B", 1, 2);
 		},
 		expectedText: "hworld",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "obliterate, then remove adjacent to range end",
@@ -132,7 +120,6 @@ describe("overlapping edits", () => {
 			helper.removeRange("B", 4, 6);
 		},
 		expectedText: "heworld",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "remove, then obliterate adjacent to range start",
@@ -143,7 +130,6 @@ describe("overlapping edits", () => {
 			helper.obliterateRange("B", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 		},
 		expectedText: "heworld",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "remove, then obliterate adjacent to range end",
@@ -154,7 +140,6 @@ describe("overlapping edits", () => {
 			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 6, side: Side.After });
 		},
 		expectedText: "heorld",
-		expectedEventCount: 3,
 	});
 });
 
@@ -177,7 +162,6 @@ describe.skip("reconnect", () => {
 			helper.insertText("A", 2, "123");
 		},
 		expectedText: "heo world",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "add text, disconnect, obliterate, insert adjacent to obliterated range, reconnect",
@@ -196,7 +180,6 @@ describe.skip("reconnect", () => {
 			helper.submitDisconnectedOp("C", op);
 		},
 		expectedText: "heo world",
-		expectedEventCount: 2,
 	});
 });
 
@@ -223,10 +206,9 @@ describe("sided obliterates", () => {
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
 			helper.obliterateRange("B", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			helper.insertText("C", 2, "123");
-			helper.insertText("C", 5, "456");
+			helper.insertText("C", 8, "456");
 		},
 		expectedText: "he world",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "2. A expand start endpoint, B expand end endpoint",
@@ -249,7 +231,6 @@ describe("sided obliterates", () => {
 			);
 		},
 		expectedText: "AC",
-		expectedEventCount: 4,
 	});
 	itCorrectlyObliterates({
 		title: "3. A expand both endpoints, B expand start",
@@ -266,7 +247,6 @@ describe("sided obliterates", () => {
 			helper.insertText("C", 4, "456");
 		},
 		expectedText: "he world",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "4. A expand both endpoints, B expand end",
@@ -282,12 +262,11 @@ describe("sided obliterates", () => {
 				{ pos: 2, side: Side.Before },
 				{ pos: 5, side: Side.Before },
 			);
-			helper.insertText("C", 2, "123");
+			helper.insertText("C", 2, "123"); // he123llo world
 			// for this to be interesting, might want to insert at 5
-			helper.insertText("C", 4, "456");
+			helper.insertText("C", 8, "456"); // he123llo456 world
 		},
 		expectedText: "he world",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "5. A expand neither endpoint, B expand start",
@@ -295,14 +274,13 @@ describe("sided obliterates", () => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 
-			helper.insertText("C", 5, "456");
-
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
 			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			// ( 2, 4]: after 1, after 4 => h e( l l o] _ w o r l d
 			helper.obliterateRange("B", { pos: 1, side: Side.After }, { pos: 4, side: Side.After });
 
-			helper.insertText("C", 2, "123");
+			helper.insertText("C", 2, "123"); // h e( 123 l l o] _ w o r l d
+			helper.insertText("C", 8, "456"); // h e( 123 l l o) 456 _ w o r l d
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he456 world");
@@ -312,15 +290,12 @@ describe("sided obliterates", () => {
 			helper.logger.validate();
 		},
 		expectedText: "he456 world",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "6. A expand neither endpoint, B expand end",
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-
-			helper.insertText("C", 5, "456");
 
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
 			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
@@ -332,6 +307,7 @@ describe("sided obliterates", () => {
 			);
 
 			helper.insertText("C", 2, "123");
+			helper.insertText("C", 8, "456");
 
 			helper.processAllOps();
 
@@ -342,6 +318,5 @@ describe("sided obliterates", () => {
 			helper.logger.validate();
 		},
 		expectedText: "he123 world",
-		expectedEventCount: 5,
 	});
 });

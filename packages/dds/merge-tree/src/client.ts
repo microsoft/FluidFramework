@@ -75,7 +75,7 @@ import {
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
-import { Side, type SequencePlace } from "./sequencePlace.js";
+import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -258,8 +258,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	public obliterateRangeLocal(
-		start: SequencePlace,
-		end: SequencePlace,
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
 		// eslint-disable-next-line import/no-deprecated
 	): IMergeTreeObliterateMsg {
 		const obliterateOp = createObliterateRangeOp(
@@ -483,13 +483,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
-		// const range = this.getValidOpRange(op, clientArgs);
-		const start = { pos: op.pos1 ?? 0, side: op.before1 ? Side.Before : Side.After };
-		const end = { pos: op.pos2 ?? 0, side: op.before2 ? Side.Before : Side.After };
-
-		// Kludge: using this for the error handling, even though the returned value is not used.
-		this.getValidOpRange(op, clientArgs);
-
+		let start: number | InteriorSequencePlace;
+		let end: number | InteriorSequencePlace;
+		// Kludge: using this for the error handling,
+		// even though the returned value is not used when sidedness is enabled.
+		const range = this.getValidOpRange(op, clientArgs);
+		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
+			start = { pos: op.pos1 ?? 0, side: op.before1 ? Side.Before : Side.After };
+			end = { pos: op.pos2 ?? 0, side: op.before2 ? Side.Before : Side.After };
+		} else {
+			start = range.start;
+			end = range.end;
+		}
 		this._mergeTree.obliterateRange(
 			start,
 			end,

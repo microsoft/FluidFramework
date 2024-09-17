@@ -90,16 +90,14 @@ import {
 } from "./referencePositions.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
-import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
+import {
+	normalizePlace,
+	Side,
+	type InteriorSequencePlace,
+	type SequencePlace,
+} from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
-
-export function wasRemovedAfter(seg: ISegment, seq: number): boolean {
-	return (
-		seg.removedSeq !== UnassignedSequenceNumber &&
-		(seg.removedSeq === undefined || seg.removedSeq > seq)
-	);
-}
 
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.moveDst = moveInfo.moveDst;
@@ -1976,6 +1974,7 @@ export class MergeTree {
 
 			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
 				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
+				// The local obliterate has not been sequenced yet, so it is still the newest obliterate we are aware of.
 				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
 				return true;
 			}
@@ -2094,8 +2093,8 @@ export class MergeTree {
 	}
 
 	private obliterateRangeLegacy(
-		start: SequencePlace,
-		end: SequencePlace,
+		start: number,
+		end: number,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -2125,19 +2124,9 @@ export class MergeTree {
 			localSeq,
 			segmentGroup: undefined,
 		};
-		const normalizedStartPos = start === "start" ? 0 : startPos;
-		const normalizedEndPos = end === "end" ? this.getLength(refSeq, clientId) : endPos;
 
-		const { segment: startSeg } = this.getContainingSegment(
-			normalizedStartPos,
-			refSeq,
-			clientId,
-		);
-		const { segment: endSeg } = this.getContainingSegment(
-			normalizedEndPos - 1,
-			refSeq,
-			clientId,
-		);
+		const { segment: startSeg } = this.getContainingSegment(start, refSeq, clientId);
+		const { segment: endSeg } = this.getContainingSegment(end - 1, refSeq, clientId);
 		assert(
 			startSeg !== undefined && endSeg !== undefined,
 			0xa3f /* segments cannot be undefined */,
@@ -2282,8 +2271,8 @@ export class MergeTree {
 	}
 
 	public obliterateRange(
-		start: SequencePlace,
-		end: SequencePlace,
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -2294,6 +2283,10 @@ export class MergeTree {
 		if (this.options?.mergeTreeEnableSidedObliterate) {
 			this.obliterateRangeSided(start, end, refSeq, clientId, seq, overwrite, opArgs);
 		} else {
+			assert(
+				typeof start === "number" && typeof end === "number",
+				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+			);
 			this.obliterateRangeLegacy(start, end, refSeq, clientId, seq, overwrite, opArgs);
 		}
 	}
