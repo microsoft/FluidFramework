@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @rushstack/no-new-null */
 
-import { SchemaFactory, TreeViewConfiguration } from "./index.js";
+import { assert } from '@fluidframework/core-utils/internal';
+import { SchemaFactory, TreeViewConfiguration, type ImplicitFieldSchema, type TreeFieldFromImplicitField } from "./index.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -74,6 +75,23 @@ export interface Move extends Edit {
 	type: "move";
 	source: Selection;
 	destination: Place;
+}
+
+export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(root: TreeFieldFromImplicitField<TRootSchema>): {stringified: string, idMap: Map<number, unknown>} {
+	const idMap = new Map<number, unknown>();
+	let idCount = 0;
+	const stringified: string = JSON.stringify(root, (_, value) => {
+		if (typeof value === "object") {
+			idMap.set(idCount, value);
+			assert(!{}.hasOwnProperty.call(value, "__fluid_id"), "Collision of property '__fluid_id'.");
+			return {
+				__fluid_id: idCount++,
+				...value,
+			} as unknown;
+		}
+		return value as unknown;
+	});
+	return {stringified, idMap};
 }
 
 /** ---------------- EXAMPLE FOLLOWS ---------------------- */
