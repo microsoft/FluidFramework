@@ -164,11 +164,9 @@ export class ReconnectTestHelper {
 
 	public submitDisconnectedOp(
 		clientName: ClientName,
-		op: { op: IMergeTreeDeltaOp; seg: SegmentGroup | SegmentGroup[]; refSeq: number },
+		op: { op: IMergeTreeDeltaOp; seg: SegmentGroup | SegmentGroup[] },
 	): void {
 		const client = this.clients[clientName];
-		this.ops.push(
-			client.makeOpMessage(client.regeneratePendingOp(op.op, op.seg), ++this.seq, op.refSeq),
-		);
+		this.ops.push(client.makeOpMessage(client.regeneratePendingOp(op.op, op.seg), ++this.seq));
 	}
 }
