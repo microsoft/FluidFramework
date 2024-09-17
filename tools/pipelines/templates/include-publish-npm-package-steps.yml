@@ -87,7 +87,7 @@ steps:
       orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
 
       flub promote package \
-      --version "$(SetVersion.version)" \
+      --version "$(version)" \
       --orderFile $orderFile \
       --verbose
       exit 0
