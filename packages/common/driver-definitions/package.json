@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-definitions",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"description": "Fluid driver definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -89,7 +89,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": "workspace:~"
+		"@fluidframework/core-interfaces": "^2.3.1"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

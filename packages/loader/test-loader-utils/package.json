@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-loader-utils",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"description": "Mocks and other test utilities for the Fluid Framework Loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -51,10 +51,10 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~"
+		"@fluid-internal/client-utils": "^2.3.1",
+		"@fluidframework/core-interfaces": "^2.3.1",
+		"@fluidframework/driver-definitions": "^2.3.1",
+		"@fluidframework/driver-utils": "^2.3.1"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

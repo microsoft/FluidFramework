@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-constellation-view",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -40,8 +40,8 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
-		"@fluid-example/multiview-coordinate-interface": "workspace:~",
-		"@fluid-example/multiview-slider-coordinate-view": "workspace:~",
+		"@fluid-example/multiview-coordinate-interface": "^2.3.1",
+		"@fluid-example/multiview-slider-coordinate-view": "^2.3.1",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

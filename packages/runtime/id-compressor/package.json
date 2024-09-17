@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/id-compressor",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"description": "ID compressor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -128,18 +128,18 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluid-internal/client-utils": "^2.3.1",
+		"@fluidframework/core-interfaces": "^2.3.1",
+		"@fluidframework/core-utils": "^2.3.1",
+		"@fluidframework/telemetry-utils": "^2.3.1",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
-		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-private/stochastic-test-utils": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "^2.3.1",
+		"@fluid-private/stochastic-test-utils": "^2.3.1",
 		"@fluid-tools/benchmark": "^0.50.0",
 		"@fluid-tools/build-cli": "^0.46.0",
 		"@fluidframework/build-common": "^2.0.3",

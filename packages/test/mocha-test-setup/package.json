@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/mocha-test-setup",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"description": "Utilities for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -57,8 +57,8 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluid-internal/test-driver-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluid-internal/test-driver-definitions": "^2.3.1",
+		"@fluidframework/core-interfaces": "^2.3.1",
 		"mocha": "^10.2.0",
 		"source-map-support": "^0.5.21"
 	},
