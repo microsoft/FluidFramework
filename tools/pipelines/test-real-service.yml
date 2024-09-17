@@ -137,11 +137,11 @@ stages:
             inputs:
               containerregistrytype: 'Container Registry'
               dockerComposeFile: 'server/docker-compose.yml'
+              additionalDockerComposeFiles: 'server/docker-compose.dev.yml'
               dockerComposeFileArgs:
                 REGISTRY_URL=fluidcr.azurecr.io/build
                 ALFRED_IMAGE_TAG=0.0.$(resources.pipeline.routerlicious.runID)
                 HISTORIAN_IMAGE_TAG=0.0.$(resources.pipeline.historian.runID)
-              additionalDockerComposeFiles: 'server/docker-compose.dev.yml'
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'up -d'
               projectName: 'routerlicious'
