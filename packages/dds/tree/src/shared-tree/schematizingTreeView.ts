@@ -123,6 +123,10 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		);
 	}
 
+	public get schema(): TRootSchema {
+		return this.config.schema;
+	}
+
 	public initialize(content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {
 		this.ensureUndisposed();
 
