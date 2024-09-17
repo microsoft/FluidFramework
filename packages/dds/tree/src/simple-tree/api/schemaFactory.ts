@@ -364,30 +364,16 @@ export class SchemaFactory<
 		T
 	>;
 
-	// This should return TreeNodeSchemaBoth, however TypeScript gives an error if one of the overloads implicitly up casts the return type of the implementation.
-	// This seems like a TypeScript bug getting variance backwards for overload return types since its erroring when the relation between the overload
-	// and the implementation is type safe, and forcing an unsafe typing instead.
-	// TODO: Something about this method seems to break syntax highting despite being valid. This should be root caused and reported.
+	/**
+	 * @privateRemarks
+	 * This should return TreeNodeSchemaBoth, however TypeScript gives an error if one of the overloads implicitly up casts the return type of the implementation.
+	 * This seems like a TypeScript bug getting variance backwards for overload return types since its erroring when the relation between the overload
+	 * and the implementation is type safe, and forcing an unsafe typing instead.
+	 */
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	):
-		| TreeNodeSchemaClass<
-				string,
-				NodeKind.Map,
-				TreeMapNode<T>,
-				MapNodeInsertableData<T>,
-				true,
-				T
-		  >
-		| TreeNodeSchemaNonClass<
-				string,
-				NodeKind.Map,
-				TreeMapNode<T>,
-				MapNodeInsertableData<T>,
-				true,
-				T
-		  > {
+	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
@@ -488,7 +474,7 @@ export class SchemaFactory<
 	 */
 	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
@@ -521,6 +507,10 @@ export class SchemaFactory<
 		T
 	>;
 
+	/**
+	 * @privateRemarks
+	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
+	 */
 	public array<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
@@ -546,7 +536,15 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		const out: TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, string>,
+			NodeKind.Array,
+			TreeArrayNode<T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			true,
+			T
+		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return out;
 	}
 
 	/**
@@ -567,7 +565,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,

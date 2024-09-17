@@ -310,6 +310,7 @@ declare type current_as_old_for_Interface_InternalTypes_TreeMapNodeUnsafe = requ
  * typeValidation.broken:
  * "Interface_InternalTypes_TreeNodeSchemaNonClass": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_InternalTypes_TreeNodeSchemaNonClass = requireAssignableTo<TypeOnly<current.InternalTypes.TreeNodeSchemaNonClass>, TypeOnly<old.InternalTypes.TreeNodeSchemaNonClass>>
 
 /*

@@ -226,7 +226,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_InternalTypes_TreeNodeSchemaNonClass": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }
