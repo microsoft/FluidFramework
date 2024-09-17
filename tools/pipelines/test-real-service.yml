@@ -10,7 +10,7 @@ pr: none
 
 resources:
   pipelines:
-  - pipeline: client   # Name of the pipeline resource
+  - pipeline: client
     source: Build - client packages
     branch: main # Default branch for manual/scheduled triggers if none is selected
     trigger:
@@ -19,6 +19,12 @@ resources:
       - main
       - next
       - lts
+  - pipeline: routerlicious
+    source: server-routerlicious
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: historian
+    source: server-historian
+    branch: main # Default branch for manual/scheduled triggers if none is selected
 
 variables:
 - group: prague-key-vault
@@ -130,8 +136,12 @@ stages:
             displayName: 'Start routerlicious environment in docker'
             inputs:
               containerregistrytype: 'Container Registry'
-              dockerComposeFile: 'server/routerlicious/docker-compose.yml'
-              additionalDockerComposeFiles: 'server/routerlicious/docker-compose.dev.yml'
+              dockerComposeFile: 'server/docker-compose.yml'
+              dockerComposeFileArgs:
+                REGISTRY_URL=fluidcr.azurecr.io/build
+                ALFRED_IMAGE_TAG=0.0.$(resources.pipeline.routerlicious.runID)
+                HISTORIAN_IMAGE_TAG=0.0.$(resources.pipeline.historian.runID)
+              additionalDockerComposeFiles: 'server/docker-compose.dev.yml'
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'up -d'
               projectName: 'routerlicious'
@@ -141,8 +151,8 @@ stages:
             condition: always()
             inputs:
               containerregistrytype: 'Container Registry'
-              dockerComposeFile: 'server/routerlicious/docker-compose.yml'
-              additionalDockerComposeFiles: 'server/routerlicious/docker-compose.dev.yml'
+              dockerComposeFile: 'server/docker-compose.yml'
+              additionalDockerComposeFiles: 'server/docker-compose.dev.yml'
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'down'
               projectName: 'routerlicious'
