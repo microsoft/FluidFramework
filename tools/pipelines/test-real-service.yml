@@ -132,6 +132,13 @@ stages:
             flags: --compatVersion=CROSS_VERSION
         cacheCompatVersionsInstalls: true
         preSteps:
+          - task: Docker@2
+            inputs:
+              # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
+              # specified as a runtime variable (variables from variable groups apparently are never available "statically"
+              # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+              containerRegistry: $(containerRegistryConnection)
+              command: 'login'
           - task: DockerCompose@1
             displayName: 'Start routerlicious environment in docker'
             inputs:

@@ -94,6 +94,7 @@ jobs:
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
       - group: ado-feeds
+      - group: container-registry-info
       - name: isTestBranch
         value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
         readonly: true
