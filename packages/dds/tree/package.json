@@ -233,6 +233,9 @@
 			"Interface_ITreeViewConfiguration": {
 				"forwardCompat": false
 			},
+			"TypeAlias_ImplicitAllowedTypes": {
+				"forwardCompat": false
+			},
 			"TypeAlias_ImplicitFieldSchema": {
 				"forwardCompat": false
 			}
