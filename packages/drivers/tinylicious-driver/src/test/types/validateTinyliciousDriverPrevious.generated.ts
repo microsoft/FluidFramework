@@ -34,15 +34,6 @@ declare type old_as_current_for_Class_InsecureTinyliciousTokenProvider = require
 declare type current_as_old_for_Class_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<current.InsecureTinyliciousTokenProvider>, TypeOnly<old.InsecureTinyliciousTokenProvider>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_InsecureTinyliciousTokenProvider": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<typeof current.InsecureTinyliciousTokenProvider>, TypeOnly<typeof old.InsecureTinyliciousTokenProvider>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -59,6 +50,15 @@ declare type old_as_current_for_Class_InsecureTinyliciousUrlResolver = requireAs
  * "Class_InsecureTinyliciousUrlResolver": {"backCompat": false}
  */
 declare type current_as_old_for_Class_InsecureTinyliciousUrlResolver = requireAssignableTo<TypeOnly<current.InsecureTinyliciousUrlResolver>, TypeOnly<old.InsecureTinyliciousUrlResolver>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_InsecureTinyliciousTokenProvider": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<typeof current.InsecureTinyliciousTokenProvider>, TypeOnly<typeof old.InsecureTinyliciousTokenProvider>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
