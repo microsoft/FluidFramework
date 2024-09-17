@@ -375,10 +375,18 @@ export class SchemaFactory<
 		TCustomMetadata
 	>;
 
-	public map<const T extends ImplicitAllowedTypes>(
+	public map<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
+	): TreeNodeSchema<
+		string,
+		NodeKind.Map,
+		TreeMapNode<T>,
+		MapNodeInsertableData<T>,
+		true,
+		T,
+		TCustomMetadata
+	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
@@ -398,7 +406,8 @@ export class SchemaFactory<
 				TreeMapNode<T>,
 				MapNodeInsertableData<T>,
 				true,
-				T
+				T,
+				TCustomMetadata
 			>;
 		}
 		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -413,6 +422,7 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
@@ -424,7 +434,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		TCustomMetadata
 	> {
 		return mapSchema(
 			this.scoped(name),
@@ -468,7 +479,10 @@ export class SchemaFactory<
 	 *
 	 * {@label STRUCTURAL}
 	 */
-	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
+	public array<
+		const T extends TreeNodeSchema | readonly TreeNodeSchema[],
+		const TCustomMetadata = unknown,
+	>(
 		allowedTypes: T,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
@@ -476,7 +490,8 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	>;
 
 	/**
@@ -491,7 +506,11 @@ export class SchemaFactory<
 	 *
 	 * {@label NAMED}
 	 */
-	public array<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public array<
+		const Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
 	): TreeNodeSchemaClass<
@@ -500,10 +519,11 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	>;
 
-	public array<const T extends ImplicitAllowedTypes>(
+	public array<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
@@ -512,7 +532,8 @@ export class SchemaFactory<
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -525,7 +546,8 @@ export class SchemaFactory<
 				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 				true,
-				T
+				T,
+				TCustomMetadata
 			>;
 		}
 		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -544,6 +566,7 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TCustomMetadata,
 	>(
 		name: Name,
 		allowedTypes: T,
@@ -555,7 +578,8 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		TCustomMetadata
 	> {
 		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
 	}

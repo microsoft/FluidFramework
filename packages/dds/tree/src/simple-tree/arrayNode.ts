@@ -920,7 +920,8 @@ export function arraySchema<
 		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		TCustomMetadata
 	>;
 	let flexSchema: FlexTreeNodeSchema;
 	let unhydratedContext: UnhydratedContext;

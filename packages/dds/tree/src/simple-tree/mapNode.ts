@@ -293,7 +293,8 @@ export function mapSchema<
 		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		TCustomMetadata
 	> = Schema;
 	return schemaErased;
 }
