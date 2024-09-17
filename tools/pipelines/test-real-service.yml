@@ -153,7 +153,7 @@ stages:
             inputs:
               containerregistrytype: 'Container Registry'
               dockerComposeFile: 'server/docker-compose.yml'
-              additionalDockerComposeFiles: 'docker-compose.dev.yml'
+              # additionalDockerComposeFiles: 'docker-compose.dev.yml'
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'up -d'
               projectName: 'routerlicious'
@@ -170,7 +170,7 @@ stages:
             inputs:
               containerregistrytype: 'Container Registry'
               dockerComposeFile: 'server/docker-compose.yml'
-              additionalDockerComposeFiles: 'docker-compose.dev.yml'
+              # additionalDockerComposeFiles: 'docker-compose.dev.yml'
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'down'
               projectName: 'routerlicious'
