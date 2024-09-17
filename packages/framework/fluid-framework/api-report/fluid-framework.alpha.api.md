@@ -21,6 +21,14 @@ export enum AttachState {
     Detached = "Detached"
 }
 
+// @alpha
+export interface BranchableTree extends ViewableTree {
+    branch(): TreeBranch;
+    merge(branch: TreeBranch): void;
+    merge(branch: TreeBranch, disposeView: boolean): void;
+    rebase(branch: TreeBranch): void;
+}
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -140,6 +148,12 @@ export type FluidObject<T = unknown> = {
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @alpha
+export function getBranch(tree: ITree): BranchableTree;
+
+// @alpha
+export function getBranch(view: TreeView<ImplicitFieldSchema>): BranchableTree;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
@@ -528,8 +542,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 }
 
 // @public @sealed
-export interface ITree extends IFluidLoadable {
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+export interface ITree extends ViewableTree, IFluidLoadable {
 }
 
 // @public
@@ -859,6 +872,11 @@ export const TreeBeta: {
     readonly on: <K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>) => () => void;
 };
 
+// @alpha
+export interface TreeBranch extends BranchableTree, IDisposable {
+    rebaseOnto(fork: BranchableTree): void;
+}
+
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
@@ -1010,6 +1028,11 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
 }[T["kind"]]>> = true;
+
+// @public @sealed
+export interface ViewableTree {
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+}
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
