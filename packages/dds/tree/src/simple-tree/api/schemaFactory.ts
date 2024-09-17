@@ -497,6 +497,7 @@ export class SchemaFactory<
 		const TCustomMetadata = unknown,
 	>(
 		allowedTypes: T,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
