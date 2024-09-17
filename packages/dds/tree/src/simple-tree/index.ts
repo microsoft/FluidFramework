@@ -22,8 +22,11 @@ export {
 	tryDisposeTreeNode,
 } from "./core/index.js";
 export {
+	type BranchableTree,
 	type ITree,
 	type TreeView,
+	type TreeBranch,
+	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,

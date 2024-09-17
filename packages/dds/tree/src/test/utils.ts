@@ -135,10 +135,11 @@ import {
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
-	TreeViewConfiguration,
+	type TreeViewConfiguration,
 	SchemaFactory,
 	type InsertableTreeFieldFromImplicitField,
 	toStoredSchema,
+	type TreeViewEvents,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -1039,7 +1040,9 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
+export function createTestUndoRedoStacks(
+	events: Listenable<TreeViewEvents | CheckoutEvents>,
+): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -1198,34 +1201,10 @@ export function getView<TSchema extends ImplicitFieldSchema>(
  * Views the supplied checkout with the given schema.
  */
 export function viewCheckout<TSchema extends ImplicitFieldSchema>(
-	checkout: ITreeCheckout,
+	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
 	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
-}
-
-/**
- * Forks a simple tree view.
- */
-export function forkView<T extends ImplicitFieldSchema>(
-	viewToFork: SchematizingSimpleTreeView<T>,
-): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
-export function forkView<TIn extends ImplicitFieldSchema, TOut extends ImplicitFieldSchema>(
-	viewToFork: SchematizingSimpleTreeView<TIn>,
-	schema?: TOut,
-): SchematizingSimpleTreeView<TOut> & { checkout: ITreeCheckoutFork };
-export function forkView<T extends ImplicitFieldSchema>(
-	viewToFork: SchematizingSimpleTreeView<T>,
-	schema?: T,
-): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
-	return new SchematizingSimpleTreeView<T>(
-		viewToFork.checkout.fork(),
-		new TreeViewConfiguration({
-			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
-			schema: schema ?? viewToFork.config.schema,
-		}),
-		new MockNodeKeyManager(),
-	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 }
 
 /**

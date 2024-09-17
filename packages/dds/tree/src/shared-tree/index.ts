@@ -8,6 +8,8 @@ export {
 	SharedTreeFactory,
 	type SharedTreeOptions,
 	SharedTree,
+	createTreeBranch,
+	getBranch,
 	ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,

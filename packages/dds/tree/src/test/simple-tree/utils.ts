@@ -30,7 +30,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import type { ITreeCheckoutFork } from "../../shared-tree/index.js";
+import type { TreeCheckout } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/index.js";
@@ -155,12 +155,12 @@ export function pretty(arg: unknown): number | string {
  * `<originalView>.checkout.merge(<branchView>.checkout)`.
  *
  * @param originalView - The tree view to branch.
- * @returns A new tree view for a branch of the input tree view, and an {@link ITreeCheckoutFork} object that can be
+ * @returns A new tree view for a branch of the input tree view, and an {@link TreeCheckoutFork} object that can be
  * used to merge the branch back into the original view.
  */
 export function getViewForForkedBranch<TSchema extends ImplicitFieldSchema>(
 	originalView: SchematizingSimpleTreeView<TSchema>,
-): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: ITreeCheckoutFork } {
+): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: TreeCheckout } {
 	const forkCheckout = originalView.checkout.fork();
 	return {
 		forkView: new SchematizingSimpleTreeView<TSchema>(

@@ -6,6 +6,9 @@
 export {
 	type ITree,
 	type TreeView,
+	type BranchableTree,
+	type TreeBranch,
+	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
