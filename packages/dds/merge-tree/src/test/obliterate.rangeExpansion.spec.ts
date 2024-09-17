@@ -23,7 +23,7 @@ function itCorrectlyObliterates({
 	return it(title, () => {
 		const events: number[] = [];
 
-		const helper = new ReconnectTestHelper();
+		const helper = new ReconnectTestHelper({ mergeTreeEnableSidedObliterate: true });
 		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
 			events.push(deltaArgs.operation);
 		});

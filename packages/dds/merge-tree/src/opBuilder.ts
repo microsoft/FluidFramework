@@ -93,19 +93,29 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
 export function createObliterateRangeOp(
 	start: SequencePlace,
 	end: SequencePlace,
+	mergeTreeEnableSidedObliterate: boolean,
 ): IMergeTreeObliterateMsg {
 	const startPlace = normalizePlace(start);
 	const endPlace =
 		typeof end === "number"
 			? { pos: end - 1, side: Side.After } // default to inclusive bounds
 			: normalizePlace(end);
-	return {
-		pos1: startPlace.pos,
-		before1: startPlace.side === Side.Before,
-		pos2: endPlace.pos,
-		before2: endPlace.side === Side.Before,
-		type: MergeTreeDeltaType.OBLITERATE,
-	};
+	return mergeTreeEnableSidedObliterate
+		? {
+				pos1: startPlace.pos,
+				before1: startPlace.side === Side.Before,
+				pos2: endPlace.pos,
+				before2: endPlace.side === Side.Before,
+				type: MergeTreeDeltaType.OBLITERATE,
+			}
+		: // If sidedness is not enabled, always use inclusive bounds
+			{
+				pos1: startPlace.side === Side.Before ? startPlace.pos : startPlace.pos + 1,
+				before1: true,
+				pos2: endPlace.side === Side.After ? endPlace.pos : endPlace.pos - 1,
+				before2: false,
+				type: MergeTreeDeltaType.OBLITERATE,
+			};
 }
 
 /**

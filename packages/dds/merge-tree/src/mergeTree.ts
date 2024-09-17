@@ -203,6 +203,17 @@ export interface IMergeTreeOptions {
 	 * @defaultValue `false`
 	 */
 	mergeTreeEnableObliterateReconnect?: boolean;
+
+	/**
+	 * Enables support for obliterate endpoint expansion.
+	 * When enabled, obliterate operations can have sidedness specified for their endpoints.
+	 * If an endpoint is externally anchored
+	 * (aka the start is after a given position, or the end is before a given position),
+	 * then concurrent inserts adjacent to the exclusive endpoint of an obliterated range will be included in the obliteration
+	 *
+	 * @defaultValue `false`
+	 */
+	mergeTreeEnableSidedObliterate?: boolean;
 }
 export function errorIfOptionNotTrue(
 	options: IMergeTreeOptions | undefined,
@@ -1576,13 +1587,14 @@ export class MergeTree {
 							oldest = ob;
 							movedClientIds.unshift(ob.clientId);
 							movedSeqs.unshift(ob.seq);
+						} else {
+							movedClientIds.push(ob.clientId);
+							movedSeqs.push(ob.seq);
 						}
 						if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
 							normalizedNewestSeq = normalizedObSeq;
 							newest = ob;
 						}
-						movedClientIds.push(ob.clientId);
-						movedSeqs.push(ob.seq);
 					}
 				}
 
@@ -1612,8 +1624,7 @@ export class MergeTree {
 						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 					}
 				} else if (oldest && newest?.clientId === clientId) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(newSegment as any).prevObliterateByInserter = newest;
+					newSegment.prevObliterateByInserter = newest;
 				}
 
 				saveIfLocal(newSegment);
@@ -1922,7 +1933,7 @@ export class MergeTree {
 		}
 	}
 
-	public obliterateRange(
+	private obliterateRangeSided(
 		start: SequencePlace,
 		end: SequencePlace,
 		refSeq: number,
@@ -1931,9 +1942,6 @@ export class MergeTree {
 		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
-		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
-
-		// const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
 		const startPlace = normalizePlace(start);
 		const endPlace = normalizePlace(end);
 		const startPos = startPlace.side === Side.Before ? startPlace.pos : startPlace.pos + 1;
@@ -2012,9 +2020,10 @@ export class MergeTree {
 			}
 
 			// TODO: if segment was inserted inside of a later local obliteration range
-			// then it shouldn't be obliterated.
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			if ((segment as any).prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
+			// then it shouldn't be considered obliterated for other clients
+			// for refSeqs between the insertion's seq and the obliterate's seq.
+
+			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
 				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
 				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
 				return true;
@@ -2131,6 +2140,233 @@ export class MergeTree {
 			MergeTree.options.zamboniSegments
 		) {
 			zamboniSegments(this);
+		}
+	}
+
+	private obliterateRangeLegacy(
+		start: SequencePlace,
+		end: SequencePlace,
+		refSeq: number,
+		clientId: number,
+		seq: number,
+		overwrite: boolean = false,
+		opArgs: IMergeTreeDeltaOpArgs,
+	): void {
+		const startPlace = normalizePlace(start);
+		const endPlace = normalizePlace(end);
+		const startPos = startPlace.side === Side.Before ? startPlace.pos : startPlace.pos + 1;
+		const endPos = endPlace.side === Side.Before ? endPlace.pos : endPlace.pos + 1;
+
+		this.ensureIntervalBoundary(startPos, refSeq, clientId);
+		this.ensureIntervalBoundary(endPos, refSeq, clientId);
+
+		let _overwrite = overwrite;
+		const localOverlapWithRefs: ISegment[] = [];
+		const movedSegments: IMergeTreeSegmentDelta[] = [];
+		const localSeq =
+			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+		if (seq !== UnassignedSequenceNumber && seq !== this.moveSeqs[this.moveSeqs.length - 1]) {
+			this.moveSeqs.push(seq);
+		} else if (seq === UnassignedSequenceNumber && localSeq !== undefined) {
+			this.localMoveSeqs.add(localSeq);
+		}
+		// eslint-disable-next-line import/no-deprecated
+		let segmentGroup: SegmentGroup;
+
+		const obliterate: ObliterateInfo = {
+			clientId,
+			end: createDetachedLocalReferencePosition(undefined),
+			refSeq,
+			seq,
+			start: createDetachedLocalReferencePosition(undefined),
+			localSeq,
+		};
+
+		const markMoved = (
+			segment: ISegment,
+			pos: number,
+			_start: number,
+			_end: number,
+		): boolean => {
+			const existingMoveInfo = toMoveInfo(segment);
+			if (startPlace.side === Side.Before && startPos === pos) {
+				obliterate.start = this.createLocalReferencePosition(
+					segment,
+					0,
+					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+					{ obliterate },
+				);
+			} else if (startPlace.side === Side.After && startPos === pos + segment.cachedLength) {
+				obliterate.start = this.createLocalReferencePosition(
+					segment,
+					segment.cachedLength - 1,
+					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+					{ obliterate },
+				);
+				return true; // start is exclusive, don't mark segment moved
+			}
+			if (endPlace.side === Side.Before && endPos === pos) {
+				if (obliterate.end) {
+					this.removeLocalReferencePosition(obliterate.end);
+				}
+				obliterate.end = this.createLocalReferencePosition(
+					segment,
+					0,
+					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+					{ obliterate },
+				);
+				return true; // end is exclusive, don't mark segment moved
+			} else if (
+				endPlace.side === Side.After &&
+				segment.cachedLength > 0 && // if the segment is empty we must have already set our reference
+				endPos === pos + segment.cachedLength
+			) {
+				obliterate.end = this.createLocalReferencePosition(
+					segment,
+					segment.cachedLength - 1,
+					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+					{ obliterate },
+				);
+			}
+
+			// TODO: if segment was inserted inside of a later local obliteration range
+			// then it shouldn't be considered obliterated for other clients
+			// for refSeqs between the insertion's seq and the obliterate's seq.
+
+			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
+				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
+				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
+				return true;
+			}
+
+			if (
+				clientId !== segment.clientId &&
+				segment.seq !== undefined &&
+				seq !== UnassignedSequenceNumber &&
+				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
+			) {
+				// why do we need this? we don't need it for the insert + remove case?
+				// there are subtle differences in the visibility of the client doing to remove
+				// however, i'm not aware of invariants in the code that would break due to that
+				segment.wasMovedOnInsert = true;
+			}
+
+			if (existingMoveInfo === undefined) {
+				segment.movedClientIds = [clientId];
+				segment.movedSeq = seq;
+				segment.localMovedSeq = localSeq;
+				segment.movedSeqs = [seq];
+
+				if (!toRemovalInfo(segment)) {
+					movedSegments.push({ segment });
+				}
+			} else {
+				_overwrite = true;
+				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
+					// we moved this locally, but someone else moved it first
+					// so put them at the head of the list
+					// The list isn't ordered, but we keep the first move at the head
+					// for partialLengths bookkeeping purposes
+					existingMoveInfo.movedClientIds.unshift(clientId);
+
+					existingMoveInfo.movedSeq = seq;
+					existingMoveInfo.movedSeqs.unshift(seq);
+					if (segment.localRefs?.empty === false) {
+						localOverlapWithRefs.push(segment);
+					}
+				} else {
+					// Do not replace earlier sequence number for move
+					existingMoveInfo.movedClientIds.push(clientId);
+					existingMoveInfo.movedSeqs.push(seq);
+				}
+			}
+
+			// Save segment so can assign moved sequence number when acked by server
+			if (this.collabWindow.collaborating) {
+				if (
+					segment.movedSeq === UnassignedSequenceNumber &&
+					clientId === this.collabWindow.clientId
+				) {
+					segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
+					segmentGroup.obliterateInfo ??= obliterate;
+				} else {
+					if (MergeTree.options.zamboniSegments) {
+						this.addToLRUSet(segment, seq);
+					}
+				}
+			}
+			return true;
+		};
+
+		const afterMarkMoved = (
+			node: MergeBlock,
+			pos: number,
+			_start: number,
+			_end: number,
+		): boolean => {
+			if (_overwrite) {
+				this.nodeUpdateLengthNewStructure(node);
+			} else {
+				this.blockUpdateLength(node, seq, clientId);
+			}
+			return true;
+		};
+
+		this.nodeMap(
+			refSeq,
+			clientId,
+			markMoved,
+			undefined,
+			afterMarkMoved,
+			startPlace.pos,
+			endPlace.pos + 1, // include the segment containing the end reference
+			undefined,
+			seq === UnassignedSequenceNumber ? undefined : seq,
+		);
+
+		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
+		// opArgs == undefined => test code
+		if (movedSegments.length > 0) {
+			this.mergeTreeDeltaCallback?.(opArgs, {
+				operation: MergeTreeDeltaType.OBLITERATE,
+				deltaSegments: movedSegments,
+			});
+		}
+
+		if (segmentGroup! && localSeq !== undefined) {
+			this.locallyMovedSegments.set(localSeq, segmentGroup);
+		}
+
+		// these events are newly removed
+		// so we slide after eventing in case the consumer wants to make reference
+		// changes at remove time, like add a ref to track undo redo.
+		if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
+			this.slideAckedRemovedSegmentReferences(movedSegments.map(({ segment }) => segment));
+		}
+
+		if (
+			this.collabWindow.collaborating &&
+			seq !== UnassignedSequenceNumber &&
+			MergeTree.options.zamboniSegments
+		) {
+			zamboniSegments(this);
+		}
+	}
+
+	public obliterateRange(
+		start: SequencePlace,
+		end: SequencePlace,
+		refSeq: number,
+		clientId: number,
+		seq: number,
+		overwrite: boolean = false,
+		opArgs: IMergeTreeDeltaOpArgs,
+	): void {
+		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
+		if (this.options?.mergeTreeEnableSidedObliterate) {
+			this.obliterateRangeSided(start, end, refSeq, clientId, seq, overwrite, opArgs);
+		} else {
+			this.obliterateRangeLegacy(start, end, refSeq, clientId, seq, overwrite, opArgs);
 		}
 	}
 

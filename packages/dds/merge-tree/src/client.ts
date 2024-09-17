@@ -261,7 +261,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		start: SequencePlace,
 		end: SequencePlace,
 	): IMergeTreeObliterateMsg {
-		const obliterateOp = createObliterateRangeOp(start, end);
+		const obliterateOp = createObliterateRangeOp(
+			start,
+			end,
+			this._mergeTree.options?.mergeTreeEnableSidedObliterate ?? false,
+		);
 		this.applyObliterateRangeOp({ op: obliterateOp });
 		return obliterateOp;
 	}
@@ -896,6 +900,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						newOp = createObliterateRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
+							this._mergeTree.options?.mergeTreeEnableSidedObliterate ?? false,
 						);
 					}
 					break;
