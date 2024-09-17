@@ -99,9 +99,6 @@ describe("Makes TS type strings from schema", () => {
 			// agentSchema.Array<["agentSchema.Array<[\\"agentSchema.Array<[\\\\\\"com.fluidframework.leaf.string\\\\\\"]>\\",\\"com.fluidframework.leaf.number\\"]>","com.fluidframework.leaf.number"]>
 			y: sf.array([sf.number, sf.array([sf.number, sf.array(sf.string)])]),
 		}) {}
-		assert.equal(
-			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
-			"interface Foo { x: number[]; }",
-		);
+		assert.equal(getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)), "???");
 	});
 });
