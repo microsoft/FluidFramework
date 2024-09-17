@@ -78,7 +78,7 @@ describe("Makes TS type strings from schema", () => {
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
-			"interface Foo { x: number | string | Bar; }",
+			"interface Foo { y: number | string | Bar; } interface Bar { z: number; }",
 		);
 	});
 
