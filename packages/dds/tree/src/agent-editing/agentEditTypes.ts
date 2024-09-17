@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @rushstack/no-new-null */
 
@@ -8,12 +13,12 @@ import {
 	NodeKind,
 	SchemaFactory,
 	TreeViewConfiguration,
-	// type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeView,
-} from "./index.js";
-import { toSimpleTreeSchema, type SimpleTreeSchema } from "./api/index.js";
+} from "../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toSimpleTreeSchema, type SimpleTreeSchema } from "../simple-tree/api/index.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -88,9 +93,10 @@ export interface Move extends Edit {
 	destination: Place;
 }
 
-export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(
-	root: TreeFieldFromImplicitField<TRootSchema>,
-): { stringified: string; idMap: Map<number, unknown> } {
+export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSchema>): {
+	stringified: string;
+	idMap: Map<number, unknown>;
+} {
 	const idMap = new Map<number, unknown>();
 	let idCount = 0;
 	const stringified: string = JSON.stringify(root, (_, value) => {
@@ -110,32 +116,23 @@ export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(
 	return { stringified, idMap };
 }
 
-export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(
-	view: TreeView<TRootSchema>,
-): string {
-	assert(!(view.schema instanceof FieldSchema), "SchemaFactory not allowed in view.");
-
-	const baseSystemPrompt = 'You are a helpful assistant. You will be provided a schema for an object, the current state of that object, and descriptions of the methods by which you can make modifications to that object. The user will request changes to the object, and you must accomplish those changes using the modification methods provided. Modification instructions must be returned in the provided structured schema, in the order in which they should be applied.'
-
-	// Description of the schema of the tree.
+export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
+	assert(!(view.schema instanceof FieldSchema), "Root cannot be a FieldSchema.");
 	const simpleTreeSchema = toSimpleTreeSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
-
-	// Tree content (current state) -- output of toDecoratedJson.
-	const decoratedJsonTree = toDecoratedJson(view);
-
-
-
+	const decoratedJson = toDecoratedJson(view.root);
 
 	/*
 	-- Dynamic pieces:
+	1. Description of the schema of the tree.
+	2. Tree content (current state) -- output of toDecoratedJson.
 	3.? TypeScripty version of the edits it's allowed to make (Json schema); depends on Structured Output requirements.
 	4.? If it performs poorly, potentially dynamically generate some examples based on the passed schema.
 	*/
 	return "";
 }
 
-function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string {
+export function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string {
 	let stringifiedSchema = "";
 	simpleTreeSchema.definitions.forEach((nodeSchemaDef, nodeSchemaName) => {
 		if (nodeSchemaDef.kind !== NodeKind.Object) {
@@ -143,34 +140,32 @@ function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string
 		}
 
 		const friendlyNodeType = getFriendlySchemaName(nodeSchemaName);
-		if (friendlyNodeType === null || friendlyNodeType === "") {
-			return; // null or empty schema node description. This would likely be a throw instead.
-		}
+
 		let stringifiedEntry = `interface ${friendlyNodeType} {`;
 
 		Object.entries(nodeSchemaDef.fields).forEach(([fieldName, fieldSchema]) => {
-			const mappedAllowedTypes = [...fieldSchema.allowedTypes]
-				.map((allowedType) => getFriendlySchemaName(allowedType))
-				.filter(
-					(allowedType): allowedType is string => allowedType !== null && allowedType !== "",
-				); // as above, null or empty schema node descriptions should likely throw?
+			const mappedAllowedTypes = [...fieldSchema.allowedTypes].map((allowedType) =>
+				getFriendlySchemaName(allowedType),
+			);
 			if (fieldSchema.kind === FieldKind.Optional) {
 				mappedAllowedTypes.push("undefined");
 			}
 			const allowedTypesString = mappedAllowedTypes.join(" | ");
-			stringifiedEntry += `${fieldName}: ${allowedTypesString}, `;
+			stringifiedEntry += ` ${fieldName}: ${allowedTypesString};`;
 		});
-		stringifiedEntry += "}, ";
 
-		stringifiedSchema += stringifiedEntry;
+		stringifiedEntry += " }";
+
+		stringifiedSchema += (stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
 	});
 	return stringifiedSchema;
 }
 
-function getFriendlySchemaName(schemaName: string): string | null {
+function getFriendlySchemaName(schemaName: string): string {
 	const matches = schemaName.match(/[^.]+$/);
 	if (matches === null) {
-		return null;
+		// empty scope
+		return schemaName;
 	}
 	return matches[0];
 }
