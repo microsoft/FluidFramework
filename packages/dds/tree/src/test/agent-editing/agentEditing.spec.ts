@@ -45,16 +45,53 @@ describe("toDecoratedJson", () => {
 });
 
 describe("Makes TS type strings from schema", () => {
-	const testSf = new SchemaFactory("test");
-	class Foo extends testSf.object("Foo", {
-		x: testSf.number,
-		y: testSf.string,
-	}) {}
-
 	it("for objects with primitive fields", () => {
+		const testSf = new SchemaFactory("test");
+		class Foo extends testSf.object("Foo", {
+			x: testSf.number,
+			y: testSf.string,
+		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
 			"interface Foo { x: number; y: string; }",
+		);
+	});
+
+	it("for objects with identifier fields", () => {
+		const testSf = new SchemaFactory("test");
+		class Foo extends testSf.object("Foo", {
+			y: testSf.identifier,
+		}) {}
+		assert.equal(
+			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			"interface Foo { y: string; }",
+		);
+	});
+
+	it("for objects with polymorphic fields", () => {
+		const testSf = new SchemaFactory("test");
+		class Bar extends testSf.object("Bar", {
+			z: testSf.number,
+		}) {}
+		class Foo extends testSf.object("Foo", {
+			// agentSchema.Array<["agentSchema.Array<[\\"agentSchema.Array<[\\\\\\"com.fluidframework.leaf.string\\\\\\"]>\\",\\"com.fluidframework.leaf.number\\"]>","com.fluidframework.leaf.number"]>
+			y: sf.required([sf.number, sf.string]),
+		}) {}
+		assert.equal(
+			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			"interface Foo { x: number | string | Bar; }",
+		);
+	});
+
+	it("for objects with array fields", () => {
+		const testSf = new SchemaFactory("test");
+		class Foo extends testSf.object("Foo", {
+			// agentSchema.Array<["agentSchema.Array<[\\"agentSchema.Array<[\\\\\\"com.fluidframework.leaf.string\\\\\\"]>\\",\\"com.fluidframework.leaf.number\\"]>","com.fluidframework.leaf.number"]>
+			y: sf.array([sf.number, sf.array([sf.number, sf.array(sf.string)])]),
+		}) {}
+		assert.equal(
+			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			"interface Foo { x: number[]; }",
 		);
 	});
 });
