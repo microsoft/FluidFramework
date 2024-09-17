@@ -69,10 +69,10 @@ export function matchProperties(
  */
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T> {
 	if (extension !== undefined) {
-		// eslint-disable-next-line guard-for-in, no-restricted-syntax
-		for (const key in extension) {
-			const v = extension[key];
-			if (v === null) {
+		for (const [key, v] of Object.entries(extension)) {
+			if (v === undefined) {
+				continue;
+			} else if (v === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete base[key];
 			} else {
