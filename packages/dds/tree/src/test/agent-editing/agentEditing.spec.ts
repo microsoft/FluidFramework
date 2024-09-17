@@ -74,8 +74,7 @@ describe("Makes TS type strings from schema", () => {
 			z: testSf.number,
 		}) {}
 		class Foo extends testSf.object("Foo", {
-			// agentSchema.Array<["agentSchema.Array<[\\"agentSchema.Array<[\\\\\\"com.fluidframework.leaf.string\\\\\\"]>\\",\\"com.fluidframework.leaf.number\\"]>","com.fluidframework.leaf.number"]>
-			y: sf.required([sf.number, sf.string]),
+			y: sf.required([sf.number, sf.string, Bar]),
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
