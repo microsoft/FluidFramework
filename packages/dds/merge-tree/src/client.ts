@@ -97,8 +97,7 @@ export interface IIntegerRange {
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -121,9 +120,7 @@ export interface IClientEvents {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * @internal
  */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
@@ -304,7 +301,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		accum: TClientData,
 		splitRange?: boolean,
 	): void;
-	public walkSegments<undefined>(
+	public walkSegments(
 		handler: ISegmentAction<undefined>,
 		start?: number,
 		end?: number,

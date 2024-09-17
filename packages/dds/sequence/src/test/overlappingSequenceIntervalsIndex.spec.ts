@@ -19,6 +19,8 @@ import {
 	createOverlappingSequenceIntervalsIndex,
 } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SequenceIntervalClass } from "../intervals/sequenceInterval.js";
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
@@ -38,7 +40,7 @@ function assertSequenceIntervalsEqual(
 		let expectedStart;
 		let expectedEnd;
 
-		if (expected[i] instanceof SequenceInterval) {
+		if (expected[i] instanceof SequenceIntervalClass) {
 			expectedStart = string.localReferencePositionToPosition(
 				expected[i].start as LocalReferencePosition,
 			);

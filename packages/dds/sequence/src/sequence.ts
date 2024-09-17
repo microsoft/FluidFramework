@@ -80,7 +80,12 @@ import {
 	type SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import {
+	SequenceDeltaEvent,
+	SequenceDeltaEventClass,
+	SequenceMaintenanceEvent,
+	SequenceMaintenanceEventClass,
+} from "./sequenceDeltaEvent.js";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
@@ -343,8 +348,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 }
 
 /**
- * @legacy
- * @alpha
+ * @internal
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
@@ -464,7 +468,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.ongoingResubmitRefSeq ?? this.deltaManager.lastSequenceNumber;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
@@ -513,7 +516,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
-			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
+			const event = new SequenceDeltaEventClass(opArgs, deltaArgs, this.client);
 			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
@@ -521,7 +524,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {
-			this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
+			this.emit(
+				"maintenance",
+				new SequenceMaintenanceEventClass(opArgs, args, this.client),
+				this,
+			);
 		});
 
 		this.intervalCollections = new IntervalCollectionMap(

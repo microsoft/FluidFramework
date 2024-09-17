@@ -139,8 +139,7 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- * @legacy
- * @alpha
+ * @internal
  */
 export class SharedStringClass
 	extends SharedSegmentSequence<SharedStringSegment>
