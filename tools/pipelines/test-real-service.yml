@@ -152,8 +152,7 @@ stages:
             displayName: 'Start routerlicious environment in docker'
             inputs:
               containerregistrytype: 'Container Registry'
-              currentWorkingDirectory: 'server'
-              dockerComposeFile: 'docker-compose.yml'
+              dockerComposeFile: 'server/docker-compose.yml'
               additionalDockerComposeFiles: 'docker-compose.dev.yml'
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'up -d'
@@ -170,8 +169,7 @@ stages:
             condition: always()
             inputs:
               containerregistrytype: 'Container Registry'
-              currentWorkingDirectory: 'server'
-              dockerComposeFile: 'docker-compose.yml'
+              dockerComposeFile: 'server/docker-compose.yml'
               additionalDockerComposeFiles: 'docker-compose.dev.yml'
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'down'
