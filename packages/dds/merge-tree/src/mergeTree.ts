@@ -87,7 +87,6 @@ import {
 } from "./referencePositions.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
-import type { InteriorSequencePlace } from "./sequencePlace.js";
 import { zamboniSegments } from "./zamboni.js";
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
@@ -1923,8 +1922,8 @@ export class MergeTree {
 	}
 
 	public obliterateRange(
-		start: number | InteriorSequencePlace,
-		end: number | InteriorSequencePlace,
+		start: number,
+		end: number,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -1933,11 +1932,8 @@ export class MergeTree {
 	): void {
 		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
 
-		const startPos = typeof start === "number" ? start : start.pos;
-		const endPos = typeof end === "number" ? end : end.pos;
-
-		this.ensureIntervalBoundary(startPos, refSeq, clientId);
-		this.ensureIntervalBoundary(endPos, refSeq, clientId);
+		this.ensureIntervalBoundary(start, refSeq, clientId);
+		this.ensureIntervalBoundary(end, refSeq, clientId);
 
 		let _overwrite = overwrite;
 		const localOverlapWithRefs: ISegment[] = [];
@@ -2033,8 +2029,8 @@ export class MergeTree {
 			markMoved,
 			undefined,
 			afterMarkMoved,
-			startPos,
-			endPos,
+			start,
+			end,
 			undefined,
 			seq === UnassignedSequenceNumber ? undefined : seq,
 		);

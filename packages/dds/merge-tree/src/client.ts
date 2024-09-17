@@ -75,7 +75,7 @@ import {
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
-import { type InteriorSequencePlace } from "./sequencePlace.js";
+import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -257,11 +257,25 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param end - The exclusive end of the range to obliterate
 	 */
 	public obliterateRangeLocal(
-		start: number | InteriorSequencePlace,
-		end: number | InteriorSequencePlace,
+		start: SequencePlace,
+		end: SequencePlace,
 		// eslint-disable-next-line import/no-deprecated
 	): IMergeTreeObliterateMsg {
-		const obliterateOp = createObliterateRangeOp(start, end);
+		const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
+
+		assert(
+			startPos !== undefined &&
+				endPos !== undefined &&
+				startSide !== undefined &&
+				endSide !== undefined &&
+				startPos !== "end" &&
+				endPos !== "start",
+			"start and end cannot be undefined because they were not passed in as undefined",
+		);
+		const numericalStart = startPos === "start" ? 0 : startPos;
+		const numericalEnd = endPos === "end" ? this.getLength() - 1 : endPos;
+
+		const obliterateOp = createObliterateRangeOp(numericalStart, numericalEnd);
 		this.applyObliterateRangeOp({ op: obliterateOp });
 		return obliterateOp;
 	}
