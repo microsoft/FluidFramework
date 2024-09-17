@@ -23,14 +23,11 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
 	const notificationsWorkspace = presence.getNotifications("name:testNotificationWorkspace", {
-		chat: Notifications<
-			{
-				msg: (message: string) => void;
-			},
-			string
-		>({
+		chat: Notifications<{
+			msg: (message: string) => void;
+		}>({
 			msg: (client: ISessionClient, message: string) => {
-				console.log(`${client.currentClientId()} says, "${message}"`);
+				console.log(`${client.sessionId} says, "${message}"`);
 			},
 		}),
 	});
@@ -42,7 +39,7 @@ export function checkCompiles(): void {
 	// produced after `add`.
 	const NF = Notifications({
 		newId: (client: ISessionClient, id: number): void => {
-			console.log(`${client.currentClientId()} has a new id: ${id}`);
+			console.log(`${client.sessionId} has a new id: ${id}`);
 		},
 	});
 
@@ -55,7 +52,7 @@ export function checkCompiles(): void {
 	// 		"events"
 	// 	>({
 	// 		newId: (client: ISessionClient, id: number) => {
-	// 			console.log(`${client.currentClientId()} has a new id: ${id}`);
+	// 			console.log(`${client.sessionId} has a new id: ${id}`);
 	// 		},
 	// 	}),
 	// );
@@ -65,7 +62,7 @@ export function checkCompiles(): void {
 
 	function logUnattended(name: string, client: ISessionClient, ...content: unknown[]): void {
 		console.log(
-			`${client.currentClientId()} sent unattended notification '${name}' with content`,
+			`${client.sessionId} sent unattended notification '${name}' with content`,
 			...content,
 		);
 	}
@@ -78,7 +75,7 @@ export function checkCompiles(): void {
 	const chatClients = new Set<ISessionClient>();
 	const chatMsgOff = chat.notifications.on("msg", (client, _message) => {
 		if (!chatClients.has(client)) {
-			console.log(`client ${client.currentClientId()} has started chatting`);
+			console.log(`client ${client.sessionId} has started chatting`);
 			chatClients.add(client);
 		}
 	});

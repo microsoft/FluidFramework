@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { createSessionId } from "@fluidframework/id-compressor/internal";
 
-import type { ConnectedClientId } from "./baseTypes.js";
-import type { IPresence, ISessionClient, PresenceEvents } from "./presence.js";
+import type { ClientConnectionId } from "./baseTypes.js";
+import type {
+	ClientSessionId,
+	IPresence,
+	ISessionClient,
+	PresenceEvents,
+} from "./presence.js";
 import type {
 	IEphemeralRuntime,
 	PresenceDatastoreManager,
@@ -32,22 +37,25 @@ export interface IPresenceManager
 		Pick<Required<IContainerExtension<[]>>, "processSignal"> {}
 
 /**
- * Common Presence manager
+ * The Presence manager
  */
 class PresenceManager implements IPresenceManager {
 	private readonly datastoreManager: PresenceDatastoreManager;
-	private readonly attendees = new Map<ConnectedClientId, ISessionClient>();
 	private readonly selfAttendee: ISessionClient = {
-		currentClientId: () => {
+		sessionId: createSessionId() as ClientSessionId,
+		currentConnectionId: () => {
 			throw new Error("Client has never been connected");
 		},
 	};
+	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, ISessionClient>([
+		[this.selfAttendee.sessionId, this.selfAttendee],
+	]);
 
 	public constructor(runtime: IEphemeralRuntime) {
 		// If already connected, populate self and attendees.
 		const originalClientId = runtime.clientId;
 		if (originalClientId !== undefined) {
-			this.selfAttendee.currentClientId = () => originalClientId;
+			this.selfAttendee.currentConnectionId = () => originalClientId;
 			this.attendees.set(originalClientId, this.selfAttendee);
 		}
 
@@ -57,14 +65,16 @@ class PresenceManager implements IPresenceManager {
 		// might possibly try to use it. (Datastore manager is expected to
 		// use connected clientId more directly and no order dependence should
 		// be relied upon, but helps with debugging consistency.)
-		runtime.on("connected", () => {
-			const clientId = runtime.clientId;
-			assert(clientId !== undefined, "Connected without local clientId");
-			this.selfAttendee.currentClientId = () => clientId;
+		runtime.on("connected", (clientId: ClientConnectionId) => {
+			this.selfAttendee.currentConnectionId = () => clientId;
 			this.attendees.set(clientId, this.selfAttendee);
 		});
 
-		this.datastoreManager = new PresenceDatastoreManagerImpl(runtime, this);
+		this.datastoreManager = new PresenceDatastoreManagerImpl(
+			this.selfAttendee.sessionId,
+			runtime,
+			this,
+		);
 	}
 
 	public readonly events = createEmitter<PresenceEvents>();
@@ -72,17 +82,22 @@ class PresenceManager implements IPresenceManager {
 	public getAttendees(): ReadonlySet<ISessionClient> {
 		return new Set(this.attendees.values());
 	}
-	public getAttendee(clientId: ConnectedClientId): ISessionClient {
+
+	public getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
 		const attendee = this.attendees.get(clientId);
 		if (attendee) {
 			return attendee;
 		}
+		// This is a major hack to enable basic operation.
+		// Missing attendees should be rejected.
 		const newAttendee = {
-			currentClientId: () => clientId,
-		};
+			sessionId: clientId as ClientSessionId,
+			currentConnectionId: () => clientId,
+		} satisfies ISessionClient;
 		this.attendees.set(clientId, newAttendee);
 		return newAttendee;
 	}
+
 	public getMyself(): ISessionClient {
 		return this.selfAttendee;
 	}
