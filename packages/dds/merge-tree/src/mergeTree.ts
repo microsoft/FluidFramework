@@ -1623,11 +1623,7 @@ export class MergeTree {
 		return { next };
 	};
 
-	private ensureIntervalBoundary(
-		pos: number | "start" | "end",
-		refSeq: number,
-		clientId: number,
-	): void {
+	private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number): void {
 		const splitNode = this.insertingWalk(
 			this.root,
 			pos,
@@ -1671,21 +1667,14 @@ export class MergeTree {
 
 	private insertingWalk(
 		block: MergeBlock,
-		pos: number | "start" | "end",
+		pos: number,
 		refSeq: number,
 		clientId: number,
 		seq: number,
 		context: InsertContext,
 		isLastChildBlock: boolean = true,
 	): MergeBlock | undefined {
-		let _pos: number;
-		if (pos === "start") {
-			_pos = 0;
-		} else if (pos === "end") {
-			_pos = this.root.mergeTree?.getLength(refSeq, clientId) ?? 0;
-		} else {
-			_pos = pos;
-		}
+		let _pos: number = pos;
 
 		const children = block.children;
 		let childIndex: number;

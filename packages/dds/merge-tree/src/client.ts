@@ -260,6 +260,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public obliterateRangeLocal(
 		start: SequencePlace,
 		end: SequencePlace,
+		// eslint-disable-next-line import/no-deprecated
 	): IMergeTreeObliterateMsg {
 		const obliterateOp = createObliterateRangeOp(
 			start,
