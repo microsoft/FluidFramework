@@ -4,11 +4,11 @@
  */
 
 import type { JsonTreeSchema } from "./jsonSchema.js";
-import type { ImplicitAllowedTypes } from "./schemaTypes.js";
+import type { ImplicitAllowedTypes } from "../schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { getSimpleSchema } from "./getSimpleSchema.js";
-import { getOrCreate } from "../util/index.js";
-import type { TreeNodeSchema } from "./core/index.js";
+import { getOrCreate } from "../../util/index.js";
+import type { TreeNodeSchema } from "../core/index.js";
 
 /**
  * Cache in which the results of {@link getJsonSchema} are saved.

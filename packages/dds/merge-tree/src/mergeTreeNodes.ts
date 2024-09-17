@@ -401,6 +401,7 @@ export interface SegmentActions<TClientData> {
 }
 
 /**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @legacy
  * @alpha
  */
@@ -411,6 +412,7 @@ export interface ObliterateInfo {
 	clientId: number;
 	seq: number;
 	localSeq: number | undefined;
+	segmentGroup: SegmentGroup | undefined;
 }
 
 /**
@@ -679,7 +681,7 @@ export abstract class BaseSegment implements ISegment {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
 				const obliterateInfo = segmentGroup.obliterateInfo;
-				assert(obliterateInfo !== undefined, "must have obliterate info");
+				assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
 				this.localMovedSeq = obliterateInfo.localSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);

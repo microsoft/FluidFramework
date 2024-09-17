@@ -224,6 +224,7 @@ export function createTreeCheckout(
 				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
 			{ jsonValidator: noopValidator },
 			args?.chunkCompressionStrategy,
+			idCompressor,
 		);
 	const branch =
 		args?.branch ??
@@ -743,7 +744,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const field = cursor.getFieldKey();
 			assert(
 				rootFields.has(field),
-				"Forest has a root field which is unknown to the detached field index",
+				0xa22 /* Forest has a root field which is unknown to the detached field index */,
 			);
 
 			rootFields.delete(field);

@@ -249,7 +249,10 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier?.context.isHydrated() === true, "Expected hydrated identifier");
+				assert(
+					identifier?.context.isHydrated() === true,
+					0xa27 /* Expected hydrated identifier */,
+				);
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
@@ -304,13 +307,13 @@ function getStoredKey(node: TreeNode): string | number {
 		// The parent of `node` is an array node
 		assert(
 			parentField.parent.key === EmptyKey,
-			"When using index as key, field should use EmptyKey",
+			0xa28 /* When using index as key, field should use EmptyKey */,
 		);
 		return parentField.index;
 	}
 
 	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
-	assert(parentField.index === 0, "When using field key as key, index should be 0");
+	assert(parentField.index === 0, 0xa29 /* When using field key as key, index should be 0 */);
 	return parentField.parent.key;
 }
 
