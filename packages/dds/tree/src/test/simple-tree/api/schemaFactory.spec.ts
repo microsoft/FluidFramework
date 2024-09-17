@@ -110,7 +110,7 @@ import { validateUsageError } from "../../utils.js";
 	}
 }
 
-describe.only("schemaFactory", () => {
+describe("schemaFactory", () => {
 	it("leaf", () => {
 		const schema = new SchemaFactory("com.example");
 
