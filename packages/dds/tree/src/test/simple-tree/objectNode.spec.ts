@@ -7,7 +7,12 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, type NodeKind, type TreeNodeSchema } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	type NodeBuilderData,
+	type NodeKind,
+	type TreeNodeSchema,
+} from "../../simple-tree/index.js";
 
 import { describeHydration, hydrate, pretty } from "./utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
@@ -20,17 +25,83 @@ describeHydration(
 	"ObjectNode",
 	(init) => {
 		describe("shadowing", () => {
-			it("constructor", () => {
-				// constructor is a special case, since one is built in on the derived type.
+			describe("constructor", () => {
+				it("empty", () => {
+					class Schema extends schemaFactory.object("x", {}) {}
+					const n = init(Schema, {});
+					// constructor is a special case, since one is built in on the derived type.
+					// Check that it is exposed as expected based on type:
+					const x = n.constructor;
+					// eslint-disable-next-line @typescript-eslint/ban-types
+					type check_ = requireAssignableTo<typeof x, Function>;
+					assert.equal(x, Schema);
+				});
+
+				it("required", () => {
+					class Schema extends schemaFactory.object("x", {
+						constructor: schemaFactory.number,
+					}) {}
+
+					const n = init(Schema, { constructor: 5 });
+
+					const x = n.constructor;
+					type check_ = requireAssignableTo<typeof x, number>;
+					assert.equal(x, 5);
+				});
+
+				describe("optional", () => {
+					class Schema extends schemaFactory.object("x", {
+						constructor: schemaFactory.optional(schemaFactory.number),
+					}) {}
+
+					it("explicit undefined", () => {
+						const n = init(Schema, { constructor: undefined });
+						const x = n.constructor;
+						type check_ = requireAssignableTo<typeof x, number | undefined>;
+						assert.equal(x, undefined);
+					});
+
+					it("default", () => {
+						// Example of how a type conversion that allows using literals with defaults can still be allowed to compile in the presence of overloaded inherited values.
+						const data: { [P in "constructor"]?: undefined } = {};
+						const insertable: NodeBuilderData<typeof Schema> = data;
+
+						const n = init(Schema, insertable);
+						const x = n.constructor;
+						assert.equal(x, undefined);
+
+						{
+							// In this particular case of overloads, TypeScript knows this is unsafe, but in other similar cases (like the one above), it can compile without error.
+							// @ts-expect-error Unsafely construct insertable with correct type.
+							const _insertable: NodeBuilderData<typeof Schema> = {};
+						}
+					});
+				});
+			});
+
+			it("union", () => {
 				class Schema extends schemaFactory.object("x", {
 					constructor: schemaFactory.number,
 				}) {}
+				class Other extends schemaFactory.object("y", {
+					other: schemaFactory.number,
+				}) {}
 
-				const n = init(Schema, { constructor: 5 });
+				// TODO:
+				// "init" can't handle field schema, so this uses hydrate, making the two versions of this test the same.
+				// Either:
+				// 1. Generalize init
+				// 2. Reorganize these tests to avoid hitting this requirement
+				// 3. Some other refactor to resolve this
+				const a = hydrate([Schema, Other], { constructor: 5 });
+				const b = hydrate([Schema, Other], { other: 6 });
 
-				const x = n.constructor;
-				type check_ = requireAssignableTo<typeof x, number>;
-				assert.equal(x, 5);
+				// eslint-disable-next-line @typescript-eslint/ban-types
+				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
+				assert.equal(a.constructor, 5);
+				assert.equal(b.constructor, Other);
+				assert(Tree.is(b, Other));
+				assert.equal(b.other, 6);
 			});
 		});
 
@@ -133,6 +204,136 @@ describeHydration(
 				});
 			});
 		});
+
+		describe("supports setting", () => {
+			describe("primitives", () => {
+				function check<const TNode>(
+					schema: TreeNodeSchema<string, NodeKind, TNode>,
+					before: TNode,
+					after: TNode,
+				) {
+					describe(`required ${typeof before} `, () => {
+						it(`(${pretty(before)} -> ${pretty(after)})`, () => {
+							const Root = schemaFactory.object("", { value: schema });
+							const root = init(Root, { value: before });
+							assert.equal(root.value, before);
+							root.value = after;
+							assert.equal(root.value, after);
+						});
+					});
+
+					describe(`optional ${typeof before}`, () => {
+						it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
+							const root = init(
+								schemaFactory.object("", { value: schemaFactory.optional(schema) }),
+								{ value: undefined },
+							);
+							assert.equal(root.value, undefined);
+							root.value = before;
+							assert.equal(root.value, before);
+							root.value = after;
+							assert.equal(root.value, after);
+						});
+					});
+				}
+
+				check(schemaFactory.boolean, false, true);
+				check(schemaFactory.number, 0, 1);
+				check(schemaFactory.string, "", "!");
+			});
+
+			describe("required object", () => {
+				const Child = schemaFactory.object("child", {
+					objId: schemaFactory.number,
+				});
+				const Schema = schemaFactory.object("parent", {
+					child: Child,
+				});
+
+				const before = { objId: 0 };
+				const after = { objId: 1 };
+
+				it(`(${pretty(before)} -> ${pretty(after)})`, () => {
+					const root = init(Schema, { child: before });
+					assert.equal(root.child.objId, 0);
+					root.child = new Child(after);
+					assert.equal(root.child.objId, 1);
+				});
+			});
+
+			describe("optional object", () => {
+				const Child = schemaFactory.object("child", {
+					objId: schemaFactory.number,
+				});
+				const Schema = schemaFactory.object("parent", {
+					child: schemaFactory.optional(Child),
+				});
+
+				const before = { objId: 0 };
+				const after = { objId: 1 };
+
+				it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
+					const root = init(Schema, { child: undefined });
+					assert.equal(root.child, undefined);
+					root.child = new Child(before);
+					assert.equal(root.child.objId, 0);
+					root.child = new Child(after);
+					assert.equal(root.child.objId, 1);
+				});
+			});
+
+			describe.skip("required list", () => {
+				// const _ = new SchemaFactory("test");
+				// const list = _.fieldNode("List<string>", _.sequence(_.string));
+				// const parent = _.struct("parent", {
+				// 	list,
+				// });
+				// const schema = _.intoSchema(parent);
+				// const before: string[] = [];
+				// const after = ["A"];
+				// it(`(${pretty(before)} -> ${pretty(after)})`, () => {
+				// 	const root = getRoot(schema, { list: before });
+				// 	assert.deepEqual(root.list, before);
+				// 	root.list = after;
+				// 	assert.deepEqual(root.list, after);
+				// });
+			});
+
+			describe.skip("optional list", () => {
+				// const _ = new SchemaFactory("test");
+				// const list = _.fieldNode("List<string>", _.sequence(_.string));
+				// const parent = _.struct("parent", {
+				// 	list: _.optional(list),
+				// });
+				// const schema = _.intoSchema(parent);
+				// const before: string[] = [];
+				// const after = ["A"];
+				// it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
+				// 	const root = getRoot(schema, { list: undefined });
+				// 	assert.equal(root.list, undefined);
+				// 	root.list = before;
+				// 	assert.deepEqual(root.list, before);
+				// 	root.list = after;
+				// 	assert.deepEqual(root.list, after);
+				// });
+			});
+
+			describe.skip("required map", () => {
+				// TODO
+			});
+
+			describe.skip("optional map", () => {
+				// TODO
+			});
+		});
+
+		it("default optional field", () => {
+			class Schema extends schemaFactory.object("x", {
+				x: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const n = init(Schema, {});
+			assert.equal(n.x, undefined);
+		});
 	},
 	() => {
 		describe("shadowing", () => {
@@ -192,128 +393,6 @@ describeHydration(
 					() => new Schema({ foo: undefined }),
 					(e: Error) => validateAssertionError(e, /this shadowing will not work/),
 				);
-			});
-		});
-
-		describe("supports setting", () => {
-			describe("primitives", () => {
-				function check<const TNode>(
-					schema: TreeNodeSchema<string, NodeKind, TNode>,
-					before: TNode,
-					after: TNode,
-				) {
-					describe(`required ${typeof before} `, () => {
-						it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-							const Root = schemaFactory.object("", { value: schema });
-							const root = hydrate(Root, { value: before });
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
-
-					describe(`optional ${typeof before}`, () => {
-						it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-							const root = hydrate(
-								schemaFactory.object("", { value: schemaFactory.optional(schema) }),
-								{ value: undefined },
-							);
-							assert.equal(root.value, undefined);
-							root.value = before;
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
-				}
-
-				check(schemaFactory.boolean, false, true);
-				check(schemaFactory.number, 0, 1);
-				check(schemaFactory.string, "", "!");
-			});
-
-			describe("required object", () => {
-				const Child = schemaFactory.object("child", {
-					objId: schemaFactory.number,
-				});
-				const Schema = schemaFactory.object("parent", {
-					child: Child,
-				});
-
-				const before = { objId: 0 };
-				const after = { objId: 1 };
-
-				it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-					const root = hydrate(Schema, { child: before });
-					assert.equal(root.child.objId, 0);
-					root.child = new Child(after);
-					assert.equal(root.child.objId, 1);
-				});
-			});
-
-			describe("optional object", () => {
-				const Child = schemaFactory.object("child", {
-					objId: schemaFactory.number,
-				});
-				const Schema = schemaFactory.object("parent", {
-					child: schemaFactory.optional(Child),
-				});
-
-				const before = { objId: 0 };
-				const after = { objId: 1 };
-
-				it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-					const root = hydrate(Schema, { child: undefined });
-					assert.equal(root.child, undefined);
-					root.child = new Child(before);
-					assert.equal(root.child.objId, 0);
-					root.child = new Child(after);
-					assert.equal(root.child.objId, 1);
-				});
-			});
-
-			describe.skip("required list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list,
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: before });
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("optional list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list: _.optional(list),
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: undefined });
-				// 	assert.equal(root.list, undefined);
-				// 	root.list = before;
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("required map", () => {
-				// TODO
-			});
-
-			describe.skip("optional map", () => {
-				// TODO
 			});
 		});
 

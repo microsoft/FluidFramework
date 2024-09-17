@@ -67,15 +67,11 @@ export abstract class SequenceEvent<
 		});
 
 		this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
-			// TODO Non null asserting, why is this not null?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			() => this.sortedRanges.value.items[0]!,
+			() => this.sortedRanges.value.items[0],
 		);
 
 		this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
-			// TODO Non null asserting, why is this not null?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1]!,
+			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1],
 		);
 	}
 

@@ -20,24 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_DataStoreMessageType": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<old.DataStoreMessageType>, TypeOnly<current.DataStoreMessageType>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_DataStoreMessageType": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<current.DataStoreMessageType>, TypeOnly<old.DataStoreMessageType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Class_FluidDataStoreRuntime": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.FluidDataStoreRuntime>, TypeOnly<current.FluidDataStoreRuntime>>
@@ -50,15 +32,6 @@ declare type old_as_current_for_Class_FluidDataStoreRuntime = requireAssignableT
  * "Class_FluidDataStoreRuntime": {"backCompat": false}
  */
 declare type current_as_old_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.FluidDataStoreRuntime>, TypeOnly<old.FluidDataStoreRuntime>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_FluidDataStoreRuntime": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreRuntime>, TypeOnly<typeof old.FluidDataStoreRuntime>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -83,9 +56,36 @@ declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<Ty
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "ClassStatics_FluidDataStoreRuntime": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreRuntime>, TypeOnly<typeof old.FluidDataStoreRuntime>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "ClassStatics_FluidObjectHandle": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_FluidObjectHandle = requireAssignableTo<TypeOnly<typeof current.FluidObjectHandle>, TypeOnly<typeof old.FluidObjectHandle>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_DataStoreMessageType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<old.DataStoreMessageType>, TypeOnly<current.DataStoreMessageType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_DataStoreMessageType": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<current.DataStoreMessageType>, TypeOnly<old.DataStoreMessageType>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

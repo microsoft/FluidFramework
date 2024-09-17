@@ -5,6 +5,7 @@
 
 export {
 	typeNameSymbol,
+	typeSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	NodeKind,
@@ -18,6 +19,7 @@ export {
 	type Unhydrated,
 	type InternalTreeNode,
 	isTreeNode,
+	tryDisposeTreeNode,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -41,6 +43,27 @@ export {
 	test_RecursiveObjectPojoMode,
 	treeNodeApi,
 	type TreeNodeApi,
+	cursorFromInsertable,
+	createFromInsertable,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+	type SimpleTreeSchema,
+	type JsonSchemaId,
+	type JsonSchemaType,
+	type JsonObjectNodeSchema,
+	type JsonArrayNodeSchema,
+	type JsonMapNodeSchema,
+	type JsonLeafNodeSchema,
+	type JsonSchemaRef,
+	type JsonRefPath,
+	type JsonNodeSchema,
+	type JsonNodeSchemaBase,
+	type JsonTreeSchema,
+	type JsonFieldSchema,
+	type JsonLeafSchemaType,
+	getJsonSchema,
+	getSimpleSchema,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -61,8 +84,9 @@ export {
 	type FieldProps,
 	normalizeFieldSchema,
 	type ApplyKind,
+	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
-export { getOrCreateInnerNode, tryDisposeTreeNode } from "./proxyBinding.js";
+export { getOrCreateInnerNode } from "./proxyBinding.js";
 export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
@@ -83,7 +107,6 @@ export type {
 } from "./typesUnsafe.js";
 export {
 	getTreeNodeForField,
-	type InsertableContent,
 	prepareContentForHydration,
 } from "./proxies.js";
 
@@ -100,22 +123,12 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { mapTreeFromNodeData } from "./toMapTree.js";
-export type { SimpleTreeSchema } from "./simpleSchema.js";
+export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
+export { toStoredSchema, getStoredSchema, getFlexSchema } from "./toFlexSchema.js";
 export {
-	type JsonSchemaId,
-	type JsonSchemaType,
-	type JsonObjectNodeSchema,
-	type JsonArrayNodeSchema,
-	type JsonMapNodeSchema,
-	type JsonLeafNodeSchema,
-	type JsonSchemaRef,
-	type JsonRefPath,
-	type JsonNodeSchema,
-	type JsonNodeSchemaBase,
-	type JsonTreeSchema,
-	type JsonFieldSchema,
-	type JsonLeafSchemaType,
-} from "./jsonSchema.js";
-export { getJsonSchema } from "./getJsonSchema.js";
-export { getSimpleSchema } from "./getSimpleSchema.js";
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+} from "./leafNodeSchema.js";

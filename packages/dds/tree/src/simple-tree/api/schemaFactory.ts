@@ -100,7 +100,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
  *
- * @public
+ * @system @public
  */
 export type ScopedSchemaName<
 	TScope extends string | undefined,
@@ -134,17 +134,46 @@ export type ScopedSchemaName<
  * The usage below generalizes this to include array and map like objects as well.
  *
  * There are two ways to use these APIs:
- * |                     | Customizable | POJO Emulation |
- * | ------------------- | ------------ |--------------- |
- * | Declaration         | `class X extends schemaFactory.object("x", {}) {}` | `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>; `
- * | Allows adding "local" (non-persisted) members | Yes. Members (including methods) can be added to class.        | No. Attempting to set non-field members will error. |
- * | Prototype | The user defined class | `Object.prototype`, `Map.prototype` or `Array.prototype` depending on node kind |
- * | Structurally named Schema | Not Supported | Supported |
- * | Explicitly named Objects | Supported | Supported |
- * | Explicitly named Maps and Arrays | Supported: Both declaration approaches can be used | Not Supported |
- * | node.js assert.deepEqual | Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields. | Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different. |
- * | IntelliSense | Shows and links to user defined class by name: `X` | Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">` |
- * | Recursion | Supported with special declaration patterns. | Unsupported: Generated d.ts files replace recursive references with `any`, breaking use of recursive schema across compilation boundaries |
+ *
+ * Customizable Approach:
+ *
+ * 1. Declaration: `class X extends schemaFactory.object("x", {}) {}`
+ *
+ * 2. Allows adding "local" (non-persisted) members: Yes. Members (including methods) can be added to the class.
+ *
+ * 3. Prototype: The user-defined class.
+ *
+ * 4. Structurally named Schema: Not Supported.
+ *
+ * 5. Explicitly named Objects: Supported.
+ *
+ * 6. Explicitly named Maps and Arrays: Supported: Both declaration approaches can be used.
+ *
+ * 7. Node.js `assert.deepEqual`: Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields.
+ *
+ * 8. IntelliSense: Shows and links to user-defined class by name: `X`.
+ *
+ * 9. Recursion: Supported with special declaration patterns.
+ *
+ * POJO Emulation Approach:
+ *
+ * 1. Declaration: `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>;`
+ *
+ * 2. Allows adding "local" (non-persisted) members: No. Attempting to set non-field members will result in an error.
+ *
+ * 3. Prototype: `Object.prototype`, `Map.prototype`, or `Array.prototype` depending on node kind.
+ *
+ * 4. Structurally named Schema: Supported.
+ *
+ * 5. Explicitly named Objects: Supported.
+ *
+ * 6. Explicitly named Maps and Arrays: Not Supported.
+ *
+ * 7. Node.js `assert.deepEqual`: Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different.
+ *
+ * 8. IntelliSense: Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`.
+ *
+ * 9. Recursion: Unsupported: Generated `.d.ts` files replace recursive references with `any`, breaking the use of recursive schema across compilation boundaries.
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
  *
@@ -164,6 +193,8 @@ export type ScopedSchemaName<
  * When doing this, it's still possible to make `instanceof` perform correctly.
  * Allowing (or banning) custom/out-of-schema properties on the class is also possible in both modes: it could be orthogonal.
  * Also for consistency, if keeping the current approach to detecting `POJO Emulation` mode it might make sense to make explicitly named Maps and Arrays do the detection the same as how object does it.
+ *
+ * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
  *
  * @sealed @public
  */
@@ -303,7 +334,7 @@ export class SchemaFactory<
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
 		T
@@ -325,7 +356,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
 		T
@@ -377,7 +408,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
@@ -429,7 +460,7 @@ export class SchemaFactory<
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T
@@ -453,7 +484,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T
@@ -508,7 +539,7 @@ export class SchemaFactory<
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T
@@ -521,11 +552,14 @@ export class SchemaFactory<
 	 *
 	 * @param t - The types allowed under the field.
 	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public optional<const T extends ImplicitAllowedTypes>(
+	public optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Optional, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
 		});
@@ -544,11 +578,14 @@ export class SchemaFactory<
 	 * @remarks
 	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
 	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public required<const T extends ImplicitAllowedTypes>(
+	public required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Required, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
 
@@ -663,7 +700,7 @@ export class SchemaFactory<
 		return RecursiveArray as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
-			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 			{
 				/**
 				 * Iterator for the iterable of content for this node.
@@ -705,7 +742,7 @@ export class SchemaFactory<
 		return MapSchema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 			{
 				/**
 				 * Iterator for the iterable of content for this node.
@@ -748,7 +785,7 @@ export function structuralName<const T extends string>(
 		names.sort();
 		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
 		// Using JSON is a simple way to accomplish this.
-		// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
+		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;

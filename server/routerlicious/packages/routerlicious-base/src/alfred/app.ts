@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isIPv4, isIPv6 } from "net";
 import {
 	IDeltaService,
 	IDocumentStorage,
@@ -26,7 +27,6 @@ import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
@@ -106,17 +106,9 @@ export function create(
 						additionalProperties.hashedClientIPAddress = hashedClientIP;
 
 						const clientIPAddress = req.ip ? req.ip : "";
-						const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-						const ipv6Regex = /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i;
-						if (
-							ipv4Regex.test(clientIPAddress) &&
-							clientIPAddress.split(".").every((part) => Number(part) <= 255)
-						) {
+						if (isIPv4(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv4";
-						} else if (
-							ipv6Regex.test(clientIPAddress) &&
-							clientIPAddress.split(":").every((part) => part.length <= 4)
-						) {
+						} else if (isIPv6(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv6";
 						} else {
 							additionalProperties.clientIPType = "";
@@ -159,8 +151,6 @@ export function create(
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
-
-	app.use(bindCorrelationId());
 
 	// Bind routes
 	const routes = alfredRoutes.create(

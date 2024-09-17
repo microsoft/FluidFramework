@@ -336,6 +336,18 @@ extends:
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
+        # The 1ES.BuildContainerImage task apparently expects to see the CredScan suppressions file not in the root of
+        # the repo, but in the folder used as its 'context' input. So we need to copy it there before building any images.
+        # Note: ADO's CopyFiles task is unusable to copy files when the source folder has a lot of subfolders/files
+        # because it tries to enumerate *everything* (.git, node_modules, etc) before deciding what to copy.
+        - task: Bash@3
+          displayName: Copy CredScan suppressions file for container builds
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              cp ./CredScanSuppressions.json ${{ parameters.buildDirectory }}
+
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
         # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
         # which aren't available at compile-time, for expression-syntax conditionals that are evaluated at compile-time.
@@ -388,10 +400,10 @@ extends:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  flub list --no-private $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build --outFile $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev --outFile $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test --outFile $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.

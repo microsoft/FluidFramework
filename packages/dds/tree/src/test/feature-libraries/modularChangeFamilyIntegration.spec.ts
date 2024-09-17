@@ -19,7 +19,6 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
@@ -47,6 +46,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	failCodecFamily,
 	mintRevisionTag,
+	moveWithin,
 	testChangeReceiver,
 } from "../utils.js";
 
@@ -60,6 +60,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
+import { numberSchema } from "../../simple-tree/index.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -271,7 +272,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 2, 2);
+			moveWithin(editor, { parent: undefined, field: fieldA }, 0, 2, 2);
 			const [move1, move2] = getChanges();
 			const rebased = family.rebase(
 				makeAnonChange(move2),
@@ -305,15 +306,10 @@ describe("ModularChangeFamily integration", () => {
 			editor.enterTransaction();
 
 			// Moves node2, which is a child of node1 to an earlier position in its field
-			editor
-				.sequenceField({
-					parent: node1Path,
-					field: fieldB,
-				})
-				.move(1, 1, 0);
+			moveWithin(editor, { parent: node1Path, field: fieldB }, 1, 1, 0);
 
 			// Moves node1 to an earlier position in the field
-			editor.sequenceField(fieldAPath).move(1, 1, 0);
+			moveWithin(editor, fieldAPath, 1, 1, 0);
 
 			// Modifies node2 so that both fieldA and fieldB have changes that need to be transferred
 			// from a move source to a destination during rebase.
@@ -444,11 +440,12 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			// This edit moves node1 in field A to the beginning of the field.
-			editor.sequenceField({ parent: undefined, field: fieldA }).move(1, 1, 0);
+			const fieldAPath = { parent: undefined, field: fieldA };
+			moveWithin(editor, fieldAPath, 1, 1, 0);
 
 			// The changeset to be rebased consists of the following two edits.
 			// This is an arbitrary edit to field A.
-			editor.sequenceField({ parent: undefined, field: fieldA }).remove(2, 1);
+			editor.sequenceField(fieldAPath).remove(2, 1);
 
 			// This is an edit which targets node2.
 			editor.sequenceField({ parent: undefined, field: fieldB }).remove(0, 1);
@@ -524,27 +521,16 @@ describe("ModularChangeFamily integration", () => {
 			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
 
 			// Moves A to an adjacent cell to its right
-			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 1, 1);
+			const fieldAPath = { parent: undefined, field: fieldA };
+			moveWithin(editor, fieldAPath, 0, 1, 1);
 
 			// Moves B into A
-			editor.move(
-				{ parent: undefined, field: fieldA },
-				1,
-				1,
-				{ parent: nodeAPath, field: fieldB },
-				0,
-			);
+			editor.move(fieldAPath, 1, 1, { parent: nodeAPath, field: fieldB }, 0);
 
 			const nodeBPath: UpPath = { parent: nodeAPath, parentField: fieldB, parentIndex: 0 };
 
 			// Moves C into B
-			editor.move(
-				{ parent: undefined, field: fieldA },
-				1,
-				1,
-				{ parent: nodeBPath, field: fieldC },
-				0,
-			);
+			editor.move(fieldAPath, 1, 1, { parent: nodeBPath, field: fieldC }, 0);
 
 			const nodeCPath: UpPath = { parent: nodeBPath, parentField: fieldC, parentIndex: 0 };
 
@@ -607,7 +593,10 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({
+				type: brand(numberSchema.identifier),
+				value: newValue,
+			});
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -664,7 +653,10 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({
+				type: brand(numberSchema.identifier),
+				value: newValue,
+			});
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -817,17 +809,21 @@ describe("ModularChangeFamily integration", () => {
 			editor.enterTransaction();
 
 			// Moves node1 to an earlier position in the field
-			editor.sequenceField(fieldAPath).move(1, 1, 0);
+			moveWithin(editor, fieldAPath, 1, 1, 0);
 			const node1Path = { parent: undefined, parentField: fieldA, parentIndex: 0 };
 			const node2Path = { parent: node1Path, parentField: fieldB, parentIndex: 0 };
 
 			// Moves node2, which is a child of node1 to an earlier position in its field
-			editor
-				.sequenceField({
+			moveWithin(
+				editor,
+				{
 					parent: node1Path,
 					field: fieldB,
-				})
-				.move(1, 1, 0);
+				},
+				1,
+				1,
+				0,
+			);
 
 			// Modifies node2 so that both fieldA and fieldB have changes that need to be transfered
 			// from a move source to a destination during invert.

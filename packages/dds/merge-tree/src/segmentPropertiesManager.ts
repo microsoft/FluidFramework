@@ -9,11 +9,15 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { IMergeTreeAnnotateMsg } from "./ops.js";
-import { MapLike, PropertySet, createMap } from "./properties.js";
+import { MapLike, PropertySet, clone, createMap, extend } from "./properties.js";
 
 /**
  * @legacy
  * @alpha
+ *
+ * @deprecated - This enum should not be used externally and will be removed in a subsequent release.
+ *
+ * @privateRemarks This enum should be made internal after the deprecation period
  */
 export enum PropertiesRollback {
 	/**
@@ -30,6 +34,10 @@ export enum PropertiesRollback {
 /**
  * @legacy
  * @alpha
+ *
+ * @deprecated - This class should not be used externally and will be removed in a subsequent release.
+ *
+ * @privateRemarks This class should be made internal after the deprecation period
  */
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;
@@ -42,7 +50,6 @@ export class PropertiesManager {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && this.pendingKeyUpdateCount?.[key] !== undefined) {
 				assert(
-					// TODO Non null asserting, why is this not null?
 					this.pendingKeyUpdateCount[key]! > 0,
 					0x05c /* "Trying to update more annotate props than do exist!" */,
 				);
@@ -125,14 +132,10 @@ export class PropertiesManager {
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}
-			for (const key of Object.keys(oldProps)) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				newProps[key] = oldProps[key];
-			}
-			newManager.pendingKeyUpdateCount = createMap<number>();
-			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
-				// TODO Non null asserting, why is this not null?
-				newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key]!;
+			extend(newProps, oldProps);
+
+			if (this.pendingKeyUpdateCount) {
+				newManager.pendingKeyUpdateCount = clone(this.pendingKeyUpdateCount);
 			}
 		}
 		return newProps;

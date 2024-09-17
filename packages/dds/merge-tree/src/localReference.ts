@@ -70,6 +70,13 @@ export interface LocalReferencePosition extends ReferencePosition {
 	 * special segments representing the position before or after the tree
 	 */
 	readonly canSlideToEndpoint?: boolean;
+
+	/**
+	 * @param newProps - Properties to add to this reference.
+	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
+	 * to ensure broadcast happens if that is desired.
+	 */
+	addProperties(newProps: PropertySet): void;
 }
 
 /**
@@ -125,7 +132,7 @@ class LocalReference implements LocalReferencePosition {
 		this.offset = offset;
 	}
 
-	public isLeaf(): boolean {
+	public isLeaf(): this is ISegment {
 		return false;
 	}
 
@@ -290,9 +297,7 @@ export class LocalReferenceCollection {
 		const iterator = {
 			next(): IteratorResult<LocalReferencePosition> {
 				while (subiterators.length > 0) {
-					// TODO Non null asserting, why is this not null?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const next = subiterators[0]!.next();
+					const next = subiterators[0].next();
 					if (next.done === true) {
 						subiterators.shift();
 					} else {

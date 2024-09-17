@@ -42,6 +42,7 @@ import {
 	sequence,
 	required as valueFieldKind,
 } from "./defaultFieldKinds.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -168,6 +169,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
+		private readonly idCompressor?: IIdCompressor,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}
@@ -188,7 +190,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			set: (newContent: ITreeCursorSynchronous): void => {
 				const fillId = this.modularBuilder.generateId();
 
-				const build = this.modularBuilder.buildTrees(fillId, newContent);
+				const build = this.modularBuilder.buildTrees(fillId, newContent, this.idCompressor);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set({
 						fill: fillId,
@@ -216,7 +218,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				let optionalChange: OptionalChangeset;
 				if (newContent !== undefined) {
 					fillId = this.modularBuilder.generateId();
-					const build = this.modularBuilder.buildTrees(fillId, newContent);
+					const build = this.modularBuilder.buildTrees(fillId, newContent, this.idCompressor);
 					edits.push(build);
 
 					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
@@ -339,7 +341,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				}
 
 				const firstId = this.modularBuilder.generateId(length);
-				const build = this.modularBuilder.buildTrees(firstId, content);
+				const build = this.modularBuilder.buildTrees(firstId, content, this.idCompressor);
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(index, length, firstId),
 				);
@@ -362,23 +364,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					sequence.changeHandler.editor.remove(index, count, id),
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
-			},
-			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				if (count === 0) {
-					return;
-				} else if (count < 0 || !Number.isSafeInteger(count)) {
-					throw new UsageError(`Expected non-negative integer count, got ${count}.`);
-				}
-				const detachId = this.modularBuilder.generateId(count);
-				const attachId = this.modularBuilder.generateId(count);
-				const change = sequence.changeHandler.editor.move(
-					sourceIndex,
-					count,
-					destIndex,
-					detachId,
-					attachId,
-				);
-				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
 			},
 		};
 	}
@@ -423,14 +408,6 @@ export interface SequenceFieldEditBuilder<TContent> {
 	 * @param count - The number of elements to remove.
 	 */
 	remove(index: number, count: number): void;
-
-	/**
-	 * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.
-	 * @param sourceIndex - the index of the first moved element.
-	 * @param count - the number of elements to move.
-	 * @param destIndex - the index the elements are moved to, interpreted before detaching the moved elements.
-	 */
-	move(sourceIndex: number, count: number, destIndex: number): void;
 }
 
 /**

@@ -387,7 +387,7 @@ export class SharedTreeBranch<
 			const commit =
 				commits[i] ?? fail("This wont run because we are iterating through commits");
 			const inverse = this.changeFamily.rebaser.changeRevision(
-				this.changeFamily.rebaser.invert(commit, false),
+				this.changeFamily.rebaser.invert(commit, true),
 				revision,
 				commit.revision,
 			);

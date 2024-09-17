@@ -4,6 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ITreeCursorSynchronous, SchemaAndPolicy } from "../../core/index.js";
 import { fail } from "../../util/index.js";
@@ -12,19 +13,23 @@ import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
+	FieldSchema,
+	FieldKind,
 } from "../schemaTypes.js";
 import type { Unhydrated } from "../core/index.js";
 import {
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
+	FieldKinds,
 	intoStoredSchema,
 	mapTreeFromCursor,
+	UnhydratedContext,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { getOrCreateNodeFromFlexTreeNode, type InsertableContent } from "../proxies.js";
-import { getOrCreateMapTreeNode } from "../../feature-libraries/index.js";
+import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
+import { getOrCreateMapTreeNode, isFieldInSchema } from "../../feature-libraries/index.js";
 import { toFlexSchema } from "../toFlexSchema.js";
-import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
+import { inSchemaOrThrow, mapTreeFromNodeData, type InsertableContent } from "../toMapTree.js";
 import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
@@ -34,7 +39,7 @@ import {
 } from "./verboseTree.js";
 
 /**
- * Construct tree content compatible with a field defined by the provided `schema`.
+ * Construct tree content that is compatible with the field defined by the provided `schema`.
  * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
  * @param data - The data used to construct the field content.
  * @remarks
@@ -58,7 +63,7 @@ export function createFromInsertable<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * Construct tree content compatible with a field defined by the provided `schema`.
+ * Construct tree content that is compatible with the field defined by the provided `schema`.
  * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
  * @param data - The data used to construct the field content.
  * @remarks
@@ -70,7 +75,9 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	data: InsertableTreeFieldFromImplicitField<TSchema>,
 	context?: NodeKeyManager | undefined,
-): ITreeCursorSynchronous | undefined {
+):
+	| ITreeCursorSynchronous
+	| (TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never) {
 	const flexSchema = toFlexSchema(schema);
 	const schemaValidationPolicy: SchemaAndPolicy = {
 		policy: defaultSchemaPolicy,
@@ -84,8 +91,14 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
 		context,
 		schemaValidationPolicy,
 	);
-	const result = mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree);
-	return result;
+	if (mapTree === undefined) {
+		assert(
+			flexSchema.rootFieldSchema.kind === FieldKinds.optional,
+			0xa10 /* missing non-optional field */,
+		);
+		return undefined as TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never;
+	}
+	return cursorForMapTreeNode(mapTree);
 }
 
 /**
@@ -128,11 +141,14 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	return createFromCursor(schema, cursor);
 }
 
+/**
+ * Creates an unhydrated simple-tree field from a cursor in nodes mode.
+ */
 export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	cursor: ITreeCursorSynchronous,
+	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	const mapTree = mapTreeFromCursor(cursor);
+	const mapTrees = cursor === undefined ? [] : [mapTreeFromCursor(cursor)];
 	const flexSchema = toFlexSchema(schema);
 
 	const schemaValidationPolicy: SchemaAndPolicy = {
@@ -141,10 +157,26 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 		schema: intoStoredSchema(flexSchema),
 	};
 
-	inSchemaOrThrow(schemaValidationPolicy, mapTree);
+	const maybeError = isFieldInSchema(
+		mapTrees,
+		flexSchema.rootFieldSchema.stored,
+		schemaValidationPolicy,
+	);
+	inSchemaOrThrow(maybeError);
 
-	const rootSchema = flexSchema.nodeSchema.get(cursor.type) ?? fail("missing schema");
-	const mapTreeNode = getOrCreateMapTreeNode(rootSchema, mapTree);
+	if (mapTrees.length === 0) {
+		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	}
+	assert(mapTrees.length === 1, 0xa11 /* unexpected field length */);
+	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const mapTree = mapTrees[0]!;
+	const rootSchema = flexSchema.nodeSchema.get(mapTree.type) ?? fail("missing schema");
+	const mapTreeNode = getOrCreateMapTreeNode(
+		new UnhydratedContext(flexSchema),
+		rootSchema,
+		mapTree,
+	);
 
 	// TODO: ensure this works for InnerNodes to create unhydrated nodes
 	const result = getOrCreateNodeFromFlexTreeNode(mapTreeNode);

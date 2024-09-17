@@ -12,7 +12,10 @@ import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
  * @returns Modified summary tree where the blob contents could be utf8 string only.
  */
 export function convertSummaryToCreateNewSummary(summary: ISummaryTree): ISummaryTree {
-	for (const [key, summaryObject] of Object.entries(summary.tree)) {
+	const keys = Object.keys(summary.tree);
+	for (const key of keys) {
+		const summaryObject = summary.tree[key];
+
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				summary.tree[key] = convertSummaryToCreateNewSummary(summaryObject);
