@@ -765,6 +765,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			segments: [],
 			localSeq: segmentGroup.localSeq,
 			refSeq: this.getCollabWindow().currentSeq,
+			obliterateInfo: {
+				...segmentGroup.obliterateInfo!,
+			},
 		};
 
 		const opList: IMergeTreeDeltaOp[] = [];

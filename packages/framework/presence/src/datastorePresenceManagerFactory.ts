@@ -90,9 +90,9 @@ export const ExperimentalPresenceManager =
  *
  * @alpha
  */
-export async function acquirePresenceViaDataObject(
+export function acquirePresenceViaDataObject(
 	fluidLoadable: ExperimentalPresenceDO,
-): Promise<IPresence> {
+): IPresence {
 	if (fluidLoadable instanceof PresenceManagerDataObject) {
 		return fluidLoadable.presenceManager();
 	}

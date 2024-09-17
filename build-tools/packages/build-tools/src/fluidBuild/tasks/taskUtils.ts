@@ -4,13 +4,13 @@
  */
 
 import { existsSync } from "node:fs";
-import { readdir } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import * as path from "path";
 import * as glob from "glob";
 
 import type { PackageJson } from "../../common/npmPackage";
-import { lookUpDirSync, readFileAsync } from "../../common/utils";
+import { lookUpDirSync } from "../../common/utils";
 
 export function getEsLintConfigFilePath(dir: string) {
 	// TODO: we currently don't support .yaml and .yml, or config in package.json
@@ -33,7 +33,7 @@ export async function getInstalledPackageVersion(packageName: string, cwd: strin
 		throw new Error(`Unable to find package ${packageName} from ${cwd}`);
 	}
 	const packageJson: PackageJson = JSON.parse(
-		await readFileAsync(path.join(packageJsonPath, "package.json"), "utf8"),
+		await readFile(path.join(packageJsonPath, "package.json"), "utf8"),
 	);
 	return packageJson.version;
 }

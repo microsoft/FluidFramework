@@ -43,7 +43,7 @@ import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./treeView.js";
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 import { HydratedContext, SimpleContextSlot } from "../simple-tree/index.js";
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already

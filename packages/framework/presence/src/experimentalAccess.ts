@@ -72,7 +72,7 @@ export function acquirePresence(fluidContainer: IFluidContainer): IPresence {
 
 	assert(
 		isContainerExtensionStore(innerContainer),
-		"Container does not support extensions. Use acquirePresenceViaDataObject.",
+		0xa39 /* Container does not support extensions. Use acquirePresenceViaDataObject. */,
 	);
 
 	const pm = innerContainer.acquireExtension(

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ObliterateInfo } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
@@ -168,6 +169,69 @@ describe("obliterate", () => {
 				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
 			});
 			assert.equal(client.getText(), "");
+		});
+	});
+
+	describe("local references", () => {
+		it("cleans up local references once the collab window advances enough", () => {
+			const client2 = new TestClient({ mergeTreeEnableObliterate: true });
+			client2.startOrUpdateCollaboration("client2");
+
+			const obliterateStart = 0;
+			const obliterateEnd = client.getLength();
+			const startSeg = client.getContainingSegment(obliterateStart);
+			const endSeg = client.getContainingSegment(obliterateEnd);
+			client.obliterateRange({
+				start: obliterateStart,
+				end: obliterateEnd,
+				refSeq,
+				clientId: remoteClientId,
+				seq: refSeq + 1,
+				overwrite: false,
+				opArgs: undefined as never,
+			});
+			insertText({
+				mergeTree: client.mergeTree,
+				pos: 1,
+				refSeq,
+				clientId: remoteClientId + 1,
+				seq: refSeq + 2,
+				text: "more ",
+				props: undefined,
+				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+			});
+			assert.equal(client.getText(), "");
+
+			startSeg.segment?.localRefs?.walkReferences((ref) => {
+				const oblProps = ref.properties?.obliterate as ObliterateInfo | undefined;
+				assert(oblProps?.start !== undefined, "start ref should NOT be removed");
+			});
+			endSeg.segment?.localRefs?.walkReferences((ref) => {
+				const oblProps = ref.properties?.obliterate as ObliterateInfo | undefined;
+				assert(oblProps?.end !== undefined, "end ref should NOT be removed");
+			});
+
+			// this will force Zamboni to run
+			let seq = refSeq;
+			for (let i = 0; i < 5; i++) {
+				const insert = client.makeOpMessage(
+					client.insertTextLocal(client.getLength(), i.toString()),
+					++seq,
+				);
+				insert.minimumSequenceNumber = seq - 1;
+				client.applyMsg(insert);
+				client2.applyMsg(insert);
+			}
+
+			// want to check that the start and end segment don't have the obliterate refs on them
+			startSeg.segment?.localRefs?.walkReferences((ref) => {
+				const oblProps = ref.properties?.obliterate as ObliterateInfo;
+				assert(oblProps.start === undefined, "start ref should be removed");
+			});
+			endSeg.segment?.localRefs?.walkReferences((ref) => {
+				const oblProps = ref.properties?.obliterate as ObliterateInfo;
+				assert(oblProps.end === undefined, "end ref should be removed");
+			});
 		});
 	});
 });
