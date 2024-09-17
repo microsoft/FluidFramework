@@ -91,8 +91,8 @@ import {
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
 import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
-import { zamboniSegments } from "./zamboni.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
+import { zamboniSegments } from "./zamboni.js";
 
 export function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -1948,7 +1948,7 @@ export class MergeTree {
 
 		obliterate.start = this.createLocalReferencePosition(
 			startSeg,
-			0,
+			startPlace.side === Side.Before ? 0 : Math.max(startSeg.cachedLength - 1, 0),
 			ReferenceType.StayOnRemove,
 			{
 				obliterate,
@@ -1957,7 +1957,7 @@ export class MergeTree {
 
 		obliterate.end = this.createLocalReferencePosition(
 			endSeg,
-			endSeg.cachedLength - 1,
+			endPlace.side === Side.Before ? 0 : Math.max(endSeg.cachedLength - 1, 0),
 			ReferenceType.StayOnRemove,
 			{
 				obliterate,
@@ -1970,6 +1970,16 @@ export class MergeTree {
 			_start: number,
 			_end: number,
 		): boolean => {
+			if (
+				(startPlace.side === Side.After && startPos === pos + segment.cachedLength) || // exclusive start segment
+				(endPlace.side === Side.Before &&
+					endPos === pos &&
+					isSegmentPresent(segment, { refSeq, localSeq })) // exclusive end segment
+			) {
+				// We walk these segments because we want to also walk any concurrently inserted segments between here and the obliterated segments.
+				// These segments are outside of the obliteration range though, so return true to keep walking.
+				return true;
+			}
 			const existingMoveInfo = toMoveInfo(segment);
 			// TODO: if segment was inserted inside of a later local obliteration range
 			// then it shouldn't be considered obliterated for other clients
@@ -1987,9 +1997,6 @@ export class MergeTree {
 				seq !== UnassignedSequenceNumber &&
 				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
 			) {
-				// why do we need this? we don't need it for the insert + remove case?
-				// there are subtle differences in the visibility of the client doing to remove
-				// however, i'm not aware of invariants in the code that would break due to that
 				segment.wasMovedOnInsert = true;
 			}
 
@@ -2129,15 +2136,19 @@ export class MergeTree {
 			localSeq,
 			segmentGroup: undefined,
 		};
+		const normalizedStartPos = start === "start" ? 0 : startPos;
+		const normalizedEndPos = end === "end" ? this.getLength(refSeq, clientId) : endPos;
 
-		const { segment: startSeg } =
-			startPlace.pos === -1
-				? { segment: startPlace.side === Side.After ? this.startOfTree : this.endOfTree }
-				: this.getContainingSegment(startPlace.pos, refSeq, clientId);
-		const { segment: endSeg } =
-			endPlace.pos === -1
-				? { segment: endPlace.side === Side.After ? this.startOfTree : this.endOfTree }
-				: this.getContainingSegment(endPlace.pos, refSeq, clientId);
+		const { segment: startSeg } = this.getContainingSegment(
+			normalizedStartPos,
+			refSeq,
+			clientId,
+		);
+		const { segment: endSeg } = this.getContainingSegment(
+			normalizedEndPos - 1,
+			refSeq,
+			clientId,
+		);
 		assert(
 			startSeg !== undefined && endSeg !== undefined,
 			0xa3f /* segments cannot be undefined */,
@@ -2168,65 +2179,12 @@ export class MergeTree {
 			_end: number,
 		): boolean => {
 			const existingMoveInfo = toMoveInfo(segment);
-			if (startPlace.side === Side.Before && startPos === pos) {
-				obliterate.start = this.createLocalReferencePosition(
-					segment,
-					0,
-					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-					{ obliterate },
-				);
-			} else if (startPlace.side === Side.After && startPos === pos + segment.cachedLength) {
-				obliterate.start = this.createLocalReferencePosition(
-					segment,
-					segment.cachedLength - 1,
-					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-					{ obliterate },
-				);
-				return true; // start is exclusive, don't mark segment moved
-			}
-			if (endPlace.side === Side.Before && endPos === pos) {
-				if (obliterate.end) {
-					this.removeLocalReferencePosition(obliterate.end);
-				}
-				obliterate.end = this.createLocalReferencePosition(
-					segment,
-					0,
-					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-					{ obliterate },
-				);
-				return true; // end is exclusive, don't mark segment moved
-			} else if (
-				endPlace.side === Side.After &&
-				segment.cachedLength > 0 && // if the segment is empty we must have already set our reference
-				endPos === pos + segment.cachedLength
-			) {
-				obliterate.end = this.createLocalReferencePosition(
-					segment,
-					segment.cachedLength - 1,
-					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-					{ obliterate },
-				);
-			}
-
-			// TODO: if segment was inserted inside of a later local obliteration range
-			// then it shouldn't be considered obliterated for other clients
-			// for refSeqs between the insertion's seq and the obliterate's seq.
-
-			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
-				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
-				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
-				return true;
-			}
-
 			if (
 				clientId !== segment.clientId &&
 				segment.seq !== undefined &&
 				seq !== UnassignedSequenceNumber &&
 				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
 			) {
-				// why do we need this? we don't need it for the insert + remove case?
-				// there are subtle differences in the visibility of the client doing to remove
-				// however, i'm not aware of invariants in the code that would break due to that
 				segment.wasMovedOnInsert = true;
 			}
 
@@ -2301,11 +2259,13 @@ export class MergeTree {
 			markMoved,
 			undefined,
 			afterMarkMoved,
-			startPlace.pos,
-			endPlace.pos + 1, // include the segment containing the end reference
+			startPos,
+			endPos,
 			undefined,
 			seq === UnassignedSequenceNumber ? undefined : seq,
 		);
+
+		this.obliterates.addOrUpdate(obliterate);
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code
