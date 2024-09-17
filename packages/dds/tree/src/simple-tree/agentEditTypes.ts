@@ -117,14 +117,14 @@ function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string
 
 		const friendlyNodeType = getFriendlySchemaName(nodeSchemaName)
 		if (friendlyNodeType === null || friendlyNodeType === '') {
-			return; // null or empty schema node description;
+			return; // null or empty schema node description. This would likely be a throw instead.
 		}
 		let stringifiedEntry = `interface ${friendlyNodeType} {`;
 
 		Object.entries(nodeSchemaDef.fields).forEach(([fieldName, fieldSchema]) => {
 			const mappedAllowedTypes = [...fieldSchema.allowedTypes]
-				.map((type) => getFriendlySchemaName(type))
-				.filter((type): type is string => type !== null);
+				.map((allowedType) => getFriendlySchemaName(allowedType))
+				.filter((allowedType): allowedType is string => allowedType !== null && allowedType !== ''); // as above, null or empty schema node descriptions should likely throw?
 			if (fieldSchema.kind === FieldKind.Optional) {
 				mappedAllowedTypes.push('undefined');
 			}
