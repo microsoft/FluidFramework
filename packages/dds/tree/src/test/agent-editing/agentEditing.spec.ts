@@ -27,12 +27,13 @@ class RootObject extends sf.object("RootObject", {
 const config = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
 
 describe("toDecoratedJson", () => {
-	it("can be hydrated", () => {
+	it("adds ID fields", () => {
 		const vector = new Vector({ id: "1", x: 1, y: 2 });
 		const hydratedObject = hydrate(Vector, vector);
 		assert.equal(
 			toDecoratedJson(hydratedObject),
 			JSON.stringify({
+				__fluid_id: 0,
 				id: "1",
 				x: 1,
 				y: 2,
