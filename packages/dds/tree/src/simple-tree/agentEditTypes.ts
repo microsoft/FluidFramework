@@ -8,7 +8,7 @@ import {
 	NodeKind,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type ImplicitAllowedTypes,
+	// type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeView,
@@ -114,13 +114,21 @@ export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(
 	view: TreeView<TRootSchema>,
 ): string {
 	assert(!(view.schema instanceof FieldSchema), "SchemaFactory not allowed in view.");
+
+	const baseSystemPrompt = 'You are a helpful assistant. You will be provided a schema for an object, the current state of that object, and descriptions of the methods by which you can make modifications to that object. The user will request changes to the object, and you must accomplish those changes using the modification methods provided. Modification instructions must be returned in the provided structured schema, in the order in which they should be applied.'
+
+	// Description of the schema of the tree.
 	const simpleTreeSchema = toSimpleTreeSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
 
+	// Tree content (current state) -- output of toDecoratedJson.
+	const decoratedJsonTree = toDecoratedJson(view);
+
+
+
+
 	/*
 	-- Dynamic pieces:
-	1. Description of the schema of the tree.
-	2. Tree content (current state) -- output of toDecoratedJson.
 	3.? TypeScripty version of the edits it's allowed to make (Json schema); depends on Structured Output requirements.
 	4.? If it performs poorly, potentially dynamically generate some examples based on the passed schema.
 	*/
