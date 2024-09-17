@@ -103,18 +103,10 @@ export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
 	/**
 	 * The kinds of items allowed under the array.
-	 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
 	 *
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-items}.
 	 */
-	readonly items: {
-		/**
-		 * The kinds of items allowed under the array.
-		 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
-		 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
-		 */
-		anyOf: JsonSchemaRef[];
-	};
+	readonly items: JsonFieldSchema;
 }
 
 /**
@@ -191,14 +183,24 @@ export type JsonNodeSchema =
  * @sealed
  * @alpha
  */
-export interface JsonFieldSchema {
+export type JsonFieldSchema = {
 	/**
-	 * The kinds of items allowed under the field.
-	 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
-	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
+	 * Description of the field.
+	 * @remarks Derived from {@link FieldSchemaMetadata.description}.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-validation#name-title-and-description}
 	 */
-	readonly anyOf: JsonSchemaRef[];
-}
+	readonly description?: string | undefined;
+} & (
+	| {
+			/**
+			 * The kinds of items allowed under the field, for polymorphic types.
+			 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
+			 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
+			 */
+			readonly anyOf: JsonSchemaRef[];
+	  }
+	| JsonSchemaRef
+);
 
 /**
  * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a tree schema.
@@ -221,10 +223,10 @@ export interface JsonFieldSchema {
  * @sealed
  * @alpha
  */
-export interface JsonTreeSchema extends JsonFieldSchema {
+export type JsonTreeSchema = JsonFieldSchema & {
 	/**
 	 * The set of definitions reachable from this schema's root.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-re-use-with-defs}
 	 */
 	readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
-}
+};

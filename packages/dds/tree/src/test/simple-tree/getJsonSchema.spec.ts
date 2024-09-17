@@ -28,11 +28,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/com.fluidframework.leaf.string",
-				},
-			],
+			$ref: "#/$defs/com.fluidframework.leaf.string",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -109,7 +105,7 @@ describe("getJsonSchema", () => {
 					type: "array",
 					_treeNodeSchemaKind: NodeKind.Array,
 					items: {
-						anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
+						$ref: "#/$defs/com.fluidframework.leaf.string",
 					},
 				},
 				"com.fluidframework.leaf.string": {
@@ -117,11 +113,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: '#/$defs/test.Array<["com.fluidframework.leaf.string"]>',
-				},
-			],
+			$ref: '#/$defs/test.Array<["com.fluidframework.leaf.string"]>',
 		};
 		assert.deepEqual(actual, expected);
 
@@ -149,7 +141,7 @@ describe("getJsonSchema", () => {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Map,
 					patternProperties: {
-						"^.*$": { anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }] },
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
 					},
 				},
 				"com.fluidframework.leaf.string": {
@@ -157,11 +149,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: '#/$defs/test.Map<["com.fluidframework.leaf.string"]>',
-				},
-			],
+			$ref: '#/$defs/test.Map<["com.fluidframework.leaf.string"]>',
 		};
 		assert.deepEqual(actual, expected);
 
@@ -202,8 +190,12 @@ describe("getJsonSchema", () => {
 	it("Object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.object("object", {
-			foo: schemaFactory.optional(schemaFactory.number),
-			bar: schemaFactory.required(schemaFactory.string),
+			foo: schemaFactory.optional(schemaFactory.number, {
+				metadata: { description: "A number representing the concept of Foo." },
+			}),
+			bar: schemaFactory.required(schemaFactory.string, {
+				metadata: { description: "A string representing the concept of Bar." },
+			}),
 		});
 
 		const actual = getJsonSchema(Schema);
@@ -215,10 +207,12 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
-							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.number" }],
+							$ref: "#/$defs/com.fluidframework.leaf.number",
+							description: "A number representing the concept of Foo.",
 						},
 						bar: {
-							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
+							$ref: "#/$defs/com.fluidframework.leaf.string",
+							description: "A string representing the concept of Bar.",
 						},
 					},
 					required: ["bar"],
@@ -233,11 +227,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -301,7 +291,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						id: {
-							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
+							$ref: "#/$defs/com.fluidframework.leaf.string",
 						},
 					},
 					required: [],
@@ -312,11 +302,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -354,11 +340,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -392,11 +374,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.recursive-object",
-				},
-			],
+			$ref: "#/$defs/test.recursive-object",
 		};
 		assert.deepEqual(actual, expected);
 

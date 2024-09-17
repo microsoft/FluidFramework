@@ -1318,6 +1318,7 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
+	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
@@ -1622,8 +1623,8 @@ export class ContainerRuntime
 		);
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-		const useDeltaManagerOpsProxy =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
+		this.useDeltaManagerOpsProxy =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
 		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
 			this.innerDeltaManager,
@@ -1632,7 +1633,7 @@ export class ContainerRuntime
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
-		if (useDeltaManagerOpsProxy) {
+		if (this.useDeltaManagerOpsProxy) {
 			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
 				summarizerDeltaManagerProxy,
 				this.pendingStateManager,
@@ -2717,29 +2718,31 @@ export class ContainerRuntime
 				return;
 			}
 
-			const batchStart: BatchStartInfo = inboundResult.batchStart;
-			const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
-			if (result?.duplicate) {
-				const error = new DataCorruptionError(
-					"Duplicate batch - The same batch was sequenced twice",
-					{ batchId: batchStart.batchId },
-				);
+			if ("batchStart" in inboundResult) {
+				const batchStart: BatchStartInfo = inboundResult.batchStart;
+				const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
+				if (result?.duplicate) {
+					const error = new DataCorruptionError(
+						"Duplicate batch - The same batch was sequenced twice",
+						{ batchId: batchStart.batchId },
+					);
 
-				this.mc.logger.sendTelemetryEvent(
-					{
-						eventName: "DuplicateBatch",
-						details: {
-							batchId: batchStart.batchId,
-							clientId: batchStart.clientId,
-							batchStartCsn: batchStart.batchStartCsn,
-							size: inboundResult.length,
-							duplicateBatchSequenceNumber: result.otherSequenceNumber,
-							...extractSafePropertiesFromMessage(batchStart.keyMessage),
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: "DuplicateBatch",
+							details: {
+								batchId: batchStart.batchId,
+								clientId: batchStart.clientId,
+								batchStartCsn: batchStart.batchStartCsn,
+								size: inboundResult.length,
+								duplicateBatchSequenceNumber: result.otherSequenceNumber,
+								...extractSafePropertiesFromMessage(batchStart.keyMessage),
+							},
 						},
-					},
-					error,
-				);
-				throw error;
+						error,
+					);
+					throw error;
+				}
 			}
 
 			let runtimeBatch: boolean = true;
@@ -2751,7 +2754,18 @@ export class ContainerRuntime
 				localOpMetadata?: unknown;
 			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
 
-			if (inboundResult.length === 0) {
+			if (inboundResult.type !== "fullBatch") {
+				assert(
+					messagesWithPendingState.length === 1,
+					0xa3d /* Partial batch should have exactly one message */,
+				);
+			}
+
+			if (messagesWithPendingState.length === 0) {
+				assert(
+					inboundResult.type === "fullBatch",
+					0xa3e /* Empty batch is always considered a full batch */,
+				);
 				/**
 				 * We need to process an empty batch, which will execute expected actions while processing even if there
 				 * are no inner runtime messages.
@@ -2774,11 +2788,12 @@ export class ContainerRuntime
 				runtimeBatch = false;
 			}
 
-			// This is trivial today, but when support for other types is added, we can quickly update this.
-			const locationInBatch: { batchStart: boolean; batchEnd: boolean } = {
-				batchStart: true,
-				batchEnd: true,
-			};
+			const locationInBatch: { batchStart: boolean; batchEnd: boolean } =
+				inboundResult.type === "fullBatch"
+					? { batchStart: true, batchEnd: true }
+					: inboundResult.type === "batchStartingMessage"
+						? { batchStart: true, batchEnd: false }
+						: { batchStart: false, batchEnd: inboundResult.batchEnd === true };
 
 			this.processInboundMessages(
 				messagesWithPendingState,
@@ -2808,7 +2823,7 @@ export class ContainerRuntime
 	private _processedClientSequenceNumber: number | undefined;
 
 	/**
-	 * Processes inbound batch message(s). It calls schedule manager according to the location in the batch of the message(s).
+	 * Processes inbound message(s). It calls schedule manager according to the messages' location in the batch.
 	 * @param messages - messages to process.
 	 * @param locationInBatch - Are we processing the start and/or end of a batch?
 	 * @param local - true if the messages were originally generated by the client receiving it.
@@ -2895,7 +2910,10 @@ export class ContainerRuntime
 		const { local, message, savedOp, localOpMetadata } = messageWithContext;
 
 		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
-		if (this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber) {
+		if (
+			this.useDeltaManagerOpsProxy &&
+			this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber
+		) {
 			message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 		}
 

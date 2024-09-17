@@ -12,16 +12,16 @@ import type { ClientSessionId, ISessionClient } from "./presence.js";
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
 // > = TValue extends InternalTypes.ValueDirectoryOrState<infer T> ? InternalTypes.ValueDirectoryOrState<T> : never;
 
-/**
- * @internal
- */
-export interface StateDatastoreSchema {
-	// This type is not precise. It may
-	// need to be replaced with PresenceStates schema pattern
-	// similar to what is commented out.
-	[key: string]: InternalTypes.ValueDirectoryOrState<unknown>;
-	// [key: string]: StateDatastoreSchemaNode;
-}
+// /**
+//  * @internal
+//  */
+// export interface StateDatastoreSchema {
+// 	// This type is not precise. It may
+// 	// need to be replaced with PresenceStates schema pattern
+// 	// similar to what is commented out.
+// 	[key: string]: InternalTypes.ValueDirectoryOrState<unknown>;
+// 	// [key: string]: StateDatastoreSchemaNode;
+// }
 
 /**
  * @internal

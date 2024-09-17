@@ -43,7 +43,7 @@ import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./treeView.js";
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
@@ -121,6 +121,10 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				this.events.emit("commitApplied", data, getRevertible),
 			),
 		);
+	}
+
+	public get schema(): TRootSchema {
+		return this.config.schema;
 	}
 
 	public initialize(content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {

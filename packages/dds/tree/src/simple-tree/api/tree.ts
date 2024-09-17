@@ -467,6 +467,11 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	 * Events for the tree.
 	 */
 	readonly events: Listenable<TreeViewEvents>;
+
+	/**
+	 * The view schema used by this TreeView.
+	 */
+	readonly schema: TSchema;
 }
 
 /**

@@ -236,7 +236,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		local: boolean,
 	): void {
 		const received = Date.now();
-		assert(message.clientId !== null, "Map received signal without clientId");
+		assert(message.clientId !== null, 0xa3a /* Map received signal without clientId */);
 		if (!isPresenceMessage(message)) {
 			return;
 		}
@@ -290,7 +290,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				}, waitTime);
 			}
 		} else {
-			assert(message.type === datastoreUpdateMessageType, "Unexpected message type");
+			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
 			}
