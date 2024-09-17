@@ -85,12 +85,20 @@ describe("Makes TS type strings from schema", () => {
 	it("for objects with array fields", () => {
 		const testSf = new SchemaFactory("test");
 		class Foo extends testSf.object("Foo", {
-			// agentSchema.Array<["agentSchema.Array<[\\"agentSchema.Array<[\\\\\\"com.fluidframework.leaf.string\\\\\\"]>\\",\\"com.fluidframework.leaf.number\\"]>","com.fluidframework.leaf.number"]>
-			y: sf.array([sf.number, sf.array([sf.number, sf.array(sf.string)])]),
+			y: sf.array(sf.number),
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
 			"interface Foo { x: number[]; }",
 		);
+	});
+
+	it("for objects with nested array fields", () => {
+		const testSf = new SchemaFactory("test");
+		class Foo extends testSf.object("Foo", {
+			// agentSchema.Array<["agentSchema.Array<[\\"agentSchema.Array<[\\\\\\"com.fluidframework.leaf.string\\\\\\"]>\\",\\"com.fluidframework.leaf.number\\"]>","com.fluidframework.leaf.number"]>
+			y: sf.array([sf.number, sf.array([sf.number, sf.array(sf.string)])]),
+		}) {}
+		assert.equal(getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)), "???");
 	});
 });
