@@ -5,35 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type { MergeTree } from "../mergeTree.js";
-import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import type { ObliterateInfo } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
-import { insertText } from "./testUtils.js";
-
-function obliterateRange({
-	mergeTree,
-	start,
-	end,
-	refSeq,
-	clientId,
-	seq,
-	overwrite = false,
-	opArgs,
-}: {
-	mergeTree: MergeTree;
-	start: number;
-	end: number;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	overwrite?: boolean;
-	opArgs: IMergeTreeDeltaOpArgs;
-}): void {
-	mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
-}
+import { insertText, obliterateRange } from "./testUtils.js";
 
 describe("obliterate", () => {
 	let client: TestClient;
