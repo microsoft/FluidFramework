@@ -25,6 +25,12 @@ resources:
   - pipeline: historian
     source: server-historian
     branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitrest
+    source: server-gitrest
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitssh
+    source: server-gitssh
+    branch: main # Default branch for manual/scheduled triggers if none is selected
 
 variables:
 - group: prague-key-vault
@@ -155,6 +161,8 @@ stages:
               REGISTRY_URL: fluidcr.azurecr.io/build
               ALFRED_IMAGE_TAG: 0.0.$(resources.pipeline.routerlicious.runID)
               HISTORIAN_IMAGE_TAG: 0.0.$(resources.pipeline.historian.runID)
+              GITREST_IMAGE_TAG: 0.0.$(resources.pipeline.gitrest.runID)
+              GITSSH_IMAGE_TAG: 0.0.$(resources.pipeline.gitssh.runID)
         additionalSteps:
           - task: DockerCompose@1
             displayName: 'Stop routerlicious environment in docker'
