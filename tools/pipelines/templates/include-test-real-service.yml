@@ -347,8 +347,9 @@ jobs:
       - task: Npm@1
         displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
         continueOnError: ${{ parameters.continueOnError }}
-        env:
-          ${{ parameters.env }}
+        ${{ if parameters.env }}:
+          env:
+            ${{ parameters.env }}
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
