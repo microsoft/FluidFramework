@@ -4,6 +4,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FieldKind,
+	FieldSchema,
 	NodeKind,
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -111,9 +112,9 @@ export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(
 
 export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(
 	view: TreeView<TRootSchema>,
-	schema: ImplicitAllowedTypes,
 ): string {
-	const simpleTreeSchema = toSimpleTreeSchema(schema);
+	assert(!(view.schema instanceof FieldSchema), "SchemaFactory not allowed in view.");
+	const simpleTreeSchema = toSimpleTreeSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
 
 	/*
