@@ -8,6 +8,7 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldUpPath,
+	type ITreeCursorSynchronous,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
@@ -200,6 +201,14 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	 * If well-formed, it must follow this schema.
 	 */
 	readonly flexSchema: FlexTreeNodeSchema;
+
+	/**
+	 * Get a cursor for the underlying data.
+	 * @remarks
+	 * This cursor might be one the node uses in its implementation, and thus must be returned to its original location before using any other APIs to interact with the tree.
+	 * Must not be held onto across edits or any other tree API use.
+	 */
+	borrowCursor(): ITreeCursorSynchronous;
 }
 
 /**

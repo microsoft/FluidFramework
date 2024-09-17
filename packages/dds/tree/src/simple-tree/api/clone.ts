@@ -11,9 +11,12 @@ import type {
 	TreeFieldFromImplicitField,
 	TreeLeafValue,
 } from "../schemaTypes.js";
-import { isTreeNode, type TreeNode } from "../core/index.js";
-import type { VerboseTree, VerboseTreeNode } from "./verboseTree.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { getKernel, type TreeNode } from "../core/index.js";
+import { verboseFromCursor, type EncodeOptions, type VerboseTree } from "./verboseTree.js";
+import type { ITreeCursorSynchronous } from "../../core/index.js";
+import { cursorFromInsertable } from "./create.js";
+import { tryGetSchema } from "./treeNodeApi.js";
+import { isTreeValue } from "../../feature-libraries/index.js";
 
 /**
  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
@@ -44,7 +47,7 @@ export function clone<TSchema extends ImplicitFieldSchema>(
  * then the returned object will be lossless and compatible with {@link TreeBeta.create} (unless the options are used to customize it).
  * @beta
  */
-export function cloneToJSON<T>(
+export function cloneToJson<T>(
 	node: TreeNode | TreeLeafValue,
 	options?: {
 		handleConverter(handle: IFluidHandle): T;
@@ -56,19 +59,32 @@ export function cloneToJSON<T>(
  * Same as generic overload, except leaves handles as is.
  * @beta
  */
-export function cloneToJSON(
+export function cloneToJson(
 	node: TreeNode | TreeLeafValue,
 	options?: { handleConverter?: undefined; useStableFieldKeys?: boolean },
 ): JsonCompatible<IFluidHandle>;
 
-export function cloneToJSON<T>(
+export function cloneToJson<T>(
 	node: TreeNode | TreeLeafValue,
 	options?: {
 		handleConverter?(handle: IFluidHandle): T;
 		readonly useStableFieldKeys?: boolean;
 	},
 ): JsonCompatible<T> {
-	throw new Error();
+	const _schema = tryGetSchema(node) ?? fail("invalid input");
+	const _cursor = borrowCursorFromTreeNodeOrValue(node);
+	fail("TODO");
+}
+
+function borrowCursorFromTreeNodeOrValue(
+	node: TreeNode | TreeLeafValue,
+): ITreeCursorSynchronous {
+	if (isTreeValue(node)) {
+		return cursorFromInsertable(tryGetSchema(node) ?? fail("missing schema"), node);
+	}
+	const kernel = getKernel(node);
+	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+	return cursor;
 }
 
 /**
@@ -76,7 +92,7 @@ export function cloneToJSON<T>(
  * Verbose tree format, with explicit type on every node.
  *
  * @remarks
- * There are several cases this may be preferred to {@link TreeBeta.clone}:
+ * There are several cases this may be preferred to {@link TreeBeta.cloneToJSON}:
  *
  * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), {@link TreeBeta.clone} can produce ambiguous data (the type may be unclear on some nodes).
  * This may be a good alternative to {@link TreeBeta.clone} since it is lossless.
@@ -86,68 +102,33 @@ export function cloneToJSON<T>(
  * 3. When easy access to the type is desired, or a more uniform simple to parse format is desired.
  * @beta
  */
-export function cloneToJSONVerbose<T>(
+export function cloneToVerbose<T>(
 	node: TreeNode | TreeLeafValue,
-	options?: {
-		handleConverter(handle: IFluidHandle): T;
-		readonly useStableFieldKeys?: boolean;
-	},
+	options: EncodeOptions<T>,
 ): VerboseTree<T>;
 
 /**
  * Same as generic overload, except leaves handles as is.
  * @beta
  */
-export function cloneToJSONVerbose(
+export function cloneToVerbose(
 	node: TreeNode | TreeLeafValue,
-	options?: { readonly handleConverter?: undefined; readonly useStableFieldKeys?: boolean },
+	options?: Partial<EncodeOptions<IFluidHandle>>,
 ): VerboseTree;
 
-export function cloneToJSONVerbose<T>(
+export function cloneToVerbose<T>(
 	node: TreeNode | TreeLeafValue,
-	options?: {
-		handleConverter?(handle: IFluidHandle): T;
-		readonly useStableFieldKeys?: boolean;
-	},
+	options?: Partial<EncodeOptions<T>>,
 ): VerboseTree<T> {
-	const config = {
-		handleConverter(handle: IFluidHandle): T {
+	const config: EncodeOptions<T> = {
+		valueConverter(handle: IFluidHandle): T {
 			return handle as T;
 		},
-		useStableFieldKeys: false,
 		...options,
 	};
 
-	// TODO: this should probably just get a cursor to the underlying data and use that.
-
-	function convertNode(n: TreeNode): VerboseTreeNode<T> {
-		// let fields: VerboseTreeNode<T>["fields"];
-
-		// if (n instanceof CustomArrayNodeBase) {
-		// 	const x = n as CustomArrayNodeBase<ImplicitAllowedTypes>;
-		// 	fields = Array.from(x, convertNodeOrValue);
-		// } else if ((n as TreeNode) instanceof CustomMapNodeBase) {
-		// 	fields = {};
-		// 	for (const [key, value] of n as CustomMapNodeBase<ImplicitAllowedTypes>) {
-		// 		fields[key] = convertNodeOrValue(value);
-		// 	}
-		// } else {
-		// 	fields = {};
-		// 	for (const [key, value] of n as CustomMapNodeBase<ImplicitAllowedTypes>) {
-		// 		fields[key] = convertNodeOrValue(value);
-		// 	}
-		// }
-
-		// return { type: n[typeNameSymbol], fields };
-
-		throw new Error();
-	}
-
-	function convertNodeOrValue(n: TreeNode | TreeLeafValue): VerboseTree<T> {
-		return isTreeNode(n) ? convertNode(n) : isFluidHandle(n) ? config.handleConverter(n) : n;
-	}
-
-	return convertNodeOrValue(node);
+	const cursor = borrowCursorFromTreeNodeOrValue(node);
+	return verboseFromCursor(cursor, tryGetSchema(node) ?? fail("invalid input"), config);
 }
 
 /**
