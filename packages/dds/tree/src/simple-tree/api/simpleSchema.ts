@@ -110,6 +110,11 @@ export interface SimpleFieldSchema {
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypes: ReadonlySet<string>;
+
+	/**
+	 * {@inheritDoc FieldSchemaMetadata.description}
+	 */
+	readonly description?: string | undefined;
 }
 
 /**
