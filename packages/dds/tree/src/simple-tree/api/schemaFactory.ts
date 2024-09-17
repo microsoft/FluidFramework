@@ -338,6 +338,7 @@ export class SchemaFactory<
 		const TCustomMetadata = unknown,
 	>(
 		allowedTypes: T,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
@@ -365,6 +366,7 @@ export class SchemaFactory<
 	>(
 		name: Name,
 		allowedTypes: T,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -377,7 +379,8 @@ export class SchemaFactory<
 
 	public map<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
-		allowedTypes?: T,
+		allowedTypesOrProps?: T | NodeSchemaProps<TCustomMetadata>,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchema<
 		string,
 		NodeKind.Map,
@@ -387,30 +390,38 @@ export class SchemaFactory<
 		T,
 		TCustomMetadata
 	> {
-		if (allowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
-			const fullName = structuralName("Map", types);
-			return getOrCreate(
-				this.structuralTypes,
-				fullName,
-				() =>
-					this.namedMap(
-						fullName as TName,
-						nameOrAllowedTypes as T,
-						false,
-						true,
-					) as TreeNodeSchema,
-			) as TreeNodeSchemaClass<
-				string,
-				NodeKind.Map,
-				TreeMapNode<T>,
-				MapNodeInsertableData<T>,
+		if (typeof nameOrAllowedTypes === "string") {
+			return this.namedMap(
+				nameOrAllowedTypes as TName,
+				allowedTypesOrProps as T,
 				true,
-				T,
-				TCustomMetadata
-			>;
+				true,
+				props,
+			);
 		}
-		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+
+		const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+		const fullName = structuralName("Map", types);
+		return getOrCreate(
+			this.structuralTypes,
+			fullName,
+			() =>
+				this.namedMap(
+					fullName as TName,
+					nameOrAllowedTypes as T,
+					false,
+					true,
+					allowedTypesOrProps as NodeSchemaProps<TCustomMetadata>,
+				) as TreeNodeSchema,
+		) as TreeNodeSchemaClass<
+			string,
+			NodeKind.Map,
+			TreeMapNode<T>,
+			MapNodeInsertableData<T>,
+			true,
+			T,
+			TCustomMetadata
+		>;
 	}
 
 	/**
@@ -428,6 +439,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -443,6 +455,7 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
+			props,
 		);
 	}
 
@@ -550,7 +563,13 @@ export class SchemaFactory<
 		const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 		const fullName = structuralName("Array", types);
 		return getOrCreate(this.structuralTypes, fullName, () =>
-			this.namedArray(fullName, nameOrAllowedTypes as T, false, true, props),
+			this.namedArray(
+				fullName,
+				nameOrAllowedTypes as T,
+				false,
+				true,
+				allowedTypesOrProps as NodeSchemaProps<TCustomMetadata>,
+			),
 		) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, string>,
 			NodeKind.Array,

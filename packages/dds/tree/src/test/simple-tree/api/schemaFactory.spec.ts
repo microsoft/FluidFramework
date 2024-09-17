@@ -637,6 +637,24 @@ describe.only("schemaFactory", () => {
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.map("Foo", factory.number, {
+				metadata: { description: "A map containing numbers", custom: { baz: true } },
+			}) {}
+
+			assert.equal(Foo.metadata?.description, "A map containing numbers");
+			assert.equal(Foo.metadata?.custom?.baz, true);
+
+			const foo = hydrate(Foo, { a: 1, b: 2, c: 3 });
+			const schema = Tree.schema(foo);
+
+			assert.equal(schema.metadata?.description, "A map containing numbers");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			assert.equal((schema.metadata?.custom as any)?.baz, true);
+		});
 	});
 
 	describe("produces proxies that can be read after insertion for trees of", () => {
