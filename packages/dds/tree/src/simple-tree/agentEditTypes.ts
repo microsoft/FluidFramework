@@ -113,7 +113,7 @@ export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(
 export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(
 	view: TreeView<TRootSchema>,
 ): string {
-	assert(!(view.schema instanceof FieldSchema), "SchemaFactory not allowed in view.");
+	assert(!(view.schema instanceof FieldSchema), "Root cannot be a FieldSchema.");
 	const simpleTreeSchema = toSimpleTreeSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
 
