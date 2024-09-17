@@ -49,6 +49,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
+	TreeNodeSchemaBoth,
 } from "../core/index.js";
 import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
@@ -363,10 +364,30 @@ export class SchemaFactory<
 		T
 	>;
 
+	// This should return TreeNodeSchemaBoth, however TypeScript gives an error if one of the overloads implicitly up casts the return type of the implementation.
+	// This seems like a TypeScript bug getting variance backwards for overload return types since its erroring when the relation between the overload
+	// and the implementation is type safe, and forcing an unsafe typing instead.
+	// TODO: Something about this method seems to break syntax highting despite being valid. This should be root caused and reported.
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
+	):
+		| TreeNodeSchemaClass<
+				string,
+				NodeKind.Map,
+				TreeMapNode<T>,
+				MapNodeInsertableData<T>,
+				true,
+				T
+		  >
+		| TreeNodeSchemaNonClass<
+				string,
+				NodeKind.Map,
+				TreeMapNode<T>,
+				MapNodeInsertableData<T>,
+				true,
+				T
+		  > {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
@@ -380,7 +401,7 @@ export class SchemaFactory<
 						false,
 						true,
 					) as TreeNodeSchema,
-			) as TreeNodeSchemaClass<
+			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
 				TreeMapNode<T>,
@@ -389,7 +410,16 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		const out: TreeNodeSchemaBoth<
+			string,
+			NodeKind.Map,
+			TreeMapNode<T>,
+			MapNodeInsertableData<T>,
+			true,
+			T
+		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return out;
 	}
 
 	/**
@@ -406,7 +436,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
