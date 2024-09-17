@@ -11,6 +11,7 @@ import type { FieldKind } from "../schemaTypes.js";
  * Base interface for all {@link SimpleNodeSchema} implementations.
  *
  * @sealed
+ * @internal
  */
 export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 	/**
@@ -25,6 +26,7 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
  * A {@link SimpleNodeSchema} for an object node.
  *
  * @sealed
+ * @internal
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Object> {
 	/**
@@ -37,6 +39,7 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Ob
  * A {@link SimpleNodeSchema} for an array node.
  *
  * @sealed
+ * @internal
  */
 export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Array> {
 	/**
@@ -52,6 +55,7 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Arr
  * A {@link SimpleNodeSchema} for a map node.
  *
  * @sealed
+ * @internal
  */
 export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> {
 	/**
@@ -67,6 +71,7 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> 
  * A {@link SimpleNodeSchema} for a leaf node.
  *
  * @sealed
+ * @internal
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
 	/**
@@ -81,6 +86,7 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf
  * @remarks This definition is incomplete, and references child types by identifiers.
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
+ * @internal
  */
 export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
