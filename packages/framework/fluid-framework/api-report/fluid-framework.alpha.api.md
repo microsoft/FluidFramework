@@ -537,15 +537,13 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha @sealed
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
-    readonly items: {
-        anyOf: JsonSchemaRef[];
-    };
+    readonly items: JsonFieldSchema;
 }
 
 // @alpha @sealed
-export interface JsonFieldSchema {
+export type JsonFieldSchema = {
     readonly anyOf: JsonSchemaRef[];
-}
+} | JsonSchemaRef;
 
 // @alpha @sealed
 export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<NodeKind.Leaf, JsonLeafSchemaType> {
@@ -593,9 +591,9 @@ export interface JsonSchemaRef {
 export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 
 // @alpha @sealed
-export interface JsonTreeSchema extends JsonFieldSchema {
+export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
-}
+};
 
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);

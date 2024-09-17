@@ -33,11 +33,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.string",
-				},
-			],
+			$ref: "#/$defs/test.string",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -83,7 +79,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					type: "array",
 					_treeNodeSchemaKind: NodeKind.Array,
 					items: {
-						anyOf: [{ $ref: "#/$defs/test.string" }],
+						$ref: "#/$defs/test.string",
 					},
 				},
 				"test.string": {
@@ -91,11 +87,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.array",
-				},
-			],
+			$ref: "#/$defs/test.array",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -128,7 +120,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Map,
 					patternProperties: {
-						"^.*$": { anyOf: [{ $ref: "#/$defs/test.string" }] },
+						"^.*$": { $ref: "#/$defs/test.string" },
 					},
 				},
 				"test.string": {
@@ -136,11 +128,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.map",
-				},
-			],
+			$ref: "#/$defs/test.map",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -201,12 +189,8 @@ describe("simpleSchemaToJsonSchema", () => {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
-						foo: {
-							anyOf: [{ $ref: "#/$defs/test.number" }],
-						},
-						bar: {
-							anyOf: [{ $ref: "#/$defs/test.string" }],
-						},
+						foo: { $ref: "#/$defs/test.number" },
+						bar: { $ref: "#/$defs/test.string" },
 					},
 					required: ["bar"],
 					additionalProperties: false,
@@ -220,11 +204,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -292,9 +272,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
-						id: {
-							anyOf: [{ $ref: "#/$defs/test.identifier" }],
-						},
+						id: { $ref: "#/$defs/test.identifier" },
 					},
 					required: [],
 					additionalProperties: false,
@@ -304,11 +282,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -358,11 +332,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -409,11 +379,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.recursive-object",
-				},
-			],
+			$ref: "#/$defs/test.recursive-object",
 		};
 		assert.deepEqual(actual, expected);
 
