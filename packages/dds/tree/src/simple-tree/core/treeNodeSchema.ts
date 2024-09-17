@@ -108,13 +108,13 @@ export interface TreeNodeSchemaClass<
 	 */
 	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
+
 /**
  * Data common to all tree node schema.
  * @remarks
  * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
  * @sealed @public
  */
-
 export interface TreeNodeSchemaCore<
 	out Name extends string,
 	out Kind extends NodeKind,
@@ -164,6 +164,11 @@ export interface TreeNodeSchemaCore<
 	 * This set cannot be used before the schema in it have been defined:
 	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
 	 * users must wait until after the schema are defined to access this set.
+	 * @privateRemarks
+	 * Currently there isn't much use for this in the public API,
+	 * and its possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
+	 * To keep options option, this is marked `@system` for now.
+	 * @system
 	 */
 	readonly childTypes: ReadonlySet<TreeNodeSchema>;
 }
