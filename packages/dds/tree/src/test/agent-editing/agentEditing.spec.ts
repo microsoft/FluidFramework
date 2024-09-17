@@ -7,7 +7,9 @@ import { strict as assert } from "assert";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { toDecoratedJson } from "../../agent-editing/index.js";
+import { getPromptFriendlyTreeSchema, toDecoratedJson } from "../../agent-editing/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toSimpleTreeSchema } from "../../simple-tree/api/index.js";
 
 const sf = new SchemaFactory("agentSchema");
 
@@ -38,6 +40,21 @@ describe("toDecoratedJson", () => {
 				x: 1,
 				y: 2,
 			}),
+		);
+	});
+});
+
+describe("Makes TS type strings from schema", () => {
+	const testSf = new SchemaFactory("test");
+	class Foo extends testSf.object("Foo", {
+		x: testSf.number,
+		y: testSf.string,
+	}) {}
+
+	it("for objects with primitive fields", () => {
+		assert.equal(
+			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			"interface Foo { x: number; y: string; }",
 		);
 	});
 });

@@ -3,4 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { toDecoratedJson } from "./agentEditTypes.js";
+export {
+	toDecoratedJson,
+	getPromptFriendlyTreeSchema,
+	getSystemPrompt,
+} from "./agentEditTypes.js";

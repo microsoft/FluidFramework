@@ -132,7 +132,7 @@ export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	return "";
 }
 
-function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string {
+export function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string {
 	let stringifiedSchema = "";
 	simpleTreeSchema.definitions.forEach((nodeSchemaDef, nodeSchemaName) => {
 		if (nodeSchemaDef.kind !== NodeKind.Object) {
@@ -140,9 +140,7 @@ function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string
 		}
 
 		const friendlyNodeType = getFriendlySchemaName(nodeSchemaName);
-		if (friendlyNodeType === null || friendlyNodeType === "") {
-			return; // null or empty schema node description. This would likely be a throw instead.
-		}
+
 		let stringifiedEntry = `interface ${friendlyNodeType} {`;
 
 		Object.entries(nodeSchemaDef.fields).forEach(([fieldName, fieldSchema]) => {
@@ -155,19 +153,21 @@ function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string
 				mappedAllowedTypes.push("undefined");
 			}
 			const allowedTypesString = mappedAllowedTypes.join(" | ");
-			stringifiedEntry += `${fieldName}: ${allowedTypesString}, `;
+			stringifiedEntry += ` ${fieldName}: ${allowedTypesString};`;
 		});
-		stringifiedEntry += "}, ";
 
-		stringifiedSchema += stringifiedEntry;
+		stringifiedEntry += " }";
+
+		stringifiedSchema += (stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
 	});
 	return stringifiedSchema;
 }
 
-function getFriendlySchemaName(schemaName: string): string | null {
+function getFriendlySchemaName(schemaName: string): string {
 	const matches = schemaName.match(/[^.]+$/);
 	if (matches === null) {
-		return null;
+		// empty scope
+		return schemaName;
 	}
 	return matches[0];
 }
