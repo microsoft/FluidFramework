@@ -20,28 +20,28 @@ export function clone<TSchema extends ImplicitFieldSchema>(original: TreeFieldFr
 }): TreeFieldFromImplicitField<TSchema>;
 
 // @beta
-export function cloneToJSON<T>(node: TreeNode, options?: {
+export function cloneToJSON<T>(node: TreeNode | TreeLeafValue, options?: {
     handleConverter(handle: IFluidHandle): T;
     readonly useStableFieldKeys?: boolean;
 }): JsonCompatible<T>;
 
 // @beta
-export function cloneToJSON(node: TreeNode, options?: {
+export function cloneToJSON(node: TreeNode | TreeLeafValue, options?: {
     handleConverter?: undefined;
     useStableFieldKeys?: boolean;
 }): JsonCompatible<IFluidHandle>;
 
 // @beta
-export function cloneToJSONVerbose<T>(node: TreeNode, options?: {
+export function cloneToJSONVerbose<T>(node: TreeNode | TreeLeafValue, options?: {
     handleConverter(handle: IFluidHandle): T;
     readonly useStableFieldKeys?: boolean;
-}): VerboseTreeNode<T>;
+}): VerboseTree<T>;
 
 // @beta
-export function cloneToJSONVerbose(node: TreeNode, options?: {
+export function cloneToJSONVerbose(node: TreeNode | TreeLeafValue, options?: {
     readonly handleConverter?: undefined;
     readonly useStableFieldKeys?: boolean;
-}): VerboseTreeNode;
+}): VerboseTree;
 
 // @public
 export enum CommitKind {

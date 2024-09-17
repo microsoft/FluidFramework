@@ -5,10 +5,15 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { JsonCompatible } from "../../util/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
-import type { TreeNode } from "../core/index.js";
-import type { VerboseTreeNode } from "./verboseTree.js";
+import { fail, type JsonCompatible } from "../../util/index.js";
+import type {
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+	TreeLeafValue,
+} from "../schemaTypes.js";
+import { isTreeNode, type TreeNode } from "../core/index.js";
+import type { VerboseTree, VerboseTreeNode } from "./verboseTree.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 /**
  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
@@ -40,7 +45,7 @@ export function clone<TSchema extends ImplicitFieldSchema>(
  * @beta
  */
 export function cloneToJSON<T>(
-	node: TreeNode,
+	node: TreeNode | TreeLeafValue,
 	options?: {
 		handleConverter(handle: IFluidHandle): T;
 		readonly useStableFieldKeys?: boolean;
@@ -52,12 +57,12 @@ export function cloneToJSON<T>(
  * @beta
  */
 export function cloneToJSON(
-	node: TreeNode,
+	node: TreeNode | TreeLeafValue,
 	options?: { handleConverter?: undefined; useStableFieldKeys?: boolean },
 ): JsonCompatible<IFluidHandle>;
 
 export function cloneToJSON<T>(
-	node: TreeNode,
+	node: TreeNode | TreeLeafValue,
 	options?: {
 		handleConverter?(handle: IFluidHandle): T;
 		readonly useStableFieldKeys?: boolean;
@@ -82,36 +87,36 @@ export function cloneToJSON<T>(
  * @beta
  */
 export function cloneToJSONVerbose<T>(
-	node: TreeNode,
+	node: TreeNode | TreeLeafValue,
 	options?: {
 		handleConverter(handle: IFluidHandle): T;
 		readonly useStableFieldKeys?: boolean;
 	},
-): VerboseTreeNode<T>;
+): VerboseTree<T>;
 
 /**
  * Same as generic overload, except leaves handles as is.
  * @beta
  */
 export function cloneToJSONVerbose(
-	node: TreeNode,
+	node: TreeNode | TreeLeafValue,
 	options?: { readonly handleConverter?: undefined; readonly useStableFieldKeys?: boolean },
-): VerboseTreeNode;
+): VerboseTree;
 
 export function cloneToJSONVerbose<T>(
-	node: TreeNode,
+	node: TreeNode | TreeLeafValue,
 	options?: {
 		handleConverter?(handle: IFluidHandle): T;
 		readonly useStableFieldKeys?: boolean;
 	},
-): VerboseTreeNode<T> {
-	// const config = {
-	// 	handleConverter(handle: IFluidHandle): T {
-	// 		return handle as T;
-	// 	},
-	// 	useStableFieldKeys: false,
-	// 	...options,
-	// };
+): VerboseTree<T> {
+	const config = {
+		handleConverter(handle: IFluidHandle): T {
+			return handle as T;
+		},
+		useStableFieldKeys: false,
+		...options,
+	};
 
 	// TODO: this should probably just get a cursor to the underlying data and use that.
 
@@ -138,9 +143,21 @@ export function cloneToJSONVerbose<T>(
 		throw new Error();
 	}
 
-	// function convertNodeOrValue(n: TreeNode | TreeLeafValue): VerboseTree<T> {
-	// 	return isTreeNode(n) ? convertNode(n) : isFluidHandle(n) ? config.handleConverter(n) : n;
-	// }
+	function convertNodeOrValue(n: TreeNode | TreeLeafValue): VerboseTree<T> {
+		return isTreeNode(n) ? convertNode(n) : isFluidHandle(n) ? config.handleConverter(n) : n;
+	}
 
-	return convertNode(node);
+	return convertNodeOrValue(node);
+}
+
+/**
+ * Construct tree content compatible with a field defined by the provided `schema`.
+ * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+ * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+ * @beta
+ */
+export function cloneToCompressed(
+	node: TreeNode | TreeLeafValue,
+): JsonCompatible<IFluidHandle> {
+	return fail("TODO");
 }

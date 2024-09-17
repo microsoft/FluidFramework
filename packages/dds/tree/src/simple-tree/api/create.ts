@@ -7,7 +7,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ITreeCursorSynchronous, SchemaAndPolicy } from "../../core/index.js";
-import { fail } from "../../util/index.js";
+import { fail, type JsonCompatible } from "../../util/index.js";
 import type {
 	TreeLeafValue,
 	ImplicitFieldSchema,
@@ -141,6 +141,19 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	const schemalessConfig = applySchemaToParserOptions(schema, config);
 	const cursor = cursorFromVerbose(data, schemalessConfig);
 	return createFromCursor(schema, cursor);
+}
+
+/**
+ * Construct tree content compatible with a field defined by the provided `schema`.
+ * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+ * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+ * @beta
+ */
+export function createFromCompressed<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+	data: JsonCompatible<IFluidHandle>,
+): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+	fail("TODO");
 }
 
 /**
