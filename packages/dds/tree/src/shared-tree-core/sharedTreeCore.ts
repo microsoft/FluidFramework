@@ -32,6 +32,7 @@ import {
 	RevisionTagCodec,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
+	type TaggedChange,
 	type TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -271,7 +272,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine =
 			resubmitMachine ??
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(changes: TaggedChange<TChange>, isRollback: boolean) =>
+					changeFamily.rebaser.invert(changes, isRollback, this.mintRevisionTag()),
 				changeEnricher,
 			);
 		this.commitEnricher = new BranchCommitEnricher(changeFamily.rebaser, changeEnricher);
@@ -423,7 +425,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				commit === toResubmit[0],
 				0x95d /* Resubmit phase should start with the oldest local commit */,
 			);
-			this.resubmitMachine.prepareForResubmit(toResubmit);
+			this.resubmitMachine.prepareForResubmit(toResubmit, this.mintRevisionTag());
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),
@@ -446,7 +448,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const {
 			commit: { revision, change },
 		} = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
-		this.editManager.localBranch.apply({ change, revision }, revision);
+		this.editManager.localBranch.apply({ change, revision });
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {

@@ -18,6 +18,7 @@ import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	type JsonableTree,
 	RevisionTagCodec,
+	type TaggedChange,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	makeDetachedFieldIndex,
@@ -263,7 +264,8 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(changes: TaggedChange<SharedTreeChange>, isRollback: boolean) =>
+					changeFamily.rebaser.invert(changes, isRollback, this.mintRevisionTag()),
 				changeEnricher,
 			),
 			changeEnricher,

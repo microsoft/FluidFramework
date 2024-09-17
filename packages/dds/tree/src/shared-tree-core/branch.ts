@@ -224,7 +224,7 @@ export class SharedTreeBranch<
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
-			this.apply(change, mintRevisionTag()),
+			this.apply(change),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.emit("ancestryTrimmed", commit);
@@ -243,13 +243,11 @@ export class SharedTreeBranch<
 	/**
 	 * Apply a change to this branch.
 	 * @param taggedChange - the change to apply
-	 * @param revision - the revision of the new head commit of the branch that contains `change`
 	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
 	public apply(
 		taggedChange: TaggedChange<TChange>,
-		revision: RevisionTag, // This can be removed once we make revision required on taggedChange?
 		kind: CommitKind = CommitKind.Default,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
@@ -370,7 +368,7 @@ export class SharedTreeBranch<
 			const commit =
 				commits[i] ?? fail("This wont run because we are iterating through commits");
 			const inverse = this.changeFamily.rebaser.changeRevision(
-				this.changeFamily.rebaser.invert(commit, true),
+				this.changeFamily.rebaser.invert(commit, true, revision),
 				revision,
 				commit.revision,
 			);

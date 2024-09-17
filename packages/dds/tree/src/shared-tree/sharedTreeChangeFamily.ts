@@ -122,6 +122,7 @@ export class SharedTreeChangeFamily
 	public invert(
 		change: TaggedChange<SharedTreeChange>,
 		isRollback: boolean,
+		revision: RevisionTag,
 	): SharedTreeChange {
 		const invertInnerChange: (
 			innerChange: SharedTreeChange["changes"][number],
@@ -133,6 +134,7 @@ export class SharedTreeChangeFamily
 						innerChange: this.modularChangeFamily.invert(
 							mapTaggedChange(change, innerChange.innerChange),
 							isRollback,
+							revision,
 						),
 					};
 				case "schema": {

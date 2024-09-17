@@ -56,19 +56,26 @@ export function invert(
 	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
+	revision: RevisionTag,
 ): Changeset {
-	return invertMarkList(change, isRollback, crossFieldManager as CrossFieldManager<NodeId>);
+	return invertMarkList(
+		change,
+		isRollback,
+		crossFieldManager as CrossFieldManager<NodeId>,
+		revision,
+	);
 }
 
 function invertMarkList(
 	markList: MarkList,
 	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
+	revision: RevisionTag,
 ): MarkList {
 	const inverseMarkList = new MarkListFactory();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, isRollback, crossFieldManager);
+		const inverseMarks = invertMark(mark, isRollback, crossFieldManager, revision);
 		inverseMarkList.push(...inverseMarks);
 	}
 
@@ -79,6 +86,7 @@ function invertMark(
 	mark: Mark,
 	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
+	revision: RevisionTag,
 ): Mark[] {
 	if (!isImpactful(mark)) {
 		const inputId = getInputCellId(mark);
@@ -115,7 +123,7 @@ function invertMark(
 					id: mark.id,
 					cellId: outputId,
 					count: mark.count,
-					revision: mark.revision,
+					revision,
 				};
 			} else {
 				inverse = {
@@ -123,7 +131,7 @@ function invertMark(
 					id: mark.id,
 					cellId: outputId,
 					count: mark.count,
-					revision: mark.revision,
+					revision,
 				};
 				if (isRollback) {
 					inverse.idOverride = inputId;
@@ -138,7 +146,7 @@ function invertMark(
 				type: "Remove",
 				count: mark.count,
 				id: inputId.localId,
-				revision: mark.revision,
+				revision,
 			};
 
 			if (isRollback) {
@@ -171,7 +179,7 @@ function invertMark(
 			const moveIn: MoveIn = {
 				type: "MoveIn",
 				id: mark.id,
-				revision: mark.revision,
+				revision,
 			};
 
 			if (mark.finalEndpoint !== undefined) {
@@ -186,7 +194,7 @@ function invertMark(
 				const detach: Mutable<Detach> = {
 					type: "Remove",
 					id: mark.id,
-					revision: mark.revision,
+					revision,
 				};
 				if (isRollback) {
 					detach.idOverride = inputId;
@@ -206,7 +214,7 @@ function invertMark(
 				type: "MoveOut",
 				id: mark.id,
 				count: mark.count,
-				revision: mark.revision,
+				revision,
 			};
 
 			if (isRollback) {
@@ -237,8 +245,8 @@ function invertMark(
 				changes: mark.changes,
 				...mark.detach,
 			};
-			const attachInverses = invertMark(attach, isRollback, crossFieldManager);
-			const detachInverses = invertMark(detach, isRollback, crossFieldManager);
+			const attachInverses = invertMark(attach, isRollback, crossFieldManager, revision);
+			const detachInverses = invertMark(detach, isRollback, crossFieldManager, revision);
 
 			if (detachInverses.length === 0) {
 				return attachInverses;

@@ -17,6 +17,7 @@ import {
 	type EncodingTestData,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
+	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
@@ -174,6 +175,7 @@ describe("GenericField", () => {
 			true,
 			idAllocatorFromMaxId(),
 			crossFieldManager,
+			mintRevisionTag(),
 			defaultRevisionMetadataFromChanges([]),
 		);
 		assert.deepEqual(actual, expected);

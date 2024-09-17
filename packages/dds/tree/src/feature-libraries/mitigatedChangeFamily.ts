@@ -61,8 +61,14 @@ export function makeMitigatedRebaser<TChange>(
 		compose: (changes: TaggedChange<TChange>[]): TChange => {
 			return withFallback(() => unmitigatedRebaser.compose(changes));
 		},
-		invert: (changes: TaggedChange<TChange>, isRollback: boolean): TChange => {
-			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback));
+		invert: (
+			changes: TaggedChange<TChange>,
+			isRollback: boolean,
+			revisionForApply: RevisionTag,
+		): TChange => {
+			return withFallback(() =>
+				unmitigatedRebaser.invert(changes, isRollback, revisionForApply),
+			);
 		},
 		rebase: (
 			change: TaggedChange<TChange>,

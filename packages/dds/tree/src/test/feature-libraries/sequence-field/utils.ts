@@ -78,6 +78,7 @@ import {
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
+	mintRevisionTag,
 } from "../../utils.js";
 
 import { ChangesetWrapper } from "../../changesetWrapper.js";
@@ -462,6 +463,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
+		mintRevisionTag(),
 	);
 
 	if (table.isInvalidated) {
@@ -474,6 +476,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
+			mintRevisionTag(),
 		);
 	}
 

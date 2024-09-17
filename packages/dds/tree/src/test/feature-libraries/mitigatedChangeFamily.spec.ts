@@ -96,9 +96,10 @@ describe("makeMitigatedChangeFamily", () => {
 			mitigatedReturningRebaser.rebase(arg1, arg2, arg3),
 			returningRebaser.rebase(arg1, arg2, arg3),
 		);
+		const revision = mintRevisionTag();
 		assert.equal(
-			mitigatedReturningRebaser.invert(arg1, arg2),
-			returningRebaser.invert(arg1, arg2),
+			mitigatedReturningRebaser.invert(arg1, arg2, revision),
+			returningRebaser.invert(arg1, arg2, revision),
 		);
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
 	});
@@ -110,7 +111,7 @@ describe("makeMitigatedChangeFamily", () => {
 		});
 		it("invert", () => {
 			errorLog.length = 0;
-			assert.equal(mitigatedThrowingRebaser.invert(arg1, arg2), fallback);
+			assert.equal(mitigatedThrowingRebaser.invert(arg1, arg2, mintRevisionTag()), fallback);
 			assert.deepEqual(errorLog, ["invert"]);
 		});
 		it("compose", () => {

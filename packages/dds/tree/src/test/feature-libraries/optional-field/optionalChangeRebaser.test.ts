@@ -159,6 +159,7 @@ function invert(
 		isRollback,
 		idAllocatorFromMaxId(),
 		failCrossFieldManager,
+		mintRevisionTag(),
 		defaultRevisionMetadataFromChanges([change]),
 	);
 	verifyContextChain(change, makeAnonChange(inverted));

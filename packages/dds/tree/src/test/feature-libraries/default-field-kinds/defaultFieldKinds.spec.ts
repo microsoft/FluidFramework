@@ -200,6 +200,7 @@ describe("defaultFieldKinds", () => {
 				true,
 				idAllocatorFromMaxId(),
 				failCrossFieldManager,
+				mintRevisionTag(),
 				defaultRevisionMetadataFromChanges([taggedChange]),
 			);
 

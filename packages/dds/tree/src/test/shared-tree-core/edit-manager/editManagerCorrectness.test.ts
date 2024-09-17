@@ -568,20 +568,14 @@ export function testCorrectness() {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.localBranch.apply(
-						{ change: TestChange.emptyChange, revision: sequencedLocalChange },
-						sequencedLocalChange,
-					);
+					manager.localBranch.apply({
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+					});
 					const revision1 = mintRevisionTag();
-					manager.localBranch.apply(
-						{ change: TestChange.emptyChange, revision: revision1 },
-						revision1,
-					);
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
 					const revision2 = mintRevisionTag();
-					manager.localBranch.apply(
-						{ change: TestChange.emptyChange, revision: revision2 },
-						revision2,
-					);
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision2 });
 					manager.addSequencedChange(
 						{
 							change: TestChange.emptyChange,
@@ -607,15 +601,12 @@ export function testCorrectness() {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.localBranch.apply(
-						{ change: TestChange.emptyChange, revision: sequencedLocalChange },
-						sequencedLocalChange,
-					);
+					manager.localBranch.apply({
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+					});
 					const revision1 = mintRevisionTag();
-					manager.localBranch.apply(
-						{ change: TestChange.emptyChange, revision: revision1 },
-						revision1,
-					);
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
 					manager.addSequencedChange(
 						{
 							change: TestChange.emptyChange,
@@ -702,10 +693,10 @@ function applyLocalCommit(
 	intention: number | number[] = [],
 ): Commit<TestChange> {
 	const revision = mintRevisionTag();
-	const [_, commit] = manager.localBranch.apply(
-		{ change: TestChange.mint(inputContext, intention), revision },
+	const [_, commit] = manager.localBranch.apply({
+		change: TestChange.mint(inputContext, intention),
 		revision,
-	);
+	});
 	return {
 		change: commit.change,
 		revision: commit.revision,

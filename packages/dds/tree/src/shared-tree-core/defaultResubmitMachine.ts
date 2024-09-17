@@ -4,7 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import type { ChangeRebaser, GraphCommit } from "../core/index.js";
+import type { ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
 import { disposeSymbol } from "../util/index.js";
 import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
@@ -57,7 +57,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		this.inFlightQueue.push(commit);
 	}
 
-	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
+	public prepareForResubmit(
+		toResubmit: readonly GraphCommit<TChange>[],
+		revision: RevisionTag,
+	): void {
 		assert(
 			!this.isInResubmitPhase,
 			0x957 /* Invalid resubmit phase start during incomplete resubmit phase */,
@@ -75,7 +78,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			// Roll back the checkout to the state before the oldest commit
 			for (let iCommit = toResubmit.length - 1; iCommit >= 0; iCommit -= 1) {
 				const commit = toResubmit[iCommit] ?? oob();
-				const rollback = this.inverter(commit, true);
+				const rollback = this.inverter(commit, true, revision);
 				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 				// Either we have to make it possible to do so, or this logic will have to change to work
 				// forwards from an earlier fork instead of backwards.

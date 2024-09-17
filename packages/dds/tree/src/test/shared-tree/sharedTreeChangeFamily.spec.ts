@@ -225,14 +225,25 @@ describe("SharedTreeChangeFamily", () => {
 
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
-				assert.deepEqual(sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback), {
-					changes: [
-						{
-							type: "data",
-							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback),
-						},
-					],
-				});
+				assert.deepEqual(
+					sharedTreeFamily.invert(
+						makeAnonChange(stDataChange1),
+						isRollback,
+						mintRevisionTag(),
+					),
+					{
+						changes: [
+							{
+								type: "data",
+								innerChange: modularFamily.invert(
+									makeAnonChange(dataChange1),
+									isRollback,
+									mintRevisionTag(),
+								),
+							},
+						],
+					},
+				);
 			});
 		}
 	});

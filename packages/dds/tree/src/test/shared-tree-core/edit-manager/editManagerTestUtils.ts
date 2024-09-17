@@ -124,7 +124,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager.localBranch.apply({ change: mintChange(undefined), revision }, revision);
+		manager.localBranch.apply({ change: mintChange(undefined), revision });
 	}
 	const trunkEdits = makeArray(trunkEditCount, () => {
 		const revision = mintRevisionTag();

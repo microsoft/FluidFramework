@@ -885,7 +885,10 @@ describe("ModularChangeFamily", () => {
 				},
 			]);
 
-			assertEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
+			assertEqual(
+				family.invert(makeAnonChange(rootChange1a), false, mintRevisionTag()),
+				expectedInverse,
+			);
 		});
 
 		it("generic", () => {
@@ -904,7 +907,10 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueInverse2),
 			);
 
-			assertEqual(family.invert(makeAnonChange(rootChange1aGeneric), false), expectedInverse);
+			assertEqual(
+				family.invert(makeAnonChange(rootChange1aGeneric), false, mintRevisionTag()),
+				expectedInverse,
+			);
 		});
 
 		it("build => destroy but only for rollback", () => {
@@ -929,8 +935,8 @@ describe("ModularChangeFamily", () => {
 			const expectedUndo: ModularChangeset = Change.empty();
 
 			deepFreeze(change1);
-			const actualRollback = family.invert(change1, true);
-			const actualUndo = family.invert(change1, false);
+			const actualRollback = family.invert(change1, true, mintRevisionTag());
+			const actualUndo = family.invert(change1, false, mintRevisionTag());
 
 			actualRollback.crossFieldKeys.unfreeze();
 			actualUndo.crossFieldKeys.unfreeze();

@@ -643,10 +643,7 @@ export class EditManager<
 				...newChangeFullyRebased.telemetryProperties,
 			});
 
-			peerLocalBranch.apply(
-				tagChange(newCommit.change, newCommit.revision),
-				newCommit.revision,
-			);
+			peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
 			this.pushCommitToTrunk(sequenceId, {
 				...newCommit,
 				change: newChangeFullyRebased.change,

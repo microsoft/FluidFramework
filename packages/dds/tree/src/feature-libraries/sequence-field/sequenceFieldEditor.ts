@@ -115,7 +115,7 @@ export const sequenceFieldEditor = {
 			type: "Insert",
 			id: detachEvent.localId,
 			count,
-			cellId: { ...detachEvent, revision },
+			cellId: detachEvent,
 			revision,
 		};
 		return count === 0 ? [] : markAtIndex(index, mark);
@@ -188,7 +188,7 @@ export const sequenceFieldEditor = {
 		const moveOut: CellMark<MoveOut> = {
 			type: "MoveOut",
 			id: attachCellId.localId,
-			idOverride: { ...detachCellId, revision },
+			idOverride: detachCellId,
 			count,
 			revision,
 		};
@@ -197,7 +197,7 @@ export const sequenceFieldEditor = {
 			type: "MoveIn",
 			id: attachCellId.localId,
 			count,
-			cellId: { ...attachCellId, revision },
+			cellId: attachCellId,
 			revision,
 		};
 

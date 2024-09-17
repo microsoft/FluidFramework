@@ -59,7 +59,11 @@ export interface ChangeRebaser<TChangeset> {
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
 	 * See {@link ChangeRebaser} for details.
 	 */
-	invert(changes: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
+	invert(
+		changes: TaggedChange<TChangeset>,
+		isRollback: boolean,
+		revisionForApply: RevisionTag,
+	): TChangeset;
 
 	/**
 	 * Rebase `change` over `over`.

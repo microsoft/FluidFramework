@@ -235,7 +235,7 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			idState.maxId,
 			revInfos,
-			undefined /* slices */,
+			undefined /* constraintViolationCount */,
 			allBuilds,
 			allDestroys,
 			allRefreshers,
@@ -682,6 +682,7 @@ export class ModularChangeFamily
 	public invert(
 		change: TaggedChange<ModularChangeset>,
 		isRollback: boolean,
+		revisionForInvert: RevisionTag,
 	): ModularChangeset {
 		// Rollback changesets destroy the nodes created by the change being rolled back.
 		const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
@@ -691,7 +692,8 @@ export class ModularChangeFamily
 			change.change.destroys === undefined,
 			0x89a /* Unexpected destroys in change to invert */,
 		);
-		const { revInfos } = getRevInfoFromTaggedChanges([change]);
+
+		const revInfos: RevisionInfo[] = [{ revision: revisionForInvert }];
 
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset(
@@ -702,7 +704,7 @@ export class ModularChangeFamily
 				undefined /* crossFieldKeys */,
 				change.change.maxId,
 				revInfos,
-				undefined /* slices */,
+				undefined /* constraintViolationCount */,
 				undefined /* builds */,
 				destroys,
 			);
@@ -715,7 +717,8 @@ export class ModularChangeFamily
 			originalFieldToContext: new Map(),
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
 		};
-		const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
+		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
+		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
 
 		const invertedFields = this.invertFieldMap(
 			change.change.fieldChanges,
@@ -724,7 +727,7 @@ export class ModularChangeFamily
 			genId,
 			crossFieldTable,
 			revisionMetadata,
-			change.revision,
+			revisionForInvert,
 		);
 
 		const invertedNodes: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
@@ -738,7 +741,7 @@ export class ModularChangeFamily
 					genId,
 					crossFieldTable,
 					revisionMetadata,
-					revision,
+					revisionForInvert,
 				),
 			);
 		});
@@ -763,6 +766,7 @@ export class ModularChangeFamily
 					isRollback,
 					genId,
 					new InvertManager(crossFieldTable, fieldChange, fieldId),
+					revisionForInvert,
 					revisionMetadata,
 				);
 				invertedField.change = brand(amendedChange);
@@ -792,7 +796,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
-		revision: RevisionTag | undefined,
+		revisionForInvert: RevisionTag,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
 
@@ -802,7 +806,14 @@ export class ModularChangeFamily
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
-			).rebaser.invert(fieldChange.change, isRollback, genId, manager, revisionMetadata);
+			).rebaser.invert(
+				fieldChange.change,
+				isRollback,
+				genId,
+				manager,
+				revisionForInvert,
+				revisionMetadata,
+			);
 
 			const invertedFieldChange: FieldChange = {
 				...fieldChange,
@@ -826,7 +837,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
-		revision: RevisionTag | undefined,
+		revisionForInvert: RevisionTag,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -838,7 +849,7 @@ export class ModularChangeFamily
 				genId,
 				crossFieldTable,
 				revisionMetadata,
-				revision,
+				revisionForInvert,
 			);
 		}
 

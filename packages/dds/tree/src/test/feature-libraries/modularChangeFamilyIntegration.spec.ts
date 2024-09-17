@@ -245,7 +245,11 @@ describe("ModularChangeFamily integration", () => {
 			);
 			const [remove, move] = getChanges();
 			const baseTag = mintRevisionTag();
-			const restore = family.invert(tagChangeInline(remove, baseTag), false);
+			const restore = family.invert(
+				tagChangeInline(remove, baseTag),
+				false,
+				mintRevisionTag(),
+			);
 			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
 			const rebased = family.rebase(
 				makeAnonChange(move),
@@ -669,7 +673,11 @@ describe("ModularChangeFamily integration", () => {
 			const [move, insert] = getChanges();
 			const moveTagged = tagChangeInline(move, tag1);
 			const returnTagged = tagRollbackInverse(
-				family.changeRevision(family.invert(moveTagged, true), tag3, moveTagged.revision),
+				family.changeRevision(
+					family.invert(moveTagged, true, mintRevisionTag()),
+					tag3,
+					moveTagged.revision,
+				),
 				tag3,
 				moveTagged.revision,
 			);
@@ -778,7 +786,9 @@ describe("ModularChangeFamily integration", () => {
 			const [remove, move] = getChanges();
 			const edit = family.compose([makeAnonChange(remove), makeAnonChange(move)]);
 
-			const inverse = removeAliases(family.invert(tagChangeInline(edit, tag1), false));
+			const inverse = removeAliases(
+				family.invert(tagChangeInline(edit, tag1), false, mintRevisionTag()),
+			);
 
 			const fieldAExpected = [
 				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
@@ -848,7 +858,9 @@ describe("ModularChangeFamily integration", () => {
 				makeAnonChange(modify),
 			]);
 
-			const inverse = removeAliases(family.invert(tagChangeInline(moves, tag1), false));
+			const inverse = removeAliases(
+				family.invert(tagChangeInline(moves, tag1), false, mintRevisionTag()),
+			);
 
 			const fieldAExpected: SF.Changeset = [
 				MarkMaker.moveOut(1, brand(0)),
