@@ -513,6 +513,7 @@ export class SchemaFactory<
 	>(
 		name: Name,
 		allowedTypes: T,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -525,7 +526,8 @@ export class SchemaFactory<
 
 	public array<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
-		allowedTypes?: T,
+		allowedTypesOrProps?: T | NodeSchemaProps<TCustomMetadata>,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, string>,
 		NodeKind.Array,
@@ -535,22 +537,29 @@ export class SchemaFactory<
 		T,
 		TCustomMetadata
 	> {
-		if (allowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
-			const fullName = structuralName("Array", types);
-			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
-			) as TreeNodeSchemaClass<
-				ScopedSchemaName<TScope, string>,
-				NodeKind.Array,
-				TreeArrayNode<T>,
-				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		if (typeof nameOrAllowedTypes === "string") {
+			return this.namedArray(
+				nameOrAllowedTypes as TName,
+				allowedTypesOrProps as T,
 				true,
-				T,
-				TCustomMetadata
-			>;
+				true,
+				props,
+			);
 		}
-		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+
+		const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+		const fullName = structuralName("Array", types);
+		return getOrCreate(this.structuralTypes, fullName, () =>
+			this.namedArray(fullName, nameOrAllowedTypes as T, false, true, props),
+		) as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, string>,
+			NodeKind.Array,
+			TreeArrayNode<T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			true,
+			T,
+			TCustomMetadata
+		>;
 	}
 
 	/**
@@ -572,6 +581,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		props?: NodeSchemaProps<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -581,7 +591,13 @@ export class SchemaFactory<
 		T,
 		TCustomMetadata
 	> {
-		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
+		return arraySchema(
+			this.scoped(name),
+			allowedTypes,
+			implicitlyConstructable,
+			customizable,
+			props,
+		);
 	}
 
 	/**

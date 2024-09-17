@@ -384,14 +384,21 @@ describe.only("schemaFactory", () => {
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactory("");
 
-			class Obj extends factory.object(
-				"O",
-				{ a: factory.number },
-				{ metadata: { description: "An object", custom: { foo: true } } },
+			class Foo extends factory.object(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: { description: "An object", custom: { baz: true } } },
 			) {}
 
-			assert.equal(Obj.metadata?.description, "An object");
-			assert.equal(Obj.metadata?.custom?.foo, true);
+			assert.equal(Foo.metadata?.description, "An object");
+			assert.equal(Foo.metadata?.custom?.baz, true);
+
+			const foo = hydrate(Foo, { bar: 37 });
+			const schema = Tree.schema(foo) as ObjectNodeSchema;
+
+			assert.equal(schema.metadata?.description, "An object");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			assert.equal((schema.metadata?.custom as any)?.baz, true);
 		});
 
 		describe("deep equality", () => {
@@ -555,6 +562,24 @@ describe.only("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.array("Foo", factory.number, {
+				metadata: { description: "An array of numbers", custom: { baz: true } },
+			}) {}
+
+			assert.equal(Foo.metadata?.description, "An array of numbers");
+			assert.equal(Foo.metadata?.custom?.baz, true);
+
+			const foo = hydrate(Foo, [1, 2, 3]);
+			const schema = Tree.schema(foo);
+
+			assert.equal(schema.metadata?.description, "An array of numbers");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			assert.equal((schema.metadata?.custom as any)?.baz, true);
 		});
 	});
 
