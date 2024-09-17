@@ -2,7 +2,8 @@
 /* eslint-disable @rushstack/no-new-null */
 
 import { assert } from '@fluidframework/core-utils/internal';
-import { SchemaFactory, TreeViewConfiguration, type ImplicitFieldSchema, type TreeFieldFromImplicitField } from "./index.js";
+import { FieldKind, NodeKind, SchemaFactory, TreeViewConfiguration, type ImplicitAllowedTypes, type ImplicitFieldSchema, type TreeFieldFromImplicitField, type TreeView } from "./index.js";
+import { toSimpleTreeSchema, type SimpleTreeSchema, type SimpleObjectNodeSchema, type SimpleFieldSchema } from './api/index.js';
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -92,6 +93,57 @@ export function toDecoratedJson<TRootSchema extends ImplicitFieldSchema>(root: T
 		return value as unknown;
 	});
 	return {stringified, idMap};
+}
+
+export function getSystemPrompt<TRootSchema extends ImplicitFieldSchema>(view: TreeView<TRootSchema>, schema: ImplicitAllowedTypes): string {
+	const simpleTreeSchema = toSimpleTreeSchema(schema);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
+
+	/*
+	-- Dynamic pieces:
+	1. Description of the schema of the tree.
+	2. Tree content (current state) -- output of toDecoratedJson.
+	3.? TypeScripty version of the edits it's allowed to make (Json schema); depends on Structured Output requirements.
+	4.? If it performs poorly, potentially dynamically generate some examples based on the passed schema.
+	*/
+}
+
+function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string {
+	let stringifiedSchema = '';
+	simpleTreeSchema.definitions.forEach((nodeSchemaDef, nodeSchemaName) => {
+		if (nodeSchemaDef.kind !== NodeKind.Object) {
+			return;
+		}
+
+		const friendlyNodeType = getFriendlySchemaName(nodeSchemaName)
+		if (friendlyNodeType === null || friendlyNodeType === '') {
+			return; // null or empty schema node description. This would likely be a throw instead.
+		}
+		let stringifiedEntry = `interface ${friendlyNodeType} {`;
+
+		Object.entries(nodeSchemaDef.fields).forEach(([fieldName, fieldSchema]) => {
+			const mappedAllowedTypes = [...fieldSchema.allowedTypes]
+				.map((allowedType) => getFriendlySchemaName(allowedType))
+				.filter((allowedType): allowedType is string => allowedType !== null && allowedType !== ''); // as above, null or empty schema node descriptions should likely throw?
+			if (fieldSchema.kind === FieldKind.Optional) {
+				mappedAllowedTypes.push('undefined');
+			}
+			const allowedTypesString = mappedAllowedTypes.join(' | ');
+			stringifiedEntry += `${fieldName}: ${allowedTypesString}, `
+		});
+		stringifiedEntry += '}, ';
+
+		stringifiedSchema += stringifiedEntry
+	});
+	return stringifiedSchema;
+}
+
+function getFriendlySchemaName(schemaName: string): string | null {
+	const matches = schemaName.match(/[^.]+$/);
+	if (matches === null) {
+		return null;
+	}
+	return matches[0];
 }
 
 /** ---------------- EXAMPLE FOLLOWS ---------------------- */
