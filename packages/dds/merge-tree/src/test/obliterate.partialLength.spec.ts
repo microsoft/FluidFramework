@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { MergeTree } from "../mergeTree.js";
+import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
@@ -13,6 +15,28 @@ import {
 	useStrictPartialLengthChecks,
 	validatePartialLengths,
 } from "./testUtils.js";
+
+function obliterateRange({
+	mergeTree,
+	start,
+	end,
+	refSeq,
+	clientId,
+	seq,
+	overwrite = false,
+	opArgs,
+}: {
+	mergeTree: MergeTree;
+	start: number;
+	end: number;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	overwrite?: boolean;
+	opArgs: IMergeTreeDeltaOpArgs;
+}): void {
+	mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
+}
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;
@@ -113,7 +137,8 @@ describe("obliterate partial lengths", () => {
 	describe("overlapping remove+obliterate", () => {
 		it("passes for local remove and remote obliterate", () => {
 			const localRemoveOp = client.removeRangeLocal(0, "hello ".length);
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,
@@ -174,7 +199,8 @@ describe("obliterate partial lengths", () => {
 				refSeq,
 				client.getLongClientId(remoteClientId),
 			);
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,
@@ -215,7 +241,8 @@ describe("obliterate partial lengths", () => {
 	describe("overlapping obliterate+obliterate", () => {
 		it("passes for local obliterate and remote obliterate", () => {
 			const localObliterateOp = client.obliterateRangeLocal(0, "hello ".length);
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,
@@ -246,7 +273,8 @@ describe("obliterate partial lengths", () => {
 		});
 
 		it("passes for remote obliterate and local obliterate", () => {
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,

@@ -5,10 +5,34 @@
 
 import { strict as assert } from "node:assert";
 
+import type { MergeTree } from "../mergeTree.js";
+import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
 import { insertText } from "./testUtils.js";
+
+function obliterateRange({
+	mergeTree,
+	start,
+	end,
+	refSeq,
+	clientId,
+	seq,
+	overwrite = false,
+	opArgs,
+}: {
+	mergeTree: MergeTree;
+	start: number;
+	end: number;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	overwrite?: boolean;
+	opArgs: IMergeTreeDeltaOpArgs;
+}): void {
+	mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
+}
 
 describe("obliterate", () => {
 	let client: TestClient;
@@ -40,7 +64,8 @@ describe("obliterate", () => {
 
 	describe("concurrent obliterate and insert", () => {
 		it("removes text for obliterate then insert", () => {
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: client.getLength(),
 				refSeq,
@@ -72,7 +97,8 @@ describe("obliterate", () => {
 				props: undefined,
 				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
 			});
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello world".length,
 				refSeq,
@@ -94,7 +120,8 @@ describe("obliterate", () => {
 				props: undefined,
 				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
 			});
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 1,
 				end: "hello world".length,
 				refSeq,
@@ -109,7 +136,8 @@ describe("obliterate", () => {
 
 	describe("endpoint behavior", () => {
 		it("does not expand to include text inserted at start", () => {
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 5,
 				end: "hello world".length,
 				refSeq,
@@ -131,7 +159,8 @@ describe("obliterate", () => {
 			assert.equal(client.getText(), "helloXXX");
 		});
 		it("does not expand to include text inserted at end", () => {
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello".length,
 				refSeq,
