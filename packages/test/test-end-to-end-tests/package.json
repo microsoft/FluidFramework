@@ -47,7 +47,7 @@
 		"test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
 		"test:realsvc:odsp-df": "npm run test:realsvc:run -- --driver=odsp --odspEndpointName=odsp-df --timeout=20s",
 		"test:realsvc:odsp:report": "npm run test:realsvc:odsp --",
-		"test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=20s",
+		"test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=20s --compatVersion=0",
 		"test:realsvc:r11s:parallel": "npm run test:realsvc:r11s -- --parallel",
 		"test:realsvc:r11s:docker": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker --timeout=20s",
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
