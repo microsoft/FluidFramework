@@ -388,7 +388,7 @@ class ForkedTreeBranch implements TreeBranch {
 
 	public get checkout(): TreeCheckout {
 		if (this._checkout === undefined) {
-			throw new UsageError("Branch has been disposed");
+			throw new UsageError("This branch has been disposed and can no longer be used.");
 		}
 
 		return this._checkout;
@@ -398,7 +398,7 @@ class ForkedTreeBranch implements TreeBranch {
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot> {
 		if (this._checkout === undefined) {
-			throw new UsageError("Branch has been disposed");
+			throw new UsageError("This branch has been disposed and can no longer be used.");
 		}
 
 		const view = new SchematizingSimpleTreeView(
@@ -414,7 +414,9 @@ class ForkedTreeBranch implements TreeBranch {
 
 	public branch(): TreeBranch {
 		if (this._checkout === undefined) {
-			throw new UsageError("Branch parent has been disposed");
+			throw new UsageError(
+				"The parent branch has already been disposed and can no longer create new branches.",
+			);
 		}
 
 		return createTreeBranch(this._checkout.fork(), this.nodeKeyManager, this.breaker);
@@ -423,11 +425,15 @@ class ForkedTreeBranch implements TreeBranch {
 	public merge(branch: TreeBranch, disposeView?: boolean): void {
 		assert(branch instanceof ForkedTreeBranch, "Unsupported TreeBranch implementation");
 		if (this._checkout === undefined) {
-			throw new UsageError("Merge target has been disposed");
+			throw new UsageError(
+				"The target of the branch merge has been disposed and cannot be merged.",
+			);
 		}
 
 		if (branch._checkout === undefined) {
-			throw new UsageError("Merge source has been disposed");
+			throw new UsageError(
+				"The source of the branch merge has been disposed and cannot be merged.",
+			);
 		}
 
 		if (disposeView !== undefined) {
@@ -440,11 +446,15 @@ class ForkedTreeBranch implements TreeBranch {
 	public rebase(branch: TreeBranch): void {
 		assert(branch instanceof ForkedTreeBranch, "Unsupported TreeBranch implementation");
 		if (this._checkout === undefined) {
-			throw new UsageError("Rebase target has been disposed");
+			throw new UsageError(
+				"The target of the branch rebase has been disposed and cannot be rebased.",
+			);
 		}
 
 		if (branch._checkout === undefined) {
-			throw new UsageError("Rebase source has been disposed");
+			throw new UsageError(
+				"The source of the branch rebase has been disposed and cannot be rebased.",
+			);
 		}
 
 		this._checkout.rebase(branch._checkout);
@@ -456,7 +466,9 @@ class ForkedTreeBranch implements TreeBranch {
 			"Unsupported TreeBranch implementation",
 		);
 		if (this._checkout === undefined) {
-			throw new UsageError("Rebase source has been disposed");
+			throw new UsageError(
+				"The target of the branch rebase has been disposed and cannot be rebased.",
+			);
 		}
 
 		this._checkout.rebaseOnto(tree.checkout);
@@ -464,7 +476,9 @@ class ForkedTreeBranch implements TreeBranch {
 
 	public dispose(): void {
 		if (this._checkout === undefined) {
-			throw new UsageError("Branch has already been disposed");
+			throw new UsageError(
+				"The branch has already been disposed and cannot be disposed again.",
+			);
 		}
 
 		this._checkout[disposeSymbol]();
