@@ -29,7 +29,7 @@ export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSc
 	const idMap = new Map<number, unknown>();
 	let idCount = 0;
 	const stringified: string = JSON.stringify(root, (_, value) => {
-		if (typeof value === "object") {
+		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			idMap.set(idCount, value);
 			assert(
 				!{}.hasOwnProperty.call(value, "__fluid_id"),
