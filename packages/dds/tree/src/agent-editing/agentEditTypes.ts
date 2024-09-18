@@ -5,7 +5,15 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { SchemaFactory, TreeViewConfiguration } from "../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type JsonTreeSchema,
+	type TreeNodeSchema,
+	type TreeView,
+} from "../simple-tree/index.js";
+import { getOrCreate } from "../util/index.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -252,3 +260,14 @@ const _jsonSchema = {
 		},
 	},
 };
+
+/**
+ * Cache in which the results of {@link generateAgentEditSchema} are saved.
+ */
+const agentEditSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
+
+export function generateAgentEditSchema(view: TreeView<ImplicitFieldSchema>): JsonTreeSchema {
+	return getOrCreate(agentEditSchemaCache, view.schema, () => {
+		throw new Error("Not implemented");
+	});
+}
