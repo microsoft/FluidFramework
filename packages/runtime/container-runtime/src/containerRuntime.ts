@@ -633,8 +633,6 @@ const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * Checks whether a message.type is one of the values in ContainerMessageType
- * @deprecated please use version in driver-utils
- * @internal
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(ContainerMessageType) as string[]).includes(message.type);
