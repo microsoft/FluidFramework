@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -16,10 +16,12 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type IEditableForest,
 	type JsonableTree,
 	RevisionTagCodec,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
+	type TreeStoredSchemaSubscription,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -61,6 +63,7 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -144,6 +147,27 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	return versions;
 }
 
+export function buildConfiguredForest(
+	type: ForestType,
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+): IEditableForest {
+	switch (type) {
+		case ForestType.Optimized:
+			return buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy),
+				undefined,
+				idCompressor,
+			);
+		case ForestType.Reference:
+			return buildForest();
+		case ForestType.Expensive:
+			return buildForest(undefined, true);
+		default:
+			unreachableCase(type);
+	}
+}
+
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
@@ -176,16 +200,7 @@ export class SharedTree
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest =
-			options.forest === ForestType.Optimized
-				? buildChunkedForest(
-						makeTreeChunker(schema, defaultSchemaPolicy),
-						undefined,
-						runtime.idCompressor,
-					)
-				: options.forest === ForestType.Reference
-					? buildForest()
-					: buildForest(undefined, true);
+		const forest = buildConfiguredForest(options.forest, schema, runtime.idCompressor);
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",

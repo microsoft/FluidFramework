@@ -9,6 +9,8 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObjectKind,
@@ -16,8 +18,26 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import { SharedTree as SharedTreeImpl, type SharedTreeOptions } from "./shared-tree/index.js";
-import type { ITree } from "./simple-tree/index.js";
+import {
+	buildConfiguredForest,
+	createTreeCheckout,
+	SharedTree as SharedTreeImpl,
+	type SharedTreeOptions,
+} from "./shared-tree/index.js";
+import type {
+	ImplicitFieldSchema,
+	ITree,
+	TreeView,
+	TreeViewConfiguration,
+} from "./simple-tree/index.js";
+import { SchematizingSimpleTreeView, defaultSharedTreeOptions } from "./shared-tree/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	RevisionTagCodec,
+	TreeStoredSchemaRepository,
+	type RevisionTag,
+} from "./core/index.js";
+import { createNodeKeyManager } from "./feature-libraries/index.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
@@ -95,4 +115,38 @@ export function configuredSharedTree(
 		}
 	}
 	return createSharedObjectKind<ITree>(ConfiguredFactory);
+}
+
+/**
+ * Create a {@link TreeView} that is not tied to any {@link SharedTree} instance.
+ *
+ * @remarks
+ * Such a view can never experience collaboration or be persisted to to a Fluid Container.
+ *
+ * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some fluid service.
+ * @alpha
+ */
+export function independentView<TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options: SharedTreeOptions & { idCompressor?: IIdCompressor | undefined },
+): TreeView<TSchema> {
+	const idCompressor: IIdCompressor =
+		options.idCompressor ?? createAlwaysFinalizedIdCompressor();
+	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
+	const revisionTagCodec = new RevisionTagCodec(idCompressor);
+	const schema = new TreeStoredSchemaRepository();
+	const forest = buildConfiguredForest(
+		options.forest ?? defaultSharedTreeOptions.forest,
+		schema,
+		idCompressor,
+	);
+	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
+		forest,
+		schema,
+	});
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createNodeKeyManager(idCompressor),
+	);
 }
