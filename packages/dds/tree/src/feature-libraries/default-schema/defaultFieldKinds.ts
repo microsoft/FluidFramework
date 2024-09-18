@@ -54,8 +54,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
-	 * @param newContent - the new content for the field
-	 * @param changeId - the ID associated with the replacement of the current content.
+	 * @param ids - The ids for the fill and detach fields.
 	 */
 	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
 }

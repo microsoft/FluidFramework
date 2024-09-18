@@ -677,6 +677,7 @@ export class ModularChangeFamily
 	/**
 	 * @param change - The change to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
+	 * @param revisionForInvert - The revision for the invert changeset.
 	 * performing a sandwich rebase.
 	 */
 	public invert(
@@ -2567,6 +2568,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	/**
 	 * @param firstId - The ID to associate with the first node
 	 * @param content - The node(s) to build. Can be in either Field or Node mode.
+	 * @param revision - The revision to use for the build.
 	 * @returns A description of the edit that can be passed to `submitChanges`.
 	 */
 	public buildTrees(
@@ -2601,6 +2603,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	 * @param field - the field which is being edited
 	 * @param fieldKind - the kind of the field
 	 * @param change - the change to the field
+	 * @param revision - the revision of the change
 	 */
 	public submitChange(
 		field: FieldUpPath,

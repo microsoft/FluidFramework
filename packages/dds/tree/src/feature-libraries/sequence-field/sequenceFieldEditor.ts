@@ -38,7 +38,8 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	 * @param count - The number of nodes to move
 	 * @param destIndex - The index the nodes should be moved to, interpreted before detaching the moved nodes
 	 * @param detachCellId - The local ID to assign to the first cell being emptied by the move
-	 * @param attachCellId - The local ID to assign to the first cell being filled by the move
+	 * @param attachCellId - The ID to assign to the first cell being filled by the move
+	 * @param revision - The revision to assign to the move marks
 	 */
 	move(
 		sourceIndex: number,

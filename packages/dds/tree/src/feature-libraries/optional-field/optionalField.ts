@@ -581,11 +581,9 @@ export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
-	 * Creates a change which replaces the field with `newContent`
-	 * @param newContent - the new content for the field
+	 * Creates a change which would replace "detach" field with "fill" field.
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param changeId - the ID associated with the replacement of the current content.
-	 * @param buildId - the ID associated with the creation of the `newContent`.
+	 * @param ids - the "fill" and "detach" ids associated with the change.
 	 */
 	set(
 		wasEmpty: boolean,
@@ -598,7 +596,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which clears the field's contents (if any).
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param changeId - the ID associated with the detach.
+	 * @param id - the ID associated with the change.
 	 */
 	clear(wasEmpty: boolean, id: ChangeAtomId): OptionalChangeset;
 }

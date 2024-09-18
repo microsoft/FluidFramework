@@ -13,6 +13,7 @@ export interface ResubmitMachine<TChange> {
 	/**
 	 * Must be called before calling `enrichCommit` as part of a resubmit phase.
 	 * @param toResubmit - the commits that will be resubmitted (from oldest to newest).
+	 * @param revision - the revision tag to be used to resubmit the change.
 	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
 	 * as opposed to the version which was last submitted.
 	 * `toResubmit` can be safely mutated by the caller after this call returns.

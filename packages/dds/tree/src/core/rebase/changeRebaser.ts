@@ -51,6 +51,7 @@ export interface ChangeRebaser<TChangeset> {
 	 * @param changes - The changes to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
+	 * @param revision - The revision for the invert changeset.
 	 * This flag is relevant to merge semantics that are dependent on edit sequencing order:
 	 * - In the context of an undo, this function inverts a change that is sequenced and applied before the produced inverse.
 	 * - In the context of a rollback, this function inverts a change that is sequenced after but applied before the produced inverse.
@@ -62,7 +63,7 @@ export interface ChangeRebaser<TChangeset> {
 	invert(
 		changes: TaggedChange<TChangeset>,
 		isRollback: boolean,
-		revisionForApply: RevisionTag,
+		revision: RevisionTag,
 	): TChangeset;
 
 	/**
