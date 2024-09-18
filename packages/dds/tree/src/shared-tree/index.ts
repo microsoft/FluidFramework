@@ -8,7 +8,6 @@ export {
 	SharedTreeFactory,
 	type SharedTreeOptions,
 	SharedTree,
-	createTreeBranch,
 	getBranch,
 	ForestType,
 	type SharedTreeContentSnapshot,
@@ -24,6 +23,8 @@ export {
 	type CheckoutEvents,
 	type ITransaction,
 	type ITreeCheckoutFork,
+	type TreeCheckoutBranch,
+	type TreeCheckoutBranched,
 } from "./treeCheckout.js";
 
 export {

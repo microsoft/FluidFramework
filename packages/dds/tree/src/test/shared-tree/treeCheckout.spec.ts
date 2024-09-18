@@ -31,6 +31,7 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
+	type TreeCheckoutBranch,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -51,7 +52,7 @@ import {
 import { getOrCreateInnerNode } from "../../simple-tree/proxyBinding.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { toFlexSchema, type BranchableTree } from "../../simple-tree/index.js";
+import { toFlexSchema } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
@@ -507,8 +508,8 @@ describe("sharedTreeView", () => {
 		it("submit edits to Fluid when merging into the root view", () => {
 			const sf = new SchemaFactory("edits submitted schema");
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith(
+			const branch1 = getBranch(provider.trees[0]);
+			const view1 = provider.trees[0].viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -522,7 +523,7 @@ describe("sharedTreeView", () => {
 					enableSchemaValidation,
 				}),
 			);
-			const baseTree = tree1.branch();
+			const baseTree = branch1.branch();
 			const tree = baseTree.branch();
 			const view = tree.viewWith(view1.config);
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
@@ -532,7 +533,7 @@ describe("sharedTreeView", () => {
 			baseTree.merge(tree);
 			provider.processMessages();
 			assert.equal(tree2.root[0], undefined);
-			tree1.merge(baseTree);
+			branch1.merge(baseTree);
 			provider.processMessages();
 			assert.equal(tree2.root[0], "42");
 		});
@@ -541,6 +542,7 @@ describe("sharedTreeView", () => {
 			const sf = new SchemaFactory("no squash commits schema");
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
+			const branch1 = getBranch(tree1);
 			const view1 = tree1.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -551,13 +553,13 @@ describe("sharedTreeView", () => {
 			provider.processMessages();
 			let opsReceived = 0;
 			provider.trees[1].on("op", () => (opsReceived += 1));
-			const baseTree = tree1.branch();
-			const tree = baseTree.branch();
+			const baseBranch = branch1.branch();
+			const tree = baseBranch.branch();
 			const view = tree.viewWith(view1.config);
 			view.root.insertAtStart("A");
 			view.root.insertAtStart("B");
-			baseTree.merge(tree);
-			tree1.merge(baseTree);
+			baseBranch.merge(tree);
+			branch1.merge(baseBranch);
 			provider.processMessages();
 			assert.equal(opsReceived, 2);
 		});
@@ -658,7 +660,11 @@ describe("sharedTreeView", () => {
 						tree.merge(treeBranch, true);
 					});
 				},
-				(e: Error) => validateAssertionError(e, /0x9b0/),
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						"Views cannot be merged into a view while it has a pending transaction",
+					),
 			);
 		});
 
@@ -917,14 +923,15 @@ describe("sharedTreeView", () => {
 			const oldSchema = sf1.array(sf1.string);
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
 			const tree1 = provider.trees[0];
+			const branch1 = getBranch(tree1);
 			const view1 = tree1.viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
 			// Fork the main branch with new schema.
 			const sf2 = new SchemaFactory("schema1");
 			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
-			const tree2 = tree1.branch();
-			const view2 = tree2.viewWith(
+			const branch2 = branch1.branch();
+			const view2 = branch2.viewWith(
 				new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }),
 			);
 
@@ -945,7 +952,7 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view2.root, ["A", "B"]);
 
 			// Rebase the child branch onto the parent branch.
-			view2.checkout.rebaseOnto(view1.checkout);
+			branch2.rebaseOnto(branch1);
 
 			// The schema change and any changes after that should be dropped,
 			// but the changes before the schema change should be preserved
@@ -973,7 +980,7 @@ describe("sharedTreeView", () => {
 			// Get the checkout of the parent branch and fork it before disposing it. The branch is disposed
 			// so that a new view can be created from it with a new schema.
 			const checkout1 = view1.checkout;
-			const checkout2 = view1.checkout.fork();
+			const checkout2 = view1.checkout.branch();
 			view1.dispose();
 
 			// Create a new schema - schema2.
@@ -1261,7 +1268,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: TreeCheckoutBranch;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1273,7 +1280,7 @@ function itView(
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<typeof rootArray>;
-		tree: BranchableTree;
+		tree: TreeCheckoutBranch;
 		logger: IMockLoggerExt;
 	}) => void,
 	options?: {
@@ -1287,7 +1294,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: TreeCheckoutBranch;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1301,7 +1308,7 @@ function itView<
 		thunk: typeof fn,
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: BranchableTree;
+			tree: TreeCheckoutBranch;
 			logger: IMockLoggerExt;
 		},
 	): void {
@@ -1319,7 +1326,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: BranchableTree;
+					tree: TreeCheckoutBranch;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -1333,7 +1340,7 @@ function itView<
 			(
 				thunk as unknown as (args: {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: BranchableTree;
+					tree: TreeCheckoutBranch;
 					logger: IMockLoggerExt;
 				}) => void
 			)({ view, tree, logger });
@@ -1345,7 +1352,7 @@ function itView<
 		fork: boolean,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: TreeCheckoutBranch;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
@@ -1367,9 +1374,10 @@ function itView<
 	itFunction(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
+		const branch = getBranch(tree);
 		callWithView(fn, (config) => ({
 			view: tree.viewWith(config),
-			tree,
+			tree: branch,
 			logger: provider.logger,
 		}));
 	});
@@ -1381,7 +1389,7 @@ function itView<
 	itFunction(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		const branch = tree.branch();
+		const branch = getBranch(tree).branch();
 		callWithView(fn, (config) => {
 			const view = branch.viewWith(config);
 			assert(view instanceof SchematizingSimpleTreeView);

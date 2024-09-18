@@ -14,14 +14,6 @@ type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> =
     [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
 }[Kind];
 
-// @alpha
-export interface BranchableTree extends ViewableTree {
-    branch(): TreeBranch;
-    merge(branch: TreeBranch): void;
-    merge(branch: TreeBranch, disposeView: boolean): void;
-    rebase(branch: TreeBranch): void;
-}
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -101,10 +93,10 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
-export function getBranch(tree: ITree): BranchableTree;
+export function getBranch(tree: ITree): TreeCheckoutBranch;
 
 // @alpha
-export function getBranch(view: TreeView<ImplicitFieldSchema>): BranchableTree;
+export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeCheckoutBranch;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
@@ -500,11 +492,6 @@ export const TreeBeta: {
     readonly on: <K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>) => () => void;
 };
 
-// @alpha
-export interface TreeBranch extends BranchableTree, IDisposable {
-    rebaseOnto(fork: BranchableTree): void;
-}
-
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
@@ -514,6 +501,19 @@ export interface TreeChangeEvents {
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+}
+
+// @alpha (undocumented)
+export interface TreeCheckoutBranch extends ViewableTree {
+    branch(): TreeCheckoutBranched;
+    merge(view: TreeCheckoutBranched): void;
+    merge(view: TreeCheckoutBranched, disposeView: boolean): void;
+    rebase(view: TreeCheckoutBranched): void;
+}
+
+// @alpha (undocumented)
+export interface TreeCheckoutBranched extends TreeCheckoutBranch, IDisposable {
+    rebaseOnto(view: TreeCheckoutBranch): void;
 }
 
 // @public

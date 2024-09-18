@@ -93,6 +93,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly config: TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
+		private readonly onDispose?: () => void,
 	) {
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
@@ -329,6 +330,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.disposeView();
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
+		this.onDispose?.();
 	}
 
 	public get root(): TreeFieldFromImplicitField<TRootSchema> {

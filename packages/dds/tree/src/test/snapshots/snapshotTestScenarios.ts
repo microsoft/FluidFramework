@@ -10,6 +10,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
+	getBranch,
 	type ISharedTree,
 	SharedTreeFactory,
 	type SharedTreeOptions,
@@ -216,17 +217,18 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				view1.initialize([]);
 				provider.processMessages();
 
-				const tree2 = tree1.branch();
+				const branch1 = getBranch(tree1);
+				const tree2 = branch1.branch();
 				const view2 = tree2.viewWith(view1.config);
 				view1.root.insertAt(0, "y");
-				tree2.rebaseOnto(tree1);
+				tree2.rebaseOnto(branch1);
 
 				view1.root.insertAt(0, "x");
 				view2.root.insertAt(1, "a", "c");
 				view2.root.insertAt(2, "b");
 
-				tree2.rebaseOnto(tree1);
-				tree1.merge(tree2);
+				tree2.rebaseOnto(branch1);
+				branch1.merge(tree2);
 
 				provider.processMessages();
 				await takeSnapshot(tree1, "tree2");
@@ -234,13 +236,13 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				assert.deepEqual(view1.root, ["x", "y", "a", "b", "c"]);
 				assert.deepEqual(view1.root, view2.root);
 
-				const tree3 = tree1.branch();
+				const tree3 = branch1.branch();
 				const view3 = tree3.viewWith(view1.config);
 				view1.root.insertAt(0, "z");
 				view3.root.insertAt(1, "d", "e");
 				view3.root.insertAt(2, "f");
-				tree3.rebaseOnto(tree1);
-				tree1.merge(tree3);
+				tree3.rebaseOnto(branch1);
+				branch1.merge(tree3);
 
 				provider.processMessages();
 				await takeSnapshot(tree1, "tree3");

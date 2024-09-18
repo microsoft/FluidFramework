@@ -147,7 +147,7 @@ describe("Fuzz - composed vs individual changes", () => {
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
 
-			const branchCheckout = initialState.main.checkout.fork();
+			const branchCheckout = initialState.main.checkout.branch();
 			const treeSchema = simpleSchemaFromStoredSchema(initialState.main.checkout.storedSchema);
 			const branchView = viewCheckout(
 				branchCheckout,

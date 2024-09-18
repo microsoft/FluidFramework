@@ -140,6 +140,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	toStoredSchema,
 	type TreeViewEvents,
+	type TreeView,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -1219,6 +1220,12 @@ export class MockTreeCheckout implements ITreeCheckout {
 		this._editor = editor;
 	}
 
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot> {
+		throw new Error("'viewWith' not implemented in MockTreeCheckout.");
+	}
+
 	public get storedSchema(): TreeStoredSchemaSubscription {
 		throw new Error("'storedSchema' property not implemented in MockTreeCheckout.");
 	}
@@ -1238,7 +1245,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 
-	public fork(): ITreeCheckoutFork {
+	public branch(): ITreeCheckoutFork {
 		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
 	}
 	public merge(view: unknown, disposeView?: unknown): void {

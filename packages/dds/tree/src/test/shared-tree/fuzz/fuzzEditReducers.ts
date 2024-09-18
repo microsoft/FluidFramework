@@ -311,7 +311,7 @@ export function applyTransactionBoundary(
 			boundary === "start",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
-		const treeViewFork = viewFromState(state).checkout.fork();
+		const treeViewFork = viewFromState(state).checkout.branch();
 		const treeSchema = simpleSchemaFromStoredSchema(state.client.channel.storedSchema);
 		const treeView = viewCheckout(
 			treeViewFork,

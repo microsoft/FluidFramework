@@ -36,13 +36,11 @@ import {
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	buildForest,
-	createNodeKeyManager,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
-	type NodeKeyManager,
 } from "../feature-libraries/index.js";
 import {
 	DefaultResubmitMachine,
@@ -52,10 +50,8 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
-	TreeBranch,
 	TreeView,
 	TreeViewConfiguration,
-	BranchableTree,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -63,8 +59,14 @@ import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js"
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
-import { breakingClass, disposeSymbol, throwIfBroken, type Breakable } from "../util/index.js";
+import {
+	type CheckoutEvents,
+	type TreeCheckout,
+	type TreeCheckoutBranch,
+	alphalizeCheckout,
+	createTreeCheckout,
+} from "./treeCheckout.js";
+import { breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -283,30 +285,9 @@ export class SharedTree
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
 				logger: this.logger,
+				breaker: this.breaker,
 			},
 		);
-	}
-
-	public branch(): TreeBranch {
-		return createTreeBranch(
-			this.checkout.fork(),
-			createNodeKeyManager(this.runtime.idCompressor),
-			this.breaker,
-		);
-	}
-
-	public merge(branch: TreeBranch, disposeView?: boolean): void {
-		assert(branch instanceof ForkedTreeBranch, "Unsupported TreeBranch implementation");
-		if (disposeView !== undefined) {
-			this.checkout.merge(branch.checkout, disposeView);
-		} else {
-			this.checkout.merge(branch.checkout);
-		}
-	}
-
-	public rebase(branch: TreeBranch): void {
-		assert(branch instanceof ForkedTreeBranch, "Unsupported TreeBranch implementation");
-		this.checkout.rebase(branch.checkout);
 	}
 
 	@throwIfBroken
@@ -327,12 +308,7 @@ export class SharedTree
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): SchematizingSimpleTreeView<TRoot> {
-		return new SchematizingSimpleTreeView(
-			this.checkout,
-			config,
-			createNodeKeyManager(this.runtime.idCompressor),
-			this.breaker,
-		);
+		return this.checkout.viewWith(config);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -343,156 +319,30 @@ export class SharedTree
 }
 
 /**
- * Get a {@link BranchableTree} from a {@link ITree}.
+ * Get a {@link TreeCheckoutBranch} from a {@link ITree}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
+ * @privateRemarks This function will be removed if/when the branching API becomes public,
+ * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  */
-export function getBranch(tree: ITree): BranchableTree;
+export function getBranch(tree: ITree): TreeCheckoutBranch;
 /**
- * Get a {@link BranchableTree} from a {@link TreeView}.
+ * Get a {@link TreeCheckoutBranch} from a {@link TreeView}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
+ * @privateRemarks This function will be removed if/when the branching API becomes public,
+ * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  */
-export function getBranch(view: TreeView<ImplicitFieldSchema>): BranchableTree;
-export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): BranchableTree {
-	if (treeOrView instanceof SharedTree) {
-		return treeOrView;
-	}
-
+export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeCheckoutBranch;
+export function getBranch(
+	treeOrView: ITree | TreeView<ImplicitFieldSchema>,
+): TreeCheckoutBranch {
 	assert(
-		treeOrView instanceof SchematizingSimpleTreeView,
-		"Unsupported TreeView implementation",
+		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
+		"Unsupported implementation",
 	);
-	return createTreeBranch(treeOrView.checkout, treeOrView.nodeKeyManager, treeOrView.breaker);
-}
-
-export function createTreeBranch(
-	checkout: TreeCheckout,
-	nodeKeyManager: NodeKeyManager,
-	breaker?: Breakable,
-): TreeBranch {
-	return new ForkedTreeBranch(checkout, nodeKeyManager, breaker);
-}
-
-class ForkedTreeBranch implements TreeBranch {
-	private _checkout?: TreeCheckout;
-	private readonly views: TreeView<ImplicitFieldSchema>[] = [];
-
-	public constructor(
-		checkout: TreeCheckout,
-		private readonly nodeKeyManager: NodeKeyManager,
-		private readonly breaker?: Breakable,
-	) {
-		this._checkout = checkout;
-	}
-
-	public get checkout(): TreeCheckout {
-		if (this._checkout === undefined) {
-			throw new UsageError("This branch has been disposed and can no longer be used.");
-		}
-
-		return this._checkout;
-	}
-
-	public viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeViewConfiguration<TRoot>,
-	): TreeView<TRoot> {
-		if (this._checkout === undefined) {
-			throw new UsageError("This branch has been disposed and can no longer be used.");
-		}
-
-		const view = new SchematizingSimpleTreeView(
-			this._checkout,
-			config,
-			this.nodeKeyManager,
-			this.breaker,
-		);
-
-		this.views.push(view);
-		return view;
-	}
-
-	public branch(): TreeBranch {
-		if (this._checkout === undefined) {
-			throw new UsageError(
-				"The parent branch has already been disposed and can no longer create new branches.",
-			);
-		}
-
-		return createTreeBranch(this._checkout.fork(), this.nodeKeyManager, this.breaker);
-	}
-
-	public merge(branch: TreeBranch, disposeView?: boolean): void {
-		assert(branch instanceof ForkedTreeBranch, "Unsupported TreeBranch implementation");
-		if (this._checkout === undefined) {
-			throw new UsageError(
-				"The target of the branch merge has been disposed and cannot be merged.",
-			);
-		}
-
-		if (branch._checkout === undefined) {
-			throw new UsageError(
-				"The source of the branch merge has been disposed and cannot be merged.",
-			);
-		}
-
-		if (disposeView !== undefined) {
-			this._checkout.merge(branch._checkout, disposeView);
-		} else {
-			this._checkout.merge(branch._checkout);
-		}
-	}
-
-	public rebase(branch: TreeBranch): void {
-		assert(branch instanceof ForkedTreeBranch, "Unsupported TreeBranch implementation");
-		if (this._checkout === undefined) {
-			throw new UsageError(
-				"The target of the branch rebase has been disposed and cannot be rebased.",
-			);
-		}
-
-		if (branch._checkout === undefined) {
-			throw new UsageError(
-				"The source of the branch rebase has been disposed and cannot be rebased.",
-			);
-		}
-
-		this._checkout.rebase(branch._checkout);
-	}
-
-	public rebaseOnto(tree: BranchableTree): void {
-		assert(
-			tree instanceof SharedTree || tree instanceof ForkedTreeBranch,
-			"Unsupported TreeBranch implementation",
-		);
-		if (this._checkout === undefined) {
-			throw new UsageError(
-				"The target of the branch rebase has been disposed and cannot be rebased.",
-			);
-		}
-
-		this._checkout.rebaseOnto(tree.checkout);
-	}
-
-	public dispose(): void {
-		if (this._checkout === undefined) {
-			throw new UsageError(
-				"The branch has already been disposed and cannot be disposed again.",
-			);
-		}
-
-		this._checkout[disposeSymbol]();
-		this._checkout = undefined;
-		for (const view of this.views) {
-			if (!view.disposed) {
-				view.dispose();
-			}
-		}
-	}
-
-	public get disposed(): boolean {
-		return this._checkout === undefined;
-	}
+	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
+	return treeOrView.checkout as unknown as TreeCheckoutBranch;
 }
 
 /**
