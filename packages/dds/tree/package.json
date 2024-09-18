@@ -212,6 +212,14 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:test:cjs": [
+				"...",
+				"@fluidframework/id-compressor#build:test:cjs"
+			],
+			"build:test:esm": [
+				"...",
+				"@fluidframework/id-compressor#build:test:esm"
+			],
 			"ci:build:docs": [
 				"build:esnext"
 			]
