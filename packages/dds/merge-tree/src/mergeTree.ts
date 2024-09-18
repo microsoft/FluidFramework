@@ -90,7 +90,6 @@ import {
 } from "./referencePositions.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
-import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
 
@@ -1601,11 +1600,7 @@ export class MergeTree {
 		return { next };
 	};
 
-	private ensureIntervalBoundary(
-		pos: number | "start" | "end",
-		refSeq: number,
-		clientId: number,
-	): void {
+	private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number): void {
 		const splitNode = this.insertingWalk(
 			this.root,
 			pos,
@@ -1649,21 +1644,14 @@ export class MergeTree {
 
 	private insertingWalk(
 		block: MergeBlock,
-		pos: number | "start" | "end",
+		pos: number,
 		refSeq: number,
 		clientId: number,
 		seq: number,
 		context: InsertContext,
 		isLastChildBlock: boolean = true,
 	): MergeBlock | undefined {
-		let _pos: number;
-		if (pos === "start") {
-			_pos = 0;
-		} else if (pos === "end") {
-			_pos = this.root.mergeTree?.getLength(refSeq, clientId) ?? 0;
-		} else {
-			_pos = pos;
-		}
+		let _pos: number = pos;
 
 		const children = block.children;
 		let childIndex: number;
@@ -1879,8 +1867,8 @@ export class MergeTree {
 	}
 
 	public obliterateRange(
-		start: SequencePlace,
-		end: SequencePlace,
+		start: number,
+		end: number,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -1889,20 +1877,8 @@ export class MergeTree {
 	): void {
 		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
 
-		const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
-
-		assert(
-			startPos !== undefined &&
-				endPos !== undefined &&
-				startSide !== undefined &&
-				endSide !== undefined &&
-				startPos !== "end" &&
-				endPos !== "start",
-			0x9e2 /* start and end cannot be undefined because they were not passed in as undefined */,
-		);
-
-		this.ensureIntervalBoundary(startPos, refSeq, clientId);
-		this.ensureIntervalBoundary(endPos, refSeq, clientId);
+		this.ensureIntervalBoundary(start, refSeq, clientId);
+		this.ensureIntervalBoundary(end, refSeq, clientId);
 
 		let _overwrite = overwrite;
 		const localOverlapWithRefs: ISegment[] = [];
@@ -1919,20 +1895,9 @@ export class MergeTree {
 			localSeq,
 			segmentGroup: undefined,
 		};
-		const normalizedStartPos = startPos === "start" || startPos === undefined ? 0 : startPos;
-		const normalizedEndPos =
-			endPos === "end" || endPos === undefined ? this.getLength(refSeq, clientId) : endPos;
 
-		const { segment: startSeg } = this.getContainingSegment(
-			normalizedStartPos,
-			refSeq,
-			clientId,
-		);
-		const { segment: endSeg } = this.getContainingSegment(
-			normalizedEndPos - 1,
-			refSeq,
-			clientId,
-		);
+		const { segment: startSeg } = this.getContainingSegment(start, refSeq, clientId);
+		const { segment: endSeg } = this.getContainingSegment(end - 1, refSeq, clientId);
 		assert(
 			startSeg !== undefined && endSeg !== undefined,
 			0xa3f /* segments cannot be undefined */,
@@ -2684,28 +2649,18 @@ export class MergeTree {
 		leaf: ISegmentAction<TClientData>,
 		accum: TClientData,
 		post?: BlockAction<TClientData>,
-		start: SequencePlace = 0,
-		end?: SequencePlace,
+		start: number = 0,
+		end?: number,
 		localSeq?: number,
 		visibilitySeq: number = refSeq,
 	): void {
-		const maybeEndPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
-		if (maybeEndPos === start) {
+		const endPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
+		if (endPos === start) {
 			return;
 		}
 
 		let pos = 0;
-		let { startPos, endPos } = endpointPosAndSide(start, end);
 
-		startPos = startPos === "start" || startPos === undefined ? 0 : startPos;
-		endPos =
-			endPos === "end" || endPos === undefined
-				? this.root.mergeTree?.getLength(refSeq, clientId) ?? 0
-				: endPos;
-		assert(
-			startPos !== "end" && endPos !== "start",
-			0x9e3 /* start cannot be 'end' and end cannot be 'start' */,
-		);
 		depthFirstNodeWalk(
 			this.root,
 			this.root.children[0],
@@ -2733,15 +2688,13 @@ export class MergeTree {
 
 				const nextPos = pos + lenAtRefSeq;
 				// start is beyond the current node, so we can skip it
-				if (typeof startPos === "number" && startPos >= nextPos) {
+				if (start >= nextPos) {
 					pos = nextPos;
 					return NodeAction.Skip;
 				}
 
 				if (node.isLeaf()) {
-					if (
-						leaf(node, pos, refSeq, clientId, startPos - pos, endPos - pos, accum) === false
-					) {
+					if (leaf(node, pos, refSeq, clientId, start - pos, endPos - pos, accum) === false) {
 						return NodeAction.Exit;
 					}
 					pos = nextPos;
@@ -2751,7 +2704,7 @@ export class MergeTree {
 			post === undefined
 				? undefined
 				: (block): boolean =>
-						post(block, pos, refSeq, clientId, startPos - pos, endPos - pos, accum),
+						post(block, pos, refSeq, clientId, start - pos, endPos - pos, accum),
 		);
 	}
 }
