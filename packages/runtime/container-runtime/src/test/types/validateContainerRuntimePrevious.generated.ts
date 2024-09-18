@@ -22,7 +22,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_ChannelCollection": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ChannelCollection = requireAssignableTo<TypeOnly<old.ChannelCollection>, TypeOnly<current.ChannelCollection>>
 
 /*
@@ -113,7 +112,6 @@ declare type current_as_old_for_Class_DocumentsSchemaController = requireAssigna
  * typeValidation.broken:
  * "Class_FluidDataStoreContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_FluidDataStoreContext = requireAssignableTo<TypeOnly<old.FluidDataStoreContext>, TypeOnly<current.FluidDataStoreContext>>
 
 /*
@@ -150,7 +148,6 @@ declare type current_as_old_for_Class_FluidDataStoreRegistry = requireAssignable
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContext>, TypeOnly<current.LocalFluidDataStoreContext>>
 
 /*
@@ -169,7 +166,6 @@ declare type current_as_old_for_Class_LocalFluidDataStoreContext = requireAssign
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContextBase": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContextBase>, TypeOnly<current.LocalFluidDataStoreContextBase>>
 
 /*
@@ -387,6 +383,15 @@ declare type current_as_old_for_Function_detectOutboundReferences = requireAssig
  * "Function_isRuntimeMessage": {"backCompat": false}
  */
 declare type current_as_old_for_Function_isRuntimeMessage = requireAssignableTo<TypeOnly<typeof current.isRuntimeMessage>, TypeOnly<typeof old.isRuntimeMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_loadContainerRuntime": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_loadContainerRuntime = requireAssignableTo<TypeOnly<typeof current.loadContainerRuntime>, TypeOnly<typeof old.loadContainerRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -800,7 +805,6 @@ declare type current_as_old_for_Interface_IFluidDataStoreContextEvents = require
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextInternal": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDataStoreContextInternal = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextInternal>, TypeOnly<current.IFluidDataStoreContextInternal>>
 
 /*
@@ -819,7 +823,6 @@ declare type current_as_old_for_Interface_IFluidDataStoreContextInternal = requi
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextProps": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextProps>, TypeOnly<current.IFluidDataStoreContextProps>>
 
 /*
@@ -946,7 +949,6 @@ declare type current_as_old_for_Interface_IGenerateSummaryTreeResult = requireAs
  * typeValidation.broken:
  * "Interface_ILocalDetachedFluidDataStoreContextProps": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ILocalDetachedFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.ILocalDetachedFluidDataStoreContextProps>, TypeOnly<current.ILocalDetachedFluidDataStoreContextProps>>
 
 /*
@@ -965,7 +967,6 @@ declare type current_as_old_for_Interface_ILocalDetachedFluidDataStoreContextPro
  * typeValidation.broken:
  * "Interface_ILocalFluidDataStoreContextProps": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ILocalFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.ILocalFluidDataStoreContextProps>, TypeOnly<current.ILocalFluidDataStoreContextProps>>
 
 /*
@@ -1498,6 +1499,24 @@ declare type old_as_current_for_Interface_IUploadSummaryResult = requireAssignab
  * "Interface_IUploadSummaryResult": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IUploadSummaryResult = requireAssignableTo<TypeOnly<current.IUploadSummaryResult>, TypeOnly<old.IUploadSummaryResult>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_LoadContainerRuntimeParams": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<old.LoadContainerRuntimeParams>, TypeOnly<current.LoadContainerRuntimeParams>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_LoadContainerRuntimeParams": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<current.LoadContainerRuntimeParams>, TypeOnly<old.LoadContainerRuntimeParams>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
