@@ -164,13 +164,17 @@ function extractShareLinkData(
 	return shareLinkInfo;
 }
 
+function ensureStartsWithSlash(path: string): string {
+	return path.startsWith("/") ? path : `/${path}`;
+}
+
 export async function createNewEmptyFluidFile(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
 ): Promise<string> {
-	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
+	const filePath = newFileInfo.filePath ? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath)) : "";
 	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
@@ -234,7 +238,7 @@ export async function createNewFluidFileFromSummary(
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<ICreateFileResponse> {
-	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
+	const filePath = newFileInfo.filePath ? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath)) : "";
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
 	const baseUrl =
 		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
