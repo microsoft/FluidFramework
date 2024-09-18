@@ -26,4 +26,3 @@ export {
 	StableId,
 	IdCreationRange,
 } from "./types/index.js";
-export { createAlwaysFinalizedIdCompressor } from "./createAlwaysFinalizedIdCompressor.js";

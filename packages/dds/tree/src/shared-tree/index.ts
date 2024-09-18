@@ -14,6 +14,7 @@ export {
 	SharedTreeFormatVersion,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
+	type ForestOptions,
 } from "./sharedTree.js";
 
 export {

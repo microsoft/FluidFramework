@@ -23,11 +23,8 @@ import type {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
-import {
-	assertIsStableId,
-	createIdCompressor,
-	createAlwaysFinalizedIdCompressor,
-} from "@fluidframework/id-compressor/internal";
+import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,

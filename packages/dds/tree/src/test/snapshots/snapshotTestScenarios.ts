@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../external-utilities/index.js";
