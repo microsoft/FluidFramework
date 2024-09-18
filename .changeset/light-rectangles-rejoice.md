@@ -5,7 +5,7 @@
 section: tree
 ---
 
-Allow associating metadata with Field Schema.
+Allow associating metadata with Field Schema
 
 Users of TreeView can now specify metadata when creating Field Schema.
 This includes system-understood metadata, i.e., `description`.
@@ -29,7 +29,7 @@ Functionality like the experimental conversion of Tree Schema to [JSON Schema](h
 In the case of the `description` property, this is mapped directly to the `description` property supported by JSON Schema.
 
 Custom, user-defined properties can also be specified.
-These properties will not be leveraged by the system by default, but can be used as a handy means of associating common, application-specific properties with Field Schema.
+These properties will not be leveraged by the system by default, but can be used as a handy means of associating common application-specific properties with Field Schema.
 
 Example:
 
