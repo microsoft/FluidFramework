@@ -99,47 +99,53 @@ export interface CheckoutEvents {
 }
 
 /**
+ * A "version control"-style branch of a SharedTree.
+ * @remarks Branches may be used to coordinate edits to a SharedTree, e.g. via merge and rebase operations.
+ * Changes applied to a branch of a branch only apply to that branch and are isolated from other branches.
+ * Changes may be synchronized across branches via merge and rebase operations provided on the branch object.
  * @alpha
  */
-export interface TreeCheckoutBranch extends ViewableTree {
+export interface TreeBranch extends ViewableTree {
 	/**
-	 * Spawn a new view which is based off of the current state of this view.
-	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
+	 * Spawn a new branch which is based off of the current state of this branch.
+	 * Any mutations of the new branch will not apply to this branch until the new branch is merged back into this branch via `merge()`.
 	 */
-	branch(): TreeCheckoutBranched;
+	branch(): TreeBranchFork;
 
 	/**
-	 * Apply all the new changes on the given view to this view.
-	 * @param view - a view which was created by a call to `fork()`.
+	 * Apply all the new changes on the given branch to this branch.
+	 * @param view - a branch which was created by a call to `branch()`.
 	 * It is automatically disposed after the merge completes.
-	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
+	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
 	 */
-	merge(view: TreeCheckoutBranched): void;
+	merge(branch: TreeBranchFork): void;
 
 	/**
-	 * Apply all the new changes on the given view to this view.
-	 * @param view - a view which was created by a call to `fork()`.
-	 * @param disposeView - whether or not to dispose `view` after the merge completes.
-	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
+	 * Apply all the new changes on the given branch to this branch.
+	 * @param branch - a branch which was created by a call to `branch()`.
+	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
+	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
 	 */
-	merge(view: TreeCheckoutBranched, disposeView: boolean): void;
+	merge(branch: TreeBranchFork, disposeMerged: boolean): void;
 
 	/**
-	 * Rebase the given view onto this view.
-	 * @param view - a view which was created by a call to `fork()`. It is modified by this operation.
+	 * Rebase the given branch onto this branch.
+	 * @param branch - a branch which was created by a call to `branch()`. It is modified by this operation.
 	 */
-	rebase(view: TreeCheckoutBranched): void;
+	rebase(branch: TreeBranchFork): void;
 }
 
 /**
+ * A {@link TreeBranch | branch} of a SharedTree that has merged from another branch.
+ * @remarks This branch should be disposed when it is no longer needed in order to free resources.
  * @alpha
  */
-export interface TreeCheckoutBranched extends TreeCheckoutBranch, IDisposable {
+export interface TreeBranchFork extends TreeBranch, IDisposable {
 	/**
 	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
-	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
+	 * @param view - Either the root view or a view that was created by a call to `branch()`. It is not modified by this operation.
 	 */
-	rebaseOnto(view: TreeCheckoutBranch): void;
+	rebaseOnto(view: TreeBranch): void;
 }
 
 /**
@@ -188,11 +194,11 @@ export interface ITreeCheckout extends AnchorLocator, ViewableTree {
 
 	branch(): ITreeCheckoutFork;
 
-	merge(view: ITreeCheckoutFork): void;
+	merge(checkout: ITreeCheckoutFork): void;
 
-	merge(view: ITreeCheckoutFork, disposeView: boolean): void;
+	merge(checkout: ITreeCheckoutFork, disposeMerged: boolean): void;
 
-	rebase(view: ITreeCheckoutFork): void;
+	rebase(checkout: ITreeCheckoutFork): void;
 
 	/**
 	 * Replaces all schema with the provided schema.

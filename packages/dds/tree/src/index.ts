@@ -59,8 +59,8 @@ export {
 	type RunTransaction,
 	rollback,
 	getBranch,
-	type TreeCheckoutBranch,
-	type TreeCheckoutBranched,
+	type TreeBranch,
+	type TreeBranchFork,
 } from "./shared-tree/index.js";
 
 export {

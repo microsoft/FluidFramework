@@ -228,7 +228,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				view2.root.insertAt(2, "b");
 
 				tree2.rebaseOnto(branch1);
-				branch1.merge(tree2);
+				branch1.merge(tree2, false);
 
 				provider.processMessages();
 				await takeSnapshot(tree1, "tree2");

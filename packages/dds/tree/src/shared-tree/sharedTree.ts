@@ -62,8 +62,7 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import {
 	type CheckoutEvents,
 	type TreeCheckout,
-	type TreeCheckoutBranch,
-	alphalizeCheckout,
+	type TreeBranch,
 	createTreeCheckout,
 } from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
@@ -319,30 +318,28 @@ export class SharedTree
 }
 
 /**
- * Get a {@link TreeCheckoutBranch} from a {@link ITree}.
+ * Get a {@link TreeBranch} from a {@link ITree}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  */
-export function getBranch(tree: ITree): TreeCheckoutBranch;
+export function getBranch(tree: ITree): TreeBranch;
 /**
- * Get a {@link TreeCheckoutBranch} from a {@link TreeView}.
+ * Get a {@link TreeBranch} from a {@link TreeView}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  */
-export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeCheckoutBranch;
-export function getBranch(
-	treeOrView: ITree | TreeView<ImplicitFieldSchema>,
-): TreeCheckoutBranch {
+export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
+export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): TreeBranch {
 	assert(
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
 		"Unsupported implementation",
 	);
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return treeOrView.checkout as unknown as TreeCheckoutBranch;
+	return treeOrView.checkout as unknown as TreeBranch;
 }
 
 /**

@@ -31,7 +31,7 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
-	type TreeCheckoutBranch,
+	type TreeBranch,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -278,7 +278,7 @@ describe("sharedTreeView", () => {
 			treeC.merge(treeD);
 			assert.equal(viewB.root[0], undefined);
 			assert.equal(viewC.root[0], "view");
-			treeB.merge(treeC);
+			treeB.merge(treeC, false);
 			assert.equal(viewB.root[0], "view");
 			assert.equal(viewC.root[0], "view");
 		});
@@ -311,7 +311,7 @@ describe("sharedTreeView", () => {
 			const childView = childTree.viewWith(view.config);
 			parentView.root.insertAtStart("P2");
 			childView.root.insertAtStart("C1");
-			childTree.merge(parentTree);
+			childTree.merge(parentTree, false);
 			assert.deepEqual([...childView.root], ["P2", "C1", "P1"]);
 			assert.deepEqual([...parentView.root], ["P2", "P1"]);
 		});
@@ -473,7 +473,7 @@ describe("sharedTreeView", () => {
 			parentView.root.insertAtStart("root");
 			const childTree = parentTree.branch();
 			const childView = childTree.viewWith(parentView.config);
-			parentTree.merge(childTree);
+			parentTree.merge(childTree, false);
 			assert.equal(childView.root[0], "root");
 		});
 
@@ -1268,7 +1268,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeCheckoutBranch;
+		tree: TreeBranch;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1280,7 +1280,7 @@ function itView(
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<typeof rootArray>;
-		tree: TreeCheckoutBranch;
+		tree: TreeBranch;
 		logger: IMockLoggerExt;
 	}) => void,
 	options?: {
@@ -1294,7 +1294,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeCheckoutBranch;
+		tree: TreeBranch;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1308,7 +1308,7 @@ function itView<
 		thunk: typeof fn,
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: TreeCheckoutBranch;
+			tree: TreeBranch;
 			logger: IMockLoggerExt;
 		},
 	): void {
@@ -1326,7 +1326,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeCheckoutBranch;
+					tree: TreeBranch;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -1340,7 +1340,7 @@ function itView<
 			(
 				thunk as unknown as (args: {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeCheckoutBranch;
+					tree: TreeBranch;
 					logger: IMockLoggerExt;
 				}) => void
 			)({ view, tree, logger });
@@ -1352,7 +1352,7 @@ function itView<
 		fork: boolean,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeCheckoutBranch;
+		tree: TreeBranch;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();

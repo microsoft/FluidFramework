@@ -21,14 +21,6 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @alpha
-export interface BranchableTree extends ViewableTree {
-    branch(): TreeBranch;
-    merge(branch: TreeBranch): void;
-    merge(branch: TreeBranch, disposeView: boolean): void;
-    rebase(branch: TreeBranch): void;
-}
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -150,10 +142,10 @@ export type FluidObject<T = unknown> = {
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @alpha
-export function getBranch(tree: ITree): BranchableTree;
+export function getBranch(tree: ITree): TreeBranch;
 
 // @alpha
-export function getBranch(view: TreeView<ImplicitFieldSchema>): BranchableTree;
+export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
@@ -873,8 +865,16 @@ export const TreeBeta: {
 };
 
 // @alpha
-export interface TreeBranch extends BranchableTree, IDisposable {
-    rebaseOnto(fork: BranchableTree): void;
+export interface TreeBranch extends ViewableTree {
+    branch(): TreeBranchFork;
+    merge(branch: TreeBranchFork): void;
+    merge(branch: TreeBranchFork, disposeMerged: boolean): void;
+    rebase(branch: TreeBranchFork): void;
+}
+
+// @alpha
+export interface TreeBranchFork extends TreeBranch, IDisposable {
+    rebaseOnto(view: TreeBranch): void;
 }
 
 // @public @sealed
