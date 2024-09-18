@@ -99,11 +99,18 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	const items: JsonFieldSchema =
 		allowedTypes.length === 1 ? allowedTypes[0] ?? oob() : { anyOf: allowedTypes };
 
-	return {
+	const output: Mutable<JsonArrayNodeSchema> = {
 		type: "array",
 		_treeNodeSchemaKind: NodeKind.Array,
 		items,
 	};
+
+	// Don't include "description" property at all if it's not present.
+	if (schema.description !== undefined) {
+		output.description = schema.description;
+	}
+
+	return output;
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
@@ -182,7 +189,8 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 	schema.allowedTypes.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
-	return {
+
+	const output: Mutable<JsonMapNodeSchema> = {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
@@ -194,6 +202,13 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 						},
 		},
 	};
+
+	// Don't include "description" property at all if it's not present.
+	if (schema.description !== undefined) {
+		output.description = schema.description;
+	}
+
+	return output;
 }
 
 function createSchemaRef(schemaId: string): JsonSchemaRef {

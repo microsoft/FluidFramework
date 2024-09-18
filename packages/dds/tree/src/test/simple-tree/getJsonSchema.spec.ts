@@ -95,7 +95,9 @@ describe("getJsonSchema", () => {
 
 	it("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.array(schemaFactory.string);
+		const Schema = schemaFactory.array(schemaFactory.string, {
+			metadata: { description: "An array of strings" },
+		});
 
 		const actual = getJsonSchema(Schema);
 
@@ -104,6 +106,7 @@ describe("getJsonSchema", () => {
 				'test.Array<["com.fluidframework.leaf.string"]>': {
 					type: "array",
 					_treeNodeSchemaKind: NodeKind.Array,
+					description: "An array of strings",
 					items: {
 						$ref: "#/$defs/com.fluidframework.leaf.string",
 					},
@@ -132,7 +135,9 @@ describe("getJsonSchema", () => {
 
 	it("Map schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.map(schemaFactory.string);
+		const Schema = schemaFactory.map(schemaFactory.string, {
+			metadata: { description: "A map containing strings" },
+		});
 
 		const actual = getJsonSchema(Schema);
 		const expected: JsonTreeSchema = {
@@ -140,6 +145,7 @@ describe("getJsonSchema", () => {
 				'test.Map<["com.fluidframework.leaf.string"]>': {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Map,
+					description: "A map containing strings",
 					patternProperties: {
 						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
 					},
