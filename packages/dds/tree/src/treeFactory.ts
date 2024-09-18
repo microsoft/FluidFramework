@@ -9,7 +9,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
@@ -130,8 +130,7 @@ export function independentView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: SharedTreeOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeView<TSchema> {
-	const idCompressor: IIdCompressor =
-		options.idCompressor ?? createAlwaysFinalizedIdCompressor();
+	const idCompressor: IIdCompressor = options.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 	const schema = new TreeStoredSchemaRepository();
