@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert } from "./debug.js";
 
@@ -15,15 +14,15 @@ export type JsonBuilderContext<ObjectHandle, ArrayHandle> =
 	| { parentArray: ArrayHandle };
 
 export interface JsonBuilder<ObjectHandle, ArrayHandle> {
-	addObject?(context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): ObjectHandle;
-	addArray?(context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): ArrayHandle;
-	addPrimitive?(
+	addObject(context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): ObjectHandle;
+	addArray(context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): ArrayHandle;
+	addPrimitive(
 		value: JsonPrimitive,
 		context?: JsonBuilderContext<ObjectHandle, ArrayHandle>,
 	): void;
-	appendText?(chars: string, context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): void;
-	completeContext?(context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): void;
-	completeContainer?(container: ObjectHandle | ArrayHandle): void;
+	appendText(chars: string, context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): void;
+	completeContext(context?: JsonBuilderContext<ObjectHandle, ArrayHandle>): void;
+	completeContainer(container: ObjectHandle | ArrayHandle): void;
 }
 
 export function contextIsObject<ObjectHandle, ArrayHandle>(
@@ -45,7 +44,7 @@ export function createStreamedJsonParser<ObjectHandle, ArrayHandle>(
 
 // Implementation
 
-const smoothStreaming = true;
+const smoothStreaming = false;
 
 // prettier-ignore
 enum State {
@@ -236,9 +235,8 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 
 		switch (charCode) {
 			case 123: // '{'
-				this.verifyImplemented(this.builder.addObject);
 				this.consumeCharAndPush(State.InsideObjectAtStart, {
-					parentObject: this.builder.addObject!(builderContext),
+					parentObject: this.builder.addObject(builderContext),
 				});
 				break;
 			case 58: // ':'
@@ -251,9 +249,8 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 				this.consumeCharAndEnterNextState(Production.CloseBrace);
 				break;
 			case 91: // '['
-				this.verifyImplemented(this.builder.addArray);
 				this.consumeCharAndPush(State.InsideArrayAtStart, {
-					parentArray: this.builder.addArray!(builderContext),
+					parentArray: this.builder.addArray(builderContext),
 				});
 				break;
 			case 93: // ']'
@@ -264,8 +261,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 					// Keys shouldn't be updated incrementally, so wait until the complete key has arrived
 					this.pushContext(State.InsideKey, char);
 				} else {
-					this.verifyImplemented(this.builder.addPrimitive);
-					this.builder.addPrimitive!("", builderContext);
+					this.builder.addPrimitive("", builderContext);
 					this.consumeCharAndPush(State.InsideString);
 				}
 				break;
@@ -434,8 +430,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		const builderContext = this.builderContextFromParserContext(
 			this.contexts[this.contexts.length - 2]!,
 		)!;
-		this.verifyImplemented(this.builder.appendText);
-		this.builder.appendText!(text, builderContext);
+		this.builder.appendText(text, builderContext);
 	}
 
 	private consumeCharAndPush(
@@ -461,8 +456,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	}
 
 	private setPrimitiveValueAndPop(value: JsonPrimitive): void {
-		this.verifyImplemented(this.builder.addPrimitive);
-		this.builder.addPrimitive!(
+		this.builder.addPrimitive(
 			value,
 			this.builderContextFromParserContext(this.contexts[this.contexts.length - 2]!),
 		);
@@ -527,11 +521,5 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 
 	private unexpectedTokenError(token: string): void {
 		throw new Error(`Unexpected token ${token}`);
-	}
-
-	private verifyImplemented<T>(method?: T): void {
-		if (typeof method !== "function") {
-			throw new TypeError(`Method is not implemented`);
-		}
 	}
 }

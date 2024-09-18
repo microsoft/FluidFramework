@@ -135,10 +135,6 @@ const remove = jh.object(() => ({
 	},
 }));
 
-const responseHandler1 = createResponseHandler(exampleGeneratedEdit(), new AbortController());
-const jsonSchema1 = responseHandler1.jsonSchema();
-console.log(`Schema:\n${JSON.stringify(jsonSchema1, null, 2)}`);
-
 const sampleOps = [
 	{
 		type: "setRoot",
@@ -225,9 +221,6 @@ const testHandler = (chunkSize: number) => {
 	}
 	testResponseHandler.complete();
 };
-
-testHandler(21);
-testHandler(27);
 
 describe("JsonHandler", () => {
 	it("Test", async () => {
