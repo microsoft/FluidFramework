@@ -163,11 +163,19 @@ export enum ForestType {
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
 
+// @alpha
+export interface ICodecOptions {
+    readonly jsonValidator: JsonValidator;
+}
+
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @alpha
+export function independentInitializedView<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeView<TSchema>;
 
 // @alpha
 export function independentView<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & {
@@ -349,6 +357,11 @@ export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 };
 
+// @alpha
+export interface JsonValidator {
+    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
+}
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -401,6 +414,9 @@ export enum NodeKind {
     Map = 0,
     Object = 2
 }
+
+// @alpha
+export const noopValidator: JsonValidator;
 
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
@@ -517,6 +533,12 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     // (undocumented)
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
+}
+
+// @alpha
+export interface SchemaValidationFunction<Schema extends TSchema> {
+    // (undocumented)
+    check(data: unknown): data is Static<Schema>;
 }
 
 // @public
@@ -709,6 +731,9 @@ export interface TreeViewEvents {
     schemaChanged(): void;
 }
 
+// @alpha
+export const typeboxValidator: JsonValidator;
+
 // @public @deprecated
 const typeNameSymbol: unique symbol;
 
@@ -741,6 +766,13 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
         [key: string]: VerboseTree<THandle>;
     };
     type: string;
+}
+
+// @alpha (undocumented)
+export interface ViewContent {
+    readonly idCompressor: IIdCompressor;
+    readonly schema: JsonCompatible;
+    readonly tree: JsonCompatible<IFluidHandle>;
 }
 
 // @public @sealed

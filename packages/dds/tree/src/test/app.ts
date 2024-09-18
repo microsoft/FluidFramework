@@ -13,10 +13,20 @@ import {
 	type VerboseTree,
 	extractPersistedSchema,
 	FluidClientVersion,
+	type ViewContent,
+	independentInitializedView,
+	TreeViewConfiguration,
+	type ForestOptions,
+	type ICodecOptions,
+	typeboxValidator,
 } from "../index.js";
 import { readFileSync, writeFileSync } from "node:fs";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	deserializeIdCompressor,
+	type SerializedIdCompressorWithOngoingSession,
+} from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 console.log("App");
@@ -50,7 +60,7 @@ writeFileSync(
 const File = Type.Object({
 	tree: Type.Unsafe<JsonCompatible<IFluidHandle>>(),
 	schema: Type.Unsafe<JsonCompatible>(),
-	idCompressor: Type.Unsafe<JsonCompatible>(),
+	idCompressor: Type.Unsafe<SerializedIdCompressorWithOngoingSession>(),
 });
 type File = Static<typeof File>;
 
@@ -74,3 +84,26 @@ function rejectHandles(key: string, value: unknown): unknown {
 }
 
 writeFileSync("list.combo.json", JSON.stringify(file, rejectHandles));
+
+// deserializeIdCompressor
+
+const combo: File = JSON.parse(readFileSync("list.combo.json").toString());
+
+const content: ViewContent = {
+	schema: combo.schema,
+	tree: combo.tree,
+	idCompressor: deserializeIdCompressor(combo.idCompressor),
+};
+
+const config = new TreeViewConfiguration({
+	schema: List,
+	enableSchemaValidation: true,
+	preventAmbiguity: true,
+});
+
+const options: ForestOptions & ICodecOptions = { jsonValidator: typeboxValidator };
+
+const view = independentInitializedView(config, options, content);
+const compat = view.compatibility;
+const root = view.root;
+console.log("Done");
