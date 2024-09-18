@@ -614,7 +614,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				invalidPositions.push("start");
 			}
 			// Validate end if not insert, or insert has end
-			//
+			// TODO: this condition will have to change for zero length, unless we only want to support
+			// zero length with sideness (and not plain numbers).
 			if (
 				(op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
 				(end === undefined || end <= start!)

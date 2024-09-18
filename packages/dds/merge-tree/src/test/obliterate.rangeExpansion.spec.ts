@@ -66,6 +66,36 @@ describe.skip("obliterate", () => {
 		expectedText: "XYZheo world",
 		expectedEventCount: 3,
 	});
+	itCorrectlyObliterates({
+		title: "zero length obliterate",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.Before });
+			helper.insertText("B", 0, "more ");
+		},
+		expectedText: "hello world",
+		// TODO: remove this after merging sided obliterates
+		expectedEventCount: 3,
+	});
+	itCorrectlyObliterates({
+		title: "obliterate at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange(
+				"A",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+			helper.insertText("B", 10, "123");
+		},
+		expectedText: "hello",
+		// TODO: remove this after merging sided obliterates
+		expectedEventCount: 3,
+	});
 });
 
 describe.skip("overlapping edits", () => {
