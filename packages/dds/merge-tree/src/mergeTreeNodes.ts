@@ -30,7 +30,6 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
-import { Side } from "./sequencePlace.js";
 
 /**
  * Common properties for a node in a merge tree.
@@ -263,14 +262,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
-	/**
-	 * Stores side information passed to obliterate for the start of a range.
-	 */
-	startSide?: Side.Before | Side.After;
-	/**
-	 * Stores side information passed to obliterate for the end of a range.
-	 */
-	endSide?: Side.Before | Side.After;
 
 	/**
 	 * Add properties to this segment via annotation.
@@ -674,7 +665,7 @@ export abstract class BaseSegment implements ISegment {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
 				const obliterateInfo = segmentGroup.obliterateInfo;
-				assert(obliterateInfo !== undefined, "must have obliterate info");
+				assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
 				this.localMovedSeq = obliterateInfo.localSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
