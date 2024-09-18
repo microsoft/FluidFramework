@@ -58,6 +58,7 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	type ForestOptions,
 } from "./shared-tree/index.js";
 
 export {

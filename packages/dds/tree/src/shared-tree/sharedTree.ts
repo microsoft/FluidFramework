@@ -371,12 +371,18 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
  * @internal
  */
 export type SharedTreeOptions = Partial<ICodecOptions> &
-	Partial<SharedTreeFormatOptions> & {
-		/**
-		 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
-		 */
-		forest?: ForestType;
-	};
+	Partial<SharedTreeFormatOptions> &
+	ForestOptions;
+
+/**
+ * @alpha
+ */
+export interface ForestOptions {
+	/**
+	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 */
+	readonly forest?: ForestType;
+}
 
 /**
  * Options for configuring the persisted format SharedTree uses.
@@ -404,7 +410,7 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
- * @internal
+ * @alpha
  */
 export enum ForestType {
 	/**

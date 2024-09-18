@@ -22,6 +22,7 @@ import {
 	buildConfiguredForest,
 	createTreeCheckout,
 	SharedTree as SharedTreeImpl,
+	type ForestOptions,
 	type SharedTreeOptions,
 } from "./shared-tree/index.js";
 import type {
@@ -118,17 +119,17 @@ export function configuredSharedTree(
 }
 
 /**
- * Create a {@link TreeView} that is not tied to any {@link SharedTree} instance.
+ * Create a {@link TreeView} that is not tied to any {@link ITree} instance.
  *
  * @remarks
  * Such a view can never experience collaboration or be persisted to to a Fluid Container.
  *
- * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some fluid service.
+ * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
  * @alpha
  */
 export function independentView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: SharedTreeOptions & { idCompressor?: IIdCompressor | undefined },
+	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeView<TSchema> {
 	const idCompressor: IIdCompressor = options.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
