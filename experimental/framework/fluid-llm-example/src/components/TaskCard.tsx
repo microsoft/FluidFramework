@@ -33,8 +33,6 @@ export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, shar
 		};
 	}, []);
 
-
-
 	const deleteTask = () => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
 		console.log('initiated delete of task at index: ', taskIndex);

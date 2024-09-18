@@ -5,7 +5,6 @@
 
 import {
 	type FlexMapNodeSchema,
-	type FlexTreeMapNode,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type MapTreeNode,
@@ -14,12 +13,7 @@ import {
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
-import {
-	type FactoryContent,
-	type InsertableContent,
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	createFieldSchema,
@@ -40,7 +34,11 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
+import {
+	mapTreeFromNodeData,
+	type FactoryContent,
+	type InsertableContent,
+} from "./toMapTree.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
@@ -145,8 +143,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return this.entries();
 	}
 
-	private get innerNode(): InnerNode & FlexTreeMapNode {
-		return getOrCreateInnerNode(this) as InnerNode & FlexTreeMapNode;
+	private get innerNode(): InnerNode {
+		return getOrCreateInnerNode(this);
 	}
 
 	private editor(key: string): OptionalFieldEditBuilder<ExclusiveMapTree> {

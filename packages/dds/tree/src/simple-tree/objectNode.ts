@@ -20,11 +20,7 @@ import {
 	type MapTreeNode,
 	UnhydratedContext,
 } from "../feature-libraries/index.js";
-import {
-	type InsertableContent,
-	getTreeNodeForField,
-	prepareContentForHydration,
-} from "./proxies.js";
+import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	type ImplicitFieldSchema,
@@ -47,7 +43,7 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
+import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
@@ -55,7 +51,7 @@ import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * Helper used to produce types for object nodes.
- * @public
+ * @system @public
  */
 export type ObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
@@ -86,7 +82,7 @@ export type TreeObjectNode<
  * TODO: Account for field schemas with default value providers.
  * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
  *
- * @public
+ * @system @public
  */
 export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
 	FieldKind.Optional | FieldKind.Identifier
@@ -98,6 +94,8 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  * Helper used to produce types for:
  *
  * 1. Insertable content which can be used to construct an object node.
+ * In this case, only own properties are considered.
+ * This reduces the risk of incorrectly interpreting data at the cost of occasionally requiring users to convert data into a compatible format.
  *
  * 2. Insertable content which is an unhydrated object node.
  *
@@ -105,7 +103,7 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  *
  * @privateRemarks TODO: consider separating these cases into different types.
  *
- * @public
+ * @system @public
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
@@ -177,6 +175,7 @@ function createProxyHandler(
 					return getTreeNodeForField(field);
 				}
 
+				// TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
 				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
 				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
 				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.

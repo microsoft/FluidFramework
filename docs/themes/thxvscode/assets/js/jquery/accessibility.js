@@ -1,3 +1,7 @@
+/**
+ * If an #skip-to-content element exists, this adds click handling to it to scroll the first button
+ * or link in the #main-content into view.
+ */
 export function loadSkipToContentButton() {
 	var skip_to_main_content_btn = $("#skip-to-content");
 	var mainFirstAnchor = $("#main-content button, #main-content a:visible").first();

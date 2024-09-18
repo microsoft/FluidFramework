@@ -301,16 +301,12 @@ const unparentedLocation: LocationInField = {
 		is<TKind2 extends FlexFieldKind>(kind: TKind2) {
 			return this.schema.kind === kind.identifier;
 		},
-		isExactly(schema: FlexFieldSchema) {
-			return schema === FlexFieldSchema.empty;
-		},
 		boxedIterator(): IterableIterator<FlexTreeNode> {
 			return [].values();
 		},
 		boxedAt(index: number): FlexTreeNode | undefined {
 			return undefined;
 		},
-		flexSchema: FlexFieldSchema.empty,
 		schema: FlexFieldSchema.empty.stored,
 		context: emptyContext,
 		mapTrees: [],
@@ -361,10 +357,6 @@ class EagerMapTreeField implements MapTreeField {
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
 		return this.schema.kind === kind.identifier;
-	}
-
-	public isExactly(schema: FlexFieldSchema): boolean {
-		return this.flexSchema.equals(schema);
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeNode> {

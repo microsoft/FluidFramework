@@ -198,13 +198,12 @@ export {
 } from "./default-schema/index.js";
 
 export {
-	type FlexTreeLeafNode,
-	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
 	Skip,
 	type FlexTreeContext,
+	type FlexTreeHydratedContext,
 	type FlexTreeTypedField,
 	type FlexTreeEntity,
 	type FlexTreeField,
