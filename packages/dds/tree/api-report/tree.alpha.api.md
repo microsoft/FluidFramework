@@ -20,7 +20,10 @@ export function clone<TSchema extends ImplicitFieldSchema>(original: TreeFieldFr
 }): TreeFieldFromImplicitField<TSchema>;
 
 // @beta
-export function cloneToCompressed(node: TreeNode | TreeLeafValue): JsonCompatible<IFluidHandle>;
+export function cloneToCompressed(node: TreeNode | TreeLeafValue, options: {
+    oldestCompatibleClient: FluidClientVersion;
+    idCompressor?: IIdCompressor;
+}): JsonCompatible<IFluidHandle>;
 
 // @beta
 export function cloneToJson<T>(node: TreeNode | TreeLeafValue, options?: {
@@ -71,6 +74,9 @@ export interface EncodeOptions<TCustom> {
 
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+
+// @alpha
+export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible;
 
 // @public
 type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
@@ -129,6 +135,18 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @beta (undocumented)
+export enum FluidClientVersion {
+    // (undocumented)
+    v2_0 = "v2_0",
+    // (undocumented)
+    v2_1 = "v2_1",
+    // (undocumented)
+    v2_2 = "v2_2",
+    // (undocumented)
+    v2_3 = "v2_3"
+}
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;

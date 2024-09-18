@@ -73,6 +73,7 @@ export {
 	type EncodeOptions,
 	type ParseOptions,
 	type VerboseTree,
+	extractPersistedSchema,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

@@ -20,7 +20,10 @@ export function clone<TSchema extends ImplicitFieldSchema>(original: TreeFieldFr
 }): TreeFieldFromImplicitField<TSchema>;
 
 // @beta
-export function cloneToCompressed(node: TreeNode | TreeLeafValue): JsonCompatible<IFluidHandle>;
+export function cloneToCompressed(node: TreeNode | TreeLeafValue, options: {
+    oldestCompatibleClient: FluidClientVersion;
+    idCompressor?: IIdCompressor;
+}): JsonCompatible<IFluidHandle>;
 
 // @beta
 export function cloneToJson<T>(node: TreeNode | TreeLeafValue, options?: {
@@ -126,6 +129,18 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @beta (undocumented)
+export enum FluidClientVersion {
+    // (undocumented)
+    v2_0 = "v2_0",
+    // (undocumented)
+    v2_1 = "v2_1",
+    // (undocumented)
+    v2_2 = "v2_2",
+    // (undocumented)
+    v2_3 = "v2_3"
+}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;

@@ -17,13 +17,19 @@ import type { ITreeCursorSynchronous } from "../../core/index.js";
 import { cursorFromInsertable } from "./create.js";
 import { tryGetSchema } from "./treeNodeApi.js";
 import {
+	cursorForMapTreeField,
+	defaultSchemaPolicy,
 	isTreeValue,
 	makeFieldBatchCodec,
+	mapTreeFromCursor,
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
 } from "../../feature-libraries/index.js";
-import { noopValidator } from "../../codec/index.js";
+import { noopValidator, type FluidClientVersion } from "../../codec/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal"; // TODO: no alpha exports?
+import { toStoredSchema } from "../toFlexSchema.js";
 
 /**
  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
@@ -94,6 +100,15 @@ function borrowCursorFromTreeNodeOrValue(
 	return cursor;
 }
 
+function borrowFieldCursorFromTreeNodeOrValue(
+	node: TreeNode | TreeLeafValue,
+): ITreeCursorSynchronous {
+	const cursor = borrowCursorFromTreeNodeOrValue(node);
+	// TODO: avoid copy
+	const mapTree = mapTreeFromCursor(cursor);
+	return cursorForMapTreeField([mapTree]);
+}
+
 /**
  * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
  * Verbose tree format, with explicit type on every node.
@@ -146,25 +161,23 @@ export function cloneToVerbose<T>(
  */
 export function cloneToCompressed(
 	node: TreeNode | TreeLeafValue,
-	options: { oldestCompatibleClient: FluidClientVersion },
+	options: { oldestCompatibleClient: FluidClientVersion; idCompressor?: IIdCompressor },
 ): JsonCompatible<IFluidHandle> {
+	const schema = tryGetSchema(node) ?? fail("invalid input");
 	const format = versionToFormat[options.oldestCompatibleClient];
 	const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
-	const cursor = borrowCursorFromTreeNodeOrValue(node);
+	const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 	const batch: FieldBatch = [cursor];
+	// If none provided, create a compressor which will not compress anything (TODO: is this the right way to do that?).
+	const idCompressor = options.idCompressor ?? createIdCompressor();
 	const context: FieldBatchEncodingContext = {
 		encodeType: TreeCompressionStrategy.Compressed,
-		idCompressor: undefined,
+		idCompressor,
+		originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
+		schema: { schema: toStoredSchema(schema), policy: defaultSchemaPolicy },
 	};
-	codec.encode(batch, context);
-	return fail("TODO");
-}
-
-export enum FluidClientVersion {
-	v2_0 = "v2_0",
-	v2_1 = "v2_1",
-	v2_2 = "v2_2",
-	v2_3 = "v2_3",
+	const result = codec.encode(batch, context);
+	return result;
 }
 
 const versionToFormat = {
