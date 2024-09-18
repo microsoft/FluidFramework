@@ -1,4 +1,5 @@
-import { assert } from "./debug";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { assert } from "./debug.js";
 import {
 	type JsonArray,
 	type JsonBuilder,
@@ -8,7 +9,7 @@ import {
 	type StreamedJsonParser,
 	contextIsObject,
 	createStreamedJsonParser,
-} from "./jsonParser";
+} from "./jsonParser.js";
 
 type StreamedTypeGetter = (
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +28,9 @@ class ResponseHandlerImpl {
 			streamedType instanceof StreamedStringProperty ||
 			streamedType instanceof StreamedString
 		) {
-			throw new TypeError("StreamedStringProperty and StreamedString cannot be used as root type");
+			throw new TypeError(
+				"StreamedStringProperty and StreamedString cannot be used as root type",
+			);
 		}
 
 		const streamedValueHandler = (
@@ -44,7 +47,7 @@ class ResponseHandlerImpl {
 		this.parser = createStreamedJsonParser(builder, abortController);
 	}
 
-	jsonSchema(): JsonObject {
+	public jsonSchema(): JsonObject {
 		const definitions = new Map<StreamedTypeIdentity, string>();
 		const visited = new Set<StreamedTypeIdentity>();
 
@@ -78,11 +81,11 @@ class ResponseHandlerImpl {
 		return schema;
 	}
 
-	processChars(chars: string): void {
+	public processChars(chars: string): void {
 		this.parser.addChars(chars);
 	}
 
-	complete(): void {
+	public complete(): void {
 		// Send one more whitespace token, just to ensure the parser knows we're finished
 		// (this is necessary for the case of a schema comprising a single number)
 		this.parser.addChars("\n");
@@ -95,11 +98,14 @@ class ResponseHandlerImpl {
 const createResponseHandlerImpl = (
 	streamedType: StreamedType,
 	abortController: AbortController,
-) => {
+): ResponseHandlerImpl => {
 	return new ResponseHandlerImpl(streamedType, abortController);
 };
 
-export const getCreateResponseHandler = () => createResponseHandlerImpl;
+export const getCreateResponseHandler: () => (
+	streamedType: StreamedType,
+	abortController: AbortController,
+) => ResponseHandlerImpl = () => createResponseHandlerImpl;
 
 export class StreamedType {
 	private readonly _brand = Symbol();
@@ -182,6 +188,7 @@ class JsonHandlerImpl {
 
 	public null(args?: {
 		description?: string;
+		// eslint-disable-next-line @rushstack/no-new-null
 		complete?: (value: null, partial: PartialArg) => void;
 	}): StreamedType {
 		return new AtomicNull(args);
@@ -202,7 +209,7 @@ class JsonHandlerImpl {
 // The one JsonHandler
 const jsonHandler = new JsonHandlerImpl();
 
-export const getJsonHandler = () => jsonHandler;
+export const getJsonHandler: () => JsonHandlerImpl = () => jsonHandler;
 
 // TODO: Can perhaps not export these after illustrateInteraction re-implemented (and remove all the ?s and !s)
 export interface StreamedObjectHandler {
@@ -228,7 +235,7 @@ type BuilderContext = JsonBuilderContext<StreamedObjectHandler, StreamedArrayHan
 class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedArrayHandler> {
 	public constructor(private readonly rootHandler: StreamedValueHandler) {}
 
-	addObject(context?: BuilderContext): StreamedObjectHandler {
+	public addObject(context?: BuilderContext): StreamedObjectHandler {
 		if (!context) {
 			// TODO: This error-handling, which really shouldn't be necessary in principle with Structured Outputs,
 			//       is arguably "inside-out", i.e. it should report the expected type of the result, rather than
@@ -244,7 +251,7 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 		}
 	}
 
-	addArray(context?: BuilderContext): StreamedArrayHandler {
+	public addArray(context?: BuilderContext): StreamedArrayHandler {
 		if (!context) {
 			if (!(this.rootHandler instanceof StreamedArrayHandlerImpl)) {
 				throw new TypeError(`Expected array for root`);
@@ -257,7 +264,7 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 		}
 	}
 
-	addPrimitive(value: JsonPrimitive, context?: BuilderContext): void {
+	public addPrimitive(value: JsonPrimitive, context?: BuilderContext): void {
 		if (!context) {
 			if (value === null) {
 				if (!(this.rootHandler instanceof AtomicNullHandlerImpl)) {
@@ -285,6 +292,9 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 							throw new TypeError(`Expected boolean for root`);
 						}
 						break;
+
+					default:
+						break;
 				}
 			}
 		} else if (contextIsObject(context)) {
@@ -294,16 +304,16 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 		}
 	}
 
-	appendText(chars: string, context?: BuilderContext): void {
+	public appendText(chars: string, context?: BuilderContext): void {
 		assert(context !== undefined);
 		if (contextIsObject(context)) {
 			context.parentObject.appendText!(chars, context.key);
 		} else {
-			context.parentArray.appendText!(chars);
+			context!.parentArray.appendText!(chars);
 		}
 	}
 
-	completeContext(context?: BuilderContext): void {
+	public completeContext(context?: BuilderContext): void {
 		if (context !== undefined) {
 			if (contextIsObject(context)) {
 				context.parentObject.completeProperty?.(context.key);
@@ -313,7 +323,7 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 		}
 	}
 
-	completeContainer(container: StreamedObjectHandler | StreamedArrayHandler): void {
+	public completeContainer(container: StreamedObjectHandler | StreamedArrayHandler): void {
 		container.complete?.();
 	}
 }
@@ -337,23 +347,27 @@ type StreamedValueHandler =
 	| AtomicPrimitiveHandler<PrimitiveType>; // Needed so AtomicPrimitive<T extends PrimitiveType> can implement StreamedType<AtomicPrimitiveHandler<T>>
 
 abstract class SchemaGeneratingStreamedType extends StreamedType {
-	getIdentity(): StreamedTypeIdentity {
+	public getIdentity(): StreamedTypeIdentity {
 		return this;
 	}
-	abstract findDefinitions(
+	public abstract findDefinitions(
 		visited: Set<StreamedTypeIdentity>,
 		definitions: DefinitionMap,
 	): void;
-	abstract jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject;
+	public abstract jsonSchema(
+		root: StreamedTypeIdentity,
+		definitions: DefinitionMap,
+	): JsonObject;
 }
 
 abstract class InvocableStreamedType<
 	T extends StreamedValueHandler | undefined,
 > extends SchemaGeneratingStreamedType {
-	abstract invoke(parentPartial: PartialArg, partial: PartialArg): T;
+	public abstract invoke(parentPartial: PartialArg, partial: PartialArg): T;
 }
 
 interface FieldHandlers {
+	// eslint-disable-next-line @rushstack/no-new-null
 	[key: string]: StreamedValueHandler | null;
 }
 
@@ -361,12 +375,11 @@ const findDefinitions = (
 	streamedType: StreamedType,
 	visited: Set<StreamedTypeIdentity>,
 	definitions: DefinitionMap,
-) => {
-	return (streamedType as InvocableStreamedType<StreamedValueHandler>).findDefinitions(
+): void =>
+	(streamedType as InvocableStreamedType<StreamedValueHandler>).findDefinitions(
 		visited,
 		definitions,
 	);
-};
 
 const addDefinition = (
 	streamedType: StreamedTypeIdentity,
@@ -427,7 +440,7 @@ export interface StreamedObjectDescriptor {
 }
 
 class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler> {
-	constructor(
+	public constructor(
 		private readonly getDescriptor: (input: Input) => StreamedObjectDescriptor,
 		private readonly identity: StreamedTypeIdentity,
 		private readonly getInput?: (partial: PartialArg) => Input,
@@ -435,11 +448,14 @@ class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler>
 		super();
 	}
 
-	override getIdentity(): StreamedTypeIdentity {
+	public override getIdentity(): StreamedTypeIdentity {
 		return this.identity;
 	}
 
-	findDefinitions(visited: Set<StreamedTypeIdentity>, definitions: DefinitionMap): void {
+	public findDefinitions(
+		visited: Set<StreamedTypeIdentity>,
+		definitions: DefinitionMap,
+	): void {
 		const identity = this.getIdentity();
 		if (visited.has(identity)) {
 			addDefinition(identity, definitions);
@@ -454,14 +470,14 @@ class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler>
 		}
 	}
 
-	jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
+	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
 		const { description, properties } = this.getDescriptor(guaranteedErrorObject as Input);
 
 		const propertyNames = Object.keys(properties);
 		const schemaProperties: { [key: string]: JsonObject } = {};
 		propertyNames.forEach((fieldName) => {
 			schemaProperties[fieldName] = jsonSchemaFromStreamedType(
-				properties[fieldName],
+				properties[fieldName]!,
 				root,
 				definitions,
 			);
@@ -482,7 +498,7 @@ class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler>
 		return schema;
 	}
 
-	invoke(parentPartial: PartialArg, partial: PartialArg): StreamedObjectHandler {
+	public invoke(parentPartial: PartialArg, partial: PartialArg): StreamedObjectHandler {
 		return new StreamedObjectHandlerImpl(
 			partial,
 			this.getDescriptor(this.getInput?.(parentPartial) as Input),
@@ -501,13 +517,13 @@ class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler>
 }
 
 class StreamedObjectHandlerImpl implements StreamedObjectHandler {
-	constructor(
+	public constructor(
 		private partial: PartialObject,
 		private descriptor?: StreamedObjectDescriptor,
 		private readonly streamedAnyOf?: StreamedAnyOf,
 	) {}
 
-	addObject(key: string): StreamedObjectHandler {
+	public addObject(key: string): StreamedObjectHandler {
 		if (!this.descriptor) {
 			// TODO-AnyOf:
 		} else {
@@ -524,7 +540,7 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			if (streamedType instanceof StreamedAnyOf) {
 				const streamedAnyOf = streamedType;
 				if (!(streamedType = streamedType.streamedTypeIfSingleMatch(StreamedObject))) {
-					const childPartial = {} as PartialObject;
+					const childPartial: PartialObject = {};
 					this.partial[key] = childPartial;
 					this.handlers[key] = new StreamedObjectHandlerImpl(
 						childPartial,
@@ -536,7 +552,7 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			}
 
 			if (streamedType instanceof StreamedObject) {
-				const childPartial = {} as PartialObject;
+				const childPartial: PartialObject = {};
 				this.partial[key] = childPartial;
 				this.handlers[key] = streamedType.invoke(this.partial, childPartial);
 				return this.handlers[key] as StreamedObjectHandler;
@@ -546,7 +562,7 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 		throw new Error(`Expected object for key ${key}`);
 	}
 
-	addArray(key: string): StreamedArrayHandler {
+	public addArray(key: string): StreamedArrayHandler {
 		if (!this.descriptor) {
 			// TODO-AnyOf:
 		} else {
@@ -586,7 +602,7 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 	}
 
 	// TODO: Return boolean requesting throttling if StreamedString (also in StreamedArrayHandlerImpl)
-	addPrimitive(value: JsonPrimitive, key: string): void {
+	public addPrimitive(value: JsonPrimitive, key: string): void {
 		if (!this.descriptor) {
 			this.partial[key] = value;
 			return;
@@ -611,7 +627,7 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 		if (streamedType instanceof StreamedAnyOf) {
 			const streamedAnyOf = streamedType;
 			if (!(streamedType = streamedType.streamedTypeOfFirstMatch(value))) {
-				const childPartial = {} as PartialObject;
+				const childPartial: PartialObject = {};
 				this.partial[key] = childPartial;
 				this.handlers[key] = new StreamedObjectHandlerImpl(
 					childPartial,
@@ -657,6 +673,9 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 						this.handlers[key] = streamedType.invoke();
 					}
 					break;
+
+				default:
+					break;
 			}
 		}
 
@@ -664,20 +683,21 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 		throw new Error(`Unexpected ${typeof value} for key ${key}`);
 	}
 
-	appendText(chars: string, key: string): void {
+	public appendText(chars: string, key: string): void {
 		assert(typeof this.partial[key] === "string");
-		this.partial[key] += chars;
+		(this.partial[key] as string) += chars;
 		if (
 			this.handlers[key] instanceof StreamedStringPropertyHandlerImpl ||
 			this.handlers[key] instanceof StreamedStringHandlerImpl
 		) {
-			this.handlers[key].append(chars);
+			(this.handlers[key] as { append: (chars: string) => void }).append(chars);
 		}
 	}
 
-	completeProperty?(key: string): void {
+	public completeProperty?(key: string): void {
+		const value = this.partial[key];
+
 		if (!this.descriptor) {
-			const value = this.partial[key];
 			// TODO-AnyOf: Need a much more general algorithm
 			if (typeof value === "string") {
 				assert(this.streamedAnyOf !== undefined);
@@ -686,7 +706,6 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 						const property = option.properties[key];
 						if (property instanceof AtomicEnum && property.values.includes(value)) {
 							// We now know which option in the AnyOf to use
-							this.partial[key] = value;
 							this.descriptor = option.delayedInvoke(this.partial);
 							this.handlers[key] = property.invoke();
 						}
@@ -695,30 +714,33 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			}
 		}
 
+		const handler = this.handlers[key];
+
 		// Objects and Arrays will have their complete() handler called directly
 		if (
-			this.handlers[key] instanceof StreamedStringPropertyHandlerImpl ||
-			this.handlers[key] instanceof StreamedStringHandlerImpl ||
-			this.handlers[key] instanceof AtomicStringHandlerImpl
+			handler instanceof StreamedStringPropertyHandlerImpl ||
+			handler instanceof StreamedStringHandlerImpl ||
+			handler instanceof AtomicStringHandlerImpl
 		) {
-			this.handlers[key].complete(this.partial[key] as string, this.partial);
-		} else if (this.handlers[key] instanceof AtomicBooleanHandlerImpl) {
-			this.handlers[key].complete(this.partial[key] as boolean, this.partial);
-		} else if (this.handlers[key] instanceof AtomicNullHandlerImpl) {
-			this.handlers[key].complete(this.partial[key] as null, this.partial);
+			handler.complete(value as string, this.partial);
+		} else if (handler instanceof AtomicBooleanHandlerImpl) {
+			handler.complete(value as boolean, this.partial);
+		} else if (handler instanceof AtomicNullHandlerImpl) {
+			handler.complete(value as null, this.partial);
 		}
 	}
 
-	complete(): void {
+	public complete(): void {
 		// TODO-AnyOf:
 		this.descriptor!.complete?.(this.partial);
 	}
 
-	private handlers = {} as FieldHandlers; // TODO: Overkill, since only one needed at a time?
+	private handlers: FieldHandlers = {}; // TODO: Overkill, since only one needed at a time?
 }
 
 type PartialArray = JsonArray;
 
+// eslint-disable-next-line @rushstack/no-new-null
 type ArrayAppendHandler = StreamedValueHandler | null;
 
 export interface StreamedArrayDescriptor {
@@ -728,7 +750,7 @@ export interface StreamedArrayDescriptor {
 }
 
 class StreamedArray<Input> extends InvocableStreamedType<StreamedArrayHandler> {
-	constructor(
+	public constructor(
 		private readonly getDescriptor: (input: Input) => StreamedArrayDescriptor,
 		private readonly identity: StreamedTypeIdentity,
 		private readonly getInput?: (partial: PartialArg) => Input,
@@ -736,11 +758,14 @@ class StreamedArray<Input> extends InvocableStreamedType<StreamedArrayHandler> {
 		super();
 	}
 
-	override getIdentity(): StreamedTypeIdentity {
+	public override getIdentity(): StreamedTypeIdentity {
 		return this.identity;
 	}
 
-	findDefinitions(visited: Set<StreamedTypeIdentity>, definitions: DefinitionMap): void {
+	public findDefinitions(
+		visited: Set<StreamedTypeIdentity>,
+		definitions: DefinitionMap,
+	): void {
 		const identity = this.getIdentity();
 		if (visited.has(identity)) {
 			addDefinition(identity, definitions);
@@ -752,7 +777,7 @@ class StreamedArray<Input> extends InvocableStreamedType<StreamedArrayHandler> {
 		}
 	}
 
-	jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
+	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
 		const { description, items } = this.getDescriptor(guaranteedErrorObject as Input);
 
 		const schema: JsonObject = {
@@ -767,7 +792,7 @@ class StreamedArray<Input> extends InvocableStreamedType<StreamedArrayHandler> {
 		return schema;
 	}
 
-	invoke(parentPartial: PartialArg, partial: PartialArg): StreamedArrayHandler {
+	public invoke(parentPartial: PartialArg, partial: PartialArg): StreamedArrayHandler {
 		return new StreamedArrayHandlerImpl(
 			partial,
 			this.getDescriptor(this.getInput?.(parentPartial) as Input),
@@ -786,13 +811,13 @@ class StreamedArray<Input> extends InvocableStreamedType<StreamedArrayHandler> {
 }
 
 class StreamedArrayHandlerImpl implements StreamedArrayHandler {
-	constructor(
+	public constructor(
 		private readonly partial: PartialArray,
 		private descriptor?: StreamedArrayDescriptor,
 		private readonly streamedAnyOf?: StreamedAnyOf,
 	) {}
 
-	addObject(): StreamedObjectHandler {
+	public addObject(): StreamedObjectHandler {
 		if (!this.descriptor) {
 			assert(this.streamedAnyOf !== undefined);
 			for (const option of this.streamedAnyOf!.options) {
@@ -800,7 +825,7 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 					const property = option.items;
 					if (property instanceof StreamedObject) {
 						// We now know which option in the AnyOf to use
-						const childPartial = {} as PartialObject;
+						const childPartial: PartialObject = {};
 						this.partial.push(childPartial);
 						this.descriptor = option.delayedInvoke(this.partial);
 						this.lastHandler = property.invoke(this.partial, childPartial);
@@ -815,7 +840,7 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 			if (streamedType instanceof StreamedAnyOf) {
 				const streamedAnyOf = streamedType;
 				if (!(streamedType = streamedType.streamedTypeIfSingleMatch(StreamedObject))) {
-					const childPartial = {} as PartialObject;
+					const childPartial: PartialObject = {};
 					this.partial.push(childPartial);
 					this.lastHandler = new StreamedObjectHandlerImpl(
 						childPartial,
@@ -827,17 +852,17 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 			}
 
 			if (streamedType instanceof StreamedObject) {
-				const childPartial = {} as PartialObject;
+				const childPartial: PartialObject = {};
 				this.partial.push(childPartial);
 				this.lastHandler = streamedType.invoke(this.partial, childPartial);
-				return this.lastHandler ;
+				return this.lastHandler;
 			}
 		}
 
 		throw new Error("Expected object for items");
 	}
 
-	addArray(): StreamedArrayHandler {
+	public addArray(): StreamedArrayHandler {
 		if (!this.descriptor) {
 			// TODO-AnyOf:
 		} else {
@@ -854,7 +879,7 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 		throw new Error("Expected array for items");
 	}
 
-	addPrimitive(value: JsonPrimitive): void {
+	public addPrimitive(value: JsonPrimitive): void {
 		if (!this.descriptor) {
 			this.partial.push(value);
 			return;
@@ -899,6 +924,9 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 						return;
 					}
 					break;
+
+				default:
+					break;
 			}
 		}
 
@@ -906,16 +934,16 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 		throw new Error(`Unexpected ${typeof value}`);
 	}
 
-	appendText(chars: string): void {
+	public appendText(chars: string): void {
 		assert(typeof this.partial[this.partial.length - 1] === "string");
 
-		this.partial[this.partial.length - 1] += chars;
+		(this.partial[this.partial.length - 1] as string) += chars;
 		if (this.lastHandler instanceof StreamedStringPropertyHandlerImpl) {
 			this.lastHandler.append(chars);
 		}
 	}
 
-	completeLast?(): void {
+	public completeLast?(): void {
 		if (!this.descriptor) {
 			const value = this.partial[this.partial.length - 1];
 			// TODO-AnyOf: Need a much more general algorithm
@@ -953,7 +981,7 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 		}
 	}
 
-	complete(): void {
+	public complete(): void {
 		// TODO-AnyOf:
 		this.descriptor!.complete?.(this.partial);
 	}
@@ -984,11 +1012,14 @@ class StreamedStringProperty<
 	T extends Record<P, string | undefined>,
 	P extends keyof T,
 > extends InvocableStreamedType<StreamedStringPropertyHandler> {
-	constructor(private readonly args: StreamedStringPropertyDescriptor<T, P>) {
+	public constructor(private readonly args: StreamedStringPropertyDescriptor<T, P>) {
 		super();
 	}
 
-	findDefinitions(visited: Set<StreamedTypeIdentity>, definitions: DefinitionMap): void {
+	public findDefinitions(
+		visited: Set<StreamedTypeIdentity>,
+		definitions: DefinitionMap,
+	): void {
 		if (visited.has(this)) {
 			addDefinition(this, definitions);
 		} else {
@@ -996,7 +1027,7 @@ class StreamedStringProperty<
 		}
 	}
 
-	jsonSchema(): JsonObject {
+	public jsonSchema(): JsonObject {
 		const { description } = this.args;
 
 		const schema: { type: string; description?: string } = {
@@ -1008,12 +1039,14 @@ class StreamedStringProperty<
 		return schema;
 	}
 
-	invoke(parentPartial: PartialArg): StreamedStringPropertyHandler {
+	public invoke(parentPartial: PartialArg): StreamedStringPropertyHandler {
 		const { target, key, complete } = this.args;
 
 		const item = target(parentPartial);
 		item[key] = "" as T[P];
-		const append = (chars: string) => (item[key] = (item[key] + chars) as T[P]);
+		const append = (chars: string): void => {
+			item[key] = (item[key] + chars) as T[P];
+		};
 
 		return new StreamedStringPropertyHandlerImpl(append, complete);
 	}
@@ -1052,11 +1085,14 @@ type StreamedStringDescriptor<Parent extends object> = SchemaArgs & {
 class StreamedString<
 	Parent extends object,
 > extends InvocableStreamedType<StreamedStringHandler> {
-	constructor(private readonly args: StreamedStringDescriptor<Parent>) {
+	public constructor(private readonly args: StreamedStringDescriptor<Parent>) {
 		super();
 	}
 
-	findDefinitions(visited: Set<StreamedTypeIdentity>, definitions: DefinitionMap): void {
+	public findDefinitions(
+		visited: Set<StreamedTypeIdentity>,
+		definitions: DefinitionMap,
+	): void {
 		if (visited.has(this)) {
 			addDefinition(this, definitions);
 		} else {
@@ -1064,7 +1100,7 @@ class StreamedString<
 		}
 	}
 
-	jsonSchema(): JsonObject {
+	public jsonSchema(): JsonObject {
 		const { description } = this.args;
 
 		const schema: { type: string; description?: string } = {
@@ -1076,7 +1112,7 @@ class StreamedString<
 		return schema;
 	}
 
-	invoke(parentPartial: PartialArg): StreamedStringHandler {
+	public invoke(parentPartial: PartialArg): StreamedStringHandler {
 		const { target, append, complete } = this.args;
 
 		const parent = target?.(parentPartial);
@@ -1101,6 +1137,7 @@ class StreamedStringHandlerImpl<Parent extends object> implements StreamedString
 	}
 }
 
+// eslint-disable-next-line @rushstack/no-new-null
 type PrimitiveType = string | number | boolean | null;
 
 interface AtomicPrimitiveHandler<T extends PrimitiveType> {
@@ -1115,11 +1152,14 @@ type AtomicPrimitiveDescriptor<T extends PrimitiveType> = SchemaArgs & {
 abstract class AtomicPrimitive<T extends PrimitiveType> extends InvocableStreamedType<
 	AtomicPrimitiveHandler<T>
 > {
-	constructor(protected descriptor?: AtomicPrimitiveDescriptor<T>) {
+	public constructor(protected descriptor?: AtomicPrimitiveDescriptor<T>) {
 		super();
 	}
 
-	findDefinitions(visited: Set<StreamedTypeIdentity>, definitions: DefinitionMap): void {
+	public findDefinitions(
+		visited: Set<StreamedTypeIdentity>,
+		definitions: DefinitionMap,
+	): void {
 		if (visited.has(this)) {
 			addDefinition(this, definitions);
 		} else {
@@ -1127,7 +1167,7 @@ abstract class AtomicPrimitive<T extends PrimitiveType> extends InvocableStreame
 		}
 	}
 
-	jsonSchema(): JsonObject {
+	public jsonSchema(): JsonObject {
 		const description = this.descriptor?.description;
 
 		const schema: { type: string; enum?: string[]; description?: string } = {
@@ -1142,7 +1182,7 @@ abstract class AtomicPrimitive<T extends PrimitiveType> extends InvocableStreame
 		return schema;
 	}
 
-	public abstract invoke(): AtomicPrimitiveHandler<T>;
+	public abstract override invoke(): AtomicPrimitiveHandler<T>;
 
 	protected abstract typeName: string;
 }
@@ -1161,21 +1201,21 @@ class AtomicPrimitiveHandlerImpl<T extends PrimitiveType>
 
 type AtomicStringHandler = AtomicPrimitiveHandler<string>;
 class AtomicString extends AtomicPrimitive<string> {
-	override invoke(): AtomicStringHandler {
+	public override invoke(): AtomicStringHandler {
 		return new AtomicStringHandlerImpl(this.descriptor?.complete);
 	}
 
-	override typeName = "string";
+	public override typeName = "string";
 }
 class AtomicStringHandlerImpl extends AtomicPrimitiveHandlerImpl<string> {}
 
 type AtomicEnumHandler = AtomicPrimitiveHandler<string>;
 class AtomicEnum extends AtomicPrimitive<string> {
-	override invoke(): AtomicEnumHandler {
+	public override invoke(): AtomicEnumHandler {
 		return new AtomicEnumHandlerImpl(this.descriptor?.complete);
 	}
 
-	override typeName = "string";
+	public override typeName = "string";
 
 	public get values(): string[] {
 		// TODO-AnyOf: Expose this more cleanly
@@ -1186,44 +1226,48 @@ class AtomicEnumHandlerImpl extends AtomicPrimitiveHandlerImpl<string> {}
 
 type AtomicNumberHandler = AtomicPrimitiveHandler<number>;
 class AtomicNumber extends AtomicPrimitive<number> {
-	override invoke(): AtomicNumberHandler {
+	public override invoke(): AtomicNumberHandler {
 		return new AtomicNumberHandlerImpl(this.descriptor?.complete);
 	}
 
-	override typeName = "number";
+	public override typeName = "number";
 }
 class AtomicNumberHandlerImpl extends AtomicPrimitiveHandlerImpl<number> {}
 
 type AtomicBooleanHandler = AtomicPrimitiveHandler<boolean>;
 class AtomicBoolean extends AtomicPrimitive<boolean> {
-	override invoke(): AtomicBooleanHandler {
+	public override invoke(): AtomicBooleanHandler {
 		return new AtomicBooleanHandlerImpl(this.descriptor?.complete);
 	}
 
-	override typeName = "boolean";
+	public override typeName = "boolean";
 }
 class AtomicBooleanHandlerImpl extends AtomicPrimitiveHandlerImpl<boolean> {}
 
+// eslint-disable-next-line @rushstack/no-new-null
 type AtomicNullHandler = AtomicPrimitiveHandler<null>;
 class AtomicNull extends AtomicPrimitive<null> {
-	override invoke(): AtomicNullHandler {
+	public override invoke(): AtomicNullHandler {
 		return new AtomicNullHandlerImpl(this.descriptor?.complete);
 	}
 
-	override typeName = "null";
+	public override typeName = "null";
 }
 class AtomicNullHandlerImpl extends AtomicPrimitiveHandlerImpl<null> {}
 
 // TODO: Only make this legal under object properties, not array items
 class StreamedOptional extends SchemaGeneratingStreamedType {
-	constructor(optionalType: SchemaGeneratingStreamedType) {
+	public constructor(optionalType: SchemaGeneratingStreamedType) {
 		assert(!(optionalType instanceof AtomicNull));
 
 		super();
 		this.optionalType = optionalType;
 	}
 
-	findDefinitions(visited: Set<StreamedTypeIdentity>, definitions: DefinitionMap): void {
+	public findDefinitions(
+		visited: Set<StreamedTypeIdentity>,
+		definitions: DefinitionMap,
+	): void {
 		if (visited.has(this)) {
 			addDefinition(this, definitions);
 		} else {
@@ -1233,13 +1277,14 @@ class StreamedOptional extends SchemaGeneratingStreamedType {
 		}
 	}
 
-	jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
+	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
 		const schema = jsonSchemaFromStreamedType(this.optionalType, root, definitions);
+		assert(typeof schema.type === "string");
 
 		if (root === this.optionalType || definitions.has(this.optionalType)) {
 			return { anyOf: [schema, { type: "null" }] };
 		} else {
-			schema.type = [schema.type, "null"];
+			schema.type = [schema.type!, "null"];
 			return schema;
 		}
 	}
@@ -1248,12 +1293,15 @@ class StreamedOptional extends SchemaGeneratingStreamedType {
 }
 
 class StreamedAnyOf extends SchemaGeneratingStreamedType {
-	constructor(options: SchemaGeneratingStreamedType[]) {
+	public constructor(options: SchemaGeneratingStreamedType[]) {
 		super();
 		this.options = options;
 	}
 
-	findDefinitions(visited: Set<StreamedTypeIdentity>, definitions: DefinitionMap): void {
+	public findDefinitions(
+		visited: Set<StreamedTypeIdentity>,
+		definitions: DefinitionMap,
+	): void {
 		if (visited.has(this)) {
 			addDefinition(this, definitions);
 		} else {
@@ -1265,7 +1313,7 @@ class StreamedAnyOf extends SchemaGeneratingStreamedType {
 		}
 	}
 
-	jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
+	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
 		return {
 			anyOf: this.options.map((streamedType) =>
 				jsonSchemaFromStreamedType(streamedType, root, definitions),
@@ -1291,6 +1339,7 @@ class StreamedAnyOf extends SchemaGeneratingStreamedType {
 	}
 
 	public streamedTypeOfFirstMatch(
+		// eslint-disable-next-line @rushstack/no-new-null
 		value: string | number | boolean | null,
 	): StreamedType | undefined {
 		for (const option of this.options) {
@@ -1315,6 +1364,9 @@ class StreamedAnyOf extends SchemaGeneratingStreamedType {
 						if (option instanceof AtomicBoolean) {
 							return option;
 						}
+						break;
+
+					default:
 						break;
 				}
 			}

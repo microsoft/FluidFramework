@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert } from "./debug.js";
 
 // eslint-disable-next-line @rushstack/no-new-null
@@ -167,7 +169,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		{ state: State.Start, firstToken: "" },
 	];
 
-	private removeControlCharacters(text: string) {
+	private removeControlCharacters(text: string): string {
 		// eslint-disable-next-line no-control-regex
 		return text.replace(/[\x00-\x1F\x7F]/g, "");
 	}
@@ -179,7 +181,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 			return false;
 		}
 
-		const state = this.contexts[this.contexts.length - 1].state;
+		const state = this.contexts[this.contexts.length - 1]!.state;
 
 		// Are we in the midst of a multi-character token?
 		switch (state) {
@@ -223,11 +225,11 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		}
 
 		const builderContext = this.builderContextFromParserContext(
-			this.contexts[this.contexts.length - 1],
+			this.contexts[this.contexts.length - 1]!,
 		)!;
 
 		// Start a new token
-		const char = this.buffer[0];
+		const char = this.buffer[0]!;
 		const charCode = char.charCodeAt(0);
 
 		switch (charCode) {
@@ -295,7 +297,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		return this.buffer.length > 0;
 	}
 
-	private processLeadingMarkdownDelimiter() {
+	private processLeadingMarkdownDelimiter(): boolean {
 		const leadingMarkdownDelimiter = "```json";
 		if (this.buffer.startsWith(leadingMarkdownDelimiter)) {
 			this.buffer = this.buffer.slice(leadingMarkdownDelimiter.length);
@@ -306,7 +308,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		return false;
 	}
 
-	private processTrailingMarkdownDelimiter() {
+	private processTrailingMarkdownDelimiter(): boolean {
 		const trailingMarkdownDelimiter = "```";
 		if (this.buffer.startsWith(trailingMarkdownDelimiter)) {
 			this.buffer = this.buffer.slice(trailingMarkdownDelimiter.length);
@@ -320,10 +322,10 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	private processJsonKeyword(): boolean {
 		// Just match the keyword, let the next iteration handle the next characters
 		for (let i = 0; i < keywords.length; i++) {
-			const keyword = keywords[i];
+			const keyword = keywords[i]!;
 			if (this.buffer.startsWith(keyword)) {
 				this.buffer = this.buffer.slice(keyword.length);
-				this.setPrimitiveValueAndPop(keywordValues[i]);
+				this.setPrimitiveValueAndPop(keywordValues[i]!);
 				return true;
 			} else if (keyword.startsWith(this.buffer)) {
 				return false;
@@ -360,7 +362,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 			const key = JSON.parse(keyText);
 
 			assert(this.contexts.length > 1);
-			const parentContext = this.contexts[this.contexts.length - 2];
+			const parentContext = this.contexts[this.contexts.length - 2]!;
 			parentContext.key = key;
 
 			this.popContext(Production.Key);
@@ -374,7 +376,8 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	private processJsonStringCharacters(): boolean {
 		let maxCount = Number.POSITIVE_INFINITY;
 
-		if (window.smoothStreaming) {
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-explicit-any
+		if ((window as any).smoothStreaming) {
 			maxCount = 5;
 		}
 
@@ -422,13 +425,13 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 
 		const result = this.buffer.slice(0, i);
 		this.buffer = this.buffer.slice(i);
-		return JSON.parse(`"${  result  }"`);
+		return JSON.parse(`"${result}"`) as string;
 	}
 
-	private appendText(text: string) {
+	private appendText(text: string): void {
 		assert(this.contexts.length > 1);
 		const builderContext = this.builderContextFromParserContext(
-			this.contexts[this.contexts.length - 2],
+			this.contexts[this.contexts.length - 2]!,
 		)!;
 		this.verifyImplemented(this.builder.appendText);
 		this.builder.appendText!(text, builderContext);
@@ -437,8 +440,8 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	private consumeCharAndPush(
 		state: State,
 		parent?: { parentObject?: ObjectHandle; parentArray?: ArrayHandle },
-	) {
-		const firstToken = this.buffer[0];
+	): void {
+		const firstToken = this.buffer[0]!;
 		this.buffer = this.buffer.slice(1);
 		this.pushContext(state, firstToken, parent);
 	}
@@ -447,7 +450,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		state: State,
 		firstToken: string,
 		parent?: { parentObject?: ObjectHandle; parentArray?: ArrayHandle },
-	) {
+	): void {
 		this.contexts.push({
 			state,
 			firstToken,
@@ -456,24 +459,24 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		});
 	}
 
-	private setPrimitiveValueAndPop(value: JsonPrimitive) {
+	private setPrimitiveValueAndPop(value: JsonPrimitive): void {
 		this.verifyImplemented(this.builder.addPrimitive);
 		this.builder.addPrimitive!(
 			value,
-			this.builderContextFromParserContext(this.contexts[this.contexts.length - 2]),
+			this.builderContextFromParserContext(this.contexts[this.contexts.length - 2]!),
 		);
 		this.popContext(Production.Value);
 	}
 
-	private completeAndPopContext() {
-		const context = this.contexts[this.contexts.length - 1];
-		if (context.parentObject) {
+	private completeAndPopContext(): void {
+		const context = this.contexts[this.contexts.length - 1]!;
+		if (context.parentObject !== undefined) {
 			this.builder.completeContainer?.(context.parentObject);
-		} else if (context.parentArray) {
+		} else if (context.parentArray !== undefined) {
 			this.builder.completeContainer?.(context.parentArray);
 		}
 		this.builder.completeContext?.(
-			this.builderContextFromParserContext(this.contexts[this.contexts.length - 2]),
+			this.builderContextFromParserContext(this.contexts[this.contexts.length - 2]!),
 		);
 		this.popContext();
 	}
@@ -481,29 +484,29 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	private builderContextFromParserContext(
 		context: ParserContext<ObjectHandle, ArrayHandle>,
 	): JsonBuilderContext<ObjectHandle, ArrayHandle> | undefined {
-		if (context.parentObject) {
+		if (context.parentObject !== undefined) {
 			return { parentObject: context.parentObject, key: context.key! };
-		} else if (context.parentArray) {
+		} else if (context.parentArray !== undefined) {
 			return { parentArray: context.parentArray };
 		} else {
 			return undefined;
 		}
 	}
 
-	private popContext(production = Production.Value) {
+	private popContext(production = Production.Value): void {
 		assert(this.contexts.length > 1);
 		const poppedContext = this.contexts.pop()!;
 		this.nextState(poppedContext.firstToken, production);
 	}
 
-	private consumeCharAndEnterNextState(production: Production) {
-		const token = this.buffer[0];
+	private consumeCharAndEnterNextState(production: Production): void {
+		const token = this.buffer[0]!;
 		this.buffer = this.buffer.slice(1);
 		this.nextState(token, production);
 	}
 
-	private nextState(token: string, production: Production) {
-		const context = this.contexts[this.contexts.length - 1];
+	private nextState(token: string, production: Production): void {
+		const context = this.contexts[this.contexts.length - 1]!;
 
 		const stateTransitions = stateTransitionTable.get(context.state);
 		assert(stateTransitions !== undefined);
@@ -521,7 +524,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		this.unexpectedTokenError(token);
 	}
 
-	private unexpectedTokenError(token: string) {
+	private unexpectedTokenError(token: string): void {
 		throw new Error(`Unexpected token ${token}`);
 	}
 

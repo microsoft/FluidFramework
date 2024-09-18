@@ -66,9 +66,9 @@ export const JsonHandler: {
 		complete?: (value: boolean, partial: PartialArg) => void;
 	}): StreamedType;
 
-	// eslint-disable-next-line @rushstack/no-new-null
 	null(args?: {
 		description?: string;
+		// eslint-disable-next-line @rushstack/no-new-null
 		complete?: (value: null, partial: PartialArg) => void;
 	}): StreamedType;
 
