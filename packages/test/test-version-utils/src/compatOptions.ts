@@ -86,11 +86,18 @@ const options = {
 	},
 };
 
+// console.log("WORKER_ID", process.env.MOCHA_WORKER_ID);
 nconf
 	.argv({
 		...options,
 		transform: (obj: { key: string; value: string }) => {
+			// If any of the FF specific options are defined, set them as environment variablse so they are available
+			// to worker processes too.
+			// Otherwise mocha's --parallel flag will not work correctly because console flags are not passed to the worker
+			// processes, so they will run tests with default settings instead of the specified ones.
 			if (options[obj.key] !== undefined) {
+				// Put flags set through command line into environment variables
+				process.env[`fluid__test__${obj.key}`] = obj.value;
 				obj.key = `fluid:test:${obj.key}`;
 			}
 			return obj;

@@ -4,6 +4,7 @@
 	// for use in mocha configuration.
 	"include": ["src/compatOptions.ts"],
 	"compilerOptions": {
+		"types": ["node"],
 		"rootDir": "./src",
 		"outDir": "./dist",
 	},
