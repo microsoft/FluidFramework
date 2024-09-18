@@ -6,7 +6,7 @@
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
+import { getOrCreate, type Mutable } from "../../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -142,12 +142,20 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
-		properties[key] =
+		const output: Mutable<JsonFieldSchema> =
 			allowedTypes.length === 1
 				? allowedTypes[0] ?? oob()
 				: {
 						anyOf: allowedTypes,
 					};
+
+		// Don't include "description" property at all if it's not present in the input.
+		if (value.description !== undefined) {
+			output.description = value.description;
+		}
+
+		properties[key] = output;
+
 		if (value.kind === FieldKind.Required) {
 			required.push(key);
 		}

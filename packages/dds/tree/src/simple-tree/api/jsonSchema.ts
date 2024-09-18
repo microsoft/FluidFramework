@@ -183,7 +183,14 @@ export type JsonNodeSchema =
  * @sealed
  * @alpha
  */
-export type JsonFieldSchema =
+export type JsonFieldSchema = {
+	/**
+	 * Description of the field.
+	 * @remarks Derived from {@link FieldSchemaMetadata.description}.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-validation#name-title-and-description}
+	 */
+	readonly description?: string | undefined;
+} & (
 	| {
 			/**
 			 * The kinds of items allowed under the field, for polymorphic types.
@@ -192,7 +199,8 @@ export type JsonFieldSchema =
 			 */
 			readonly anyOf: JsonSchemaRef[];
 	  }
-	| JsonSchemaRef;
+	| JsonSchemaRef
+);
 
 /**
  * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a tree schema.

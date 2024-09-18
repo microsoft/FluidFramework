@@ -86,6 +86,7 @@ export {
 	type FieldProps,
 	normalizeFieldSchema,
 	type ApplyKind,
+	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
 export { getOrCreateInnerNode } from "./proxyBinding.js";
 export { toFlexSchema } from "./toFlexSchema.js";

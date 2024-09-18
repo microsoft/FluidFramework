@@ -19,7 +19,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import type { ValueSchema } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
+import { getOrCreate, type Mutable } from "../../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 
@@ -126,10 +126,15 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 	}
 
 	const allowedTypes = allowedTypesFromFieldSchema(schema);
-	const result = {
+	const result: Mutable<SimpleFieldSchema> = {
 		kind: schema.kind,
 		allowedTypes,
 	};
+
+	// Don't include "description" property at all if it's not present.
+	if (schema.metadata?.description !== undefined) {
+		result.description = schema.metadata.description;
+	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(schema as any)[simpleFieldSchemaCacheSymbol] = result;
