@@ -25,7 +25,7 @@ import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkSchema.js";
 /**
- * A tree of which a {@link TreeView} can be created.
+ * A tree from which a {@link TreeView} can be created.
  * @system @sealed @public
  */
 export interface ViewableTree {
@@ -112,16 +112,16 @@ export interface BranchableTree extends ViewableTree {
 export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
- * A {@link BranchableTree.branch | fork} of a tree.
+ * A {@link BranchableTree.branch | branch} of a tree.
  * @alpha
  */
 export interface TreeBranch extends BranchableTree, IDisposable {
 	/**
-	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
-	 * @param fork - Either the root tree or a tree that was created by a call to `fork()`.
+	 * Rebase the changes that have been applied to this branch over all the new changes in the given branch.
+	 * @param branch - Either the root tree or a tree that was created by a call to `branch()`.
 	 * It is not modified by this operation.
 	 */
-	rebaseOnto(fork: BranchableTree): void;
+	rebaseOnto(branch: BranchableTree): void;
 }
 
 /**
