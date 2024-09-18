@@ -14260,6 +14260,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/protocol-definitions':
+        specifier: 3.2.0
+        version: 3.2.0
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
