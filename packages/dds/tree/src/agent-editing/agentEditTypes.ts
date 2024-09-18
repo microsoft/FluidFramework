@@ -8,7 +8,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	FieldKind,
 	FieldSchema,
 	NodeKind,
 	SchemaFactory,
@@ -18,7 +17,9 @@ import {
 	type TreeView,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toSimpleTreeSchema, type SimpleTreeSchema } from "../simple-tree/api/index.js";
+import { getJsonSchema, type JsonFieldSchema, type JsonNodeSchema, type JsonSchemaRef, type JsonTreeSchema } from "../simple-tree/api/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { fail } from "../util/utils.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -118,8 +119,8 @@ export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSc
 
 export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	assert(!(view.schema instanceof FieldSchema), "Root cannot be a FieldSchema.");
-	const simpleTreeSchema = toSimpleTreeSchema(view.schema);
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(simpleTreeSchema);
+	const jsonTreeSchema = getJsonSchema(view.schema);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(jsonTreeSchema);
 	const decoratedJson = toDecoratedJson(view.root);
 
 	/*
@@ -132,26 +133,28 @@ export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	return "";
 }
 
-export function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema): string {
+export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
 	let stringifiedSchema = "";
-	simpleTreeSchema.definitions.forEach((nodeSchemaDef, nodeSchemaName) => {
-		if (nodeSchemaDef.kind !== NodeKind.Object) {
+	Object.entries(jsonSchema.$defs).forEach(([name, def]) => {
+		if (def.type !== "object" || def._treeNodeSchemaKind === NodeKind.Map) {
 			return;
 		}
 
-		const friendlyNodeType = getFriendlySchemaName(nodeSchemaName);
+		let stringifiedEntry = `interface ${getFriendlySchemaName(name)} {`;
 
-		let stringifiedEntry = `interface ${friendlyNodeType} {`;
-
-		Object.entries(nodeSchemaDef.fields).forEach(([fieldName, fieldSchema]) => {
-			const mappedAllowedTypes = [...fieldSchema.allowedTypes].map((allowedType) =>
-				getFriendlySchemaName(allowedType),
-			);
-			if (fieldSchema.kind === FieldKind.Optional) {
-				mappedAllowedTypes.push("undefined");
+		Object.entries(def.properties).forEach(([fieldName, fieldSchema]) => {
+			stringifiedEntry += ` ${fieldName}: `;
+			let typeString = '';
+			if (isJsonSchemaRef(fieldSchema)) {
+				const nextFieldName = fieldSchema.$ref;
+				const nextDef = getDef(jsonSchema.$defs, nextFieldName);
+				typeString = `${getTypeString(jsonSchema.$defs, [nextFieldName, nextDef])}`;
+			} else {
+				typeString = `${handleAnyOf(jsonSchema.$defs, fieldSchema.anyOf)}`;
 			}
-			const allowedTypesString = mappedAllowedTypes.join(" | ");
-			stringifiedEntry += ` ${fieldName}: ${allowedTypesString};`;
+			if (def.required && !def.required.includes(fieldName)) {
+				typeString = `( ${typeString} | undefined )`;
+			}
 		});
 
 		stringifiedEntry += " }";
@@ -159,6 +162,45 @@ export function getPromptFriendlyTreeSchema(simpleTreeSchema: SimpleTreeSchema):
 		stringifiedSchema += (stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
 	});
 	return stringifiedSchema;
+}
+
+function getTypeString(defs: Record<string, JsonNodeSchema>, [name, currentDef]: [string, JsonNodeSchema]): string {
+	const {_treeNodeSchemaKind} = currentDef;
+	if (_treeNodeSchemaKind === NodeKind.Leaf) {
+		return currentDef.type;
+	}
+	if (_treeNodeSchemaKind === NodeKind.Object) {
+		return getFriendlySchemaName(name);
+	}
+	if (_treeNodeSchemaKind === NodeKind.Array) {
+		const items = currentDef.items;
+		if (!isJsonSchemaRef(items)) {
+			handleAnyOf(defs, items.anyOf)
+		} else {
+			return `${getTypeString(defs, [items.$ref, getDef(defs, items.$ref)])}[]`;
+		}
+	}
+	fail("no maps");
+}
+
+function handleAnyOf(defs: Record<string, JsonNodeSchema>, refList: JsonSchemaRef[]): string {
+	const typeNames: string[] = [];
+	refList.forEach((ref) => {
+		typeNames.push(getTypeString(defs, [ref.$ref, getDef(defs, ref.$ref)]));
+	});
+	return `( ${typeNames.join(' | ')} )`;
+}
+
+function isJsonSchemaRef(field: JsonFieldSchema): field is JsonSchemaRef {
+	return (field as JsonSchemaRef).$ref === undefined;
+
+	// Bug here. Returns false for entries which do not have anyOf. 
+}
+
+function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSchema {
+	const nextDef = defs[ref];
+	assert(nextDef !== undefined, 'Ref not found.');
+	return nextDef;
 }
 
 function getFriendlySchemaName(schemaName: string): string {
@@ -194,7 +236,7 @@ const config = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
 // Example of generated JSON schema we send to the model:
 // TODO: add descriptions to fluid-generated types
 
-const jsonSchema = {
+const _jsonSchema = {
 	$ref: "#/$defs/__fluid_rootWrapper",
 	$defs: {
 		"agentSchema.Vector": {

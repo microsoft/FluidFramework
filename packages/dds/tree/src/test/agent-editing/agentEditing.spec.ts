@@ -9,7 +9,7 @@ import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js
 import { hydrate } from "../simple-tree/utils.js";
 import { getPromptFriendlyTreeSchema, toDecoratedJson } from "../../agent-editing/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toSimpleTreeSchema } from "../../simple-tree/api/index.js";
+import { getJsonSchema } from "../../simple-tree/api/index.js";
 
 const sf = new SchemaFactory("agentSchema");
 
@@ -52,7 +52,7 @@ describe("Makes TS type strings from schema", () => {
 			y: testSf.string,
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
 			"interface Foo { x: number; y: string; }",
 		);
 	});
@@ -63,7 +63,7 @@ describe("Makes TS type strings from schema", () => {
 			y: testSf.identifier,
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
 			"interface Foo { y: string; }",
 		);
 	});
@@ -77,7 +77,7 @@ describe("Makes TS type strings from schema", () => {
 			y: sf.required([sf.number, sf.string, Bar]),
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
 			"interface Foo { y: number | string | Bar; } interface Bar { z: number; }",
 		);
 	});
@@ -87,8 +87,9 @@ describe("Makes TS type strings from schema", () => {
 		class Foo extends testSf.object("Foo", {
 			y: sf.array(sf.number),
 		}) {}
+		const stringified = JSON.stringify(getJsonSchema(Foo));
 		assert.equal(
-			getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)),
+			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
 			"interface Foo { x: number[]; }",
 		);
 	});
@@ -97,8 +98,10 @@ describe("Makes TS type strings from schema", () => {
 		const testSf = new SchemaFactory("test");
 		class Foo extends testSf.object("Foo", {
 			// agentSchema.Array<["agentSchema.Array<[\\"agentSchema.Array<[\\\\\\"com.fluidframework.leaf.string\\\\\\"]>\\",\\"com.fluidframework.leaf.number\\"]>","com.fluidframework.leaf.number"]>
+			// Array[Array[Array[string], ]]
+			// (number | (number | string[])[])[]
 			y: sf.array([sf.number, sf.array([sf.number, sf.array(sf.string)])]),
 		}) {}
-		assert.equal(getPromptFriendlyTreeSchema(toSimpleTreeSchema(Foo)), "???");
+		assert.equal(getPromptFriendlyTreeSchema(getJsonSchema(Foo)), "???");
 	});
 });
