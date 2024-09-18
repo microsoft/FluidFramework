@@ -45,6 +45,8 @@ export function createStreamedJsonParser<ObjectHandle, ArrayHandle>(
 
 // Implementation
 
+const smoothStreaming = true;
+
 // prettier-ignore
 enum State {
 	Start,
@@ -376,8 +378,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	private processJsonStringCharacters(): boolean {
 		let maxCount = Number.POSITIVE_INFINITY;
 
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-explicit-any
-		if ((window as any).smoothStreaming) {
+		if (smoothStreaming) {
 			maxCount = 5;
 		}
 

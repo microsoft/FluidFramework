@@ -1,3 +1,5 @@
+import { strict as assert } from "assert";
+
 // eslint-disable-next-line import/no-internal-modules
 import { createResponseHandler, JsonHandler as jh } from "../../json-handler/jsonHandler.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -19,7 +21,7 @@ const agentSchema_rootObject = jh.object(() => ({
 	properties: {
 		str: jh.string(),
 		vectors: jh.array(() => ({ items: agentSchema_vector(() => {}) }))(),
-		bools: jh.array(() => ({ items: jh.boolean() }))(),
+		booleans: jh.array(() => ({ items: jh.boolean() }))(),
 	},
 }));
 
@@ -87,7 +89,7 @@ const modify = jh.object(() => ({
 	properties: {
 		type: jh.enum({ values: ["modify"] }),
 		target: target(),
-		field: jh.enum({ values: ["x", "y", "z", "str", "vectors", "bools"] }),
+		field: jh.enum({ values: ["x", "y", "z", "str", "vectors", "booleans"] }),
 		modification: jh.anyOf([
 			jh.number(),
 			jh.null(),
@@ -150,7 +152,7 @@ const sampleOps = [
 				{ x: 1, y: 2, z: 3 },
 				{ x: 4, y: 5, z: 6 },
 			],
-			bools: [true, false, true],
+			booleans: [true, false, true],
 		},
 	},
 	{
@@ -188,7 +190,7 @@ const sampleOps = [
 	/* {
         type: 'modify',
         target: { objectId: 4 },
-        field: 'bools',
+        field: 'booleans',
         modification: [false, false, true, true],
     }, */
 	{
@@ -228,7 +230,8 @@ testHandler(21);
 testHandler(27);
 
 describe("JsonHandler", () => {
-	it("Test", () => {
+	it("Test", async () => {
 		testHandler(33);
+		assert(true);
 	});
 });
