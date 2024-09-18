@@ -1322,14 +1322,13 @@ export class ContainerRuntime
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
-		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
-		signalsSentSinceLastLatencyMeasurement: 0,
-		broadcastSignalSequenceNumber: 0,
+		signalSequenceNumber: 0,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
+		baseSignalTrackingGroupSequenceNumber: undefined,
 		minimumTrackingSignalSequenceNumber: undefined,
 	};
 
@@ -2641,11 +2640,10 @@ export class ContainerRuntime
 			this._signalTracking.signalsLost = 0;
 			this._signalTracking.signalsOutOfOrder = 0;
 			this._signalTracking.signalTimestamp = 0;
-			this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			this._signalTracking.totalSignalsSentInLatencyWindow = 0;
 			this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
 			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+			this._signalTracking.baseSignalTrackingGroupSequenceNumber = undefined;
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -3004,21 +3002,30 @@ export class ContainerRuntime
 
 	/**
 	 * Emits the Signal event and update the perf signal data.
+	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
 	 */
-	private sendSignalTelemetryEvent() {
+	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
+		const signalsSent =
+			this._signalTracking.baseSignalTrackingGroupSequenceNumber !== undefined
+				? clientSignalSequenceNumber -
+					this._signalTracking.baseSignalTrackingGroupSequenceNumber +
+					1
+				: -1;
+
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration, // Roundtrip duration of the tracked signal in milliseconds.
-			signalsSent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
+			signalsSent, // Signals sent since the last logged SignalLatency event.
 			signalsLost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
 			outOfOrderSignals: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
 			reconnectCount: this.consecutiveReconnects, // Container reconnect count.
 		});
+		this._signalTracking.baseSignalTrackingGroupSequenceNumber =
+			clientSignalSequenceNumber + 1;
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalsOutOfOrder = 0;
 		this._signalTracking.signalTimestamp = 0;
-		this._signalTracking.totalSignalsSentInLatencyWindow = 0;
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -3027,26 +3034,21 @@ export class ContainerRuntime
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
-			targetClientId: message.targetClientId,
 		};
 
-		// Only collect signal telemetry for broadcast messages sent by the current client.
-		if (
-			message.clientId === this.clientId &&
-			this.connected &&
-			envelope.clientBroadcastSignalSequenceNumber !== undefined
-		) {
+		// Only collect signal telemetry for messages sent by the current client.
+		if (message.clientId === this.clientId && this.connected) {
 			if (
 				this._signalTracking.trackingSignalSequenceNumber !== undefined &&
 				this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined
 			) {
 				if (
-					envelope.clientBroadcastSignalSequenceNumber >=
+					envelope.clientSignalSequenceNumber >=
 					this._signalTracking.trackingSignalSequenceNumber
 				) {
 					// Calculate the number of signals lost and log the event.
 					const signalsLost =
-						envelope.clientBroadcastSignalSequenceNumber -
+						envelope.clientSignalSequenceNumber -
 						this._signalTracking.trackingSignalSequenceNumber;
 					if (signalsLost > 0) {
 						this._signalTracking.signalsLost += signalsLost;
@@ -3054,15 +3056,14 @@ export class ContainerRuntime
 							eventName: "SignalLost",
 							signalsLost, // Number of lost signals detected.
 							trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-							clientBroadcastSignalSequenceNumber:
-								envelope.clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
+							clientSignalSequenceNumber: envelope.clientSignalSequenceNumber, // Actual signal sequence number received.
 						});
 					}
 					// Update the tracking signal sequence number to the next expected signal in the sequence.
 					this._signalTracking.trackingSignalSequenceNumber =
-						envelope.clientBroadcastSignalSequenceNumber + 1;
+						envelope.clientSignalSequenceNumber + 1;
 				} else if (
-					envelope.clientBroadcastSignalSequenceNumber >=
+					envelope.clientSignalSequenceNumber >=
 					this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
 					this._signalTracking.signalsOutOfOrder++;
@@ -3070,23 +3071,23 @@ export class ContainerRuntime
 						eventName: "SignalOutOfOrder",
 						type: envelope.contents.type, // Type of signal that was received out of order.
 						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-						clientBroadcastSignalSequenceNumber: envelope.clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
+						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber, // Sequence number of the out of order signal.
 					});
 				}
 				if (
 					this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
-					envelope.clientBroadcastSignalSequenceNumber >=
+					envelope.clientSignalSequenceNumber >=
 						this._signalTracking.roundTripSignalSequenceNumber
 				) {
 					if (
-						envelope.clientBroadcastSignalSequenceNumber ===
+						envelope.clientSignalSequenceNumber ===
 						this._signalTracking.roundTripSignalSequenceNumber
 					) {
 						// Latency tracked signal has been received.
 						// We now log the roundtrip duration of the tracked signal.
 						// This telemetry event also logs metrics for signals sent, signals lost, and out of order signals received.
 						// These metrics are reset after logging the telemetry event.
-						this.sendSignalTelemetryEvent();
+						this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 					}
 					this._signalTracking.roundTripSignalSequenceNumber = undefined;
 				}
@@ -3337,45 +3338,32 @@ export class ContainerRuntime
 		address: string | undefined,
 		type: string,
 		content: any,
-		targetClientId?: string,
 	): ISignalEnvelope {
+		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
+
+		// Initialize tracking to expect the first signal sent by the connected client.
+		if (
+			this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
+			this._signalTracking.trackingSignalSequenceNumber === undefined
+		) {
+			this._signalTracking.minimumTrackingSignalSequenceNumber = newSequenceNumber;
+			this._signalTracking.trackingSignalSequenceNumber = newSequenceNumber;
+			this._signalTracking.baseSignalTrackingGroupSequenceNumber = newSequenceNumber;
+		}
+
 		const newEnvelope: ISignalEnvelope = {
 			address,
+			clientSignalSequenceNumber: newSequenceNumber,
 			contents: { type, content },
 		};
 
-		const isBroadcastSignal = targetClientId === undefined;
-
-		if (isBroadcastSignal) {
-			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
-				.broadcastSignalSequenceNumber;
-			newEnvelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
-			this._signalTracking.signalsSentSinceLastLatencyMeasurement++;
-
-			if (
-				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
-				this._signalTracking.trackingSignalSequenceNumber === undefined
-			) {
-				// Signal monitoring window is undefined
-				// Initialize tracking to expect the next signal sent by the connected client.
-				this._signalTracking.minimumTrackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.trackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-			}
-
-			// We should not track the round trip of a new signal in the case we are already tracking one.
-			if (
-				clientBroadcastSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-				this._signalTracking.roundTripSignalSequenceNumber === undefined
-			) {
-				this._signalTracking.signalTimestamp = Date.now();
-				this._signalTracking.roundTripSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this._signalTracking.totalSignalsSentInLatencyWindow +=
-					this._signalTracking.signalsSentSinceLastLatencyMeasurement;
-				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			}
+		// We should not track the round trip of a new signal in the case we are already tracking one.
+		if (
+			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+			this._signalTracking.roundTripSignalSequenceNumber === undefined
+		) {
+			this._signalTracking.signalTimestamp = Date.now();
+			this._signalTracking.roundTripSignalSequenceNumber = newSequenceNumber;
 		}
 
 		return newEnvelope;
@@ -3386,21 +3374,10 @@ export class ContainerRuntime
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 *
-	 * @remarks
-	 *
-	 * The `targetClientId` parameter here is currently intended for internal testing purposes only.
-	 * Support for this option at container runtime is planned to be deprecated in the future.
-	 *
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed();
-		const envelope = this.createNewSignalEnvelope(
-			undefined /* address */,
-			type,
-			content,
-			targetClientId,
-		);
+		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
 		return this.submitSignalFn(envelope, targetClientId);
 	}
 

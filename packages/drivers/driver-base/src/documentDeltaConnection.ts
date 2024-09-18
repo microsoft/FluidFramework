@@ -18,7 +18,6 @@ import {
 	IConnect,
 	IConnected,
 	IDocumentMessage,
-	type ISentSignalMessage,
 	ISignalClient,
 	ITokenClaims,
 	ScopeType,
@@ -39,8 +38,6 @@ import type { Socket } from "socket.io-client";
 
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-
-const feature_submit_signals_v2 = "submit_signals_v2";
 
 /**
  * Represents a connection to a stream of delta updates.
@@ -315,24 +312,9 @@ export class DocumentDeltaConnection
 		this.checkNotDisposed();
 		return this.details.initialClients;
 	}
-	/**
-	 * Emits 'submitOp' messages.
-	 * @param type - Must be 'submitOp'.
-	 * @param messages - An array of document messages to submit.
-	 */
-	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
 
-	/**
-	 * Emits 'submitSignal' messages.
-	 *
-	 * **Note:** When using `ISentSignalMessage[]`, the service must support the `submit_signals_v2` feature.
-	 * @param type - Must be 'submitSignal'.
-	 * @param messages - An array of signals to submit. Can be either `string[][]` or `ISentSignalMessage[]`.
-	 */
-	protected emitMessages(
-		type: "submitSignal",
-		messages: string[][] | ISentSignalMessage[],
-	): void;
+	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+	protected emitMessages(type: "submitSignal", messages: string[][]): void;
 	protected emitMessages(type: string, messages: unknown): void {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
@@ -361,20 +343,11 @@ export class DocumentDeltaConnection
 	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
 
-		// Check for server-side support of v2 signals
-		if (this.details.supportedFeatures?.submit_signals_v2 === true) {
-			const signal: ISentSignalMessage = { content };
-			if (targetClientId !== undefined) {
-				signal.targetClientId = targetClientId;
-			}
-			this.emitMessages("submitSignal", [signal]);
-		} else if (targetClientId !== undefined) {
-			throw new UsageError(
-				"Sending signals to specific client ids is not supported with this service.",
-			);
-		} else {
-			this.emitMessages("submitSignal", [[content]]);
+		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
+			throw new UsageError("Sending signals to specific client ids is not supported.");
 		}
+
+		this.emitMessages("submitSignal", [[content]]);
 	}
 
 	/**
@@ -459,11 +432,6 @@ export class DocumentDeltaConnection
 		this.socket.on("op", this.earlyOpHandler);
 		this.socket.on("signal", this.earlySignalHandler);
 		this.earlyOpHandlerAttached = true;
-
-		connectMessage.supportedFeatures = {
-			...connectMessage.supportedFeatures,
-			[feature_submit_signals_v2]: true,
-		};
 
 		// Socket.io's reconnect_attempt event is unreliable, so we track connect_error count instead.
 		let internalSocketConnectionFailureCount: number = 0;

@@ -5,13 +5,6 @@
 
 /**
  * @internal
- *
- * @privateRemarks
- * `IRuntimeSignalEnvelope` is an interface that mirrors `ISignalEnvelope` for signals that come from an external
- * caller (not sent by a client—so no `clientBroadcastSignalSequenceNumber`) and are always addressed
- * to the Container (so no `address`).
- *
- * See at `server/routerlicious/packages/lambdas/src/utils/messageGenerator.ts`.
  */
 export interface ISignalEnvelope {
 	/**
@@ -20,9 +13,9 @@ export interface ISignalEnvelope {
 	address?: string;
 
 	/**
-	 * Signal tracking identifier for self submitted broadcast signals.
+	 * Identifier for the signal being submitted.
 	 */
-	clientBroadcastSignalSequenceNumber?: number;
+	clientSignalSequenceNumber: number;
 
 	/**
 	 * The contents of the envelope
