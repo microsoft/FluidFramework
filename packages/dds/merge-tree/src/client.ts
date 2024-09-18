@@ -603,12 +603,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				clientArgs.clientId,
 			);
 		}
+		// eslint-disable-next-line import/no-deprecated
 		if (start !== undefined && (op as IMergeTreeObliterateMsg).before1 === false) {
 			// pos1 is after the given index. Normalize to before-sided for bounds checking
 			start += 1;
 		}
 
 		let end: number | undefined = op.pos2;
+		// eslint-disable-next-line import/no-deprecated
 		if (end !== undefined && (op as IMergeTreeObliterateMsg).before2 === false) {
 			// pos2 is after the given index. Normalize to before-sided for bounds checking
 			end += 1;
@@ -643,7 +645,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				(end === undefined ||
 					end < start! ||
 					(end === start &&
+						// eslint-disable-next-line import/no-deprecated
 						!(op as IMergeTreeObliterateMsg).before1 &&
+						// eslint-disable-next-line import/no-deprecated
 						(op as IMergeTreeObliterateMsg).before2))
 			) {
 				invalidPositions.push("end");

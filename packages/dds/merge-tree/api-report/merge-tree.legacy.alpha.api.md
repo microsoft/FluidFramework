@@ -144,7 +144,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
-    obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
+    obliterateRangeLocal(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): IMergeTreeObliterateMsg;
     peekPendingSegmentGroups(): SegmentGroup | undefined;
     // (undocumented)
     peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
@@ -360,6 +360,10 @@ export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallba
 // @alpha @deprecated (undocumented)
 export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
     // (undocumented)
+    before1?: boolean;
+    // (undocumented)
+    before2?: boolean;
+    // (undocumented)
     pos1?: number;
     // (undocumented)
     pos2?: number;
@@ -379,6 +383,7 @@ export interface IMergeTreeOptions {
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
+    mergeTreeEnableSidedObliterate?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
@@ -418,6 +423,7 @@ export interface IMoveInfo {
     movedSeq: number;
     movedSeqs: number[];
     moveDst?: ReferencePosition;
+    prevObliterateByInserter?: ObliterateInfo;
     wasMovedOnInsert: boolean;
 }
 
@@ -637,22 +643,6 @@ export interface MergeTreeRevertibleDriver {
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     // (undocumented)
     removeRange(start: number, end: number): void;
-}
-
-// @alpha (undocumented)
-export interface ObliterateInfo {
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    end: LocalReferencePosition;
-    // (undocumented)
-    localSeq: number | undefined;
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    seq: number;
-    // (undocumented)
-    start: LocalReferencePosition;
 }
 
 // @alpha @deprecated (undocumented)

@@ -419,7 +419,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						assert(lastRem.pos2 !== undefined, 0x874 /* pos2 should not be undefined here */);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(createObliterateRangeOp(r.position, r.position + r.segment.cachedLength));
+						ops.push(
+							createObliterateRangeOp(r.position, r.position + r.segment.cachedLength, false),
+						);
 					}
 					break;
 				}

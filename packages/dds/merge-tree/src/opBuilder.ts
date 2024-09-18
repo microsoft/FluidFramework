@@ -91,11 +91,11 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
 export function createObliterateRangeOp(
 	start: SequencePlace,
 	end: SequencePlace,
 	mergeTreeEnableSidedObliterate: boolean,
+	// eslint-disable-next-line import/no-deprecated
 ): IMergeTreeObliterateMsg {
 	if (mergeTreeEnableSidedObliterate) {
 		const startPlace = normalizePlace(start);
