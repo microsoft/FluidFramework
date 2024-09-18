@@ -47,18 +47,17 @@ export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSc
 
 export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	assert(!(view.schema instanceof FieldSchema), "Root cannot be a FieldSchema.");
-	const jsonTreeSchema = getJsonSchema(view.schema);
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(jsonTreeSchema);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(view.schema));
 	const decoratedJson = toDecoratedJson(view.root);
 
-	/*
-	-- Dynamic pieces:
-	1. Description of the schema of the tree.
-	2. Tree content (current state) -- output of toDecoratedJson.
-	3.? TypeScripty version of the edits it's allowed to make (Json schema); depends on Structured Output requirements.
-	4.? If it performs poorly, potentially dynamically generate some examples based on the passed schema.
-	*/
-	return `${promptFriendlySchema}\n${decoratedJson.stringified}`;
+	const systemPrompt = `
+	You are a collaborative agent who interacts with a tree. 
+	You should make the minimum number of edits to the tree to achieve the desired outcome, and do it in as granular a way as possible to ensure good merge outcomes.
+	The tree is a JSON object with the following schema: ${promptFriendlySchema} 
+	The current state of the tree is: ${decoratedJson.stringified}.
+	The allowed edits are defined by the following schema: ${"TODO"}. 
+	Example edits: ${"TODO"}.`;
+	return systemPrompt;
 }
 
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
