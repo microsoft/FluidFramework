@@ -328,6 +328,7 @@ export function getBranch(tree: ITree): TreeBranch;
 /**
  * Get a {@link TreeBranch} from a {@link TreeView}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
+ * Branches are currently an unstable "alpha" API and are subject to change in the future.
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
