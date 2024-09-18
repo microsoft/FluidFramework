@@ -383,7 +383,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 		if (this.buffer.startsWith('"')) {
 			// The end of the string was reached
 			this.buffer = this.buffer.slice(1);
-			this.completeAndPopContext();
+			this.completePrimitiveAndPop();
 			return this.buffer.length > 0;
 		} else if (this.buffer.length > 0) {
 			this.throttled = true;
@@ -458,6 +458,13 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	private setPrimitiveValueAndPop(value: JsonPrimitive): void {
 		this.builder.addPrimitive(
 			value,
+			this.builderContextFromParserContext(this.contexts[this.contexts.length - 2]!),
+		);
+		this.completePrimitiveAndPop();
+	}
+
+	private completePrimitiveAndPop(): void {
+		this.builder.completeContext(
 			this.builderContextFromParserContext(this.contexts[this.contexts.length - 2]!),
 		);
 		this.popContext(Production.Value);

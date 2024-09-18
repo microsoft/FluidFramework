@@ -183,12 +183,12 @@ const sampleOps = [
 			{ x: 3, y: 2, z: null },
 		],
 	},
-	/* {
+	{
         type: 'modify',
         target: { objectId: 4 },
         field: 'booleans',
         modification: [false, false, true, true],
-    }, */
+    },
 	{
 		type: "remove",
 		source: {
