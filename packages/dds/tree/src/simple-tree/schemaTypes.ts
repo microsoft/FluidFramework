@@ -221,7 +221,7 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	/**
 	 * User-defined metadata.
 	 */
-	custom?: TCustomMetadata;
+	readonly custom?: TCustomMetadata;
 
 	/**
 	 * The description of the field.
@@ -232,7 +232,7 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	 * E.g., when converting a field schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
 	 * used as the `description` field.
 	 */
-	description?: string | undefined;
+	readonly description?: string | undefined;
 }
 
 /**
