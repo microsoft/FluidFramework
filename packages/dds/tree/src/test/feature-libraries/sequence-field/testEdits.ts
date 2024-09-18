@@ -75,7 +75,12 @@ function createInsertChangeset(
 	count: number,
 	id?: ChangesetLocalId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0), tag);
+	return SF.sequenceFieldEditor.insert(
+		index,
+		count,
+		{ localId: id ?? brand(0), revision: tag },
+		tag,
+	);
 }
 
 function createRemoveChangeset(
@@ -126,7 +131,7 @@ function createMoveChangeset(
 		count,
 		destIndex,
 		id,
-		brand(id + count),
+		{ localId: brand(id + count), revision: tag },
 		tag,
 	);
 }

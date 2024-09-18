@@ -27,20 +27,29 @@ export function testEditor() {
 		});
 
 		it("insert one node", () => {
-			const actual = SF.sequenceFieldEditor.insert(42, 1, id, mintRevisionTag());
-			const expected: SF.Changeset = [{ count: 42 }, Mark.revive(1, { localId: id })];
+			const revision = mintRevisionTag();
+			const actual = SF.sequenceFieldEditor.insert(42, 1, { localId: id, revision }, revision);
+			const expected: SF.Changeset = [
+				{ count: 42 },
+				Mark.revive(1, { localId: id, revision }, { revision }),
+			];
 			assert.deepEqual(actual, expected);
 		});
 
 		it("insert multiple nodes", () => {
-			const actual = SF.sequenceFieldEditor.insert(42, 2, id, mintRevisionTag());
-			const expected: SF.Changeset = [{ count: 42 }, Mark.insert(2, id)];
+			const revision = mintRevisionTag();
+			const actual = SF.sequenceFieldEditor.insert(42, 2, { localId: id, revision }, revision);
+			const expected: SF.Changeset = [
+				{ count: 42 },
+				Mark.insert(2, { localId: id, revision }, { revision }),
+			];
 			assert.deepEqual(actual, expected);
 		});
 
 		it("remove", () => {
-			const actual = SF.sequenceFieldEditor.remove(42, 3, id, mintRevisionTag());
-			const expected: SF.Changeset = [{ count: 42 }, Mark.remove(3, id)];
+			const revision = mintRevisionTag();
+			const actual = SF.sequenceFieldEditor.remove(42, 3, id, revision);
+			const expected: SF.Changeset = [{ count: 42 }, Mark.remove(3, id, { revision })];
 			assert.deepEqual(actual, expected);
 		});
 	});

@@ -63,7 +63,6 @@ const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (ta
 const modularBuilder = new ModularEditBuilder(
 	modularFamily,
 	modularFamily.fieldKinds,
-	mintRevisionTag,
 	() => {},
 );
 

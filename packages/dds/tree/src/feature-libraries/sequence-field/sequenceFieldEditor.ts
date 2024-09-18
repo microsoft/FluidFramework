@@ -22,12 +22,7 @@ import type {
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(
-		index: number,
-		count: number,
-		firstId: ChangesetLocalId,
-		revision: RevisionTag,
-	): Changeset;
+	insert(index: number, count: number, firstId: CellId, revision: RevisionTag): Changeset;
 	remove(index: number, count: number, id: ChangesetLocalId, revision: RevisionTag): Changeset;
 	revive(
 		index: number,
@@ -50,7 +45,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		count: number,
 		destIndex: number,
 		detachCellId: ChangesetLocalId,
-		attachCellId: ChangesetLocalId,
+		attachCellId: CellId,
 		revision: RevisionTag,
 	): Changeset;
 
@@ -64,7 +59,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		destIndex: number,
 		count: number,
 		moveId: ChangesetLocalId,
-		attachCellId: ChangesetLocalId,
+		attachCellId: CellId,
 		revision: RevisionTag,
 	): Changeset;
 
@@ -84,14 +79,14 @@ export const sequenceFieldEditor = {
 	insert: (
 		index: number,
 		count: number,
-		firstId: ChangesetLocalId,
+		firstId: CellId,
 		revision: RevisionTag,
 	): Changeset => {
 		const mark: CellMark<Insert> = {
 			type: "Insert",
-			id: firstId,
+			id: firstId.localId,
 			count,
-			cellId: { localId: firstId, revision },
+			cellId: firstId,
 			revision,
 		};
 		return markAtIndex(index, mark);
@@ -126,14 +121,14 @@ export const sequenceFieldEditor = {
 		count: number,
 		destIndex: number,
 		detachCellId: ChangesetLocalId,
-		attachCellId: ChangesetLocalId,
+		attachCellId: CellId,
 		revision: RevisionTag,
 	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
 			id: detachCellId,
 			count,
-			cellId: { localId: attachCellId, revision },
+			cellId: attachCellId,
 			revision,
 		};
 		const moveOut: Mark = {
@@ -164,14 +159,14 @@ export const sequenceFieldEditor = {
 		destIndex: number,
 		count: number,
 		moveId: ChangesetLocalId,
-		attachCellId: ChangesetLocalId,
+		attachCellId: CellId,
 		revision: RevisionTag,
 	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
 			id: moveId,
 			count,
-			cellId: { localId: attachCellId, revision },
+			cellId: attachCellId,
 			revision,
 		};
 		return markAtIndex(destIndex, moveIn);

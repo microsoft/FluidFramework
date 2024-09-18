@@ -4,13 +4,12 @@
  */
 
 import {
-	type ChangesetLocalId,
+	type ChangeAtomId,
 	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
-	type RevisionTag,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
@@ -57,12 +56,8 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the current value of the field with `newValue`.
 	 * @param newContent - the new content for the field
 	 * @param changeId - the ID associated with the replacement of the current content.
-	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
-	set(
-		ids: { fill: ChangesetLocalId; detach: ChangesetLocalId },
-		revision: RevisionTag,
-	): OptionalChangeset;
+	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -81,13 +76,10 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (
-		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
-		},
-		revision: RevisionTag,
-	): OptionalChangeset => optionalFieldEditor.set(false, ids, revision),
+	set: (ids: {
+		fill: ChangeAtomId;
+		detach: ChangeAtomId;
+	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {

@@ -1064,6 +1064,6 @@ function tagChangeInline(
 }
 
 function buildChangeset(edits: EditDescription[]): ModularChangeset {
-	const editor = family.buildEditor(mintRevisionTag, () => undefined);
+	const editor = family.buildEditor(() => undefined);
 	return editor.buildChanges(edits);
 }

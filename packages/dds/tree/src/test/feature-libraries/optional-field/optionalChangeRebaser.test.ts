@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
+	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
@@ -81,15 +82,15 @@ const OptionalChange = {
 		value: string,
 		wasEmpty: boolean,
 		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
+			fill: ChangeAtomId;
+			detach: ChangeAtomId;
 		},
 	) {
-		return optionalFieldEditor.set(wasEmpty, ids, tag1);
+		return optionalFieldEditor.set(wasEmpty, ids);
 	},
 
-	clear(wasEmpty: boolean, id: ChangesetLocalId) {
-		return optionalFieldEditor.clear(wasEmpty, id, tag1);
+	clear(wasEmpty: boolean, id: ChangeAtomId) {
+		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
 	buildChildChange(childChange: NodeId) {
@@ -314,7 +315,11 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 		tagFromIntention: (intention: number) => RevisionTag,
 		mintIntention: () => number,
 	): Iterable<OptionalFieldTestState> {
-		const mintId = mintIntention as () => ChangesetLocalId;
+		const mintId: () => ChangeAtomId = () => {
+			return {
+				localId: mintIntention() as ChangesetLocalId,
+			};
+		};
 		const edits = getSequentialEdits(state);
 		if (state.content !== undefined) {
 			const changeChildIntention = mintIntention();
