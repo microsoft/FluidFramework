@@ -52,6 +52,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
+ * @internal
  */
 @breakingClass
 export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
