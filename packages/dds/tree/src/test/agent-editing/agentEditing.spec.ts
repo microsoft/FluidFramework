@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { getPromptFriendlyTreeSchema, toDecoratedJson } from "../../agent-editing/index.js";
+import {
+	getPromptFriendlyTreeSchema,
+	toDecoratedJson,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../agent-editing/promptGeneration.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getJsonSchema } from "../../simple-tree/api/index.js";
 
