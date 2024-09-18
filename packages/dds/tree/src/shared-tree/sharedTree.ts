@@ -338,8 +338,9 @@ export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): Tr
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
 		"Unsupported implementation",
 	);
+	const checkout: TreeCheckout = treeOrView.checkout;
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return treeOrView.checkout as unknown as TreeBranch;
+	return checkout as unknown as TreeBranch;
 }
 
 /**

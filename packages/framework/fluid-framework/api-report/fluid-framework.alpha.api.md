@@ -864,7 +864,7 @@ export const TreeBeta: {
     readonly on: <K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>) => () => void;
 };
 
-// @alpha
+// @alpha @sealed
 export interface TreeBranch extends ViewableTree {
     branch(): TreeBranchFork;
     merge(branch: TreeBranchFork): void;
@@ -872,9 +872,9 @@ export interface TreeBranch extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
-// @alpha
+// @alpha @sealed
 export interface TreeBranchFork extends TreeBranch, IDisposable {
-    rebaseOnto(view: TreeBranch): void;
+    rebaseOnto(branch: TreeBranch): void;
 }
 
 // @public @sealed

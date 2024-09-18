@@ -103,7 +103,7 @@ export interface CheckoutEvents {
  * @remarks Branches may be used to coordinate edits to a SharedTree, e.g. via merge and rebase operations.
  * Changes applied to a branch of a branch only apply to that branch and are isolated from other branches.
  * Changes may be synchronized across branches via merge and rebase operations provided on the branch object.
- * @alpha
+ * @alpha @sealed
  */
 export interface TreeBranch extends ViewableTree {
 	/**
@@ -138,14 +138,14 @@ export interface TreeBranch extends ViewableTree {
 /**
  * A {@link TreeBranch | branch} of a SharedTree that has merged from another branch.
  * @remarks This branch should be disposed when it is no longer needed in order to free resources.
- * @alpha
+ * @alpha @sealed
  */
 export interface TreeBranchFork extends TreeBranch, IDisposable {
 	/**
-	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
-	 * @param view - Either the root view or a view that was created by a call to `branch()`. It is not modified by this operation.
+	 * Rebase the changes that have been applied to this branch over all the new changes in the given branch.
+	 * @param branch - Either the root branch or a branch that was created by a call to `branch()`. It is not modified by this operation.
 	 */
-	rebaseOnto(view: TreeBranch): void;
+	rebaseOnto(branch: TreeBranch): void;
 }
 
 /**
@@ -664,46 +664,46 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		);
 	}
 
-	public rebase(view: TreeCheckout): void {
+	public rebase(checkout: TreeCheckout): void {
 		this.checkNotDisposed(
 			"The target of the branch rebase has been disposed and cannot be rebased.",
 		);
-		view.checkNotDisposed(
+		checkout.checkNotDisposed(
 			"The source of the branch rebase has been disposed and cannot be rebased.",
 		);
 		assert(
-			!view.transaction.inProgress(),
+			!checkout.transaction.inProgress(),
 			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
-		view._branch.rebaseOnto(this._branch);
+		checkout._branch.rebaseOnto(this._branch);
 	}
 
-	public rebaseOnto(view: ITreeCheckout): void {
+	public rebaseOnto(checkout: ITreeCheckout): void {
 		this.checkNotDisposed(
 			"The target of the branch rebase has been disposed and cannot be rebased.",
 		);
-		view.rebase(this);
+		checkout.rebase(this);
 	}
 
-	public merge(view: TreeCheckout): void;
-	public merge(view: TreeCheckout, disposeView: boolean): void;
-	public merge(view: TreeCheckout, disposeView = true): void {
+	public merge(checkout: TreeCheckout): void;
+	public merge(checkout: TreeCheckout, disposeMerged: boolean): void;
+	public merge(checkout: TreeCheckout, disposeMerged = true): void {
 		this.checkNotDisposed(
 			"The target of the branch merge has been disposed and cannot be merged.",
 		);
-		view.checkNotDisposed(
+		checkout.checkNotDisposed(
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
 		assert(
 			!this.transaction.inProgress(),
 			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
 		);
-		while (view.transaction.inProgress()) {
-			view.transaction.commit();
+		while (checkout.transaction.inProgress()) {
+			checkout.transaction.commit();
 		}
-		this._branch.merge(view._branch);
-		if (disposeView) {
-			view[disposeSymbol]();
+		this._branch.merge(checkout._branch);
+		if (disposeMerged) {
+			checkout[disposeSymbol]();
 		}
 	}
 
