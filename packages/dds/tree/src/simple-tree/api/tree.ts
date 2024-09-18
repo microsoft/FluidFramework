@@ -66,43 +66,6 @@ export interface ViewableTree {
 	): TreeView<TRoot>;
 }
 
-// /**
-//  * A tree that may be {@link ViewableTree.viewWith | viewed} or {@link BranchableTree.branch | branched}.
-//  * @alpha
-//  */
-// export interface BranchableTree extends ViewableTree {
-// 	/**
-// 	 * Create a new branch of the current state of the tree.
-// 	 * @remarks
-// 	 * The branch can be read and modified independently of the original tree.
-// 	 * A {@link TreeView | view} of the branch can be acquired using {@link ViewableTree.viewWith}().
-// 	 * Edits to the branch do not affect the original tree until they are merged back in.
-// 	 * Braches may also be rebased onto each other.
-// 	 */
-// 	branch(): TreeBranch;
-
-// 	/**
-// 	 * Apply all the new changes on the given branch to this tree.
-// 	 * @param branch - a branch which was created by a call to {@link BranchableTree.branch}().
-// 	 * @remarks It is automatically disposed after the merge completes.
-// 	 */
-// 	merge(branch: TreeBranch): void;
-
-// 	/**
-// 	 * Apply all the new changes on the given branch to this tree.
-// 	 * @param branch - a branch which was created by a call to {@link BranchableTree.branch}().
-// 	 * @param disposeView - whether or not to dispose `branch` after the merge completes.
-// 	 */
-// 	merge(branch: TreeBranch, disposeView: boolean): void;
-
-// 	/**
-// 	 * Rebase the changes that have been applied to the given branch over all the new changes in this tree.
-// 	 * @param branch - a branch which was created by a call to {@link BranchableTree.branch}().
-// 	 * It is modified by this operation.
-// 	 */
-// 	rebase(branch: TreeBranch): void;
-// }
-
 /**
  * Channel for a Fluid Tree DDS.
  * @remarks
@@ -110,19 +73,6 @@ export interface ViewableTree {
  * @sealed @public
  */
 export interface ITree extends ViewableTree, IFluidLoadable {}
-
-// /**
-//  * A {@link BranchableTree.branch | branch} of a tree.
-//  * @alpha
-//  */
-// export interface TreeBranch extends BranchableTree, IDisposable {
-// 	/**
-// 	 * Rebase the changes that have been applied to this branch over all the new changes in the given branch.
-// 	 * @param branch - Either the root tree or a tree that was created by a call to `branch()`.
-// 	 * It is not modified by this operation.
-// 	 */
-// 	rebaseOnto(branch: BranchableTree): void;
-// }
 
 /**
  * Options when constructing a tree view.
