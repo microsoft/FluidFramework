@@ -116,7 +116,7 @@ describe("obliterate", () => {
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: 5,
-				end: "hello world".length,
+				end: client.getLength(),
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
@@ -162,7 +162,7 @@ describe("obliterate", () => {
 
 	describe("local obliterate with concurrent inserts", () => {
 		it("removes range when pending local obliterate op", () => {
-			client.obliterateRangeLocal(0, "hello world".length);
+			client.obliterateRangeLocal(0, client.getLength());
 			insertText({
 				mergeTree: client.mergeTree,
 				pos: 1,
@@ -246,7 +246,7 @@ describe("obliterate", () => {
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: 5,
-				end: "hello world".length,
+				end: client.getLength(),
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
@@ -268,7 +268,7 @@ describe("obliterate", () => {
 		it("insert, then obliterate at the end of the string", () => {
 			insertText({
 				mergeTree: client.mergeTree,
-				pos: "hello world".length,
+				pos: client.getLength(),
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
@@ -279,7 +279,7 @@ describe("obliterate", () => {
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: 5,
-				end: "hello world".length,
+				end: client.getLength(),
 				refSeq,
 				clientId: remoteClientId + 1,
 				seq: refSeq + 2,
