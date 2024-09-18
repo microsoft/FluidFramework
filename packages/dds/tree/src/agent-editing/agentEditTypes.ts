@@ -16,8 +16,14 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeView,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getJsonSchema, type JsonFieldSchema, type JsonNodeSchema, type JsonSchemaRef, type JsonTreeSchema } from "../simple-tree/api/index.js";
+import {
+	getJsonSchema,
+	type JsonFieldSchema,
+	type JsonNodeSchema,
+	type JsonSchemaRef,
+	type JsonTreeSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
 
@@ -143,18 +149,18 @@ export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string 
 		let stringifiedEntry = `interface ${getFriendlySchemaName(name)} {`;
 
 		Object.entries(def.properties).forEach(([fieldName, fieldSchema]) => {
-			stringifiedEntry += ` ${fieldName}: `;
-			let typeString = '';
+			let typeString: string;
 			if (isJsonSchemaRef(fieldSchema)) {
 				const nextFieldName = fieldSchema.$ref;
 				const nextDef = getDef(jsonSchema.$defs, nextFieldName);
 				typeString = `${getTypeString(jsonSchema.$defs, [nextFieldName, nextDef])}`;
 			} else {
-				typeString = `${handleAnyOf(jsonSchema.$defs, fieldSchema.anyOf)}`;
+				typeString = `${getAnyOfTypeString(jsonSchema.$defs, fieldSchema.anyOf, true)}`;
 			}
 			if (def.required && !def.required.includes(fieldName)) {
-				typeString = `( ${typeString} | undefined )`;
+				typeString = `${typeString} | undefined`;
 			}
+			stringifiedEntry += ` ${fieldName}: ${typeString};`;
 		});
 
 		stringifiedEntry += " }";
@@ -164,8 +170,11 @@ export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string 
 	return stringifiedSchema;
 }
 
-function getTypeString(defs: Record<string, JsonNodeSchema>, [name, currentDef]: [string, JsonNodeSchema]): string {
-	const {_treeNodeSchemaKind} = currentDef;
+function getTypeString(
+	defs: Record<string, JsonNodeSchema>,
+	[name, currentDef]: [string, JsonNodeSchema],
+): string {
+	const { _treeNodeSchemaKind } = currentDef;
 	if (_treeNodeSchemaKind === NodeKind.Leaf) {
 		return currentDef.type;
 	}
@@ -174,32 +183,36 @@ function getTypeString(defs: Record<string, JsonNodeSchema>, [name, currentDef]:
 	}
 	if (_treeNodeSchemaKind === NodeKind.Array) {
 		const items = currentDef.items;
-		if (!isJsonSchemaRef(items)) {
-			handleAnyOf(defs, items.anyOf)
-		} else {
-			return `${getTypeString(defs, [items.$ref, getDef(defs, items.$ref)])}[]`;
-		}
+		const innerType = !isJsonSchemaRef(items)
+			? getAnyOfTypeString(defs, items.anyOf)
+			: getTypeString(defs, [items.$ref, getDef(defs, items.$ref)]);
+		return `${innerType}[]`;
 	}
-	fail("no maps");
+	fail("Non-object, non-leaf, non-array schema type.");
 }
 
-function handleAnyOf(defs: Record<string, JsonNodeSchema>, refList: JsonSchemaRef[]): string {
+function getAnyOfTypeString(
+	defs: Record<string, JsonNodeSchema>,
+	refList: JsonSchemaRef[],
+	topLevel = false,
+): string {
 	const typeNames: string[] = [];
 	refList.forEach((ref) => {
 		typeNames.push(getTypeString(defs, [ref.$ref, getDef(defs, ref.$ref)]));
 	});
-	return `( ${typeNames.join(' | ')} )`;
+	const typeString = typeNames.join(" | ");
+	return topLevel ? typeString : `(${typeString})`;
 }
 
 function isJsonSchemaRef(field: JsonFieldSchema): field is JsonSchemaRef {
-	return (field as JsonSchemaRef).$ref === undefined;
-
-	// Bug here. Returns false for entries which do not have anyOf. 
+	return (field as JsonSchemaRef).$ref !== undefined;
 }
 
 function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSchema {
-	const nextDef = defs[ref];
-	assert(nextDef !== undefined, 'Ref not found.');
+	// strip the "#/$defs/" prefix
+	const strippedRef = ref.slice(8);
+	const nextDef = defs[strippedRef];
+	assert(nextDef !== undefined, "Ref not found.");
 	return nextDef;
 }
 
