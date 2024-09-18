@@ -12,6 +12,7 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldUpPath,
+	type ITreeCursorSynchronous,
 	type MapTree,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -47,6 +48,7 @@ import {
 	FieldKinds,
 	type SequenceFieldEditBuilder,
 } from "../default-schema/index.js";
+import { cursorForMapTreeNode } from "../mapTreeCursor.js";
 
 // #region Nodes
 
@@ -182,6 +184,10 @@ export class EagerMapTreeNode implements MapTreeNode {
 
 	public is(schema: FlexTreeNodeSchema): boolean {
 		return (schema as unknown) === this.flexSchema;
+	}
+
+	public borrowCursor(): ITreeCursorSynchronous {
+		return cursorForMapTreeNode(this.mapTree);
 	}
 
 	public tryGetField(key: FieldKey): EagerMapTreeField | undefined {

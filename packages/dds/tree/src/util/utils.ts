@@ -222,23 +222,26 @@ export function count(iterable: Iterable<unknown>): number {
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @beta
  */
-export type JsonCompatible =
+export type JsonCompatible<TExtra = never> =
 	| string
 	| number
 	| boolean
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
-	| JsonCompatible[]
-	| JsonCompatibleObject;
+	| JsonCompatible<TExtra>[]
+	| JsonCompatibleObject<TExtra>
+	| TExtra;
 
 /**
  * Use for Json object compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @beta
  */
-export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
+export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 
 /**
  * Use for readonly view of Json compatible data.

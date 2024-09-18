@@ -25,7 +25,8 @@ export {
 	type EmptyObject,
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
-export { createFromInsertable, cursorFromInsertable } from "./create.js";
+export { createFromInsertable, cursorFromInsertable, createFromVerbose } from "./create.js";
+export { clone, cloneToJson, cloneToVerbose, cloneToCompressed } from "./clone.js";
 export type { SimpleTreeSchema } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
@@ -45,7 +46,16 @@ export {
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 
+export type {
+	VerboseTreeNode,
+	EncodeOptions,
+	ParseOptions,
+	VerboseTree,
+} from "./verboseTree.js";
+
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
+
+export { extractPersistedSchema } from "./getStoredSchema.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

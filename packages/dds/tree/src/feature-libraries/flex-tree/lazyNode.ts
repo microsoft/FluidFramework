@@ -10,6 +10,7 @@ import {
 	type AnchorNode,
 	CursorLocationType,
 	type FieldKey,
+	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
@@ -98,6 +99,10 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 			this.context.flexSchema.nodeSchema.get(this.flexSchema.name) !== undefined,
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
+	}
+
+	public borrowCursor(): ITreeCursorSynchronous {
+		return this[cursorSymbol] as ITreeCursorSynchronous;
 	}
 
 	public is(schema: FlexTreeNodeSchema): boolean {

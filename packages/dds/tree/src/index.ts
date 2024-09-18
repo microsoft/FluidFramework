@@ -129,6 +129,16 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	createFromVerbose,
+	clone,
+	cloneToJson,
+	cloneToVerbose,
+	cloneToCompressed,
+	type VerboseTreeNode,
+	type EncodeOptions,
+	type ParseOptions,
+	type VerboseTree,
+	extractPersistedSchema,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
@@ -147,8 +157,12 @@ export {
 } from "./simple-tree/index.js";
 export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
-export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
-export { noopValidator } from "./codec/index.js";
+export type {
+	ICodecOptions,
+	JsonValidator,
+	SchemaValidationFunction,
+} from "./codec/index.js";
+export { noopValidator, FluidClientVersion } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export {
@@ -171,3 +185,5 @@ export {
 // These would be put in `internalTypes` except doing so tents to cause errors like:
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
+
+export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";

@@ -7,7 +7,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ITreeCursorSynchronous, SchemaAndPolicy } from "../../core/index.js";
-import { fail } from "../../util/index.js";
+import { fail, type JsonCompatible } from "../../util/index.js";
 import type {
 	TreeLeafValue,
 	ImplicitFieldSchema,
@@ -107,10 +107,11 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
  * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
  * @privateRemarks
  * This could be exposed as a public `Tree.createFromVerbose` function.
+ * @beta
  */
 export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	schema: TSchema,
-	data: VerboseTreeNode<THandle> | undefined,
+	data: VerboseTree<THandle> | undefined,
 	options: ParseOptions<THandle>,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
@@ -118,16 +119,17 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
  * Construct tree content compatible with a field defined by the provided `schema`.
  * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
  * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+ * @beta
  */
 export function createFromVerbose<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	data: VerboseTreeNode | undefined,
+	data: VerboseTree | undefined,
 	options?: Partial<ParseOptions<IFluidHandle>>,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	schema: TSchema,
-	data: VerboseTreeNode<THandle> | undefined,
+	data: VerboseTree<THandle> | undefined,
 	options?: Partial<ParseOptions<THandle>>,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const config: ParseOptions<THandle> = {
@@ -139,6 +141,19 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	const schemalessConfig = applySchemaToParserOptions(schema, config);
 	const cursor = cursorFromVerbose(data, schemalessConfig);
 	return createFromCursor(schema, cursor);
+}
+
+/**
+ * Construct tree content compatible with a field defined by the provided `schema`.
+ * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+ * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+ * @beta
+ */
+export function createFromCompressed<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+	data: JsonCompatible<IFluidHandle>,
+): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+	fail("TODO");
 }
 
 /**
