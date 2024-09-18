@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD:experimental/framework/fluid-llm-example/package.json
 	"name": "@fluid-experimental/fluid-llm-example",
-=======
-	"name": "@fluid-experimental/fluid-llm",
->>>>>>> 9402c9378f08e97d7755f467f2f40ad1183cd235:experimental/framework/fluid-llm/package.json
 	"version": "2.3.0",
 	"description": "Experimental SharedTree API for React integration.",
 	"homepage": "https://fluidframework.com",
@@ -113,7 +109,6 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:^",
 		"@fluidframework/tree": "workspace:~",
-<<<<<<< HEAD:experimental/framework/fluid-llm-example/package.json
 		"@iconify/react": "^5.0.2",
 		"@mui/lab": "6.0.0-beta.9",
 		"@mui/material": "^6.0.2",
@@ -123,10 +118,6 @@
 		"react-dom": "^18.3.1",
 		"tinylicious": "^5.0.0",
 		"typechat": "^0.1.1"
-=======
-		"react": "^17.0.1",
-		"zod": "^3.23.8"
->>>>>>> 9402c9378f08e97d7755f467f2f40ad1183cd235:experimental/framework/fluid-llm/package.json
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
@@ -136,12 +127,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-<<<<<<< HEAD:experimental/framework/fluid-llm-example/package.json
 		"@microsoft/api-extractor": "^7.45.1",
-=======
-		"@fluidframework/tinylicious-client": "workspace:~",
-		"@microsoft/api-extractor": "7.47.8",
->>>>>>> 9402c9378f08e97d7755f467f2f40ad1183cd235:experimental/framework/fluid-llm/package.json
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
