@@ -68,6 +68,7 @@ export {
 	type clone,
 	type cloneToJson,
 	type cloneToVerbose,
+	type cloneToCompressed,
 	type VerboseTreeNode,
 	type EncodeOptions,
 	type ParseOptions,

@@ -20,28 +20,25 @@ export function clone<TSchema extends ImplicitFieldSchema>(original: TreeFieldFr
 }): TreeFieldFromImplicitField<TSchema>;
 
 // @beta
-export function cloneToJSON<T>(node: TreeNode | TreeLeafValue, options?: {
+export function cloneToCompressed(node: TreeNode | TreeLeafValue): JsonCompatible<IFluidHandle>;
+
+// @beta
+export function cloneToJson<T>(node: TreeNode | TreeLeafValue, options?: {
     handleConverter(handle: IFluidHandle): T;
     readonly useStableFieldKeys?: boolean;
 }): JsonCompatible<T>;
 
 // @beta
-export function cloneToJSON(node: TreeNode | TreeLeafValue, options?: {
+export function cloneToJson(node: TreeNode | TreeLeafValue, options?: {
     handleConverter?: undefined;
     useStableFieldKeys?: boolean;
 }): JsonCompatible<IFluidHandle>;
 
 // @beta
-export function cloneToJSONVerbose<T>(node: TreeNode | TreeLeafValue, options?: {
-    handleConverter(handle: IFluidHandle): T;
-    readonly useStableFieldKeys?: boolean;
-}): VerboseTree<T>;
+export function cloneToVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
 
 // @beta
-export function cloneToJSONVerbose(node: TreeNode | TreeLeafValue, options?: {
-    readonly handleConverter?: undefined;
-    readonly useStableFieldKeys?: boolean;
-}): VerboseTree;
+export function cloneToVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
 
 // @public
 export enum CommitKind {
@@ -57,10 +54,10 @@ export interface CommitMetadata {
 }
 
 // @beta
-export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTreeNode<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 // @beta
-export function createFromVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTreeNode | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+export function createFromVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
@@ -475,8 +472,9 @@ export const TreeBeta: {
     readonly create: <TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>) => Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     readonly createFromVerbose: typeof createFromVerbose;
     readonly clone: typeof clone;
-    readonly cloneToJSONVerbose: typeof cloneToJSONVerbose;
-    readonly cloneToJSON: typeof cloneToJSON;
+    readonly cloneToVerbose: typeof cloneToVerbose;
+    readonly cloneToJson: typeof cloneToJson;
+    readonly cloneToCompressed: typeof cloneToCompressed;
 };
 
 // @public @sealed

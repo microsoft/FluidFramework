@@ -12,7 +12,7 @@ import type {
 } from "../core/index.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 import { createFromInsertable, createFromVerbose } from "./create.js";
-import { clone, cloneToJson, cloneToVerbose } from "./clone.js";
+import { clone, cloneToCompressed, cloneToJson, cloneToVerbose } from "./clone.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -122,4 +122,5 @@ export const TreeBeta = {
 	clone,
 	cloneToVerbose,
 	cloneToJson,
+	cloneToCompressed,
 } as const;

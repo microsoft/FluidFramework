@@ -26,7 +26,7 @@ export {
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable, createFromVerbose } from "./create.js";
-export { clone, cloneToJson, cloneToVerbose } from "./clone.js";
+export { clone, cloneToJson, cloneToVerbose, cloneToCompressed } from "./clone.js";
 export type { SimpleTreeSchema } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,

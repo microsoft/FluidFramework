@@ -111,7 +111,7 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
  */
 export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	schema: TSchema,
-	data: VerboseTreeNode<THandle> | undefined,
+	data: VerboseTree<THandle> | undefined,
 	options: ParseOptions<THandle>,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
@@ -123,13 +123,13 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
  */
 export function createFromVerbose<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	data: VerboseTreeNode | undefined,
+	data: VerboseTree | undefined,
 	options?: Partial<ParseOptions<IFluidHandle>>,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	schema: TSchema,
-	data: VerboseTreeNode<THandle> | undefined,
+	data: VerboseTree<THandle> | undefined,
 	options?: Partial<ParseOptions<THandle>>,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const config: ParseOptions<THandle> = {

@@ -133,10 +133,12 @@ export {
 	clone,
 	cloneToJson,
 	cloneToVerbose,
+	cloneToCompressed,
 	type VerboseTreeNode,
 	type EncodeOptions,
 	type ParseOptions,
 	type VerboseTree,
+	encodeSchema,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,

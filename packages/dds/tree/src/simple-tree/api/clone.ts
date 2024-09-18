@@ -16,7 +16,14 @@ import { verboseFromCursor, type EncodeOptions, type VerboseTree } from "./verbo
 import type { ITreeCursorSynchronous } from "../../core/index.js";
 import { cursorFromInsertable } from "./create.js";
 import { tryGetSchema } from "./treeNodeApi.js";
-import { isTreeValue } from "../../feature-libraries/index.js";
+import {
+	isTreeValue,
+	makeFieldBatchCodec,
+	TreeCompressionStrategy,
+	type FieldBatch,
+	type FieldBatchEncodingContext,
+} from "../../feature-libraries/index.js";
+import { noopValidator } from "../../codec/index.js";
 
 /**
  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
@@ -92,7 +99,7 @@ function borrowCursorFromTreeNodeOrValue(
  * Verbose tree format, with explicit type on every node.
  *
  * @remarks
- * There are several cases this may be preferred to {@link TreeBeta.cloneToJSON}:
+ * There are several cases this may be preferred to {@link TreeBeta.cloneToJson}:
  *
  * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), {@link TreeBeta.clone} can produce ambiguous data (the type may be unclear on some nodes).
  * This may be a good alternative to {@link TreeBeta.clone} since it is lossless.
@@ -134,11 +141,35 @@ export function cloneToVerbose<T>(
 /**
  * Construct tree content compatible with a field defined by the provided `schema`.
  * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
- * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+ * @param data - The data used to construct the field content. See `Tree.cloneToVerbose`.
  * @beta
  */
 export function cloneToCompressed(
 	node: TreeNode | TreeLeafValue,
+	options: { oldestCompatibleClient: FluidClientVersion },
 ): JsonCompatible<IFluidHandle> {
+	const format = versionToFormat[options.oldestCompatibleClient];
+	const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
+	const cursor = borrowCursorFromTreeNodeOrValue(node);
+	const batch: FieldBatch = [cursor];
+	const context: FieldBatchEncodingContext = {
+		encodeType: TreeCompressionStrategy.Compressed,
+		idCompressor: undefined,
+	};
+	codec.encode(batch, context);
 	return fail("TODO");
 }
+
+export enum FluidClientVersion {
+	v2_0 = "v2_0",
+	v2_1 = "v2_1",
+	v2_2 = "v2_2",
+	v2_3 = "v2_3",
+}
+
+const versionToFormat = {
+	v2_0: 1,
+	v2_1: 1,
+	v2_2: 1,
+	v2_3: 1,
+};
