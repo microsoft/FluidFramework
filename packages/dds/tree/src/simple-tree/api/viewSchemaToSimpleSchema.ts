@@ -131,9 +131,9 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 		allowedTypes,
 	};
 
-	// Don't include "description" property at all if it's not present.
-	if (schema.metadata?.description !== undefined) {
-		result.description = schema.metadata.description;
+	// Don't include "metadata" property at all if it's not present.
+	if (schema.metadata !== undefined) {
+		result.metadata = schema.metadata;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
