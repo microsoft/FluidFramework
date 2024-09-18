@@ -174,7 +174,9 @@ export async function createNewEmptyFluidFile(
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
 ): Promise<string> {
-	const filePath = newFileInfo.filePath ? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath)) : "";
+	const filePath = newFileInfo.filePath
+		? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath))
+		: "";
 	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
@@ -238,7 +240,9 @@ export async function createNewFluidFileFromSummary(
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<ICreateFileResponse> {
-	const filePath = newFileInfo.filePath ? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath)) : "";
+	const filePath = newFileInfo.filePath
+		? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath))
+		: "";
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
 	const baseUrl =
 		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
