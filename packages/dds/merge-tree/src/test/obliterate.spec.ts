@@ -242,61 +242,6 @@ describe("obliterate", () => {
 	});
 
 	describe.skip("boundary cases", () => {
-		it("zero length remote obliterate", () => {
-			const segment = client.getContainingSegment(1);
-			obliterateRange({
-				mergeTree: client.mergeTree,
-				start: 1,
-				end: 1,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
-			insertText({
-				mergeTree: client.mergeTree,
-				pos: 1,
-				refSeq,
-				clientId: remoteClientId + 1,
-				seq: refSeq + 2,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
-			assert.equal(client.getText(), "hello world");
-
-			assert.equal(client.getText(), "hello world");
-
-			segment.segment?.localRefs?.walkReferences((ref) => {
-				const oblProps = ref.properties?.obliterate as ObliterateInfo;
-				assert(oblProps?.start !== undefined, "start ref should exist");
-				assert(oblProps?.end !== undefined, "end ref should exist");
-			});
-		});
-		it("zero length local obliterate", () => {
-			const segment = client.getContainingSegment(1);
-			client.obliterateRangeLocal(1, 1);
-			insertText({
-				mergeTree: client.mergeTree,
-				pos: 1,
-				refSeq,
-				clientId: remoteClientId + 1,
-				seq: refSeq + 2,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
-			assert.equal(client.getText(), "hello world");
-
-			assert.equal(client.getText(), "hello world");
-
-			segment.segment?.localRefs?.walkReferences((ref) => {
-				const oblProps = ref.properties?.obliterate as ObliterateInfo;
-				assert(oblProps?.start !== undefined, "start ref should exist");
-				assert(oblProps?.end !== undefined, "end ref should exist");
-			});
-		});
 		it("obliterate, then insert at the end of the string", () => {
 			obliterateRange({
 				mergeTree: client.mergeTree,
