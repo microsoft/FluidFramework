@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { CommitKind, RevisionTag } from "../core/index.js";
+import type { RevertMetrics } from "./treeCheckout.js";
+
 /**
  * Allows reversion of a change made to SharedTree.
  *
@@ -31,6 +35,11 @@ export interface Revertible {
 	revert(dispose: boolean): void;
 
 	/**
+	 * Forks a new revertible from the current revertible.
+	 */
+	fork(view: RervertibleTarget): Revertible;
+
+	/**
 	 * Disposes this revertible, allowing associated resources to be released.
 	 */
 	dispose(): void;
@@ -46,6 +55,19 @@ export enum RevertibleStatus {
 	Valid,
 	/** The revertible has been disposed. Reverting it will have no effect. */
 	Disposed,
+}
+
+/**
+ * TODO
+ *
+ * @public
+ */
+export interface RervertibleTarget {
+	logger?: ITelemetryLoggerExt;
+	revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics;
+	fork(): RervertibleTarget;
+	dispose(): void;
+	disposeRevertible(revertible: Revertible, revision: RevisionTag): void;
 }
 
 /**

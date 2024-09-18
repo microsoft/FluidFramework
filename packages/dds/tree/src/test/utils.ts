@@ -62,7 +62,6 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type JsonableTree,
-	type Revertible,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -86,7 +85,6 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
-	type RevertibleFactory,
 } from "../core/index.js";
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -123,6 +121,8 @@ import {
 	type ISharedTreeEditor,
 	type ITransaction,
 	type ITreeCheckoutFork,
+	type RevertibleFactory,
+	type Revertible,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema, type TreeStoredContent } from "../shared-tree/schematizeTree.js";

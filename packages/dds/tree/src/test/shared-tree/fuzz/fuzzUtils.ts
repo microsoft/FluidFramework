@@ -16,7 +16,6 @@ import {
 
 import {
 	type Anchor,
-	type Revertible,
 	TreeNavigationResult,
 	type UpPath,
 	type Value,
@@ -24,7 +23,7 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import type { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
+import type { ITreeCheckout, SharedTree, Revertible } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 import type {

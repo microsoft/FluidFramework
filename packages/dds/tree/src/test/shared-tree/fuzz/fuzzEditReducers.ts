@@ -10,9 +10,9 @@ import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import {
+	type Revertible,
 	Tree,
 	type ITreeCheckoutFork,
 	type SharedTreeFactory,

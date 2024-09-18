@@ -18,7 +18,6 @@ import {
 	type Anchor,
 	CommitKind,
 	type JsonableTree,
-	type Revertible,
 	type UpPath,
 	type Value,
 } from "../../../core/index.js";
@@ -27,7 +26,7 @@ import {
 	toJsonableTree,
 	validateFuzzTreeConsistency,
 } from "../../utils.js";
-
+import type { Revertible } from "../../../shared-tree/index.js";
 import {
 	type EditGeneratorOpWeights,
 	type FuzzTestState,

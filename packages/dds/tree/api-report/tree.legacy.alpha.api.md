@@ -278,6 +278,20 @@ interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
 }
 
 // @public
+export interface RervertibleTarget {
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    disposeRevertible(revertible: Revertible, revision: RevisionTag): void;
+    // (undocumented)
+    fork(): RervertibleTarget;
+    // (undocumented)
+    logger?: ITelemetryLoggerExt;
+    // (undocumented)
+    revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics;
+}
+
+// @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
@@ -285,6 +299,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 // @public @sealed
 export interface Revertible {
     dispose(): void;
+    fork(view: RervertibleTarget): Revertible;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
