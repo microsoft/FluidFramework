@@ -634,7 +634,7 @@ const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 /**
  * Checks whether a message.type is one of the values in ContainerMessageType
  */
-export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(ContainerMessageType) as string[]).includes(message.type);
 }
 
@@ -2806,7 +2806,7 @@ export class ContainerRuntime
 				{ batchStart: true, batchEnd: true }, // Single message
 				local,
 				savedOp,
-				isRuntimeMessage(messageCopy) /* runtimeBatch */,
+				isUnpackedRuntimeMessage(messageCopy) /* runtimeBatch */,
 			);
 		}
 
