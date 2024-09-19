@@ -13,7 +13,7 @@ import {
 	rootFieldKey,
 } from "../core/index.js";
 import { FieldKinds, isFlexTreeNode, type FlexTreeNode } from "../feature-libraries/index.js";
-import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
+import type { CheckoutFlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
 	cursorFromInsertable,
@@ -170,7 +170,7 @@ export function readWideTreeAsJSObject(nodes: JSWideTree): {
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: FlexTreeView): {
+export function readWideCursorTree(tree: CheckoutFlexTreeView): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -188,7 +188,7 @@ export function readWideCursorTree(tree: FlexTreeView): {
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: FlexTreeView): {
+export function readDeepCursorTree(tree: CheckoutFlexTreeView): {
 	depth: number;
 	value: number;
 } {
@@ -245,7 +245,7 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideFlexTree(tree: FlexTreeView): {
+export function readWideFlexTree(tree: CheckoutFlexTreeView): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -263,7 +263,7 @@ export function readWideFlexTree(tree: FlexTreeView): {
 	return { nodesCount, sum };
 }
 
-export function readDeepFlexTree(tree: FlexTreeView): {
+export function readDeepFlexTree(tree: CheckoutFlexTreeView): {
 	depth: number;
 	value: number;
 } {

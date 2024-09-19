@@ -112,7 +112,7 @@ export namespace InternalTypes {
 		key: TKey,
 		datastoreHandle: StateDatastoreHandle<TKey, TValue>,
 	) => {
-		value: TValue;
+		value?: TValue;
 		manager: StateValue<TManager>;
 	};
 

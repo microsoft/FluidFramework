@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectedClientId } from "./baseTypes.js";
+import type { SessionId } from "@fluidframework/id-compressor";
+
+import type { ClientConnectionId } from "./baseTypes.js";
 import type {
 	PresenceNotifications,
 	PresenceNotificationsSchema,
@@ -15,14 +17,28 @@ import type {
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
 
 /**
+ * A Fluid client session identifier.
+ *
+ * @remarks
+ * Each client once connected to a session is given a unique identifier for the
+ * duration of the session. If a client disconnects and reconnects, it will
+ * retain its identifier. Prefer use of {@link ISessionClient} as a way to
+ * identify clients in a session. {@link ISessionClient.sessionId} will provide
+ * the session id.
+ *
+ * @alpha
+ */
+export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSessionId" };
+
+/**
  * A client within a Fluid session (period of container connectivity to service).
  *
  * @remarks
- * Note: This is very preliminary session client represenation.
+ * Note: This is very preliminary session client representation.
  *
  * `ISessionClient` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
- * client's {@link ConnectedClientId} may change over time `ISessionClient`
+ * client's {@link ClientConnectionId} may change over time `ISessionClient`
  * will be fixed.
  *
  * @privateRemarks
@@ -33,27 +49,29 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
  * @alpha
  */
 export interface ISessionClient<
-	SpecificClientId extends ConnectedClientId = ConnectedClientId,
+	SpecificSessionClientId extends ClientSessionId = ClientSessionId,
 > {
+	readonly sessionId: SpecificSessionClientId;
+
 	/**
 	 * Get current client connection id.
 	 *
 	 * @returns Current client connection id.
 	 *
 	 * @remarks
-	 * Connection id will change on reconnection.
+	 * Connection id will change on reconnect.
 	 */
-	currentClientId(): SpecificClientId;
+	currentConnectionId(): ClientConnectionId;
 }
 
 /**
  * Utility type limiting to a specific session client. (A session client with
- * a specific connection id - not just any connection id.)
+ * a specific session id - not just any session id.)
  *
  * @internal
  */
-export type SpecificSessionClient<SpecificClientId extends ConnectedClientId> =
-	string extends SpecificClientId ? never : ISessionClient<SpecificClientId>;
+export type SpecificSessionClient<SpecificSessionClientId extends ClientSessionId> =
+	string extends SpecificSessionClientId ? never : ISessionClient<SpecificSessionClientId>;
 
 /**
  * @sealed
@@ -116,9 +134,9 @@ export interface IPresence {
 	/**
 	 * Lookup a specific attendee in the session.
 	 *
-	 * @param clientId - Client connection id
+	 * @param clientId - Client connection or session id
 	 */
-	getAttendee(clientId: ConnectedClientId): ISessionClient;
+	getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
 
 	/**
 	 * Get this client's session client.
