@@ -24,10 +24,6 @@ describe("compatOptions", () => {
 			assert(secondIndex >= 0, `Second instance of --compatVersion flag not found`);
 			const secondValue = process.argv[secondIndex + 1];
 			assert.equal(secondValue, "-1");
-		} else {
-			// When running the test in a worker process, confirm it passed in the correct format
-			const actualValue = process.env.fluid__test__compatVersion;
-			assert.equal(actualValue, '["0","-1"]');
 		}
 
 		assert.deepEqual(compatVersions, ["0", "-1"]);

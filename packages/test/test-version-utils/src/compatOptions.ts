@@ -39,7 +39,7 @@ export const CompatKind = {
  * Parse the command line argument and environment variables. Arguments take precedent over environment variable
  * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
-export const options = {
+const options = {
 	compatKind: {
 		description: "Compat kind to run",
 		choices: [

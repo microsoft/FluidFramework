@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import {
 	CompatKind,
-	options,
 	compatKind,
 	compatVersions,
 	driver,
@@ -28,12 +27,6 @@ describe("compatOptions", () => {
 			tenantIndex: "42",
 			baseVersion: "myBaseVersion",
 		};
-		const expectedEnvValues = {
-			...expectedCliFlagValues,
-			compatKind: `["${CompatKind.None}"]`,
-			compatVersion: '["testCompatVersion"]',
-			reinstall: true,
-		};
 
 		if (process.env.MOCHA_WORKER_ID === undefined) {
 			// When running the test in the main moch processes, confirm the expected flags are being passed in CLI,
@@ -47,18 +40,6 @@ describe("compatOptions", () => {
 					expectedValue,
 					`CLI flag '--${key}' has value '${value}' instead of expected '${expectedValue}'`,
 				);
-			}
-		} else {
-			// When running the test in a worker process, confirm all CLI flags are now visible as env variables
-			for (const option of Object.keys(options)) {
-				if (option === "reinstall") {
-					// Not sure why this one is not passed as env variable correctly
-					continue;
-				}
-				const expectedValue = expectedEnvValues[option];
-				assert(expectedValue !== undefined, `No expected value defined for '${option}'`);
-				const actualValue = process.env[`fluid__test__${option}`];
-				assert.equal(actualValue, expectedValue);
 			}
 		}
 

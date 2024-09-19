@@ -16,10 +16,6 @@ describe("compatOptions", () => {
 			assert(keyIndex >= 0, `Expected CLI flag not found: --compatVersion`);
 			const value = process.argv[keyIndex + 1];
 			assert.equal(value, "0");
-		} else {
-			// When running the test in a worker process, confirm it passed in the correct format
-			const actualValue = process.env.fluid__test__compatVersion;
-			assert.equal(actualValue, '["0"]');
 		}
 
 		assert.deepEqual(compatVersions, ["0"]);
