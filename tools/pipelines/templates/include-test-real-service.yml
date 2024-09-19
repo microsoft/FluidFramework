@@ -81,10 +81,6 @@ parameters:
   type: stepList
   default: []
 
-- name: checkout
-  type: boolean
-  default: false
-
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -127,12 +123,8 @@ jobs:
 
       steps:
       # Setup
-      - ${{ if eq(parameters.checkout, true) }}:
-        - checkout: self
-          clean: true
-      - ${{ else }}:
-        - checkout: none
-          clean: true
+      - checkout: none
+        clean: true
 
       # Install self-signed cert for R11s deployment in local cert store
       - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
