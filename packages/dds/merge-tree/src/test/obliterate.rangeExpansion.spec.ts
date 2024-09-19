@@ -61,6 +61,47 @@ describe.skip("obliterate", () => {
 		},
 		expectedText: "XYZhe world",
 	});
+	itCorrectlyObliterates({
+		title: "zero length obliterate in the middle of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.Before });
+			helper.insertText("B", 0, "more ");
+		},
+		expectedText: "hello world",
+	});
+	itCorrectlyObliterates({
+		title: "obliterate, then insert at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange(
+				"A",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+			helper.insertText("B", 10, "123");
+		},
+		expectedText: "hello",
+	});
+	itCorrectlyObliterates({
+		title: "insert, then obliterate at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.insertText("A", 10, "123");
+			helper.obliterateRange(
+				"B",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+		},
+		expectedText: "hello",
+	});
 });
 
 describe.skip("overlapping edits", () => {
