@@ -91,6 +91,15 @@ class ResponseHandlerImpl {
 		return schema;
 	}
 
+	public async processResponse(responseGenerator: {
+		[Symbol.asyncIterator](): AsyncGenerator<string, void>;
+	}): Promise<void> {
+		for await (const fragment of responseGenerator) {
+			this.processChars(fragment);
+		}
+		this.complete();
+	}
+
 	public processChars(chars: string): void {
 		this.parser.addChars(chars);
 	}

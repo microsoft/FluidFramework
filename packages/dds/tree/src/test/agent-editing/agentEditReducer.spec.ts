@@ -235,7 +235,6 @@ describe("applyAgentEdit", () => {
 			bools: [true],
 		});
 
-
 		const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
 		nodeMap.set(0, view.root as TreeNode);
 
@@ -255,8 +254,7 @@ describe("applyAgentEdit", () => {
 		};
 		applyAgentEdit(view, modifyEdit2, nodeMap);
 
-
-		nodeMap.set(1, (view.root as RootObject).vectors[0] as Vector)
+		nodeMap.set(1, (view.root as RootObject).vectors[0] as Vector);
 
 		const modifyEdit3: TreeEdit = {
 			type: "modify",
@@ -265,7 +263,7 @@ describe("applyAgentEdit", () => {
 			modification: 111,
 		};
 		applyAgentEdit(view, modifyEdit3, nodeMap);
-		
+
 		const identifier = ((view.root as RootObject).vectors[0] as Vector).id;
 
 		const expected = [
