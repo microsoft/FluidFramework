@@ -18,12 +18,11 @@ import { strict as assert } from "node:assert";
 import { jsonableTreeFromForest } from "../../feature-libraries/treeTextCursor.js";
 import {
 	applyAgentEdit,
+	typeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/agentEditReducer.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { typeField } from "../../agent-editing/handlers.js";
 
 const sf = new SchemaFactory("agentSchema");
 
@@ -61,7 +60,7 @@ describe("applyAgentEdit", () => {
 			);
 			const view = tree.viewWith(config);
 			const schema = normalizeFieldSchema(view.schema);
-		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 			view.initialize({
 				str: "testStr",
 				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
@@ -115,7 +114,7 @@ describe("applyAgentEdit", () => {
 			const configOptionalRoot = new TreeViewConfiguration({ schema: sf.optional(sf.number) });
 			const view = tree.viewWith(configOptionalRoot);
 			const schema = normalizeFieldSchema(view.schema);
-		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 			view.initialize(1);
 
 			const setRootEdit: TreeEdit = {

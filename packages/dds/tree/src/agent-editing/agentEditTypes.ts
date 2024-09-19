@@ -5,9 +5,9 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-// eslint-disable-next-line import/no-internal-modules
-import type { JsonObject, JsonValue } from "../json-handler/jsonParser.js";
+import type { JsonPrimitive } from "../json-handler/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../simple-tree/index.js";
+import type { typeField } from "./agentEditReducer.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
@@ -24,7 +24,16 @@ import { SchemaFactory, TreeViewConfiguration } from "../simple-tree/index.js";
  * TODO: without field count limits, we could generate a schema for valid paths from the root object to any field, but it's not clear how useful that would be.
  *
  * TODO: add example of handling fields the model cannot initialize (identifiers, uuid fields, etc.)
+ *
+ * TODO: We don't have a way to refer (via ID) to content that was newly inserted by the LLM. The LLM would need to provide IDs for new content.
  */
+
+export interface TreeEditObject {
+	[key: string]: TreeEditValue;
+	[typeField]: string;
+}
+export type TreeEditArray = TreeEditValue[];
+export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
 
 // For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
 export interface EditWrapper {
@@ -55,12 +64,12 @@ export interface Range {
 
 export interface SetRoot extends Edit {
 	type: "setRoot";
-	content: JsonValue;
+	content: TreeEditValue;
 }
 
 export interface Insert extends Edit {
 	type: "insert";
-	content: JsonObject;
+	content: TreeEditObject;
 	destination: Place;
 }
 
@@ -68,7 +77,7 @@ export interface Modify extends Edit {
 	type: "modify";
 	target: Target;
 	field: string;
-	modification: JsonValue;
+	modification: TreeEditValue;
 }
 
 export interface Remove extends Edit {
