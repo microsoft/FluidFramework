@@ -12,6 +12,7 @@
 	"author": "Microsoft and contributors",
 	"type": "module",
 	"scripts": {
+		"app": "node ./lib/index.js",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
