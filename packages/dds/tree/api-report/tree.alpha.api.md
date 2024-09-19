@@ -101,7 +101,7 @@ export function getBranch(tree: ITree): TreeBranch;
 export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 
 // @alpha
-export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
+export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
