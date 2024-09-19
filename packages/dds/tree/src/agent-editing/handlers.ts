@@ -29,14 +29,14 @@ import type { Insert, Modify, Move, Remove, SetRoot } from "./agentEditTypes.js"
 import { applyAgentEdit, typeField } from "./agentEditReducer.js";
 
 const targetHandler = jh.object(() => ({
-	description: "TODO",
+	description: "A handler that points to a node in the tree.",
 	properties: {
 		objectId: jh.number(),
 	},
 }));
 
 const placeHandler = jh.object(() => ({
-	description: "TODO",
+	description: "A handler that points to a location in the tree.",
 	properties: {
 		objectId: jh.number(),
 		place: jh.enum({ values: ["before", "after"] }),
@@ -44,7 +44,7 @@ const placeHandler = jh.object(() => ({
 }));
 
 const rangeHandler = jh.object(() => ({
-	description: "TODO",
+	description: "A handler that points to a range of locations in the tree.",
 	properties: {
 		from: placeHandler(),
 		to: placeHandler(),
@@ -74,7 +74,7 @@ export function generateHandlers(
 	}
 
 	const setRootHandler = jh.object(() => ({
-		description: "Handler for setting content to the root of the tree.",
+		description: "A handler for setting content to the root of the tree.",
 		properties: {
 			type: jh.enum({ values: ["setRoot"] }),
 			content: jh.anyOf(
