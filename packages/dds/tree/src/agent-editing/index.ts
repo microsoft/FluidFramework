@@ -54,18 +54,25 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 			json_schema: llmJsonSchema,
 		},
 		stream: true, // Opt in to streaming responses.
+		max_tokens: 4096,
 	};
 
 	const result = await client.chat.completions.create(body);
+
 	const resultStream = result.toReadableStream();
 	const resultStreamReader = resultStream.getReader();
 
 	await responseHandler.processResponse({
 		async *[Symbol.asyncIterator](): AsyncGenerator<string, void> {
-			yield (await resultStreamReader.read()).value;
+			const read = await resultStreamReader.read();
+			KLUDGE += read.value;
+			console.log(read.value);
+			yield read.value;
 		},
 	});
 }
+
+export let KLUDGE = "";
 
 // TODO
 // Depends on particular env variables
