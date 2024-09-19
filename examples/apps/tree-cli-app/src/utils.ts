@@ -16,16 +16,15 @@ import {
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
 import {
 	extractPersistedSchema,
 	FluidClientVersion,
 	independentInitializedView,
-	TreeArrayNode,
 	TreeBeta,
 	typeboxValidator,
 	type ForestOptions,
 	type ICodecOptions,
-	type InsertableTypedNode,
 	type JsonCompatible,
 	type VerboseTree,
 	type ViewContent,
