@@ -70,6 +70,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 		case "setRoot": {
 			const treeSchema = tree.schema;
 			const validator = getJsonValidator(tree.schema);
+			// If it's a primitive, just validate the content and set
 			if (isPrimitive(treeEdit.content)) {
 				if (validator(treeEdit.content)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
