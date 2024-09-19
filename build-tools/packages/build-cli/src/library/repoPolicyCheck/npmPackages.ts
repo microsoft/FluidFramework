@@ -8,7 +8,7 @@
 // import * as child_process from "node:child_process";
 // import fs from "node:fs";
 // import { createRequire } from "node:module";
-// import { EOL as newline } from "node:os";
+import { EOL as newline } from "node:os";
 // import path from "node:path";
 // import depcheck from "depcheck";
 // import { writeJson } from "fs-extra/esm";
@@ -2050,22 +2050,24 @@ export const handlers: Handler[] = [
 					return;
 				}
 			}
+
 			try {
-				console.log(`Running depcheck for ${packageDir}`);
 				const result = await depcheck(packageDir, options);
-				let logResult = "";
+				const packageErrors: string[] = [];
 				if (result.dependencies.length === 0 && result.devDependencies.length === 0) {
-					logResult = "No unused dependencies found.";
+					packageErrors.push("No unused dependencies found.");
 				} else {
 					if (result.dependencies.length > 0) {
-						logResult = `Unused dependencies:\n${result.dependencies}`;
+						packageErrors.push(`
+							Unused dependencies:${newline}${result.dependencies.join(newline)}`);
 					}
 					if (result.devDependencies.length > 0) {
-						logResult = `${logResult}\nUnused devDependencies:\n${result.devDependencies}`;
+						packageErrors.push(
+							`Unused devDependencies:${newline}${result.devDependencies.join(newline)}`,
+						);
 					}
 				}
-				console.log(logResult);
-				return logResult;
+				return `Check package.json declaration violations: ${newline}${packageErrors.join(newline)}`;
 			} catch (error) {
 				return `Error running depcheck for ${packageDir}: ${error}`;
 			}
