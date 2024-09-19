@@ -40,10 +40,9 @@ import {
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
+import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 
 export const typeField = "__fluid_type";
-// eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
@@ -83,13 +82,16 @@ function populateDefaults(
 			const nodeSchema = definitionMap.get(json[typeField]);
 			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
 
-			for (const [key, value] of Object.entries(json)) {
-				const defaulter = nodeSchema.fields[key]?.metadata?.llmDefault;
+			for (const [key, fieldSchema] of Object.entries(nodeSchema.fields)) {
+				const defaulter = fieldSchema?.metadata?.llmDefault;
 				if (defaulter !== undefined) {
 					// TODO: Properly type. The input `json` is a JsonValue, but the output can contain nodes (from the defaulters) amidst the json.
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					json[key] = defaulter() as any;
 				}
+			}
+
+			for (const value of Object.values(json)) {
 				populateDefaults(value, definitionMap);
 			}
 		}

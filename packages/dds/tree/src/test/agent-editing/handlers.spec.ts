@@ -18,18 +18,27 @@ import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
 import { typeField } from "../../agent-editing/agentEditReducer.js";
 import { toDecoratedJson } from "../../agent-editing/promptGeneration.js";
 
-const demoSf = new SchemaFactory("agentSchema");
+const sf = new SchemaFactory("agentSchema");
 
-class Vector extends demoSf.object("Vector", {
-	x: demoSf.number,
-	y: demoSf.number,
-	z: demoSf.optional(demoSf.number),
+class Vector extends sf.object("Vector", {
+	id: sf.identifier,
+	x: sf.required(sf.number, { metadata: { description: "The x-coordinate of the vector." } }),
+	y: sf.required(sf.number, { metadata: { description: "The y-coordinate of the vector." } }),
+	z: sf.optional(sf.number, {
+		metadata: {
+			description:
+				"The optional z-coordinate of the vector. If absent, this is a 2D vector. If present, it is a 3D vector.",
+		},
+	}),
+	timeCreated: sf.required(sf.string, {
+		metadata: { llmDefault: () => "Taylor's underpants are inside out" },
+	}),
 }) {}
 
-class RootObject extends demoSf.object("RootObject", {
-	str: demoSf.string,
-	vectors: demoSf.array(Vector),
-	bools: demoSf.array(demoSf.boolean),
+class RootObject extends sf.object("RootObject", {
+	str: sf.string,
+	vectors: sf.array(Vector),
+	bools: sf.array(sf.boolean),
 }) {}
 
 describe("Agent Editing Handlers", () => {
@@ -48,8 +57,8 @@ describe("Stuff", () => {
 			// ID: 0?
 			str: "TEST",
 			vectors: [
-				new Vector({ x: 1, y: 1, z: 1 }), // ID: 1?
-				new Vector({ x: 2, y: 2 }), // ID: 2?
+				new Vector({ x: 1, y: 1, z: 1, timeCreated: Date.now().toString() }), // ID: 1?
+				new Vector({ x: 2, y: 2, timeCreated: Date.now().toString() }), // ID: 2?
 			],
 			bools: [true],
 		});
@@ -85,7 +94,7 @@ const streamedLlmResponse = (result: string) => {
 const sampleEdits: TreeEdit[] = [
 	{
 		type: "insert",
-		content: { [typeField]: RootObject.identifier, x: 3, y: 3, z: 0 },
+		content: { [typeField]: Vector.identifier, x: 3, y: 3, z: 0 },
 		destination: { objectId: 2, place: "after" },
 	},
 	{
