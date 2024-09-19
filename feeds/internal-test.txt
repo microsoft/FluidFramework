@@ -89,6 +89,7 @@ fluid-framework
 @fluid-experimental/property-common
 @fluid-experimental/property-changeset
 @fluid-example/table-document
+@fluid-example/tree-cli-app
 @fluid-experimental/azure-scenario-runner
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service

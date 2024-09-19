@@ -135,6 +135,7 @@ export {
 	type ParseOptions,
 	type VerboseTree,
 	extractPersistedSchema,
+	comparePersistedSchema,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,

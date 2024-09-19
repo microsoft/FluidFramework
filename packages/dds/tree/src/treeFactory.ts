@@ -187,8 +187,8 @@ export function independentInitializedView<TSchema extends ImplicitFieldSchema>(
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
-	const schemaCodec = makeSchemaCodec(options);
 	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
+	const schemaCodec = makeSchemaCodec(options);
 
 	const schema = new TreeStoredSchemaRepository(schemaCodec.decode(content.schema as Format));
 	const forest = buildConfiguredForest(

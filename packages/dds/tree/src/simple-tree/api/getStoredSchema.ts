@@ -3,10 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { encodeTreeSchema } from "../../feature-libraries/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
+import { Compatibility, type TreeStoredSchema } from "../../core/index.js";
+import {
+	defaultSchemaPolicy,
+	encodeTreeSchema,
+	makeSchemaCodec,
+	ViewSchema,
+} from "../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { Format } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toFlexSchema.js";
+import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
  * Dumps the "persisted" schema subset of `schema` into a deterministic JSON compatible semi-human readable but unspecified format.
@@ -22,6 +32,8 @@ import { toStoredSchema } from "../toFlexSchema.js";
  *
  * If two schema have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
  *
+ * See also {@link comparePersistedSchema}.
+ *
  * @privateRemarks
  * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
  * This intentionally does not leak the format types in the API.
@@ -32,4 +44,61 @@ import { toStoredSchema } from "../toFlexSchema.js";
 export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
 	const stored = toStoredSchema(schema);
 	return encodeTreeSchema(stored);
+}
+
+/**
+ * Compares two schema extracted using {@link extractPersistedSchema}.
+ * Reports the same compatibility that {@link TreeView.compatibility} would report if
+ * opening a document that used the `persisted` schema and provided `view` to {@link ITree.viewWith}.
+ *
+ * @remarks
+ * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.
+ * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
+ *
+ * @alpha
+ */
+export function comparePersistedSchema(
+	persisted: JsonCompatible,
+	view: JsonCompatible,
+	options: ICodecOptions,
+	canInitialize: boolean,
+): SchemaCompatibilityStatus {
+	const stored = parseSchema(persisted, options);
+	const viewParsed = parseSchema(view, options);
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, viewParsed);
+	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
+}
+
+export function parseSchema(
+	persisted: JsonCompatible,
+	options: ICodecOptions,
+): TreeStoredSchema {
+	const schemaCodec = makeSchemaCodec(options);
+	const schema = schemaCodec.decode(persisted as Format);
+	return schema;
+}
+
+export function comparePersistedSchemaInternal(
+	stored: TreeStoredSchema,
+	viewSchema: ViewSchema,
+	canInitialize: boolean,
+): SchemaCompatibilityStatus {
+	const result = viewSchema.checkCompatibility(stored);
+
+	// TODO: AB#8121: Weaken this check to support viewing under additional circumstances.
+	// In the near term, this should support viewing documents with additional optional fields in their schema on object types.
+	// Longer-term (as demand arises), we could also add APIs to constructing view schema to allow for more flexibility
+	// (e.g. out-of-schema content handlers could allow support for viewing docs which have extra allowed types in a particular field)
+	const canView =
+		result.write === Compatibility.Compatible && result.read === Compatibility.Compatible;
+	const canUpgrade = result.read === Compatibility.Compatible;
+	const isEquivalent = canView && canUpgrade;
+	const compatibility: SchemaCompatibilityStatus = {
+		canView,
+		canUpgrade,
+		isEquivalent,
+		canInitialize,
+	};
+
+	return compatibility;
 }

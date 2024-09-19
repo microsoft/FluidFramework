@@ -21,11 +21,6 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @beta
-export function clone<TSchema extends ImplicitFieldSchema>(original: TreeFieldFromImplicitField<TSchema>, options?: {
-    replaceIdentifiers?: true;
-}): TreeFieldFromImplicitField<TSchema>;
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -87,30 +82,6 @@ export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
 }
-
-// @beta
-export function exportCompressed(node: TreeNode | TreeLeafValue, options: {
-    oldestCompatibleClient: FluidClientVersion;
-    idCompressor?: IIdCompressor;
-}): JsonCompatible<IFluidHandle>;
-
-// @beta
-export function exportConcise<T>(node: TreeNode | TreeLeafValue, options?: {
-    handleConverter(handle: IFluidHandle): T;
-    readonly useStableFieldKeys?: boolean;
-}): ConciseTree<T>;
-
-// @beta
-export function exportConcise(node: TreeNode | TreeLeafValue, options?: {
-    handleConverter?: undefined;
-    useStableFieldKeys?: boolean;
-}): JsonCompatible<IFluidHandle>;
-
-// @beta
-export function exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
-
-// @beta
-export function exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
 
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
@@ -448,12 +419,6 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
-
-// @beta
-export function importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-
-// @beta
-export function importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
@@ -860,14 +825,25 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 
 // @beta @sealed
 export const TreeBeta: {
-    readonly on: <K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>) => () => void;
-    readonly create: <TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>) => Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    readonly importConcise: <TSchema_1 extends ImplicitFieldSchema>(schema: TSchema_1, data: InsertableTreeFieldFromImplicitField | ConciseTree) => TreeFieldFromImplicitField<TSchema_1>;
-    readonly importVerbose: typeof importVerbose;
-    readonly clone: typeof clone;
-    readonly exportVerbose: typeof exportVerbose;
-    readonly exportConcise: typeof exportConcise;
-    readonly exportCompressed: typeof exportCompressed;
+    on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
+    create<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    importConcise<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField | ConciseTree): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    exportConcise<T>(node: TreeNode | TreeLeafValue, options?: {
+        handleConverter(handle: IFluidHandle): T;
+        readonly useStableFieldKeys?: boolean;
+    }): ConciseTree<T>;
+    exportConcise(node: TreeNode | TreeLeafValue, options?: {
+        handleConverter?: undefined;
+        useStableFieldKeys?: boolean;
+    }): JsonCompatible<IFluidHandle>;
+    exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
+    exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
+    exportCompressed(tree: TreeNode | TreeLeafValue, options: {
+        oldestCompatibleClient: FluidClientVersion;
+        idCompressor?: IIdCompressor;
+    }): JsonCompatible<IFluidHandle>;
 };
 
 // @public @sealed

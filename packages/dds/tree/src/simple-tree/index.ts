@@ -69,7 +69,9 @@ export {
 	type ParseOptions,
 	type VerboseTree,
 	extractPersistedSchema,
+	comparePersistedSchema,
 	type ConciseTree,
+	comparePersistedSchemaInternal,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
