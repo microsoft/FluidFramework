@@ -38,11 +38,15 @@ import type {
 } from "../agent-editing/agentEditTypes.js";
 import {
 	getOrCreateInnerNode,
+	NodeKind,
 	type TreeNodeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
+import type { JsonValue } from "../json-handler/jsonParser.js";
+import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
+import { typeField } from "./handlers.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
@@ -62,15 +66,46 @@ export function getJsonValidator(schema: JsonTreeSchema): (data: unknown) => voi
 	return ajv.compile(schema);
 }
 
+function populateDefaults(
+	json: JsonValue,
+	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
+): void {
+	if (typeof json === "object") {
+		if (json === null) {
+			return;
+		}
+		if (Array.isArray(json)) {
+			for (const element of json) {
+				populateDefaults(element, definitionMap);
+			}
+		} else {
+			assert(typeof json[typeField] === "string", "missing or invalid type field");
+			const nodeSchema = definitionMap.get(json[typeField]);
+			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
+
+			for (const [key, value] of Object.entries(json)) {
+				const defaulter = nodeSchema.fields[key]?.metadata?.llmDefault;
+				if (defaulter !== undefined) {
+					// TODO: Properly type. The input `json` is a JsonValue, but the output can contain nodes (from the defaulters) amidst the json.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					json[key] = defaulter() as any;
+				}
+				populateDefaults(value, definitionMap);
+			}
+		}
+	}
+}
+
 export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	tree: TreeView<TSchema>,
 	treeEdit: TreeEdit,
 	nodeMap: Map<number, TreeNode>,
+	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 ): void {
 	switch (treeEdit.type) {
 		case "setRoot": {
 			const { simpleNodeSchema } = getSimpleNodeSchema(tree.root as TreeNode);
-
+			populateDefaults(treeEdit.content, definitionMap);
 			const rootNode = new simpleNodeSchema(treeEdit.content);
 			tree.root = rootNode as InsertableTreeFieldFromImplicitField<TSchema>;
 			break;
@@ -82,6 +117,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			const { treeNodeSchema, simpleNodeSchema } = getSimpleNodeSchema(node);
 
+			populateDefaults(treeEdit.content, definitionMap);
 			const jsonSchema = getJsonSchema(treeNodeSchema);
 			const validator = getJsonValidator(jsonSchema);
 			validator(treeEdit.content);
@@ -130,6 +166,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
 			else if (typeof fieldSchema === "function") {
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
+				populateDefaults(modification, definitionMap);
 				const jsonSchema = getJsonSchema(fieldSchema);
 				const validator = getJsonValidator(jsonSchema);
 				validator(modification);
