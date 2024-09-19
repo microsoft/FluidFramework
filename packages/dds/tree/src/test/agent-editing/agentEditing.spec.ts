@@ -45,6 +45,39 @@ describe("toDecoratedJson", () => {
 			}),
 		);
 	});
+
+	it("handles nested objects", () => {
+		const hydratedObject = hydrate(
+			RootObject,
+			new RootObject({ str: "hello", vectors: [{ x: 1, y: 2, z: 3 }], bools: [true] }),
+		);
+		const { stringified, idMap } = toDecoratedJson(hydratedObject);
+		assert.equal(
+			stringified,
+			JSON.stringify({
+				__fluid_id: 0,
+				str: "hello",
+				vectors: [
+					{
+						__fluid_id: 1,
+						x: 1,
+						y: 2,
+						z: 3,
+					},
+				],
+				bools: [true],
+			}),
+		);
+		assert.equal(idMap.get(0), hydratedObject);
+		assert.equal(idMap.get(1), hydratedObject.vectors.at(0));
+	});
+
+	it("handles non-POJO mode arrays", () => {
+		const sf = new SchemaFactory("testSchema");
+		class NamedArray extends sf.array("Vector", sf.number) {}
+		const hydratedObject = hydrate(NamedArray, new NamedArray([1, 2, 3]));
+		assert.equal(toDecoratedJson(hydratedObject).stringified, JSON.stringify([1, 2, 3]));
+	});
 });
 
 describe("Makes TS type strings from schema", () => {
