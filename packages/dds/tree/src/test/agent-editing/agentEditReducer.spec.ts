@@ -68,7 +68,7 @@ describe("applyAgentEdit", () => {
 			const setRootEdit: TreeEdit = {
 				type: "setRoot",
 				content: {
-					schemaType: "com.fluidframework.leaf.number",
+					schemaType: "agentSchema.RootObject",
 					str: "rootStr",
 					vectors: [],
 					bools: [],
@@ -110,7 +110,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const configOptionalRoot = new TreeViewConfiguration({ schema: sf.optional(sf.number) });
-			const view = tree.viewWith(config);
+			const view = tree.viewWith(configOptionalRoot);
 			view.initialize(1);
 
 			const setRootEdit: TreeEdit = {
