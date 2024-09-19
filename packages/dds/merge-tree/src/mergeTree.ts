@@ -1510,11 +1510,11 @@ export class MergeTree {
 				}
 
 				this.updateRoot(splitNode);
-				saveIfLocal(newSegment);
 
 				insertPos += newSegment.cachedLength;
 
 				if (!this.options?.mergeTreeEnableObliterate || this.obliterates.empty()) {
+					saveIfLocal(newSegment);
 					continue;
 				}
 
@@ -1576,6 +1576,7 @@ export class MergeTree {
 						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 					}
 				}
+				saveIfLocal(newSegment);
 			}
 		}
 	}
