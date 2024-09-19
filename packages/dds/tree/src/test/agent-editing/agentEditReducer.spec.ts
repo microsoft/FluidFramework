@@ -40,14 +40,20 @@ class Vector2 extends sf.object("Vector2", {
 	z2: sf.optional(sf.number),
 }) {}
 
-class RootObject extends sf.object("RootObject", {
+class RootObjectPolymorphic extends sf.object("RootObject", {
 	str: sf.string,
 	// Two different vector types to handle the polymorphic case
 	vectors: sf.array([Vector, Vector2]),
 	bools: sf.array(sf.boolean),
 }) {}
 
-const config = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
+class RootObject extends sf.object("RootObject", {
+	str: sf.string,
+	// Two different vector types to handle the polymorphic case
+	vectors: sf.array([Vector]),
+	bools: sf.array(sf.boolean),
+}) {}
+const config = new TreeViewConfiguration({ schema: [sf.number, RootObjectPolymorphic] });
 
 const factory = new TreeFactory({});
 
@@ -70,7 +76,7 @@ describe("applyAgentEdit", () => {
 			const setRootEdit: TreeEdit = {
 				type: "setRoot",
 				content: {
-					[typeField]: RootObject.identifier,
+					[typeField]: RootObjectPolymorphic.identifier,
 					str: "rootStr",
 					vectors: [],
 					bools: [],
@@ -135,235 +141,307 @@ describe("applyAgentEdit", () => {
 		});
 	});
 
-	it("insert edits", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		const schema = normalizeFieldSchema(view.schema);
-		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+	describe("insert edits", () => {
+		it("polymorphic insert edits", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const view = tree.viewWith(config);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
-		view.initialize({
-			str: "testStr",
-			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-			bools: [true],
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
+
+			const vectorNode = (view.root as RootObjectPolymorphic).vectors[0];
+
+			const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
+			nodeMap.set(0, vectorNode as Vector);
+
+			const insertEdit: TreeEdit = {
+				type: "insert",
+				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+				destination: {
+					objectId: 0,
+					place: "after",
+				},
+			};
+			applyAgentEdit(view, insertEdit, nodeMap, simpleSchema.definitions);
+
+			const insertEdit2: TreeEdit = {
+				type: "insert",
+				content: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
+				destination: {
+					objectId: 0,
+					place: "after",
+				},
+			};
+			applyAgentEdit(view, insertEdit2, nodeMap, simpleSchema.definitions);
+
+			const identifier1 = ((view.root as RootObjectPolymorphic).vectors[0] as Vector).id;
+			const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector).id;
+			const identifier3 = ((view.root as RootObjectPolymorphic).vectors[2] as Vector).id;
+
+			const expected = [
+				{
+					type: "agentSchema.RootObject",
+					fields: {
+						bools: [
+							{
+								fields: {
+									"": [
+										{
+											type: "com.fluidframework.leaf.boolean",
+											value: true,
+										},
+									],
+								},
+								type: 'agentSchema.Array<["com.fluidframework.leaf.boolean"]>',
+							},
+						],
+						str: [
+							{
+								type: "com.fluidframework.leaf.string",
+								value: "testStr",
+							},
+						],
+						vectors: [
+							{
+								fields: {
+									"": [
+										{
+											fields: {
+												id: [
+													{
+														type: "com.fluidframework.leaf.string",
+														value: identifier1,
+													},
+												],
+												x: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 1,
+													},
+												],
+												y: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 2,
+													},
+												],
+												z: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 3,
+													},
+												],
+											},
+											type: "agentSchema.Vector",
+										},
+										{
+											fields: {
+												id: [
+													{
+														type: "com.fluidframework.leaf.string",
+														value: identifier2,
+													},
+												],
+												x2: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 3,
+													},
+												],
+												y2: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 4,
+													},
+												],
+												z2: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 5,
+													},
+												],
+											},
+											type: "agentSchema.Vector2",
+										},
+										{
+											fields: {
+												id: [
+													{
+														type: "com.fluidframework.leaf.string",
+														value: identifier3,
+													},
+												],
+												x: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 2,
+													},
+												],
+												y: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 3,
+													},
+												],
+												z: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 4,
+													},
+												],
+											},
+											type: "agentSchema.Vector",
+										},
+									],
+								},
+								type: 'agentSchema.Array<["agentSchema.Vector","agentSchema.Vector2"]>',
+							},
+						],
+					},
+				},
+			];
+
+			assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
 		});
 
-		const vectorNode = (view.root as RootObject).vectors[0];
+		it("non polymorphic insert edits", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const config2 = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
+			const view = tree.viewWith(config2);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
-		const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
-		nodeMap.set(0, vectorNode as Vector);
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
 
-		const insertEdit: TreeEdit = {
-			type: "insert",
-			content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
-			destination: {
-				objectId: 0,
-				place: "after",
-			},
-		};
-		applyAgentEdit(view, insertEdit, nodeMap, simpleSchema.definitions);
+			const vectorNode = (view.root as RootObject).vectors[0];
 
-		const insertEdit2: TreeEdit = {
-			type: "insert",
-			content: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
-			destination: {
-				objectId: 0,
-				place: "after",
-			},
-		};
-		applyAgentEdit(view, insertEdit2, nodeMap, simpleSchema.definitions);
+			const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
+			nodeMap.set(0, vectorNode);
 
-		const identifier1 = ((view.root as RootObject).vectors[0] as Vector).id;
-		const identifier2 = ((view.root as RootObject).vectors[1] as Vector).id;
-		const identifier3 = ((view.root as RootObject).vectors[2] as Vector).id;
-
-		const expected = [
-			{
-				type: "agentSchema.RootObject",
-				fields: {
-					bools: [
-						{
-							fields: {
-								"": [
-									{
-										type: "com.fluidframework.leaf.boolean",
-										value: true,
-									},
-								],
-							},
-							type: 'agentSchema.Array<["com.fluidframework.leaf.boolean"]>',
-						},
-					],
-					str: [
-						{
-							type: "com.fluidframework.leaf.string",
-							value: "testStr",
-						},
-					],
-					vectors: [
-						{
-							fields: {
-								"": [
-									{
-										fields: {
-											id: [
-												{
-													type: "com.fluidframework.leaf.string",
-													value: identifier1,
-												},
-											],
-											x: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 1,
-												},
-											],
-											y: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 2,
-												},
-											],
-											z: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 3,
-												},
-											],
-										},
-										type: "agentSchema.Vector",
-									},
-									{
-										fields: {
-											id: [
-												{
-													type: "com.fluidframework.leaf.string",
-													value: identifier2,
-												},
-											],
-											x2: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 3,
-												},
-											],
-											y2: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 4,
-												},
-											],
-											z2: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 5,
-												},
-											],
-										},
-										type: "agentSchema.Vector2",
-									},
-									{
-										fields: {
-											id: [
-												{
-													type: "com.fluidframework.leaf.string",
-													value: identifier3,
-												},
-											],
-											x: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 2,
-												},
-											],
-											y: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 3,
-												},
-											],
-											z: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 4,
-												},
-											],
-										},
-										type: "agentSchema.Vector",
-									},
-								],
-							},
-							type: 'agentSchema.Array<["agentSchema.Vector","agentSchema.Vector2"]>',
-						},
-					],
+			const insertEdit: TreeEdit = {
+				type: "insert",
+				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+				destination: {
+					objectId: 0,
+					place: "after",
 				},
-			},
-		];
+			};
+			applyAgentEdit(view, insertEdit, nodeMap, simpleSchema.definitions);
 
-		assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
-	});
+			const identifier1 = (view.root as RootObject).vectors[0].id;
+			const identifier2 = (view.root as RootObject).vectors[1].id;
 
-	it("remove edits", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		const schema = normalizeFieldSchema(view.schema);
-		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+			const expected = [
+				{
+					type: "agentSchema.RootObject",
+					fields: {
+						bools: [
+							{
+								fields: {
+									"": [
+										{
+											type: "com.fluidframework.leaf.boolean",
+											value: true,
+										},
+									],
+								},
+								type: 'agentSchema.Array<["com.fluidframework.leaf.boolean"]>',
+							},
+						],
+						str: [
+							{
+								type: "com.fluidframework.leaf.string",
+								value: "testStr",
+							},
+						],
+						vectors: [
+							{
+								fields: {
+									"": [
+										{
+											fields: {
+												id: [
+													{
+														type: "com.fluidframework.leaf.string",
+														value: identifier1,
+													},
+												],
+												x: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 1,
+													},
+												],
+												y: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 2,
+													},
+												],
+												z: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 3,
+													},
+												],
+											},
+											type: "agentSchema.Vector",
+										},
+										{
+											fields: {
+												id: [
+													{
+														type: "com.fluidframework.leaf.string",
+														value: identifier2,
+													},
+												],
+												x: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 2,
+													},
+												],
+												y: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 3,
+													},
+												],
+												z: [
+													{
+														type: "com.fluidframework.leaf.number",
+														value: 4,
+													},
+												],
+											},
+											type: "agentSchema.Vector",
+										},
+									],
+								},
+								type: 'agentSchema.Array<["agentSchema.Vector"]>',
+							},
+						],
+					},
+				},
+			];
 
-		view.initialize({
-			str: "testStr",
-			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-			bools: [true],
+			assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
 		});
-
-		const vectorNode = (view.root as RootObject).vectors[0];
-
-		const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
-		nodeMap.set(0, vectorNode as Vector);
-
-		const removeEdit: TreeEdit = {
-			type: "remove",
-			source: { objectId: 0 },
-		};
-		applyAgentEdit(view, removeEdit, nodeMap, simpleSchema.definitions);
-
-		const expected = [
-			{
-				type: "agentSchema.RootObject",
-				fields: {
-					bools: [
-						{
-							fields: {
-								"": [
-									{
-										type: "com.fluidframework.leaf.boolean",
-										value: true,
-									},
-								],
-							},
-							type: 'agentSchema.Array<["com.fluidframework.leaf.boolean"]>',
-						},
-					],
-					str: [
-						{
-							type: "com.fluidframework.leaf.string",
-							value: "testStr",
-						},
-					],
-					vectors: [
-						{
-							type: 'agentSchema.Array<["agentSchema.Vector","agentSchema.Vector2"]>',
-						},
-					],
-				},
-			},
-		];
-
-		assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
 	});
 
 	it("modify edits", () => {
@@ -403,7 +481,7 @@ describe("applyAgentEdit", () => {
 		};
 		applyAgentEdit(view, modifyEdit2, nodeMap, simpleSchema.definitions);
 
-		nodeMap.set(1, (view.root as RootObject).vectors[0] as Vector);
+		nodeMap.set(1, (view.root as RootObjectPolymorphic).vectors[0] as Vector);
 
 		const modifyEdit3: TreeEdit = {
 			type: "modify",
@@ -413,8 +491,8 @@ describe("applyAgentEdit", () => {
 		};
 		applyAgentEdit(view, modifyEdit3, nodeMap, simpleSchema.definitions);
 
-		const identifier = ((view.root as RootObject).vectors[0] as Vector).id;
-		const identifier2 = ((view.root as RootObject).vectors[1] as Vector2).id;
+		const identifier = ((view.root as RootObjectPolymorphic).vectors[0] as Vector).id;
+		const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector2).id;
 
 		const expected = [
 			{
