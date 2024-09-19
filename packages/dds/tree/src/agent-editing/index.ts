@@ -40,7 +40,7 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 	const abortController = new AbortController();
 	const responseHandler = createResponseHandler(editSchema, abortController);
 
-	const responseSchema: ResponseFormatJSONSchema.JSONSchema = {
+	const llmJsonSchema: ResponseFormatJSONSchema.JSONSchema = {
 		schema: responseHandler.jsonSchema(),
 		name: "llm-response",
 		strict: true, // Opt into structured output
@@ -54,7 +54,7 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 		model: "gpt-4o",
 		response_format: {
 			type: "json_schema",
-			json_schema: responseSchema,
+			json_schema: llmJsonSchema,
 		},
 	};
 
