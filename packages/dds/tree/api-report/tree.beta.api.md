@@ -19,30 +19,6 @@ export function clone<TSchema extends ImplicitFieldSchema>(original: TreeFieldFr
     replaceIdentifiers?: true;
 }): TreeFieldFromImplicitField<TSchema>;
 
-// @beta
-export function cloneToCompressed(node: TreeNode | TreeLeafValue, options: {
-    oldestCompatibleClient: FluidClientVersion;
-    idCompressor?: IIdCompressor;
-}): JsonCompatible<IFluidHandle>;
-
-// @beta
-export function cloneToJson<T>(node: TreeNode | TreeLeafValue, options?: {
-    handleConverter(handle: IFluidHandle): T;
-    readonly useStableFieldKeys?: boolean;
-}): JsonCompatible<T>;
-
-// @beta
-export function cloneToJson(node: TreeNode | TreeLeafValue, options?: {
-    handleConverter?: undefined;
-    useStableFieldKeys?: boolean;
-}): JsonCompatible<IFluidHandle>;
-
-// @beta
-export function cloneToVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
-
-// @beta
-export function cloneToVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -57,10 +33,9 @@ export interface CommitMetadata {
 }
 
 // @beta
-export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-
-// @beta
-export function createFromVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
+    [key: string]: ConciseTree<THandle>;
+};
 
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
@@ -71,6 +46,30 @@ export interface EncodeOptions<TCustom> {
     readonly useStoredKeys?: boolean;
     valueConverter(data: IFluidHandle): TCustom;
 }
+
+// @beta
+export function exportCompressed(node: TreeNode | TreeLeafValue, options: {
+    oldestCompatibleClient: FluidClientVersion;
+    idCompressor?: IIdCompressor;
+}): JsonCompatible<IFluidHandle>;
+
+// @beta
+export function exportConcise<T>(node: TreeNode | TreeLeafValue, options?: {
+    handleConverter(handle: IFluidHandle): T;
+    readonly useStableFieldKeys?: boolean;
+}): ConciseTree<T>;
+
+// @beta
+export function exportConcise(node: TreeNode | TreeLeafValue, options?: {
+    handleConverter?: undefined;
+    useStableFieldKeys?: boolean;
+}): JsonCompatible<IFluidHandle>;
+
+// @beta
+export function exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
+
+// @beta
+export function exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
 
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
@@ -147,6 +146,12 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @beta
+export function importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+// @beta
+export function importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 // @public
 type _InlineTrick = 0;
@@ -485,11 +490,12 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 export const TreeBeta: {
     readonly on: <K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>) => () => void;
     readonly create: <TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>) => Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    readonly createFromVerbose: typeof createFromVerbose;
+    readonly importConcise: <TSchema_1 extends ImplicitFieldSchema>(schema: TSchema_1, data: InsertableTreeFieldFromImplicitField | ConciseTree) => TreeFieldFromImplicitField<TSchema_1>;
+    readonly importVerbose: typeof importVerbose;
     readonly clone: typeof clone;
-    readonly cloneToVerbose: typeof cloneToVerbose;
-    readonly cloneToJson: typeof cloneToJson;
-    readonly cloneToCompressed: typeof cloneToCompressed;
+    readonly exportVerbose: typeof exportVerbose;
+    readonly exportConcise: typeof exportConcise;
+    readonly exportCompressed: typeof exportCompressed;
 };
 
 // @public @sealed

@@ -11,13 +11,14 @@ import type {
 	WithType,
 } from "../core/index.js";
 import { treeNodeApi } from "./treeNodeApi.js";
-import { createFromInsertable, createFromVerbose } from "./create.js";
-import { clone, cloneToCompressed, cloneToJson, cloneToVerbose } from "./clone.js";
+import { createFromInsertable, importVerbose } from "./create.js";
+import { clone, exportCompressed, exportConcise, exportVerbose } from "./clone.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
 } from "../schemaTypes.js";
+import type { ConciseTree } from "./conciseTree.js";
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
@@ -112,15 +113,47 @@ export const TreeBeta = {
 		return treeNodeApi.on(node, eventName, listener);
 	},
 
+	/**
+	 * Generic tree constructor.
+	 * @remarks
+	 * This is equivalent to calling {@link TreeNodeSchemaClass}'s constructor or `TreeNodeSchemaNonClass.create`,
+	 * except that this also handles the case where the root is polymorphic, or optional.
+	 *
+	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
+	 * but for now most invalid inputs will throw a recoverable error.
+	 */
 	create<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: InsertableTreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		return createFromInsertable(schema, data);
 	},
-	createFromVerbose,
+
+	/**
+	 * Less type safe version of {@link TreeBeta.create}, suitable for importing data.
+	 * @remarks
+	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
+	 * This does not support {@link ConciseTree}'s with customized handle encodings or using persisted keys.
+	 * Use "compressed" or "verbose" formats to for more flexibility.
+	 *
+	 * When using this function,
+	 * it is recommend to ensure you schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
+	 * If the schema is ambiguous, consider using {@link TreeBeta.create} and {@link Unhydrated} nodes where needed,
+	 * or using {@link TreeBeta.importVerbose} and specify all types.
+	 *
+	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
+	 * but for now most invalid inputs will throw a recoverable error.
+	 */
+	importConcise<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: InsertableTreeFieldFromImplicitField | ConciseTree,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		return createFromInsertable(schema, data as InsertableTreeFieldFromImplicitField<TSchema>);
+	},
+
+	importVerbose,
 	clone,
-	cloneToVerbose,
-	cloneToJson,
-	cloneToCompressed,
+	exportVerbose,
+	exportConcise,
+	exportCompressed,
 } as const;

@@ -130,11 +130,11 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	createFromVerbose,
+	importVerbose,
 	clone,
-	cloneToJson,
-	cloneToVerbose,
-	cloneToCompressed,
+	exportConcise,
+	exportVerbose,
+	exportCompressed,
 	type VerboseTreeNode,
 	type EncodeOptions,
 	type ParseOptions,
@@ -155,6 +155,7 @@ export {
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
 	getJsonSchema,
+	type ConciseTree,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

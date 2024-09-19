@@ -109,7 +109,7 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
  * This could be exposed as a public `Tree.createFromVerbose` function.
  * @beta
  */
-export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
+export function importVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	schema: TSchema,
 	data: VerboseTree<THandle> | undefined,
 	options: ParseOptions<THandle>,
@@ -121,13 +121,13 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
  * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
  * @beta
  */
-export function createFromVerbose<TSchema extends ImplicitFieldSchema>(
+export function importVerbose<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	data: VerboseTree | undefined,
 	options?: Partial<ParseOptions<IFluidHandle>>,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
-export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
+export function importVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 	schema: TSchema,
 	data: VerboseTree<THandle> | undefined,
 	options?: Partial<ParseOptions<THandle>>,

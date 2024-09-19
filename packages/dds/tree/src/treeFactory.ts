@@ -247,7 +247,7 @@ function copyNodeCursor(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous 
  */
 export interface ViewContent {
 	/**
-	 * Compressed tree from {@link TreeBeta.cloneToCompressed}.
+	 * Compressed tree from {@link TreeBeta.exportCompressed}.
 	 * @remarks
 	 * This is an owning reference:
 	 * consumers of this content might modify this data in place (for example when applying edits) to avoid copying.

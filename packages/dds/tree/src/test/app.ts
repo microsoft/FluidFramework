@@ -39,19 +39,19 @@ const path = "list.json";
 const data: JsonCompatible = JSON.parse(readFileSync(path).toString());
 
 // const node = TreeBeta.create(List, data as InsertableTypedNode<typeof List>);
-const node = TreeBeta.createFromVerbose(List, data as VerboseTree);
+const node = TreeBeta.importVerbose(List, data as VerboseTree);
 
 node.insertAtEnd("x");
 
-writeFileSync(path, JSON.stringify(TreeBeta.cloneToVerbose(node)));
+writeFileSync(path, JSON.stringify(TreeBeta.exportVerbose(node)));
 
 // Demo all formats:
-writeFileSync("list.verbose.json", JSON.stringify(TreeBeta.cloneToVerbose(node)));
-// writeFileSync("list.simple.json", JSON.stringify(TreeBeta.cloneToJson(node)));
+writeFileSync("list.verbose.json", JSON.stringify(TreeBeta.exportVerbose(node)));
+// writeFileSync("list.simple.json", JSON.stringify(TreeBeta.exportConcise(node)));
 writeFileSync(
 	"list.compressed.json",
 	JSON.stringify(
-		TreeBeta.cloneToCompressed(node, { oldestCompatibleClient: FluidClientVersion.v2_3 }),
+		TreeBeta.exportCompressed(node, { oldestCompatibleClient: FluidClientVersion.v2_3 }),
 	),
 );
 
@@ -68,7 +68,7 @@ const idCompressor = createIdCompressor();
 // idCompressor.finalizeCreationRange(idCompressor.takeUnfinalizedCreationRange());
 
 const file: File = {
-	tree: TreeBeta.cloneToCompressed(node, {
+	tree: TreeBeta.exportCompressed(node, {
 		oldestCompatibleClient: FluidClientVersion.v2_3,
 		idCompressor,
 	}),
