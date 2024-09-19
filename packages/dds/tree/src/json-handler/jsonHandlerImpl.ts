@@ -528,9 +528,9 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 	) {}
 
 	public addObject(key: string): StreamedObjectHandler {
-		if (!this.descriptor) {
-			// TODO-AnyOf:
-		} else {
+		this.attemptResolution(key, StreamedObject);
+
+		if (this.descriptor) {
 			let streamedType: StreamedType | undefined = this.descriptor.properties[key];
 
 			if (streamedType === undefined) {
@@ -544,6 +544,7 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			if (streamedType instanceof StreamedAnyOf) {
 				const streamedAnyOf = streamedType;
 				if (!(streamedType = streamedType.streamedTypeIfSingleMatch(StreamedObject))) {
+					// The type is ambiguous, so create an "unbound" StreamedObjectHandler and wait for more input
 					const childPartial: PartialObject = {};
 					this.partial[key] = childPartial;
 					this.handlers[key] = new StreamedObjectHandlerImpl(
@@ -558,7 +559,7 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			if (streamedType instanceof StreamedObject) {
 				const childPartial: PartialObject = {};
 				this.partial[key] = childPartial;
-				this.handlers[key] = streamedType.invoke(this.partial, childPartial);
+				this.handlers[key] = streamedType.invoke(this.partial, this.partial[key]);
 				return this.handlers[key] as StreamedObjectHandler;
 			}
 		}
@@ -567,9 +568,9 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 	}
 
 	public addArray(key: string): StreamedArrayHandler {
-		if (!this.descriptor) {
-			// TODO-AnyOf:
-		} else {
+		this.attemptResolution(key, StreamedArray);
+
+		if (this.descriptor) {
 			let streamedType: StreamedType | undefined = this.descriptor.properties[key];
 
 			if (streamedType === undefined) {
@@ -582,8 +583,9 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 
 			if (streamedType instanceof StreamedAnyOf) {
 				const streamedAnyOf = streamedType;
-				if (!(streamedType = streamedType.streamedTypeIfSingleMatch(StreamedObject))) {
-					const childPartial = [] as PartialArray;
+				if (!(streamedType = streamedType.streamedTypeIfSingleMatch(StreamedArray))) {
+					// The type is ambiguous, so create an "unbound" StreamedObjectHandler and wait for more input
+					const childPartial: PartialArray = [];
 					this.partial[key] = childPartial;
 					this.handlers[key] = new StreamedArrayHandlerImpl(
 						childPartial,
@@ -632,46 +634,13 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			streamedType = streamedType.streamedTypeOfFirstMatch(value);
 		}
 
-		if (value === null) {
-			if (streamedType instanceof AtomicNull) {
-				this.handlers[key] = streamedType.invoke();
-				return;
-			}
-		} else {
-			switch (typeof value) {
-				case "string":
-					if (streamedType instanceof StreamedStringProperty) {
-						this.handlers[key] = streamedType.invoke(this.partial);
-						return;
-					} else if (streamedType instanceof StreamedString) {
-						this.handlers[key] = streamedType.invoke(this.partial);
-						return;
-					} else if (streamedType instanceof AtomicString) {
-						this.handlers[key] = streamedType.invoke();
-						return;
-					} else if (streamedType instanceof AtomicEnum) {
-						this.handlers[key] = streamedType.invoke();
-						return;
-					}
-					break;
-
-				case "number":
-					if (streamedType instanceof AtomicNumber) {
-						this.handlers[key] = streamedType.invoke();
-						return;
-					}
-					break;
-
-				case "boolean":
-					if (streamedType instanceof AtomicBoolean) {
-						this.handlers[key] = streamedType.invoke();
-					}
-					break;
-
-				default:
-					break;
-			}
-		}
+        if (primitiveMatchesStreamedType(value, streamedType!)) {
+            this.handlers[key] = (streamedType as InvocableStreamedType<StreamedValueHandler>).invoke(
+                this.partial,
+                undefined,
+            );
+            return;
+        }
 
 		// Shouldn't happen with Structured Outputs
 		throw new Error(`Unexpected ${typeof value} for key ${key}`);
@@ -727,6 +696,24 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 	public complete(): void {
 		// TODO-AnyOf:
 		this.descriptor!.complete?.(this.partial);
+	}
+
+	private attemptResolution(
+		key: string,
+		classType: typeof StreamedObject | typeof StreamedArray,
+	): void {
+		if (!this.descriptor) {
+			assert(this.streamedAnyOf !== undefined);
+			for (const option of this.streamedAnyOf!.options) {
+				if (option instanceof StreamedObject) {
+					const property = option.properties[key];
+					if (property instanceof classType) {
+						// We now know which option in the AnyOf to use
+						this.descriptor = option.delayedInvoke(this.partial);
+					}
+				}
+			}
+		}
 	}
 
 	private handlers: FieldHandlers = {}; // TODO: Overkill, since only one needed at a time?
@@ -882,47 +869,13 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 
 		this.partial.push(value);
 
-		if (value === null) {
-			if (streamedType instanceof AtomicNull) {
-				this.lastHandler = streamedType.invoke();
-				return;
-			}
-		} else {
-			switch (typeof value) {
-				case "string":
-					if (streamedType instanceof StreamedStringProperty) {
-						this.lastHandler = streamedType.invoke(this.partial);
-						return;
-					} else if (streamedType instanceof StreamedString) {
-						this.lastHandler = streamedType.invoke(this.partial);
-						return;
-					} else if (streamedType instanceof AtomicString) {
-						this.lastHandler = streamedType.invoke();
-						return;
-					} else if (streamedType instanceof AtomicEnum) {
-						this.lastHandler = streamedType.invoke();
-						return;
-					}
-					break;
-
-				case "number":
-					if (streamedType instanceof AtomicNumber) {
-						this.lastHandler = streamedType.invoke();
-						return;
-					}
-					break;
-
-				case "boolean":
-					if (streamedType instanceof AtomicBoolean) {
-						this.lastHandler = streamedType.invoke();
-						return;
-					}
-					break;
-
-				default:
-					break;
-			}
-		}
+        if (primitiveMatchesStreamedType(value, streamedType)) {
+            this.lastHandler = (streamedType as InvocableStreamedType<StreamedValueHandler>).invoke(
+                this.partial,
+                undefined,
+            );
+            return;
+        }
 
 		// Shouldn't happen with Structured Outputs
 		throw new Error(`Unexpected ${typeof value}`);
@@ -982,6 +935,32 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 
 	private lastHandler?: ArrayAppendHandler;
 }
+
+const primitiveMatchesStreamedType = (value: JsonPrimitive, streamedType: StreamedType): boolean => {
+    if (value === null) {
+        return streamedType instanceof AtomicNull;
+    } else {
+        switch (typeof value) {
+            case 'string':
+                return (
+                    streamedType instanceof StreamedStringProperty ||
+                    streamedType instanceof StreamedString ||
+                    streamedType instanceof AtomicString ||
+                    streamedType instanceof AtomicEnum
+                );
+
+            case 'number':
+                return streamedType instanceof AtomicNumber;
+
+            case 'boolean':
+                return streamedType instanceof AtomicBoolean;
+
+            default:
+                assert(false);
+                return false;
+        }
+    }
+};
 
 interface SchemaArgs {
 	description?: string;
