@@ -25,9 +25,7 @@ class ResponseHandlerImpl {
 		abortController: AbortController,
 	) {
 		if (streamedType instanceof StreamedAnyOf) {
-			throw new TypeError(
-				"anyOf cannot be used as root type",
-			);
+			throw new TypeError("anyOf cannot be used as root type");
 		}
 
 		if (
@@ -630,9 +628,9 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			streamedType = streamedType.optionalType;
 		}
 
-        if (streamedType instanceof StreamedAnyOf) {
-            streamedType = streamedType.streamedTypeOfFirstMatch(value);
-        }
+		if (streamedType instanceof StreamedAnyOf) {
+			streamedType = streamedType.streamedTypeOfFirstMatch(value);
+		}
 
 		if (value === null) {
 			if (streamedType instanceof AtomicNull) {
