@@ -130,11 +130,6 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	importVerbose,
-	clone,
-	exportConcise,
-	exportVerbose,
-	exportCompressed,
 	type VerboseTreeNode,
 	type EncodeOptions,
 	type ParseOptions,

@@ -5,9 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { createFromInsertable, SchemaFactory } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { importVerbose } from "../../../simple-tree/api/create.js";
+import { createFromInsertable, SchemaFactory, TreeBeta } from "../../../simple-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -25,7 +23,7 @@ describe("simple-tree create", () => {
 	});
 
 	it("createFromVerbose", () => {
-		const canvas1 = importVerbose(Canvas, {
+		const canvas1 = TreeBeta.importVerbose(Canvas, {
 			type: Canvas.identifier,
 			fields: { stuff: { type: NodeList.identifier, fields: [] } },
 		});
