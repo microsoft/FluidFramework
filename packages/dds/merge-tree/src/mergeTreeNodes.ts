@@ -160,6 +160,13 @@ export interface IMoveInfo {
 	 * calculations
 	 */
 	wasMovedOnInsert: boolean;
+
+	/**
+	 * If a segment is inserted into an obliterated range,
+	 * but the newest obliteration of that range was by the inserting client,
+	 * then the segment is not obliterated because it is aware of the latest obliteration.
+	 */
+	prevObliterateByInserter?: ObliterateInfo;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {

@@ -75,6 +75,7 @@ import {
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -252,15 +253,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Obliterates the range. This is similar to removing the range, but also
 	 * includes any concurrently inserted content.
 	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
+	 * @param start - The start of the range to obliterate. Inclusive if the side is Before
+	 * @param end - The end of the range to obliterate. Inclusive if the side is After
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public obliterateRangeLocal(
-		start: number,
-		end: number,
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
 		// eslint-disable-next-line import/no-deprecated
 	): IMergeTreeObliterateMsg {
-		const obliterateOp = createObliterateRangeOp(start, end);
+		const obliterateOp = createObliterateRangeOp(
+			start,
+			end,
+			this._mergeTree.options?.mergeTreeEnableSidedObliterate ?? false,
+		);
 		this.applyObliterateRangeOp({ op: obliterateOp });
 		return obliterateOp;
 	}
@@ -477,11 +483,21 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
+		let start: number | InteriorSequencePlace;
+		let end: number | InteriorSequencePlace;
+		// Kludge: using this for the error handling,
+		// even though the returned value is not used when sidedness is enabled.
 		const range = this.getValidOpRange(op, clientArgs);
-
+		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
+			start = { pos: op.pos1 ?? 0, side: op.before1 ? Side.Before : Side.After };
+			end = { pos: op.pos2 ?? 0, side: op.before2 ? Side.Before : Side.After };
+		} else {
+			start = range.start;
+			end = range.end;
+		}
 		this._mergeTree.obliterateRange(
-			range.start,
-			range.end,
+			start,
+			end,
 			clientArgs.referenceSequenceNumber,
 			clientArgs.clientId,
 			clientArgs.sequenceNumber,
@@ -587,8 +603,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				clientArgs.clientId,
 			);
 		}
+		// eslint-disable-next-line import/no-deprecated
+		if (start !== undefined && (op as IMergeTreeObliterateMsg).before1 === false) {
+			// pos1 is after the given index. Normalize to before-sided for bounds checking
+			start += 1;
+		}
 
 		let end: number | undefined = op.pos2;
+		// eslint-disable-next-line import/no-deprecated
+		if (end !== undefined && (op as IMergeTreeObliterateMsg).before2 === false) {
+			// pos2 is after the given index. Normalize to before-sided for bounds checking
+			end += 1;
+		}
 		if (end === undefined && op.relativePos2) {
 			end = this._mergeTree.posFromRelativePos(
 				op.relativePos2,
@@ -614,10 +640,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				invalidPositions.push("start");
 			}
 			// Validate end if not insert, or insert has end
-			//
 			if (
 				(op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
-				(end === undefined || end <= start!)
+				(end === undefined ||
+					end < start! ||
+					(end === start &&
+						// eslint-disable-next-line import/no-deprecated
+						!(op as IMergeTreeObliterateMsg).before1 &&
+						// eslint-disable-next-line import/no-deprecated
+						(op as IMergeTreeObliterateMsg).before2))
 			) {
 				invalidPositions.push("end");
 			}
@@ -878,6 +909,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						newOp = createObliterateRangeOp(
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
+							this._mergeTree.options?.mergeTreeEnableSidedObliterate ?? false,
 						);
 					}
 					break;
