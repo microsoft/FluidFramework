@@ -21,7 +21,6 @@ import {
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import ajvModuleOrClass from "ajv";
-// eslint-disable-next-line import/no-internal-modules
 import type {
 	TreeEdit,
 	Target,
@@ -41,14 +40,9 @@ import {
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
-import {
-	normalizeAllowedTypes,
-	type ImplicitAllowedTypes,
-} from "../simple-tree/schemaTypes.js";
+import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 
 export const typeField = "__fluid_type";
-// eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
