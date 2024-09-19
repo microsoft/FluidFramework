@@ -20,10 +20,12 @@ import {
 	extractPersistedSchema,
 	FluidClientVersion,
 	independentInitializedView,
+	TreeArrayNode,
 	TreeBeta,
 	typeboxValidator,
 	type ForestOptions,
 	type ICodecOptions,
+	type InsertableTypedNode,
 	type JsonCompatible,
 	type VerboseTree,
 	type ViewContent,
@@ -31,6 +33,7 @@ import {
 } from "@fluidframework/tree/alpha";
 import { type Static, Type } from "@sinclair/typebox";
 
+import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";
 
 /**
@@ -144,6 +147,56 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		default: {
 			console.log(`Invalid source format: ${parts.at(-2)}`);
 			process.exit(1);
+		}
+	}
+}
+
+/**
+ * Encode to format based on file name.
+ */
+export function applyEdit(edits: string, tree: List): void {
+	for (const edit of edits.split(",")) {
+		console.log(`Applying edit ${edit}`);
+		const parts = edit.split(":");
+		if (parts.length !== 2) {
+			throw new Error(`Invalid edit ${edit}`);
+		}
+		const [kind, countString] = parts;
+		const count = Number(countString);
+		if (count === 0 || !Number.isInteger(count)) {
+			throw new TypeError(`Invalid count in edit ${edit}`);
+		}
+		if (count > 0) {
+			let data: InsertableTypedNode<typeof Item> | string;
+			switch (kind) {
+				case "string": {
+					data = "x";
+					break;
+				}
+				case "item": {
+					data = { location: { x: 0, y: 0 }, name: "item" };
+					break;
+				}
+				default: {
+					throw new TypeError(`Invalid kind in insert edit ${edit}`);
+				}
+			}
+			// eslint-disable-next-line unicorn/no-new-array
+			tree.insertAtEnd(TreeArrayNode.spread(new Array(count).fill(data)));
+		} else {
+			switch (kind) {
+				case "start": {
+					tree.removeRange(0, -count);
+					break;
+				}
+				case "end": {
+					tree.removeRange(tree.length + count, -count);
+					break;
+				}
+				default: {
+					throw new TypeError(`Invalid end in remove edit ${edit}`);
+				}
+			}
 		}
 	}
 }
