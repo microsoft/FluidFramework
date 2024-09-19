@@ -148,14 +148,21 @@ export function generateHandlers(
 		},
 	}));
 
-	return jh.array(() => ({
+	const edits = jh.array(() => ({
+		description: "A list of sequential edits to apply to the tree.",
 		items: jh.anyOf([
 			setRootHandler(),
 			insertHandler(),
-			modifyHandler(),
+			// modifyHandler(),
 			removeHandler(),
 			moveHandler(),
 		]),
+	}));
+
+	return jh.object(() => ({
+		properties: {
+			edits: edits(),
+		},
 	}))();
 }
 

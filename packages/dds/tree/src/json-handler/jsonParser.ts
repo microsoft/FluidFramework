@@ -176,8 +176,9 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	];
 
 	private removeControlCharacters(text: string): string {
+		return text;
 		// eslint-disable-next-line no-control-regex
-		return text.replace(/[\x00-\x1F\x7F]/g, "");
+		// return text.replace(/[\x00-\x1F\x7F]/g, "");
 	}
 
 	// Returns true if another token should be processed

@@ -10,6 +10,8 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
 import { getSystemPrompt } from "./promptGeneration.js";
 import { generateHandlers } from "./handlers.js";
@@ -53,19 +55,30 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 			type: "json_schema",
 			json_schema: llmJsonSchema,
 		},
-		stream: true, // Opt in to streaming responses.
+		// TODO
+		// stream: true, // Opt in to streaming responses.
+		max_tokens: 4096,
 	};
 
 	const result = await client.chat.completions.create(body);
-	const resultStream = result.toReadableStream();
-	const resultStreamReader = resultStream.getReader();
+	assert(result.choices.length !== 0, "Response included no choices.");
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	assert(result.choices[0]!.finish_reason === "stop", "Response was unfinished.");
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	assert(result.choices[0]!.message.content !== null, "Response contained no contents.");
 
 	await responseHandler.processResponse({
 		async *[Symbol.asyncIterator](): AsyncGenerator<string, void> {
-			yield (await resultStreamReader.read()).value;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const content = result.choices[0]!.message.content!;
+			KLUDGE += content;
+			console.log(content);
+			yield content;
 		},
 	});
 }
+
+export let KLUDGE = "";
 
 // TODO
 // Depends on particular env variables
