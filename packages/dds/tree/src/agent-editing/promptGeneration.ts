@@ -51,11 +51,11 @@ export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	const decoratedJson = toDecoratedJson(view.root);
 
 	const systemPrompt = `
-	You are a collaborative agent who interacts with a tree. 
+	You are a collaborative agent who interacts with a tree.
 	You should make the minimum number of edits to the tree to achieve the desired outcome, and do it in as granular a way as possible to ensure good merge outcomes.
-	The tree is a JSON object with the following schema: ${promptFriendlySchema} 
+	The tree is a JSON object with the following schema: ${promptFriendlySchema}
 	The current state of the tree is: ${decoratedJson.stringified}.
-	The allowed edits are defined by the following schema: ${"TODO"}. 
+	The allowed edits are defined by the following schema: ${"TODO"}.
 	Example edits: ${"TODO"}.`;
 	return systemPrompt;
 }
