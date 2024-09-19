@@ -29,12 +29,14 @@ import type { Insert, Modify, Move, Remove, SetRoot } from "./agentEditTypes.js"
 import { applyAgentEdit, typeField } from "./agentEditReducer.js";
 
 const targetHandler = jh.object(() => ({
+	description: "TODO",
 	properties: {
 		objectId: jh.number(),
 	},
 }));
 
 const placeHandler = jh.object(() => ({
+	description: "TODO",
 	properties: {
 		objectId: jh.number(),
 		place: jh.enum({ values: ["before", "after"] }),
@@ -42,6 +44,7 @@ const placeHandler = jh.object(() => ({
 }));
 
 const rangeHandler = jh.object(() => ({
+	description: "TODO",
 	properties: {
 		from: placeHandler(),
 		to: placeHandler(),
@@ -71,6 +74,7 @@ export function generateHandlers(
 	}
 
 	const setRootHandler = jh.object(() => ({
+		description: "Handler for setting content to the root of the tree.",
 		properties: {
 			type: jh.enum({ values: ["setRoot"] }),
 			content: jh.anyOf(
@@ -88,6 +92,7 @@ export function generateHandlers(
 	}));
 
 	const insertHandler = jh.object(() => ({
+		description: "A handler for inserting new content into the tree.",
 		properties: {
 			type: jh.enum({ values: ["insert"] }),
 			content: jh.anyOf(
@@ -102,6 +107,7 @@ export function generateHandlers(
 	}));
 
 	const removeHandler = jh.object(() => ({
+		description: "A handler for removing content from the tree.",
 		properties: {
 			type: jh.enum({ values: ["remove"] }),
 			source: rangeHandler(),
@@ -113,6 +119,7 @@ export function generateHandlers(
 	}));
 
 	const modifyHandler = jh.object(() => ({
+		description: "A handler for inserting new content into the tree.",
 		properties: {
 			type: jh.enum({ values: ["modify"] }),
 			target: targetHandler(),
@@ -128,6 +135,7 @@ export function generateHandlers(
 	}));
 
 	const moveHandler = jh.object(() => ({
+		description: "A handler for moving content from one location in the tree to another location in the tree.",
 		properties: {
 			type: jh.enum({ values: ["move"] }),
 			source: rangeHandler(),
