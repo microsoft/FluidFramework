@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 // eslint-disable-next-line import/no-internal-modules
 import { createResponseHandler, JsonHandler as jh } from "../../json-handler/jsonHandler.js";
 // eslint-disable-next-line import/no-internal-modules
