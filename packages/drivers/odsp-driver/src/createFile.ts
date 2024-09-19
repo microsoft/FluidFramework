@@ -164,8 +164,13 @@ function extractShareLinkData(
 	return shareLinkInfo;
 }
 
-function ensureStartsWithSlash(path: string): string {
-	return path.startsWith("/") ? path : `/${path}`;
+/**
+ * Encodes file path so it can be embedded in the request url
+ * @param path - path to encode
+ * @returns encoded path or "" if path is undefined
+ */
+function encodeFilePath(path: string | undefined): string {
+	return path ? encodeURIComponent(path.startsWith("/") ? path : `/${path}`) : "";
 }
 
 export async function createNewEmptyFluidFile(
@@ -174,9 +179,7 @@ export async function createNewEmptyFluidFile(
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
 ): Promise<string> {
-	const filePath = newFileInfo.filePath
-		? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath))
-		: "";
+	const filePath = encodeFilePath(newFileInfo.filePath);
 	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
@@ -240,9 +243,7 @@ export async function createNewFluidFileFromSummary(
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<ICreateFileResponse> {
-	const filePath = newFileInfo.filePath
-		? encodeURIComponent(ensureStartsWithSlash(newFileInfo.filePath))
-		: "";
+	const filePath = encodeFilePath(newFileInfo.filePath);
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
 	const baseUrl =
 		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
