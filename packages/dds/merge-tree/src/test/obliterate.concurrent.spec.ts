@@ -63,10 +63,8 @@ for (const incremental of [true, false]) {
 			helper.insertText("B", 8, "123");
 			helper.processAllOps();
 
-			assert.equal(helper.clients.A.getText(), "123");
-			assert.equal(helper.clients.B.getText(), "123");
 
-			helper.logger.validate();
+			helper.logger.validate({baseText: "123"});
 		});
 
 		it("insert, then obliterate at the end of the string", () => {
