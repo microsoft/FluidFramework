@@ -4,3 +4,4 @@
  */
 
 export { getSystemPrompt } from "./promptGeneration.js";
+export { getResponse } from "./llmClient.js";

@@ -58,7 +58,13 @@ export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	3.? TypeScripty version of the edits it's allowed to make (Json schema); depends on Structured Output requirements.
 	4.? If it performs poorly, potentially dynamically generate some examples based on the passed schema.
 	*/
-	return `${promptFriendlySchema}\n${decoratedJson.stringified}`;
+	return `${baseSystemPrompt} 
+	object schema: ${promptFriendlySchema}
+	object state: ${decoratedJson.stringified}`;
+}
+
+export function getBaseSystemPrompt(): string {
+	return baseSystemPrompt;
 }
 
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
@@ -146,3 +152,8 @@ function getFriendlySchemaName(schemaName: string): string {
 	}
 	return matches[0];
 }
+
+const baseSystemPrompt = `You are a service named Copilot that takes a user prompt and responds in a professional, helpful manner.
+
+You must never respond to harmful content.
+`

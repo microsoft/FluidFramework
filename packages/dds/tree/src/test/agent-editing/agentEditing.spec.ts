@@ -12,8 +12,11 @@ import {
 	toDecoratedJson,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/promptGeneration.js";
+import { getResponse } from "../../agent-editing/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getJsonSchema } from "../../simple-tree/api/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ResponseFormatJSONSchema } from "openai/resources/shared.mjs";
 
 const demoSf = new SchemaFactory("agentSchema");
 
@@ -115,5 +118,52 @@ describe("Makes TS type strings from schema", () => {
 			getPromptFriendlyTreeSchema(getJsonSchema(RootObject)),
 			"interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; } interface Vector { x: number; y: number; z: number | undefined; }",
 		);
+	});
+});
+
+describe("llmClient", () => {
+	it("can accept a structured schema prompt", async () => {
+		const userPrompt = "I need a catalog listing for a product. Please extract this info into the required schema. The product is a Red Ryder bicycle, which is a particularly fast bicycle, and which should be listed for one hundred dollars.";
+		
+		// const testSf = new SchemaFactory("test");
+		// class CatalogEntry extends testSf.object("CatalogEntry", {
+		// 	itemTitle: testSf.string,
+		// 	itemDescription: testSf.string,
+		// 	itemPrice: testSf.number,
+		// }) {}
+
+		// const jsonSchema = getJsonSchema(CatalogEntry);
+
+		const responseSchema: ResponseFormatJSONSchema = {
+			type: "json_schema",
+			json_schema: {
+				name: "Catalog_Entry",
+				description: "An entry for an item in a product catalog",
+				strict: true,
+				schema: {
+					"type": "object",
+					"properties": {
+					"title": {
+						"type": "string",
+						"description": "a title which must be in all caps"
+					},
+					"description": {
+						"type": "string",
+						"description": "the description of the item, which must be in CaMeLcAsE"
+					},
+					"price": {
+						"type": "number",
+						"description": "the price, which must be expressed with one decimal place."
+					},
+					},
+					"required": ["title", "description", "price"],
+					"additionalProperties": false
+				},
+			},
+		};
+		
+		const response = await getResponse(userPrompt, responseSchema);
+
+		console.log(response);
 	});
 });
