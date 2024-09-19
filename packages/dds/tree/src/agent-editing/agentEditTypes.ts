@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import type { JsonObject, JsonValue } from "../json-handler/jsonParser.js";
 import { SchemaFactory, TreeViewConfiguration } from "../simple-tree/index.js";
 
 /**
@@ -53,12 +54,12 @@ export interface Range {
 
 export interface SetRoot extends Edit {
 	type: "setRoot";
-	content: unknown;
+	content: JsonValue;
 }
 
 export interface Insert extends Edit {
 	type: "insert";
-	content: unknown;
+	content: JsonObject;
 	destination: Place;
 }
 
@@ -66,7 +67,7 @@ export interface Modify extends Edit {
 	type: "modify";
 	target: Target;
 	field: string;
-	modification: unknown;
+	modification: JsonValue;
 }
 
 export interface Remove extends Edit {

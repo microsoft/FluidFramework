@@ -110,7 +110,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 export interface FieldSchemaMetadata<TCustomMetadata = unknown, T extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
     readonly custom?: TCustomMetadata;
     readonly description?: string | undefined;
-    readonly llmDefault?: () => T;
+    readonly llmDefault?: () => TreeNodeFromImplicitAllowedTypes<T>;
     readonly omitFromJson?: boolean | undefined;
 }
 

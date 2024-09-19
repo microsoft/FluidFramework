@@ -110,7 +110,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 export interface FieldSchemaMetadata<TCustomMetadata = unknown, T extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
     readonly custom?: TCustomMetadata;
     readonly description?: string | undefined;
-    readonly llmDefault?: () => T;
+    readonly llmDefault?: () => TreeNodeFromImplicitAllowedTypes<T>;
     readonly omitFromJson?: boolean | undefined;
 }
 
@@ -150,7 +150,7 @@ export function getBranch(tree: ITree): TreeBranch;
 export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 
 // @alpha
-export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
+export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
 
 // @public
 export interface IConnection {

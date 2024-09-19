@@ -255,7 +255,7 @@ export interface FieldSchemaMetadata<
 	 * NOTE: This is a hacky workaround for lacking proper field default value providers.
 	 * Once we support those, this should be unneeded.
 	 */
-	readonly llmDefault?: () => T;
+	readonly llmDefault?: () => TreeNodeFromImplicitAllowedTypes<T>;
 }
 
 /**

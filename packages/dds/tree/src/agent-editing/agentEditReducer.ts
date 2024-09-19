@@ -33,12 +33,16 @@ import type {
 } from "../agent-editing/agentEditTypes.js";
 import {
 	getOrCreateInnerNode,
+	NodeKind,
 	type TreeNodeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { JsonValue } from "../json-handler/jsonParser.js";
+import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
+import { typeField } from "./handlers.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
@@ -61,13 +65,78 @@ export function getJsonValidator<TSchema extends ImplicitFieldSchema>(
 	return ajv.compile(jsonSchema);
 }
 
+function populateDefaults(
+	json: JsonValue,
+	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
+): void {
+	if (typeof json === "object") {
+		if (json === null) {
+			return;
+		}
+		if (Array.isArray(json)) {
+			for (const element of json) {
+				populateDefaults(element, definitionMap);
+			}
+		} else {
+			assert(typeof json[typeField] === "string", "missing or invalid type field");
+			const nodeSchema = definitionMap.get(json[typeField]);
+			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
+
+			for (const [key, value] of Object.entries(json)) {
+				const defaulter = nodeSchema.fields[key]?.metadata?.llmDefault;
+				if (defaulter !== undefined) {
+					// TODO: Properly type. The input `json` is a JsonValue, but the output can contain nodes (from the defaulters) amidst the json.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					json[key] = defaulter() as any;
+				}
+				populateDefaults(value, definitionMap);
+			}
+		}
+	}
+}
+
+function populateDefaults(
+	json: JsonValue,
+	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
+): void {
+	if (typeof json === "object") {
+		if (json === null) {
+			return;
+		}
+		if (Array.isArray(json)) {
+			for (const element of json) {
+				populateDefaults(element, definitionMap);
+			}
+		} else {
+			assert(typeof json[typeField] === "string", "missing or invalid type field");
+			const nodeSchema = definitionMap.get(json[typeField]);
+			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
+
+			for (const [key, value] of Object.entries(json)) {
+				const defaulter = nodeSchema.fields[key]?.metadata?.llmDefault;
+				if (defaulter !== undefined) {
+					// TODO: Properly type. The input `json` is a JsonValue, but the output can contain nodes (from the defaulters) amidst the json.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					json[key] = defaulter() as any;
+				}
+				populateDefaults(value, definitionMap);
+			}
+		}
+	}
+}
+
 export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	tree: TreeView<TSchema>,
 	treeEdit: TreeEdit,
 	nodeMap: Map<number, TreeNode>,
+	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 ): void {
 	switch (treeEdit.type) {
 		case "setRoot": {
+			const { simpleNodeSchema } = getSimpleNodeSchema(tree.root as TreeNode);
+			populateDefaults(treeEdit.content, definitionMap);
+			const rootNode = new simpleNodeSchema(treeEdit.content);
+			tree.root = rootNode as InsertableTreeFieldFromImplicitField<TSchema>;
 			const treeSchema = tree.schema;
 			const validator = getJsonValidator(tree.schema);
 			// If it's a primitive, just validate the content and set
@@ -126,7 +195,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			assert(parentNode !== undefined, "parent node must exist");
 
 			const parentNodeSchema = Tree.schema(parentNode);
-
+			populateDefaults(treeEdit.content, definitionMap);
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
 			const allowedTypes = parentNodeSchema.info;
 
@@ -192,6 +261,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
 			else if (typeof fieldSchema === "function") {
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
+				populateDefaults(modification, definitionMap);
 				const validator = getJsonValidator(fieldSchema);
 				validator(modification);
 

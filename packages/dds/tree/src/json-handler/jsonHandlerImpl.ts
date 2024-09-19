@@ -1297,12 +1297,10 @@ class StreamedOptional extends SchemaGeneratingStreamedType {
 
 	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
 		const schema = jsonSchemaFromStreamedType(this.optionalType, root, definitions);
-		// TODO: Fix/Remove assert here
-		// assert(typeof schema.type === "string");
-
 		if (root === this.optionalType || definitions.has(this.optionalType)) {
 			return { anyOf: [schema, { type: "null" }] };
 		} else {
+			assert(typeof schema.type === "string");
 			schema.type = [schema.type!, "null"];
 			return schema;
 		}

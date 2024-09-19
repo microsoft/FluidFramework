@@ -85,7 +85,7 @@ export function generateHandlers(
 		},
 		complete: (jsonObject: JsonObject) => {
 			const setRoot = jsonObject as unknown as SetRoot;
-			applyAgentEdit(view, setRoot, nodeMap);
+			applyAgentEdit(view, setRoot, nodeMap, simpleSchema.definitions);
 		},
 	}));
 
@@ -99,7 +99,7 @@ export function generateHandlers(
 		},
 		complete: (jsonObject: JsonObject) => {
 			const insert = jsonObject as unknown as Insert;
-			applyAgentEdit(view, insert, nodeMap);
+			applyAgentEdit(view, insert, nodeMap, simpleSchema.definitions);
 		},
 	}));
 
@@ -110,7 +110,7 @@ export function generateHandlers(
 		},
 		complete: (jsonObject: JsonObject) => {
 			const remove = jsonObject as unknown as Remove;
-			applyAgentEdit(view, remove, nodeMap);
+			applyAgentEdit(view, remove, nodeMap, simpleSchema.definitions);
 		},
 	}));
 
@@ -125,7 +125,7 @@ export function generateHandlers(
 		},
 		complete: (jsonObject: JsonObject) => {
 			const modify = jsonObject as unknown as Modify;
-			applyAgentEdit(view, modify, nodeMap);
+			applyAgentEdit(view, modify, nodeMap, simpleSchema.definitions);
 		},
 	}));
 
@@ -137,7 +137,7 @@ export function generateHandlers(
 		},
 		complete: (jsonObject: JsonObject) => {
 			const move = jsonObject as unknown as Move;
-			applyAgentEdit(view, move, nodeMap);
+			applyAgentEdit(view, move, nodeMap, simpleSchema.definitions);
 		},
 	}));
 

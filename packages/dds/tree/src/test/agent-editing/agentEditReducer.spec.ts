@@ -5,6 +5,8 @@
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
+	getSimpleSchema,
+	normalizeFieldSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
@@ -137,6 +139,9 @@ describe("applyAgentEdit", () => {
 			"tree",
 		);
 		const view = tree.viewWith(config);
+		const schema = normalizeFieldSchema(view.schema);
+		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
 		view.initialize({
 			str: "testStr",
 			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
@@ -156,7 +161,7 @@ describe("applyAgentEdit", () => {
 				place: "after",
 			},
 		};
-		applyAgentEdit(view, insertEdit, nodeMap);
+		applyAgentEdit(view, insertEdit, nodeMap, simpleSchema.definitions);
 
 		const insertEdit2: TreeEdit = {
 			type: "insert",
@@ -166,7 +171,7 @@ describe("applyAgentEdit", () => {
 				place: "after",
 			},
 		};
-		applyAgentEdit(view, insertEdit2, nodeMap);
+		applyAgentEdit(view, insertEdit2, nodeMap, simpleSchema.definitions);
 
 		const identifier1 = ((view.root as RootObject).vectors[0] as Vector).id;
 		const identifier2 = ((view.root as RootObject).vectors[1] as Vector).id;
@@ -304,6 +309,8 @@ describe("applyAgentEdit", () => {
 			"tree",
 		);
 		const view = tree.viewWith(config);
+		const schema = normalizeFieldSchema(view.schema);
+		const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
 		view.initialize({
 			str: "testStr",
@@ -320,7 +327,7 @@ describe("applyAgentEdit", () => {
 			type: "remove",
 			source: { objectId: 0 },
 		};
-		applyAgentEdit(view, removeEdit, nodeMap);
+		applyAgentEdit(view, removeEdit, nodeMap, simpleSchema.definitions);
 
 		const expected = [
 			{
@@ -363,6 +370,8 @@ describe("applyAgentEdit", () => {
 			"tree",
 		);
 		const view = tree.viewWith(config);
+		const schema = normalizeFieldSchema(view.schema);
+		const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
 		view.initialize({
 			str: "testStr",
@@ -382,7 +391,7 @@ describe("applyAgentEdit", () => {
 				{ schemaType: "agentSchema.Vector2", x2: 3, y2: 4, z2: 5 },
 			],
 		};
-		applyAgentEdit(view, modifyEdit, nodeMap);
+		applyAgentEdit(view, modifyEdit, nodeMap, simpleSchema.definitions);
 
 		const modifyEdit2: TreeEdit = {
 			type: "modify",
@@ -390,7 +399,7 @@ describe("applyAgentEdit", () => {
 			field: "bools",
 			modification: [false],
 		};
-		applyAgentEdit(view, modifyEdit2, nodeMap);
+		applyAgentEdit(view, modifyEdit2, nodeMap, simpleSchema.definitions);
 
 		nodeMap.set(1, (view.root as RootObject).vectors[0] as Vector);
 
@@ -400,7 +409,7 @@ describe("applyAgentEdit", () => {
 			field: "x",
 			modification: 111,
 		};
-		applyAgentEdit(view, modifyEdit3, nodeMap);
+		applyAgentEdit(view, modifyEdit3, nodeMap, simpleSchema.definitions);
 
 		const identifier = ((view.root as RootObject).vectors[0] as Vector).id;
 		const identifier2 = ((view.root as RootObject).vectors[1] as Vector2).id;
