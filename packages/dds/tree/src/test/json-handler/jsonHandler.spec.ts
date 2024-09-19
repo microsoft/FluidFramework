@@ -213,23 +213,37 @@ const sampleOps = [
 
 const opText = JSON.stringify(sampleOps);
 
-const testHandler = (chunkSize: number) => {
-	const testResponseHandler = createResponseHandler(
-		exampleGeneratedEdit(),
-		new AbortController(),
-	);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const streamedLlmResponse = (prompt: string, schema: object, abort: AbortController) => {
+	const chunkSize = parseInt(prompt, 10);
 	console.log(`Breaking json into ${chunkSize}-character chunks`);
-	for (let i = 0; i < opText.length; i += chunkSize) {
-		const chunk = opText.slice(i, i + chunkSize);
-		console.log(chunk);
-		testResponseHandler.processChars(chunk);
-	}
-	testResponseHandler.complete();
+
+	return {
+		async *[Symbol.asyncIterator]() {
+			for (let i = 0; i < opText.length; i += chunkSize) {
+				const chunk = opText.slice(i, i + chunkSize);
+				console.log(chunk);
+				yield chunk;
+			}
+		},
+	};
+};
+
+const testHandler = async (chunkSize: number) => {
+	const abortController = new AbortController();
+	const testResponseHandler = createResponseHandler(exampleGeneratedEdit(), abortController);
+	await testResponseHandler.processResponse(
+		streamedLlmResponse(
+			chunkSize.toString(),
+			testResponseHandler.jsonSchema(),
+			abortController,
+		),
+	);
 };
 
 describe("JsonHandler", () => {
 	it("Test", async () => {
-		testHandler(33);
-		assert(true);
+		await testHandler(21);
+		await testHandler(27);
 	});
 });

@@ -15,6 +15,9 @@ import type { JsonObject } from "./jsonParser.js";
 
 export interface ResponseHandler {
 	jsonSchema(): JsonObject;
+	processResponse(responseGenerator: {
+		[Symbol.asyncIterator](): AsyncGenerator<string, void>;
+	}): Promise<void>;
 	processChars(chars: string): void;
 	complete(): void;
 }
