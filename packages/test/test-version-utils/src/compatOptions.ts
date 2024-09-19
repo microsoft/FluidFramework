@@ -86,7 +86,6 @@ const options = {
 	},
 };
 
-// console.log("WORKER_ID", process.env.MOCHA_WORKER_ID);
 nconf
 	.argv({
 		...options,
@@ -96,8 +95,9 @@ nconf
 			// Otherwise mocha's --parallel flag will not work correctly because console flags are not passed to the worker
 			// processes, so they will run tests with default settings instead of the specified ones.
 			if (options[obj.key] !== undefined) {
-				// Put flags set through command line into environment variables
-				process.env[`fluid__test__${obj.key}`] = obj.value;
+				// Important to JSON.stringify() so types are preserved (i.e. arrays are surrounded by brackets, strings have
+				// quotes, etc) and when we JSON.parse() them when processing values from env they are set correctly.
+				process.env[`fluid__test__${obj.key}`] = JSON.stringify(obj.value);
 				obj.key = `fluid:test:${obj.key}`;
 			}
 			return obj;
@@ -118,9 +118,14 @@ nconf
 			if (!obj.key.startsWith("fluid__test__")) {
 				return obj;
 			}
+
 			const key = obj.key.substring("fluid__test__".length);
 			if (options[key]?.array) {
 				try {
+					if (!obj.value.startsWith("[")) {
+						// A bit of proctection against potential bugs.
+						throw new Error(`Environment variable '${obj.key}' must be a stringified JSON array. Got '${obj.value}'.`);
+					}
 					obj.value = JSON.parse(obj.value);
 				} catch {
 					// ignore
