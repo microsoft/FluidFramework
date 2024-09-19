@@ -40,7 +40,6 @@ import {
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -182,8 +181,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 							) => TreeNode;
 							const insertNode = new simpleNodeSchema(treeEdit.content);
 							(parentNode as TreeArrayNode).insertAt(index, insertNode);
-						} else {
-							throw new UsageError("insert operations only support object nodes in an array");
 						}
 					}
 				}
