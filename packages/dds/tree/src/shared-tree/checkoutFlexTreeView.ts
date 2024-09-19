@@ -65,7 +65,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
 	public fork(): CheckoutFlexTreeView<ITreeCheckout & ITreeCheckoutFork> {
-		const branch = this.checkout.fork();
+		const branch = this.checkout.branch();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}
 }
