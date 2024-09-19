@@ -6,6 +6,7 @@ import {
 	type JsonBuilderContext,
 	type JsonObject,
 	type JsonPrimitive,
+	type JsonValue,
 	type StreamedJsonParser,
 	contextIsObject,
 	createStreamedJsonParser,
@@ -217,21 +218,21 @@ export const getJsonHandler: () => JsonHandlerImpl = () => jsonHandler;
 
 // TODO: Can perhaps not export these after illustrateInteraction re-implemented (and remove all the ?s and !s)
 export interface StreamedObjectHandler {
-	addObject?(key: string): StreamedObjectHandler;
-	addArray?(key: string): StreamedArrayHandler;
-	addPrimitive?(value: JsonPrimitive, key: string): void;
-	appendText?(chars: string, key: string): void;
-	completeProperty?(key: string): void;
-	complete?(): void;
+	addObject(key: string): StreamedObjectHandler;
+	addArray(key: string): StreamedArrayHandler;
+	addPrimitive(value: JsonPrimitive, key: string): void;
+	appendText(chars: string, key: string): void;
+	completeProperty(key: string): void;
+	complete(): void;
 }
 
 export interface StreamedArrayHandler {
-	addObject?(): StreamedObjectHandler;
-	addArray?(): StreamedArrayHandler;
-	addPrimitive?(value: JsonPrimitive): void;
-	appendText?(chars: string): void;
-	completeLast?(): void;
-	complete?(): void;
+	addObject(): StreamedObjectHandler;
+	addArray(): StreamedArrayHandler;
+	addPrimitive(value: JsonPrimitive): void;
+	appendText(chars: string): void;
+	completeLast(): void;
+	complete(): void;
 }
 
 type BuilderContext = JsonBuilderContext<StreamedObjectHandler, StreamedArrayHandler>;
@@ -249,9 +250,9 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 			}
 			return this.rootHandler;
 		} else if (contextIsObject(context)) {
-			return context.parentObject.addObject!(context.key);
+			return context.parentObject.addObject(context.key);
 		} else {
-			return context.parentArray.addObject!();
+			return context.parentArray.addObject();
 		}
 	}
 
@@ -262,9 +263,9 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 			}
 			return this.rootHandler;
 		} else if (contextIsObject(context)) {
-			return context.parentObject.addArray!(context.key);
+			return context.parentObject.addArray(context.key);
 		} else {
-			return context.parentArray.addArray!();
+			return context.parentArray.addArray();
 		}
 	}
 
@@ -302,18 +303,18 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 				}
 			}
 		} else if (contextIsObject(context)) {
-			context.parentObject.addPrimitive!(value, context.key);
+			context.parentObject.addPrimitive(value, context.key);
 		} else {
-			context.parentArray.addPrimitive!(value);
+			context.parentArray.addPrimitive(value);
 		}
 	}
 
 	public appendText(chars: string, context?: BuilderContext): void {
 		assert(context !== undefined);
 		if (contextIsObject(context)) {
-			context.parentObject.appendText!(chars, context.key);
+			context.parentObject.appendText(chars, context.key);
 		} else {
-			context!.parentArray.appendText!(chars);
+			context!.parentArray.appendText(chars);
 		}
 	}
 
@@ -634,13 +635,12 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			streamedType = streamedType.streamedTypeOfFirstMatch(value);
 		}
 
-        if (primitiveMatchesStreamedType(value, streamedType!)) {
-            this.handlers[key] = (streamedType as InvocableStreamedType<StreamedValueHandler>).invoke(
-                this.partial,
-                undefined,
-            );
-            return;
-        }
+		if (primitiveMatchesStreamedType(value, streamedType!)) {
+			this.handlers[key] = (
+				streamedType as InvocableStreamedType<StreamedValueHandler>
+			).invoke(this.partial, undefined);
+			return;
+		}
 
 		// Shouldn't happen with Structured Outputs
 		throw new Error(`Unexpected ${typeof value} for key ${key}`);
@@ -657,39 +657,13 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 		}
 	}
 
-	public completeProperty?(key: string): void {
+	public completeProperty(key: string): void {
 		const value = this.partial[key];
+		if (isPrimitiveValue(value!)) {
+			this.attemptResolution(key, value as PrimitiveType);
 
-		if (!this.descriptor) {
-			// TODO-AnyOf: Need a much more general algorithm
-			if (typeof value === "string") {
-				assert(this.streamedAnyOf !== undefined);
-				for (const option of this.streamedAnyOf!.options) {
-					if (option instanceof StreamedObject) {
-						const property = option.properties[key];
-						if (property instanceof AtomicEnum && property.values.includes(value)) {
-							// We now know which option in the AnyOf to use
-							this.descriptor = option.delayedInvoke(this.partial);
-							this.handlers[key] = property.invoke();
-						}
-					}
-				}
-			}
-		}
-
-		const handler = this.handlers[key];
-
-		// Objects and Arrays will have their complete() handler called directly
-		if (
-			handler instanceof StreamedStringPropertyHandlerImpl ||
-			handler instanceof StreamedStringHandlerImpl ||
-			handler instanceof AtomicStringHandlerImpl
-		) {
-			handler.complete(value as string, this.partial);
-		} else if (handler instanceof AtomicBooleanHandlerImpl) {
-			handler.complete(value as boolean, this.partial);
-		} else if (handler instanceof AtomicNullHandlerImpl) {
-			handler.complete(value as null, this.partial);
+			// Objects and Arrays will have their complete() handler called directly
+			completePrimitive(this.handlers[key]!, value as PrimitiveType, this.partial);
 		}
 	}
 
@@ -700,14 +674,14 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 
 	private attemptResolution(
 		key: string,
-		classType: typeof StreamedObject | typeof StreamedArray,
+		typeOrValue: typeof StreamedObject | typeof StreamedArray | PrimitiveType,
 	): void {
 		if (!this.descriptor) {
 			assert(this.streamedAnyOf !== undefined);
 			for (const option of this.streamedAnyOf!.options) {
 				if (option instanceof StreamedObject) {
 					const property = option.properties[key];
-					if (property instanceof classType) {
+					if (streamedTypeMatches(property!, typeOrValue)) {
 						// We now know which option in the AnyOf to use
 						this.descriptor = option.delayedInvoke(this.partial);
 					}
@@ -799,21 +773,7 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 	) {}
 
 	public addObject(): StreamedObjectHandler {
-		if (!this.descriptor) {
-			assert(this.streamedAnyOf !== undefined);
-			for (const option of this.streamedAnyOf!.options) {
-				if (option instanceof StreamedArray) {
-					const property = option.items;
-					if (property instanceof StreamedObject) {
-						// We now know which option in the AnyOf to use
-						const childPartial: PartialObject = {};
-						this.partial.push(childPartial);
-						this.descriptor = option.delayedInvoke(this.partial);
-						this.lastHandler = property.invoke(this.partial, childPartial);
-					}
-				}
-			}
-		}
+		this.attemptResolution(StreamedObject);
 
 		if (this.descriptor) {
 			let streamedType: StreamedType | undefined = this.descriptor.items;
@@ -836,7 +796,7 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 				const childPartial: PartialObject = {};
 				this.partial.push(childPartial);
 				this.lastHandler = streamedType.invoke(this.partial, childPartial);
-				return this.lastHandler;
+				return this.lastHandler as StreamedObjectHandler;
 			}
 		}
 
@@ -844,9 +804,9 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 	}
 
 	public addArray(): StreamedArrayHandler {
-		if (!this.descriptor) {
-			// TODO-AnyOf:
-		} else {
+		this.attemptResolution(StreamedArray);
+
+		if (this.descriptor) {
 			const streamedType = this.descriptor.items;
 
 			if (streamedType instanceof StreamedObject) {
@@ -869,13 +829,13 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 
 		this.partial.push(value);
 
-        if (primitiveMatchesStreamedType(value, streamedType)) {
-            this.lastHandler = (streamedType as InvocableStreamedType<StreamedValueHandler>).invoke(
-                this.partial,
-                undefined,
-            );
-            return;
-        }
+		if (primitiveMatchesStreamedType(value, streamedType)) {
+			this.lastHandler = (streamedType as InvocableStreamedType<StreamedValueHandler>).invoke(
+				this.partial,
+				undefined,
+			);
+			return;
+		}
 
 		// Shouldn't happen with Structured Outputs
 		throw new Error(`Unexpected ${typeof value}`);
@@ -890,41 +850,14 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 		}
 	}
 
-	public completeLast?(): void {
-		if (!this.descriptor) {
-			const value = this.partial[this.partial.length - 1];
-			// TODO-AnyOf: Need a much more general algorithm
-			if (typeof value === "boolean") {
-				assert(this.streamedAnyOf !== undefined);
-				for (const option of this.streamedAnyOf!.options) {
-					if (option instanceof StreamedArray) {
-						const items = option.items;
-						if (items instanceof AtomicBoolean) {
-							// We now know which option in the AnyOf to use
-							this.descriptor = option.delayedInvoke(this.partial);
-							this.lastHandler = items.invoke();
-						}
-					}
-				}
-			}
-		}
+	public completeLast(): void {
+		const value = this.partial[this.partial.length - 1];
 
-		// Objects and Arrays will have their complete() handler called directly
-		if (
-			this.lastHandler instanceof StreamedStringPropertyHandlerImpl ||
-			this.lastHandler instanceof StreamedStringHandlerImpl ||
-			this.lastHandler instanceof AtomicStringHandlerImpl
-		) {
-			this.lastHandler.complete(this.partial[this.partial.length - 1] as string, this.partial);
-		} else if (this.lastHandler instanceof AtomicNumberHandlerImpl) {
-			this.lastHandler.complete(this.partial[this.partial.length - 1] as number, this.partial);
-		} else if (this.lastHandler instanceof AtomicBooleanHandlerImpl) {
-			this.lastHandler.complete(
-				this.partial[this.partial.length - 1] as boolean,
-				this.partial,
-			);
-		} else if (this.lastHandler instanceof AtomicNullHandlerImpl) {
-			this.lastHandler.complete(this.partial[this.partial.length - 1] as null, this.partial);
+		if (isPrimitiveValue(value!)) {
+			this.attemptResolution(value as PrimitiveType);
+
+			// Objects and Arrays will have their complete() handler called directly
+			completePrimitive(this.lastHandler!, value as PrimitiveType, this.partial);
 		}
 	}
 
@@ -933,33 +866,111 @@ class StreamedArrayHandlerImpl implements StreamedArrayHandler {
 		this.descriptor!.complete?.(this.partial);
 	}
 
+	private attemptResolution(
+		typeOrValue: typeof StreamedObject | typeof StreamedArray | PrimitiveType,
+	): void {
+		if (!this.descriptor) {
+			assert(this.streamedAnyOf !== undefined);
+			for (const option of this.streamedAnyOf!.options) {
+				if (option instanceof StreamedArray) {
+					const property = option.items;
+					if (streamedTypeMatches(property, typeOrValue)) {
+						// We now know which option in the AnyOf to use
+						this.descriptor = option.delayedInvoke(this.partial);
+					}
+				}
+			}
+		}
+	}
+
 	private lastHandler?: ArrayAppendHandler;
 }
 
-const primitiveMatchesStreamedType = (value: JsonPrimitive, streamedType: StreamedType): boolean => {
-    if (value === null) {
-        return streamedType instanceof AtomicNull;
-    } else {
-        switch (typeof value) {
-            case 'string':
-                return (
-                    streamedType instanceof StreamedStringProperty ||
-                    streamedType instanceof StreamedString ||
-                    streamedType instanceof AtomicString ||
-                    streamedType instanceof AtomicEnum
-                );
+const primitiveMatchesStreamedType = (
+	value: JsonPrimitive,
+	streamedType: StreamedType,
+): boolean => {
+	if (value === null) {
+		return streamedType instanceof AtomicNull;
+	} else {
+		switch (typeof value) {
+			case "string":
+				return (
+					streamedType instanceof StreamedStringProperty ||
+					streamedType instanceof StreamedString ||
+					streamedType instanceof AtomicString ||
+					streamedType instanceof AtomicEnum
+				);
 
-            case 'number':
-                return streamedType instanceof AtomicNumber;
+			case "number":
+				return streamedType instanceof AtomicNumber;
 
-            case 'boolean':
-                return streamedType instanceof AtomicBoolean;
+			case "boolean":
+				return streamedType instanceof AtomicBoolean;
 
-            default:
-                assert(false);
-                return false;
-        }
-    }
+			default:
+				assert(false);
+				return false;
+		}
+	}
+};
+
+const isPrimitiveValue = (value: JsonValue): value is JsonPrimitive => {
+	return (
+		value === null ||
+		typeof value === "string" ||
+		typeof value === "number" ||
+		typeof value === "boolean"
+	);
+};
+
+const completePrimitive = (
+	handler: StreamedValueHandler,
+	value: PrimitiveType,
+	partialParent: PartialArg,
+): void => {
+	if (
+		handler instanceof StreamedStringPropertyHandlerImpl ||
+		handler instanceof StreamedStringHandlerImpl ||
+		handler instanceof AtomicStringHandlerImpl
+	) {
+		handler.complete(value as string, partialParent);
+	} else if (handler instanceof AtomicBooleanHandlerImpl) {
+		handler.complete(value as boolean, partialParent);
+	} else if (handler instanceof AtomicNullHandlerImpl) {
+		handler.complete(value as null, partialParent);
+	}
+};
+
+const streamedTypeMatches = (
+	streamedType: StreamedType,
+	typeOrValue: typeof StreamedObject | typeof StreamedArray | PrimitiveType,
+): boolean => {
+	if (typeOrValue === StreamedObject || typeOrValue === StreamedArray) {
+		return streamedType instanceof typeOrValue;
+	} else {
+		if (typeOrValue === null) {
+			return streamedType instanceof AtomicNull;
+		} else {
+			switch (typeof typeOrValue) {
+				case "string":
+					return (
+						streamedType instanceof AtomicString ||
+						(streamedType instanceof AtomicEnum && streamedType.values.includes(typeOrValue))
+					);
+
+				case "number":
+					return streamedType instanceof AtomicNumber;
+
+				case "boolean":
+					return streamedType instanceof AtomicBoolean;
+
+				default:
+					assert(false);
+					return false;
+			}
+		}
+	}
 };
 
 interface SchemaArgs {
