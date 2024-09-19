@@ -1,12 +1,9 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { AzureOpenAI } from "openai";
 // eslint-disable-next-line import/no-internal-modules
 import type { ChatCompletionCreateParamsNonStreaming, ResponseFormatJSONSchema } from "openai/resources/index.mjs";
-import { getSystemPrompt } from "./promptGeneration.js";
-// import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
 
 export async function getResponse(userPrompt: string, schema: ResponseFormatJSONSchema): Promise<string> {
-	/* TODOs: 
+	/* TODOs:
 	1. Update the signature to take a TreeView<ImplicitFieldSchema>.
 	2. Update body to call getSystemPrompt, cleanup imports/exports.
 	3. Finish System prompt construction logic.
