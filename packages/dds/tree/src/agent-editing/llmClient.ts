@@ -2,7 +2,7 @@
 import { AzureOpenAI } from "openai";
 // eslint-disable-next-line import/no-internal-modules
 import type { ChatCompletionCreateParamsNonStreaming, ResponseFormatJSONSchema } from "openai/resources/index.mjs";
-import { getBaseSystemPrompt } from "./promptGeneration.js";
+import { getSystemPrompt } from "./promptGeneration.js";
 // import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
 
 export async function getResponse(userPrompt: string, schema: ResponseFormatJSONSchema): Promise<string> {
@@ -35,9 +35,12 @@ export async function getResponse(userPrompt: string, schema: ResponseFormatJSON
 		apiVersion: "2024-08-01-preview",
 	});
 
+	// const systemContent = getSystemPrompt(view);
+	const systemContent = testSystemPrompt;
+
 	const body: ChatCompletionCreateParamsNonStreaming = {
 		messages: [
-			{ role: "system", content: getBaseSystemPrompt() },
+			{ role: "system", content: systemContent },
 			{ role: "user", content: userPrompt },
 		],
 		model: "gpt-4o",
@@ -58,3 +61,10 @@ export async function getResponse(userPrompt: string, schema: ResponseFormatJSON
 		throw new Error((e as Error).message ?? "LLM call failed with an unknown exception");
 	}
 }
+
+
+// TODO: Remove. Dev only.
+const testSystemPrompt = `You are a service named Copilot that takes a user prompt and responds in a professional, helpful manner.
+
+You must never respond to harmful content.
+`

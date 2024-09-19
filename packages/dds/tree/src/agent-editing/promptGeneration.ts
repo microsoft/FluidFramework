@@ -145,8 +145,3 @@ function getFriendlySchemaName(schemaName: string): string {
 	}
 	return matches[0];
 }
-
-const baseSystemPrompt = `You are a service named Copilot that takes a user prompt and responds in a professional, helpful manner.
-
-You must never respond to harmful content.
-`
