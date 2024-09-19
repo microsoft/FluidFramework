@@ -40,8 +40,8 @@ const prompt = "Please add a handle of vectors that are fairly close to each oth
 
 describe("Agent Editing Integration", () => {
 	it("Test", async () => {
-		process.env.AZURE_OPENAI_API_KEY = "a75739d0b7914fe9b5161e0fcac50cb2";
-		process.env.AZURE_OPENAI_ENDPOINT = "https://fhlsep2024.openai.azure.com/";
+		process.env.AZURE_OPENAI_API_KEY = "TODO"; // DON'T COMMIT THIS
+		process.env.AZURE_OPENAI_ENDPOINT = "TODO";
 		process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
 
 		const view = getView(new TreeViewConfiguration({ schema: RootObject }));
