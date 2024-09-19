@@ -25,14 +25,16 @@ import {
 import { fail } from "../util/utils.js";
 
 export interface StringifiedJsonTreeSchema {
-	stringifiedSchema: string;
+	stringified: string;
 	idMap: Map<number, TreeNode>;
 }
 
-export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSchema>): StringifiedJsonTreeSchema {
+export function toDecoratedJson(
+	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
+): StringifiedJsonTreeSchema {
 	const idMap = new Map<number, TreeNode>();
 	let idCount = 0;
-	const stringifiedSchema: string = JSON.stringify(root, (_, value) => {
+	const stringified: string = JSON.stringify(root, (_, value) => {
 		assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			idMap.set(idCount, value);
@@ -47,7 +49,7 @@ export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSc
 		}
 		return value as unknown;
 	});
-	return { stringifiedSchema, idMap };
+	return { stringified, idMap };
 }
 
 export interface SystemPromptResult {
@@ -64,7 +66,7 @@ export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): SystemProm
 	You are a collaborative agent who interacts with a tree.
 	You should make the minimum number of edits to the tree to achieve the desired outcome, and do it in as granular a way as possible to ensure good merge outcomes.
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state of the tree is: ${decoratedTreeJson.stringifiedSchema}.
+	The current state of the tree is: ${decoratedTreeJson.stringified}.
 	The allowed edits are defined by the following schema: ${"TODO"}.
 	Example edits: ${"TODO"}.`;
 	return { systemPrompt, decoratedTreeJson };
