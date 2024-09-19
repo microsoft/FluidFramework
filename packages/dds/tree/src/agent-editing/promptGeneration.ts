@@ -24,13 +24,15 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
 
-export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSchema>): {
-	stringified: string;
+export interface StringifiedJsonTreeSchema {
+	stringifiedSchema: string;
 	idMap: Map<number, TreeNode>;
-} {
+}
+
+export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSchema>): StringifiedJsonTreeSchema {
 	const idMap = new Map<number, TreeNode>();
 	let idCount = 0;
-	const stringified: string = JSON.stringify(root, (_, value) => {
+	const stringifiedSchema: string = JSON.stringify(root, (_, value) => {
 		assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			idMap.set(idCount, value);
@@ -45,7 +47,7 @@ export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSc
 		}
 		return value as unknown;
 	});
-	return { stringified, idMap };
+	return { stringifiedSchema, idMap };
 }
 
 export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
@@ -57,7 +59,7 @@ export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
 	You are a collaborative agent who interacts with a tree.
 	You should make the minimum number of edits to the tree to achieve the desired outcome, and do it in as granular a way as possible to ensure good merge outcomes.
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state of the tree is: ${decoratedJson.stringified}.
+	The current state of the tree is: ${decoratedJson.stringifiedSchema}.
 	The allowed edits are defined by the following schema: ${"TODO"}.
 	Example edits: ${"TODO"}.`;
 	return systemPrompt;
