@@ -1,8 +1,8 @@
 import { AzureOpenAI } from "openai";
-// eslint-disable-next-line import/no-internal-modules
 import type {
 	ChatCompletionCreateParamsNonStreaming,
 	ResponseFormatJSONSchema,
+	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
 // import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
 
