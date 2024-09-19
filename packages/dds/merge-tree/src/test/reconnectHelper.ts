@@ -75,6 +75,7 @@ export class ReconnectTestHelper {
 		const client = this.clients[clientName];
 		this.ops.push(
 			client.makeOpMessage(
+				// TODO: remove type assertions when sidedness is enabled
 				client.obliterateRangeLocal(start as number, end as number),
 				++this.seq,
 			),
