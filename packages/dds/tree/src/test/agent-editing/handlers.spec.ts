@@ -12,7 +12,9 @@ import { getView } from "../utils.js";
 import { generateHandlers } from "../../agent-editing/handlers.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createResponseHandler } from "../../json-handler/jsonHandler.js";
+// eslint-disable-next-line import/no-internal-modules
 import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
+// eslint-disable-next-line import/no-internal-modules
 import { typeField } from "../../agent-editing/agentEditReducer.js";
 import { toDecoratedJson } from "../../agent-editing/promptGeneration.js";
 
