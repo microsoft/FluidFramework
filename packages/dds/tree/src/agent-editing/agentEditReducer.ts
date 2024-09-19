@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -14,8 +15,6 @@ import {
 	getJsonSchema,
 	Tree,
 	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-	type JsonTreeSchema,
 	type TreeArrayNode,
 	type TreeNode,
 } from "../index.js";
@@ -58,12 +57,15 @@ const Ajv =
 /**
  * Creates a JSON Schema validator for the provided schema, using `ajv`.
  */
-export function getJsonValidator(schema: JsonTreeSchema): (data: unknown) => void {
+export function getJsonValidator<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+): (data: unknown) => data is TSchema {
+	const jsonSchema = getJsonSchema(schema);
 	const ajv = new Ajv({
 		strict: false,
 		allErrors: true,
 	});
-	return ajv.compile(schema);
+	return ajv.compile(jsonSchema);
 }
 
 function populateDefaults(
@@ -104,10 +106,58 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 ): void {
 	switch (treeEdit.type) {
 		case "setRoot": {
-			const { simpleNodeSchema } = getSimpleNodeSchema(tree.root as TreeNode);
 			populateDefaults(treeEdit.content, definitionMap);
-			const rootNode = new simpleNodeSchema(treeEdit.content);
-			tree.root = rootNode as InsertableTreeFieldFromImplicitField<TSchema>;
+			
+			const treeSchema = tree.schema;
+			const validator = getJsonValidator(tree.schema);
+			// If it's a primitive, just validate the content and set
+			if (isPrimitive(treeEdit.content)) {
+				if (validator(treeEdit.content)) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					(tree as any).root = treeEdit.content;
+				}
+			} else if (treeSchema instanceof FieldSchema) {
+				if (treeSchema.kind === FieldKind.Optional && treeEdit.content === undefined) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					(tree as any).root = treeEdit.content;
+				} else {
+					for (const allowedType of treeSchema.allowedTypeSet.values()) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						if ((treeEdit.content as any)[typeField] === allowedType.identifier) {
+							if (typeof allowedType === "function") {
+								const simpleNodeSchema = allowedType as unknown as new (
+									dummy: unknown,
+								) => TreeNode;
+								const rootNode = new simpleNodeSchema(treeEdit.content);
+								if (validator(rootNode)) {
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
+									(tree as any).root = rootNode;
+								}
+							} else {
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								(tree as any).root = treeEdit.content;
+							}
+						}
+					}
+				}
+			} else if (Array.isArray(treeSchema)) {
+				for (const allowedType of treeSchema) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					if ((treeEdit.content as any)[typeField] === allowedType.identifier) {
+						if (typeof allowedType === "function") {
+							const simpleNodeSchema = allowedType as unknown as new (
+								dummy: unknown,
+							) => TreeNode;
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							(tree as any).root = new simpleNodeSchema(treeEdit.content);
+						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							(tree as any).root = treeEdit.content;
+						}
+					}
+				}
+			}
+
 			break;
 		}
 		case "insert": {
@@ -115,15 +165,27 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const parentNode = Tree.parent(node);
 			assert(parentNode !== undefined, "parent node must exist");
 
-			const { treeNodeSchema, simpleNodeSchema } = getSimpleNodeSchema(node);
-
+			const parentNodeSchema = Tree.schema(parentNode);
 			populateDefaults(treeEdit.content, definitionMap);
-			const jsonSchema = getJsonSchema(treeNodeSchema);
-			const validator = getJsonValidator(jsonSchema);
-			validator(treeEdit.content);
-			const insertNode = new simpleNodeSchema(treeEdit.content);
+			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
+			const allowedTypes = parentNodeSchema.info;
 
-			(parentNode as TreeArrayNode).insertAt(index, insertNode);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const schemaIdentifier = (treeEdit.content as any)[typeField];
+
+			if (Array.isArray(allowedTypes)) {
+				for (const allowedType of allowedTypes) {
+					if (allowedType.identifier === schemaIdentifier) {
+						if (typeof allowedType === "function") {
+							const simpleNodeSchema = allowedType as unknown as new (
+								dummy: unknown,
+							) => TreeNode;
+							const insertNode = new simpleNodeSchema(treeEdit.content);
+							(parentNode as TreeArrayNode).insertAt(index, insertNode);
+						}
+					}
+				}
+			}
 			break;
 		}
 		case "remove": {
@@ -167,9 +229,9 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			else if (typeof fieldSchema === "function") {
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
 				populateDefaults(modification, definitionMap);
-				const jsonSchema = getJsonSchema(fieldSchema);
-				const validator = getJsonValidator(jsonSchema);
+				const validator = getJsonValidator(fieldSchema);
 				validator(modification);
+
 				if (Array.isArray(modification)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const field = (node as any)[treeEdit.field] as TreeArrayNode;
@@ -190,17 +252,18 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = undefined;
 				}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const schemaIdentifier = (modification as any)[typeField];
+
 				for (const allowedType of fieldSchema.allowedTypeSet.values()) {
-					const jsonSchema = getJsonSchema(allowedType);
-					const validator = getJsonValidator(jsonSchema);
-					if (isValidContent(modification, validator)) {
-						if (allowedType instanceof LeafNodeSchema) {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							(node as any)[treeEdit.field] = modification;
-						} else if (typeof allowedType === "function") {
+					if (allowedType.identifier === schemaIdentifier) {
+						if (typeof allowedType === "function") {
 							const simpleSchema = allowedType as unknown as new (dummy: unknown) => TreeNode;
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							(node as any)[treeEdit.field] = new simpleSchema(modification);
+						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							(node as any)[treeEdit.field] = modification;
 						}
 					}
 				}
@@ -215,26 +278,14 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	}
 }
 
-function isValidContent(content: unknown, validator: (data: unknown) => void): boolean {
-	try {
-		validator(content);
-	} catch (error) {
-		return false;
-	}
-	return true;
+function isPrimitive(content: unknown): boolean {
+	return (
+		typeof content === "number" ||
+		typeof content === "string" ||
+		typeof content === "boolean" ||
+		typeof content === "undefined"
+	);
 }
-
-// TODO: remove?
-//
-// export function agentEditReducer<TSchema extends ImplicitFieldSchema>(
-// 	tree: SchematizingSimpleTreeView<TSchema>,
-// 	editWrapper: EditWrapper,
-// 	nodeMap: Map<number, TreeNode>,
-// ): void {
-// 	for (const treeEdit of editWrapper.edits) {
-// 		applyAgentEdit(tree, treeEdit, nodeMap);
-// 	}
-// }
 
 function isTarget(selection: Selection): selection is Target {
 	return "objectId" in selection;
@@ -284,6 +335,15 @@ function getTargetInfo(target: Target, nodeMap: Map<number, TreeNode>): TargetIn
 interface SchemaInfo {
 	treeNodeSchema: TreeNodeSchema;
 	simpleNodeSchema: new (dummy: unknown) => TreeNode;
+}
+
+export function isValidContent(content: unknown, validator: (data: unknown) => void): boolean {
+	try {
+		validator(content);
+	} catch (error) {
+		return false;
+	}
+	return true;
 }
 
 function getSimpleNodeSchema(node: TreeNode): SchemaInfo {
