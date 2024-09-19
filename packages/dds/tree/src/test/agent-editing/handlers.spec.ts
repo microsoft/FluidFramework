@@ -5,11 +5,11 @@
 
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-// eslint-disable-next-line import/no-internal-modules
 import { TreeViewConfiguration } from "../../simple-tree/api/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { getView } from "../utils.js";
+// eslint-disable-next-line import/no-internal-modules
 import { generateHandlers } from "../../agent-editing/handlers.js";
+// eslint-disable-next-line import/no-internal-modules
 import { createResponseHandler } from "../../json-handler/jsonHandler.js";
 
 const demoSf = new SchemaFactory("agentSchema");

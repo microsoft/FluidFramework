@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+// eslint-disable-next-line import/no-internal-modules
 import type { JsonObject, JsonValue } from "../json-handler/jsonParser.js";
 import { SchemaFactory, TreeViewConfiguration } from "../simple-tree/index.js";
 

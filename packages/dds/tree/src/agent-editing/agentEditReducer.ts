@@ -41,9 +41,12 @@ import {
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
+// eslint-disable-next-line import/no-internal-modules
 import type { JsonValue } from "../json-handler/jsonParser.js";
+// eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
-import { typeField } from "./handlers.js";
+
+export const typeField = "__fluid_type";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`

@@ -26,9 +26,7 @@ import {
 	JsonHandler as jh,
 } from "../json-handler/index.js";
 import type { Insert, Modify, Move, Remove, SetRoot } from "./agentEditTypes.js";
-import { applyAgentEdit } from "./agentEditReducer.js";
-
-export const typeField = "__fluid_type";
+import { applyAgentEdit, typeField } from "./agentEditReducer.js";
 
 const targetHandler = jh.object(() => ({
 	properties: {
