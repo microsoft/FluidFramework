@@ -112,8 +112,6 @@ describe.skip("obliterate", () => {
 			helper.insertText("B", 0, "more ");
 		},
 		expectedText: "hello world",
-		// TODO: remove this after merging sided obliterates
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "obliterate, then insert at the end of the string",
@@ -129,8 +127,6 @@ describe.skip("obliterate", () => {
 			helper.insertText("B", 10, "123");
 		},
 		expectedText: "hello",
-		// TODO: remove this after merging sided obliterates
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "insert, then obliterate at the end of the string",
@@ -146,8 +142,6 @@ describe.skip("obliterate", () => {
 			);
 		},
 		expectedText: "hello",
-		// TODO: remove this after merging sided obliterates
-		expectedEventCount: 3,
 	});
 });
 
