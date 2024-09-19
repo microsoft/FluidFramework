@@ -42,7 +42,7 @@ import {
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
-import type { ITreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -89,10 +89,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private readonly rootFieldSchema: FieldSchema;
 
 	public constructor(
-		public readonly checkout: ITreeCheckout,
+		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
+		private readonly onDispose?: () => void,
 	) {
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
@@ -329,6 +330,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.disposeView();
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
+		this.onDispose?.();
 	}
 
 	public get root(): TreeFieldFromImplicitField<TRootSchema> {

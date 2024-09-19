@@ -144,6 +144,12 @@ export type FluidObject<T = unknown> = {
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @alpha
+export function getBranch(tree: ITree): TreeBranch;
+
+// @alpha
+export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
+
+// @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
 
 // @public
@@ -530,8 +536,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 }
 
 // @public @sealed
-export interface ITree extends IFluidLoadable {
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+export interface ITree extends ViewableTree, IFluidLoadable {
 }
 
 // @public
@@ -861,6 +866,19 @@ export const TreeBeta: {
     readonly on: <K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>) => () => void;
 };
 
+// @alpha @sealed
+export interface TreeBranch extends ViewableTree {
+    branch(): TreeBranchFork;
+    merge(branch: TreeBranchFork): void;
+    merge(branch: TreeBranchFork, disposeMerged: boolean): void;
+    rebase(branch: TreeBranchFork): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchFork extends TreeBranch, IDisposable {
+    rebaseOnto(branch: TreeBranch): void;
+}
+
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
@@ -1012,6 +1030,11 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
 }[T["kind"]]>> = true;
+
+// @public @sealed
+export interface ViewableTree {
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+}
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
