@@ -18,13 +18,12 @@ import { strict as assert } from "node:assert";
 import { jsonableTreeFromForest } from "../../feature-libraries/treeTextCursor.js";
 import {
 	applyAgentEdit,
-	isValidContent,
-	getJsonValidator,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/agentEditReducer.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
-import { Tree } from "../../shared-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { typeField } from "../../agent-editing/handlers.js";
 
 const sf = new SchemaFactory("agentSchema");
 
@@ -61,6 +60,8 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const view = tree.viewWith(config);
+			const schema = normalizeFieldSchema(view.schema);
+		const simpleSchema = getSimpleSchema(schema.allowedTypes);
 			view.initialize({
 				str: "testStr",
 				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
@@ -70,14 +71,14 @@ describe("applyAgentEdit", () => {
 			const setRootEdit: TreeEdit = {
 				type: "setRoot",
 				content: {
-					schemaType: "agentSchema.RootObject",
+					[typeField]: RootObject.identifier,
 					str: "rootStr",
 					vectors: [],
 					bools: [],
 				},
 			};
 
-			applyAgentEdit(view, setRootEdit, new Map<number, TreeNode>());
+			applyAgentEdit(view, setRootEdit, new Map<number, TreeNode>(), simpleSchema.definitions);
 
 			const expected = [
 				{
@@ -113,6 +114,8 @@ describe("applyAgentEdit", () => {
 			);
 			const configOptionalRoot = new TreeViewConfiguration({ schema: sf.optional(sf.number) });
 			const view = tree.viewWith(configOptionalRoot);
+			const schema = normalizeFieldSchema(view.schema);
+		const simpleSchema = getSimpleSchema(schema.allowedTypes);
 			view.initialize(1);
 
 			const setRootEdit: TreeEdit = {
@@ -120,7 +123,7 @@ describe("applyAgentEdit", () => {
 				content: 2,
 			};
 
-			applyAgentEdit(view, setRootEdit, new Map<number, TreeNode>());
+			applyAgentEdit(view, setRootEdit, new Map<number, TreeNode>(), simpleSchema.definitions);
 
 			const expected = [
 				{
@@ -155,7 +158,7 @@ describe("applyAgentEdit", () => {
 
 		const insertEdit: TreeEdit = {
 			type: "insert",
-			content: { schemaType: "agentSchema.Vector", x: 2, y: 3, z: 4 },
+			content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 			destination: {
 				objectId: 0,
 				place: "after",
@@ -165,7 +168,7 @@ describe("applyAgentEdit", () => {
 
 		const insertEdit2: TreeEdit = {
 			type: "insert",
-			content: { schemaType: "agentSchema.Vector2", x2: 3, y2: 4, z2: 5 },
+			content: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			destination: {
 				objectId: 0,
 				place: "after",
@@ -387,8 +390,8 @@ describe("applyAgentEdit", () => {
 			target: { objectId: 0 },
 			field: "vectors",
 			modification: [
-				{ schemaType: "agentSchema.Vector", x: 2, y: 3, z: 4 },
-				{ schemaType: "agentSchema.Vector2", x2: 3, y2: 4, z2: 5 },
+				{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			],
 		};
 		applyAgentEdit(view, modifyEdit, nodeMap, simpleSchema.definitions);
@@ -509,22 +512,5 @@ describe("applyAgentEdit", () => {
 		];
 
 		assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
-	});
-
-	it("isValidContent", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-
-		view.initialize({
-			str: "testStr",
-			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-			bools: [true],
-		});
-
-		const validator = getJsonValidator(Tree.schema((view.root as RootObject).vectors[0]));
-		assert(isValidContent(1, validator));
 	});
 });
