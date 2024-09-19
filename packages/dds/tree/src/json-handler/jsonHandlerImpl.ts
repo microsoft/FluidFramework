@@ -473,7 +473,7 @@ class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler>
 			visited.add(identity);
 
 			// TODO: Cache descriptor here, assert it's cached in jsonSchema (ditto all other types)
-			const { properties } = this.getDescriptor(guaranteedErrorObject as Input);
+			const { properties } = this.getDummyDescriptor();
 			Object.values(properties).forEach((streamedType) => {
 				findDefinitions(streamedType, visited, definitions);
 			});
@@ -481,7 +481,7 @@ class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler>
 	}
 
 	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
-		const { description, properties } = this.getDescriptor(guaranteedErrorObject as Input);
+		const { description, properties } = this.getDummyDescriptor();
 
 		const propertyNames = Object.keys(properties);
 		const schemaProperties: { [key: string]: JsonObject } = {};
@@ -517,13 +517,23 @@ class StreamedObject<Input> extends InvocableStreamedType<StreamedObjectHandler>
 
 	public get properties(): FieldTypes {
 		// TODO-AnyOf: Expose this more gracefully
-		return this.getDescriptor(guaranteedErrorObject as Input).properties;
+		return this.getDummyDescriptor().properties;
 	}
 
 	public delayedInvoke(parentPartial: PartialArg): StreamedObjectDescriptor {
 		// TODO-AnyOf: Expose this more gracefully
 		return this.getDescriptor(this.getInput?.(parentPartial) as Input);
 	}
+
+	private getDummyDescriptor(): StreamedObjectDescriptor {
+		if (this.dummyDescriptor === undefined) {
+			this.dummyDescriptor = this.getDescriptor(guaranteedErrorObject as Input);
+		}
+
+		return this.dummyDescriptor;
+	}
+
+	private dummyDescriptor?: StreamedObjectDescriptor;
 }
 
 class StreamedObjectHandlerImpl implements StreamedObjectHandler {
@@ -732,13 +742,13 @@ class StreamedArray<Input> extends InvocableStreamedType<StreamedArrayHandler> {
 		} else {
 			visited.add(identity);
 
-			const { items } = this.getDescriptor(guaranteedErrorObject as Input);
+			const { items } = this.getDummyDescriptor();
 			findDefinitions(items, visited, definitions);
 		}
 	}
 
 	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
-		const { description, items } = this.getDescriptor(guaranteedErrorObject as Input);
+		const { description, items } = this.getDummyDescriptor();
 
 		const schema: JsonObject = {
 			type: "array",
@@ -761,13 +771,23 @@ class StreamedArray<Input> extends InvocableStreamedType<StreamedArrayHandler> {
 
 	public get items(): StreamedType {
 		// TODO-AnyOf: Expose this more gracefully
-		return this.getDescriptor(guaranteedErrorObject as Input).items;
+		return this.getDummyDescriptor().items;
 	}
 
 	public delayedInvoke(parentPartial: PartialArg): StreamedArrayDescriptor {
 		// TODO-AnyOf: Expose this more gracefully
 		return this.getDescriptor(this.getInput?.(parentPartial) as Input);
 	}
+
+	private getDummyDescriptor(): StreamedArrayDescriptor {
+		if (this.dummyDescriptor === undefined) {
+			this.dummyDescriptor = this.getDescriptor(guaranteedErrorObject as Input);
+		}
+
+		return this.dummyDescriptor;
+	}
+
+	private dummyDescriptor?: StreamedArrayDescriptor;
 }
 
 class StreamedArrayHandlerImpl implements StreamedArrayHandler {
