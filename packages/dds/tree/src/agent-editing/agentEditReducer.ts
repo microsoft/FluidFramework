@@ -22,8 +22,6 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import ajvModuleOrClass from "ajv";
 // eslint-disable-next-line import/no-internal-modules
-import { valueSchemaAllows } from "../feature-libraries/valueUtilities.js";
-import type { Value } from "../core/index.js";
 import type {
 	TreeEdit,
 	Target,
@@ -39,11 +37,13 @@ import {
 	type TreeView,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
-// eslint-disable-next-line import/no-internal-modules
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
+import {
+	normalizeAllowedTypes,
+	type ImplicitAllowedTypes,
+} from "../simple-tree/schemaTypes.js";
 
 export const typeField = "__fluid_type";
 
@@ -168,7 +168,9 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const parentNodeSchema = Tree.schema(parentNode);
 			populateDefaults(treeEdit.content, definitionMap);
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
-			const allowedTypes = parentNodeSchema.info;
+			const allowedTypes = normalizeAllowedTypes(
+				parentNodeSchema.info as ImplicitAllowedTypes,
+			);
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
