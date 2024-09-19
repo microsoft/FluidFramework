@@ -107,7 +107,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	switch (treeEdit.type) {
 		case "setRoot": {
 			populateDefaults(treeEdit.content, definitionMap);
-			
+
 			const treeSchema = tree.schema;
 			const validator = getJsonValidator(tree.schema);
 			// If it's a primitive, just validate the content and set
