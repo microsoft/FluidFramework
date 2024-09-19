@@ -403,6 +403,7 @@ module.exports = {
 				"^tools/telemetry-generator/",
 				"^packages/tools/webpack-fluid-loader/",
 			],
+			"npm-check-unused-dependencies": [],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
