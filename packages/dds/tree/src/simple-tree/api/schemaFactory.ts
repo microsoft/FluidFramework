@@ -558,7 +558,7 @@ export class SchemaFactory<
 	 */
 	public optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+		props?: Omit<FieldProps<TCustomMetadata, T>, "defaultProvider">,
 	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
@@ -584,7 +584,7 @@ export class SchemaFactory<
 	 */
 	public required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+		props?: Omit<FieldProps<TCustomMetadata, T>, "defaultProvider">,
 	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}

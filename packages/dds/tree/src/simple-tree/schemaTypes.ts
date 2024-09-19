@@ -103,7 +103,10 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
  *
  * @public
  */
-export interface FieldProps<TCustomMetadata = unknown> {
+export interface FieldProps<
+	TCustomMetadata = unknown,
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -167,7 +170,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
 	 * Optional metadata to associate with the field.
 	 * @remarks Note: this metadata is not persisted in the document.
 	 */
-	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
+	readonly metadata?: FieldSchemaMetadata<TCustomMetadata, T>;
 }
 
 /**
@@ -217,7 +220,10 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
  * @sealed
  * @public
  */
-export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
+export interface FieldSchemaMetadata<
+	TCustomMetadata = unknown,
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> {
 	/**
 	 * User-defined metadata.
 	 */
@@ -239,6 +245,17 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	 * @defaultValue `false`
 	 */
 	readonly omitFromJson?: boolean | undefined;
+
+	/**
+	 * Optional default value generator for the field.
+	 * Can be used when interop-ing with external systems generating input data.
+	 * The JSON Schema generated to be provided to those systems will omit the associated field.
+	 * This default provider can be invoked to fill in the missing field before inserting the data.
+	 *
+	 * NOTE: This is a hacky workaround for lacking proper field default value providers.
+	 * Once we support those, this should be unneeded.
+	 */
+	readonly llmDefault?: () => T;
 }
 
 /**
