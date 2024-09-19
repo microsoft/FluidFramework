@@ -33,6 +33,7 @@ import type {
 import {
 	getOrCreateInnerNode,
 	NodeKind,
+	type ImplicitAllowedTypes,
 	type TreeNodeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
@@ -46,6 +47,8 @@ import {
 } from "../simple-tree/schemaTypes.js";
 
 export const typeField = "__fluid_type";
+// eslint-disable-next-line import/no-internal-modules
+import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
@@ -175,16 +178,14 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
 
-			if (Array.isArray(allowedTypes)) {
-				for (const allowedType of allowedTypes) {
-					if (allowedType.identifier === schemaIdentifier) {
-						if (typeof allowedType === "function") {
-							const simpleNodeSchema = allowedType as unknown as new (
-								dummy: unknown,
-							) => TreeNode;
-							const insertNode = new simpleNodeSchema(treeEdit.content);
-							(parentNode as TreeArrayNode).insertAt(index, insertNode);
-						}
+			for (const allowedType of allowedTypes.values()) {
+				if (allowedType.identifier === schemaIdentifier) {
+					if (typeof allowedType === "function") {
+						const simpleNodeSchema = allowedType as unknown as new (
+							dummy: unknown,
+						) => TreeNode;
+						const insertNode = new simpleNodeSchema(treeEdit.content);
+						(parentNode as TreeArrayNode).insertAt(index, insertNode);
 					}
 				}
 			}
@@ -246,6 +247,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					field.removeRange(0);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = modificationArrayNode;
+				} else {
+					const modificationNode = new simpleSchema(modification);
+
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					(node as any)[treeEdit.field] = modificationNode;
 				}
 			}
 			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.
