@@ -20,6 +20,11 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 	 * @remarks can be used to type-switch between implementations.
 	 */
 	readonly kind: TNodeKind;
+
+	/**
+	 * {@inheritDoc NodeSchemaMetadata}
+	 */
+	readonly metadata?: FieldSchemaMetadata | undefined;
 }
 
 /**

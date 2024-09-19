@@ -99,11 +99,18 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	const items: JsonFieldSchema =
 		allowedTypes.length === 1 ? allowedTypes[0] ?? oob() : { anyOf: allowedTypes };
 
-	return {
+	const output: Mutable<JsonArrayNodeSchema> = {
 		type: "array",
 		_treeNodeSchemaKind: NodeKind.Array,
 		items,
 	};
+
+	// Don't include "description" property at all if it's not present.
+	if (schema.metadata?.description !== undefined) {
+		output.description = schema.metadata.description;
+	}
+
+	return output;
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
@@ -136,18 +143,18 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema
 function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNodeSchema {
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
-	for (const [key, value] of Object.entries(schema.fields)) {
-		if (value.metadata?.omitFromJson === true) {
+	for (const [key, fieldSchema] of Object.entries(schema.fields)) {
+		if (fieldSchema.metadata?.omitFromJson === true) {
 			// Don't emit JSON Schema for fields which specify they should be excluded.
 			continue;
 		}
 
 		const allowedTypes: JsonSchemaRef[] = [];
-		for (const allowedType of value.allowedTypes) {
+		for (const allowedType of fieldSchema.allowedTypes) {
 			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
-		const output: Mutable<JsonFieldSchema> =
+		const transformedField: Mutable<JsonFieldSchema> =
 			allowedTypes.length === 1
 				? allowedTypes[0] ?? oob()
 				: {
@@ -155,23 +162,31 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 					};
 
 		// Don't include "description" property at all if it's not present in the input.
-		if (value.metadata?.description !== undefined) {
-			output.description = value.metadata.description;
+		if (fieldSchema.metadata?.description !== undefined) {
+			transformedField.description = fieldSchema.metadata.description;
 		}
 
-		properties[key] = output;
+		properties[key] = transformedField;
 
-		if (value.kind === FieldKind.Required) {
+		if (fieldSchema.kind === FieldKind.Required) {
 			required.push(key);
 		}
 	}
-	return {
+
+	const transformedNode: Mutable<JsonObjectNodeSchema> = {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Object,
 		properties,
 		required,
 		additionalProperties: false,
 	};
+
+	// Don't include "description" property at all if it's not present in the input.
+	if (schema.metadata?.description !== undefined) {
+		transformedNode.description = schema.metadata.description;
+	}
+
+	return transformedNode;
 }
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
@@ -179,7 +194,8 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 	schema.allowedTypes.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
-	return {
+
+	const output: Mutable<JsonMapNodeSchema> = {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
@@ -191,6 +207,13 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 						},
 		},
 	};
+
+	// Don't include "description" property at all if it's not present.
+	if (schema.metadata?.description !== undefined) {
+		output.description = schema.metadata.description;
+	}
+
+	return output;
 }
 
 function createSchemaRef(schemaId: string): JsonSchemaRef {

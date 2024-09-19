@@ -25,13 +25,15 @@ export interface ObjectNodeSchema<
 		ImplicitFieldSchema
 	>,
 	ImplicitlyConstructable extends boolean = boolean,
+	TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 		TName,
 		NodeKind.Object,
 		TreeObjectNode<T, TName>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		TCustomMetadata
 	> {
 	/**
 	 * From property keys to the associated schema.
