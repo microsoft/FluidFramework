@@ -4,11 +4,9 @@
  */
 import { AzureOpenAI } from "openai";
 
-import { oob } from "@fluidframework/core-utils/internal";
 import type {
-	ChatCompletion,
-	ChatCompletionCreateParamsNonStreaming,
-	ResponseFormatJSONSchema
+	ChatCompletionCreateParams,
+	ResponseFormatJSONSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
 
@@ -30,12 +28,11 @@ export interface OpenAIContext<TSchema extends ImplicitFieldSchema> {
  * Applies those edits to the provided tree branch before returning.
  */
 export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
-	{client, tree}: OpenAIContext<TSchema>,
+	{ client, tree }: OpenAIContext<TSchema>,
 	prompt: string,
 ): Promise<void> {
 	const { systemPrompt, decoratedTreeJson } = getSystemPrompt(tree);
 
-	// TODO: get edit schema
 	const editSchema = generateHandlers(tree, decoratedTreeJson.idMap);
 	const abortController = new AbortController();
 	const responseHandler = createResponseHandler(editSchema, abortController);
@@ -46,7 +43,7 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 		strict: true, // Opt into structured output
 	};
 
-	const body: ChatCompletionCreateParamsNonStreaming = {
+	const body: ChatCompletionCreateParams = {
 		messages: [
 			{ role: "system", content: systemPrompt },
 			{ role: "user", content: prompt },
@@ -56,31 +53,25 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 			type: "json_schema",
 			json_schema: llmJsonSchema,
 		},
+		stream: true, // Opt in to streaming responses.
 	};
 
 	const result = await client.chat.completions.create(body);
-	if (!result.created) {
-		throw new Error("AI did not return result");
-	}
-	if (result.choices.length === 0) {
-		throw new Error("AI result contained no choices");
-	}
+	const resultStream = result.toReadableStream();
+	const resultStreamReader = resultStream.getReader();
 
-	const choice: ChatCompletion.Choice = result.choices[0] ?? oob();
-	if (choice.finish_reason !== "stop") {
-		return undefined;
-	}
-
-	if (choice.message.content === null) {
-		throw new Error("AI result contained no content");
-	}
-
-	// TODO: invoke edit handlers based on response.
+	await responseHandler.processResponse({
+		async *[Symbol.asyncIterator](): AsyncGenerator<string, void> {
+			yield (await resultStreamReader.read()).value;
+		},
+	});
 }
 
 // TODO
 // Depends on particular env variables
-export function initializeOpenAIClient<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema>): OpenAIContext<TSchema> {
+export function initializeOpenAIClient<TSchema extends ImplicitFieldSchema>(
+	tree: TreeView<TSchema>,
+): OpenAIContext<TSchema> {
 	/* TODOs:
 	1. Update the signature to take a TreeView<ImplicitFieldSchema>.
 	2. Update body to call getSystemPrompt, cleanup imports/exports.
@@ -113,5 +104,5 @@ export function initializeOpenAIClient<TSchema extends ImplicitFieldSchema>(tree
 	return {
 		client,
 		tree,
-	}
+	};
 }
