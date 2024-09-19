@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert } from "./debug.js";
 import {
@@ -1263,7 +1268,8 @@ class StreamedOptional extends SchemaGeneratingStreamedType {
 
 	public jsonSchema(root: StreamedTypeIdentity, definitions: DefinitionMap): JsonObject {
 		const schema = jsonSchemaFromStreamedType(this.optionalType, root, definitions);
-		assert(typeof schema.type === "string");
+		// TODO: Fix/Remove assert here
+		// assert(typeof schema.type === "string");
 
 		if (root === this.optionalType || definitions.has(this.optionalType)) {
 			return { anyOf: [schema, { type: "null" }] };

@@ -156,8 +156,9 @@ describe("Makes TS type strings from schema", () => {
 
 describe("llmClient", () => {
 	it("can accept a structured schema prompt", async () => {
-		const userPrompt = "I need a catalog listing for a product. Please extract this info into the required schema. The product is a Red Ryder bicycle, which is a particularly fast bicycle, and which should be listed for one hundred dollars.";
-		
+		const userPrompt =
+			"I need a catalog listing for a product. Please extract this info into the required schema. The product is a Red Ryder bicycle, which is a particularly fast bicycle, and which should be listed for one hundred dollars.";
+
 		// const testSf = new SchemaFactory("test");
 		// class CatalogEntry extends testSf.object("CatalogEntry", {
 		// 	itemTitle: testSf.string,
@@ -176,25 +177,25 @@ describe("llmClient", () => {
 				schema: {
 					"type": "object",
 					"properties": {
-					"title": {
-						"type": "string",
-						"description": "a title which must be in all caps"
-					},
-					"description": {
-						"type": "string",
-						"description": "the description of the item, which must be in CaMeLcAsE"
-					},
-					"price": {
-						"type": "number",
-						"description": "the price, which must be expressed with one decimal place."
-					},
+						"title": {
+							"type": "string",
+							"description": "a title which must be in all caps",
+						},
+						"description": {
+							"type": "string",
+							"description": "the description of the item, which must be in CaMeLcAsE",
+						},
+						"price": {
+							"type": "number",
+							"description": "the price, which must be expressed with one decimal place.",
+						},
 					},
 					"required": ["title", "description", "price"],
-					"additionalProperties": false
+					"additionalProperties": false,
 				},
 			},
 		};
-		
+
 		const response = await getResponse(userPrompt, responseSchema);
 
 		console.log(response);

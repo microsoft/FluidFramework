@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	FieldSchema,
 	NodeKind,
+	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeView,
@@ -46,8 +46,8 @@ export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSc
 }
 
 export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
-	assert(!(view.schema instanceof FieldSchema), "Root cannot be a FieldSchema.");
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(view.schema));
+	const schema = normalizeFieldSchema(view.schema);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
 	const decoratedJson = toDecoratedJson(view.root);
 
 	const systemPrompt = `
