@@ -45,7 +45,8 @@ import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
-import { typeField } from "./handlers.js";
+
+export const typeField = "__fluid_type";
 // eslint-disable-next-line import/no-internal-modules
 import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 
@@ -214,16 +215,16 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const { node } = getTargetInfo(treeEdit.target, nodeMap);
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const fieldSchema = (treeNodeSchema.info as any)[treeEdit.field];
+			const fieldSchema =
+				(treeNodeSchema.info as Record<string, ImplicitFieldSchema>)[treeEdit.field] ??
+				fail("Expected field schema");
+
 			const modification = treeEdit.modification;
 
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
-			if (fieldSchema instanceof LeafNodeSchema) {
-				assert(
-					valueSchemaAllows(fieldSchema.info, modification as Value),
-					"invalid modification content",
-				);
+			if (isPrimitive(modification)) {
+				const validator = getJsonValidator(fieldSchema);
+				validator(modification);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(node as any)[treeEdit.field] = modification;
 			}
@@ -290,7 +291,8 @@ function isPrimitive(content: unknown): boolean {
 		typeof content === "number" ||
 		typeof content === "string" ||
 		typeof content === "boolean" ||
-		typeof content === "undefined"
+		typeof content === "undefined" ||
+		content === null
 	);
 }
 

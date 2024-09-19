@@ -26,17 +26,17 @@ import {
 	JsonHandler as jh,
 } from "../json-handler/index.js";
 import type { Insert, Modify, Move, Remove, SetRoot } from "./agentEditTypes.js";
-import { applyAgentEdit } from "./agentEditReducer.js";
-
-export const typeField = "__fluid_type";
+import { applyAgentEdit, typeField } from "./agentEditReducer.js";
 
 const targetHandler = jh.object(() => ({
+	description: "A handler that points to a node in the tree.",
 	properties: {
 		objectId: jh.number(),
 	},
 }));
 
 const placeHandler = jh.object(() => ({
+	description: "A handler that points to a location in the tree.",
 	properties: {
 		objectId: jh.number(),
 		place: jh.enum({ values: ["before", "after"] }),
@@ -44,6 +44,7 @@ const placeHandler = jh.object(() => ({
 }));
 
 const rangeHandler = jh.object(() => ({
+	description: "A handler that points to a range of locations in the tree.",
 	properties: {
 		from: placeHandler(),
 		to: placeHandler(),
@@ -73,6 +74,7 @@ export function generateHandlers(
 	}
 
 	const setRootHandler = jh.object(() => ({
+		description: "A handler for setting content to the root of the tree.",
 		properties: {
 			type: jh.enum({ values: ["setRoot"] }),
 			content: jh.anyOf(
@@ -90,6 +92,7 @@ export function generateHandlers(
 	}));
 
 	const insertHandler = jh.object(() => ({
+		description: "A handler for inserting new content into the tree.",
 		properties: {
 			type: jh.enum({ values: ["insert"] }),
 			content: jh.anyOf(
@@ -104,6 +107,7 @@ export function generateHandlers(
 	}));
 
 	const removeHandler = jh.object(() => ({
+		description: "A handler for removing content from the tree.",
 		properties: {
 			type: jh.enum({ values: ["remove"] }),
 			source: rangeHandler(),
@@ -115,6 +119,7 @@ export function generateHandlers(
 	}));
 
 	const modifyHandler = jh.object(() => ({
+		description: "A handler for inserting new content into the tree.",
 		properties: {
 			type: jh.enum({ values: ["modify"] }),
 			target: targetHandler(),
@@ -130,6 +135,7 @@ export function generateHandlers(
 	}));
 
 	const moveHandler = jh.object(() => ({
+		description: "A handler for moving content from one location in the tree to another location in the tree.",
 		properties: {
 			type: jh.enum({ values: ["move"] }),
 			source: rangeHandler(),

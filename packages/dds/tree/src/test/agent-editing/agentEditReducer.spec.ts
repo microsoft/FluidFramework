@@ -18,12 +18,11 @@ import { strict as assert } from "node:assert";
 import { jsonableTreeFromForest } from "../../feature-libraries/treeTextCursor.js";
 import {
 	applyAgentEdit,
+	typeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/agentEditReducer.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { typeField } from "../../agent-editing/handlers.js";
 
 const sf = new SchemaFactory("agentSchema");
 
