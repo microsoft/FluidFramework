@@ -63,8 +63,7 @@ for (const incremental of [true, false]) {
 			helper.insertText("B", 8, "123");
 			helper.processAllOps();
 
-
-			helper.logger.validate({baseText: "123"});
+			helper.logger.validate({ baseText: "123" });
 		});
 
 		it("insert, then obliterate at the end of the string", () => {
@@ -76,10 +75,7 @@ for (const incremental of [true, false]) {
 			helper.obliterateRange("A", 0, 8);
 			helper.processAllOps();
 
-			assert.equal(helper.clients.A.getText(), "123");
-			assert.equal(helper.clients.B.getText(), "123");
-
-			helper.logger.validate();
+			helper.logger.validate({ baseText: "123" });
 		});
 
 		it("length of children does not differ from parent when overlapping remove+obliterate", () => {
