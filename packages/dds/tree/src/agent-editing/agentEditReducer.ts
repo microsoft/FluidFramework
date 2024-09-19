@@ -82,13 +82,16 @@ function populateDefaults(
 			const nodeSchema = definitionMap.get(json[typeField]);
 			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
 
-			for (const [key, value] of Object.entries(json)) {
-				const defaulter = nodeSchema.fields[key]?.metadata?.llmDefault;
+			for (const [key, fieldSchema] of Object.entries(nodeSchema.fields)) {
+				const defaulter = fieldSchema?.metadata?.llmDefault;
 				if (defaulter !== undefined) {
 					// TODO: Properly type. The input `json` is a JsonValue, but the output can contain nodes (from the defaulters) amidst the json.
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					json[key] = defaulter() as any;
 				}
+			}
+
+			for (const value of Object.values(json)) {
 				populateDefaults(value, definitionMap);
 			}
 		}
