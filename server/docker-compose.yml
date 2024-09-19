@@ -1,7 +1,7 @@
 version: "3.4"
 services:
   proxy:
-    platform: linux/arm64/v8
+    platform: linux/amd64/v3
     image: nginx:latest
     depends_on:
       - "alfred"
