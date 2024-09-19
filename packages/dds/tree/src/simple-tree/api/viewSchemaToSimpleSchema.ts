@@ -8,6 +8,7 @@ import {
 	normalizeFieldSchema,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
@@ -26,7 +27,7 @@ import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 /**
  * Converts a "view" schema to a "simple" schema representation.
  */
-export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
+export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
 	const normalizedSchema = normalizeFieldSchema(schema);
 
 	const allowedTypes = allowedTypesFromFieldSchema(normalizedSchema);
