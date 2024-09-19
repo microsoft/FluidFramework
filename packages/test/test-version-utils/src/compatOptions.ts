@@ -39,7 +39,7 @@ export const CompatKind = {
  * Parse the command line argument and environment variables. Arguments take precedent over environment variable
  * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
-const options = {
+export const options = {
 	compatKind: {
 		description: "Compat kind to run",
 		choices: [
@@ -66,7 +66,7 @@ const options = {
 	reinstall: {
 		default: false,
 		description: "Force compat package to be installed",
-		boolean: true,
+		type: "boolean",
 	},
 	driver: {
 		choices: ["tinylicious", "t9s", "routerlicious", "r11s", "odsp", "local"],
@@ -95,9 +95,13 @@ nconf
 			// Otherwise mocha's --parallel flag will not work correctly because console flags are not passed to the worker
 			// processes, so they will run tests with default settings instead of the specified ones.
 			if (options[obj.key] !== undefined) {
-				// Important to JSON.stringify() so types are preserved (i.e. arrays are surrounded by brackets, strings have
-				// quotes, etc) and when we JSON.parse() them when processing values from env they are set correctly.
-				process.env[`fluid__test__${obj.key}`] = JSON.stringify(obj.value);
+				// Important to JSON.stringify() arrays and objects so when we JSON.parse() them as we process values from env
+				// variables they are set correctly.
+				const shouldStringify = Array.isArray(obj.value) || typeof obj.value === "object";
+				process.env[`fluid__test__${obj.key}`] = shouldStringify
+					? JSON.stringify(obj.value)
+					: obj.value;
+
 				obj.key = `fluid:test:${obj.key}`;
 			}
 			return obj;
@@ -110,27 +114,45 @@ nconf
 			"fluid__test__compatVersion",
 			"fluid__test__backCompat",
 			"fluid__test__driver",
+			"fluid__test__reinstall", // TODO: doesn't work for parallel processes; but we don't use it?
+			"fluid__test__tenantIndex",
 			"fluid__test__r11sEndpointName",
 			"fluid__test__odspEndpointName",
 			"fluid__test__baseVersion",
 		],
-		transform: (obj: { key: string; value: string }) => {
+		// We know that environment variables always come as strings, but since we want the transform function
+		// to be able to set obj.value to different types, we use unkwown here as an alternative to adding as-casts
+		// wherever we set it to something that is not a string.
+		// And since we know the value will always start as a string, we assign 'stringValue' to avoid having to cast
+		// obj.value to string every time we use a string method on it.
+		transform: (obj: { key: string; value: unknown }) => {
+			const stringValue: string = obj.value as string;
+
 			if (!obj.key.startsWith("fluid__test__")) {
 				return obj;
 			}
 
 			const key = obj.key.substring("fluid__test__".length);
+
+			// Environment flags are always strings, but in order to get values whose types match the types that the CLI
+			// flags would have, we need to parse them.
 			if (options[key]?.array) {
-				try {
-					if (!obj.value.startsWith("[")) {
-						// A bit of proctection against potential bugs.
-						throw new Error(`Environment variable '${obj.key}' must be a stringified JSON array. Got '${obj.value}'.`);
-					}
-					obj.value = JSON.parse(obj.value);
-				} catch {
-					// ignore
+				if (!stringValue.startsWith("[")) {
+					// A bit of proctection against potential bugs.
+					throw new Error(
+						`Environment variable '${obj.key}' must be a stringified JSON array. Got '${stringValue}'.`,
+					);
 				}
+				obj.value = JSON.parse(stringValue);
 			}
+
+			if (options[key]?.type === "number") {
+				obj.value = parseInt(stringValue, 10);
+			}
+			if (options[key]?.type === "boolean") {
+				obj.value = Boolean(stringValue);
+			}
+			// console.log(`Setting ${key} to ${obj.value}`);
 			return obj;
 		},
 	})
