@@ -157,7 +157,7 @@
 		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
 		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
-		"bogus:script": "bogus"
+		"bogus:script": "bogus script"
 	},
 	"c8": {
 		"all": true,
