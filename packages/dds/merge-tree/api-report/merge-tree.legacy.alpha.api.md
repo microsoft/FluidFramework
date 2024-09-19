@@ -379,6 +379,7 @@ export interface IMergeTreeOptions {
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
+    mergeTreeEnableSidedObliterate?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
@@ -418,6 +419,7 @@ export interface IMoveInfo {
     movedSeq: number;
     movedSeqs: number[];
     moveDst?: ReferencePosition;
+    prevObliterateByInserter?: ObliterateInfo;
     wasMovedOnInsert: boolean;
 }
 
