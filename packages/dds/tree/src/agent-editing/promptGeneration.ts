@@ -35,8 +35,8 @@ export function toDecoratedJson(
 	const idMap = new Map<number, TreeNode>();
 	let idCount = 0;
 	const stringified: string = JSON.stringify(root, (_, value) => {
-		assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+			assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
 			idMap.set(idCount, value);
 			assert(
 				!{}.hasOwnProperty.call(value, "__fluid_id"),

@@ -107,7 +107,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	switch (treeEdit.type) {
 		case "setRoot": {
 			populateDefaults(treeEdit.content, definitionMap);
-			
+
 			const treeSchema = tree.schema;
 			const validator = getJsonValidator(tree.schema);
 			// If it's a primitive, just validate the content and set
@@ -212,16 +212,16 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const { node } = getTargetInfo(treeEdit.target, nodeMap);
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const fieldSchema = (treeNodeSchema.info as any)[treeEdit.field];
+			const fieldSchema =
+				(treeNodeSchema.info as Record<string, ImplicitFieldSchema>)[treeEdit.field] ??
+				fail("Expected field schema");
+
 			const modification = treeEdit.modification;
 
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
-			if (fieldSchema instanceof LeafNodeSchema) {
-				assert(
-					valueSchemaAllows(fieldSchema.info, modification as Value),
-					"invalid modification content",
-				);
+			if (isPrimitive(modification)) {
+				const validator = getJsonValidator(fieldSchema);
+				validator(modification);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(node as any)[treeEdit.field] = modification;
 			}
@@ -283,7 +283,8 @@ function isPrimitive(content: unknown): boolean {
 		typeof content === "number" ||
 		typeof content === "string" ||
 		typeof content === "boolean" ||
-		typeof content === "undefined"
+		typeof content === "undefined" ||
+		content === null
 	);
 }
 

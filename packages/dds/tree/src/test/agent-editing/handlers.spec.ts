@@ -14,6 +14,7 @@ import { generateHandlers } from "../../agent-editing/handlers.js";
 import { createResponseHandler } from "../../json-handler/jsonHandler.js";
 import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
 import { typeField } from "../../agent-editing/agentEditReducer.js";
+import { toDecoratedJson } from "../../agent-editing/promptGeneration.js";
 
 const demoSf = new SchemaFactory("agentSchema");
 
@@ -51,7 +52,7 @@ describe("Stuff", () => {
 			bools: [true],
 		});
 
-		const handler = generateHandlers(view, new Map());
+		const handler = generateHandlers(view, toDecoratedJson(view.root).idMap);
 		const edits = JSON.stringify(sampleEdits);
 		const abortController = new AbortController();
 		const responseHandler = createResponseHandler(handler, abortController);
