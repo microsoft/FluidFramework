@@ -24,6 +24,7 @@ export {
 export {
 	type ITree,
 	type TreeView,
+	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
