@@ -4,8 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../shared-tree/schematizingTreeView.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
@@ -28,7 +26,6 @@ import ajvModuleOrClass from "ajv";
 import { valueSchemaAllows } from "../feature-libraries/valueUtilities.js";
 import type { Value } from "../core/index.js";
 import type {
-	EditWrapper,
 	TreeEdit,
 	Target,
 	Selection,
@@ -224,15 +221,17 @@ function isValidContent(content: unknown, validator: (data: unknown) => void): b
 	return true;
 }
 
-export function agentEditReducer<TSchema extends ImplicitFieldSchema>(
-	tree: SchematizingSimpleTreeView<TSchema>,
-	editWrapper: EditWrapper,
-	nodeMap: Map<number, TreeNode>,
-): void {
-	for (const treeEdit of editWrapper.edits) {
-		applyAgentEdit(tree, treeEdit, nodeMap);
-	}
-}
+// TODO: remove?
+//
+// export function agentEditReducer<TSchema extends ImplicitFieldSchema>(
+// 	tree: SchematizingSimpleTreeView<TSchema>,
+// 	editWrapper: EditWrapper,
+// 	nodeMap: Map<number, TreeNode>,
+// ): void {
+// 	for (const treeEdit of editWrapper.edits) {
+// 		applyAgentEdit(tree, treeEdit, nodeMap);
+// 	}
+// }
 
 function isTarget(selection: Selection): selection is Target {
 	return "objectId" in selection;
