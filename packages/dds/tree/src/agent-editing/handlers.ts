@@ -8,6 +8,7 @@ import {
 	NodeKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
+	type TreeNode,
 	type TreeView,
 } from "../simple-tree/index.js";
 import {
@@ -24,6 +25,8 @@ import {
 	type JsonObject,
 	JsonHandler as jh,
 } from "../json-handler/index.js";
+import type { Insert, Modify, Move, Remove, SetRoot } from "./agentEditTypes.js";
+import { applyAgentEdit } from "./agentEditReducer.js";
 
 export const typeField = "__fluid_type";
 
@@ -47,22 +50,10 @@ const rangeHandler = jh.object(() => ({
 	},
 }));
 
-const removeHandler = jh.object(() => ({
-	properties: {
-		type: jh.enum({ values: ["remove"] }),
-		source: rangeHandler(),
-	},
-}));
-
-const moveHandler = jh.object(() => ({
-	properties: {
-		type: jh.enum({ values: ["move"] }),
-		source: rangeHandler(),
-		destination: placeHandler(),
-	},
-}));
-
-export function generateHandlers(view: TreeView<ImplicitFieldSchema>): StreamedType {
+export function generateHandlers(
+	view: TreeView<ImplicitFieldSchema>,
+	nodeMap: Map<number, TreeNode>,
+): StreamedType {
 	const schema = normalizeFieldSchema(view.schema);
 	const simpleSchema = getSimpleSchema(schema.allowedTypes);
 	const insertSet = new Set<string>();
@@ -92,8 +83,9 @@ export function generateHandlers(view: TreeView<ImplicitFieldSchema>): StreamedT
 				),
 			),
 		},
-		complete: (result: JsonObject) => {
-			// TODO
+		complete: (jsonObject: JsonObject) => {
+			const setRoot = jsonObject as unknown as SetRoot;
+			applyAgentEdit(view, setRoot, nodeMap);
 		},
 	}));
 
@@ -105,8 +97,20 @@ export function generateHandlers(view: TreeView<ImplicitFieldSchema>): StreamedT
 			),
 			destination: placeHandler(),
 		},
-		complete: (result: JsonObject) => {
-			// TODO
+		complete: (jsonObject: JsonObject) => {
+			const insert = jsonObject as unknown as Insert;
+			applyAgentEdit(view, insert, nodeMap);
+		},
+	}));
+
+	const removeHandler = jh.object(() => ({
+		properties: {
+			type: jh.enum({ values: ["remove"] }),
+			source: rangeHandler(),
+		},
+		complete: (jsonObject: JsonObject) => {
+			const remove = jsonObject as unknown as Remove;
+			applyAgentEdit(view, remove, nodeMap);
 		},
 	}));
 
@@ -119,8 +123,21 @@ export function generateHandlers(view: TreeView<ImplicitFieldSchema>): StreamedT
 				Array.from(modifyTypeSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
 			),
 		},
-		complete: (result: JsonObject) => {
-			// TODO
+		complete: (jsonObject: JsonObject) => {
+			const modify = jsonObject as unknown as Modify;
+			applyAgentEdit(view, modify, nodeMap);
+		},
+	}));
+
+	const moveHandler = jh.object(() => ({
+		properties: {
+			type: jh.enum({ values: ["move"] }),
+			source: rangeHandler(),
+			destination: placeHandler(),
+		},
+		complete: (jsonObject: JsonObject) => {
+			const move = jsonObject as unknown as Move;
+			applyAgentEdit(view, move, nodeMap);
 		},
 	}));
 
