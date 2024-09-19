@@ -11,6 +11,8 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeView,
 } from "../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeNode } from "../simple-tree/core/index.js";
 import {
 	getJsonSchema,
 	type JsonFieldSchema,
@@ -24,11 +26,12 @@ import { fail } from "../util/utils.js";
 
 export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSchema>): {
 	stringified: string;
-	idMap: Map<number, unknown>;
+	idMap: Map<number, TreeNode>;
 } {
-	const idMap = new Map<number, unknown>();
+	const idMap = new Map<number, TreeNode>();
 	let idCount = 0;
 	const stringified: string = JSON.stringify(root, (_, value) => {
+		assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			idMap.set(idCount, value);
 			assert(

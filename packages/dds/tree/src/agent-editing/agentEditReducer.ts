@@ -36,7 +36,11 @@ import type {
 	Place,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../agent-editing/agentEditTypes.js";
-import { getOrCreateInnerNode, type TreeNodeSchema } from "../simple-tree/index.js";
+import {
+	getOrCreateInnerNode,
+	type TreeNodeSchema,
+	type TreeView,
+} from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
 
@@ -59,7 +63,7 @@ export function getJsonValidator(schema: JsonTreeSchema): (data: unknown) => voi
 }
 
 export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
-	tree: SchematizingSimpleTreeView<TSchema>,
+	tree: TreeView<TSchema>,
 	treeEdit: TreeEdit,
 	nodeMap: Map<number, TreeNode>,
 ): void {
