@@ -24,6 +24,12 @@ class ResponseHandlerImpl {
 		private readonly streamedType: StreamedType,
 		abortController: AbortController,
 	) {
+		if (streamedType instanceof StreamedAnyOf) {
+			throw new TypeError(
+				"anyOf cannot be used as root type",
+			);
+		}
+
 		if (
 			streamedType instanceof StreamedStringProperty ||
 			streamedType instanceof StreamedString
@@ -624,19 +630,9 @@ class StreamedObjectHandlerImpl implements StreamedObjectHandler {
 			streamedType = streamedType.optionalType;
 		}
 
-		if (streamedType instanceof StreamedAnyOf) {
-			const streamedAnyOf = streamedType;
-			if (!(streamedType = streamedType.streamedTypeOfFirstMatch(value))) {
-				const childPartial: PartialObject = {};
-				this.partial[key] = childPartial;
-				this.handlers[key] = new StreamedObjectHandlerImpl(
-					childPartial,
-					undefined,
-					streamedAnyOf,
-				);
-				return;
-			}
-		}
+        if (streamedType instanceof StreamedAnyOf) {
+            streamedType = streamedType.streamedTypeOfFirstMatch(value);
+        }
 
 		if (value === null) {
 			if (streamedType instanceof AtomicNull) {
