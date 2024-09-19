@@ -81,7 +81,7 @@
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
 		"concurrently": "^8.2.1",
-		"conventional-changelog-cli": "workspace:~",
+		"conventional-changelog-cli": "^2.2.2",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
@@ -119,7 +119,7 @@
 		],
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",
-			"json5@>=2.0.0 <2.2.2": "workspace:~",
+			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"qs": "^6.11.0",
 			"sharp": "^0.33.2",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
