@@ -33,8 +33,8 @@ import type {
 	Target,
 	Selection,
 	Range,
-	// eslint-disable-next-line import/no-internal-modules
 	Place,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../agent-editing/agentEditTypes.js";
 import { getOrCreateInnerNode, type TreeNodeSchema } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
