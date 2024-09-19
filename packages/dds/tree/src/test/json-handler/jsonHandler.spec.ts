@@ -211,7 +211,6 @@ const sampleOps = [
 
 const opText = JSON.stringify(sampleOps);
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const streamedLlmResponse = (prompt: string, schema: object, abort: AbortController) => {
 	const chunkSize = parseInt(prompt, 10);
 	console.log(`Breaking json into ${chunkSize}-character chunks`);
