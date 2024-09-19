@@ -50,19 +50,24 @@ export function toDecoratedJson(root: TreeFieldFromImplicitField<ImplicitFieldSc
 	return { stringifiedSchema, idMap };
 }
 
-export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): string {
+export interface SystemPromptResult {
+	systemPrompt: string;
+	decoratedTreeJson: StringifiedJsonTreeSchema;
+}
+
+export function getSystemPrompt(view: TreeView<ImplicitFieldSchema>): SystemPromptResult {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
-	const decoratedJson = toDecoratedJson(view.root);
+	const decoratedTreeJson = toDecoratedJson(view.root);
 
 	const systemPrompt = `
 	You are a collaborative agent who interacts with a tree.
 	You should make the minimum number of edits to the tree to achieve the desired outcome, and do it in as granular a way as possible to ensure good merge outcomes.
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state of the tree is: ${decoratedJson.stringifiedSchema}.
+	The current state of the tree is: ${decoratedTreeJson.stringifiedSchema}.
 	The allowed edits are defined by the following schema: ${"TODO"}.
 	Example edits: ${"TODO"}.`;
-	return systemPrompt;
+	return { systemPrompt, decoratedTreeJson };
 }
 
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
