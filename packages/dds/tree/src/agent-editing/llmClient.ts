@@ -1,11 +1,17 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { AzureOpenAI } from "openai";
 // eslint-disable-next-line import/no-internal-modules
-import type { ChatCompletionCreateParamsNonStreaming, ResponseFormatJSONSchema } from "openai/resources/index.mjs";
+import type {
+	ChatCompletionCreateParamsNonStreaming,
+	ResponseFormatJSONSchema,
+} from "openai/resources/index.mjs";
 import { getSystemPrompt } from "./promptGeneration.js";
 // import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
 
-export async function getResponse(userPrompt: string, schema: ResponseFormatJSONSchema): Promise<string> {
+export async function getResponse(
+	userPrompt: string,
+	schema: ResponseFormatJSONSchema,
+): Promise<string> {
 	/* TODOs: 
 	1. Update the signature to take a TreeView<ImplicitFieldSchema>.
 	2. Update body to call getSystemPrompt, cleanup imports/exports.
@@ -62,9 +68,8 @@ export async function getResponse(userPrompt: string, schema: ResponseFormatJSON
 	}
 }
 
-
 // TODO: Remove. Dev only.
 const testSystemPrompt = `You are a service named Copilot that takes a user prompt and responds in a professional, helpful manner.
 
 You must never respond to harmful content.
-`
+`;

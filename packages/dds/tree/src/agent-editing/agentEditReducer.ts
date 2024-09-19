@@ -27,13 +27,15 @@ import ajvModuleOrClass from "ajv";
 // eslint-disable-next-line import/no-internal-modules
 import { valueSchemaAllows } from "../feature-libraries/valueUtilities.js";
 import type { Value } from "../core/index.js";
-import type { EditWrapper,
+import type {
+	EditWrapper,
 	TreeEdit,
 	Target,
 	Selection,
 	Range,
 	// eslint-disable-next-line import/no-internal-modules
-	Place, } from "../agent-editing/agentEditTypes.js";
+	Place,
+} from "../agent-editing/agentEditTypes.js";
 import { getOrCreateInnerNode, type TreeNodeSchema } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
@@ -140,7 +142,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = modificationArrayNode;
 				}
-			} 
+			}
 			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.
 			else if (fieldSchema instanceof FieldSchema) {
 				if (fieldSchema.kind === FieldKind.Optional && modification === undefined) {
