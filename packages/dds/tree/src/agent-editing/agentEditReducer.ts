@@ -21,9 +21,6 @@ import {
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import ajvModuleOrClass from "ajv";
-// eslint-disable-next-line import/no-internal-modules
-import { valueSchemaAllows } from "../feature-libraries/valueUtilities.js";
-import type { Value } from "../core/index.js";
 import type {
 	TreeEdit,
 	Target,
@@ -39,8 +36,6 @@ import {
 	type TreeNodeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { LeafNodeSchema } from "../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
