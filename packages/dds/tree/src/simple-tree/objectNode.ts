@@ -32,6 +32,8 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	FieldKind,
+	type NodeSchemaProps,
+	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -306,11 +308,14 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
+	props?: NodeSchemaProps<TCustomMetadata>,
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+	ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
@@ -420,6 +425,8 @@ export function objectSchema<
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			props?.metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

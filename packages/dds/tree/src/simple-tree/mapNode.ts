@@ -20,6 +20,8 @@ import {
 	FieldKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
+	type NodeSchemaProps,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -227,11 +229,13 @@ export function mapSchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
+	props?: NodeSchemaProps<TCustomMetadata>,
 ) {
 	let flexSchema: FlexMapNodeSchema;
 	let unhydratedContext: UnhydratedContext;
@@ -272,6 +276,8 @@ export function mapSchema<
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			props?.metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -287,7 +293,8 @@ export function mapSchema<
 		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		TCustomMetadata
 	> = Schema;
 	return schemaErased;
 }
