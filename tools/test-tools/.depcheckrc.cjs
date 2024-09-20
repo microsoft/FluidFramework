@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	ignores: [
+	ignoreMatches: [
 		"mocha-json-output-reporter",
 		"mocha-multi-reporters",
 	],

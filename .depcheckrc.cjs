@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	ignores: [
+	ignoreMatches: [
 		"@fluid-private/changelog-generator-wrapper",
 		"@fluidframework/eslint-config-fluid",
 		"@microsoft/api-documenter",

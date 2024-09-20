@@ -4,5 +4,5 @@
  */
 
 module.exports = {
-	ignoreMatches: ["typescript"],
+	ignoreMatches: ["events"],
 };
