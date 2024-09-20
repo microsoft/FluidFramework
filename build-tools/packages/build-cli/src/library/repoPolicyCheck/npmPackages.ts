@@ -10,6 +10,7 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
+import depcheck from "depcheck";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
@@ -1973,8 +1974,6 @@ export const handlers: Handler[] = [
 			return result;
 		},
 	},
-<<<<<<< Updated upstream
-=======
 	{
 		name: "npm-check-unused-dependencies",
 		match,
@@ -2013,7 +2012,6 @@ export const handlers: Handler[] = [
 			}
 		},
 	},
->>>>>>> Stashed changes
 ];
 
 function missingCleanDirectories(scripts: { [key: string]: string | undefined }): string[] {
