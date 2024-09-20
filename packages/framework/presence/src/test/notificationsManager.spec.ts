@@ -23,12 +23,9 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
 	const notificationsWorkspace = presence.getNotifications("name:testNotificationWorkspace", {
-		chat: Notifications<
-			{
-				msg: (message: string) => void;
-			},
-			string
-		>({
+		chat: Notifications<{
+			msg: (message: string) => void;
+		}>({
 			msg: (client: ISessionClient, message: string) => {
 				console.log(`${client.sessionId} says, "${message}"`);
 			},
