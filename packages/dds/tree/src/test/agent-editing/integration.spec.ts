@@ -54,8 +54,8 @@ export class Conference extends sf.object("Conference", {
 
 describe("Agent Editing Integration", () => {
 	it("Test", async () => {
-		process.env.AZURE_OPENAI_API_KEY = "TODO"; // DON'T COMMIT THIS
-		process.env.AZURE_OPENAI_ENDPOINT = "TODO";
+		process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
+		process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
 		process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
 
 		const view = getView(new TreeViewConfiguration({ schema: Conference }));
