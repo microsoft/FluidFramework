@@ -25,29 +25,60 @@ import {
 	type JsonObject,
 	JsonHandler as jh,
 } from "../json-handler/index.js";
-import type { Insert, Modify, Move, Remove, SetRoot } from "./agentEditTypes.js";
+import {
+	objectIdKey,
+	type Insert,
+	type Modify,
+	type Move,
+	type Remove,
+	type SetRoot,
+} from "./agentEditTypes.js";
 import { applyAgentEdit, typeField } from "./agentEditReducer.js";
 
-const targetHandler = jh.object(() => ({
-	description: "A handler that points to a node in the tree.",
+const objectTargetHandler = jh.object(() => ({
+	description: "A pointer to an object in the tree",
 	properties: {
-		objectId: jh.number(),
+		[objectIdKey]: jh.number({ description: "The id of the object that is being pointed to" }),
 	},
 }));
 
-const placeHandler = jh.object(() => ({
-	description: "A handler that points to a location in the tree.",
+const objectPlaceHandler = jh.object(() => ({
+	description:
+		"A pointer to a location either just before or just after an object that is in an array",
 	properties: {
-		objectId: jh.number(),
-		place: jh.enum({ values: ["before", "after"] }),
+		type: jh.enum({ values: ["objectPlace"] }),
+		objectId: jh.number({
+			description: `The ${objectIdKey} of the object that the new/moved object should be placed relative to`,
+		}),
+		place: jh.enum({
+			values: ["before", "after"],
+			description:
+				"Where the new/moved object will be relative to the target object - either just before or just after",
+		}),
+	},
+}));
+
+const arrayPlaceHandler = jh.object(() => ({
+	description:
+		"A location at either the beginning or the end of an array (useful for prepending or appending)",
+	properties: {
+		type: jh.enum({ values: ["arrayPlace"] }),
+		objectId: jh.number({
+			description: `The ${objectIdKey} of the object to insert into the array`,
+		}),
+		field: jh.string({ "description": "The key of the array to insert into" }),
+		location: jh.enum({
+			values: ["start", "end"],
+			description: "Where to insert into the array - either the start or the end",
+		}),
 	},
 }));
 
 const rangeHandler = jh.object(() => ({
-	description: "A handler that points to a range of locations in the tree.",
+	description: "A span of objects that are in an array",
 	properties: {
-		from: placeHandler(),
-		to: placeHandler(),
+		from: objectPlaceHandler(),
+		to: objectPlaceHandler(),
 	},
 }));
 
@@ -98,7 +129,7 @@ export function generateHandlers(
 			content: jh.anyOf(
 				Array.from(insertSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
 			),
-			destination: placeHandler(),
+			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
 		},
 		complete: (jsonObject: JsonObject) => {
 			const insert = jsonObject as unknown as Insert;
@@ -110,7 +141,7 @@ export function generateHandlers(
 		description: "A handler for removing content from the tree.",
 		properties: {
 			type: jh.enum({ values: ["remove"] }),
-			source: rangeHandler(),
+			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 		},
 		complete: (jsonObject: JsonObject) => {
 			const remove = jsonObject as unknown as Remove;
@@ -122,7 +153,7 @@ export function generateHandlers(
 		description: "A handler for inserting new content into the tree.",
 		properties: {
 			type: jh.enum({ values: ["modify"] }),
-			target: targetHandler(),
+			target: objectTargetHandler(),
 			field: jh.enum({ values: Array.from(modifyFieldSet) }),
 			modification: jh.anyOf(
 				Array.from(modifyTypeSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
@@ -139,8 +170,8 @@ export function generateHandlers(
 			"A handler for moving content from one location in the tree to another location in the tree.",
 		properties: {
 			type: jh.enum({ values: ["move"] }),
-			source: rangeHandler(),
-			destination: placeHandler(),
+			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
+			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
 		},
 		complete: (jsonObject: JsonObject) => {
 			const move = jsonObject as unknown as Move;

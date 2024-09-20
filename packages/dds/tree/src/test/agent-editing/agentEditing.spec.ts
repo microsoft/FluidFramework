@@ -17,6 +17,7 @@ import { getResponse } from "../../agent-editing/index.js";
 import { getJsonSchema } from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { ResponseFormatJSONSchema } from "openai/resources/shared.mjs";
+import { objectIdKey } from "../../agent-editing/agentEditTypes.js";
 
 const demoSf = new SchemaFactory("agentSchema");
 
@@ -39,7 +40,7 @@ describe("toDecoratedJson", () => {
 		assert.equal(
 			toDecoratedJson(hydratedObject).stringified,
 			JSON.stringify({
-				__fluid_id: 0,
+				[objectIdKey]: 0,
 				x: 1,
 				y: 2,
 			}),
@@ -55,11 +56,11 @@ describe("toDecoratedJson", () => {
 		assert.equal(
 			stringified,
 			JSON.stringify({
-				__fluid_id: 0,
+				[objectIdKey]: 0,
 				str: "hello",
 				vectors: [
 					{
-						__fluid_id: 1,
+						[objectIdKey]: 1,
 						x: 1,
 						y: 2,
 						z: 3,

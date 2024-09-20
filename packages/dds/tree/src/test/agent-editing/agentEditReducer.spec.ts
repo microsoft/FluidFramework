@@ -22,7 +22,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/agentEditReducer.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
+import { objectIdKey, type TreeEdit } from "../../agent-editing/agentEditTypes.js";
 
 const sf = new SchemaFactory("agentSchema");
 
@@ -166,7 +166,8 @@ describe("applyAgentEdit", () => {
 				type: "insert",
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
-					objectId: 0,
+					type: "objectPlace",
+					[objectIdKey]: 0,
 					place: "after",
 				},
 			};
@@ -176,7 +177,8 @@ describe("applyAgentEdit", () => {
 				type: "insert",
 				content: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 				destination: {
-					objectId: 0,
+					type: "objectPlace",
+					[objectIdKey]: 0,
 					place: "after",
 				},
 			};
@@ -337,7 +339,8 @@ describe("applyAgentEdit", () => {
 				type: "insert",
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
-					objectId: 0,
+					type: "objectPlace",
+					[objectIdKey]: 0,
 					place: "after",
 				},
 			};
@@ -464,7 +467,7 @@ describe("applyAgentEdit", () => {
 
 		const modifyEdit: TreeEdit = {
 			type: "modify",
-			target: { objectId: 0 },
+			target: { __fluid_objectId: 0 },
 			field: "vectors",
 			modification: [
 				{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
@@ -475,7 +478,7 @@ describe("applyAgentEdit", () => {
 
 		const modifyEdit2: TreeEdit = {
 			type: "modify",
-			target: { objectId: 0 },
+			target: { __fluid_objectId: 0 },
 			field: "bools",
 			modification: [false],
 		};
@@ -485,7 +488,7 @@ describe("applyAgentEdit", () => {
 
 		const modifyEdit3: TreeEdit = {
 			type: "modify",
-			target: { objectId: 1 },
+			target: { __fluid_objectId: 1 },
 			field: "x",
 			modification: 111,
 		};

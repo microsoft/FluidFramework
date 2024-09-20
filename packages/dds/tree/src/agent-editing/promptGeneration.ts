@@ -23,6 +23,7 @@ import {
 } from "../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
+import { objectIdKey } from "./agentEditTypes.js";
 
 export interface StringifiedJsonTreeSchema {
 	stringified: string;
@@ -39,11 +40,11 @@ export function toDecoratedJson(
 			assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
 			idMap.set(idCount, value);
 			assert(
-				!{}.hasOwnProperty.call(value, "__fluid_id"),
-				"Collision of property '__fluid_id'.",
+				!{}.hasOwnProperty.call(value, objectIdKey),
+				`Collision of property '${objectIdKey}'.`,
 			);
 			return {
-				__fluid_id: idCount++,
+				[objectIdKey]: idCount++,
 				...value,
 			} as unknown;
 		}

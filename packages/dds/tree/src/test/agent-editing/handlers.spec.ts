@@ -13,7 +13,7 @@ import { generateHandlers } from "../../agent-editing/handlers.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createResponseHandler } from "../../json-handler/jsonHandler.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { TreeEdit } from "../../agent-editing/agentEditTypes.js";
+import { objectIdKey, type TreeEdit } from "../../agent-editing/agentEditTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeField } from "../../agent-editing/agentEditReducer.js";
 import { toDecoratedJson } from "../../agent-editing/promptGeneration.js";
@@ -95,17 +95,17 @@ const sampleEdits: TreeEdit[] = [
 	{
 		type: "insert",
 		content: { [typeField]: Vector.identifier, x: 3, y: 3, z: 0 },
-		destination: { objectId: 2, place: "after" },
+		destination: { type: "objectPlace", [objectIdKey]: 2, place: "after" },
 	},
 	{
 		type: "modify",
-		target: { objectId: 1 },
+		target: { [objectIdKey]: 1 },
 		field: "z",
 		modification: 0,
 	},
 	{
 		type: "modify",
-		target: { objectId: 2 },
+		target: { [objectIdKey]: 2 },
 		field: "z",
 		modification: 0,
 	},

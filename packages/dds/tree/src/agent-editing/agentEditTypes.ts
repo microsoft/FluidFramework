@@ -28,6 +28,8 @@ import type { typeField } from "./agentEditReducer.js";
  * TODO: We don't have a way to refer (via ID) to content that was newly inserted by the LLM. The LLM would need to provide IDs for new content.
  */
 
+export const objectIdKey = "__fluid_objectId";
+
 export interface TreeEditObject {
 	[key: string]: TreeEditValue;
 	[typeField]: string;
@@ -46,20 +48,29 @@ export interface Edit {
 	type: "setRoot" | "insert" | "modify" | "remove" | "move";
 }
 
-export type Selection = Target | Range;
+export type Selection = ObjectTarget | Range;
 
-export interface Target {
-	objectId: number;
+export interface ObjectTarget {
+	[objectIdKey]: number;
 }
 
-export interface Place extends Target {
+// TODO: Allow support for nested arrays
+export interface ArrayPlace {
+	type: "arrayPlace";
+	[objectIdKey]: number;
+	field: string;
+	location: "start" | "end";
+}
+
+export interface ObjectPlace extends ObjectTarget {
+	type: "objectPlace";
 	// No "start" or "end" because we don't have a way to refer to arrays directly.
 	place: "before" | "after";
 }
 
 export interface Range {
-	from: Place;
-	to: Place;
+	from: ObjectPlace;
+	to: ObjectPlace;
 }
 
 export interface SetRoot extends Edit {
@@ -70,12 +81,12 @@ export interface SetRoot extends Edit {
 export interface Insert extends Edit {
 	type: "insert";
 	content: TreeEditObject;
-	destination: Place;
+	destination: ObjectPlace | ArrayPlace;
 }
 
 export interface Modify extends Edit {
 	type: "modify";
-	target: Target;
+	target: ObjectTarget;
 	field: string;
 	modification: TreeEditValue;
 }
@@ -88,7 +99,7 @@ export interface Remove extends Edit {
 export interface Move extends Edit {
 	type: "move";
 	source: Selection;
-	destination: Place;
+	destination: ObjectPlace | ArrayPlace;
 }
 
 /** ---------------- EXAMPLE FOLLOWS ---------------------- */
