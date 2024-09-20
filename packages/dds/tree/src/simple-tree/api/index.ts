@@ -27,7 +27,16 @@ export {
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable } from "./create.js";
-export type { SimpleTreeSchema } from "./simpleSchema.js";
+export type {
+	SimpleTreeSchema,
+	SimpleObjectNodeSchema,
+	SimpleArrayNodeSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleNodeSchemaBase,
+	SimpleNodeSchema,
+	SimpleFieldSchema,
+} from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -45,6 +54,7 @@ export {
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
+export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
 

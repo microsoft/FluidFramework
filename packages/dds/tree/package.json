@@ -165,6 +165,7 @@
 		"@sinclair/typebox": "^0.32.29",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"@ungap/structured-clone": "^1.2.0",
+		"openai": "^4.62.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -231,6 +232,9 @@
 				"forwardCompat": false
 			},
 			"Interface_ITreeViewConfiguration": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitAllowedTypes": {
 				"forwardCompat": false
 			},
 			"TypeAlias_ImplicitFieldSchema": {
