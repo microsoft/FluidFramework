@@ -2056,17 +2056,16 @@ export const handlers: Handler[] = [
 				const result = await depcheck(packageDir, options);
 				const packageErrors: string[] = [];
 				if (result.dependencies.length > 0) {
-					packageErrors.push(`
-						Unused dependencies:${newline}${result.dependencies.join(newline)}`);
+					packageErrors.push(
+						`---Unused dependencies---${newline}${result.dependencies.join(newline)}`,
+					);
 				}
 				if (result.devDependencies.length > 0) {
 					packageErrors.push(
-						`Unused devDependencies:${newline}${result.devDependencies.join(newline)}`,
+						`---Unused devDependencies---${newline}${result.devDependencies.join(newline)}`,
 					);
 				}
-				return packageErrors.length > 0
-					? `${newline}${packageErrors.join(newline)}`
-					: undefined;
+				return packageErrors.length > 0 ? `${newline}${packageErrors.join("")}` : undefined;
 			} catch (error) {
 				return `Error running depcheck for ${packageDir}: ${error}`;
 			}
