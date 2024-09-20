@@ -109,6 +109,12 @@ export function TaskGroup(props: {
 									<Box sx={{ borderRadius: '50%', backgroundColor: '#a4dbfc', width: 20, height: 20 }} />
 									<Typography variant='body1'>Changed</Typography>
 								</Stack>
+
+
+								<Stack direction='row' alignItems='center' spacing={1}>
+									<Box sx={{ borderRadius: '50%', backgroundColor: '#e5c5fa', width: 20, height: 20 }} />
+									<Typography variant='body1'>Moved</Typography>
+								</Stack>
 							</Stack>
 							<Stack direction='row' spacing={2} sx={{ justifyContent: 'center' }}>
 								<Button variant="contained" color='success' sx={{ textTransform: 'none' }}

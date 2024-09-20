@@ -1,7 +1,7 @@
 'use client';
 
 import { editTask } from "@/actions/task";
-import { branch, SharedTreeBranchManager, type Difference, type DifferenceChange } from "@fluid-experimental/fluid-llm"
+import { branch, SharedTreeBranchManager, type Difference, type DifferenceChange, type DifferenceMove } from "@fluid-experimental/fluid-llm"
 import { SharedTreeEngineerList, SharedTreeTask, SharedTreeTaskGroup, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
 import { TaskPriorities, TaskStatuses, type Task, type TaskPriority } from "@/types/task";
 import { Tree, type TreeView } from "@fluidframework/tree";
@@ -39,7 +39,15 @@ export function TaskCard(props: {
 
 	const task = props.sharedTreeTask;
 
-	const fieldDifferences = { isNewCreation: false, changes: {} as Record<string, DifferenceChange> };
+	const fieldDifferences: {
+		isNewCreation: boolean;
+		changes: Record<string, DifferenceChange>;
+		moved?: DifferenceMove
+	} = {
+		isNewCreation: false,
+		changes: {} as Record<string, DifferenceChange>,
+	}
+
 	for (const diff of props.branchDifferences ?? []) {
 		if (diff.type === 'CHANGE') {
 			fieldDifferences.changes[diff.path[diff.path.length - 1]] = diff;
@@ -47,11 +55,21 @@ export function TaskCard(props: {
 		if (diff.type === 'CREATE') {
 			fieldDifferences.isNewCreation = true;
 		}
+		if (diff.type === 'MOVE') {
+			fieldDifferences.moved = diff;
+		}
+	}
+
+	let cardColor = 'white';
+	if (fieldDifferences.isNewCreation) {
+		cardColor = '#e4f7e8';
+	} else if (fieldDifferences.moved) {
+		cardColor = '#e5c5fa'
 	}
 
 	return <Card sx={{
 		p: 4, position: 'relative', width: '100%',
-		backgroundColor: fieldDifferences.isNewCreation ? '#e4f7e8' : 'white'
+		backgroundColor: cardColor
 	}} key={`${task.title}`}>
 
 		{fieldDifferences.isNewCreation &&
@@ -59,6 +77,15 @@ export function TaskCard(props: {
 				<IconButton>
 					<Icon icon='clarity:new-solid' width={45} height={45} color='blue' />
 				</IconButton>
+			</Box>
+		}
+
+		{fieldDifferences.moved &&
+			<Box component='span' sx={{ position: 'absolute', top: 5, left: 5 }}>
+				<Tooltip title={`This was moved from index: ${fieldDifferences.moved.path[fieldDifferences.moved.path.length - 1]}`}>
+					<Icon icon='material-symbols:move-down' width={35} height={35} color='blue' />
+
+				</Tooltip>
 			</Box>
 		}
 
