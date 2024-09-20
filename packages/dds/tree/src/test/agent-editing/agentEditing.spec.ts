@@ -77,8 +77,14 @@ describe("toDecoratedJson", () => {
 	it("handles non-POJO mode arrays", () => {
 		const sf = new SchemaFactory("testSchema");
 		class NamedArray extends sf.array("Vector", sf.number) {}
-		const hydratedObject = hydrate(NamedArray, new NamedArray([1, 2, 3]));
-		assert.equal(toDecoratedJson(hydratedObject).stringified, JSON.stringify([1, 2, 3]));
+		class Root extends sf.object("Root", {
+			arr: NamedArray,
+		}) {}
+		const hydratedObject = hydrate(Root, new Root({ arr: [1, 2, 3] }));
+		assert.equal(
+			toDecoratedJson(hydratedObject).stringified,
+			JSON.stringify({ __fluid_objectId: 0, arr: [1, 2, 3] }),
+		);
 	});
 });
 

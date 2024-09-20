@@ -179,4 +179,8 @@ export {
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 // FHL
-export { generateTreeEdits, initializeOpenAIClient } from "./agent-editing/index.js";
+export {
+	generateTreeEdits,
+	type GenerateTreeEditsOptions,
+	initializeOpenAIClient,
+} from "./agent-editing/index.js";

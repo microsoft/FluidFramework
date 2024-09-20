@@ -138,7 +138,8 @@ describe.skip("Agent Editing Integration", () => {
 			sessionsPerDay: 2,
 		});
 		const openAIClient = initializeOpenAIClient();
-		await generateTreeEdits(openAIClient, view, prompt);
+		const abortController = new AbortController();
+		await generateTreeEdits({ openAIClient, treeView: view, prompt, abortController });
 
 		const k = KLUDGE;
 		console.log(k);
