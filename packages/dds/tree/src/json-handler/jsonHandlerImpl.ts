@@ -973,7 +973,7 @@ const completePrimitive = (
 		handler instanceof AtomicStringHandlerImpl
 	) {
 		handler.complete(value as string, partialParent);
-	} else if (handler instanceof AtomicNumberHandlerImpl) { 
+	} else if (handler instanceof AtomicNumberHandlerImpl) {
 		handler.complete(value as number, partialParent);
 	} else if (handler instanceof AtomicBooleanHandlerImpl) {
 		handler.complete(value as boolean, partialParent);
