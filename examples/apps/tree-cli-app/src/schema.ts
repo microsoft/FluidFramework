@@ -19,7 +19,7 @@ class Point extends schemaBuilder.object("Point", {
  * Complex list item.
  */
 export class Item extends schemaBuilder.object("Item", {
-	location: Point,
+	position: schemaBuilder.required(Point, { key: "location" }),
 	name: schemaBuilder.string,
 }) {}
 

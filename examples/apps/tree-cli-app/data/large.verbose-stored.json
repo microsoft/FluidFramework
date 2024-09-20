@@ -14,7 +14,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -24,7 +24,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -34,7 +34,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -44,7 +44,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -54,7 +54,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -64,7 +64,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -74,7 +74,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -84,7 +84,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -94,7 +94,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -104,7 +104,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -114,7 +114,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -124,7 +124,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -134,7 +134,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -144,7 +144,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -154,7 +154,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -164,7 +164,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -174,7 +174,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -184,7 +184,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -194,7 +194,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -204,7 +204,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -214,7 +214,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -224,7 +224,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -234,7 +234,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -244,7 +244,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -254,7 +254,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -264,7 +264,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -274,7 +274,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -284,7 +284,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -294,7 +294,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -304,7 +304,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -314,7 +314,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -324,7 +324,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -334,7 +334,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -344,7 +344,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -354,7 +354,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -364,7 +364,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -374,7 +374,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -384,7 +384,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -394,7 +394,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -404,7 +404,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -414,7 +414,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -424,7 +424,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -434,7 +434,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -444,7 +444,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -454,7 +454,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -464,7 +464,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -474,7 +474,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -484,7 +484,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -494,7 +494,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -504,7 +504,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -514,7 +514,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -524,7 +524,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -534,7 +534,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -544,7 +544,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -554,7 +554,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -564,7 +564,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -574,7 +574,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -584,7 +584,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -594,7 +594,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -604,7 +604,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -614,7 +614,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -624,7 +624,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -634,7 +634,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -644,7 +644,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -654,7 +654,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -664,7 +664,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -674,7 +674,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -684,7 +684,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -694,7 +694,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -704,7 +704,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -714,7 +714,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -724,7 +724,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -734,7 +734,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -744,7 +744,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -754,7 +754,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -764,7 +764,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -774,7 +774,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -784,7 +784,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -794,7 +794,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -804,7 +804,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -814,7 +814,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -824,7 +824,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -834,7 +834,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -844,7 +844,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -854,7 +854,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -864,7 +864,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -874,7 +874,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -884,7 +884,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -894,7 +894,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -904,7 +904,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -914,7 +914,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -924,7 +924,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -934,7 +934,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -944,7 +944,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -954,7 +954,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -964,7 +964,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -974,7 +974,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -984,7 +984,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -994,7 +994,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},
@@ -1004,7 +1004,7 @@
 		{
 			"type": "com.fluidframework.example.cli.Item",
 			"fields": {
-				"position": {
+				"location": {
 					"type": "com.fluidframework.example.cli.Point",
 					"fields": { "x": 0, "y": 0 }
 				},

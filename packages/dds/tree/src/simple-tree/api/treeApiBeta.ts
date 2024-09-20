@@ -218,20 +218,17 @@ export const TreeBeta: {
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
 	 */
-	exportConcise<T>(
+	exportConcise<THandle>(
 		node: TreeNode | TreeLeafValue,
-		options?: {
-			handleConverter(handle: IFluidHandle): T;
-			readonly useStableFieldKeys?: boolean;
-		},
-	): ConciseTree<T>;
+		options?: EncodeOptions<THandle>,
+	): ConciseTree<THandle>;
 
 	/**
 	 * Same as generic overload, except leaves handles as is.
 	 */
 	exportConcise(
 		node: TreeNode | TreeLeafValue,
-		options?: { handleConverter?: undefined; useStableFieldKeys?: boolean },
+		options?: Partial<EncodeOptions<IFluidHandle>>,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -262,6 +259,9 @@ export const TreeBeta: {
 	 * Export the content of the provided `tree` in a compressed JSON compatible format.
 	 * @remarks
 	 * If an `idCompressor` is provided, it will be used to compress identifiers and thus will be needed to decompress the data.
+	 *
+	 * Always uses "stored" keys.
+	 * See {@link EncodeOptions.useStoredKeys} for details.
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
@@ -310,10 +310,7 @@ export const TreeBeta: {
 
 	exportConcise<T>(
 		node: TreeNode | TreeLeafValue,
-		options?: {
-			handleConverter?(handle: IFluidHandle): T;
-			readonly useStableFieldKeys?: boolean;
-		},
+		options?: Partial<EncodeOptions<T>>,
 	): JsonCompatible<T> {
 		const config: EncodeOptions<T> = {
 			valueConverter(handle: IFluidHandle): T {

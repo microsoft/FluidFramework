@@ -60,6 +60,11 @@ export function loadDocument(source: string | undefined): List {
 		case "verbose": {
 			return TreeBeta.importVerbose(List, fileData as VerboseTree);
 		}
+		case "verbose-stored": {
+			return TreeBeta.importVerbose(List, fileData as VerboseTree, {
+				useStoredKeys: true,
+			});
+		}
 		case "compressed": {
 			const content: ViewContent = {
 				schema: extractPersistedSchema(List),
@@ -125,6 +130,12 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		case "verbose": {
 			return TreeBeta.exportVerbose(tree) as JsonCompatible;
 		}
+		case "concise-stored": {
+			return TreeBeta.exportConcise(tree, { useStoredKeys: true }) as JsonCompatible;
+		}
+		case "verbose-stored": {
+			return TreeBeta.exportVerbose(tree, { useStoredKeys: true }) as JsonCompatible;
+		}
 		case "compressed": {
 			return TreeBeta.exportCompressed(tree, {
 				...options,
@@ -173,7 +184,7 @@ export function applyEdit(edits: string, tree: List): void {
 					break;
 				}
 				case "item": {
-					data = { location: { x: 0, y: 0 }, name: "item" };
+					data = { position: { x: 0, y: 0 }, name: "item" };
 					break;
 				}
 				default: {
