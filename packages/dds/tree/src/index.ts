@@ -177,3 +177,6 @@ export {
 // These would be put in `internalTypes` except doing so tents to cause errors like:
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
+
+// FHL
+export { generateTreeEdits, initializeOpenAIClient } from "./agent-editing/index.js";

@@ -8,7 +8,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/api/index.js";
 import { getView } from "../utils.js";
 import {
-	applyGeneratedEdits,
+	generateTreeEdits,
 	initializeOpenAIClient,
 	KLUDGE,
 } from "../../agent-editing/index.js";
@@ -101,9 +101,9 @@ describe("Agent Editing Integration", () => {
 			],
 			sessionsPerDay: 2,
 		});
-		const context = initializeOpenAIClient(view);
+		const client = initializeOpenAIClient();
 		try {
-			await applyGeneratedEdits(context, prompt);
+			await generateTreeEdits(client, view, prompt);
 		} catch (e) {
 			const k = KLUDGE;
 			console.log(k);

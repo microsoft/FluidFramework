@@ -20,17 +20,15 @@ import { createResponseHandler } from "../json-handler/index.js";
 export { getSystemPrompt } from "./promptGeneration.js";
 export { getResponse } from "./llmClient.js";
 
-export interface OpenAIContext<TSchema extends ImplicitFieldSchema> {
-	readonly client: AzureOpenAI;
-	readonly tree: TreeView<TSchema>;
-}
-
 /**
  * Prompts the provided LLM client to generate valid tree edits.
  * Applies those edits to the provided tree branch before returning.
+ *
+ * @internal
  */
-export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
-	{ client, tree }: OpenAIContext<TSchema>,
+export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
+	client: AzureOpenAI,
+	tree: TreeView<TSchema>,
 	prompt: string,
 ): Promise<void> {
 	const { systemPrompt, decoratedTreeJson } = getSystemPrompt(tree);
@@ -80,11 +78,19 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 
 export let KLUDGE = "";
 
-// TODO
-// Depends on particular env variables
-export function initializeOpenAIClient<TSchema extends ImplicitFieldSchema>(
-	tree: TreeView<TSchema>,
-): OpenAIContext<TSchema> {
+/**
+ * Creates an OpenAI Client session.
+ * Depends on the following environment variables:
+ *
+ * - AZURE_OPENAI_API_KEY
+ *
+ * - AZURE_OPENAI_ENDPOINT
+ *
+ * - AZURE_OPENAI_DEPLOYMENT
+ *
+ * @internal
+ */
+export function initializeOpenAIClient(): AzureOpenAI {
 	/* TODOs:
 	1. Update the signature to take a TreeView<ImplicitFieldSchema>.
 	2. Update body to call getSystemPrompt, cleanup imports/exports.
@@ -107,15 +113,10 @@ export function initializeOpenAIClient<TSchema extends ImplicitFieldSchema>(
 		throw new Error("AZURE_OPENAI_DEPLOYMENT environment variable not set");
 	}
 
-	const client = new AzureOpenAI({
+	return new AzureOpenAI({
 		endpoint,
 		deployment,
 		apiKey,
 		apiVersion: "2024-08-01-preview",
 	});
-
-	return {
-		client,
-		tree,
-	};
 }
