@@ -6,6 +6,7 @@
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { useEffect, useState } from "react";
 import { IFluidContainer, type ContainerSchema } from "@fluidframework/fluid-static";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/alpha";
 
 let FLUID_CLIENT: TinyliciousClient;
 
@@ -43,7 +44,7 @@ function getClient() {
 // 	return { container: res.container, sharedTree };
 // }
 
-async function createNewFluidContainerV2<T extends ContainerSchema, V>(
+export async function createNewFluidContainerV2<T extends ContainerSchema, V>(
 	containerSchema: T,
 	initializeFunction: (container: IFluidContainer<T>) => V,
 ) {
@@ -58,7 +59,7 @@ async function createNewFluidContainerV2<T extends ContainerSchema, V>(
 	return { id, container, data: intialData };
 }
 
-async function getExistingFluidContainerV2<T extends ContainerSchema, V>(
+export async function getExistingFluidContainerV2<T extends ContainerSchema, V>(
 	id: string,
 	containerSchema: T,
 	getExistingData: (container: IFluidContainer<T>) => V,
@@ -83,6 +84,7 @@ export function useFluidContainer<T extends ContainerSchema, V>(
 	initalContainerId: string | null,
 	initializeFunction: (container: IFluidContainer<T>) => V,
 	getExistingData: (container: IFluidContainer<T>) => V,
+	useDevtools: boolean = false,
 ) {
 	const [containerId, setContainerId] = useState<string | null>(initalContainerId);
 	const [container, setContainer] = useState<IFluidContainer<T>>();
@@ -102,6 +104,19 @@ export function useFluidContainer<T extends ContainerSchema, V>(
 					);
 					setContainer(container);
 					setData(data);
+
+					if (useDevtools) {
+						const devtoolsLogger = createDevtoolsLogger();
+						initializeDevtools({
+							logger: devtoolsLogger,
+							initialContainers: [
+								{
+									container,
+									containerKey: "My Container",
+								},
+							],
+						});
+					}
 				};
 				init();
 			} else {
@@ -113,6 +128,19 @@ export function useFluidContainer<T extends ContainerSchema, V>(
 					setContainer(container);
 					setContainerId(id);
 					setData(data);
+
+					if (useDevtools) {
+						const devtoolsLogger = createDevtoolsLogger();
+						initializeDevtools({
+							logger: devtoolsLogger,
+							initialContainers: [
+								{
+									container,
+									containerKey: "My Container",
+								},
+							],
+						});
+					}
 				};
 				init();
 			}

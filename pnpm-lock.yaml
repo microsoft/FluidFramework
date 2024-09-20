@@ -7059,6 +7059,9 @@ importers:
       '@emotion/styled':
         specifier: ^11.13.0
         version: 11.13.0(@emotion/react@11.13.3)(@types/react@17.0.71)(react@18.3.1)
+      '@fluid-experimental/fluid-llm':
+        specifier: workspace:~
+        version: link:../fluid-llm
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
@@ -7110,6 +7113,9 @@ importers:
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -7122,19 +7128,22 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.44.0
-        version: 0.44.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        version: 0.44.0(@types/node@18.19.1)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.44.0
         version: 0.44.0
+      '@fluidframework/devtools':
+        specifier: workspace:^
+        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
+        version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.1)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -7144,6 +7153,9 @@ importers:
       '@types/react':
         specifier: ^17.0.44
         version: 17.0.71
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.7
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -16831,7 +16843,6 @@ packages:
     dependencies:
       '@babel/highlight': 7.24.2
       picocolors: 1.1.0
-    dev: true
 
   /@babel/compat-data@7.24.4:
     resolution: {integrity: sha512-vg8Gih2MLK+kOkHJp4gBEIkyaIi00jgWot2D9QOmmfLC8jINSOzmCLta6Bvz/JSBCqnegV0L80jhxkol5GWNfQ==}
@@ -16961,7 +16972,6 @@ packages:
       chalk: 2.4.2
       js-tokens: 4.0.0
       picocolors: 1.1.0
-    dev: true
 
   /@babel/parser@7.24.4:
     resolution: {integrity: sha512-zTvEBcghmeBma9QIGunWevvBAp4/Qu9Bdq+2k0Ot4fVMD6v3dsC9WOcRSKk7tRRyBM/53yKMJko9xOatGQAwSg==}
@@ -19609,23 +19619,6 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-tools/version-tools@0.43.0-285387:
-    resolution: {integrity: sha512-+8bWXNm7VudPVYWRM371SJBZH5MiqdOnf0NwT0N5dIsMP2pZ7Weg2mgg6j9EFr8khTVwZYNiUx8T03/oH8V9+Q==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@oclif/core': 4.0.17
-      '@oclif/plugin-autocomplete': 3.1.11
-      '@oclif/plugin-commands': 4.0.10
-      '@oclif/plugin-help': 6.2.7
-      '@oclif/plugin-not-found': 3.2.14
-      chalk: 2.4.2
-      semver: 7.6.3
-      table: 6.8.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
   /@fluid-tools/version-tools@0.44.0:
     resolution: {integrity: sha512-Oae0rdx+f2vVyFdPZi+t0ABgJZMaljbLfiMY2ejyL5Bt/T0QSkOEHS6Z5qPsg+Y5N15re53Vwck4S/Ybfjw+jA==}
     engines: {node: '>=18.17.1'}
@@ -19794,38 +19787,6 @@ packages:
   /@fluidframework/build-common@2.0.3:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
-    dev: true
-
-  /@fluidframework/build-tools@0.43.0-285387:
-    resolution: {integrity: sha512-87oCiv5gqdlpBqOSOF2wXE7JqlzAQH1s987LN9eqO4ltRl8mL/TQOE+A/CJR/IC5g0kR76MJpTRUoCYhQk/LAw==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.43.0-285387
-      '@manypkg/get-packages': 2.2.0
-      async: 3.2.5
-      chalk: 2.4.2
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      date-fns: 2.30.0
-      debug: 4.3.6(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 11.2.0
-      glob: 7.2.3
-      ignore: 5.3.0
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      picomatch: 2.3.1
-      rimraf: 4.4.1
-      semver: 7.6.3
-      sort-package-json: 1.57.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.4.5
-      yaml: 2.3.4
-    transitivePeerDependencies:
-      - supports-color
     dev: true
 
   /@fluidframework/build-tools@0.44.0:
@@ -23472,7 +23433,7 @@ packages:
     resolution: {integrity: sha512-9iVaCrRPkyE/n5v+S+gIAtvlNWMe3KQgGufkn8IVuKyvy7J48gpf0y7VKyL9hySjdwwCl+63vFdttkl6Yb7Ffg==}
     dependencies:
       assert-never: 1.2.1
-      chokidar: 3.5.3
+      chokidar: 3.6.0
       fs-extra: 11.2.0
     dev: true
 
@@ -32289,7 +32250,6 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
-    dev: true
 
   /jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}

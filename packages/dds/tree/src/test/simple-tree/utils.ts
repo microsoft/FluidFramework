@@ -30,9 +30,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import type { ITreeCheckoutFork } from "../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/index.js";
 
 /**

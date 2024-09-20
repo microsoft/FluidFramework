@@ -1,19 +1,27 @@
 'use client';
 
 import { editTask } from "@/actions/task";
-import { SharedTreeEngineerList, SharedTreeTask, SharedTreeTaskGroup } from "@/types/sharedTreeAppSchema";
+import { branch, SharedTreeBranchManager, type Difference } from "@fluid-experimental/fluid-llm"
+import { SharedTreeEngineerList, SharedTreeTask, SharedTreeTaskGroup, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
 import { TaskPriorities, TaskStatuses, type Task, type TaskPriority } from "@/types/task";
-import { Tree } from "@fluidframework/tree";
+import { Tree, type TreeView } from "@fluidframework/tree";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Box, Button, Card, CircularProgress, Divider, FormControl, IconButton, InputLabel, MenuItem, Popover, Select, Stack, TextField, Typography } from "@mui/material";
 import { LoadingButton } from '@mui/lab';
 import { useEffect, useState } from "react";
 
-export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, sharedTreeTask: SharedTreeTask, engineers: SharedTreeEngineerList }) {
+export function TaskCard(props: {
+	sharedTreeBranch?: TreeView<typeof SharedTreeAppState>,
+	branchDifferences?: Difference[],
+	sharedTreeTaskGroup: SharedTreeTaskGroup,
+	sharedTreeTask: SharedTreeTask,
+}) {
+
+	if (props.branchDifferences) {
+		console.log(`Task id ${props.sharedTreeTask.id} recieved branchDifferences: `, props.branchDifferences);
+	}
 
 	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | null>(null);
-
-	const [engineers, setEngineers] = useState<SharedTreeEngineerList>(props.engineers);
 
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 
@@ -41,10 +49,15 @@ export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, shar
 
 	const task = props.sharedTreeTask;
 
+	const fieldDifferences = { changes: {} as Record<string, Difference> };
+	for (const diff of props.branchDifferences ?? []) {
+		if (diff.type === 'CHANGE') {
+			fieldDifferences.changes[diff.path[diff.path.length - 1]] = diff;
+		}
+	}
+
 	return <Card sx={{
 		p: 4, position: 'relative', width: '100%',
-
-
 	}} key={`${task.title}`}>
 
 		<Box component='span' sx={{ position: 'absolute', top: 0, right: 0 }}>
@@ -84,12 +97,29 @@ export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, shar
 								setIsAiTaskRunning(true);
 								const resp = await editTask({ ...task } as Task, query);
 								setIsAiTaskRunning(false);
+
+								// METHOD 1: Overwrite the entire task object
+								// if (resp.success) {
+								// 	// We don't know what exactly changed, So we just update everything.
+								// 	props.sharedTreeTask.description = resp.data.description;
+								// 	props.sharedTreeTask.priority = resp.data.priority;
+								// 	props.sharedTreeTask.status = resp.data.status
+								// }
+
+								// METHOD 2: Update only the changed fields using a merge function
 								if (resp.success) {
-									// We don't know what exactly changed, So we just update everything.
-									props.sharedTreeTask.description = resp.data.description;
-									props.sharedTreeTask.priority = resp.data.priority;
-									props.sharedTreeTask.status = resp.data.status
+									const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: 'id' });
+									branchManager.merge(props.sharedTreeTask as unknown as Record<string, unknown>, resp.data as unknown as Record<string, unknown>);
 								}
+
+								// METHOD 3: Update only the changed fields into a new branch of the data
+								// if (resp.success) {
+								// 	const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: 'id' });
+								// 	const { differences, newBranch, newBranchTargetNode } = branchManager.checkoutNewMergedBranch(props.sharedTreeBranch, [], resp.data as unknown as Record<string, unknown>);
+								// 	// Do something with the new branch, like a preview.
+								// 	console.log('newBranch: ', newBranch);
+								// 	console.log('newBranchTargetNode: ', { ...newBranchTargetNode });
+								// }
 							}}
 						>
 							<TextField
@@ -156,6 +186,11 @@ export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, shar
 							onChange={(e) => {
 								props.sharedTreeTask.priority = e.target.value as TaskPriority;
 							}}
+							inputProps={{
+								sx: {
+									backgroundColor: fieldDifferences.changes['priority'] ? '#a4dbfc' : 'white'
+								}
+							}}
 							size="small"
 						>
 							<MenuItem value={TaskPriorities.LOW} key={TaskPriorities.LOW}>
@@ -169,7 +204,6 @@ export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, shar
 							</MenuItem>
 						</Select>
 					</FormControl>
-
 				</Stack>
 
 				<Stack direction='row' spacing={1} alignItems='center'>
@@ -216,13 +250,18 @@ export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, shar
 							label="Assignee"
 							onChange={(e) => props.sharedTreeTask.assignee = e.target.value as string}
 							size="small"
+							inputProps={{
+								sx: {
+									backgroundColor: fieldDifferences.changes['assignee'] ? '#a4dbfc' : 'white'
+								}
+							}}
 						>
 
 							<MenuItem value={'UNASSIGNED'}>
 								<Typography> Unassigned </Typography>
 							</MenuItem>
 							{
-								engineers.map(engineer =>
+								props.sharedTreeTaskGroup.engineers.map(engineer =>
 									<MenuItem value={engineer.name} key={engineer.name}>
 										<Typography> {engineer.name} </Typography>
 									</MenuItem>
@@ -239,6 +278,13 @@ export function TaskCard(props: { sharedTreeTaskGroup: SharedTreeTaskGroup, shar
 							label='Complexity'
 							value={task.complexity}
 							size="small"
+							slotProps={{
+								htmlInput: {
+									sx: {
+										backgroundColor: fieldDifferences.changes['complexity'] ? '#a4dbfc' : 'white'
+									}
+								}
+							}}
 						/>
 					</FormControl>
 				</Stack>

@@ -12,7 +12,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskGroup } from "@/components/TaskGroup";
-import { Tree } from "@fluidframework/tree";
+import { Tree, type TreeView } from "@fluidframework/tree";
+import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 
 
@@ -22,6 +23,7 @@ export default function TasksListPage() {
 
 	const [taskGroups, setTaskGroups] = useState<SharedTreeTaskGroupList>();
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
+	const [sharedTreeBranch, setSharedTreeBranch] = useState<TreeView<typeof SharedTreeAppState>>();
 
 	const { container, containerId, isFluidInitialized, data } = useFluidContainer(
 		CONTAINER_SCHEMA,
@@ -30,11 +32,13 @@ export default function TasksListPage() {
 		(container) => {
 			const sharedTree = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			sharedTree.initialize(new SharedTreeAppState(INITIAL_APP_STATE));
+			setSharedTreeBranch(sharedTree);
 			return { sharedTree };
 		},
 		// initialize from existing container
 		(container) => {
 			const sharedTree = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+			setSharedTreeBranch(sharedTree);
 			return { sharedTree };
 		}
 	);
@@ -49,7 +53,12 @@ export default function TasksListPage() {
 	const [forceReRender, setForceReRender] = useState<number>(0);
 	useEffect(() => {
 		if (isFluidInitialized === true && data !== undefined) {
+
+			// const forceRerender = useSharedTreeRerender({ sharedTreeNode: data.sharedTree.root.taskGroups });
+
 			setTaskGroups(data.sharedTree.root.taskGroups);
+
+			// initialize selected task group
 			if (data.sharedTree.root.taskGroups.length > 0) {
 				setSelectedTaskGroup(data.sharedTree.root.taskGroups[0]);
 			}
@@ -64,7 +73,7 @@ export default function TasksListPage() {
 				listenerStopFunction();
 			};
 		}
-	}, [container]);
+	}, [container,]);
 
 	return (
 		<Container sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }} maxWidth={'lg'}>
@@ -95,7 +104,7 @@ export default function TasksListPage() {
 					</Button>
 				</Stack>
 
-				<TaskGroup sharedTreeTaskGroup={selectedTaskGroup} />
+				<TaskGroup sharedTreeBranch={sharedTreeBranch} sharedTreeTaskGroup={selectedTaskGroup} />
 			</React.Fragment>
 			}
 		</Container >
