@@ -85,6 +85,7 @@ describe("applyAgentEdit", () => {
 			});
 
 			const setRootEdit: TreeEdit = {
+				explanation: "Set root to object",
 				type: "setRoot",
 				content: {
 					[typeField]: RootObjectPolymorphic.identifier,
@@ -135,6 +136,7 @@ describe("applyAgentEdit", () => {
 			view.initialize(1);
 
 			const setRootEdit: TreeEdit = {
+				explanation: "Set root to 2",
 				type: "setRoot",
 				content: 2,
 			};
@@ -174,6 +176,7 @@ describe("applyAgentEdit", () => {
 			nodeMap.set(0, vectorNode as Vector);
 
 			const insertEdit: TreeEdit = {
+				explanation: "Insert a vector",
 				type: "insert",
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
@@ -185,6 +188,7 @@ describe("applyAgentEdit", () => {
 			applyAgentEdit(view, insertEdit, nodeMap, simpleSchema.definitions);
 
 			const insertEdit2: TreeEdit = {
+				explanation: "Insert a vector",
 				type: "insert",
 				content: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 				destination: {
@@ -347,6 +351,7 @@ describe("applyAgentEdit", () => {
 			nodeMap.set(0, vectorNode);
 
 			const insertEdit: TreeEdit = {
+				explanation: "Insert a vector",
 				type: "insert",
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
@@ -477,6 +482,7 @@ describe("applyAgentEdit", () => {
 		nodeMap.set(0, view.root as TreeNode);
 
 		const modifyEdit: TreeEdit = {
+			explanation: "Modify a vector",
 			type: "modify",
 			target: { __fluid_objectId: 0 },
 			field: "vectors",
@@ -488,6 +494,7 @@ describe("applyAgentEdit", () => {
 		applyAgentEdit(view, modifyEdit, nodeMap, simpleSchema.definitions);
 
 		const modifyEdit2: TreeEdit = {
+			explanation: "Modify a vector",
 			type: "modify",
 			target: { __fluid_objectId: 0 },
 			field: "bools",
@@ -498,6 +505,7 @@ describe("applyAgentEdit", () => {
 		nodeMap.set(1, (view.root as RootObjectPolymorphic).vectors[0] as Vector);
 
 		const modifyEdit3: TreeEdit = {
+			explanation: "Modify a vector",
 			type: "modify",
 			target: { __fluid_objectId: 1 },
 			field: "x",
@@ -630,6 +638,7 @@ describe("applyAgentEdit", () => {
 			nodeMap.set(1, view.root);
 
 			const moveEdit: TreeEdit = {
+				explanation: "Move a vector",
 				type: "move",
 				source: { [objectIdKey]: 0 },
 				destination: {
@@ -693,6 +702,7 @@ describe("applyAgentEdit", () => {
 			nodeMap.set(2, view.root);
 
 			const moveEdit: TreeEdit = {
+				explanation: "Move a vector",
 				type: "move",
 				source: {
 					from: {

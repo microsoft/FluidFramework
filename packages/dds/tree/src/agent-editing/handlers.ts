@@ -85,6 +85,7 @@ const rangeHandler = jh.object(() => ({
 export function generateHandlers(
 	view: TreeView<ImplicitFieldSchema>,
 	nodeMap: Map<number, TreeNode>,
+	complete: (jsonObject: JsonObject) => void,
 ): StreamedType {
 	const schema = normalizeFieldSchema(view.schema);
 	const simpleSchema = getSimpleSchema(schema.allowedTypes);
@@ -107,6 +108,7 @@ export function generateHandlers(
 	const setRootHandler = jh.object(() => ({
 		description: "A handler for setting content to the root of the tree.",
 		properties: {
+			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["setRoot"] }),
 			content: jh.anyOf(
 				Array.from(
@@ -125,6 +127,7 @@ export function generateHandlers(
 	const insertHandler = jh.object(() => ({
 		description: "A handler for inserting new content into the tree.",
 		properties: {
+			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["insert"] }),
 			content: jh.anyOf(
 				Array.from(insertSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
@@ -140,6 +143,7 @@ export function generateHandlers(
 	const removeHandler = jh.object(() => ({
 		description: "A handler for removing content from the tree.",
 		properties: {
+			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["remove"] }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 		},
@@ -150,8 +154,9 @@ export function generateHandlers(
 	}));
 
 	const modifyHandler = jh.object(() => ({
-		description: "A handler for inserting new content into the tree.",
+		description: "A handler for modifying content in the tree.",
 		properties: {
+			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["modify"] }),
 			target: objectTargetHandler(),
 			field: jh.enum({ values: Array.from(modifyFieldSet) }),
@@ -169,6 +174,7 @@ export function generateHandlers(
 		description:
 			"A handler for moving content from one location in the tree to another location in the tree.",
 		properties: {
+			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["move"] }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
@@ -179,23 +185,31 @@ export function generateHandlers(
 		},
 	}));
 
-	const edits = jh.array(() => ({
-		description: "A list of sequential edits to apply to the tree.",
-		items: jh.anyOf([
-			setRootHandler(),
-			insertHandler(),
-			modifyHandler(),
-			removeHandler(),
-			moveHandler(),
-		]),
+	const editWrapper = jh.object(() => ({
+		// description:
+		// 	"The next edit to apply to the tree, or null if the task is complete and no more edits are necessary.",
+		properties: {
+			edit: jh.anyOf([
+				setRootHandler(),
+				insertHandler(),
+				modifyHandler(),
+				removeHandler(),
+				moveHandler(),
+				jh.null(),
+			]),
+		},
+		complete,
 	}));
 
 	return jh.object(() => ({
 		properties: {
-			edits: edits(),
+			edit: editWrapper(),
 		},
 	}))();
 }
+
+const editDescription =
+	"A description of what this edit is meant to accomplish in human readable English";
 
 function getOrCreateHandler(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,

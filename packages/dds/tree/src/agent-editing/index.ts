@@ -16,7 +16,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
 import { getSystemPrompt } from "./promptGeneration.js";
 import { generateHandlers } from "./handlers.js";
-import { createResponseHandler } from "../json-handler/index.js";
+import {
+	createResponseHandler,
+	type JsonObject,
+	type StreamedType,
+} from "../json-handler/index.js";
+import type { EditWrapper } from "./agentEditTypes.js";
 
 export { getSystemPrompt } from "./promptGeneration.js";
 export { getResponse } from "./llmClient.js";
@@ -39,17 +44,47 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
  *
  * @internal
  */
-export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>({
-	openAIClient,
-	treeView,
-	prompt,
-	abortController,
-}: GenerateTreeEditsOptions<TSchema>): Promise<void> {
-	const { systemPrompt, decoratedTreeJson } = getSystemPrompt(treeView);
+export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
+	options: GenerateTreeEditsOptions<TSchema>,
+): Promise<void> {
+	const log: string[] = [];
 
-	const editSchema = generateHandlers(treeView, decoratedTreeJson.idMap);
+	async function doNextEdit(): Promise<void> {
+		const { systemPrompt, decoratedTreeJson } = getSystemPrompt(options.treeView, log);
+
+		let done = false;
+
+		const editHandler = generateHandlers(
+			options.treeView,
+			decoratedTreeJson.idMap,
+			(jsonObject: JsonObject) => {
+				const wrapper = jsonObject as unknown as EditWrapper;
+				if (wrapper.edit !== null) {
+					console.log(wrapper.edit.explanation);
+					log.push(wrapper.edit.explanation);
+				} else {
+					done = true;
+				}
+			},
+		);
+
+		return doEdit(systemPrompt, editHandler, options).then(async () => {
+			if (!done) {
+				await doNextEdit();
+			}
+		});
+	}
+
+	return doNextEdit();
+}
+
+async function doEdit<TSchema extends ImplicitFieldSchema>(
+	systemPrompt: string,
+	editHandler: StreamedType,
+	{ openAIClient, prompt, abortController }: GenerateTreeEditsOptions<TSchema>,
+): Promise<void> {
 	const responseHandler = createResponseHandler(
-		editSchema,
+		editHandler,
 		abortController ?? new AbortController(),
 	);
 

@@ -34,14 +34,20 @@ export interface TreeEditObject {
 export type TreeEditArray = TreeEditValue[];
 export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
 
+export interface Root {
+	wrapper: EditWrapper;
+}
+
 // For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
 export interface EditWrapper {
-	edits: TreeEdit[];
+	// eslint-disable-next-line @rushstack/no-new-null
+	edit: TreeEdit | null;
 }
 
 export type TreeEdit = SetRoot | Insert | Modify | Remove | Move;
 
 export interface Edit {
+	explanation: string;
 	type: "setRoot" | "insert" | "modify" | "remove" | "move";
 }
 
