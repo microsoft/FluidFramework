@@ -43,6 +43,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/schemaTypes.js";
 import { Tree } from "../shared-tree/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 export const typeField = "__fluid_type";
 
@@ -65,6 +66,15 @@ export function getJsonValidator<TSchema extends ImplicitFieldSchema>(
 		allErrors: true,
 	});
 	return ajv.compile(jsonSchema);
+}
+
+export function assertValidContent<TSchema>(
+	content: JsonValue,
+	validator: (data: unknown) => data is TSchema,
+): void {
+	if (!validator(content)) {
+		throw new UsageError("invalid data with schema");
+	}
 }
 
 function populateDefaults(
@@ -111,13 +121,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			populateDefaults(treeEdit.content, definitionMap);
 
 			const treeSchema = tree.schema;
-			const validator = getJsonValidator(tree.schema);
+
 			// If it's a primitive, just validate the content and set
 			if (isPrimitive(treeEdit.content)) {
-				if (validator(treeEdit.content)) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(tree as any).root = treeEdit.content;
-				}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(tree as any).root = treeEdit.content;
 			} else if (treeSchema instanceof FieldSchema) {
 				if (treeSchema.kind === FieldKind.Optional && treeEdit.content === undefined) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,10 +139,8 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 									dummy: unknown,
 								) => TreeNode;
 								const rootNode = new simpleNodeSchema(treeEdit.content);
-								if (validator(rootNode)) {
-									// eslint-disable-next-line @typescript-eslint/no-explicit-any
-									(tree as any).root = rootNode;
-								}
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								(tree as any).root = rootNode;
 							} else {
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								(tree as any).root = treeEdit.content;
@@ -220,8 +226,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
-				const validator = getJsonValidator(fieldSchema);
-				validator(modification);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(node as any)[treeEdit.field] = modification;
 			}
@@ -229,8 +233,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			else if (typeof fieldSchema === "function") {
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
 				populateDefaults(modification, definitionMap);
-				const validator = getJsonValidator(fieldSchema);
-				validator(modification);
 
 				if (Array.isArray(modification)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -276,6 +278,40 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			break;
 		}
 		case "move": {
+			const source = treeEdit.source;
+			const destination = treeEdit.destination;
+			const { node: destinationNode, index: destinationIndex } = getPlaceInfo(
+				destination,
+				nodeMap,
+			);
+			const destinationArrayNode = Tree.parent(destinationNode) as TreeArrayNode;
+			assert(Array.isArray(destinationArrayNode), "destination must be within an array node");
+			if (isTarget(source)) {
+				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, nodeMap);
+				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
+				assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
+				destinationArrayNode.moveRangeToIndex(
+					destinationIndex,
+					sourceIndex,
+					sourceIndex + 1,
+					sourceArrayNode,
+				);
+			} else if (isRange(source)) {
+				const {
+					startNode: sourceNode,
+					startIndex: sourceStartIndex,
+					endIndex: sourceEndIndex,
+				} = getRangeInfo(source, nodeMap);
+				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
+				assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
+
+				destinationArrayNode.moveRangeToIndex(
+					destinationIndex,
+					sourceStartIndex,
+					sourceEndIndex,
+					sourceArrayNode,
+				);
+			}
 			break;
 		}
 		default:
