@@ -11,12 +11,14 @@ import { fail } from "../util/utils.js";
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import ajvModuleOrClass from "ajv";
-import type {
-	TreeEdit,
-	Target,
-	Selection,
-	Range,
-	Place,
+import {
+	type TreeEdit,
+	type ObjectTarget,
+	type Selection,
+	type Range,
+	type ObjectPlace,
+	objectIdKey,
+	type ArrayPlace,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../agent-editing/agentEditTypes.js";
 import {
@@ -167,11 +169,9 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			break;
 		}
 		case "insert": {
-			const { node, index } = getPlaceInfo(treeEdit.destination, nodeMap);
-			const parentNode = Tree.parent(node);
-			assert(parentNode !== undefined, "parent node must exist");
+			const { array, index } = getPlaceInfo(treeEdit.destination, nodeMap);
 
-			const parentNodeSchema = Tree.schema(parentNode);
+			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
 			const allowedTypes = normalizeAllowedTypes(
@@ -188,7 +188,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 							dummy: unknown,
 						) => TreeNode;
 						const insertNode = new simpleNodeSchema(treeEdit.content);
-						(parentNode as TreeArrayNode).insertAt(index, insertNode);
+						array.insertAt(index, insertNode);
 					}
 				}
 			}
@@ -329,7 +329,7 @@ function isPrimitive(content: unknown): boolean {
 	);
 }
 
-function isTarget(selection: Selection): selection is Target {
+function isTarget(selection: Selection): selection is ObjectTarget {
 	return "objectId" in selection;
 }
 
@@ -345,29 +345,46 @@ interface RangeInfo {
 }
 
 function getRangeInfo(range: Range, nodeMap: Map<number, TreeNode>): RangeInfo {
-	const { node: startNode, index: startIndex } = getPlaceInfo(range.from, nodeMap);
-	const { node: endNode, index: endIndex } = getPlaceInfo(range.to, nodeMap);
+	const { array: startNode, index: startIndex } = getPlaceInfo(range.from, nodeMap);
+	const { array: endNode, index: endIndex } = getPlaceInfo(range.to, nodeMap);
 
 	return { startNode, startIndex, endNode, endIndex };
 }
 
-interface PlaceInfo {
-	node: TreeNode;
+function getPlaceInfo(
+	place: ObjectPlace | ArrayPlace,
+	nodeMap: Map<number, TreeNode>,
+): {
+	array: TreeArrayNode;
 	index: number;
+} {
+	if (place.type === "arrayPlace") {
+		const parent = nodeMap.get(place[objectIdKey]) ?? fail("Expected parent node");
+		const child = (parent as unknown as Record<string, unknown>)[place.field];
+		assert(Array.isArray(child), "Expected child to be an array node");
+		return {
+			array: child as unknown as TreeArrayNode,
+			index: place.location === "start" ? 0 : child.length,
+		};
+	} else {
+		const { node, parentIndex } = getTargetInfo(place, nodeMap);
+		const parent = Tree.parent(node);
+		assert(Array.isArray(parent), "Expected parent to be an array node");
+		return {
+			array: parent as unknown as TreeArrayNode,
+			index: place.place === "before" ? parentIndex : parentIndex + 1,
+		};
+	}
 }
 
-function getPlaceInfo(place: Place, nodeMap: Map<number, TreeNode>): PlaceInfo {
-	const { node, parentIndex } = getTargetInfo(place, nodeMap);
-	return { node, index: place.place === "before" ? parentIndex : parentIndex + 1 };
-}
-
-interface TargetInfo {
+function getTargetInfo(
+	target: ObjectTarget,
+	nodeMap: Map<number, TreeNode>,
+): {
 	node: TreeNode;
 	parentIndex: number;
-}
-
-function getTargetInfo(target: Target, nodeMap: Map<number, TreeNode>): TargetInfo {
-	const node = nodeMap.get(target.objectId);
+} {
+	const node = nodeMap.get(target[objectIdKey]);
 	assert(node !== undefined, "objectId does not exist in nodeMap");
 
 	const parentIndex = getOrCreateInnerNode(node).anchorNode.parentIndex;
