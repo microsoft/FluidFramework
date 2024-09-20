@@ -149,4 +149,4 @@ describe.skip("Agent Editing Integration", () => {
 });
 
 const prompt =
-	"A have a two day Roblox conference with various talks and lectures. Some of the sessions are better suited for children who actually play Roblox, whereas others are more focused on topics for adults. Please organize the sessions so that the topics for children are in the first day and the topics for adults happen on the second day.";
+	"Please add a third day with several sessions about minecraft. Focus specifically on how it competes with roblox and move the session about monetizing to the third day too.";

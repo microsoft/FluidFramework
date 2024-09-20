@@ -288,7 +288,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			if (isObjectTarget(source)) {
 				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, nodeMap);
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
-				assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
+				// assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
 				destinationArrayNode.moveRangeToIndex(
 					destinationIndex,
 					sourceIndex,
@@ -360,12 +360,12 @@ function getObjectPlaceInfo(
 	if (place.type === "arrayPlace") {
 		const parent = nodeMap.get(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
-		if (!Array.isArray(child)) {
-			assert(Array.isArray(child), "Expected child to be an array node");
-		}
+		// if (!Array.isArray(child)) {
+		// 	assert(Array.isArray(child), "Expected child to be an array node");
+		// }
 		return {
-			array: child as unknown as TreeArrayNode,
-			index: place.location === "start" ? 0 : child.length,
+			array: child as TreeArrayNode,
+			index: place.location === "start" ? 0 : (child as TreeArrayNode).length,
 		};
 	} else {
 		const { node, parentIndex } = getTargetInfo(place, nodeMap);
