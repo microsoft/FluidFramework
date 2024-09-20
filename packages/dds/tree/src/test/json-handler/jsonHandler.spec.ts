@@ -3,12 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 // eslint-disable-next-line import/no-internal-modules
 import { createResponseHandler, JsonHandler as jh } from "../../json-handler/jsonHandler.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { JsonObject } from "../../json-handler/jsonParser.js";
 
-const exampleGeneratedEdit = jh.array(() => ({
+import ajvModuleOrClass from "ajv";
+
+// The first case here covers the esm mode, and the second the cjs one.
+// Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
+const Ajv =
+	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(ajvModuleOrClass as any);
+
+const ajv = new Ajv();
+
+const exampleGeneratedSharedTreeEdit = jh.array(() => ({
 	items: jh.anyOf([setRoot(), insert(), modify(), remove(), move()]),
 }));
 
@@ -138,7 +151,7 @@ const remove = jh.object(() => ({
 	},
 }));
 
-const sampleOps = [
+const exampleGeneratedEditResponse = [
 	{
 		type: "setRoot",
 		content: 42,
@@ -209,16 +222,17 @@ const sampleOps = [
 	},
 ];
 
-const opText = JSON.stringify(sampleOps);
+const exampleGeneratedEditResponseText = JSON.stringify(exampleGeneratedEditResponse);
 
 const streamedLlmResponse = (prompt: string, schema: object, abort: AbortController) => {
-	const chunkSize = parseInt(prompt, 10);
+	const { response, chunkSize } = JSON.parse(prompt);
+
 	console.log(`Breaking json into ${chunkSize}-character chunks`);
 
 	return {
 		async *[Symbol.asyncIterator]() {
-			for (let i = 0; i < opText.length; i += chunkSize) {
-				const chunk = opText.slice(i, i + chunkSize);
+			for (let i = 0; i < response.length; i += chunkSize) {
+				const chunk = response.slice(i, i + chunkSize);
 				console.log(chunk);
 				yield chunk;
 			}
@@ -226,21 +240,32 @@ const streamedLlmResponse = (prompt: string, schema: object, abort: AbortControl
 	};
 };
 
-const testHandler = async (chunkSize: number) => {
+const testHandler = async (response: string, chunkSize: number) => {
+	const prompt = JSON.stringify({ response, chunkSize });
+
 	const abortController = new AbortController();
-	const testResponseHandler = createResponseHandler(exampleGeneratedEdit(), abortController);
+	const testResponseHandler = createResponseHandler(
+		exampleGeneratedSharedTreeEdit(),
+		abortController,
+	);
+
+	const responseSchema = testResponseHandler.jsonSchema();
+	try {
+		const validate = ajv.compile(responseSchema);
+		const valid = validate(JSON.parse(response));
+		assert(valid);
+	} catch (e) {
+		assert(false, `Schema compilation failed: ${e}`);
+	}
+
 	await testResponseHandler.processResponse(
-		streamedLlmResponse(
-			chunkSize.toString(),
-			testResponseHandler.jsonSchema(),
-			abortController,
-		),
+		streamedLlmResponse(prompt, responseSchema, abortController),
 	);
 };
 
 describe("JsonHandler", () => {
 	it("Test", async () => {
-		await testHandler(21);
-		await testHandler(27);
+		await testHandler(exampleGeneratedEditResponseText, 21);
+		await testHandler(exampleGeneratedEditResponseText, 27);
 	});
 });
