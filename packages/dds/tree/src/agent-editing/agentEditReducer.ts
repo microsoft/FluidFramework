@@ -40,6 +40,7 @@ import {
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
+// eslint-disable-next-line import/no-internal-modules
 import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 
 export const typeField = "__fluid_type";
