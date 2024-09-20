@@ -195,7 +195,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 		}
 		case "remove": {
 			const source = treeEdit.source;
-			if (isTarget(source)) {
+			if (isObjectTarget(source)) {
 				const { node, parentIndex } = getTargetInfo(source, nodeMap);
 				const parentNode = Tree.parent(node) as TreeArrayNode;
 				parentNode.removeAt(parentIndex);
@@ -279,13 +279,13 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 		case "move": {
 			const source = treeEdit.source;
 			const destination = treeEdit.destination;
-			const { node: destinationNode, index: destinationIndex } = getPlaceInfo(
+			const { array: destinationNode, index: destinationIndex } = getPlaceInfo(
 				destination,
 				nodeMap,
 			);
 			const destinationArrayNode = Tree.parent(destinationNode) as TreeArrayNode;
 			assert(Array.isArray(destinationArrayNode), "destination must be within an array node");
-			if (isTarget(source)) {
+			if (isObjectTarget(source)) {
 				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, nodeMap);
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
 				assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
@@ -328,8 +328,8 @@ function isPrimitive(content: unknown): boolean {
 	);
 }
 
-function isTarget(selection: Selection): selection is ObjectTarget {
-	return "objectId" in selection;
+function isObjectTarget(selection: Selection): selection is ObjectTarget {
+	return "__fluid_objectId" in selection;
 }
 
 function isRange(selection: Selection): selection is Range {
