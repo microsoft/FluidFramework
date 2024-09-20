@@ -1968,39 +1968,47 @@ export const handlers: Handler[] = [
 			return result;
 		},
 	},
+<<<<<<< Updated upstream
+=======
 	{
 		name: "npm-check-unused-dependencies",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			// const depcheckConfigFile = ".depcheckrc";
-			// const configFileAbsPath = path.resolve(path.dirname(file), depcheckConfigFile);
-			const options = {
-				ignoreBinPackage: false, // ignore packages used in the "scripts" section of package.json
-				skipMissing: false, // skip calculation of missing dependencies
-				ignorePatterns: [],
-			};
-			const currentDirectory = path.dirname(file);
+			const depcheckConfigFileName = ".depcheckrc.cjs";
+			const packageDir = path.resolve(path.dirname(file));
+			const depcheckConfigFilePath = path.resolve(
+				path.join(packageDir, depcheckConfigFileName),
+			);
+			const configExists = fs.existsSync(depcheckConfigFilePath);
+			let options: depcheck.Options = {};
+			if (configExists) {
+				try {
+					options = require(depcheckConfigFilePath) as depcheck.Options;
+				} catch (error) {
+					console.log(`Error reading ${depcheckConfigFileName} file:`, error);
+					return;
+				}
+			}
 			try {
-				console.log(`Running depcheck for ${currentDirectory}...`);
-				let logResult = "";
-				await depcheck(currentDirectory, options, (result) => {
-					if (result.dependencies.length === 0 && result.devDependencies.length === 0) {
-						logResult = "No unused dependencies found.";
-					} else {
-						if (result.dependencies.length > 0) {
-							logResult = `Unused dependencies:\n${result.dependencies}`;
-						}
-						if (result.devDependencies.length > 0) {
-							logResult = `Unused devDependencies:\n${result.devDependencies}`;
-						}
-					}
-				});
-				return logResult;
+				const result = await depcheck(packageDir, options);
+				const packageErrors: string[] = [];
+				if (result.dependencies.length > 0) {
+					packageErrors.push(
+						`---Unused dependencies---${newline}${result.dependencies.join(newline)}`,
+					);
+				}
+				if (result.devDependencies.length > 0) {
+					packageErrors.push(
+						`---Unused devDependencies---${newline}${result.devDependencies.join(newline)}`,
+					);
+				}
+				return packageErrors.length > 0 ? `${newline}${packageErrors.join("")}` : undefined;
 			} catch (error) {
-				throw new Error(`Error running depcheck for ${currentDirectory}: ${error}`);
+				return `Error running depcheck for ${packageDir}: ${error}`;
 			}
 		},
 	},
+>>>>>>> Stashed changes
 ];
 
 function missingCleanDirectories(scripts: { [key: string]: string | undefined }): string[] {
