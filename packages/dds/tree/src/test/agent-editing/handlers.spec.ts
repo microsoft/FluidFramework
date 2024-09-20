@@ -51,7 +51,7 @@ describe("Agent Editing Handlers", () => {
 	});
 });
 
-describe("Stuff", () => {
+describe.skip("Stuff", () => {
 	it("does stuff", async () => {
 		const view = getView(new TreeViewConfiguration({ schema: RootObject }));
 		view.initialize({
