@@ -254,6 +254,7 @@ stages:
       - e2e_routerlicious
       - e2e_frs
       - e2e_odsp
+      - e2e_docker
     jobs:
     - job: upload_run_telemetry
       displayName: Upload pipeline run telemetry to Kusto
