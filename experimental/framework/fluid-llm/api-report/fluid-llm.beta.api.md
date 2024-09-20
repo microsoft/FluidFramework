@@ -4,6 +4,94 @@
 
 ```ts
 
+// @public
+export function branch<T extends ImplicitFieldSchema>(treeView: TreeView<T>): TreeView<T>;
+
+// @public
+export function createMergableDiffSeries(diffs: Difference[]): Difference[];
+
+// @public
+export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference[], idAttributeName: string | number): Difference[];
+
+// @public
+export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
+
+// @public
+export interface DifferenceChange {
+    // (undocumented)
+    objectId?: string | number;
+    // (undocumented)
+    oldValue: unknown;
+    // (undocumented)
+    path: ObjectPath;
+    // (undocumented)
+    type: "CHANGE";
+    // (undocumented)
+    value: unknown;
+}
+
+// @public
+export interface DifferenceCreate {
+    // (undocumented)
+    path: ObjectPath;
+    // (undocumented)
+    type: "CREATE";
+    // (undocumented)
+    value: unknown;
+}
+
+// @public
+export interface DifferenceMove {
+    // (undocumented)
+    newIndex: number;
+    // (undocumented)
+    objectId?: string | number;
+    // (undocumented)
+    path: ObjectPath;
+    // (undocumented)
+    type: "MOVE";
+    // (undocumented)
+    value: unknown;
+}
+
+// @public
+export interface DifferenceRemove {
+    // (undocumented)
+    objectId?: string | number;
+    // (undocumented)
+    oldValue: unknown;
+    // (undocumented)
+    path: ObjectPath;
+    // (undocumented)
+    type: "REMOVE";
+}
+
+// @public
+export function merge<T extends ImplicitFieldSchema>(forkedTreeView: TreeView<T>, originalTreeView: TreeView<T>): void;
+
+// @public
+export class SharedTreeBranchManager {
+    constructor(params?: {
+        objectSchema?: z.Schema;
+        nodeIdAttributeName?: string;
+    });
+    applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): boolean;
+    checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeView<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
+        differences: Difference[];
+        newBranch: TreeView<T>;
+        newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
+    };
+    compare(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): Difference[];
+    merge(obj: Record<string, unknown> | TreeArrayNode, llmResponse: Record<string, unknown> | unknown[]): Difference[];
+    mergeDiffs(diffs: Difference[], objectToUpdate: Record<string, unknown> | TreeArrayNode): Set<Difference>;
+}
+
+// @public
+export function sharedTreeDiff(obj: Record<string, unknown> | unknown[], newObj: Record<string, unknown> | unknown[], options?: Options, _stack?: (Record<string, unknown> | unknown[])[]): Difference[];
+
+// @public
+export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[], path: ObjectPath): T | undefined;
+
 // (No @packageDocumentation comment for this package)
 
 ```

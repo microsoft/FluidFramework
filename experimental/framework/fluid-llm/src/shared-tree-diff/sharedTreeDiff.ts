@@ -32,6 +32,7 @@ export interface DifferenceRemove {
 	type: "REMOVE";
 	path: ObjectPath;
 	oldValue: unknown;
+	objectId?: string | number;
 }
 
 /**
@@ -43,6 +44,7 @@ export interface DifferenceChange {
 	path: ObjectPath;
 	value: unknown;
 	oldValue: unknown;
+	objectId?: string | number;
 }
 
 /**
@@ -54,6 +56,7 @@ export interface DifferenceMove {
 	path: ObjectPath;
 	newIndex: number;
 	value: unknown;
+	objectId?: string | number;
 }
 
 /**
@@ -138,6 +141,7 @@ export function sharedTreeDiff(
 						path: [path],
 						newIndex: newObjArrayItemIdsToIndex.get(objectId) as number,
 						value: objValue,
+						objectId,
 					});
 					continue;
 				}
@@ -233,6 +237,7 @@ export function sharedTreeDiff(
 								type: "REMOVE",
 								path: [path],
 								oldValue: objValue,
+								objectId: oldObjectId,
 							});
 						}
 						// This object still exists but at a new index within the new array therefore it was moved.
@@ -243,6 +248,7 @@ export function sharedTreeDiff(
 								path: [path],
 								newIndex: newIndexOfOldObject,
 								value: objValue,
+								objectId: oldObjectId,
 							});
 
 							// An object could have been moved AND changed. We need to check for this.
@@ -300,6 +306,10 @@ export function sharedTreeDiff(
 				type: "CHANGE",
 				value: newObjValue,
 				oldValue: objValue,
+				objectId:
+					options.useObjectIds?.idAttributeName === undefined
+						? undefined
+						: (newObj[options.useObjectIds.idAttributeName] as string | number | undefined),
 			});
 		}
 	}
@@ -344,6 +354,7 @@ export function sharedTreeDiff(
 						path: [path],
 						newIndex: newObjArrayItemIdsToIndex.get(objectId) as number,
 						value: newObjValue,
+						objectId,
 					});
 					continue;
 				}

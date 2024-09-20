@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeArrayNode } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeArrayNode, TreeView } from "@fluidframework/tree";
 import type { z } from "zod";
+
+import { branch as sharedTreeBranch } from "../branching/index.js";
 
 import {
 	createMergableDiffSeries,
@@ -65,10 +67,37 @@ export class SharedTreeBranchManager {
 	 */
 	public merge(
 		obj: Record<string, unknown> | TreeArrayNode,
-		newObj: Record<string, unknown> | unknown[],
-	): void {
-		const differences = this.compare(obj, newObj);
+		llmResponse: Record<string, unknown> | unknown[],
+	): Difference[] {
+		const differences = this.compare(obj, llmResponse);
 		this.mergeDiffs(differences, obj);
+		return differences;
+	}
+
+	/**
+	 * produces a diff between two objects and merges the differences.
+	 */
+	public checkoutNewMergedBranch<T extends ImplicitFieldSchema>(
+		treeView: TreeView<T>,
+		absolutePathToObjectNode: ObjectPath,
+		llmResponse: Record<string, unknown> | unknown[],
+	): {
+		differences: Difference[];
+		newBranch: TreeView<T>;
+		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
+	} {
+		const newBranch = sharedTreeBranch(treeView);
+
+		const newBranchTargetNode = sharedTreeTraverse(
+			newBranch.root as Record<string, unknown> | unknown[],
+			absolutePathToObjectNode,
+		) as Record<string, unknown> | TreeArrayNode;
+
+		const differences = this.compare(newBranchTargetNode, llmResponse);
+		// const differences = [];
+		this.mergeDiffs(differences, newBranchTargetNode);
+
+		return { differences, newBranch, newBranchTargetNode };
 	}
 
 	/**
