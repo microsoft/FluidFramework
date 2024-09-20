@@ -157,8 +157,7 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	) {}
 
 	public addChars(text: string): void {
-		// Filter out control characters that shouldn't be present
-		this.buffer += this.removeControlCharacters(text);
+		this.buffer += text;
 
 		if (!this.throttled) {
 			while (this.processJsonText()) {
@@ -174,12 +173,6 @@ class JsonParserImpl<ObjectHandle, ArrayHandle> implements StreamedJsonParser {
 	private readonly contexts: ParserContext<ObjectHandle, ArrayHandle>[] = [
 		{ state: State.Start, firstToken: "" },
 	];
-
-	private removeControlCharacters(text: string): string {
-		return text;
-		// eslint-disable-next-line no-control-regex
-		// return text.replace(/[\x00-\x1F\x7F]/g, "");
-	}
 
 	// Returns true if another token should be processed
 	private processJsonText(): boolean {
