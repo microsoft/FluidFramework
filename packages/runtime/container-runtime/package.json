@@ -213,7 +213,6 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"depcheck": "^1.4.7",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
