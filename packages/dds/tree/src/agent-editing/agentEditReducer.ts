@@ -9,16 +9,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
 
-import {
-	FieldKind,
-	FieldSchema,
-	getJsonSchema,
-	Tree,
-	type ImplicitFieldSchema,
-	type TreeArrayNode,
-	type TreeNode,
-} from "../index.js";
-
 // eslint-disable-next-line import/no-extraneous-dependencies
 import ajvModuleOrClass from "ajv";
 import type {
@@ -30,9 +20,12 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../agent-editing/agentEditTypes.js";
 import {
+	getJsonSchema,
 	getOrCreateInnerNode,
 	NodeKind,
 	type ImplicitAllowedTypes,
+	type TreeArrayNode,
+	type TreeNode,
 	type TreeNodeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
@@ -40,8 +33,14 @@ import {
 import type { JsonValue } from "../json-handler/jsonParser.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
+import {
+	FieldKind,
+	FieldSchema,
+	normalizeAllowedTypes,
+	type ImplicitFieldSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../simple-tree/schemaTypes.js";
+import { Tree } from "../shared-tree/index.js";
 
 export const typeField = "__fluid_type";
 

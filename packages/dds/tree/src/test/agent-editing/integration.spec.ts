@@ -73,9 +73,25 @@ describe("Agent Editing Integration", () => {
 						lastChanged: Date.now(),
 					},
 					{
+						title: "Roblox in VR",
+						abstract:
+							"Grab your VR headset and discover the latest in Roblox VR technology. Attendees of this lecture will receive a free VR headset.",
+						sessionType: SessionType.workshop,
+						created: Date.now(),
+						lastChanged: Date.now(),
+					},
+					{
 						title: "What about fun?",
 						abstract: "Can profit and the delightful smiles of the children coexist?",
-						sessionType: SessionType.workshop,
+						sessionType: SessionType.keynote,
+						created: Date.now(),
+						lastChanged: Date.now(),
+					},
+					{
+						title: "Combat in Roblox",
+						abstract:
+							"Get the latest tips and tricks for fighting your friends in roblox. Bonus: learn how to make your own sword!",
+						sessionType: SessionType.panel,
 						created: Date.now(),
 						lastChanged: Date.now(),
 					},
@@ -89,11 +105,19 @@ describe("Agent Editing Integration", () => {
 						lastChanged: Date.now(),
 					},
 					{
+						title: "Racecars!",
+						abstract:
+							"Find out how to build the fastest racecar in Roblox. Then, challenge your friends!",
+						sessionType: SessionType.workshop,
+						created: Date.now(),
+						lastChanged: Date.now(),
+					},
+					{
 						title:
 							"The Gentrification of Roblox City's Downtown (and why that's a good thing)",
 						abstract:
 							"Real estate prices in Robloxia are skyrocketing, moving cash into the hands of those who can use it most wisely.",
-						sessionType: SessionType.workshop,
+						sessionType: SessionType.session,
 						created: Date.now(),
 						lastChanged: Date.now(),
 					},
@@ -101,17 +125,16 @@ describe("Agent Editing Integration", () => {
 			],
 			sessionsPerDay: 2,
 		});
-		const client = initializeOpenAIClient();
-		try {
-			await generateTreeEdits(client, view, prompt);
-		} catch (e) {
-			const k = KLUDGE;
-			console.log(k);
-		}
+		const openAIClient = initializeOpenAIClient();
+		await generateTreeEdits(openAIClient, view, prompt);
+
+		const k = KLUDGE;
+		console.log(k);
 
 		const stringified = JSON.stringify(view.root, undefined, 2);
 		console.log(stringified);
 	});
 });
 
-const prompt = "Please add a new session to the first day of the conference.";
+const prompt =
+	"A have a two day Roblox conference with various talks and lectures. Some of the sessions are better suited for children who actually play Roblox, whereas others are more focused on topics for adults. Please organize the sessions so that the topics for children are in the first day and the topics for adults happen on the second day.";
