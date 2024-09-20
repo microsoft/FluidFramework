@@ -47,8 +47,8 @@ const objectPlaceHandler = jh.object(() => ({
 		"A pointer to a location either just before or just after an object that is in an array",
 	properties: {
 		type: jh.enum({ values: ["objectPlace"] }),
-		objectId: jh.number({
-			description: `The ${objectIdKey} of the object that the new/moved object should be placed relative to`,
+		[objectIdKey]: jh.number({
+			description: `The id (${objectIdKey}) of the object that the new/moved object should be placed relative to`,
 		}),
 		place: jh.enum({
 			values: ["before", "after"],
@@ -63,8 +63,8 @@ const arrayPlaceHandler = jh.object(() => ({
 		"A location at either the beginning or the end of an array (useful for prepending or appending)",
 	properties: {
 		type: jh.enum({ values: ["arrayPlace"] }),
-		objectId: jh.number({
-			description: `The ${objectIdKey} of the object to insert into the array`,
+		parentId: jh.number({
+			description: `The id (${objectIdKey}) of the parent object of the array`,
 		}),
 		field: jh.string({ "description": "The key of the array to insert into" }),
 		location: jh.enum({

@@ -112,6 +112,6 @@ export function initializeOpenAIClient(): AzureOpenAI {
 		deployment,
 		apiKey,
 		apiVersion: "2024-08-01-preview",
-		timeout: 1250000,
+		timeout: 2500000,
 	});
 }

@@ -358,9 +358,11 @@ function getObjectPlaceInfo(
 	index: number;
 } {
 	if (place.type === "arrayPlace") {
-		const parent = nodeMap.get(place[objectIdKey]) ?? fail("Expected parent node");
+		const parent = nodeMap.get(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
-		assert(Array.isArray(child), "Expected child to be an array node");
+		if (!Array.isArray(child)) {
+			assert(Array.isArray(child), "Expected child to be an array node");
+		}
 		return {
 			array: child as unknown as TreeArrayNode,
 			index: place.location === "start" ? 0 : child.length,

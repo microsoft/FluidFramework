@@ -634,7 +634,7 @@ describe("applyAgentEdit", () => {
 				source: { [objectIdKey]: 0 },
 				destination: {
 					type: "arrayPlace",
-					[objectIdKey]: 1,
+					parentId: 1,
 					field: "vectors2",
 					location: "start",
 				},
@@ -708,7 +708,7 @@ describe("applyAgentEdit", () => {
 				},
 				destination: {
 					type: "arrayPlace",
-					[objectIdKey]: 2,
+					parentId: 2,
 					field: "vectors2",
 					location: "start",
 				},
