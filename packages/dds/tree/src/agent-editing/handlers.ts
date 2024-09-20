@@ -153,7 +153,7 @@ export function generateHandlers(
 		items: jh.anyOf([
 			setRootHandler(),
 			insertHandler(),
-			// modifyHandler(),
+			modifyHandler(),
 			removeHandler(),
 			moveHandler(),
 		]),
@@ -179,6 +179,15 @@ function getOrCreateHandler(
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
 				for (const [key, field] of Object.entries(nodeSchema.fields)) {
+					// TODO: Remove when AI better
+					if (
+						Array.from(
+							field.allowedTypes,
+							(n) => definitionMap.get(n) ?? fail("Unknown definition"),
+						).some((n) => n.kind === NodeKind.Array)
+					) {
+						continue;
+					}
 					modifyFieldSet.add(key);
 					for (const type of field.allowedTypes) {
 						modifyTypeSet.add(type);

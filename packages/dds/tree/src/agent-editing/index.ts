@@ -80,18 +80,9 @@ export async function applyGeneratedEdits<TSchema extends ImplicitFieldSchema>(
 
 export let KLUDGE = "";
 
-// TODO
-// Depends on particular env variables
 export function initializeOpenAIClient<TSchema extends ImplicitFieldSchema>(
 	tree: TreeView<TSchema>,
 ): OpenAIContext<TSchema> {
-	/* TODOs:
-	1. Update the signature to take a TreeView<ImplicitFieldSchema>.
-	2. Update body to call getSystemPrompt, cleanup imports/exports.
-	3. Finish System prompt construction logic.
-	*/
-	console.log("Creating Azure OpenAI prompter");
-
 	const apiKey = process.env.AZURE_OPENAI_API_KEY;
 	if (apiKey === null || apiKey === undefined) {
 		throw new Error("AZURE_OPENAI_API_KEY environment variable not set");
@@ -112,6 +103,7 @@ export function initializeOpenAIClient<TSchema extends ImplicitFieldSchema>(
 		deployment,
 		apiKey,
 		apiVersion: "2024-08-01-preview",
+		timeout: 1250000,
 	});
 
 	return {
