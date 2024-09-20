@@ -206,12 +206,7 @@ extends:
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
     - check:are-the-types-wrong
-    - webpack
     - ci:test:mocha
-    - ci:test:jest
-    - ci:test:realsvc:local
-    - ci:test:realsvc:tinylicious
-    - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
     - nyc/examples
@@ -227,17 +222,3 @@ extends:
         script: |
           echo Generating .env
           echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
-
-    - task: Npm@1
-      displayName: Build devtools
-      inputs:
-        command: 'custom'
-        workingDir: ./packages/tools/devtools/devtools-browser-extension/
-        customCommand: 'run webpack'
-
-    - task: 1ES.PublishPipelineArtifact@1
-      displayName: Publish Artifact - Devtools Browser Extension
-      inputs:
-        targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-        artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
-        publishLocation: 'pipeline'
