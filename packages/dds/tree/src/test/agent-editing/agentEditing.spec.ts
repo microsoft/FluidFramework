@@ -17,6 +17,7 @@ import { getResponse } from "../../agent-editing/index.js";
 import { getJsonSchema } from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { ResponseFormatJSONSchema } from "openai/resources/shared.mjs";
+// eslint-disable-next-line import/no-internal-modules
 import { objectIdKey } from "../../agent-editing/agentEditTypes.js";
 
 const demoSf = new SchemaFactory("agentSchema");
