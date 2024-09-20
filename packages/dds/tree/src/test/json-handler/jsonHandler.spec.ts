@@ -305,6 +305,51 @@ const testTrivialStreamedTypes = async () => {
 };
 
 // --------------------------------------------------------
+// Simple examples
+
+const simpleObjectStreamedType = jh.object((expectedValue: JsonObject) => ({
+	properties: {
+		a: jh.streamedStringProperty({ target: () => ({ key1: "" }), key: "key1" }),
+		b: jh.streamedString({
+			target: () => ({ key2: "" }),
+			append: (chars, parent) => (parent.key2 += chars),
+		}),
+		// c: trivialStringStreamedType,
+		d: trivialNumberStreamedType,
+		e: trivialBooleanStreamedType,
+		f: trivialNullStreamedType,
+		g: trivialObjectStreamedType(),
+		h: trivialArrayStreamedType(),
+		i: jh.optional(jh.string()),
+		j: jh.optional(jh.number()),
+	},
+	complete: (value: JsonObject) => {
+		assert.equal(JSON.stringify(value), JSON.stringify(expectedValue));
+		console.log(value);
+	},
+}));
+const simpleObjectResponse = {
+	a: "It was the best of times,",
+	b: "it was the worst of times,",
+	// c: 'it was the age of wisdom,',
+	d: 42,
+	e: false,
+	f: null,
+	g: {},
+	h: [],
+	i: "it was the age of foolishness,",
+	j: null,
+};
+
+const testSimpleStreamedTypes = async () => {
+	await testHandler(
+		simpleObjectStreamedType(() => simpleObjectResponse),
+		JSON.stringify(simpleObjectResponse),
+		15,
+	);
+};
+
+// --------------------------------------------------------
 // Test harness
 
 const streamedLlmResponse = (prompt: string, schema: object, abort: AbortController) => {
@@ -351,5 +396,6 @@ describe("JsonHandler", () => {
 	it("Test", async () => {
 		await testGeneratedEditResponse();
 		await testTrivialStreamedTypes();
+		await testSimpleStreamedTypes();
 	});
 });
