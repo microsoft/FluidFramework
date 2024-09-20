@@ -165,12 +165,17 @@ export function resolveVersion(requested: string, installed: boolean) {
 		try {
 			result = execFileSync(
 				npmCmd,
-				["v", `@fluidframework/container-loader@${requested}`, "version", "--json"],
-				{ encoding: "utf8" },
+				["v", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
+				{
+					encoding: "utf8",
+					// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+					shell: true,
+				},
 			);
 		} catch (error: any) {
+			debugger;
 			throw new Error(
-				`Error while running: npm v @fluidframework/container-loader@"${requested}" version --json`,
+				`Error while running: ${npmCmd} v "@fluidframework/container-loader@${requested}" version --json`,
 			);
 		}
 		if (result === "" || result === undefined) {
@@ -248,6 +253,9 @@ export async function ensureInstalled(
 					// will otherwise propagate to these commands but fail to resolve.
 					NODE_OPTIONS: "",
 				},
+				// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+				// @ts-expect-error ExecOptions does not acknowledge boolean for `shell` as a valid option (at least as of @types/node@18.19.1)
+				shell: true,
 			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>

@@ -158,6 +158,7 @@ export {
 
 export {
 	areEqualChangeAtomIds,
+	areEqualChangeAtomIdOpts,
 	makeChangeAtomId,
 	asChangeAtomId,
 	type ChangeRebaser,
