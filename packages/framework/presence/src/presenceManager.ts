@@ -52,7 +52,7 @@ class PresenceManager implements IPresenceManager {
 	]);
 
 	public constructor(runtime: IEphemeralRuntime) {
-		// If already connected, populate self and attendees.
+		// If already connected (now or in the past), populate self and attendees.
 		const originalClientId = runtime.clientId;
 		if (originalClientId !== undefined) {
 			this.selfAttendee.currentConnectionId = () => originalClientId;
