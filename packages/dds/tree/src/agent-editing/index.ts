@@ -22,21 +22,36 @@ export { getSystemPrompt } from "./promptGeneration.js";
 export { getResponse } from "./llmClient.js";
 
 /**
+ * {@link generateTreeEdits} options.
+ *
+ * @internal
+ */
+export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
+	openAIClient: AzureOpenAI;
+	treeView: TreeView<TSchema>;
+	prompt: string;
+	abortController?: AbortController;
+}
+
+/**
  * Prompts the provided LLM client to generate valid tree edits.
  * Applies those edits to the provided tree branch before returning.
  *
  * @internal
  */
-export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
-	client: AzureOpenAI,
-	tree: TreeView<TSchema>,
-	prompt: string,
-): Promise<void> {
-	const { systemPrompt, decoratedTreeJson } = getSystemPrompt(tree);
+export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>({
+	openAIClient,
+	treeView,
+	prompt,
+	abortController,
+}: GenerateTreeEditsOptions<TSchema>): Promise<void> {
+	const { systemPrompt, decoratedTreeJson } = getSystemPrompt(treeView);
 
-	const editSchema = generateHandlers(tree, decoratedTreeJson.idMap);
-	const abortController = new AbortController();
-	const responseHandler = createResponseHandler(editSchema, abortController);
+	const editSchema = generateHandlers(treeView, decoratedTreeJson.idMap);
+	const responseHandler = createResponseHandler(
+		editSchema,
+		abortController ?? new AbortController(),
+	);
 
 	const llmJsonSchema: ResponseFormatJSONSchema.JSONSchema = {
 		schema: responseHandler.jsonSchema(),
@@ -59,7 +74,7 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 		max_tokens: 4096,
 	};
 
-	const result = await client.chat.completions.create(body);
+	const result = await openAIClient.chat.completions.create(body);
 	assert(result.choices.length !== 0, "Response included no choices.");
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	assert(result.choices[0]!.finish_reason === "stop", "Response was unfinished.");
