@@ -46,6 +46,7 @@ export function conciseFromCursor<TCustom>(
 		...options,
 	};
 
+	// TODO: get schema map from context when available
 	const schemaMap = new Map<string, TreeNodeSchema>();
 	walkFieldSchema(rootSchema, {
 		node(schema) {

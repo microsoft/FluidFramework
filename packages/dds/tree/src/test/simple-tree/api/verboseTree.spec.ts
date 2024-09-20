@@ -9,13 +9,16 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
 
-import { SchemaFactory, type TreeLeafValue } from "../../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	type EncodeOptions,
+	type TreeLeafValue,
+} from "../../../simple-tree/index.js";
 
 import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
-	type EncodeOptions,
 	type ParseOptions,
 	type VerboseTree,
 	type VerboseTreeNode,

@@ -24,7 +24,6 @@ import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
-	type EncodeOptions,
 	type ParseOptions,
 	type VerboseTree,
 	type VerboseTreeNode,
@@ -46,6 +45,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { toStoredSchema } from "../toFlexSchema.js";
+import type { EncodeOptions } from "./customTree.js";
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.

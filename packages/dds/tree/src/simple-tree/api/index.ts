@@ -47,10 +47,11 @@ export { getSimpleSchema } from "./getSimpleSchema.js";
 
 export type {
 	VerboseTreeNode,
-	EncodeOptions,
 	ParseOptions,
 	VerboseTree,
 } from "./verboseTree.js";
+
+export type { EncodeOptions } from "./customTree.js";
 
 export type { ConciseTree } from "./conciseTree.js";
 

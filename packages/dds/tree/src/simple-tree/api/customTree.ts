@@ -27,7 +27,7 @@ import {
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
- * Options for how to interpret a `ConciseTree<TCustom>` without relying on schema.
+ * Options for how to interpret a `CustomTree<TCustom>` without relying on schema.
  * @beta
  */
 export interface EncodeOptions<TCustom> {

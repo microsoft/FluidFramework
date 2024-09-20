@@ -43,6 +43,7 @@ import {
 	customFromCursorInner,
 	type CustomTreeNode,
 	type CustomTreeValue,
+	type EncodeOptions,
 } from "./customTree.js";
 
 /**
@@ -149,25 +150,6 @@ export interface SchemalessParseOptions<TCustom> {
 		parse(type: string, inputKey: string): FieldKey;
 		encode(type: string, key: FieldKey): string;
 	};
-}
-
-/**
- * Options for how to interpret a `VerboseTree<TCustom>` without relying on schema.
- * @beta
- */
-export interface EncodeOptions<TCustom> {
-	/**
-	 * Fixup custom input formats.
-	 * @remarks
-	 * See note on {@link ParseOptions.valueConverter}.
-	 */
-	valueConverter(data: IFluidHandle): TCustom;
-	/**
-	 * If true, interpret the input keys of object nodes as stored keys.
-	 * If false, interpret them as property keys.
-	 * @defaultValue false.
-	 */
-	readonly useStoredKeys?: boolean;
 }
 
 /**
@@ -359,6 +341,7 @@ export function verboseFromCursor<TCustom>(
 		...options,
 	};
 
+	// TODO: get schema map from context when available
 	const schemaMap = new Map<string, TreeNodeSchema>();
 	walkFieldSchema(rootSchema, {
 		node(schema) {
