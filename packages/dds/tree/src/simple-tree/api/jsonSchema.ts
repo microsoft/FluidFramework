@@ -58,6 +58,13 @@ export interface JsonNodeSchemaBase<
 	 * {@inheritDoc JsonSchemaType}
 	 */
 	readonly type: TJsonSchemaType;
+
+	/**
+	 * Description of the node schema.
+	 * @remarks Derived from {@link NodeSchemaMetadata.description}.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-validation#name-title-and-description}
+	 */
+	readonly description?: string | undefined;
 }
 
 /**

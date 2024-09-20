@@ -148,7 +148,8 @@ export function generateHandlers(
 		},
 	}));
 
-	return jh.array(() => ({
+	const edits = jh.array(() => ({
+		description: "A list of sequential edits to apply to the tree.",
 		items: jh.anyOf([
 			setRootHandler(),
 			insertHandler(),
@@ -156,6 +157,12 @@ export function generateHandlers(
 			removeHandler(),
 			moveHandler(),
 		]),
+	}));
+
+	return jh.object(() => ({
+		properties: {
+			edits: edits(),
+		},
 	}))();
 }
 
@@ -172,6 +179,15 @@ function getOrCreateHandler(
 		switch (nodeSchema.kind) {
 			case NodeKind.Object: {
 				for (const [key, field] of Object.entries(nodeSchema.fields)) {
+					// TODO: Remove when AI better
+					if (
+						Array.from(
+							field.allowedTypes,
+							(n) => definitionMap.get(n) ?? fail("Unknown definition"),
+						).some((n) => n.kind === NodeKind.Array)
+					) {
+						continue;
+					}
 					modifyFieldSet.add(key);
 					for (const type of field.allowedTypes) {
 						modifyTypeSet.add(type);

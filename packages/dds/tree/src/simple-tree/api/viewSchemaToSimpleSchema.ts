@@ -87,20 +87,36 @@ function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema 
 function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
-	return {
+
+	const output: Mutable<SimpleArrayNodeSchema> = {
 		kind: NodeKind.Array,
 		allowedTypes,
 	};
+
+	// Don't include "metadata" property at all if it's not present.
+	if (schema.metadata !== undefined) {
+		output.metadata = schema.metadata;
+	}
+
+	return output;
 }
 
 // TODO: Use a stronger type for map schemas once one is available (see object schema handler for an example).
 function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
-	return {
+
+	const output: Mutable<SimpleMapNodeSchema> = {
 		kind: NodeKind.Map,
 		allowedTypes,
 	};
+
+	// Don't include "metadata" property at all if it's not present.
+	if (schema.metadata !== undefined) {
+		output.metadata = schema.metadata;
+	}
+
+	return output;
 }
 
 function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeSchema {
@@ -108,10 +124,17 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 	for (const [key, field] of schema.fields) {
 		fields[key] = fieldSchemaToSimpleSchema(field);
 	}
-	return {
+	const output: Mutable<SimpleObjectNodeSchema> = {
 		kind: NodeKind.Object,
 		fields,
 	};
+
+	// Don't include "metadata" property at all if it's not present.
+	if (schema.metadata !== undefined) {
+		output.metadata = schema.metadata;
+	}
+
+	return output;
 }
 
 /**

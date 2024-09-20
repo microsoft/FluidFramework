@@ -197,6 +197,17 @@ export interface IMergeTreeOptions {
 	 * @defaultValue `false`
 	 */
 	mergeTreeEnableObliterateReconnect?: boolean;
+
+	/**
+	 * Enables support for obliterate endpoint expansion.
+	 * When enabled, obliterate operations can have sidedness specified for their endpoints.
+	 * If an endpoint is externally anchored
+	 * (aka the start is after a given position, or the end is before a given position),
+	 * then concurrent inserts adjacent to the exclusive endpoint of an obliterated range will be included in the obliteration
+	 *
+	 * @defaultValue `false`
+	 */
+	mergeTreeEnableSidedObliterate?: boolean;
 }
 export function errorIfOptionNotTrue(
 	options: IMergeTreeOptions | undefined,
@@ -1510,11 +1521,11 @@ export class MergeTree {
 				}
 
 				this.updateRoot(splitNode);
-				saveIfLocal(newSegment);
 
 				insertPos += newSegment.cachedLength;
 
 				if (!this.options?.mergeTreeEnableObliterate || this.obliterates.empty()) {
+					saveIfLocal(newSegment);
 					continue;
 				}
 
@@ -1576,6 +1587,7 @@ export class MergeTree {
 						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 					}
 				}
+				saveIfLocal(newSegment);
 			}
 		}
 	}
