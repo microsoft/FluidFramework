@@ -229,7 +229,7 @@ export const TreeBeta: {
 	exportConcise(
 		node: TreeNode | TreeLeafValue,
 		options?: Partial<EncodeOptions<IFluidHandle>>,
-	): JsonCompatible<IFluidHandle>;
+	): ConciseTree;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
@@ -276,8 +276,6 @@ export const TreeBeta: {
 		return treeNodeApi.on(node, eventName, listener);
 	},
 
-	// clone,
-
 	create<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: InsertableTreeFieldFromImplicitField<TSchema>,
@@ -311,7 +309,7 @@ export const TreeBeta: {
 	exportConcise<T>(
 		node: TreeNode | TreeLeafValue,
 		options?: Partial<EncodeOptions<T>>,
-	): JsonCompatible<T> {
+	): ConciseTree<T> {
 		const config: EncodeOptions<T> = {
 			valueConverter(handle: IFluidHandle): T {
 				return handle as T;

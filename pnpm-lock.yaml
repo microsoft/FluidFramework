@@ -1124,30 +1124,15 @@ importers:
 
   examples/apps/tree-cli-app:
     dependencies:
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../packages/framework/fluid-static
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../../packages/runtime/id-compressor
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../../packages/dds/shared-object-base
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -1155,21 +1140,12 @@ importers:
         specifier: ^0.32.29
         version: 0.32.29
     devDependencies:
-      '@arethetypeswrong/cli':
-        specifier: ^0.15.2
-        version: 0.15.2
       '@biomejs/biome':
         specifier: ~1.8.3
         version: 1.8.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
-      '@fluid-tools/build-cli':
-        specifier: ^0.46.0
-        version: 0.46.0(@types/node@18.19.1)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.46.0
         version: 0.46.0
@@ -1182,21 +1158,12 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.1
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -1206,12 +1173,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.2.0)
-      moment:
-        specifier: ^2.21.0
-        version: 2.29.4
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
