@@ -48,7 +48,7 @@ const objectPlaceHandler = jh.object(() => ({
 	properties: {
 		type: jh.enum({ values: ["objectPlace"] }),
 		[objectIdKey]: jh.number({
-			description: `The id (${objectIdKey}) of the object that the new/moved object should be placed relative to`,
+			description: `The id (${objectIdKey}) of the object that the new/moved object should be placed relative to. This must be the id of an object that already existed in the tree content that was originally supplied.`,
 		}),
 		place: jh.enum({
 			values: ["before", "after"],
@@ -64,7 +64,7 @@ const arrayPlaceHandler = jh.object(() => ({
 	properties: {
 		type: jh.enum({ values: ["arrayPlace"] }),
 		parentId: jh.number({
-			description: `The id (${objectIdKey}) of the parent object of the array`,
+			description: `The id (${objectIdKey}) of the parent object of the array. This must be the id of an object that already existed in the tree content that was originally supplied.`,
 		}),
 		field: jh.string({ "description": "The key of the array to insert into" }),
 		location: jh.enum({
