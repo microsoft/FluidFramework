@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 // eslint-disable-next-line import/no-internal-modules
-import { createResponseHandler, JsonHandler as jh } from "../../json-handler/jsonHandler.js";
+import {
+	createResponseHandler,
+	JsonHandler as jh,
+	type StreamedType,
+} from "../../json-handler/jsonHandler.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { JsonObject } from "../../json-handler/jsonParser.js";
 
@@ -20,6 +24,9 @@ const Ajv =
 	(ajvModuleOrClass as any);
 
 const ajv = new Ajv();
+
+// --------------------------------------------------------
+// SharedTree example
 
 const exampleGeneratedSharedTreeEdit = jh.array(() => ({
 	items: jh.anyOf([setRoot(), insert(), modify(), remove(), move()]),
@@ -224,6 +231,28 @@ const exampleGeneratedEditResponse = [
 
 const exampleGeneratedEditResponseText = JSON.stringify(exampleGeneratedEditResponse);
 
+const testGeneratedEditResponse = async () => {
+	await testHandler(exampleGeneratedSharedTreeEdit(), exampleGeneratedEditResponseText, 21);
+	await testHandler(exampleGeneratedSharedTreeEdit(), exampleGeneratedEditResponseText, 27);
+};
+
+// --------------------------------------------------------
+// Minimal examples
+
+const trivialNumberStreamedType = jh.number({
+	complete: (value: number) => {
+		console.log(value);
+	},
+});
+const trivialNumberResponse = 42;
+
+const testTrivialStreamedTypes = async () => {
+	await testHandler(trivialNumberStreamedType, JSON.stringify(trivialNumberResponse), 1);
+};
+
+// --------------------------------------------------------
+// Test harness
+
 const streamedLlmResponse = (prompt: string, schema: object, abort: AbortController) => {
 	const { response, chunkSize } = JSON.parse(prompt);
 
@@ -240,14 +269,15 @@ const streamedLlmResponse = (prompt: string, schema: object, abort: AbortControl
 	};
 };
 
-const testHandler = async (response: string, chunkSize: number) => {
+const testHandler = async (
+	streamedType: StreamedType,
+	response: string,
+	chunkSize: number,
+) => {
 	const prompt = JSON.stringify({ response, chunkSize });
 
 	const abortController = new AbortController();
-	const testResponseHandler = createResponseHandler(
-		exampleGeneratedSharedTreeEdit(),
-		abortController,
-	);
+	const testResponseHandler = createResponseHandler(streamedType, abortController);
 
 	const responseSchema = testResponseHandler.jsonSchema();
 	try {
@@ -265,7 +295,7 @@ const testHandler = async (response: string, chunkSize: number) => {
 
 describe("JsonHandler", () => {
 	it("Test", async () => {
-		await testHandler(exampleGeneratedEditResponseText, 21);
-		await testHandler(exampleGeneratedEditResponseText, 27);
+		await testGeneratedEditResponse();
+		await testTrivialStreamedTypes();
 	});
 });

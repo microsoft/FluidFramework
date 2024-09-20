@@ -289,6 +289,7 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 				if (!(this.rootHandler instanceof AtomicNullHandlerImpl)) {
 					throw new TypeError(`Expected null for root`);
 				}
+				this.rootHandler.complete(value, undefined);
 			} else {
 				switch (typeof value) {
 					case "string":
@@ -300,16 +301,19 @@ class BuilderDispatcher implements JsonBuilder<StreamedObjectHandler, StreamedAr
 						) {
 							throw new TypeError(`Expected string or enum for root`);
 						}
+						this.rootHandler.complete(value, undefined);
 						break;
 					case "number":
 						if (!(this.rootHandler instanceof AtomicNumberHandlerImpl)) {
 							throw new TypeError(`Expected number for root`);
 						}
+						this.rootHandler.complete(value, undefined);
 						break;
 					case "boolean":
 						if (!(this.rootHandler instanceof AtomicBooleanHandlerImpl)) {
 							throw new TypeError(`Expected boolean for root`);
 						}
+						this.rootHandler.complete(value, undefined);
 						break;
 
 					default:
