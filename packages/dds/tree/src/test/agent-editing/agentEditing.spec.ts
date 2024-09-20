@@ -12,7 +12,8 @@ import {
 	toDecoratedJson,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/promptGeneration.js";
-import { getResponse } from "../../agent-editing/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getResponse } from "../../agent-editing/llmClient.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getJsonSchema } from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules

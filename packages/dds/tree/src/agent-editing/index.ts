@@ -18,9 +18,6 @@ import { getSystemPrompt } from "./promptGeneration.js";
 import { generateHandlers } from "./handlers.js";
 import { createResponseHandler } from "../json-handler/index.js";
 
-export { getSystemPrompt } from "./promptGeneration.js";
-export { getResponse } from "./llmClient.js";
-
 /**
  * {@link generateTreeEdits} options.
  *
