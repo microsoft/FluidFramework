@@ -42,8 +42,7 @@ export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 		allowedTypes.push(createSchemaRef(allowedType));
 	}
 
-	const output: Mutable<JsonTreeSchema> =
-		allowedTypes.length === 1
+	return allowedTypes.length === 1
 			? {
 					...(allowedTypes[0] ?? oob()),
 					$defs: definitions,
@@ -52,8 +51,6 @@ export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 					$defs: definitions,
 					anyOf: allowedTypes,
 				};
-
-	return output;
 }
 
 function convertDefinitions(
