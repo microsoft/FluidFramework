@@ -5,16 +5,18 @@
 
 import { strict as assert } from "assert";
 
-// eslint-disable-next-line import/no-internal-modules
 import {
 	createResponseHandler,
 	JsonHandler as jh,
 	type StreamedType,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../json-handler/jsonHandler.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { JsonObject } from "../../json-handler/jsonParser.js";
+import type { JsonArray, JsonObject } from "../../json-handler/jsonParser.js";
 
 import ajvModuleOrClass from "ajv";
+// eslint-disable-next-line import/no-internal-modules
+import type { PartialArg } from "../../json-handler/jsonHandlerImpl.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
@@ -239,6 +241,15 @@ const testGeneratedEditResponse = async () => {
 // --------------------------------------------------------
 // Minimal examples
 
+/*
+const trivialStringStreamedType = jh.string({
+    complete: (value: string) => {
+        console.log(value);
+    },
+});
+const trivialStringResponse = 'Hello, world!';
+*/
+
 const trivialNumberStreamedType = jh.number({
 	complete: (value: number) => {
 		console.log(value);
@@ -246,8 +257,51 @@ const trivialNumberStreamedType = jh.number({
 });
 const trivialNumberResponse = 42;
 
+const trivialBooleanStreamedType = jh.boolean({
+	complete: (value: boolean) => {
+		console.log(value);
+	},
+});
+const trivialBooleanResponse = true;
+
+const trivialNullStreamedType = jh.null({
+	// eslint-disable-next-line @rushstack/no-new-null
+	complete: (value: null) => {
+		console.log(value);
+	},
+});
+const trivialNullResponse = null;
+
+const trivialObjectStreamedType = jh.object(() => ({
+	properties: {},
+	complete: (value: JsonObject) => {
+		console.log(value);
+	},
+}));
+const trivialObjectResponse = {};
+
+const trivialArrayStreamedType = jh.array(() => ({
+	items: jh.string(),
+	complete: (value: JsonArray) => {
+		console.log(value);
+	},
+}));
+
 const testTrivialStreamedTypes = async () => {
+	// TODO: Re-enable when StreamedType requests streaming from parser
+	// await testHandler(trivialStringStreamedType, JSON.stringify(trivialStringResponse), 1);
 	await testHandler(trivialNumberStreamedType, JSON.stringify(trivialNumberResponse), 1);
+	await testHandler(trivialBooleanStreamedType, JSON.stringify(trivialBooleanResponse), 2);
+	await testHandler(trivialNullStreamedType, JSON.stringify(trivialNullResponse), 3);
+	await testHandler(
+		trivialObjectStreamedType((partial: PartialArg) => {
+			console.log(`partial: ${JSON.stringify(partial)}`);
+			return undefined;
+		}),
+		JSON.stringify(trivialObjectResponse),
+		1,
+	);
+	await testHandler(trivialArrayStreamedType(), JSON.stringify([]), 1);
 };
 
 // --------------------------------------------------------
