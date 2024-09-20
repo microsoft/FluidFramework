@@ -135,7 +135,8 @@ export function generateHandlers(
 	}));
 
 	const moveHandler = jh.object(() => ({
-		description: "A handler for moving content from one location in the tree to another location in the tree.",
+		description:
+			"A handler for moving content from one location in the tree to another location in the tree.",
 		properties: {
 			type: jh.enum({ values: ["move"] }),
 			source: rangeHandler(),
