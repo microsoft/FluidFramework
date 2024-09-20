@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import {
 	createResponseHandler,
 	JsonHandler as jh,
-	type StreamedType,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../json-handler/jsonHandler.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -16,7 +15,7 @@ import type { JsonArray, JsonObject } from "../../json-handler/jsonParser.js";
 
 import ajvModuleOrClass from "ajv";
 // eslint-disable-next-line import/no-internal-modules
-import type { PartialArg } from "../../json-handler/jsonHandlerImpl.js";
+import type { PartialArg, StreamedType } from "../../json-handler/jsonHandlerImpl.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`

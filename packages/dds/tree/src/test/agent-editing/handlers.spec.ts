@@ -16,6 +16,7 @@ import { createResponseHandler } from "../../json-handler/jsonHandler.js";
 import { objectIdKey, type TreeEdit } from "../../agent-editing/agentEditTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeField } from "../../agent-editing/agentEditReducer.js";
+// eslint-disable-next-line import/no-internal-modules
 import { toDecoratedJson } from "../../agent-editing/promptGeneration.js";
 
 const sf = new SchemaFactory("agentSchema");

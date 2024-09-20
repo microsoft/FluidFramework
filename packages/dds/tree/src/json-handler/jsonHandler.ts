@@ -13,8 +13,6 @@ import {
 } from "./jsonHandlerImpl.js";
 import type { JsonObject } from "./jsonParser.js";
 
-export { StreamedType } from "./jsonHandlerImpl.js";
-
 export interface ResponseHandler {
 	jsonSchema(): JsonObject;
 	processResponse(responseGenerator: {
