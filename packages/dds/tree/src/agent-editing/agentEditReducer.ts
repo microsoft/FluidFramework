@@ -361,7 +361,7 @@ function isPrimitive(content: unknown): boolean {
 }
 
 function isObjectTarget(selection: Selection): selection is ObjectTarget {
-    return Object.keys(selection).length === 1 && "__fluid_objectId" in selection;
+	return Object.keys(selection).length === 1 && "__fluid_objectId" in selection;
 }
 
 function isRange(selection: Selection): selection is Range {
