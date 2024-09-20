@@ -128,6 +128,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:r11s:docker
         continueOnError: true
+        checkout: true
         splitTestVariants:
           - name: Non-compat
             flags: --compatVersion=0
