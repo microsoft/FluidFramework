@@ -168,7 +168,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			break;
 		}
 		case "insert": {
-			const { array, index } = getPlaceInfo(treeEdit.destination, nodeMap);
+			const { array, index } = getObjectPlaceInfo(treeEdit.destination, nodeMap);
 
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
@@ -277,14 +277,14 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			break;
 		}
 		case "move": {
+			// TODO: need to add schema check for valid moves
 			const source = treeEdit.source;
 			const destination = treeEdit.destination;
-			const { array: destinationNode, index: destinationIndex } = getPlaceInfo(
+			const { array: destinationArrayNode, index: destinationIndex } = getObjectPlaceInfo(
 				destination,
 				nodeMap,
 			);
-			const destinationArrayNode = Tree.parent(destinationNode) as TreeArrayNode;
-			assert(Array.isArray(destinationArrayNode), "destination must be within an array node");
+
 			if (isObjectTarget(source)) {
 				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, nodeMap);
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
@@ -299,16 +299,16 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				const {
 					startNode: sourceNode,
 					startIndex: sourceStartIndex,
+					endNode: sourceEndNode,
 					endIndex: sourceEndIndex,
 				} = getRangeInfo(source, nodeMap);
-				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
-				assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
+				assert(sourceNode === sourceEndNode, "the range must come from the same source node");
 
 				destinationArrayNode.moveRangeToIndex(
 					destinationIndex,
 					sourceStartIndex,
 					sourceEndIndex,
-					sourceArrayNode,
+					sourceNode as TreeArrayNode,
 				);
 			}
 			break;
@@ -344,13 +344,13 @@ interface RangeInfo {
 }
 
 function getRangeInfo(range: Range, nodeMap: Map<number, TreeNode>): RangeInfo {
-	const { array: startNode, index: startIndex } = getPlaceInfo(range.from, nodeMap);
-	const { array: endNode, index: endIndex } = getPlaceInfo(range.to, nodeMap);
+	const { array: startNode, index: startIndex } = getObjectPlaceInfo(range.from, nodeMap);
+	const { array: endNode, index: endIndex } = getObjectPlaceInfo(range.to, nodeMap);
 
 	return { startNode, startIndex, endNode, endIndex };
 }
 
-function getPlaceInfo(
+function getObjectPlaceInfo(
 	place: ObjectPlace | ArrayPlace,
 	nodeMap: Map<number, TreeNode>,
 ): {
