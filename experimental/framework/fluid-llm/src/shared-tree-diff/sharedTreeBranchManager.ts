@@ -88,10 +88,19 @@ export class SharedTreeBranchManager {
 	} {
 		const newBranch = sharedTreeBranch(treeView);
 
+		console.log("traveling to absolute path from root:", absolutePathToObjectNode);
 		const newBranchTargetNode = sharedTreeTraverse(
 			newBranch.root as Record<string, unknown> | unknown[],
 			absolutePathToObjectNode,
 		) as Record<string, unknown> | TreeArrayNode;
+
+		console.log(
+			"initiating compare between old and new branch target nodes",
+			{ ...newBranchTargetNode },
+			{ ...llmResponse },
+		);
+		console.log("newBranchTargetNode", { ...newBranchTargetNode });
+		console.log("llmResponse", { ...llmResponse });
 
 		const differences = this.compare(newBranchTargetNode, llmResponse);
 		// const differences = [];

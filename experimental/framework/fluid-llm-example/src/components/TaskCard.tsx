@@ -1,14 +1,16 @@
 'use client';
 
 import { editTask } from "@/actions/task";
-import { branch, SharedTreeBranchManager, type Difference } from "@fluid-experimental/fluid-llm"
+import { branch, SharedTreeBranchManager, type Difference, type DifferenceChange } from "@fluid-experimental/fluid-llm"
 import { SharedTreeEngineerList, SharedTreeTask, SharedTreeTaskGroup, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
 import { TaskPriorities, TaskStatuses, type Task, type TaskPriority } from "@/types/task";
 import { Tree, type TreeView } from "@fluidframework/tree";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { Box, Button, Card, CircularProgress, Divider, FormControl, IconButton, InputLabel, MenuItem, Popover, Select, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Card, CircularProgress, Divider, FormControl, IconButton, InputLabel, MenuItem, Popover, Select, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { LoadingButton } from '@mui/lab';
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSharedTreeRerender } from "@/useSharedTreeRerender";
+import { useSnackbar } from "notistack";
 
 export function TaskCard(props: {
 	sharedTreeBranch?: TreeView<typeof SharedTreeAppState>,
@@ -16,30 +18,18 @@ export function TaskCard(props: {
 	sharedTreeTaskGroup: SharedTreeTaskGroup,
 	sharedTreeTask: SharedTreeTask,
 }) {
+	// if (props.branchDifferences) {
+	// 	console.log(`Task id ${props.sharedTreeTask.id} recieved branchDifferences: `, props.branchDifferences);
+	// }
 
-	if (props.branchDifferences) {
-		console.log(`Task id ${props.sharedTreeTask.id} recieved branchDifferences: `, props.branchDifferences);
-	}
+	const { enqueueSnackbar } = useSnackbar();
 
-	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | null>(null);
-
+	const [aiPromptPopoverAnchor, setAiPromptPopoverAnchor] = useState<HTMLButtonElement | null>(null);
+	const [diffOldValuePopoverAnchor, setDiffOldValuePopoverAnchor] = useState<HTMLButtonElement | null>(null);
+	const [diffOldValue, setDiffOldValue] = useState<React.ReactNode>();
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 
-	const [forceReRender, setForceReRender] = useState<number>(0);
-	useEffect(() => {
-		const treeNodeListenerStopFunctions: VoidFunction[] = [];
-
-		const listenerStopFunction = Tree.on(props.sharedTreeTask, "nodeChanged", () => {
-			setForceReRender(prevReRender => { return prevReRender + 1; });
-		});
-
-		treeNodeListenerStopFunctions.push(listenerStopFunction);
-
-		// Clean up tree node listeners.
-		return () => {
-			treeNodeListenerStopFunctions.forEach(stopFunction => stopFunction());
-		};
-	}, []);
+	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: 'TaskCard' });
 
 	const deleteTask = () => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
@@ -49,16 +39,28 @@ export function TaskCard(props: {
 
 	const task = props.sharedTreeTask;
 
-	const fieldDifferences = { changes: {} as Record<string, Difference> };
+	const fieldDifferences = { isNewCreation: false, changes: {} as Record<string, DifferenceChange> };
 	for (const diff of props.branchDifferences ?? []) {
 		if (diff.type === 'CHANGE') {
 			fieldDifferences.changes[diff.path[diff.path.length - 1]] = diff;
+		}
+		if (diff.type === 'CREATE') {
+			fieldDifferences.isNewCreation = true;
 		}
 	}
 
 	return <Card sx={{
 		p: 4, position: 'relative', width: '100%',
+		backgroundColor: fieldDifferences.isNewCreation ? '#e4f7e8' : 'white'
 	}} key={`${task.title}`}>
+
+		{fieldDifferences.isNewCreation &&
+			<Box component='span' sx={{ position: 'absolute', top: -15, left: -7.5 }}>
+				<IconButton>
+					<Icon icon='clarity:new-solid' width={45} height={45} color='blue' />
+				</IconButton>
+			</Box>
+		}
 
 		<Box component='span' sx={{ position: 'absolute', top: 0, right: 0 }}>
 			<IconButton onClick={() => deleteTask()}>
@@ -74,9 +76,9 @@ export function TaskCard(props: {
 				</Box>
 				<Box>
 					<Popover
-						open={Boolean(popoverAnchor)}
-						anchorEl={popoverAnchor}
-						onClose={() => setPopoverAnchor(null)}
+						open={Boolean(aiPromptPopoverAnchor)}
+						anchorEl={aiPromptPopoverAnchor}
+						onClose={() => setAiPromptPopoverAnchor(null)}
 						anchorOrigin={{
 							vertical: 'top',
 							horizontal: 'center',
@@ -95,9 +97,16 @@ export function TaskCard(props: {
 								const query = formData.get('searchQuery') as string;
 								console.log('evoking server action w/ query: ', query);
 								setIsAiTaskRunning(true);
+								enqueueSnackbar(
+									`Copilot: I'm working on your request - "${query}"`,
+									{ variant: 'info', autoHideDuration: 5000 }
+								);
 								const resp = await editTask({ ...task } as Task, query);
 								setIsAiTaskRunning(false);
-
+								enqueueSnackbar(
+									`Copilot: I've completed your request - "${query}"`,
+									{ variant: 'success', autoHideDuration: 5000 }
+								);
 								// METHOD 1: Overwrite the entire task object
 								// if (resp.success) {
 								// 	// We don't know what exactly changed, So we just update everything.
@@ -141,7 +150,7 @@ export function TaskCard(props: {
 						variant='contained'
 						color="primary"
 						sx={{ minWidth: '40px', padding: '4px' }}
-						onClick={(event) => setPopoverAnchor(event.currentTarget)}
+						onClick={(event) => setAiPromptPopoverAnchor(event.currentTarget)}
 					>
 						<Icon icon='octicon:copilot-16' width={20} height={20} />
 					</Button>
@@ -149,24 +158,66 @@ export function TaskCard(props: {
 			</Stack>
 		</Box>
 
+		<Popover
+			open={Boolean(diffOldValuePopoverAnchor)}
+			anchorEl={diffOldValuePopoverAnchor}
+			onClose={() => setDiffOldValuePopoverAnchor(null)}
+			anchorOrigin={{
+				vertical: 'top',
+				horizontal: 'center',
+			}}
+			transformOrigin={{
+				vertical: 'bottom',
+				horizontal: 'center',
+			}}
+		>
+			<Card sx={{ p: 2 }}>
+				<Stack direction={'column'} spacing={2} alignItems='center'>
+					<Typography>
+						<Box component='span' sx={{ fontWeight: 'bold' }}>
+							{`Old Value: `}
+						</Box>
+						{diffOldValue}
+					</Typography>
+					<Button color='warning' variant="contained" size='small' sx={{ textTransform: 'none', maxWidth: '150px' }}>
+						Take Old Value</Button>
+				</Stack>
+			</Card>
+		</Popover>
+
 		<Stack direction='row' sx={{ width: '100%' }} spacing={2}>
-			<Stack sx={{ flexGrow: 1 }}>
-				<TextField
-					id="input-description-label-id"
-					label='Description'
-					value={task.description}
-					onChange={(e) => props.sharedTreeTask.description = e.target.value}
-					sx={{ height: '100%' }}
-					slotProps={{
-						input: {
-							multiline: true,
-							sx: { alignItems: 'flex-start' }
-						},
-						inputLabel: {
-							sx: { fontWeight: 'bold' }
-						}
-					}}
-				/>
+			<Stack sx={{ flexGrow: 1, direction: 'row' }}>
+				<Stack direction='row'>
+					<TextField
+						id="input-description-label-id"
+						label='Description'
+						value={task.description}
+						onChange={(e) => props.sharedTreeTask.description = e.target.value}
+						sx={{ height: '100%', width: '100%' }}
+						slotProps={{
+							input: {
+								multiline: true,
+								sx: {
+									alignItems: 'flex-start',
+									backgroundColor: fieldDifferences.changes['description'] ? '#a4dbfc' : 'white'
+								}
+							},
+							inputLabel: {
+								sx: { fontWeight: 'bold' }
+							}
+						}}
+					/>
+					{fieldDifferences.changes['description'] &&
+						<IconButton onClick={(event) => {
+							setDiffOldValue(fieldDifferences.changes['description'].oldValue);
+							setDiffOldValuePopoverAnchor(event.currentTarget)
+						}}>
+							<Icon icon='clarity:info-standard-line' width={20} height={20} />
+						</IconButton>
+					}
+				</Stack>
+
+
 			</Stack>
 
 			<Stack spacing={1} minWidth={180}>
@@ -204,6 +255,15 @@ export function TaskCard(props: {
 							</MenuItem>
 						</Select>
 					</FormControl>
+
+					{fieldDifferences.changes['priority'] &&
+						<IconButton onClick={(event) => {
+							setDiffOldValue(fieldDifferences.changes['priority'].oldValue);
+							setDiffOldValuePopoverAnchor(event.currentTarget)
+						}}>
+							<Icon icon='clarity:info-standard-line' width={20} height={20} />
+						</IconButton>
+					}
 				</Stack>
 
 				<Stack direction='row' spacing={1} alignItems='center'>
@@ -221,6 +281,11 @@ export function TaskCard(props: {
 							label="Status"
 							onChange={(e) => props.sharedTreeTask.status = e.target.value}
 							size="small"
+							inputProps={{
+								sx: {
+									backgroundColor: fieldDifferences.changes['status'] ? '#a4dbfc' : 'white'
+								}
+							}}
 						>
 							<MenuItem value={TaskStatuses.TODO} key={TaskStatuses.TODO}>
 								<Typography> Todo </Typography>
@@ -236,7 +301,6 @@ export function TaskCard(props: {
 				</Stack>
 
 				<Stack direction='row' spacing={1} alignItems='center'>
-
 					<FormControl fullWidth>
 						<InputLabel id="select-assignee-label-id">
 							<Typography fontWeight='bold'>
@@ -262,13 +326,21 @@ export function TaskCard(props: {
 							</MenuItem>
 							{
 								props.sharedTreeTaskGroup.engineers.map(engineer =>
-									<MenuItem value={engineer.name} key={engineer.name}>
+									<MenuItem value={engineer.name} key={engineer.id}>
 										<Typography> {engineer.name} </Typography>
 									</MenuItem>
 								)
 							}
 						</Select>
 					</FormControl>
+					{fieldDifferences.changes['assignee'] &&
+						<IconButton onClick={(event) => {
+							setDiffOldValue(fieldDifferences.changes['assignee'].oldValue);
+							setDiffOldValuePopoverAnchor(event.currentTarget)
+						}}>
+							<Icon icon='clarity:info-standard-line' width={20} height={20} />
+						</IconButton>
+					}
 				</Stack>
 
 				<Stack direction='row' spacing={1} alignItems='center'>
@@ -289,6 +361,6 @@ export function TaskCard(props: {
 					</FormControl>
 				</Stack>
 			</Stack>
-		</Stack>
-	</Card>;
+		</Stack >
+	</Card >;
 }

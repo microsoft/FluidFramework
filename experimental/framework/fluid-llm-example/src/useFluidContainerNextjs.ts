@@ -51,17 +51,17 @@ export function useFluidContainerNextJs<T extends ContainerSchema, V>(
 			}
 			setIsFluidInitialized(true);
 		}
-
-		// Maintains fluid container id within the url as a query parameter.
-		if (
-			isFluidInitialized === true &&
-			containerId !== undefined &&
-			containerId !== searchParams.get("fluidContainerId")
-		) {
-			router.replace(`${window.location}?fluidContainerId=${containerId}`);
-			// TODO: reconnect to the new container if id changes without page refresh?.
-		}
 	}, [containerId]);
+
+	// Maintains fluid container id within the url as a query parameter.
+	if (
+		isFluidInitialized === true &&
+		containerId !== undefined &&
+		containerId !== searchParams.get("fluidContainerId")
+	) {
+		router.replace(`${window.location}?fluidContainerId=${containerId}`);
+		// TODO: reconnect to the new container if id changes without page refresh?.
+	}
 
 	return {
 		container,

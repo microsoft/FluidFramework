@@ -5,29 +5,20 @@
 
 'use client';
 
-import { useFluidContainer } from "@/useFluidContainer";
 import { SharedTreeAppState, INITIAL_APP_STATE, CONTAINER_SCHEMA, TREE_CONFIGURATION, type SharedTreeTaskList, type SharedTreeTaskGroup, type SharedTreeTaskGroupList } from "@/types/sharedTreeAppSchema";
-import { Box, Button, Card, CircularProgress, Container, Divider, Stack, Tab, Tabs, Typography } from "@mui/material";
-import { useSearchParams, useRouter } from "next/navigation";
+import { Box, Button, CircularProgress, Container, Stack, Tab, Tabs, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { TaskCard } from "@/components/TaskCard";
 import { TaskGroup } from "@/components/TaskGroup";
-import { Tree, type TreeView } from "@fluidframework/tree";
+import { type TreeView } from "@fluidframework/tree";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
-
-
+import { useFluidContainerNextJs } from "@/useFluidContainerNextjs";
 
 export default function TasksListPage() {
-	const router = useRouter();
-	const searchParams = useSearchParams();
-
-	const [taskGroups, setTaskGroups] = useState<SharedTreeTaskGroupList>();
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
 	const [sharedTreeBranch, setSharedTreeBranch] = useState<TreeView<typeof SharedTreeAppState>>();
 
-	const { container, containerId, isFluidInitialized, data } = useFluidContainer(
+	const { container, isFluidInitialized, data } = useFluidContainerNextJs(
 		CONTAINER_SCHEMA,
-		searchParams.get('fluidContainerId'),
 		// initialize from new container
 		(container) => {
 			const sharedTree = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
@@ -40,40 +31,20 @@ export default function TasksListPage() {
 			const sharedTree = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setSharedTreeBranch(sharedTree);
 			return { sharedTree };
-		}
+		},
 	);
 
-	useEffect(() => {
-		if (isFluidInitialized === true && containerId !== undefined) {
-			router.replace(`${window.location}?fluidContainerId=${containerId}`);
-		}
-	}, [containerId]);
+	const taskGroups = data?.sharedTree.root.taskGroups;
+	useSharedTreeRerender({ sharedTreeNode: taskGroups ?? null, logId: 'WorkItemRoot' });
 
-
-	const [forceReRender, setForceReRender] = useState<number>(0);
 	useEffect(() => {
 		if (isFluidInitialized === true && data !== undefined) {
-
-			// const forceRerender = useSharedTreeRerender({ sharedTreeNode: data.sharedTree.root.taskGroups });
-
-			setTaskGroups(data.sharedTree.root.taskGroups);
-
-			// initialize selected task group
+			// initialize the selected task group
 			if (data.sharedTree.root.taskGroups.length > 0) {
 				setSelectedTaskGroup(data.sharedTree.root.taskGroups[0]);
 			}
-
-			const listenerStopFunction = Tree.on(data.sharedTree.root.taskGroups, "treeChanged", () => {
-				console.log('RootView: treeChanged');
-				setForceReRender(prevReRender => { return prevReRender + 1; });
-			});
-
-			// Clean up tree node listeners.
-			return () => {
-				listenerStopFunction();
-			};
 		}
-	}, [container,]);
+	}, [container]);
 
 	return (
 		<Container sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }} maxWidth={'lg'}>

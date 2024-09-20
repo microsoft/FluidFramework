@@ -1,54 +1,32 @@
-import { SharedTreeEngineerList, SharedTreeTaskGroup, SharedTreeTaskGroupList, sharedTreeTaskGroupToJson, SharedTreeTaskList, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
-import { Box, Button, Card, CircularProgress, Dialog, DialogContent, Divider, Fab, FormControl, IconButton, InputLabel, MenuItem, Modal, Popover, Select, Stack, Tabs, TextField, Typography } from "@mui/material";
+import { SharedTreeTaskGroup, sharedTreeTaskGroupToJson, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
+import { Box, Button, Card, CircularProgress, Dialog, Divider, Popover, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TaskCard } from "./TaskCard";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Tree, type TreeView } from "@fluidframework/tree";
 import { editTaskGroup } from "@/actions/task";
 import { LoadingButton } from "@mui/lab";
-import { SharedTreeBranchManager, type Difference, type DifferenceChange } from "@fluid-experimental/fluid-llm";
+import { merge, SharedTreeBranchManager, type Difference, type DifferenceChange } from "@fluid-experimental/fluid-llm";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
+import { useSnackbar } from 'notistack';
+
 
 export function TaskGroup(props: {
 	sharedTreeBranch?: TreeView<typeof SharedTreeAppState>,
 	branchDifferences?: Difference[],
 	sharedTreeTaskGroup: SharedTreeTaskGroup
 }) {
+	const { enqueueSnackbar } = useSnackbar();
+
 	const [isTitleEditing, setIsTitleEditing] = useState(false);
 	const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
 	const [isDiffModalOpen, setIsDiffModelOpen] = useState(false);
 
 	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | null>(null);
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
-
-	// const [forceReRender, setForceReRender] = useState<number>(0);
-	// useEffect(() => {
-	// 	const treeNodeListenerStopFunctions: VoidFunction[] = [];
-
-	// 	const listenerStopFunction = Tree.on(props.sharedTreeTaskGroup, "nodeChanged", () => {
-	// 		console.log('TaskGroup: nodeChanged');
-	// 	});
-
-	// 	const listenerStopFunction2 = Tree.on(props.sharedTreeTaskGroup, "treeChanged", () => {
-	// 		console.log('TaskGroup: treeChanged');
-	// 		// events seem to be coming in from a branch of the same tree, we can ignore them when we know that branch is being worked on.
-	// 		setForceReRender(prevReRender => { return prevReRender + 1; });
-	// 	});
-
-	// 	treeNodeListenerStopFunctions.push(listenerStopFunction, listenerStopFunction2);
-
-	// 	// Clean up tree node listeners.
-	// 	return () => {
-	// 		treeNodeListenerStopFunctions.forEach(stopFunction => stopFunction());
-	// 	};
-	// }, [props.sharedTreeTaskGroup]);
-
-	// const forceRerenderCount = useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup });
-
-
-
-
 	const [llmBranchData, setLlmBranchData] = useState<{ differences: Difference[], newBranch: TreeView<typeof SharedTreeAppState>, newBranchTargetNode: SharedTreeTaskGroup }>();
+
+	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: 'TaskGroup' });
 
 	return <Card sx={{
 		p: 7,
@@ -59,7 +37,7 @@ export function TaskGroup(props: {
 		WebkitBackdropFilter: 'blur(18px)',
 		border: '1px solid rgba(255, 255, 255, 0.3)',
 	}}>
-		<Stack direction='row' spacing={1}>
+		<Stack direction='row' spacing={1} alignItems='center'>
 			{isTitleEditing
 				? <TextField
 					id="input-description-label-id"
@@ -100,7 +78,7 @@ export function TaskGroup(props: {
 				}}
 			>
 
-				{llmBranchData &&
+				{props.sharedTreeBranch !== undefined && llmBranchData &&
 					<Box sx={{
 						maxWidth: '100%',
 						background: 'rgba(255, 255, 255, 0.38)',
@@ -111,21 +89,63 @@ export function TaskGroup(props: {
 						border: '1px solid rgba(255, 255, 255, 0.3)',
 						p: 2
 					}}>
-						<Box sx={{ my: 2 }}>
-							<Typography variant='h2' textAlign={'center'} sx={{ my: 1 }}>
+						<Stack sx={{ my: 2 }} spacing={2}>
+							<Typography variant='h2' textAlign={'center'} >
 								Preview Of Copliot Changes
 							</Typography>
-							<Stack direction='row' spacing={2} sx={{ justifyContent: 'center' }}>
-								<Button variant="contained" color='success' sx={{ textTransform: 'none' }}>Accept Changes</Button>
-								<Button variant="contained" color='error' sx={{ textTransform: 'none' }}>Decline Changes</Button>
-								<Button variant="contained" color='info' sx={{ textTransform: 'none' }}>Rerun changes</Button>
+							<Stack direction='row' spacing={2} justifyContent={'center'} sx={{ alignItems: 'center' }}>
+								<Typography variant='h6'>Differences Color Key:</Typography>
+								<Stack direction='row' alignItems='center' spacing={1}>
+									<Box sx={{ borderRadius: '50%', backgroundColor: '#f7c3c3', width: 20, height: 20 }} />
+									<Typography variant='body1'>Deleted</Typography>
+								</Stack>
+
+								<Stack direction='row' alignItems='center' spacing={1}>
+									<Box sx={{ borderRadius: '50%', backgroundColor: '#cbf7d4', width: 20, height: 20 }} />
+									<Typography variant='body1'>New</Typography>
+								</Stack>
+
+								<Stack direction='row' alignItems='center' spacing={1}>
+									<Box sx={{ borderRadius: '50%', backgroundColor: '#a4dbfc', width: 20, height: 20 }} />
+									<Typography variant='body1'>Changed</Typography>
+								</Stack>
 							</Stack>
-						</Box>
+							<Stack direction='row' spacing={2} sx={{ justifyContent: 'center' }}>
+								<Button variant="contained" color='success' sx={{ textTransform: 'none' }}
+									onClick={() => {
+										merge(llmBranchData.newBranch, props.sharedTreeBranch!);
+										setIsDiffModelOpen(false);
+									}}
+								> Accept Changes </Button>
+
+								<Button variant="contained" color='error' sx={{ textTransform: 'none' }}
+									onClick={() => setIsDiffModelOpen(false)}
+								> Decline Changes </Button>
+
+								<Button variant="contained" color='info' sx={{ textTransform: 'none' }}
+								> Rerun changes </Button>
+							</Stack>
+
+
+						</Stack>
 						<TaskGroup sharedTreeBranch={llmBranchData?.newBranch} sharedTreeTaskGroup={llmBranchData?.newBranchTargetNode as SharedTreeTaskGroup} branchDifferences={llmBranchData?.differences} />
 					</Box>
 				}
 
 			</Dialog >
+
+			<Button variant='contained' color='success'
+				onClick={() => {
+					props.sharedTreeTaskGroup.tasks.insertAtStart({
+						title: "New Task",
+						description: "This is the new task. ",
+						priority: "low",
+						complexity: 1,
+						status: "todo",
+						assignee: "UNASSIGNED"
+					});
+				}}
+			>New Task</Button>
 
 			<Popover
 				open={Boolean(popoverAnchor)}
@@ -149,8 +169,16 @@ export function TaskGroup(props: {
 						const query = formData.get('searchQuery') as string;
 						console.log('evoking server action w/ query: ', query);
 						setIsAiTaskRunning(true);
+						enqueueSnackbar(
+							`Copilot: I'm working on your request - "${query}"`,
+							{ variant: 'info', autoHideDuration: 5000 }
+						);
 						const resp = await editTaskGroup(sharedTreeTaskGroupToJson(props.sharedTreeTaskGroup), query);
 						setIsAiTaskRunning(false);
+						enqueueSnackbar(
+							`Copilot: I've completed your request - "${query}"`,
+							{ variant: 'success', autoHideDuration: 5000 }
+						);
 
 						// METHOD 1: Overwrite the entire task object
 						// if (resp.success) {
@@ -205,11 +233,11 @@ export function TaskGroup(props: {
 					</LoadingButton>
 				</Box>
 			</Popover>
+
 			<Button
-				size='small'
 				variant='contained'
 				color="primary"
-				sx={{ minWidth: '40px', padding: '4px' }}
+				sx={{ minWidth: '40px' }}
 				onClick={(event) => setPopoverAnchor(event.currentTarget)}
 			>
 				<Icon icon='octicon:copilot-16' width={20} height={20} />
@@ -245,17 +273,24 @@ export function TaskGroup(props: {
 		</Stack>
 
 
+		{/* Render Task Cards */}
 		<Stack spacing={2} sx={{ alignItems: 'center' }}>
-
 			{props.sharedTreeTaskGroup.tasks.map(task => {
-
-				const taskDiffs = props.branchDifferences
-					? props.branchDifferences.filter(diff =>
-						diff.path[0] === 'tasks' &&
-						diff.type !== 'CREATE' &&
-						diff.objectId === task.id
-					)
-					: undefined
+				const taskDiffs: Difference[] = [];
+				props.branchDifferences?.forEach(diff => {
+					if (diff.path[0] === 'tasks') {
+						if (diff.type !== 'CREATE' && diff.objectId === task.id) {
+							taskDiffs.push(diff);
+						} else {
+							if (diff.type === 'CREATE') {
+								const newTaskFromDiff = diff.value as SharedTreeTaskGroup;
+								if (newTaskFromDiff.id === task.id) {
+									taskDiffs.push(diff);
+								}
+							}
+						}
+					}
+				});
 				return <TaskCard key={task.id} sharedTreeTaskGroup={props.sharedTreeTaskGroup} sharedTreeTask={task} branchDifferences={taskDiffs} />
 			}
 			)}
@@ -297,8 +332,4 @@ export function TaskGroup(props: {
 			}
 		</Stack>
 	</Card >
-
-
-
-
 }

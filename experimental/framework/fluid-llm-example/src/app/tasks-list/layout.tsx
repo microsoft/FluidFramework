@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Box } from "@mui/material";
 import type { Metadata } from "next";
 // eslint-disable-next-line import/no-internal-modules
 import { Inter } from "next/font/google";
 import React from "react";
-import Image from 'next/image';
-import bgImg from '/public/msft-bg.webp';
+import PageLayout from "@/components/PageLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,29 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Box
-          sx={{
-            // backgroundColor: "#f0edea",
-            minWidth: '100vw',
-            minHeight: '100vh',
-            // backgroundImage: '/background-image2.jpg',
-            // backgroundSize: 'cover',
-            // backgroundPosition: 'center',
-          }}
-        >
-          <Image
-            src={bgImg}
-            alt="background image"
-            placeholder="blur"
-            fill
-            // sizes="100vw"
-            style={{
-              objectFit: 'cover',
-              zIndex: -1
-            }}
-          />
+        <PageLayout>
           {children}
-        </Box>
+        </PageLayout>
       </body>
     </html>
   );
