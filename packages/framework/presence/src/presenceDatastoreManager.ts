@@ -88,7 +88,7 @@ function isPresenceMessage(
  */
 export type IEphemeralRuntime = Pick<
 	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "getQuorum" | "off" | "on" | "submitSignal"
+	"clientId" | "connected" | "getQuorum" | "off" | "on" | "submitSignal"
 >;
 
 /**
@@ -130,7 +130,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// Note: In some manual testing, this does not appear to be enough to
 		// always trigger an initial connect.
 		const clientId = runtime.clientId;
-		if (clientId !== undefined) {
+		if (clientId !== undefined && runtime.connected) {
 			this.onConnect(clientId);
 		}
 	}
@@ -178,7 +178,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			forceBroadcast: boolean,
 		): void => {
 			// Check for connectivity before sending updates.
-			if (this.runtime.clientId === undefined) {
+			if (!this.runtime.connected) {
 				return;
 			}
 
@@ -258,6 +258,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			(this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
 
 		if (message.type === joinMessageType) {
+			assert(this.runtime.connected, "Received presence join signal while not connected");
 			const updateProviders = message.content.updateProviders;
 			this.refreshBroadcastRequested = true;
 			// We must be connected to receive this message, so clientId should be defined.
@@ -283,7 +284,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				// given an chance before us with named providers given more time.
 				const waitTime = 20 + 20 * (3 * updateProviders.length + indexOfSelf);
 				setTimeout(() => {
-					if (this.refreshBroadcastRequested) {
+					// Make sure a broadcast is still needed and we are currently connected.
+					// If not connected, nothing we can do.
+					if (this.refreshBroadcastRequested && this.runtime.connected) {
 						// TODO: Add telemetry for this attempt to satisfy join
 						this.broadcastAllKnownState();
 					}
