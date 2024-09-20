@@ -401,6 +401,20 @@ module.exports = {
 				"^tools/telemetry-generator/",
 				"^packages/tools/webpack-fluid-loader/",
 			],
+			"npm-check-unused-dependencies": [
+		        // Ommitting some sub-directories. Following will eventually be removed from the exclude list as
+		        // we progressively fix the unsed dependency errors.
+		        "^build-tools/",
+		        "^common/",
+		        "^docs/",
+		        "^examples/",
+		        "^experimental/",
+		        "^packages/",
+		        "^server/charts/",
+		        "^server/gitrest/",
+		        "^server/gitssh/",
+		        "^server/historian/",
+		      ],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
