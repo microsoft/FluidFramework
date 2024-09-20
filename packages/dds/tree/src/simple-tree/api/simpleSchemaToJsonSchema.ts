@@ -42,15 +42,18 @@ export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 		allowedTypes.push(createSchemaRef(allowedType));
 	}
 
-	return allowedTypes.length === 1
-		? {
-				...(allowedTypes[0] ?? oob()),
-				$defs: definitions,
-			}
-		: {
-				$defs: definitions,
-				anyOf: allowedTypes,
-			};
+	const output: Mutable<JsonTreeSchema> =
+		allowedTypes.length === 1
+			? {
+					...(allowedTypes[0] ?? oob()),
+					$defs: definitions,
+				}
+			: {
+					$defs: definitions,
+					anyOf: allowedTypes,
+				};
+
+	return output;
 }
 
 function convertDefinitions(

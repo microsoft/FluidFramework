@@ -35,10 +35,18 @@ export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchem
 	const definitions = new Map<string, SimpleNodeSchema>();
 	populateSchemaDefinitionsForField(normalizedSchema, definitions);
 
-	return {
+	const output: Mutable<SimpleTreeSchema> = {
+		kind: normalizedSchema.kind,
 		allowedTypes,
 		definitions,
 	};
+
+	// Don't include "description" property at all if it's not present on the input.
+	if (normalizedSchema.metadata?.description !== undefined) {
+		output.description = normalizedSchema.metadata.description;
+	}
+
+	return output;
 }
 
 /**
