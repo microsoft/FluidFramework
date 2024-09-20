@@ -4,7 +4,6 @@
  */
 
 module.exports = {
-	skipMissing: true,
 	ignores: [
 		"@fluid-private/changelog-generator-wrapper",
 		"@fluidframework/eslint-config-fluid",

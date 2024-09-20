@@ -4,5 +4,8 @@
  */
 
 module.exports = {
-	ignores: ["ts-node"],
+	ignores: [
+		"mocha-json-output-reporter",
+		"mocha-multi-reporters",
+	],
 };

@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	skipMissing: true,
-};
+module.exports = {};

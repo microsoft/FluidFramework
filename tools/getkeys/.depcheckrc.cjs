@@ -4,5 +4,7 @@
  */
 
 module.exports = {
-	ignores: ["ts-node"],
+	ignores: [
+		"typescript"
+	],
 };
