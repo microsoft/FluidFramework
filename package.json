@@ -367,6 +367,8 @@
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
 		],
 		"overrides": {
+			"@fluid-tools/build-cli": "link:build-tools/packages/build-cli",
+            "@fluidframework/build-tools": "link:build-tools/packages/build-tools",
 			"@types/node@<18": "^18.19.0",
 			"get-tsconfig": "^4.7.3",
 			"node-fetch": "^2.6.9",

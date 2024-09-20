@@ -2038,8 +2038,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const depcheckConfigFileName = ".depcheckrc.cjs";
-			const packageDir = path.dirname(file);
-			const depcheckConfigFilePath = path.resolve(packageDir, depcheckConfigFileName);
+			const packageDir = path.resolve(path.dirname(file));
+			const depcheckConfigFilePath = path.resolve(
+				path.join(packageDir, depcheckConfigFileName),
+			);
 			const configExists = fs.existsSync(depcheckConfigFilePath);
 			let options: depcheck.Options = {};
 			if (configExists) {
@@ -2050,24 +2052,21 @@ export const handlers: Handler[] = [
 					return;
 				}
 			}
-
 			try {
 				const result = await depcheck(packageDir, options);
 				const packageErrors: string[] = [];
-				if (result.dependencies.length === 0 && result.devDependencies.length === 0) {
-					packageErrors.push("No unused dependencies found.");
-				} else {
-					if (result.dependencies.length > 0) {
-						packageErrors.push(`
-							Unused dependencies:${newline}${result.dependencies.join(newline)}`);
-					}
-					if (result.devDependencies.length > 0) {
-						packageErrors.push(
-							`Unused devDependencies:${newline}${result.devDependencies.join(newline)}`,
-						);
-					}
+				if (result.dependencies.length > 0) {
+					packageErrors.push(`
+						Unused dependencies:${newline}${result.dependencies.join(newline)}`);
 				}
-				return `Check package.json declaration violations: ${newline}${packageErrors.join(newline)}`;
+				if (result.devDependencies.length > 0) {
+					packageErrors.push(
+						`Unused devDependencies:${newline}${result.devDependencies.join(newline)}`,
+					);
+				}
+				return packageErrors.length > 0
+					? `${newline}${packageErrors.join(newline)}`
+					: undefined;
 			} catch (error) {
 				return `Error running depcheck for ${packageDir}: ${error}`;
 			}
