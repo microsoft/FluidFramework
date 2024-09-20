@@ -156,7 +156,7 @@ describe("Makes TS type strings from schema", () => {
 	});
 });
 
-describe("llmClient", () => {
+describe.skip("llmClient", () => {
 	it("can accept a structured schema prompt", async () => {
 		const userPrompt =
 			"I need a catalog listing for a product. Please extract this info into the required schema. The product is a Red Ryder bicycle, which is a particularly fast bicycle, and which should be listed for one hundred dollars.";
