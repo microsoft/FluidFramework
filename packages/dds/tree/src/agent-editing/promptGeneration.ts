@@ -39,10 +39,7 @@ export function toDecoratedJson(
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
 			idMap.set(idCount, value);
-			assert(
-				!{}.hasOwnProperty.call(value, objectIdKey),
-				`Collision of property '${objectIdKey}'.`,
-			);
+			assert(!{}.hasOwnProperty.call(value, objectIdKey), `Collision of object id property.`);
 			return {
 				[objectIdKey]: idCount++,
 				...value,
