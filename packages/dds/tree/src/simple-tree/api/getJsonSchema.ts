@@ -53,7 +53,7 @@ const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
  * 			"required": ["foo"],
  * 		},
  * 	},
- * 	"anyOf": [ { "$ref": "#/$defs/com.myapp.MyObject" } ],
+ * 	"$ref": "#/$defs/com.myapp.MyObject",
  * }
  * ```
  *
