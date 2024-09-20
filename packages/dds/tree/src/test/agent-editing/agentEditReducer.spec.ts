@@ -605,149 +605,150 @@ describe("applyAgentEdit", () => {
 		assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
 	});
 
-	// describe("Move Edits", () => {
-	// 	it("move a single item", () => {
-	// 		const tree = factory.create(
-	// 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-	// 			"tree",
-	// 		);
-	// 		const configWithMultipleVectors = new TreeViewConfiguration({
-	// 			schema: [RootObjectWithMultipleVectors],
-	// 		});
-	// 		const view = tree.viewWith(configWithMultipleVectors);
-	// 		const schema = normalizeFieldSchema(view.schema);
-	// 		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+	describe("Move Edits", () => {
+		it("move a single item", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithMultipleVectors],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
-	// 		view.initialize({
-	// 			str: "testStr",
-	// 			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-	// 			vectors2: [new Vector({ x: 2, y: 3, z: 4 })],
-	// 			bools: [true],
-	// 		});
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				vectors2: [new Vector({ x: 2, y: 3, z: 4 })],
+				bools: [true],
+			});
 
-	// 		const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
-	// 		nodeMap.set(0, view.root.vectors[0]);
-	// 		nodeMap.set(1, view.root.vectors2[0]);
+			const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
+			nodeMap.set(0, view.root.vectors[0]);
+			nodeMap.set(1, view.root);
 
-	// 		const moveEdit: TreeEdit = {
-	// 			type: "move",
-	// 			source: { [objectIdKey]: 0 },
-	// 			destination: {
-	// 				type: "arrayPlace",
-	// 				[objectIdKey]: 1,
-	// 				field: "vectors2",
-	// 				location: "start",
-	// 			},
-	// 		};
-	// 		applyAgentEdit(view, moveEdit, nodeMap, simpleSchema.definitions);
-	// 		const identifier = view.root.vectors2[0].id;
-	// 		const identifier2 = view.root.vectors2[1].id;
+			const moveEdit: TreeEdit = {
+				type: "move",
+				source: { [objectIdKey]: 0 },
+				destination: {
+					type: "arrayPlace",
+					[objectIdKey]: 1,
+					field: "vectors2",
+					location: "start",
+				},
+			};
+			applyAgentEdit(view, moveEdit, nodeMap, simpleSchema.definitions);
+			const identifier = view.root.vectors2[0].id;
+			const identifier2 = view.root.vectors2[1].id;
 
-	// 		const expected = {
-	// 			"str": "testStr",
-	// 			"vectors": [],
-	// 			"vectors2": [
-	// 				{
-	// 					"id": identifier,
-	// 					"x": 1,
-	// 					"y": 2,
-	// 					"z": 3,
-	// 				},
-	// 				{
-	// 					"id": identifier2,
-	// 					"x": 2,
-	// 					"y": 3,
-	// 					"z": 4,
-	// 				},
-	// 			],
-	// 			"bools": [true],
-	// 		};
-	// 		assert.deepEqual(
-	// 			JSON.stringify(view.root, undefined, 2),
-	// 			JSON.stringify(expected, undefined, 2),
-	// 		);
-	// 	});
+			const expected = {
+				"str": "testStr",
+				"vectors": [],
+				"vectors2": [
+					{
+						"id": identifier,
+						"x": 1,
+						"y": 2,
+						"z": 3,
+					},
+					{
+						"id": identifier2,
+						"x": 2,
+						"y": 3,
+						"z": 4,
+					},
+				],
+				"bools": [true],
+			};
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
 
-	// 	it("move range of items", () => {
-	// 		const tree = factory.create(
-	// 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-	// 			"tree",
-	// 		);
-	// 		const configWithMultipleVectors = new TreeViewConfiguration({
-	// 			schema: [RootObjectWithMultipleVectors],
-	// 		});
-	// 		const view = tree.viewWith(configWithMultipleVectors);
-	// 		const schema = normalizeFieldSchema(view.schema);
-	// 		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+		it("move range of items", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithMultipleVectors],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
-	// 		view.initialize({
-	// 			str: "testStr",
-	// 			vectors: [new Vector({ x: 1, y: 2, z: 3 }), new Vector({ x: 2, y: 3, z: 4 })],
-	// 			vectors2: [new Vector({ x: 3, y: 4, z: 5 })],
-	// 			bools: [true],
-	// 		});
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 }), new Vector({ x: 2, y: 3, z: 4 })],
+				vectors2: [new Vector({ x: 3, y: 4, z: 5 })],
+				bools: [true],
+			});
 
-	// 		const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
-	// 		nodeMap.set(0, view.root.vectors[0]);
-	// 		nodeMap.set(1, view.root.vectors[1]);
-	// 		nodeMap.set(2, view.root.vectors2[0]);
+			const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
+			nodeMap.set(0, view.root.vectors[0]);
+			nodeMap.set(1, view.root.vectors[1]);
+			nodeMap.set(2, view.root);
 
-	// 		const moveEdit: TreeEdit = {
-	// 			type: "move",
-	// 			source: {
-	// 				from: {
-	// 					[objectIdKey]: 0,
-	// 					type: "objectPlace",
-	// 					place: "before"
-	// 				},
-	// 				to: {
-	// 					[objectIdKey]: 1,
-	// 					type: "objectPlace",
-	// 					place: "after"
-	// 				},
-	// 			},
-	// 			destination: {
-	// 				[objectIdKey]: 2,
-	// 				type: "objectPlace",
-	// 				place: "after"
-	// 			},
-	// 		};
-	// 		applyAgentEdit(view, moveEdit, nodeMap, simpleSchema.definitions);
-	// 		const identifier = view.root.vectors2[0].id;
-	// 		const identifier2 = view.root.vectors2[1].id;
-	// 		const identifier3 = view.root.vectors2[2].id;
+			const moveEdit: TreeEdit = {
+				type: "move",
+				source: {
+					from: {
+						[objectIdKey]: 0,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						[objectIdKey]: 1,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+				destination: {
+					type: "arrayPlace",
+					[objectIdKey]: 2,
+					field: "vectors2",
+					location: "start",
+				},
+			};
+			applyAgentEdit(view, moveEdit, nodeMap, simpleSchema.definitions);
+			const identifier = view.root.vectors2[0].id;
+			const identifier2 = view.root.vectors2[1].id;
+			const identifier3 = view.root.vectors2[2].id;
 
-	// 		const expected = {
-	// 			"str": "testStr",
-	// 			"vectors": [],
-	// 			"vectors2": [
-	// 				{
-	// 					"id": identifier,
-	// 					"x": 1,
-	// 					"y": 2,
-	// 					"z": 3,
-	// 				},
-	// 				{
-	// 					"id": identifier2,
-	// 					"x": 2,
-	// 					"y": 3,
-	// 					"z": 4,
-	// 				},
-	// 				{
-	// 					"id": identifier3,
-	// 					"x": 3,
-	// 					"y": 4,
-	// 					"z": 5,
-	// 				},
-	// 			],
-	// 			"bools": [true],
-	// 		};
-	// 		assert.deepEqual(
-	// 			JSON.stringify(view.root, undefined, 2),
-	// 			JSON.stringify(expected, undefined, 2),
-	// 		);
-	// 	});
-	// });
+			const expected = {
+				"str": "testStr",
+				"vectors": [],
+				"vectors2": [
+					{
+						"id": identifier,
+						"x": 1,
+						"y": 2,
+						"z": 3,
+					},
+					{
+						"id": identifier2,
+						"x": 2,
+						"y": 3,
+						"z": 4,
+					},
+					{
+						"id": identifier3,
+						"x": 3,
+						"y": 4,
+						"z": 5,
+					},
+				],
+				"bools": [true],
+			};
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+	});
 
 	describe("assertValidContent content", () => {
 		it("invalid content throws", () => {
