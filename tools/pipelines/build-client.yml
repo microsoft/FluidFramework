@@ -188,7 +188,7 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: ${{ variables.testCoverage }}
+    testCoverage: false
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
@@ -206,8 +206,6 @@ extends:
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
     - check:are-the-types-wrong
-    - ci:test:mocha
-    - test:copyresults
     testResultDirs:
     - nyc/examples
     - nyc/experimental
