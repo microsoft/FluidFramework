@@ -43,14 +43,14 @@ export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 	}
 
 	return allowedTypes.length === 1
-			? {
-					...(allowedTypes[0] ?? oob()),
-					$defs: definitions,
-				}
-			: {
-					$defs: definitions,
-					anyOf: allowedTypes,
-				};
+		? {
+				...(allowedTypes[0] ?? oob()),
+				$defs: definitions,
+			}
+		: {
+				$defs: definitions,
+				anyOf: allowedTypes,
+			};
 }
 
 function convertDefinitions(
