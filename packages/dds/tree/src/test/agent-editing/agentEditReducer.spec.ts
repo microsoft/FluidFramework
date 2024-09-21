@@ -793,6 +793,7 @@ describe("applyAgentEdit", () => {
 
 			const moveEdit: TreeEdit = {
 				type: "move",
+				explanation: "Move a vector",
 				source: {
 					from: {
 						[objectIdKey]: 0,
