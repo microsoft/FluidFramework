@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { PresenceManagerInternal } from "./internalTypes.js";
+import type { IEphemeralRuntime, PresenceManagerInternal } from "./internalTypes.js";
 import type { ClientSessionId } from "./presence.js";
 import type {
 	ClientUpdateEntry,
@@ -20,10 +18,7 @@ import type {
 import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 
-import type {
-	IExtensionMessage,
-	IRuntimeInternal,
-} from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
 
 interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;
@@ -81,19 +76,6 @@ function isPresenceMessage(
 ): message is DatastoreUpdateMessage | ClientJoinMessage {
 	return message.type.startsWith("Pres:");
 }
-
-/**
- * This interface is a subset of (IContainerRuntime & IRuntimeInternal) and (IFluidDataStoreRuntime) that is needed by the PresenceStates.
- *
- * @privateRemarks
- * Replace with non-DataStore based interface.
- *
- * @internal
- */
-export type IEphemeralRuntime = Pick<
-	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "connected" | "getQuorum" | "off" | "on" | "submitSignal"
->;
 
 /**
  * @internal

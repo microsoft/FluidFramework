@@ -6,17 +6,14 @@
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { PresenceManagerInternal } from "./internalTypes.js";
+import type { IEphemeralRuntime, PresenceManagerInternal } from "./internalTypes.js";
 import type {
 	ClientSessionId,
 	IPresence,
 	ISessionClient,
 	PresenceEvents,
 } from "./presence.js";
-import type {
-	IEphemeralRuntime,
-	PresenceDatastoreManager,
-} from "./presenceDatastoreManager.js";
+import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type {
 	PresenceStates,
