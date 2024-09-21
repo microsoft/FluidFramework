@@ -60,7 +60,7 @@ export class Conference extends sf.object("Conference", {
 	sessionsPerDay: sf.number,
 }) {}
 
-describe("Agent Editing Integration", () => {
+describe.skip("Agent Editing Integration", () => {
 	it("Test", async () => {
 		process.env.OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 		process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
