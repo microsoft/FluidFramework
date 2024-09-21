@@ -108,8 +108,8 @@ export function generateHandlers(
 	const setRootHandler = jh.object(() => ({
 		description: "A handler for setting content to the root of the tree.",
 		properties: {
-			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["setRoot"] }),
+			explanation: jh.string({ description: editDescription }),
 			content: jh.anyOf(
 				Array.from(
 					schema.allowedTypeSet.values(),
@@ -127,8 +127,8 @@ export function generateHandlers(
 	const insertHandler = jh.object(() => ({
 		description: "A handler for inserting new content into the tree.",
 		properties: {
-			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["insert"] }),
+			explanation: jh.string({ description: editDescription }),
 			content: jh.anyOf(
 				Array.from(insertSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
 			),
@@ -143,8 +143,8 @@ export function generateHandlers(
 	const removeHandler = jh.object(() => ({
 		description: "A handler for removing content from the tree.",
 		properties: {
-			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["remove"] }),
+			explanation: jh.string({ description: editDescription }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 		},
 		complete: (jsonObject: JsonObject) => {
@@ -156,8 +156,8 @@ export function generateHandlers(
 	const modifyHandler = jh.object(() => ({
 		description: "A handler for modifying content in the tree.",
 		properties: {
-			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["modify"] }),
+			explanation: jh.string({ description: editDescription }),
 			target: objectTargetHandler(),
 			field: jh.enum({ values: Array.from(modifyFieldSet) }),
 			modification: jh.anyOf(
@@ -174,8 +174,8 @@ export function generateHandlers(
 		description:
 			"A handler for moving content from one location in the tree to another location in the tree.",
 		properties: {
-			explanation: jh.string({ description: editDescription }),
 			type: jh.enum({ values: ["move"] }),
+			explanation: jh.string({ description: editDescription }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
 		},

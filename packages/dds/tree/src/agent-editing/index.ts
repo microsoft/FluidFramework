@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AzureOpenAI } from "openai";
+import { AzureOpenAI, OpenAI } from "openai";
 
 import type {
 	ChatCompletionCreateParams,
@@ -22,6 +22,7 @@ import {
 	type StreamedType,
 } from "../json-handler/index.js";
 import type { EditWrapper } from "./agentEditTypes.js";
+import { fail } from "../util/index.js";
 
 export { getSystemPrompt } from "./promptGeneration.js";
 export { getResponse } from "./llmClient.js";
@@ -32,7 +33,7 @@ export { getResponse } from "./llmClient.js";
  * @internal
  */
 export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
-	openAIClient: AzureOpenAI;
+	openAIClient: OpenAI;
 	treeView: TreeView<TSchema>;
 	prompt: string;
 	abortController?: AbortController;
@@ -99,7 +100,7 @@ async function doEdit<TSchema extends ImplicitFieldSchema>(
 			{ role: "system", content: systemPrompt },
 			{ role: "user", content: prompt },
 		],
-		model: "gpt-4o",
+		model: clientModel.get(openAIClient) ?? fail("Model not set"),
 		response_format: {
 			type: "json_schema",
 			json_schema: llmJsonSchema,
@@ -133,35 +134,52 @@ export let KLUDGE = "";
  * Creates an OpenAI Client session.
  * Depends on the following environment variables:
  *
+ * If using the OpenAI API:
+ * - OPENAI_API_KEY
+ *
+ * If using the Azure OpenAI API:
  * - AZURE_OPENAI_API_KEY
- *
  * - AZURE_OPENAI_ENDPOINT
- *
  * - AZURE_OPENAI_DEPLOYMENT
  *
  * @internal
  */
-export function initializeOpenAIClient(): AzureOpenAI {
-	const apiKey = process.env.AZURE_OPENAI_API_KEY;
-	if (apiKey === null || apiKey === undefined) {
-		throw new Error("AZURE_OPENAI_API_KEY environment variable not set");
-	}
+export function initializeOpenAIClient(service: "openai" | "azure"): OpenAI {
+	if (service === "azure") {
+		const apiKey = process.env.AZURE_OPENAI_API_KEY;
+		if (apiKey === null || apiKey === undefined) {
+			throw new Error("AZURE_OPENAI_API_KEY environment variable not set");
+		}
 
-	const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-	if (endpoint === null || endpoint === undefined) {
-		throw new Error("AZURE_OPENAI_ENDPOINT environment variable not set");
-	}
+		const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+		if (endpoint === null || endpoint === undefined) {
+			throw new Error("AZURE_OPENAI_ENDPOINT environment variable not set");
+		}
 
-	const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
-	if (deployment === null || deployment === undefined) {
-		throw new Error("AZURE_OPENAI_DEPLOYMENT environment variable not set");
-	}
+		const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
+		if (deployment === null || deployment === undefined) {
+			throw new Error("AZURE_OPENAI_DEPLOYMENT environment variable not set");
+		}
 
-	return new AzureOpenAI({
-		endpoint,
-		deployment,
-		apiKey,
-		apiVersion: "2024-08-01-preview",
-		timeout: 2500000,
-	});
+		const client = new AzureOpenAI({
+			endpoint,
+			deployment,
+			apiKey,
+			apiVersion: "2024-08-01-preview",
+			timeout: 2500000,
+		});
+		clientModel.set(client, "gpt-4o");
+		return client;
+	} else {
+		const apiKey = process.env.OPENAI_API_KEY;
+		if (apiKey === null || apiKey === undefined) {
+			throw new Error("OPENAI_API_KEY environment variable not set");
+		}
+
+		const client = new OpenAI({ apiKey });
+		clientModel.set(client, "gpt-4o-2024-08-06");
+		return client;
+	}
 }
+
+const clientModel = new WeakMap<OpenAI, string>();

@@ -60,8 +60,9 @@ export class Conference extends sf.object("Conference", {
 	sessionsPerDay: sf.number,
 }) {}
 
-describe.skip("Agent Editing Integration", () => {
+describe("Agent Editing Integration", () => {
 	it("Test", async () => {
+		process.env.OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 		process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 		process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
 		process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
@@ -137,7 +138,7 @@ describe.skip("Agent Editing Integration", () => {
 			],
 			sessionsPerDay: 2,
 		});
-		const openAIClient = initializeOpenAIClient();
+		const openAIClient = initializeOpenAIClient("azure");
 		const abortController = new AbortController();
 		await generateTreeEdits({ openAIClient, treeView: view, prompt, abortController });
 
