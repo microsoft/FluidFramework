@@ -90,7 +90,7 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 async function doEdit<TSchema extends ImplicitFieldSchema>(
 	systemPrompt: string,
 	editHandler: StreamedType,
-	{ openAIClient, prompt, abortController }: GenerateTreeEditsOptions<TSchema>,
+	{ openAIClient, abortController }: GenerateTreeEditsOptions<TSchema>,
 ): Promise<void> {
 	const responseHandler = createResponseHandler(
 		editHandler,
