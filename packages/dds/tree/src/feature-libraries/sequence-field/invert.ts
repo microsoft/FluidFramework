@@ -60,7 +60,7 @@ export function invert(
 	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
-	revision: RevisionTag,
+	revision: RevisionTag | undefined,
 ): Changeset {
 	return invertMarkList(
 		change,
@@ -74,7 +74,7 @@ function invertMarkList(
 	markList: MarkList,
 	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
-	revision: RevisionTag,
+	revision: RevisionTag | undefined,
 ): MarkList {
 	const inverseMarkList = new MarkListFactory();
 
@@ -90,7 +90,7 @@ function invertMark(
 	mark: Mark,
 	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
-	revision: RevisionTag,
+	revision: RevisionTag | undefined,
 ): Mark[] {
 	if (!isImpactful(mark)) {
 		const inputId = getInputCellId(mark);

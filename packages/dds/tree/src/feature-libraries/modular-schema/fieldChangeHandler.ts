@@ -118,7 +118,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revision: RevisionTag,
+		revision: RevisionTag | undefined,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 

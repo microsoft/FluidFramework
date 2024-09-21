@@ -10,6 +10,7 @@ import type {
 	ChangeFamilyEditor,
 	TaggedChange,
 	ChangeEncodingContext,
+	RevisionTag,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 import type { ICodecFamily } from "../../codec/index.js";
@@ -25,7 +26,10 @@ const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
-	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
+	buildEditor: (
+		mintRevisionTagThrow: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<string>) => void,
+	): ChangeFamilyEditor => {
 		assert.equal(changeReceiver, arg1);
 		throw new Error("buildEditor");
 	},
@@ -51,7 +55,10 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
-	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
+	buildEditor: (
+		mintRevisionTagRet: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<string>) => void,
+	): ChangeFamilyEditor => {
 		assert.equal(changeReceiver, arg1);
 		return "buildEditor" as unknown as ChangeFamilyEditor;
 	},

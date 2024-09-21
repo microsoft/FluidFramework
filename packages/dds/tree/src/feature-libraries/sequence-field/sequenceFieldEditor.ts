@@ -81,7 +81,7 @@ export const sequenceFieldEditor = {
 		index: number,
 		count: number,
 		firstId: CellId,
-		revision: RevisionTag,
+		revision: RevisionTag | undefined,
 	): Changeset => {
 		const mark: CellMark<Insert> = {
 			type: "Insert",
@@ -96,7 +96,7 @@ export const sequenceFieldEditor = {
 		index: number,
 		count: number,
 		id: ChangesetLocalId,
-		revision: RevisionTag,
+		revision: RevisionTag | undefined,
 	): Changeset =>
 		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id, revision }),
 
@@ -104,7 +104,7 @@ export const sequenceFieldEditor = {
 		index: number,
 		count: number,
 		detachEvent: CellId,
-		revision: RevisionTag,
+		revision: RevisionTag | undefined,
 	): Changeset => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Insert> = {
@@ -123,7 +123,7 @@ export const sequenceFieldEditor = {
 		destIndex: number,
 		detachCellId: ChangesetLocalId,
 		attachCellId: CellId,
-		revision: RevisionTag,
+		revision: RevisionTag | undefined,
 	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
@@ -179,7 +179,7 @@ export const sequenceFieldEditor = {
 		destIndex: number,
 		detachCellId: CellId,
 		attachCellId: CellId,
-		revision: RevisionTag,
+		revision: RevisionTag | undefined,
 	): Changeset {
 		const moveOut: CellMark<MoveOut> = {
 			type: "MoveOut",

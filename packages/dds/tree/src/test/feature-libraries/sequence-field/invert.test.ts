@@ -20,7 +20,7 @@ import { invert as invertChange, assertChangesetsEqual, tagChangeInline } from "
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 
 function invert(change: SF.Changeset, tag: RevisionTag = tag1): SF.Changeset {
-	return invertChange(tagChangeInline(change, tag));
+	return invertChange(tagChangeInline(change, tag), tag);
 }
 
 const tag1: RevisionTag = mintRevisionTag();
@@ -69,10 +69,10 @@ export function testInvert() {
 		});
 
 		it("insert => remove", () => {
-			const idOverride: SF.CellId = { revision: tag1, localId: brand(0) };
-			const input = Change.insert(0, 2);
-			const expected = [Mark.remove(2, brand(0), { idOverride })];
-			const actual = invert(input);
+			const cellId: SF.CellId = { revision: tag1, localId: brand(0) };
+			const input = Change.insert(0, 2, tag1, cellId);
+			const actual = invert(input, tag2);
+			const expected = [Mark.remove(2, brand(0), { idOverride: cellId, revision: tag2 })];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -114,7 +114,7 @@ export function testInvert() {
 				tag3, // This ID should be ignored
 			);
 			const expected = [Mark.revive(2, detachId)];
-			const actual = invertChange(input);
+			const actual = invertChange(input, tag3);
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -128,9 +128,9 @@ export function testInvert() {
 
 		it("active revive => remove", () => {
 			const cellId: CellId = { revision: tag1, localId: brand(0) };
-			const input = Change.revive(0, 2, cellId);
+			const input = Change.revive(0, 2, cellId, tag1);
 			const expected: SF.Changeset = [Mark.remove(2, brand(0), { idOverride: cellId })];
-			const actual = invert(input, tag2);
+			const actual = invert(input, tag1);
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -394,7 +394,7 @@ export function testInvert() {
 					),
 				];
 
-				const actual = invertChange(tagChangeInline(input, tag2, tag3 /* <= ignored */));
+				const actual = invertChange(tagChangeInline(input, tag2, tag3 /* <= ignored */), tag3);
 				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag2 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
@@ -437,3 +437,5 @@ export function testInvert() {
 		});
 	});
 }
+
+testInvert();

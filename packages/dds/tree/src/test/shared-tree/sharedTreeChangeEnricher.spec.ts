@@ -132,6 +132,7 @@ describe("SharedTreeChangeEnricher", () => {
 			Change.reserve("self", brand(0)),
 			Change.move({ localId: brand(0) }, "self"),
 		);
+		const tag = mintRevisionTag();
 		const restoreRoot: SharedTreeChange = {
 			changes: [
 				{
@@ -142,7 +143,7 @@ describe("SharedTreeChangeEnricher", () => {
 							field: { parent: undefined, field: rootFieldKey },
 							fieldKind: optional.identifier,
 							change: brand(restore),
-							revision: mintRevisionTag(),
+							revision: tag,
 						},
 					]),
 				},

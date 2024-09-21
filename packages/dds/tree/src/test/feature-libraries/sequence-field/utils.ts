@@ -78,7 +78,6 @@ import {
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
-	mintRevisionTag,
 } from "../../utils.js";
 
 import { ChangesetWrapper } from "../../changesetWrapper.js";
@@ -450,11 +449,18 @@ function resetCrossFieldTable(table: CrossFieldTable) {
 	table.dstQueries.clear();
 }
 
-export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
-	return ChangesetWrapper.invert(change, (c) => invert(c));
+export function invertDeep(
+	change: TaggedChange<WrappedChange>,
+	revision: RevisionTag | undefined,
+): WrappedChange {
+	return ChangesetWrapper.invert(change, (c) => invert(c, revision), revision);
 }
 
-export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
+export function invert(
+	change: TaggedChange<SF.Changeset>,
+	revision: RevisionTag | undefined,
+	isRollback = true,
+): SF.Changeset {
 	deepFreeze(change.change);
 	const table = newCrossFieldTable();
 	let inverted = SF.invert(
@@ -463,7 +469,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
-		mintRevisionTag(),
+		revision,
 	);
 
 	if (table.isInvalidated) {
@@ -476,7 +482,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
-			mintRevisionTag(),
+			revision,
 		);
 	}
 

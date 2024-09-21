@@ -75,7 +75,7 @@ export function testToDelta() {
 		});
 
 		it("insert", () => {
-			const changeset = Change.insert(0, 1);
+			const changeset = Change.insert(0, 1, tag);
 			const expected = {
 				local: [{ count: 1, attach: { minor: 0 } }],
 			};
@@ -84,7 +84,7 @@ export function testToDelta() {
 		});
 
 		it("revive => restore", () => {
-			const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) });
+			const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) }, tag);
 			const actual = toDelta(changeset);
 			const expected: DeltaFieldChanges = {
 				local: [

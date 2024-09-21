@@ -423,15 +423,18 @@ const dummyRevisionTag = mintRevisionTag();
 
 const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 	tagChangeInline(
-		buildChangeset([
-			{
-				type: "field",
-				field: pathA,
-				fieldKind: singleNodeField.identifier,
-				change: brand(undefined),
-				revision: tag1,
-			},
-		]),
+		buildChangeset(
+			[
+				{
+					type: "field",
+					field: pathA,
+					fieldKind: singleNodeField.identifier,
+					change: brand(undefined),
+					revision: dummyRevisionTag,
+				},
+			],
+			dummyRevisionTag,
+		),
 		dummyRevisionTag,
 	),
 	makeAnonChange(buildExistsConstraint(pathA0)),
@@ -489,90 +492,102 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose specific ○ specific", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2.maxId },
-				Change.field(
-					fieldA,
-					singleNodeField.identifier,
-					singleNodeField.changeHandler.createEmpty(),
-					Change.node(
-						0,
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedCompose = tagChangeInline(
+				Change.build(
+					{ family, maxId: rootChange2.maxId },
+					Change.field(
+						fieldA,
+						singleNodeField.identifier,
+						singleNodeField.changeHandler.createEmpty(),
+						Change.node(
+							0,
+							Change.field(fieldA, valueField.identifier, composedValues),
+							Change.field(fieldB, valueField.identifier, valueChange1a),
+						),
 					),
+					Change.field(fieldB, valueField.identifier, valueChange2),
 				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
+				tag1,
 			);
 
 			const composed = removeAliases(
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
 			);
 
-			assertEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose.change);
 		});
 
 		it("compose specific ○ generic", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2Generic.maxId },
-				Change.field(
-					fieldA,
-					singleNodeField.identifier,
-					singleNodeField.changeHandler.createEmpty(),
-					Change.node(
-						0,
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedCompose = tagChangeInline(
+				Change.build(
+					{ family, maxId: rootChange2Generic.maxId },
+					Change.field(
+						fieldA,
+						singleNodeField.identifier,
+						singleNodeField.changeHandler.createEmpty(),
+						Change.node(
+							0,
+							Change.field(fieldA, valueField.identifier, composedValues),
+							Change.field(fieldB, valueField.identifier, valueChange1a),
+						),
 					),
+					Change.field(fieldB, valueField.identifier, valueChange2),
 				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
+				tag1,
 			);
 
 			const composed = removeAliases(
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
 			);
 
-			assertEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose.change);
 		});
 
 		it("compose generic ○ specific", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2.maxId },
-				Change.field(
-					fieldA,
-					singleNodeField.identifier,
-					singleNodeField.changeHandler.createEmpty(),
-					Change.nodeWithId(
-						0,
-						{ localId: brand(1) },
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedCompose = tagChangeInline(
+				Change.build(
+					{ family, maxId: rootChange2.maxId },
+					Change.field(
+						fieldA,
+						singleNodeField.identifier,
+						singleNodeField.changeHandler.createEmpty(),
+						Change.nodeWithId(
+							0,
+							{ localId: brand(1) },
+							Change.field(fieldA, valueField.identifier, composedValues),
+							Change.field(fieldB, valueField.identifier, valueChange1a),
+						),
 					),
+					Change.field(fieldB, valueField.identifier, valueChange2),
 				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
+				tag1,
 			);
 
 			const composed = removeAliases(
 				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
 			);
 
-			assertEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose.change);
 		});
 
 		it("compose generic ○ generic", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2Generic.maxId },
-				Change.field(
-					fieldA,
-					genericFieldKind.identifier,
-					genericFieldKind.changeHandler.createEmpty(),
-					Change.nodeWithId(
-						0,
-						{ localId: brand(1) },
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedCompose = tagChangeInline(
+				Change.build(
+					{ family, maxId: rootChange2Generic.maxId },
+					Change.field(
+						fieldA,
+						genericFieldKind.identifier,
+						genericFieldKind.changeHandler.createEmpty(),
+						Change.nodeWithId(
+							0,
+							{ localId: brand(1) },
+							Change.field(fieldA, valueField.identifier, composedValues),
+							Change.field(fieldB, valueField.identifier, valueChange1a),
+						),
 					),
+					Change.field(fieldB, valueField.identifier, valueChange2),
 				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
+				tag1,
 			);
 
 			const composed = removeAliases(
@@ -582,40 +597,46 @@ describe("ModularChangeFamily", () => {
 				]),
 			);
 
-			assertEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose.change);
 		});
 
 		it("compose tagged changes", () => {
 			const change1 = tagChangeInline(
-				buildChangeset([
-					{
-						type: "field",
-						field: pathA,
-						fieldKind: valueField.identifier,
-						change: brand(valueChange1a),
-						revision: tag1,
-					},
-				]),
+				buildChangeset(
+					[
+						{
+							type: "field",
+							field: pathA,
+							fieldKind: valueField.identifier,
+							change: brand(valueChange1a),
+							revision: tag1,
+						},
+					],
+					tag1,
+				),
 				tag1,
 			);
 
 			const change2 = tagChangeInline(
-				buildChangeset([
-					{
-						type: "field",
-						field: pathB,
-						fieldKind: singleNodeField.identifier,
-						change: brand(undefined),
-						revision: tag1,
-					},
-					{
-						type: "field",
-						field: pathB0A,
-						fieldKind: valueField.identifier,
-						change: brand(valueChange2),
-						revision: tag1,
-					},
-				]),
+				buildChangeset(
+					[
+						{
+							type: "field",
+							field: pathB,
+							fieldKind: singleNodeField.identifier,
+							change: brand(undefined),
+							revision: tag2,
+						},
+						{
+							type: "field",
+							field: pathB0A,
+							fieldKind: valueField.identifier,
+							change: brand(valueChange2),
+							revision: tag2,
+						},
+					],
+					tag2,
+				),
 				tag2,
 			);
 
@@ -861,29 +882,32 @@ describe("ModularChangeFamily", () => {
 		const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
 		it("specific", () => {
-			const expectedInverse = buildChangeset([
-				{
-					type: "field",
-					field: pathA,
-					fieldKind: singleNodeField.identifier,
-					change: brand(undefined),
-					revision: tag1,
-				},
-				{
-					type: "field",
-					field: pathA0A,
-					fieldKind: valueField.identifier,
-					change: brand(valueInverse1),
-					revision: tag1,
-				},
-				{
-					type: "field",
-					field: pathB,
-					fieldKind: valueField.identifier,
-					change: brand(valueInverse2),
-					revision: tag1,
-				},
-			]);
+			const expectedInverse = buildChangeset(
+				[
+					{
+						type: "field",
+						field: pathA,
+						fieldKind: singleNodeField.identifier,
+						change: brand(undefined),
+						revision: tag1,
+					},
+					{
+						type: "field",
+						field: pathA0A,
+						fieldKind: valueField.identifier,
+						change: brand(valueInverse1),
+						revision: tag1,
+					},
+					{
+						type: "field",
+						field: pathB,
+						fieldKind: valueField.identifier,
+						change: brand(valueInverse2),
+						revision: tag1,
+					},
+				],
+				tag1,
+			);
 
 			assertEqual(
 				family.invert(makeAnonChange(rootChange1a), false, mintRevisionTag()),
@@ -1366,14 +1390,14 @@ describe("ModularChangeFamily", () => {
 				["with constraint", inlineRevision(rootChange3, tag1), context],
 				[
 					"with violated constraint",
-					inlineRevision({ ...buildChangeset([]), constraintViolationCount: 42 }, tag1),
+					inlineRevision({ ...buildChangeset([], tag1), constraintViolationCount: 42 }, tag1),
 					context,
 				],
 				[
 					"with builds",
 					inlineRevision(
 						{
-							...buildChangeset([]),
+							...buildChangeset([], tag1),
 							builds: newTupleBTree([
 								[[undefined, brand(1)], node1Chunk],
 								[[tag2, brand(2)], nodesChunk],
@@ -1387,7 +1411,7 @@ describe("ModularChangeFamily", () => {
 					"with refreshers",
 					inlineRevision(
 						{
-							...buildChangeset([]),
+							...buildChangeset([], tag1),
 							refreshers: newTupleBTree([
 								[[undefined, brand(1)], node1Chunk],
 								[[tag2, brand(2)], nodesChunk],
@@ -1426,17 +1450,20 @@ describe("ModularChangeFamily", () => {
 		);
 		const changes = getChanges();
 
-		const expectedChange: ModularChangeset = Change.build(
-			{ family, maxId: 0 },
-			Change.field(
-				fieldA,
-				genericFieldKind.identifier,
-				genericFieldKind.changeHandler.createEmpty(),
-				Change.node(0, Change.field(fieldB, valueField.identifier, valueChange1a)),
+		const expectedChange = tagChangeInline(
+			Change.build(
+				{ family, maxId: 0 },
+				Change.field(
+					fieldA,
+					genericFieldKind.identifier,
+					genericFieldKind.changeHandler.createEmpty(),
+					Change.node(0, Change.field(fieldB, valueField.identifier, valueChange1a)),
+				),
 			),
+			tag1,
 		);
 
-		assertEqual(changes, [expectedChange]);
+		assertEqual(changes, [expectedChange.change]);
 	});
 });
 
@@ -1563,7 +1590,7 @@ function deepFreeze(object: object) {
 	});
 }
 
-function buildChangeset(edits: EditDescription[]): ModularChangeset {
+function buildChangeset(edits: EditDescription[], revision: RevisionTag): ModularChangeset {
 	const editor = family.buildEditor(() => undefined);
 	return editor.buildChanges(edits);
 }

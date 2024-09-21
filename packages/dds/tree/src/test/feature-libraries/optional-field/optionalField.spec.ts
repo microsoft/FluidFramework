@@ -76,30 +76,26 @@ const change1 = tagChangeInline(
 );
 
 const change2Tag = mintRevisionTag();
-const change2: TaggedChange<OptionalChangeset> = tagChange(
+const change2: TaggedChange<OptionalChangeset> = tagChangeInline(
 	optionalFieldEditor.set(false, {
-		fill: { localId: brand(42), revision: change2Tag },
-		detach: { localId: brand(2), revision: change2Tag },
+		fill: { localId: brand(42) },
+		detach: { localId: brand(2) },
 	}),
 	change2Tag,
 );
 
-const revertChange2Tag = mintRevisionTag();
-const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
-	Change.atOnce(
-		Change.clear("self", { localId: brand(42), revision: revertChange2Tag }),
-		Change.move({ localId: brand(2), revision: revertChange2Tag }, "self"),
-	),
-	revertChange2Tag,
+const revertChange2: TaggedChange<OptionalChangeset> = tagChangeInline(
+	Change.atOnce(Change.clear("self", brand(42)), Change.move(brand(2), "self")),
+	mintRevisionTag(),
 );
 
 /**
  * Represents what change2 would have been had it been concurrent with change1.
  */
-const change2PreChange1: TaggedChange<OptionalChangeset> = tagChange(
+const change2PreChange1: TaggedChange<OptionalChangeset> = tagChangeInline(
 	optionalFieldEditor.set(true, {
-		fill: { localId: brand(42), revision: change2Tag },
-		detach: { localId: brand(2), revision: change2Tag },
+		fill: { localId: brand(42) },
+		detach: { localId: brand(2) },
 	}),
 	change2Tag,
 );
@@ -732,9 +728,10 @@ describe("optionalField", () => {
 			optionalFieldEditor.clear(false, { localId: brand(1), revision: tag2 }),
 			tag2,
 		);
+		const childChangeTag = mintRevisionTag();
 		const hasChildChanges = tagChange(
-			optionalFieldEditor.buildChildChange(0, nodeId1),
-			mintRevisionTag(),
+			optionalFieldEditor.buildChildChange(0, { ...nodeId1, revision: childChangeTag }),
+			childChangeTag,
 		);
 		const relevantNestedTree = { minor: 4242 };
 		const noTreesDelegate: RelevantRemovedRootsFromChild = () => [];

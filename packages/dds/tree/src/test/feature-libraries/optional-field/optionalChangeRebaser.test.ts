@@ -153,6 +153,7 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 
 function invert(
 	change: TaggedChange<OptionalChangeset>,
+	revision: RevisionTag | undefined,
 	isRollback: boolean,
 ): OptionalChangeset {
 	const inverted = optionalChangeRebaser.invert(
@@ -160,7 +161,7 @@ function invert(
 		isRollback,
 		idAllocatorFromMaxId(),
 		failCrossFieldManager,
-		mintRevisionTag(),
+		revision,
 		defaultRevisionMetadataFromChanges([change]),
 	);
 	verifyContextChain(change, makeAnonChange(inverted));
@@ -169,9 +170,10 @@ function invert(
 
 function invertWrapped(
 	change: TaggedChange<WrappedChangeset>,
+	revision: RevisionTag,
 	isRollback: boolean,
 ): WrappedChangeset {
-	return ChangesetWrapper.invert(change, invert, isRollback);
+	return ChangesetWrapper.invert(change, invert, revision, isRollback);
 }
 
 function rebase(
@@ -425,6 +427,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 						state.mostRecentEdit.changeset.change.fieldChange,
 						state.mostRecentEdit.changeset.revision,
 					),
+					tag1,
 					false,
 				),
 				nodes: invertedNodeChanges,
@@ -457,7 +460,11 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`;
 				it(title, () => {
-					const inv = tagRollbackInverse(invertWrapped(change2, true), tag1, change2.revision);
+					const inv = tagRollbackInverse(
+						invertWrapped(change2, tag1, true),
+						tag1,
+						change2.revision,
+					);
 					const r1 = rebaseWrappedTagged(change1, change2);
 					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
@@ -477,7 +484,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `${name1} ↷ [${name2}, undo(${name2})] => ${name1}`;
 				it(title, () => {
-					const inv = tagWrappedChangeInline(invertWrapped(change2, false), tag1);
+					const inv = tagWrappedChangeInline(invertWrapped(change2, tag1, false), tag1);
 					const r1 = rebaseWrappedTagged(change1, change2);
 					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
@@ -500,7 +507,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
 				it(title, () => {
 					const inverse2 = tagRollbackInverse(
-						invertWrapped(change2, true),
+						invertWrapped(change2, tag1, true),
 						tag1,
 						change2.revision,
 					);
@@ -516,7 +523,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	describe("A ○ A⁻¹ === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
-				const inv = invertWrapped(change, true);
+				const inv = invertWrapped(change, tag1, true);
 				const actual = composeWrapped(change, tagRollbackInverse(inv, tag1, change.revision));
 				const delta = toDeltaWrapped(makeAnonChange(actual));
 				assert.equal(isDeltaVisible(delta), false);
@@ -527,7 +534,11 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	describe("A⁻¹ ○ A === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
-				const inv = tagRollbackInverse(invertWrapped(change, true), tag1, change.revision);
+				const inv = tagRollbackInverse(
+					invertWrapped(change, tag1, true),
+					tag1,
+					change.revision,
+				);
 				const actual = composeWrapped(inv, change);
 				const delta = toDeltaWrapped(makeAnonChange(actual));
 				assert.equal(isDeltaVisible(delta), false);

@@ -724,7 +724,7 @@ function verifyRebaseRightDistributivity<TChangeset>(
 
 	const editRebasedOverC = rebaseTagged(fieldRebaser.rebase, editA, [editC]);
 	const invertedEdit = tagRollbackInverse(
-		fieldRebaser.invert(editA, true),
+		fieldRebaser.invert(editA, undefined, true),
 		undefined,
 		editA.revision,
 	);
@@ -754,7 +754,7 @@ function verifyRebaseOverUndoRedoPair<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	const editB = namedEditToRebaseOver.changeset;
 
-	const inverseEditB = fieldRebaser.invert(editB, true);
+	const inverseEditB = fieldRebaser.invert(editB, undefined, true);
 
 	// ((A ↷ B) ↷ B⁻¹) ↷ B
 	const actualChange = tagChange(
@@ -788,7 +788,7 @@ function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	const editB = namedEditToRebaseOver.changeset;
 
-	const invertedEditB = fieldRebaser.invert(editB, true);
+	const invertedEditB = fieldRebaser.invert(editB, undefined, true);
 	// (A ↷ B) ↷ B⁻¹
 	const actualChange = tagChange(
 		fieldRebaser.rebase(
@@ -852,7 +852,7 @@ function invert<TChangeset>(
 ): TaggedChange<TChangeset> {
 	const revision = `rollback-${change.revision}` as unknown as RevisionTag;
 	return tagRollbackInverse(
-		fieldRebaser.inlineRevision(fieldRebaser.invert(change, true), revision),
+		fieldRebaser.inlineRevision(fieldRebaser.invert(change, undefined, true), revision),
 		revision,
 		change.revision,
 	);

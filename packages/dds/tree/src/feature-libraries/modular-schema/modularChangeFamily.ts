@@ -202,6 +202,8 @@ export class ModularChangeFamily
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
+		const revInfoSet: Set<RevisionInfo> = new Set(revInfos);
+		console.log(revInfoSet);
 		const idState: IdAllocationState = { maxId };
 
 		if (changes.length === 0) {
@@ -2829,12 +2831,22 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 	maxId: ChangesetLocalId;
 } {
 	let maxId = -1;
-	const revInfos: RevisionInfo[] = [];
+	const revInfoList: RevisionInfo[] = [];
 	for (const taggedChange of changes) {
 		const change = taggedChange.change;
 		maxId = Math.max(change.maxId ?? -1, maxId);
-		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+		revInfoList.push(...revisionInfoFromTaggedChange(taggedChange));
 	}
+
+	// Remove duplicate revision infos. Each change can have a revision info and it may be the same as
+	// other changes in the list.
+	const revInfos = revInfoList.filter(
+		(value, index, self) =>
+			index ===
+			self.findIndex(
+				(r) => r.revision === value.revision && r.rollbackOf === value.rollbackOf,
+			),
+	);
 
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
