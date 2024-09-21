@@ -86,6 +86,7 @@ export function generateHandlers(
 	view: TreeView<ImplicitFieldSchema>,
 	nodeMap: Map<number, TreeNode>,
 	complete: (jsonObject: JsonObject) => void,
+	debugLog: string[],
 ): StreamedType {
 	const schema = normalizeFieldSchema(view.schema);
 	const simpleSchema = getSimpleSchema(schema.allowedTypes);
@@ -119,6 +120,7 @@ export function generateHandlers(
 			),
 		},
 		complete: (jsonObject: JsonObject) => {
+			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const setRoot = jsonObject as unknown as SetRoot;
 			applyAgentEdit(view, setRoot, nodeMap, simpleSchema.definitions);
 		},
@@ -135,6 +137,7 @@ export function generateHandlers(
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
 		},
 		complete: (jsonObject: JsonObject) => {
+			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const insert = jsonObject as unknown as Insert;
 			applyAgentEdit(view, insert, nodeMap, simpleSchema.definitions);
 		},
@@ -148,6 +151,7 @@ export function generateHandlers(
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 		},
 		complete: (jsonObject: JsonObject) => {
+			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const remove = jsonObject as unknown as Remove;
 			applyAgentEdit(view, remove, nodeMap, simpleSchema.definitions);
 		},
@@ -165,6 +169,7 @@ export function generateHandlers(
 			),
 		},
 		complete: (jsonObject: JsonObject) => {
+			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const modify = jsonObject as unknown as Modify;
 			applyAgentEdit(view, modify, nodeMap, simpleSchema.definitions);
 		},
@@ -180,6 +185,7 @@ export function generateHandlers(
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
 		},
 		complete: (jsonObject: JsonObject) => {
+			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const move = jsonObject as unknown as Move;
 			applyAgentEdit(view, move, nodeMap, simpleSchema.definitions);
 		},

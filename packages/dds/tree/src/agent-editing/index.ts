@@ -46,9 +46,16 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 	options: GenerateTreeEditsOptions<TSchema>,
 ): Promise<void> {
 	const log: string[] = [];
+	const debugLog: string[] = [];
 
 	async function doNextEdit(): Promise<void> {
-		const { systemPrompt, decoratedTreeJson } = getSystemPrompt(options.treeView, log);
+		const { systemPrompt, decoratedTreeJson } = getSystemPrompt(
+			options.prompt,
+			options.treeView,
+			log,
+		);
+
+		debugLog.push(systemPrompt);
 
 		let done = false;
 
@@ -58,12 +65,13 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 			(jsonObject: JsonObject) => {
 				const wrapper = jsonObject as unknown as EditWrapper;
 				if (wrapper.edit !== null) {
-					console.log(wrapper.edit.explanation);
 					log.push(wrapper.edit.explanation);
 				} else {
 					done = true;
+					debugLog.push("No more edits.");
 				}
 			},
+			debugLog,
 		);
 
 		return doEdit(systemPrompt, editHandler, options).then(async () => {
@@ -73,7 +81,10 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 		});
 	}
 
-	return doNextEdit();
+	return doNextEdit().finally(() => {
+		const dump = debugLog.join("\n\n");
+		console.error(dump);
+	});
 }
 
 async function doEdit<TSchema extends ImplicitFieldSchema>(
@@ -93,10 +104,7 @@ async function doEdit<TSchema extends ImplicitFieldSchema>(
 	};
 
 	const body: ChatCompletionCreateParams = {
-		messages: [
-			{ role: "system", content: systemPrompt },
-			{ role: "user", content: prompt },
-		],
+		messages: [{ role: "system", content: systemPrompt }],
 		model: clientModel.get(openAIClient) ?? fail("Model not set"),
 		response_format: {
 			type: "json_schema",

@@ -56,6 +56,7 @@ export interface SystemPromptResult {
 }
 
 export function getSystemPrompt(
+	userPrompt: string,
 	view: TreeView<ImplicitFieldSchema>,
 	log: string[],
 ): SystemPromptResult {
@@ -63,21 +64,38 @@ export function getSystemPrompt(
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
 	const decoratedTreeJson = toDecoratedJson(view.root);
 
+	function createNumberedList(items: string[]): string {
+		return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
+	}
+
+	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	You are a collaborative agent who interacts with a tree.
+	You are a collaborative agent who interacts with a tree by performing edits.
 	You should make the minimum number of edits to the tree to achieve the desired outcome, and do it in as granular a way as possible to ensure good merge outcomes.
+	Edits are made using the following primitives:
+	- ObjectTarget: a reference to an object (as specified by objectId).
+	- Place: either before or after a ObjectTarget (only makes sense for objects in arrays).
+	- ArrayPlace: either the "start" or "end" of an array, as specified by a "parent" ObjectTarget and a "field" name under which the array is stored.
+	- Selection: a ObjectTarget or a range of objects specified by a "start" and "end" Place.
+	The allowed edits are:
+	- SetRoot: sets the root to a specific value.
+	- Insert: inserts a new object at a specific Place or ArrayPlace.
+	- Modify: sets a field on a specific ObjectTarget.
+	- Remove: deletes a Selection from the tree.
+	- Move: moves a Selection to a new Place or ArrayPlace.
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-
-	So far, you have made the following edits to the tree: ${log.join("; ")}.
-
 	The current state of the tree is: ${decoratedTreeJson.stringified}.
-
-	Please produce the next edit towards accomplishing the desired outcome, or produce no edit if the tree is already in the desired state.
-`;
-
-	// The allowed edits are defined by the following schema: ${"TODO"}.
-	// Example edits: ${"TODO"}.`;
-
+	The user has requested that, after you have performed your series of actions, the following goal should be accomplished:
+	${userPrompt}
+	${
+		log.length === 0
+			? "You have not performed any actions to accomplish this goal yet."
+			: `You have already performed the following actions to accomplish this goal thus far: ${createNumberedList(log)}
+			This means that the current state of the tree already reflects your prior changes being applied.`
+	}
+	You should produce one of the following things:
+	1. An english description ("explanation") of the next edit to perform (using one of the allowed edit types) that makes progress towards accomplishing the user's request as well as a JSON object representing the edit you want to perform.
+	2. null if the tree is now in the desired state or if the goal cannot be accomplished.`;
 	return { systemPrompt, decoratedTreeJson };
 }
 
