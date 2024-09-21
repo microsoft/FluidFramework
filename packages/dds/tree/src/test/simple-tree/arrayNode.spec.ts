@@ -321,6 +321,13 @@ describe("ArrayNode", () => {
 					assert.deepEqual([...array2], [1, 3]);
 				});
 
+				it.only("moveToIndex bug", () => {
+					const array = init(schemaType, [0, 1, 2]);
+					array.moveToIndex(2, 0);
+					// Actual result is: [1, 0, 2], effectively doing a call of array.moveToIndex(1, 0)
+					assert.deepEqual([...array], [1, 2, 0]);
+				});
+
 				for (const specifySource of [false, true]) {
 					describe(`move within field ${
 						specifySource ? "(specified source)" : "(implicit source)"
