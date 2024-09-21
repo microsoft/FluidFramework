@@ -23,49 +23,54 @@ import {
 } from "../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
-import { objectIdKey } from "./agentEditTypes.js";
-
-export interface StringifiedJsonTreeSchema {
-	stringified: string;
-	idMap: Map<number, TreeNode>;
-}
+import { objectIdKey, type Insert, type TreeEdit } from "./agentEditTypes.js";
 
 export function toDecoratedJson(
+	idCount: { current: number },
+	idToNode: Map<number, TreeNode>,
+	nodeToId: Map<TreeNode, number>,
 	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
-): StringifiedJsonTreeSchema {
-	const idMap = new Map<number, TreeNode>();
-	let idCount = 0;
+): string {
 	const stringified: string = JSON.stringify(root, (_, value) => {
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
-			idMap.set(idCount, value);
+			let objId = nodeToId.get(value);
+			if (objId === undefined) {
+				objId = idCount.current++;
+			}
+			idToNode.set(objId, value);
+			nodeToId.set(value, objId);
 			assert(!{}.hasOwnProperty.call(value, objectIdKey), `Collision of object id property.`);
 			return {
-				[objectIdKey]: idCount++,
+				[objectIdKey]: objId,
 				...value,
 			} as unknown;
 		}
 		return value as unknown;
 	});
-	return { stringified, idMap };
-}
-
-export interface SystemPromptResult {
-	systemPrompt: string;
-	decoratedTreeJson: StringifiedJsonTreeSchema;
+	return stringified;
 }
 
 export function getSystemPrompt(
 	userPrompt: string,
+	idCount: { current: number },
+	idToNode: Map<number, TreeNode>,
+	nodeToId: Map<TreeNode, number>,
 	view: TreeView<ImplicitFieldSchema>,
-	log: string[],
-): SystemPromptResult {
+	log: TreeEdit[],
+): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
-	const decoratedTreeJson = toDecoratedJson(view.root);
+	const nextIdToGenerate = idCount.current;
+	const decoratedTreeJson = toDecoratedJson(idCount, idToNode, nodeToId, view.root);
 
-	function createNumberedList(items: string[]): string {
-		return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
+	function createEditList(edits: TreeEdit[]): string {
+		return edits
+			.map(
+				(edit, index) =>
+					`${index + 1}. ${prettyPrintEdit(edit, nextIdToGenerate, idCount, idToNode, nodeToId)}`,
+			)
+			.join("\n");
 	}
 
 	// TODO: security: user prompt in system prompt
@@ -84,19 +89,45 @@ export function getSystemPrompt(
 	- Remove: deletes a Selection from the tree.
 	- Move: moves a Selection to a new Place or ArrayPlace.
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state of the tree is: ${decoratedTreeJson.stringified}.
+	The current state of the tree is: ${decoratedTreeJson}.
 	The user has requested that, after you have performed your series of actions, the following goal should be accomplished:
 	${userPrompt}
 	${
 		log.length === 0
 			? "You have not performed any actions to accomplish this goal yet."
-			: `You have already performed the following actions to accomplish this goal thus far: ${createNumberedList(log)}
+			: `You have already performed the following actions to accomplish this goal thus far:
+			${createEditList(log)}
 			This means that the current state of the tree already reflects your prior changes being applied.`
 	}
 	You should produce one of the following things:
 	1. An english description ("explanation") of the next edit to perform (using one of the allowed edit types) that makes progress towards accomplishing the user's request as well as a JSON object representing the edit you want to perform.
 	2. null if the tree is now in the desired state or if the goal cannot be accomplished.`;
-	return { systemPrompt, decoratedTreeJson };
+	return systemPrompt;
+}
+
+function prettyPrintEdit(
+	edit: TreeEdit,
+	nextIdToGenerate: number,
+	idCount: { current: number },
+	idToNode: Map<number, TreeNode>,
+	nodeToId: Map<TreeNode, number>,
+): string {
+	switch (edit.type) {
+		case "insert":
+			return JSON.stringify({
+				type: edit.type,
+				explanation: edit.explanation,
+				content: JSON.parse(
+					toDecoratedJson(idCount, idToNode, nodeToId, idToNode.get(nextIdToGenerate)),
+				),
+				destination: edit.destination,
+			} satisfies Insert);
+		default:
+			return JSON.stringify({
+				type: edit.type,
+				explanation: edit.explanation,
+			});
+	}
 }
 
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {

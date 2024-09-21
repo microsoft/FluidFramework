@@ -392,9 +392,9 @@ function getObjectPlaceInfo(
 	if (place.type === "arrayPlace") {
 		const parent = nodeMap.get(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
-		// if (!Array.isArray(child)) {
-		// 	assert(Array.isArray(child), "Expected child to be an array node");
-		// }
+		assert(child !== undefined, `No child under field ${place.field}`);
+		const schema = Tree.schema(child as TreeNode);
+		assert(schema.kind === NodeKind.Array, "Expected child to be an array node");
 		return {
 			array: child as TreeArrayNode,
 			index: place.location === "start" ? 0 : (child as TreeArrayNode).length,
@@ -402,7 +402,8 @@ function getObjectPlaceInfo(
 	} else {
 		const { node, parentIndex } = getTargetInfo(place, nodeMap);
 		const parent = Tree.parent(node);
-		assert(Array.isArray(parent), "Expected parent to be an array node");
+		const schema = Tree.schema(parent as TreeNode);
+		assert(schema.kind === NodeKind.Array, "Expected child to be an array node");
 		return {
 			array: parent as unknown as TreeArrayNode,
 			index: place.place === "before" ? parentIndex : parentIndex + 1,

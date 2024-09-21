@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, type TreeNode } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
 import {
@@ -36,11 +36,19 @@ class RootObject extends demoSf.object("RootObject", {
 }) {}
 
 describe("toDecoratedJson", () => {
+	let idCount: { current: 0 };
+	let idToNode: Map<number, TreeNode>;
+	let nodeToId: Map<TreeNode, number>;
+	beforeEach(() => {
+		idCount = { current: 0 };
+		idToNode = new Map<number, TreeNode>();
+		nodeToId = new Map<TreeNode, number>();
+	});
 	it("adds ID fields", () => {
 		const vector = new Vector({ x: 1, y: 2 });
 		const hydratedObject = hydrate(Vector, vector);
 		assert.equal(
-			toDecoratedJson(hydratedObject).stringified,
+			toDecoratedJson(idCount, idToNode, nodeToId, hydratedObject),
 			JSON.stringify({
 				[objectIdKey]: 0,
 				x: 1,
@@ -54,9 +62,8 @@ describe("toDecoratedJson", () => {
 			RootObject,
 			new RootObject({ str: "hello", vectors: [{ x: 1, y: 2, z: 3 }], bools: [true] }),
 		);
-		const { stringified, idMap } = toDecoratedJson(hydratedObject);
 		assert.equal(
-			stringified,
+			toDecoratedJson(idCount, idToNode, nodeToId, hydratedObject),
 			JSON.stringify({
 				[objectIdKey]: 0,
 				str: "hello",
@@ -71,8 +78,8 @@ describe("toDecoratedJson", () => {
 				bools: [true],
 			}),
 		);
-		assert.equal(idMap.get(0), hydratedObject);
-		assert.equal(idMap.get(1), hydratedObject.vectors.at(0));
+		assert.equal(idToNode.get(0), hydratedObject);
+		assert.equal(idToNode.get(1), hydratedObject.vectors.at(0));
 	});
 
 	it("handles non-POJO mode arrays", () => {
@@ -83,7 +90,7 @@ describe("toDecoratedJson", () => {
 		}) {}
 		const hydratedObject = hydrate(Root, new Root({ arr: [1, 2, 3] }));
 		assert.equal(
-			toDecoratedJson(hydratedObject).stringified,
+			toDecoratedJson(idCount, idToNode, nodeToId, hydratedObject),
 			JSON.stringify({ __fluid_objectId: 0, arr: [1, 2, 3] }),
 		);
 	});

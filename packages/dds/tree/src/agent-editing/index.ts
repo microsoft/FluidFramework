@@ -13,7 +13,7 @@ import type {
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
+import type { ImplicitFieldSchema, TreeNode, TreeView } from "../simple-tree/index.js";
 import { getSystemPrompt } from "./promptGeneration.js";
 import { generateHandlers } from "./handlers.js";
 import {
@@ -21,7 +21,7 @@ import {
 	type JsonObject,
 	type StreamedType,
 } from "../json-handler/index.js";
-import type { EditWrapper } from "./agentEditTypes.js";
+import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import { fail } from "../util/index.js";
 
 /**
@@ -45,12 +45,18 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
 export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 	options: GenerateTreeEditsOptions<TSchema>,
 ): Promise<void> {
-	const log: string[] = [];
+	const log: TreeEdit[] = [];
+	const idCount = { current: 0 };
+	const idToNode = new Map<number, TreeNode>();
+	const nodeToId = new Map<TreeNode, number>();
 	const debugLog: string[] = [];
 
 	async function doNextEdit(): Promise<void> {
-		const { systemPrompt, decoratedTreeJson } = getSystemPrompt(
+		const systemPrompt = getSystemPrompt(
 			options.prompt,
+			idCount,
+			idToNode,
+			nodeToId,
 			options.treeView,
 			log,
 		);
@@ -61,11 +67,11 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 
 		const editHandler = generateHandlers(
 			options.treeView,
-			decoratedTreeJson.idMap,
+			idToNode,
 			(jsonObject: JsonObject) => {
 				const wrapper = jsonObject as unknown as EditWrapper;
 				if (wrapper.edit !== null) {
-					log.push(wrapper.edit.explanation);
+					log.push(wrapper.edit);
 				} else {
 					done = true;
 					debugLog.push("No more edits.");
@@ -81,10 +87,14 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 		});
 	}
 
-	return doNextEdit().finally(() => {
-		const dump = debugLog.join("\n\n");
-		console.error(dump);
-	});
+	return doNextEdit()
+		.catch((error) => {
+			debugLog.push(`Error: ${error}`);
+		})
+		.finally(() => {
+			const dump = debugLog.join("\n\n");
+			console.error(dump);
+		});
 }
 
 async function doEdit<TSchema extends ImplicitFieldSchema>(
