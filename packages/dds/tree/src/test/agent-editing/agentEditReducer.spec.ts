@@ -57,11 +57,19 @@ class RootObject extends sf.object("RootObject", {
 	bools: sf.array(sf.boolean),
 }) {}
 
-class RootObjectWithMultipleVectors extends sf.object("RootObject", {
+class RootObjectWithMultipleVectorArrays extends sf.object("RootObject", {
 	str: sf.string,
 	// Two different vector types to handle the polymorphic case
 	vectors: sf.array([Vector]),
 	vectors2: sf.array([Vector]),
+	bools: sf.array(sf.boolean),
+}) {}
+
+class RootObjectWithDifferentVectorArrayTypes extends sf.object("RootObject", {
+	str: sf.string,
+	// Two different vector types to handle the polymorphic case
+	vectors: sf.array([Vector]),
+	vectors2: sf.array([Vector2]),
 	bools: sf.array(sf.boolean),
 }) {}
 const config = new TreeViewConfiguration({ schema: [sf.number, RootObjectPolymorphic] });
@@ -620,7 +628,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const configWithMultipleVectors = new TreeViewConfiguration({
-				schema: [RootObjectWithMultipleVectors],
+				schema: [RootObjectWithMultipleVectorArrays],
 			});
 			const view = tree.viewWith(configWithMultipleVectors);
 			const schema = normalizeFieldSchema(view.schema);
@@ -683,7 +691,7 @@ describe("applyAgentEdit", () => {
 				"tree",
 			);
 			const configWithMultipleVectors = new TreeViewConfiguration({
-				schema: [RootObjectWithMultipleVectors],
+				schema: [RootObjectWithMultipleVectorArrays],
 			});
 			const view = tree.viewWith(configWithMultipleVectors);
 			const schema = normalizeFieldSchema(view.schema);
@@ -756,6 +764,57 @@ describe("applyAgentEdit", () => {
 			assert.deepEqual(
 				JSON.stringify(view.root, undefined, 2),
 				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("moving invalid types fails", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithDifferentVectorArrayTypes],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 }), new Vector({ x: 2, y: 3, z: 4 })],
+				vectors2: [new Vector2({ x2: 3, y2: 4, z2: 5 })],
+				bools: [true],
+			});
+
+			const nodeMap: Map<number, TreeNode> = new Map<number, TreeNode>();
+			nodeMap.set(0, view.root.vectors[0]);
+			nodeMap.set(1, view.root.vectors[1]);
+			nodeMap.set(2, view.root);
+
+			const moveEdit: TreeEdit = {
+				type: "move",
+				source: {
+					from: {
+						[objectIdKey]: 0,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						[objectIdKey]: 1,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+				destination: {
+					type: "arrayPlace",
+					parentId: 2,
+					field: "vectors2",
+					location: "start",
+				},
+			};
+			assert.throws(
+				() => applyAgentEdit(view, moveEdit, nodeMap, simpleSchema.definitions),
+				validateUsageError(/Illegal node type in destination array/),
 			);
 		});
 	});

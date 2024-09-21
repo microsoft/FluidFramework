@@ -173,8 +173,8 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
-			const allowedTypes = normalizeAllowedTypes(
-				parentNodeSchema.info as ImplicitAllowedTypes,
+			const allowedTypes = Array.from(
+				normalizeAllowedTypes(parentNodeSchema.info as ImplicitAllowedTypes),
 			);
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -289,26 +289,49 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, nodeMap);
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
 				// assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
-				destinationArrayNode.moveRangeToIndex(
-					destinationIndex,
-					sourceIndex,
-					sourceIndex + 1,
-					sourceArrayNode,
+				const destinationArraySchema = Tree.schema(destinationArrayNode);
+				const allowedTypes = Array.from(
+					normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
 				);
+				const nodeToMove = sourceArrayNode.at(sourceIndex);
+				assert(nodeToMove !== undefined, "node to move must exist");
+				if (isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
+					destinationArrayNode.moveRangeToIndex(
+						destinationIndex,
+						sourceIndex,
+						sourceIndex + 1,
+						sourceArrayNode,
+					);
+				} else {
+					throw new UsageError("Illegal node type in destination array");
+				}
 			} else if (isRange(source)) {
 				const {
-					startNode: sourceNode,
+					startNode: sourceStartNodeParent,
 					startIndex: sourceStartIndex,
-					endNode: sourceEndNode,
+					endNode: sourceEndNodeParent,
 					endIndex: sourceEndIndex,
 				} = getRangeInfo(source, nodeMap);
-				assert(sourceNode === sourceEndNode, "the range must come from the same source node");
-
+				assert(
+					sourceStartNodeParent === sourceEndNodeParent,
+					"the range must come from the same source node",
+				);
+				const destinationArraySchema = Tree.schema(destinationArrayNode);
+				const allowedTypes = Array.from(
+					normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
+				);
+				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
+					const nodeToMove = (sourceStartNodeParent as TreeArrayNode).at(i);
+					assert(nodeToMove !== undefined, "node to move must exist");
+					if (!isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
+						throw new UsageError("Illegal node type in destination array");
+					}
+				}
 				destinationArrayNode.moveRangeToIndex(
 					destinationIndex,
 					sourceStartIndex,
 					sourceEndIndex,
-					sourceNode as TreeArrayNode,
+					sourceStartNodeParent as TreeArrayNode,
 				);
 			}
 			break;
@@ -316,6 +339,15 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 		default:
 			fail("invalid tree edit");
 	}
+}
+
+function isNodeAllowedType(node: TreeNode, allowedTypes: TreeNodeSchema[]): boolean {
+	for (const allowedType of allowedTypes) {
+		if (Tree.is(node, allowedType)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function isPrimitive(content: unknown): boolean {
@@ -329,7 +361,7 @@ function isPrimitive(content: unknown): boolean {
 }
 
 function isObjectTarget(selection: Selection): selection is ObjectTarget {
-	return "__fluid_objectId" in selection;
+	return Object.keys(selection).length === 1 && "__fluid_objectId" in selection;
 }
 
 function isRange(selection: Selection): selection is Range {

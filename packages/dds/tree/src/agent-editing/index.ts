@@ -24,9 +24,6 @@ import {
 import type { EditWrapper } from "./agentEditTypes.js";
 import { fail } from "../util/index.js";
 
-export { getSystemPrompt } from "./promptGeneration.js";
-export { getResponse } from "./llmClient.js";
-
 /**
  * {@link generateTreeEdits} options.
  *
