@@ -32,6 +32,7 @@ import {
 	type Move,
 	type Remove,
 	type SetRoot,
+	type TreeEdit,
 } from "./agentEditTypes.js";
 import { applyAgentEdit, typeField } from "./agentEditReducer.js";
 
@@ -84,7 +85,10 @@ const rangeHandler = jh.object(() => ({
 
 export function generateHandlers(
 	view: TreeView<ImplicitFieldSchema>,
-	nodeMap: Map<number, TreeNode>,
+	log: TreeEdit[],
+	idCount: { current: number },
+	idToNode: Map<number, TreeNode>,
+	nodeToId: Map<TreeNode, number>,
 	complete: (jsonObject: JsonObject) => void,
 	debugLog: string[],
 ): StreamedType {
@@ -122,7 +126,15 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const setRoot = jsonObject as unknown as SetRoot;
-			applyAgentEdit(view, setRoot, nodeMap, simpleSchema.definitions);
+			applyAgentEdit(
+				view,
+				log,
+				setRoot,
+				idCount,
+				idToNode,
+				nodeToId,
+				simpleSchema.definitions,
+			);
 		},
 	}));
 
@@ -139,7 +151,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const insert = jsonObject as unknown as Insert;
-			applyAgentEdit(view, insert, nodeMap, simpleSchema.definitions);
+			applyAgentEdit(view, log, insert, idCount, idToNode, nodeToId, simpleSchema.definitions);
 		},
 	}));
 
@@ -153,7 +165,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const remove = jsonObject as unknown as Remove;
-			applyAgentEdit(view, remove, nodeMap, simpleSchema.definitions);
+			applyAgentEdit(view, log, remove, idCount, idToNode, nodeToId, simpleSchema.definitions);
 		},
 	}));
 
@@ -171,7 +183,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const modify = jsonObject as unknown as Modify;
-			applyAgentEdit(view, modify, nodeMap, simpleSchema.definitions);
+			applyAgentEdit(view, log, modify, idCount, idToNode, nodeToId, simpleSchema.definitions);
 		},
 	}));
 
@@ -187,7 +199,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const move = jsonObject as unknown as Move;
-			applyAgentEdit(view, move, nodeMap, simpleSchema.definitions);
+			applyAgentEdit(view, log, move, idCount, idToNode, nodeToId, simpleSchema.definitions);
 		},
 	}));
 

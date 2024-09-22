@@ -18,6 +18,7 @@ import {
 	type ObjectPlace,
 	objectIdKey,
 	type ArrayPlace,
+	type TreeEditObject,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../agent-editing/agentEditTypes.js";
 import {
@@ -43,6 +44,7 @@ import {
 } from "../simple-tree/schemaTypes.js";
 import { Tree } from "../shared-tree/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { toDecoratedJson } from "./promptGeneration.js";
 
 export const typeField = "__fluid_type";
 
@@ -109,18 +111,32 @@ function populateDefaults(
 	}
 }
 
+function contentWithIds(
+	content: TreeNode,
+	idCount: { current: number },
+	idToNode: Map<number, TreeNode>,
+	nodeToId: Map<TreeNode, number>,
+): TreeEditObject {
+	return JSON.parse(toDecoratedJson(idCount, idToNode, nodeToId, content)) as TreeEditObject;
+}
+
 export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	tree: TreeView<TSchema>,
+	log: TreeEdit[],
 	treeEdit: TreeEdit,
-	nodeMap: Map<number, TreeNode>,
+	idCount: { current: number },
+	idToNode: Map<number, TreeNode>,
+	nodeToId: Map<TreeNode, number>,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 ): void {
+	const logLength = log.length;
 	switch (treeEdit.type) {
 		case "setRoot": {
 			populateDefaults(treeEdit.content, definitionMap);
 
 			const treeSchema = tree.schema;
 
+			let insertedObject: TreeNode | undefined;
 			// If it's a primitive, just validate the content and set
 			if (isPrimitive(treeEdit.content)) {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,6 +156,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 								const rootNode = new simpleNodeSchema(treeEdit.content);
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								(tree as any).root = rootNode;
+								insertedObject = rootNode;
 							} else {
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								(tree as any).root = treeEdit.content;
@@ -155,8 +172,10 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 							const simpleNodeSchema = allowedType as unknown as new (
 								dummy: unknown,
 							) => TreeNode;
+							const rootNode = new simpleNodeSchema(treeEdit.content);
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							(tree as any).root = new simpleNodeSchema(treeEdit.content);
+							(tree as any).root = rootNode;
+							insertedObject = rootNode;
 						} else {
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							(tree as any).root = treeEdit.content;
@@ -165,10 +184,18 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				}
 			}
 
+			if (insertedObject !== undefined) {
+				log.push({
+					...treeEdit,
+					content: contentWithIds(insertedObject, idCount, idToNode, nodeToId),
+				});
+			} else {
+				log.push(treeEdit);
+			}
 			break;
 		}
 		case "insert": {
-			const { array, index } = getObjectPlaceInfo(treeEdit.destination, nodeMap);
+			const { array, index } = getObjectPlaceInfo(treeEdit.destination, idToNode);
 
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
@@ -177,30 +204,37 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				normalizeAllowedTypes(parentNodeSchema.info as ImplicitAllowedTypes),
 			);
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const schemaIdentifier = (treeEdit.content as any)[typeField];
+			const schemaIdentifier = treeEdit.content.__fluid_type;
 
+			let applied = false;
 			for (const allowedType of allowedTypes.values()) {
 				if (allowedType.identifier === schemaIdentifier) {
 					if (typeof allowedType === "function") {
+						applied = true;
 						const simpleNodeSchema = allowedType as unknown as new (
 							dummy: unknown,
 						) => TreeNode;
 						const insertNode = new simpleNodeSchema(treeEdit.content);
 						array.insertAt(index, insertNode);
+						log.push({
+							...treeEdit,
+							content: contentWithIds(insertNode, idCount, idToNode, nodeToId),
+						});
+						break;
 					}
 				}
 			}
+			assert(applied, "inserted node must be of an allowed type");
 			break;
 		}
 		case "remove": {
 			const source = treeEdit.source;
 			if (isObjectTarget(source)) {
-				const { node, parentIndex } = getTargetInfo(source, nodeMap);
+				const { node, parentIndex } = getTargetInfo(source, idToNode);
 				const parentNode = Tree.parent(node) as TreeArrayNode;
 				parentNode.removeAt(parentIndex);
 			} else if (isRange(source)) {
-				const { startNode, startIndex, endNode, endIndex } = getRangeInfo(source, nodeMap);
+				const { startNode, startIndex, endNode, endIndex } = getRangeInfo(source, idToNode);
 				const parentNode = Tree.parent(startNode) as TreeArrayNode;
 				const endParentNode = Tree.parent(endNode) as TreeArrayNode;
 
@@ -211,10 +245,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 				parentNode.removeRange(startIndex, endIndex);
 			}
+			log.push(treeEdit);
 			break;
 		}
 		case "modify": {
-			const { node } = getTargetInfo(treeEdit.target, nodeMap);
+			const { node } = getTargetInfo(treeEdit.target, idToNode);
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
 			const fieldSchema =
@@ -223,6 +258,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			const modification = treeEdit.modification;
 
+			let insertedObject: TreeNode | undefined;
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -232,24 +268,23 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			else if (typeof fieldSchema === "function") {
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
 				populateDefaults(modification, definitionMap);
+				const constructedModification = new simpleSchema(modification);
+				insertedObject = constructedModification;
 
 				if (Array.isArray(modification)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const field = (node as any)[treeEdit.field] as TreeArrayNode;
 					assert(Array.isArray(field), "the field must be an array node");
-					const modificationArrayNode = new simpleSchema(modification);
 					assert(
-						Array.isArray(modificationArrayNode),
+						Array.isArray(constructedModification),
 						"the modification must be an array node",
 					);
 					field.removeRange(0);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(node as any)[treeEdit.field] = modificationArrayNode;
+					(node as any)[treeEdit.field] = constructedModification;
 				} else {
-					const modificationNode = new simpleSchema(modification);
-
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(node as any)[treeEdit.field] = modificationNode;
+					(node as any)[treeEdit.field] = constructedModification;
 				}
 			}
 			// If the fieldSchema is of type FieldSchema, we can check its allowed types and set the field.
@@ -257,22 +292,35 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				if (fieldSchema.kind === FieldKind.Optional && modification === undefined) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = undefined;
-				}
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const schemaIdentifier = (modification as any)[typeField];
+				} else {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					const schemaIdentifier = (modification as any)[typeField];
 
-				for (const allowedType of fieldSchema.allowedTypeSet.values()) {
-					if (allowedType.identifier === schemaIdentifier) {
-						if (typeof allowedType === "function") {
-							const simpleSchema = allowedType as unknown as new (dummy: unknown) => TreeNode;
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							(node as any)[treeEdit.field] = new simpleSchema(modification);
-						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							(node as any)[treeEdit.field] = modification;
+					for (const allowedType of fieldSchema.allowedTypeSet.values()) {
+						if (allowedType.identifier === schemaIdentifier) {
+							if (typeof allowedType === "function") {
+								const simpleSchema = allowedType as unknown as new (
+									dummy: unknown,
+								) => TreeNode;
+								const constructedObject = new simpleSchema(modification);
+								insertedObject = constructedObject;
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								(node as any)[treeEdit.field] = constructedObject;
+							} else {
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								(node as any)[treeEdit.field] = modification;
+							}
 						}
 					}
 				}
+			}
+			if (insertedObject !== undefined) {
+				log.push({
+					...treeEdit,
+					modification: contentWithIds(insertedObject, idCount, idToNode, nodeToId),
+				});
+			} else {
+				log.push(treeEdit);
 			}
 			break;
 		}
@@ -282,11 +330,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const destination = treeEdit.destination;
 			const { array: destinationArrayNode, index: destinationIndex } = getObjectPlaceInfo(
 				destination,
-				nodeMap,
+				idToNode,
 			);
 
 			if (isObjectTarget(source)) {
-				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, nodeMap);
+				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, idToNode);
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
 				// assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
@@ -311,7 +359,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					startIndex: sourceStartIndex,
 					endNode: sourceEndNodeParent,
 					endIndex: sourceEndIndex,
-				} = getRangeInfo(source, nodeMap);
+				} = getRangeInfo(source, idToNode);
 				assert(
 					sourceStartNodeParent === sourceEndNodeParent,
 					"the range must come from the same source node",
@@ -334,11 +382,13 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					sourceStartNodeParent as TreeArrayNode,
 				);
 			}
+			log.push(treeEdit);
 			break;
 		}
 		default:
 			fail("invalid tree edit");
 	}
+	assert(log.length === logLength + 1, "log should have one more entry");
 }
 
 function isNodeAllowedType(node: TreeNode, allowedTypes: TreeNodeSchema[]): boolean {

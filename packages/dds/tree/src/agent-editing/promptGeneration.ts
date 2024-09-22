@@ -8,6 +8,7 @@ import {
 	NodeKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
+	type TreeArrayNode,
 	type TreeFieldFromImplicitField,
 	type TreeView,
 } from "../simple-tree/index.js";
@@ -23,7 +24,8 @@ import {
 } from "../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
-import { objectIdKey, type Insert, type TreeEdit } from "./agentEditTypes.js";
+import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
+import { Tree } from "../shared-tree/index.js";
 
 export function toDecoratedJson(
 	idCount: { current: number },
@@ -31,16 +33,11 @@ export function toDecoratedJson(
 	nodeToId: Map<TreeNode, number>,
 	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
 ): string {
+	assignIds(root, idCount, idToNode, nodeToId);
 	const stringified: string = JSON.stringify(root, (_, value) => {
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
-			let objId = nodeToId.get(value);
-			if (objId === undefined) {
-				objId = idCount.current++;
-			}
-			idToNode.set(objId, value);
-			nodeToId.set(value, objId);
-			assert(!{}.hasOwnProperty.call(value, objectIdKey), `Collision of object id property.`);
+			const objId = nodeToId.get(value) ?? fail("ID of new node should have been assigned.");
 			return {
 				[objectIdKey]: objId,
 				...value,
@@ -49,6 +46,37 @@ export function toDecoratedJson(
 		return value as unknown;
 	});
 	return stringified;
+}
+
+export function assignIds(
+	node: unknown,
+	idCount: { current: number },
+	idToNode: Map<number, TreeNode>,
+	nodeToId: Map<TreeNode, number>,
+): number | undefined {
+	if (typeof node === "object" && node !== null) {
+		const schema = Tree.schema(node as unknown as TreeNode);
+		if (schema.kind === NodeKind.Array) {
+			(node as unknown as TreeArrayNode).forEach((element) => {
+				assignIds(element, idCount, idToNode, nodeToId);
+			});
+		} else {
+			assert(node instanceof TreeNode, "Non-TreeNode value in tree.");
+			let objId = nodeToId.get(node);
+			if (objId === undefined) {
+				objId = idCount.current++;
+			}
+			idToNode.set(objId, node);
+			nodeToId.set(node, objId);
+			assert(!{}.hasOwnProperty.call(node, objectIdKey), `Collision of object id property.`);
+			Object.keys(node).forEach((key) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				assignIds((node as unknown as any)[key], idCount, idToNode, nodeToId);
+			});
+			return objId;
+		}
+	}
+	return undefined;
 }
 
 export function getSystemPrompt(
@@ -61,16 +89,10 @@ export function getSystemPrompt(
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
-	const nextIdToGenerate = idCount.current;
 	const decoratedTreeJson = toDecoratedJson(idCount, idToNode, nodeToId, view.root);
 
 	function createEditList(edits: TreeEdit[]): string {
-		return edits
-			.map(
-				(edit, index) =>
-					`${index + 1}. ${prettyPrintEdit(edit, nextIdToGenerate, idCount, idToNode, nodeToId)}`,
-			)
-			.join("\n");
+		return edits.map((edit, index) => `${index + 1}. ${JSON.stringify(edit)}`).join("\n");
 	}
 
 	// TODO: security: user prompt in system prompt
@@ -103,31 +125,6 @@ export function getSystemPrompt(
 	1. An english description ("explanation") of the next edit to perform (using one of the allowed edit types) that makes progress towards accomplishing the user's request as well as a JSON object representing the edit you want to perform.
 	2. null if the tree is now in the desired state or if the goal cannot be accomplished.`;
 	return systemPrompt;
-}
-
-function prettyPrintEdit(
-	edit: TreeEdit,
-	nextIdToGenerate: number,
-	idCount: { current: number },
-	idToNode: Map<number, TreeNode>,
-	nodeToId: Map<TreeNode, number>,
-): string {
-	switch (edit.type) {
-		case "insert":
-			return JSON.stringify({
-				type: edit.type,
-				explanation: edit.explanation,
-				content: JSON.parse(
-					toDecoratedJson(idCount, idToNode, nodeToId, idToNode.get(nextIdToGenerate)),
-				),
-				destination: edit.destination,
-			} satisfies Insert);
-		default:
-			return JSON.stringify({
-				type: edit.type,
-				explanation: edit.explanation,
-			});
-	}
 }
 
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {

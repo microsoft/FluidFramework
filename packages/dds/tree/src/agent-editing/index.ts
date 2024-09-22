@@ -67,12 +67,13 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 
 		const editHandler = generateHandlers(
 			options.treeView,
+			log,
+			idCount,
 			idToNode,
+			nodeToId,
 			(jsonObject: JsonObject) => {
 				const wrapper = jsonObject as unknown as EditWrapper;
-				if (wrapper.edit !== null) {
-					log.push(wrapper.edit);
-				} else {
+				if (wrapper.edit === null) {
 					done = true;
 					debugLog.push("No more edits.");
 				}
