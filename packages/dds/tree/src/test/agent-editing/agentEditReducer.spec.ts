@@ -27,7 +27,7 @@ import {
 import { objectIdKey, type TreeEdit } from "../../agent-editing/agentEditTypes.js";
 import { validateUsageError } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { assignIds } from "../../agent-editing/promptGeneration.js";
+import { IdGenerator } from "../../agent-editing/idGenerator.js";
 
 const sf = new SchemaFactory("agentSchema");
 
@@ -80,14 +80,10 @@ const factory = new TreeFactory({});
 
 describe("applyAgentEdit", () => {
 	let log: TreeEdit[];
-	let idCount: { current: 0 };
-	let idToNode: Map<number, TreeNode>;
-	let nodeToId: Map<TreeNode, number>;
+	let idGenerator: IdGenerator;
 	beforeEach(() => {
 		log = [];
-		idCount = { current: 0 };
-		idToNode = new Map<number, TreeNode>();
-		nodeToId = new Map<TreeNode, number>();
+		idGenerator = new IdGenerator();
 	});
 	describe("setRoot edits", () => {
 		it("polymorphic root", () => {
@@ -115,15 +111,7 @@ describe("applyAgentEdit", () => {
 				},
 			};
 
-			applyAgentEdit(
-				view,
-				log,
-				setRootEdit,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, setRootEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = [
 				{
@@ -169,15 +157,7 @@ describe("applyAgentEdit", () => {
 				content: 2,
 			};
 
-			applyAgentEdit(
-				view,
-				log,
-				setRootEdit,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, setRootEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = [
 				{
@@ -205,9 +185,10 @@ describe("applyAgentEdit", () => {
 				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
 				bools: [true],
 			});
-			assignIds(view.root, idCount, idToNode, nodeToId);
+			idGenerator.assignIds(view.root);
 			const vectorId =
-				nodeToId.get((view.root as RootObjectPolymorphic).vectors[0]) ?? fail("ID expected.");
+				idGenerator.getId((view.root as RootObjectPolymorphic).vectors[0]) ??
+				fail("ID expected.");
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
@@ -219,15 +200,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(
-				view,
-				log,
-				insertEdit,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, insertEdit, idGenerator, simpleSchema.definitions);
 
 			const insertEdit2: TreeEdit = {
 				explanation: "Insert a vector",
@@ -239,15 +212,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(
-				view,
-				log,
-				insertEdit2,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, insertEdit2, idGenerator, simpleSchema.definitions);
 
 			const identifier1 = ((view.root as RootObjectPolymorphic).vectors[0] as Vector).id;
 			const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector).id;
@@ -395,9 +360,9 @@ describe("applyAgentEdit", () => {
 				bools: [true],
 			});
 
-			assignIds(view.root, idCount, idToNode, nodeToId);
+			idGenerator.assignIds(view.root);
 			const vectorId =
-				nodeToId.get((view.root as RootObject).vectors[0]) ?? fail("ID expected.");
+				idGenerator.getId((view.root as RootObject).vectors[0]) ?? fail("ID expected.");
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
@@ -409,15 +374,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(
-				view,
-				log,
-				insertEdit,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, insertEdit, idGenerator, simpleSchema.definitions);
 
 			const identifier1 = (view.root as RootObject).vectors[0].id;
 			const identifier2 = (view.root as RootObject).vectors[1].id;
@@ -535,8 +492,8 @@ describe("applyAgentEdit", () => {
 			bools: [true],
 		});
 
-		assignIds(view.root, idCount, idToNode, nodeToId);
-		const vectorId = nodeToId.get(view.root as TreeNode) ?? fail("ID expected.");
+		idGenerator.assignIds(view.root);
+		const vectorId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
 
 		const modifyEdit: TreeEdit = {
 			explanation: "Modify a vector",
@@ -548,15 +505,7 @@ describe("applyAgentEdit", () => {
 				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			],
 		};
-		applyAgentEdit(
-			view,
-			log,
-			modifyEdit,
-			idCount,
-			idToNode,
-			nodeToId,
-			simpleSchema.definitions,
-		);
+		applyAgentEdit(view, log, modifyEdit, idGenerator, simpleSchema.definitions);
 
 		const modifyEdit2: TreeEdit = {
 			explanation: "Modify a vector",
@@ -565,19 +514,11 @@ describe("applyAgentEdit", () => {
 			field: "bools",
 			modification: [false],
 		};
-		applyAgentEdit(
-			view,
-			log,
-			modifyEdit2,
-			idCount,
-			idToNode,
-			nodeToId,
-			simpleSchema.definitions,
-		);
+		applyAgentEdit(view, log, modifyEdit2, idGenerator, simpleSchema.definitions);
 
-		assignIds(view.root, idCount, idToNode, nodeToId);
+		idGenerator.assignIds(view.root);
 		const vectorId2 =
-			nodeToId.get((view.root as RootObjectPolymorphic).vectors[0] as Vector) ??
+			idGenerator.getId((view.root as RootObjectPolymorphic).vectors[0] as Vector) ??
 			fail("ID expected.");
 
 		const modifyEdit3: TreeEdit = {
@@ -587,15 +528,7 @@ describe("applyAgentEdit", () => {
 			field: "x",
 			modification: 111,
 		};
-		applyAgentEdit(
-			view,
-			log,
-			modifyEdit3,
-			idCount,
-			idToNode,
-			nodeToId,
-			simpleSchema.definitions,
-		);
+		applyAgentEdit(view, log, modifyEdit3, idGenerator, simpleSchema.definitions);
 
 		const identifier = ((view.root as RootObjectPolymorphic).vectors[0] as Vector).id;
 		const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector2).id;
@@ -717,9 +650,9 @@ describe("applyAgentEdit", () => {
 				bools: [true],
 			});
 
-			assignIds(view.root, idCount, idToNode, nodeToId);
-			const vectorId1 = nodeToId.get(view.root.vectors[0]) ?? fail("ID expected.");
-			const vectorId2 = nodeToId.get(view.root) ?? fail("ID expected.");
+			idGenerator.assignIds(view.root);
+			const vectorId1 = idGenerator.getId(view.root.vectors[0]) ?? fail("ID expected.");
+			const vectorId2 = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
 				explanation: "Move a vector",
@@ -732,15 +665,7 @@ describe("applyAgentEdit", () => {
 					location: "start",
 				},
 			};
-			applyAgentEdit(
-				view,
-				log,
-				moveEdit,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, moveEdit, idGenerator, simpleSchema.definitions);
 			const identifier = view.root.vectors2[0].id;
 			const identifier2 = view.root.vectors2[1].id;
 
@@ -788,10 +713,10 @@ describe("applyAgentEdit", () => {
 				bools: [true],
 			});
 
-			assignIds(view.root, idCount, idToNode, nodeToId);
-			const vectorId1 = nodeToId.get(view.root.vectors[0]) ?? fail("ID expected.");
-			const vectorId2 = nodeToId.get(view.root.vectors[1]) ?? fail("ID expected.");
-			const vectorId3 = nodeToId.get(view.root) ?? fail("ID expected.");
+			idGenerator.assignIds(view.root);
+			const vectorId1 = idGenerator.getId(view.root.vectors[0]) ?? fail("ID expected.");
+			const vectorId2 = idGenerator.getId(view.root.vectors[1]) ?? fail("ID expected.");
+			const vectorId3 = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
 				explanation: "Move a vector",
@@ -815,15 +740,7 @@ describe("applyAgentEdit", () => {
 					location: "start",
 				},
 			};
-			applyAgentEdit(
-				view,
-				log,
-				moveEdit,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, moveEdit, idGenerator, simpleSchema.definitions);
 			const identifier = view.root.vectors2[0].id;
 			const identifier2 = view.root.vectors2[1].id;
 			const identifier3 = view.root.vectors2[2].id;
@@ -878,10 +795,10 @@ describe("applyAgentEdit", () => {
 				bools: [true],
 			});
 
-			assignIds(view.root, idCount, idToNode, nodeToId);
-			const vectorId1 = nodeToId.get(view.root.vectors[0]) ?? fail("ID expected.");
-			const vectorId2 = nodeToId.get(view.root.vectors[1]) ?? fail("ID expected.");
-			const vectorId3 = nodeToId.get(view.root) ?? fail("ID expected.");
+			idGenerator.assignIds(view.root);
+			const vectorId1 = idGenerator.getId(view.root.vectors[0]) ?? fail("ID expected.");
+			const vectorId2 = idGenerator.getId(view.root.vectors[1]) ?? fail("ID expected.");
+			const vectorId3 = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
 				type: "move",
@@ -906,16 +823,7 @@ describe("applyAgentEdit", () => {
 				},
 			};
 			assert.throws(
-				() =>
-					applyAgentEdit(
-						view,
-						log,
-						moveEdit,
-						idCount,
-						idToNode,
-						nodeToId,
-						simpleSchema.definitions,
-					),
+				() => applyAgentEdit(view, log, moveEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/Illegal node type in destination array/),
 			);
 		});

@@ -8,7 +8,6 @@ import {
 	NodeKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
-	type TreeArrayNode,
 	type TreeFieldFromImplicitField,
 	type TreeView,
 } from "../simple-tree/index.js";
@@ -25,19 +24,19 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
-import { Tree } from "../shared-tree/index.js";
+import type { IdGenerator } from "./idGenerator.js";
 
 export function toDecoratedJson(
-	idCount: { current: number },
-	idToNode: Map<number, TreeNode>,
-	nodeToId: Map<TreeNode, number>,
+	idGenerator: IdGenerator,
 	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
 ): string {
-	assignIds(root, idCount, idToNode, nodeToId);
+	idGenerator.assignIds(root);
 	const stringified: string = JSON.stringify(root, (_, value) => {
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
 			assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
-			const objId = nodeToId.get(value) ?? fail("ID of new node should have been assigned.");
+			const objId =
+				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
+			assert(!{}.hasOwnProperty.call(value, objectIdKey), `Collision of object id property.`);
 			return {
 				[objectIdKey]: objId,
 				...value,
@@ -48,48 +47,15 @@ export function toDecoratedJson(
 	return stringified;
 }
 
-export function assignIds(
-	node: unknown,
-	idCount: { current: number },
-	idToNode: Map<number, TreeNode>,
-	nodeToId: Map<TreeNode, number>,
-): number | undefined {
-	if (typeof node === "object" && node !== null) {
-		const schema = Tree.schema(node as unknown as TreeNode);
-		if (schema.kind === NodeKind.Array) {
-			(node as unknown as TreeArrayNode).forEach((element) => {
-				assignIds(element, idCount, idToNode, nodeToId);
-			});
-		} else {
-			assert(node instanceof TreeNode, "Non-TreeNode value in tree.");
-			let objId = nodeToId.get(node);
-			if (objId === undefined) {
-				objId = idCount.current++;
-			}
-			idToNode.set(objId, node);
-			nodeToId.set(node, objId);
-			assert(!{}.hasOwnProperty.call(node, objectIdKey), `Collision of object id property.`);
-			Object.keys(node).forEach((key) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				assignIds((node as unknown as any)[key], idCount, idToNode, nodeToId);
-			});
-			return objId;
-		}
-	}
-	return undefined;
-}
-
 export function getSystemPrompt(
 	userPrompt: string,
-	idCount: { current: number },
-	idToNode: Map<number, TreeNode>,
-	nodeToId: Map<TreeNode, number>,
+	idGenerator: IdGenerator,
 	view: TreeView<ImplicitFieldSchema>,
 	log: TreeEdit[],
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
-	const decoratedTreeJson = toDecoratedJson(idCount, idToNode, nodeToId, view.root);
+	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
 
 	function createEditList(edits: TreeEdit[]): string {
 		return edits.map((edit, index) => `${index + 1}. ${JSON.stringify(edit)}`).join("\n");

@@ -8,7 +8,6 @@ import {
 	NodeKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
-	type TreeNode,
 	type TreeView,
 } from "../simple-tree/index.js";
 import {
@@ -35,11 +34,12 @@ import {
 	type TreeEdit,
 } from "./agentEditTypes.js";
 import { applyAgentEdit, typeField } from "./agentEditReducer.js";
+import type { IdGenerator } from "./idGenerator.js";
 
 const objectTargetHandler = jh.object(() => ({
 	description: "A pointer to an object in the tree",
 	properties: {
-		[objectIdKey]: jh.number({ description: "The id of the object that is being pointed to" }),
+		[objectIdKey]: jh.string({ description: "The id of the object that is being pointed to" }),
 	},
 }));
 
@@ -48,7 +48,7 @@ const objectPlaceHandler = jh.object(() => ({
 		"A pointer to a location either just before or just after an object that is in an array",
 	properties: {
 		type: jh.enum({ values: ["objectPlace"] }),
-		[objectIdKey]: jh.number({
+		[objectIdKey]: jh.string({
 			description: `The id (${objectIdKey}) of the object that the new/moved object should be placed relative to. This must be the id of an object that already existed in the tree content that was originally supplied.`,
 		}),
 		place: jh.enum({
@@ -64,7 +64,7 @@ const arrayPlaceHandler = jh.object(() => ({
 		"A location at either the beginning or the end of an array (useful for prepending or appending)",
 	properties: {
 		type: jh.enum({ values: ["arrayPlace"] }),
-		parentId: jh.number({
+		parentId: jh.string({
 			description: `The id (${objectIdKey}) of the parent object of the array. This must be the id of an object that already existed in the tree content that was originally supplied.`,
 		}),
 		field: jh.string({ "description": "The key of the array to insert into" }),
@@ -86,9 +86,7 @@ const rangeHandler = jh.object(() => ({
 export function generateHandlers(
 	view: TreeView<ImplicitFieldSchema>,
 	log: TreeEdit[],
-	idCount: { current: number },
-	idToNode: Map<number, TreeNode>,
-	nodeToId: Map<TreeNode, number>,
+	idGenerator: IdGenerator,
 	complete: (jsonObject: JsonObject) => void,
 	debugLog: string[],
 ): StreamedType {
@@ -126,15 +124,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const setRoot = jsonObject as unknown as SetRoot;
-			applyAgentEdit(
-				view,
-				log,
-				setRoot,
-				idCount,
-				idToNode,
-				nodeToId,
-				simpleSchema.definitions,
-			);
+			applyAgentEdit(view, log, setRoot, idGenerator, simpleSchema.definitions);
 		},
 	}));
 
@@ -151,7 +141,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const insert = jsonObject as unknown as Insert;
-			applyAgentEdit(view, log, insert, idCount, idToNode, nodeToId, simpleSchema.definitions);
+			applyAgentEdit(view, log, insert, idGenerator, simpleSchema.definitions);
 		},
 	}));
 
@@ -165,7 +155,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const remove = jsonObject as unknown as Remove;
-			applyAgentEdit(view, log, remove, idCount, idToNode, nodeToId, simpleSchema.definitions);
+			applyAgentEdit(view, log, remove, idGenerator, simpleSchema.definitions);
 		},
 	}));
 
@@ -183,7 +173,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const modify = jsonObject as unknown as Modify;
-			applyAgentEdit(view, log, modify, idCount, idToNode, nodeToId, simpleSchema.definitions);
+			applyAgentEdit(view, log, modify, idGenerator, simpleSchema.definitions);
 		},
 	}));
 
@@ -199,7 +189,7 @@ export function generateHandlers(
 		complete: (jsonObject: JsonObject) => {
 			debugLog.push(JSON.stringify(jsonObject, null, 2));
 			const move = jsonObject as unknown as Move;
-			applyAgentEdit(view, log, move, idCount, idToNode, nodeToId, simpleSchema.definitions);
+			applyAgentEdit(view, log, move, idGenerator, simpleSchema.definitions);
 		},
 	}));
 

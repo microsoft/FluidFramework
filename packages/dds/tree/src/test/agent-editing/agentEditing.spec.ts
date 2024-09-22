@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaFactory, type TreeNode } from "../../simple-tree/index.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
 import {
@@ -20,6 +20,8 @@ import { getJsonSchema } from "../../simple-tree/api/index.js";
 import type { ResponseFormatJSONSchema } from "openai/resources/shared.mjs";
 // eslint-disable-next-line import/no-internal-modules
 import { objectIdKey } from "../../agent-editing/agentEditTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdGenerator } from "../../agent-editing/idGenerator.js";
 
 const demoSf = new SchemaFactory("agentSchema");
 
@@ -36,21 +38,17 @@ class RootObject extends demoSf.object("RootObject", {
 }) {}
 
 describe("toDecoratedJson", () => {
-	let idCount: { current: 0 };
-	let idToNode: Map<number, TreeNode>;
-	let nodeToId: Map<TreeNode, number>;
+	let idGenerator: IdGenerator;
 	beforeEach(() => {
-		idCount = { current: 0 };
-		idToNode = new Map<number, TreeNode>();
-		nodeToId = new Map<TreeNode, number>();
+		idGenerator = new IdGenerator();
 	});
 	it("adds ID fields", () => {
 		const vector = new Vector({ x: 1, y: 2 });
 		const hydratedObject = hydrate(Vector, vector);
 		assert.equal(
-			toDecoratedJson(idCount, idToNode, nodeToId, hydratedObject),
+			toDecoratedJson(idGenerator, hydratedObject),
 			JSON.stringify({
-				[objectIdKey]: 0,
+				[objectIdKey]: "Vector0",
 				x: 1,
 				y: 2,
 			}),
@@ -63,13 +61,13 @@ describe("toDecoratedJson", () => {
 			new RootObject({ str: "hello", vectors: [{ x: 1, y: 2, z: 3 }], bools: [true] }),
 		);
 		assert.equal(
-			toDecoratedJson(idCount, idToNode, nodeToId, hydratedObject),
+			toDecoratedJson(idGenerator, hydratedObject),
 			JSON.stringify({
-				[objectIdKey]: 0,
+				[objectIdKey]: "RootObject0",
 				str: "hello",
 				vectors: [
 					{
-						[objectIdKey]: 1,
+						[objectIdKey]: "Vector0",
 						x: 1,
 						y: 2,
 						z: 3,
@@ -78,8 +76,8 @@ describe("toDecoratedJson", () => {
 				bools: [true],
 			}),
 		);
-		assert.equal(idToNode.get(0), hydratedObject);
-		assert.equal(idToNode.get(1), hydratedObject.vectors.at(0));
+		assert.equal(idGenerator.getNode("RootObject0"), hydratedObject);
+		assert.equal(idGenerator.getNode("Vector0"), hydratedObject.vectors.at(0));
 	});
 
 	it("handles non-POJO mode arrays", () => {
@@ -90,8 +88,8 @@ describe("toDecoratedJson", () => {
 		}) {}
 		const hydratedObject = hydrate(Root, new Root({ arr: [1, 2, 3] }));
 		assert.equal(
-			toDecoratedJson(idCount, idToNode, nodeToId, hydratedObject),
-			JSON.stringify({ __fluid_objectId: 0, arr: [1, 2, 3] }),
+			toDecoratedJson(idGenerator, hydratedObject),
+			JSON.stringify({ __fluid_objectId: "Root0", arr: [1, 2, 3] }),
 		);
 	});
 });

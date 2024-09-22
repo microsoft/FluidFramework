@@ -45,6 +45,7 @@ import {
 import { Tree } from "../shared-tree/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { toDecoratedJson } from "./promptGeneration.js";
+import type { IdGenerator } from "./idGenerator.js";
 
 export const typeField = "__fluid_type";
 
@@ -111,22 +112,15 @@ function populateDefaults(
 	}
 }
 
-function contentWithIds(
-	content: TreeNode,
-	idCount: { current: number },
-	idToNode: Map<number, TreeNode>,
-	nodeToId: Map<TreeNode, number>,
-): TreeEditObject {
-	return JSON.parse(toDecoratedJson(idCount, idToNode, nodeToId, content)) as TreeEditObject;
+function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditObject {
+	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeEditObject;
 }
 
 export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	tree: TreeView<TSchema>,
 	log: TreeEdit[],
 	treeEdit: TreeEdit,
-	idCount: { current: number },
-	idToNode: Map<number, TreeNode>,
-	nodeToId: Map<TreeNode, number>,
+	idGenerator: IdGenerator,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 ): void {
 	const logLength = log.length;
@@ -187,7 +181,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			if (insertedObject !== undefined) {
 				log.push({
 					...treeEdit,
-					content: contentWithIds(insertedObject, idCount, idToNode, nodeToId),
+					content: contentWithIds(insertedObject, idGenerator),
 				});
 			} else {
 				log.push(treeEdit);
@@ -195,7 +189,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			break;
 		}
 		case "insert": {
-			const { array, index } = getObjectPlaceInfo(treeEdit.destination, idToNode);
+			const { array, index } = getObjectPlaceInfo(treeEdit.destination, idGenerator);
 
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
@@ -218,7 +212,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 						array.insertAt(index, insertNode);
 						log.push({
 							...treeEdit,
-							content: contentWithIds(insertNode, idCount, idToNode, nodeToId),
+							content: contentWithIds(insertNode, idGenerator),
 						});
 						break;
 					}
@@ -230,11 +224,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 		case "remove": {
 			const source = treeEdit.source;
 			if (isObjectTarget(source)) {
-				const { node, parentIndex } = getTargetInfo(source, idToNode);
+				const { node, parentIndex } = getTargetInfo(source, idGenerator);
 				const parentNode = Tree.parent(node) as TreeArrayNode;
 				parentNode.removeAt(parentIndex);
 			} else if (isRange(source)) {
-				const { startNode, startIndex, endNode, endIndex } = getRangeInfo(source, idToNode);
+				const { startNode, startIndex, endNode, endIndex } = getRangeInfo(source, idGenerator);
 				const parentNode = Tree.parent(startNode) as TreeArrayNode;
 				const endParentNode = Tree.parent(endNode) as TreeArrayNode;
 
@@ -249,7 +243,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			break;
 		}
 		case "modify": {
-			const { node } = getTargetInfo(treeEdit.target, idToNode);
+			const { node } = getTargetInfo(treeEdit.target, idGenerator);
 			const { treeNodeSchema } = getSimpleNodeSchema(node);
 
 			const fieldSchema =
@@ -317,7 +311,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			if (insertedObject !== undefined) {
 				log.push({
 					...treeEdit,
-					modification: contentWithIds(insertedObject, idCount, idToNode, nodeToId),
+					modification: contentWithIds(insertedObject, idGenerator),
 				});
 			} else {
 				log.push(treeEdit);
@@ -330,11 +324,14 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const destination = treeEdit.destination;
 			const { array: destinationArrayNode, index: destinationIndex } = getObjectPlaceInfo(
 				destination,
-				idToNode,
+				idGenerator,
 			);
 
 			if (isObjectTarget(source)) {
-				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(source, idToNode);
+				const { node: sourceNode, parentIndex: sourceIndex } = getTargetInfo(
+					source,
+					idGenerator,
+				);
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
 				// assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
@@ -359,7 +356,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					startIndex: sourceStartIndex,
 					endNode: sourceEndNodeParent,
 					endIndex: sourceEndIndex,
-				} = getRangeInfo(source, idToNode);
+				} = getRangeInfo(source, idGenerator);
 				assert(
 					sourceStartNodeParent === sourceEndNodeParent,
 					"the range must come from the same source node",
@@ -425,22 +422,22 @@ interface RangeInfo {
 	endIndex: number;
 }
 
-function getRangeInfo(range: Range, nodeMap: Map<number, TreeNode>): RangeInfo {
-	const { array: startNode, index: startIndex } = getObjectPlaceInfo(range.from, nodeMap);
-	const { array: endNode, index: endIndex } = getObjectPlaceInfo(range.to, nodeMap);
+function getRangeInfo(range: Range, idGenerator: IdGenerator): RangeInfo {
+	const { array: startNode, index: startIndex } = getObjectPlaceInfo(range.from, idGenerator);
+	const { array: endNode, index: endIndex } = getObjectPlaceInfo(range.to, idGenerator);
 
 	return { startNode, startIndex, endNode, endIndex };
 }
 
 function getObjectPlaceInfo(
 	place: ObjectPlace | ArrayPlace,
-	nodeMap: Map<number, TreeNode>,
+	idGenerator: IdGenerator,
 ): {
 	array: TreeArrayNode;
 	index: number;
 } {
 	if (place.type === "arrayPlace") {
-		const parent = nodeMap.get(place.parentId) ?? fail("Expected parent node");
+		const parent = idGenerator.getNode(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
 		assert(child !== undefined, `No child under field ${place.field}`);
 		const schema = Tree.schema(child as TreeNode);
@@ -450,7 +447,7 @@ function getObjectPlaceInfo(
 			index: place.location === "start" ? 0 : (child as TreeArrayNode).length,
 		};
 	} else {
-		const { node, parentIndex } = getTargetInfo(place, nodeMap);
+		const { node, parentIndex } = getTargetInfo(place, idGenerator);
 		const parent = Tree.parent(node);
 		const schema = Tree.schema(parent as TreeNode);
 		assert(schema.kind === NodeKind.Array, "Expected child to be an array node");
@@ -463,12 +460,12 @@ function getObjectPlaceInfo(
 
 function getTargetInfo(
 	target: ObjectTarget,
-	nodeMap: Map<number, TreeNode>,
+	idGenerator: IdGenerator,
 ): {
 	node: TreeNode;
 	parentIndex: number;
 } {
-	const node = nodeMap.get(target[objectIdKey]);
+	const node = idGenerator.getNode(target[objectIdKey]);
 	assert(node !== undefined, "objectId does not exist in nodeMap");
 
 	const parentIndex = getOrCreateInnerNode(node).anchorNode.parentIndex;

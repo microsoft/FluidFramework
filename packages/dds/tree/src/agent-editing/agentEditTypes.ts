@@ -50,13 +50,13 @@ export interface Edit {
 export type Selection = ObjectTarget | Range;
 
 export interface ObjectTarget {
-	[objectIdKey]: number;
+	[objectIdKey]: string;
 }
 
 // TODO: Allow support for nested arrays
 export interface ArrayPlace {
 	type: "arrayPlace";
-	parentId: number;
+	parentId: string;
 	field: string;
 	location: "start" | "end";
 }
