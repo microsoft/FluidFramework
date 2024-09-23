@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	FieldKind,
-	NodeKind,
-	normalizeFieldSchema,
-	type ImplicitFieldSchema,
-	type TreeView,
-} from "../simple-tree/index.js";
+import { FieldKind, NodeKind } from "../simple-tree/index.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
@@ -75,21 +69,18 @@ const rangeHandler = jh.object(() => ({
 	},
 }));
 
-export function generateHandlers(
-	view: TreeView<ImplicitFieldSchema>,
-	simpleSchema: SimpleTreeSchema,
+export function generateEditHandlers(
+	schema: SimpleTreeSchema,
 	complete: (jsonObject: JsonObject) => void,
 ): StreamedType {
-	// TODO Can `schema` be removed and the same information be obtained from `simpleSchema`?
-	const schema = normalizeFieldSchema(view.schema);
 	const insertSet = new Set<string>();
 	const modifyFieldSet = new Set<string>();
 	const modifyTypeSet = new Set<string>();
 	const schemaHandlers = new Map<string, StreamedType>();
 
-	for (const name of simpleSchema.definitions.keys()) {
+	for (const name of schema.definitions.keys()) {
 		getOrCreateHandler(
-			simpleSchema.definitions,
+			schema.definitions,
 			schemaHandlers,
 			insertSet,
 			modifyFieldSet,
@@ -105,9 +96,8 @@ export function generateHandlers(
 			explanation: jh.string({ description: editDescription }),
 			content: jh.anyOf(
 				Array.from(
-					schema.allowedTypeSet.values(),
-					(nodeSchema) =>
-						schemaHandlers.get(nodeSchema.identifier) ?? fail("Unexpected schema"),
+					schema.allowedTypes,
+					(nodeSchema) => schemaHandlers.get(nodeSchema) ?? fail("Unexpected schema"),
 				),
 			),
 		},

@@ -21,7 +21,7 @@ import {
 	type TreeView,
 } from "../simple-tree/index.js";
 import { getSystemPrompt, type EditLog } from "./promptGeneration.js";
-import { generateHandlers } from "./handlers.js";
+import { generateEditHandlers } from "./handlers.js";
 import { createResponseHandler, type JsonObject } from "../json-handler/index.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import { fail } from "../util/index.js";
@@ -115,20 +115,16 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		DEBUG_LOG?.push(systemPrompt);
 
 		return new Promise((resolve) => {
-			const editHandler = generateHandlers(
-				options.treeView,
-				simpleSchema,
-				(jsonObject: JsonObject) => {
-					DEBUG_LOG?.push(JSON.stringify(jsonObject, null, 2));
-					const wrapper = jsonObject as unknown as EditWrapper;
-					if (wrapper.edit === null) {
-						DEBUG_LOG?.push("No more edits.");
-						return resolve(undefined);
-					} else {
-						return resolve(wrapper.edit);
-					}
-				},
-			);
+			const editHandler = generateEditHandlers(simpleSchema, (jsonObject: JsonObject) => {
+				DEBUG_LOG?.push(JSON.stringify(jsonObject, null, 2));
+				const wrapper = jsonObject as unknown as EditWrapper;
+				if (wrapper.edit === null) {
+					DEBUG_LOG?.push("No more edits.");
+					return resolve(undefined);
+				} else {
+					return resolve(wrapper.edit);
+				}
+			});
 
 			const responseHandler = createResponseHandler(
 				editHandler,
