@@ -41,7 +41,7 @@ function createDSFWithOutOfBandCreate({
 				if (p === "createContainer") {
 					return async (summary, resolvedUrl, logger, clientIsSummarizer) => {
 						const url = await createContainerCallback(summary, resolvedUrl);
-						// this is more like the load flow, where we resolve th url
+						// this is more like the load flow, where we resolve the url
 						// and create the document service, and it works here, as
 						// the callback actually does the work of creating the container.
 						const resolver = new LocalResolver();
