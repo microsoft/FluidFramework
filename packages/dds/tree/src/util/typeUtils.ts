@@ -165,7 +165,7 @@ export type _RecursiveTrick = never;
  * `number` is not allowed as a key here since doing so causes the compiler to reject recursive schema.
  * The cause for this is unclear, but empirically it was the case when this comment was written.
  *
- * @deprecated Use a more robust / specific type instead which actually works.
+ * @deprecated Use a more robust / specific type instead. This type never worked as intended.
  * @public
  */
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -173,7 +173,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 };
 
 /**
- * Alternative to the built in `Record<string, T>` type which is readonly and does not permit symbols.
+ * Alternative to the built-in `Record<string, T>` type which is readonly and does not permit symbols.
  * @remarks
  * It would be nice if `keyof RestrictiveStringRecord<T>` returned string, but it does not: use `keyof RestrictiveStringRecord<T> & string` instead.
  * @system @public
