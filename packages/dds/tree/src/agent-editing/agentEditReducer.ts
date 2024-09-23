@@ -432,7 +432,7 @@ function getObjectPlaceInfo(
 	if (place.type === "arrayPlace") {
 		const parent = idGenerator.getNode(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
-		assert(child !== undefined, `No child under field ${place.field}`);
+		assert(child !== undefined, `No child under field field`);
 		const schema = Tree.schema(child as TreeNode);
 		assert(schema.kind === NodeKind.Array, "Expected child to be an array node");
 		return {
