@@ -78,10 +78,8 @@ const config = new TreeViewConfiguration({ schema: [sf.number, RootObjectPolymor
 const factory = new TreeFactory({});
 
 describe("applyAgentEdit", () => {
-	let log: TreeEdit[];
 	let idGenerator: IdGenerator;
 	beforeEach(() => {
-		log = [];
 		idGenerator = new IdGenerator();
 	});
 	describe("setRoot edits", () => {
@@ -110,7 +108,7 @@ describe("applyAgentEdit", () => {
 				},
 			};
 
-			applyAgentEdit(view, log, setRootEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(view, setRootEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = [
 				{
@@ -156,7 +154,7 @@ describe("applyAgentEdit", () => {
 				content: 2,
 			};
 
-			applyAgentEdit(view, log, setRootEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(view, setRootEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = [
 				{
@@ -199,7 +197,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(view, log, insertEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(view, insertEdit, idGenerator, simpleSchema.definitions);
 
 			const insertEdit2: TreeEdit = {
 				explanation: "Insert a vector",
@@ -211,7 +209,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(view, log, insertEdit2, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(view, insertEdit2, idGenerator, simpleSchema.definitions);
 
 			const identifier1 = ((view.root as RootObjectPolymorphic).vectors[0] as Vector).id;
 			const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector).id;
@@ -278,7 +276,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(view, log, insertEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(view, insertEdit, idGenerator, simpleSchema.definitions);
 
 			const identifier1 = (view.root as RootObject).vectors[0].id;
 			const identifier2 = (view.root as RootObject).vectors[1].id;
@@ -374,7 +372,7 @@ describe("applyAgentEdit", () => {
 				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			],
 		};
-		applyAgentEdit(view, log, modifyEdit, idGenerator, simpleSchema.definitions);
+		applyAgentEdit(view, modifyEdit, idGenerator, simpleSchema.definitions);
 
 		const modifyEdit2: TreeEdit = {
 			explanation: "Modify a vector",
@@ -383,7 +381,7 @@ describe("applyAgentEdit", () => {
 			field: "bools",
 			modification: [false],
 		};
-		applyAgentEdit(view, log, modifyEdit2, idGenerator, simpleSchema.definitions);
+		applyAgentEdit(view, modifyEdit2, idGenerator, simpleSchema.definitions);
 
 		idGenerator.assignIds(view.root);
 		const vectorId2 =
@@ -397,7 +395,7 @@ describe("applyAgentEdit", () => {
 			field: "x",
 			modification: 111,
 		};
-		applyAgentEdit(view, log, modifyEdit3, idGenerator, simpleSchema.definitions);
+		applyAgentEdit(view, modifyEdit3, idGenerator, simpleSchema.definitions);
 
 		const identifier = ((view.root as RootObjectPolymorphic).vectors[0] as Vector).id;
 		const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector2).id;
@@ -462,7 +460,7 @@ describe("applyAgentEdit", () => {
 					location: "start",
 				},
 			};
-			applyAgentEdit(view, log, moveEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions);
 			const identifier = view.root.vectors2[0].id;
 			const identifier2 = view.root.vectors2[1].id;
 
@@ -537,7 +535,7 @@ describe("applyAgentEdit", () => {
 					location: "start",
 				},
 			};
-			applyAgentEdit(view, log, moveEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions);
 			const identifier = view.root.vectors2[0].id;
 			const identifier2 = view.root.vectors2[1].id;
 			const identifier3 = view.root.vectors2[2].id;
@@ -620,7 +618,7 @@ describe("applyAgentEdit", () => {
 				},
 			};
 			assert.throws(
-				() => applyAgentEdit(view, log, moveEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/Illegal node type in destination array/),
 			);
 		});

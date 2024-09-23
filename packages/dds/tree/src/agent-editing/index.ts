@@ -13,17 +13,23 @@ import type {
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ImplicitFieldSchema, TreeView } from "../simple-tree/index.js";
-import { getSystemPrompt } from "./promptGeneration.js";
+import {
+	getSimpleSchema,
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+	type TreeView,
+} from "../simple-tree/index.js";
+import { getSystemPrompt, type EditLog } from "./promptGeneration.js";
 import { generateHandlers } from "./handlers.js";
 import {
 	createResponseHandler,
 	type JsonObject,
 	type StreamedType,
 } from "../json-handler/index.js";
-import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
+import type { EditWrapper } from "./agentEditTypes.js";
 import { fail } from "../util/index.js";
 import { IdGenerator } from "./idGenerator.js";
+import { applyAgentEdit } from "./agentEditReducer.js";
 
 /**
  * {@link generateTreeEdits} options.
@@ -35,7 +41,8 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
 	treeView: TreeView<TSchema>;
 	prompt: string;
 	abortController?: AbortController;
-	maxEdits?: number;
+	maxEdits: number;
+	maxSequentialErrors?: number;
 }
 
 /**
@@ -46,14 +53,22 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
  */
 export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 	options: GenerateTreeEditsOptions<TSchema>,
-): Promise<void> {
-	const log: TreeEdit[] = [];
+): Promise<"success" | "tooManyErrors" | "tooManyEdits"> {
+	const editLog: EditLog = [];
 	const idGenerator = new IdGenerator();
 	const debugLog: string[] = [];
 	let editCount = 0;
+	let sequentialErrorCount = 0;
+	const fieldSchema = normalizeFieldSchema(options.treeView.schema);
+	const simpleSchema = getSimpleSchema(fieldSchema.allowedTypes);
 
-	async function doNextEdit(): Promise<void> {
-		const systemPrompt = getSystemPrompt(options.prompt, idGenerator, options.treeView, log);
+	async function doNextEdit(): Promise<"success" | "tooManyErrors" | "tooManyEdits"> {
+		const systemPrompt = getSystemPrompt(
+			options.prompt,
+			idGenerator,
+			options.treeView,
+			editLog,
+		);
 
 		debugLog.push(systemPrompt);
 
@@ -61,37 +76,60 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 
 		const editHandler = generateHandlers(
 			options.treeView,
-			log,
-			idGenerator,
+			simpleSchema,
 			(jsonObject: JsonObject) => {
+				debugLog.push(JSON.stringify(jsonObject, null, 2));
 				const wrapper = jsonObject as unknown as EditWrapper;
 				if (wrapper.edit === null) {
 					done = true;
 					debugLog.push("No more edits.");
+				} else {
+					let error: string | undefined;
+					try {
+						applyAgentEdit(
+							options.treeView,
+							wrapper.edit,
+							idGenerator,
+							simpleSchema.definitions,
+						);
+						sequentialErrorCount = 0;
+					} catch (e: unknown) {
+						if (e instanceof Error) {
+							error = e.message;
+							sequentialErrorCount += 1;
+							debugLog.push(`Error: ${error}`);
+						} else {
+							throw e;
+						}
+					}
+					editLog.push({ edit: wrapper.edit, error });
 				}
 			},
-			debugLog,
 		);
 
 		return doEdit(systemPrompt, editHandler, options).then(async () => {
 			editCount++;
 			if (options.maxEdits !== undefined && editCount >= options.maxEdits) {
-				done = true; // TODO: return some indication that we hit the max edits
+				return "tooManyEdits";
+			} else if (
+				options.maxSequentialErrors !== undefined &&
+				sequentialErrorCount > options.maxSequentialErrors
+			) {
+				return "tooManyErrors";
 			}
+
 			if (!done) {
-				await doNextEdit();
+				return doNextEdit();
 			}
+
+			return "success";
 		});
 	}
 
-	return doNextEdit()
-		.catch((error) => {
-			debugLog.push(`Error: ${error}`);
-		})
-		.finally(() => {
-			const dump = debugLog.join("\n\n");
-			console.error(dump);
-		});
+	return doNextEdit().finally(() => {
+		const dump = debugLog.join("\n\n");
+		console.error(dump);
+	});
 }
 
 async function doEdit<TSchema extends ImplicitFieldSchema>(

@@ -116,12 +116,10 @@ function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditOb
 
 export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	tree: TreeView<TSchema>,
-	log: TreeEdit[],
 	treeEdit: TreeEdit,
 	idGenerator: IdGenerator,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-): void {
-	const logLength = log.length;
+): TreeEdit {
 	objectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
 		case "setRoot": {
@@ -181,15 +179,12 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				}
 			}
 
-			if (insertedObject !== undefined) {
-				log.push({
-					...treeEdit,
-					content: contentWithIds(insertedObject, idGenerator),
-				});
-			} else {
-				log.push(treeEdit);
-			}
-			break;
+			return insertedObject !== undefined
+				? {
+						...treeEdit,
+						content: contentWithIds(insertedObject, idGenerator),
+					}
+				: treeEdit;
 		}
 		case "insert": {
 			const { array, index } = getObjectPlaceInfo(treeEdit.destination, idGenerator);
@@ -207,27 +202,23 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				normalizeAllowedTypes(parentNodeSchema.info as ImplicitAllowedTypes),
 			);
 
-			let applied = false;
 			for (const allowedType of allowedTypes.values()) {
 				if (allowedType.identifier === schemaIdentifier) {
 					if (typeof allowedType === "function") {
 						assertValidContent(treeEdit.content, allowedType);
-						applied = true;
 						const simpleNodeSchema = allowedType as unknown as new (
 							dummy: unknown,
 						) => TreeNode;
 						const insertNode = new simpleNodeSchema(treeEdit.content);
 						array.insertAt(index, insertNode);
-						log.push({
+						return {
 							...treeEdit,
 							content: contentWithIds(insertNode, idGenerator),
-						});
-						break;
+						};
 					}
 				}
 			}
-			assert(applied, "inserted node must be of an allowed type");
-			break;
+			fail("inserted node must be of an allowed type");
 		}
 		case "remove": {
 			const source = treeEdit.source;
@@ -239,8 +230,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				const { array, startIndex, endIndex } = getRangeInfo(source, idGenerator);
 				array.removeRange(startIndex, endIndex);
 			}
-			log.push(treeEdit);
-			break;
+			return treeEdit;
 		}
 		case "modify": {
 			const { node } = getTargetInfo(treeEdit.target, idGenerator);
@@ -317,15 +307,12 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					}
 				}
 			}
-			if (insertedObject !== undefined) {
-				log.push({
-					...treeEdit,
-					modification: contentWithIds(insertedObject, idGenerator),
-				});
-			} else {
-				log.push(treeEdit);
-			}
-			break;
+			return insertedObject !== undefined
+				? {
+						...treeEdit,
+						modification: contentWithIds(insertedObject, idGenerator),
+					}
+				: treeEdit;
 		}
 		case "move": {
 			// TODO: need to add schema check for valid moves
@@ -383,13 +370,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					array,
 				);
 			}
-			log.push(treeEdit);
-			break;
+			return treeEdit;
 		}
 		default:
 			fail("invalid tree edit");
 	}
-	assert(log.length === logLength + 1, "log should have one more entry");
 }
 
 function isNodeAllowedType(node: TreeNode, allowedTypes: TreeNodeSchema[]): boolean {

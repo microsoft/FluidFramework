@@ -10,10 +10,10 @@ import {
 	type ImplicitFieldSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
-import {
-	getSimpleSchema,
-	type SimpleFieldSchema,
-	type SimpleNodeSchema,
+import type {
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -24,17 +24,8 @@ import {
 	type JsonObject,
 	JsonHandler as jh,
 } from "../json-handler/index.js";
-import {
-	objectIdKey,
-	type Insert,
-	type Modify,
-	type Move,
-	type Remove,
-	type SetRoot,
-	type TreeEdit,
-} from "./agentEditTypes.js";
-import { applyAgentEdit, typeField } from "./agentEditReducer.js";
-import type { IdGenerator } from "./idGenerator.js";
+import { objectIdKey } from "./agentEditTypes.js";
+import { typeField } from "./agentEditReducer.js";
 
 const objectTargetHandler = jh.object(() => ({
 	description: "A pointer to an object in the tree",
@@ -86,13 +77,11 @@ const rangeHandler = jh.object(() => ({
 
 export function generateHandlers(
 	view: TreeView<ImplicitFieldSchema>,
-	log: TreeEdit[],
-	idGenerator: IdGenerator,
+	simpleSchema: SimpleTreeSchema,
 	complete: (jsonObject: JsonObject) => void,
-	debugLog: string[],
 ): StreamedType {
+	// TODO Can `schema` be removed and the same information be obtained from `simpleSchema`?
 	const schema = normalizeFieldSchema(view.schema);
-	const simpleSchema = getSimpleSchema(schema.allowedTypes);
 	const insertSet = new Set<string>();
 	const modifyFieldSet = new Set<string>();
 	const modifyTypeSet = new Set<string>();
@@ -122,11 +111,6 @@ export function generateHandlers(
 				),
 			),
 		},
-		complete: (jsonObject: JsonObject) => {
-			debugLog.push(JSON.stringify(jsonObject, null, 2));
-			const setRoot = jsonObject as unknown as SetRoot;
-			applyAgentEdit(view, log, setRoot, idGenerator, simpleSchema.definitions);
-		},
 	}));
 
 	const insertHandler = jh.object(() => ({
@@ -139,11 +123,6 @@ export function generateHandlers(
 			),
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
 		},
-		complete: (jsonObject: JsonObject) => {
-			debugLog.push(JSON.stringify(jsonObject, null, 2));
-			const insert = jsonObject as unknown as Insert;
-			applyAgentEdit(view, log, insert, idGenerator, simpleSchema.definitions);
-		},
 	}));
 
 	const removeHandler = jh.object(() => ({
@@ -152,11 +131,6 @@ export function generateHandlers(
 			type: jh.enum({ values: ["remove"] }),
 			explanation: jh.string({ description: editDescription }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
-		},
-		complete: (jsonObject: JsonObject) => {
-			debugLog.push(JSON.stringify(jsonObject, null, 2));
-			const remove = jsonObject as unknown as Remove;
-			applyAgentEdit(view, log, remove, idGenerator, simpleSchema.definitions);
 		},
 	}));
 
@@ -171,11 +145,6 @@ export function generateHandlers(
 				Array.from(modifyTypeSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
 			),
 		},
-		complete: (jsonObject: JsonObject) => {
-			debugLog.push(JSON.stringify(jsonObject, null, 2));
-			const modify = jsonObject as unknown as Modify;
-			applyAgentEdit(view, log, modify, idGenerator, simpleSchema.definitions);
-		},
 	}));
 
 	const moveHandler = jh.object(() => ({
@@ -186,11 +155,6 @@ export function generateHandlers(
 			explanation: jh.string({ description: editDescription }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
-		},
-		complete: (jsonObject: JsonObject) => {
-			debugLog.push(JSON.stringify(jsonObject, null, 2));
-			const move = jsonObject as unknown as Move;
-			applyAgentEdit(view, log, move, idGenerator, simpleSchema.definitions);
 		},
 	}));
 

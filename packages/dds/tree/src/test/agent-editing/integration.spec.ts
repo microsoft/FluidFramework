@@ -140,7 +140,13 @@ describe.skip("Agent Editing Integration", () => {
 		});
 		const openAIClient = initializeOpenAIClient("azure");
 		const abortController = new AbortController();
-		await generateTreeEdits({ openAIClient, treeView: view, prompt, abortController });
+		await generateTreeEdits({
+			openAIClient,
+			treeView: view,
+			prompt,
+			abortController,
+			maxEdits: 15,
+		});
 
 		const k = KLUDGE;
 		console.log(k);
@@ -150,5 +156,4 @@ describe.skip("Agent Editing Integration", () => {
 	});
 });
 
-const prompt =
-	"Please add a third day with several sessions about minecraft. Focus specifically on how it competes with roblox and move the session about monetizing to the third day too.";
+const prompt = "Please remove all sessions from both days and do it in one operation.";
