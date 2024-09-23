@@ -552,11 +552,14 @@ export class SchemaFactory<
 	 *
 	 * @param t - The types allowed under the field.
 	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public optional<const T extends ImplicitAllowedTypes>(
+	public optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Optional, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
 		});
@@ -575,11 +578,14 @@ export class SchemaFactory<
 	 * @remarks
 	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
 	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public required<const T extends ImplicitAllowedTypes>(
+	public required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Required, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
 

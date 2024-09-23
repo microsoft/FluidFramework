@@ -31,6 +31,8 @@ import {
 	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
@@ -359,6 +361,24 @@ describe("schemaFactory", () => {
 					foo: schema.optional(schema.string, { key: "foo" }),
 				}),
 			);
+		});
+
+		it("Field Metadata", () => {
+			const schemaFactory = new SchemaFactory("com.example");
+			const barMetadata = {
+				description: "Bar",
+				custom: { prop1: "Custom metadata property." },
+			};
+
+			class Foo extends schemaFactory.object("Foo", {
+				bar: schemaFactory.required(schemaFactory.number, { metadata: barMetadata }),
+			}) {}
+
+			const foo = hydrate(Foo, { bar: 37 });
+
+			const schema = Tree.schema(foo) as ObjectNodeSchema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
 		});
 
 		describe("deep equality", () => {

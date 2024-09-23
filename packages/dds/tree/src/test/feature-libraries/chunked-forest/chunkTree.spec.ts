@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import {
 	CursorLocationType,
 	EmptyKey,
+	type FieldKey,
 	type Value,
 	mapCursorField,
 } from "../../../core/index.js";
@@ -30,8 +31,10 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeShape } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	TreeShape,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	type TreeChunk,
 	cursorForJsonableTreeField,
@@ -51,9 +54,11 @@ import {
 	nullSchema,
 	numberSchema,
 	SchemaFactory,
+	stringSchema,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
-import { fieldJsonCursor } from "../../json/index.js";
+import { fieldJsonCursor, JsonObject, singleJsonCursor } from "../../json/index.js";
+import { testIdCompressor } from "../../utils.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
@@ -136,12 +141,37 @@ describe("chunkTree", () => {
 				assert.equal(cursor.fieldIndex, 2);
 			}
 		});
+
+		it("encodes identifiers for in-memory representation", () => {
+			const identifierField: FieldKey = brand("identifierField");
+			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const identifierShape = new TreeShape(brand(JsonObject.identifier), false, [
+				[identifierField, stringShape, 1],
+			]);
+
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+
+			const chunk = uniformChunkFromCursor(
+				singleJsonCursor({ identifierField: stableId }),
+				identifierShape,
+				1,
+				true,
+				testIdCompressor,
+			);
+			assert.deepEqual(chunk.values, [compressedId]);
+		});
 	});
 
 	describe("chunkRange", () => {
 		it("single basic chunk", () => {
 			const cursor = cursorForJsonableTreeNode({ type: brand(nullSchema.identifier) });
-			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, true);
+			const chunks = chunkRange(
+				cursor,
+				{ policy: basicOnlyChunkPolicy, idCompressor: undefined },
+				1,
+				true,
+			);
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0].topLevelLength, 1);
 			assert.equal(cursor.fieldIndex, 0);
@@ -156,7 +186,12 @@ describe("chunkTree", () => {
 		it("full field basic chunk without skipLastNavigation", () => {
 			const cursor = cursorForJsonableTreeField([{ type: brand(nullSchema.identifier) }]);
 			cursor.firstNode();
-			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, false);
+			const chunks = chunkRange(
+				cursor,
+				{ policy: basicOnlyChunkPolicy, idCompressor: undefined },
+				1,
+				false,
+			);
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0].topLevelLength, 1);
 			// Should have existed the nodes and now be at fields level.
@@ -170,7 +205,12 @@ describe("chunkTree", () => {
 				{ type: brand(nullSchema.identifier) },
 			]);
 			cursor.firstNode();
-			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 2, false);
+			const chunks = chunkRange(
+				cursor,
+				{ policy: basicOnlyChunkPolicy, idCompressor: undefined },
+				2,
+				false,
+			);
 			assert.equal(chunks.length, 2);
 			assert.equal(cursor.fieldIndex, 2);
 			assert.deepEqual(jsonableTreesFromFieldCursor(new SequenceChunk(chunks).cursor()), [
@@ -189,7 +229,7 @@ describe("chunkTree", () => {
 
 			const cursor = cursorForJsonableTreeField(numberSequenceField(4));
 			cursor.firstNode();
-			const chunks = chunkRange(cursor, policy, 3, false);
+			const chunks = chunkRange(cursor, { policy, idCompressor: undefined }, 3, false);
 			assert.equal(chunks.length, 2);
 			assert(chunks[0] instanceof SequenceChunk);
 			assert.equal(chunks[0].subChunks.length, 2);
@@ -238,7 +278,12 @@ describe("chunkTree", () => {
 					const field = numberSequenceField(fieldLength);
 					const cursor = cursorForJsonableTreeField(field);
 					cursor.firstNode();
-					const chunks = chunkRange(cursor, policy, fieldLength, true);
+					const chunks = chunkRange(
+						cursor,
+						{ policy, idCompressor: undefined },
+						fieldLength,
+						true,
+					);
 					assert.equal(cursor.fieldIndex, fieldLength - 1);
 
 					function checkChunks(
@@ -272,7 +317,12 @@ describe("chunkTree", () => {
 			cursor.firstNode();
 			assert.equal(tryGetChunk(cursor), chunk);
 			assert(!chunk.isShared());
-			const chunks = chunkRange(cursor, defaultChunkPolicy, 1, false);
+			const chunks = chunkRange(
+				cursor,
+				{ policy: defaultChunkPolicy, idCompressor: undefined },
+				1,
+				false,
+			);
 			assert(chunk.isShared());
 			assert.equal(chunks[0], chunk);
 		});

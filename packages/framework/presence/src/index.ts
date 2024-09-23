@@ -5,6 +5,9 @@
 
 /**
  * Experimental package for client presence within a connected session.
+ *
+ * See {@link https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#readme | README.md } for an overview of the package.
+ *
  * @packageDocumentation
  */
 
@@ -22,7 +25,7 @@
 // 	ISubscribable,
 // } from "@fluid-experimental/presence/internal/events";
 
-export type { ConnectedClientId } from "./baseTypes.js";
+export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
 	PresenceNotifications,
@@ -35,7 +38,12 @@ export type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-export type { IPresence, ISessionClient, PresenceEvents } from "./presence.js";
+export type {
+	ClientSessionId,
+	IPresence,
+	ISessionClient,
+	PresenceEvents,
+} from "./presence.js";
 
 export { acquirePresence } from "./experimentalAccess.js";
 

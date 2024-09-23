@@ -546,6 +546,7 @@ describe("ModularChangeFamily integration", () => {
 			const remove = makeAnonChange(removeD);
 
 			const composed = family.compose([moves, remove]);
+			family.validateChangeset(composed);
 			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
@@ -637,6 +638,7 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
+			family.validateChangeset(composed);
 			const delta = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			assertDeltaEqual(delta, expected);
 		});
@@ -674,6 +676,8 @@ describe("ModularChangeFamily integration", () => {
 
 			const moveAndInsert = family.compose([tagChangeInline(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
+			family.validateChangeset(composed);
+
 			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			const expected: DeltaRoot = {
 				build: [
@@ -735,6 +739,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const [move1, move2, expected] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
+			family.validateChangeset(composed);
 			const actualDelta = normalizeDelta(
 				intoDelta(makeAnonChange(composed), family.fieldKinds),
 			);
