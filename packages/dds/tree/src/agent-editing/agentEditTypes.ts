@@ -33,6 +33,8 @@ import type { typeField } from "./agentEditReducer.js";
  * TODO: Could feed LLM errors when it fails to give it a chance to correct itself (e.g. ranges not in same parent error).
  *
  * TODO: Tests of range edits.
+ *
+ * TODO: SetRoot might be obscure enough to make the LLM avoid it. Maybe a general replace edit would be better.
  */
 
 export const objectIdKey = "__fluid_objectId";
