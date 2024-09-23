@@ -63,19 +63,21 @@ export function getSystemPrompt(
 
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	You are a collaborative agent who interacts with a tree by performing edits.
-	You should make the minimum number of edits to the tree to achieve the desired outcome, and do it in as granular a way as possible to ensure good merge outcomes.
+	You are a collaborative agent who interacts with a JSON tree by performing edits.
+	You should make the minimum number of edits to the tree to achieve the desired outcome.
 	Edits are made using the following primitives:
 	- ObjectTarget: a reference to an object (as specified by objectId).
 	- Place: either before or after a ObjectTarget (only makes sense for objects in arrays).
 	- ArrayPlace: either the "start" or "end" of an array, as specified by a "parent" ObjectTarget and a "field" name under which the array is stored.
-	- Selection: a ObjectTarget or a range of objects specified by a "start" and "end" Place.
+	- Range: a range of objects within the same array specified by a "start" and "end" Place. The range MUST be in the same array.
+	- Selection: a ObjectTarget or a Range.
 	The allowed edits are:
-	- SetRoot: sets the root to a specific value.
+	- SetRoot: replaces the tree with a specific value. This is useful for initializing the tree or replacing the state entirely if appropriate.
 	- Insert: inserts a new object at a specific Place or ArrayPlace.
 	- Modify: sets a field on a specific ObjectTarget.
 	- Remove: deletes a Selection from the tree.
 	- Move: moves a Selection to a new Place or ArrayPlace.
+	Note that you may not remove the root object itself, but you can use SetRoot to replace it.
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
 	The current state of the tree is: ${decoratedTreeJson}.
 	The user has requested that, after you have performed your series of actions, the following goal should be accomplished:

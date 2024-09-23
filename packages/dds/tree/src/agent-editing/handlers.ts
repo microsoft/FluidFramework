@@ -76,7 +76,8 @@ const arrayPlaceHandler = jh.object(() => ({
 }));
 
 const rangeHandler = jh.object(() => ({
-	description: "A span of objects that are in an array",
+	description:
+		'A span of objects that are in an array. The "to" and "from" objects MUST be in the same array.',
 	properties: {
 		from: objectPlaceHandler(),
 		to: objectPlaceHandler(),

@@ -228,16 +228,8 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				const parentNode = Tree.parent(node) as TreeArrayNode;
 				parentNode.removeAt(parentIndex);
 			} else if (isRange(source)) {
-				const { startNode, startIndex, endNode, endIndex } = getRangeInfo(source, idGenerator);
-				const parentNode = Tree.parent(startNode) as TreeArrayNode;
-				const endParentNode = Tree.parent(endNode) as TreeArrayNode;
-
-				assert(
-					parentNode === endParentNode,
-					"the two nodes of the range must be from the same parent",
-				);
-
-				parentNode.removeRange(startIndex, endIndex);
+				const { array, startIndex, endIndex } = getRangeInfo(source, idGenerator);
+				array.removeRange(startIndex, endIndex);
 			}
 			log.push(treeEdit);
 			break;
@@ -352,21 +344,16 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				}
 			} else if (isRange(source)) {
 				const {
-					startNode: sourceStartNodeParent,
+					array,
 					startIndex: sourceStartIndex,
-					endNode: sourceEndNodeParent,
 					endIndex: sourceEndIndex,
 				} = getRangeInfo(source, idGenerator);
-				assert(
-					sourceStartNodeParent === sourceEndNodeParent,
-					"the range must come from the same source node",
-				);
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
 				const allowedTypes = Array.from(
 					normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
 				);
 				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
-					const nodeToMove = (sourceStartNodeParent as TreeArrayNode).at(i);
+					const nodeToMove = array.at(i);
 					assert(nodeToMove !== undefined, "node to move must exist");
 					if (!isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
 						throw new UsageError("Illegal node type in destination array");
@@ -376,7 +363,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					destinationIndex,
 					sourceStartIndex,
 					sourceEndIndex,
-					sourceStartNodeParent as TreeArrayNode,
+					array,
 				);
 			}
 			log.push(treeEdit);
@@ -416,17 +403,21 @@ function isRange(selection: Selection): selection is Range {
 }
 
 interface RangeInfo {
-	startNode: TreeNode;
+	array: TreeArrayNode;
 	startIndex: number;
-	endNode: TreeNode;
 	endIndex: number;
 }
 
 function getRangeInfo(range: Range, idGenerator: IdGenerator): RangeInfo {
-	const { array: startNode, index: startIndex } = getObjectPlaceInfo(range.from, idGenerator);
-	const { array: endNode, index: endIndex } = getObjectPlaceInfo(range.to, idGenerator);
+	const { array: arrayFrom, index: startIndex } = getObjectPlaceInfo(range.from, idGenerator);
+	const { array: arrayTo, index: endIndex } = getObjectPlaceInfo(range.to, idGenerator);
 
-	return { startNode, startIndex, endNode, endIndex };
+	assert(
+		arrayFrom === arrayTo,
+		'The "from" node and "to" nodes of the range must be in the same parent array.',
+	);
+
+	return { array: arrayFrom, startIndex, endIndex };
 }
 
 function getObjectPlaceInfo(
@@ -449,7 +440,8 @@ function getObjectPlaceInfo(
 	} else {
 		const { node, parentIndex } = getTargetInfo(place, idGenerator);
 		const parent = Tree.parent(node);
-		const schema = Tree.schema(parent as TreeNode);
+		assert(parent !== undefined, "TODO: root node target not supported");
+		const schema = Tree.schema(parent);
 		assert(schema.kind === NodeKind.Array, "Expected child to be an array node");
 		return {
 			array: parent as unknown as TreeArrayNode,

@@ -35,6 +35,7 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
 	treeView: TreeView<TSchema>;
 	prompt: string;
 	abortController?: AbortController;
+	maxEdits?: number;
 }
 
 /**
@@ -49,6 +50,7 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 	const log: TreeEdit[] = [];
 	const idGenerator = new IdGenerator();
 	const debugLog: string[] = [];
+	let editCount = 0;
 
 	async function doNextEdit(): Promise<void> {
 		const systemPrompt = getSystemPrompt(options.prompt, idGenerator, options.treeView, log);
@@ -72,6 +74,10 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 		);
 
 		return doEdit(systemPrompt, editHandler, options).then(async () => {
+			editCount++;
+			if (options.maxEdits !== undefined && editCount >= options.maxEdits) {
+				done = true; // TODO: return some indication that we hit the max edits
+			}
 			if (!done) {
 				await doNextEdit();
 			}

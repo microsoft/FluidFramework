@@ -12,17 +12,27 @@ import type { typeField } from "./agentEditReducer.js";
  *
  * TODO: We could add a "replace" edit type to avoid tons of little modifies.
  *
- * TODO: OpenAI doesn't include the schema in the input...would doing so decrease hallucination? Maybe a compact version? We will definitely need example edits.
- *
  * TODO: only 100 object fields total are allowed by OpenAI right now, so larger schemas will fail faster if we have a bunch of schema types generated for type-specific edits.
  *
  * TODO: experiment using https://github.com/outlines-dev/outlines (and maybe a llama model) to avoid many of the annoyances of OpenAI's JSON Schema subset.
  *
  * TODO: without field count limits, we could generate a schema for valid paths from the root object to any field, but it's not clear how useful that would be.
  *
- * TODO: add example of handling fields the model cannot initialize (identifiers, uuid fields, etc.)
+ * TODO: We don't supported nested arrays yet.
  *
- * TODO: We don't have a way to refer (via ID) to content that was newly inserted by the LLM. The LLM would need to provide IDs for new content.
+ * TODO: Could omit edit contents for setRoot edits as the tree state is the result (or the other way around).
+ *
+ * TODO: Abort controller should be wired up to cancel the chain-of-thought edits.
+ *
+ * TODO: We should have a retry count for top-level API.
+ *
+ * TODO: Add a prompt suggestion API!
+ *
+ * TODO: Could encourage the model to output more technical explanations of the edits (e.g. "insert a new Foo after "Foo2").
+ *
+ * TODO: Could feed LLM errors when it fails to give it a chance to correct itself (e.g. ranges not in same parent error).
+ *
+ * TODO: Tests of range edits.
  */
 
 export const objectIdKey = "__fluid_objectId";
