@@ -14,6 +14,7 @@ import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -689,6 +690,57 @@ describe("client.applyMsg", () => {
 			}
 
 		logger.validate({ baseText: "DDDDDDcbD" });
+	});
+
+	// 	op types: 0) insert 1) remove 2) annotate
+	// Clients: 3 Ops: 3 Round: 86
+	// op         | client A | op         | client B | op           | client C
+	//            | BBB-C-   |            | BBB-C-   |              | BBB-C-
+	//            | BBB-C-   | L:558:B0@3 | BBB__-C- |              | BBB-C-
+	//            |          |            |    BB    |              |
+	//            | BBB-C-   |            | BBB__-C- | L:558:C4@2,4 | BB_-_-
+	//            |          |            |    BB    |              |   - -
+	//            | BBB-C-   |            | BBB__-C- | L:558:C4@1,2 | B__-_-
+	//            |          |            |    BB    |              |  -- -
+	// 1:0:B0@3   | BBBBB-C- | 1:0:B0@3   | BBBBB-C- | 1:0:B0@3     | B__BB-_-
+	//            |          |            |          |              |  --   -
+	// 2:0:C4@2,4 | BB----   | 2:0:C4@2,4 | BB----   | 2:0:C4@2,4   | B_-BB-
+	//            |          |            |          |              |  -
+	// 3:0:C4@1,2 | B-----   | 3:0:C4@1,2 | B-----   | 3:0:C4@1,2   | B--BB-
+	it.skip("sided obliterate regression test", () => {
+		const clients = createClientsAtInitialState(
+			{ initialState: "BBBC", options: { mergeTreeEnableObliterate: true } },
+			"A",
+			"B",
+			"C",
+		);
+		let seq = 0;
+		const logger = new TestClientLogger(clients.all);
+		const ops: ISequencedDocumentMessage[] = [];
+		ops.push(
+			clients.B.makeOpMessage(clients.B.insertTextLocal(3, "BB"), ++seq),
+			clients.C.makeOpMessage(
+				clients.C.obliterateRangeLocal(
+					{ pos: 2, side: Side.Before },
+					{ pos: 4, side: Side.Before },
+				),
+				++seq,
+			),
+			clients.C.makeOpMessage(
+				clients.C.obliterateRangeLocal(
+					{ pos: 1, side: Side.Before },
+					{ pos: 2, side: Side.Before },
+				),
+				++seq,
+			),
+		);
+
+		for (const op of ops.splice(0))
+			for (const c of clients.all) {
+				c.applyMsg(op);
+			}
+
+		logger.validate({ baseText: "B" });
 	});
 
 	describe("updates minSeq", () => {
