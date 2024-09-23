@@ -26,6 +26,11 @@ import { fail } from "../util/utils.js";
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 
+export type EditLog = {
+	edit: TreeEdit;
+	error?: string;
+}[];
+
 export function toDecoratedJson(
 	idGenerator: IdGenerator,
 	root: TreeFieldFromImplicitField<ImplicitFieldSchema>,
@@ -51,14 +56,22 @@ export function getSystemPrompt(
 	userPrompt: string,
 	idGenerator: IdGenerator,
 	view: TreeView<ImplicitFieldSchema>,
-	log: TreeEdit[],
+	log: EditLog,
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
 	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
 
-	function createEditList(edits: TreeEdit[]): string {
-		return edits.map((edit, index) => `${index + 1}. ${JSON.stringify(edit)}`).join("\n");
+	function createEditList(edits: EditLog): string {
+		return edits
+			.map((edit, index) => {
+				const error =
+					edit.error !== undefined
+						? ` This edit produced an error, and was discarded. The error message was: ${edit.error}`
+						: "";
+				return `${index + 1}. ${JSON.stringify(edit.edit)}${error}`;
+			})
+			.join("\n");
 	}
 
 	// TODO: security: user prompt in system prompt
@@ -87,7 +100,7 @@ export function getSystemPrompt(
 			? "You have not performed any actions to accomplish this goal yet."
 			: `You have already performed the following actions to accomplish this goal thus far:
 			${createEditList(log)}
-			This means that the current state of the tree already reflects your prior changes being applied.`
+			This means that the current state of the tree already reflects your prior successful changes being applied.`
 	}
 	You should produce one of the following things:
 	1. An english description ("explanation") of the next edit to perform (using one of the allowed edit types) that makes progress towards accomplishing the user's request as well as a JSON object representing the edit you want to perform.
