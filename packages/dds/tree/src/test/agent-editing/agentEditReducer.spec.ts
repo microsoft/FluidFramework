@@ -655,7 +655,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view,  insertEdit, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(view, insertEdit, idGenerator, simpleSchema.definitions),
 			validateUsageError(/objectIdKey testObjectId does not exist/),
 		);
 
@@ -672,7 +672,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view,  insertEdit2, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(view, insertEdit2, idGenerator, simpleSchema.definitions),
 			validateUsageError(/objectIdKey testObjectId does not exist/),
 		);
 
@@ -701,7 +701,7 @@ describe("applyAgentEdit", () => {
 		const objectIdKeys = ["testObjectId1", "testObjectId2", "testObjectId3"];
 		const errorMessage = `objectIdKeys [${objectIdKeys.join(",")}] does not exist`;
 		assert.throws(
-			() => applyAgentEdit(view,  moveEdit, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions),
 			validateUsageError(errorMessage),
 		);
 
@@ -721,7 +721,7 @@ describe("applyAgentEdit", () => {
 		const objectIdKeys2 = ["testObjectId1", "testObjectId2"];
 		const errorMessage2 = `objectIdKeys [${objectIdKeys2.join(",")}] does not exist`;
 		assert.throws(
-			() => applyAgentEdit(view,  moveEdit2, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(view, moveEdit2, idGenerator, simpleSchema.definitions),
 			validateUsageError(errorMessage2),
 		);
 

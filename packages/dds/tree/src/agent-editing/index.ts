@@ -132,7 +132,7 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 
 	return doNextEdit().finally(() => {
 		const dump = debugLog.join("\n\n");
-		console.error(dump);
+		console.log(dump);
 	});
 }
 
