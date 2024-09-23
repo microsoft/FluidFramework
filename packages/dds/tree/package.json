@@ -227,6 +227,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Interface_InternalTypes_TreeNodeSchemaNonClass": {
+				"backCompat": false
+			},
 			"Interface_FieldSchemaUnsafe": {
 				"forwardCompat": false
 			},
