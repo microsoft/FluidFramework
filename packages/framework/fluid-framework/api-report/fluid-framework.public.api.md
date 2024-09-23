@@ -522,8 +522,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 }
 
 // @public @sealed
-export interface ITree extends IFluidLoadable {
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+export interface ITree extends ViewableTree, IFluidLoadable {
 }
 
 // @public
@@ -928,6 +927,11 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
 }[T["kind"]]>> = true;
+
+// @public @sealed
+export interface ViewableTree {
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+}
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
