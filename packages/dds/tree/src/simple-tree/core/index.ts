@@ -27,6 +27,7 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
+	type TreeNodeSchemaBoth,
 } from "./treeNodeSchema.js";
 export {
 	getSimpleNodeSchema,

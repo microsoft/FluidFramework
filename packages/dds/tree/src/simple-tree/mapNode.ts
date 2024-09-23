@@ -27,7 +27,7 @@ import {
 	getKernel,
 	type InnerNode,
 	NodeKind,
-	type TreeNodeSchemaClass,
+	type TreeNodeSchemaBoth,
 	type TreeNodeSchema,
 	type WithType,
 	// eslint-disable-next-line import/no-deprecated
@@ -290,7 +290,7 @@ export function mapSchema<
 			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 	}
-	const schemaErased: TreeNodeSchemaClass<
+	const schemaErased: TreeNodeSchemaBoth<
 		TName,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
