@@ -19,7 +19,6 @@ import { jsonableTreeFromForest } from "../../feature-libraries/treeTextCursor.j
 import {
 	applyAgentEdit,
 	assertValidContent,
-	getJsonValidator,
 	typeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/agentEditReducer.js";
@@ -218,130 +217,35 @@ describe("applyAgentEdit", () => {
 			const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector).id;
 			const identifier3 = ((view.root as RootObjectPolymorphic).vectors[2] as Vector).id;
 
-			const expected = [
-				{
-					type: "agentSchema.RootObject",
-					fields: {
-						bools: [
-							{
-								fields: {
-									"": [
-										{
-											type: "com.fluidframework.leaf.boolean",
-											value: true,
-										},
-									],
-								},
-								type: 'agentSchema.Array<["com.fluidframework.leaf.boolean"]>',
-							},
-						],
-						str: [
-							{
-								type: "com.fluidframework.leaf.string",
-								value: "testStr",
-							},
-						],
-						vectors: [
-							{
-								fields: {
-									"": [
-										{
-											fields: {
-												id: [
-													{
-														type: "com.fluidframework.leaf.string",
-														value: identifier1,
-													},
-												],
-												x: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 1,
-													},
-												],
-												y: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 2,
-													},
-												],
-												z: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 3,
-													},
-												],
-											},
-											type: "agentSchema.Vector",
-										},
-										{
-											fields: {
-												id: [
-													{
-														type: "com.fluidframework.leaf.string",
-														value: identifier2,
-													},
-												],
-												x2: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 3,
-													},
-												],
-												y2: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 4,
-													},
-												],
-												z2: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 5,
-													},
-												],
-											},
-											type: "agentSchema.Vector2",
-										},
-										{
-											fields: {
-												id: [
-													{
-														type: "com.fluidframework.leaf.string",
-														value: identifier3,
-													},
-												],
-												x: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 2,
-													},
-												],
-												y: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 3,
-													},
-												],
-												z: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 4,
-													},
-												],
-											},
-											type: "agentSchema.Vector",
-										},
-									],
-								},
-								type: 'agentSchema.Array<["agentSchema.Vector","agentSchema.Vector2"]>',
-							},
-						],
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": identifier1,
+						"x": 1,
+						"y": 2,
+						"z": 3,
 					},
-				},
-			];
+					{
+						"id": identifier2,
+						"x2": 3,
+						"y2": 4,
+						"z2": 5,
+					},
+					{
+						"id": identifier3,
+						"x": 2,
+						"y": 3,
+						"z": 4,
+					},
+				],
+				"bools": [true],
+			};
 
-			assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
 		});
 
 		it("non polymorphic insert edits", () => {
@@ -379,101 +283,66 @@ describe("applyAgentEdit", () => {
 			const identifier1 = (view.root as RootObject).vectors[0].id;
 			const identifier2 = (view.root as RootObject).vectors[1].id;
 
-			const expected = [
-				{
-					type: "agentSchema.RootObject",
-					fields: {
-						bools: [
-							{
-								fields: {
-									"": [
-										{
-											type: "com.fluidframework.leaf.boolean",
-											value: true,
-										},
-									],
-								},
-								type: 'agentSchema.Array<["com.fluidframework.leaf.boolean"]>',
-							},
-						],
-						str: [
-							{
-								type: "com.fluidframework.leaf.string",
-								value: "testStr",
-							},
-						],
-						vectors: [
-							{
-								fields: {
-									"": [
-										{
-											fields: {
-												id: [
-													{
-														type: "com.fluidframework.leaf.string",
-														value: identifier1,
-													},
-												],
-												x: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 1,
-													},
-												],
-												y: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 2,
-													},
-												],
-												z: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 3,
-													},
-												],
-											},
-											type: "agentSchema.Vector",
-										},
-										{
-											fields: {
-												id: [
-													{
-														type: "com.fluidframework.leaf.string",
-														value: identifier2,
-													},
-												],
-												x: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 2,
-													},
-												],
-												y: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 3,
-													},
-												],
-												z: [
-													{
-														type: "com.fluidframework.leaf.number",
-														value: 4,
-													},
-												],
-											},
-											type: "agentSchema.Vector",
-										},
-									],
-								},
-								type: 'agentSchema.Array<["agentSchema.Vector"]>',
-							},
-						],
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": identifier1,
+						"x": 1,
+						"y": 2,
+						"z": 3,
 					},
-				},
-			];
+					{
+						"id": identifier2,
+						"x": 2,
+						"y": 3,
+						"z": 4,
+					},
+				],
+				"bools": [true],
+			};
 
-			assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("fails for invalid content for schema type", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const config2 = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
+			const view = tree.viewWith(config2);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const vectorId =
+				idGenerator.getId((view.root as RootObject).vectors[0]) ?? fail("ID expected.");
+
+			const insertEdit: TreeEdit = {
+				explanation: "Insert a vector",
+				type: "insert",
+				content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
+				destination: {
+					type: "objectPlace",
+					[objectIdKey]: vectorId,
+					place: "after",
+				},
+			};
+
+			assert.throws(
+				() => applyAgentEdit(view, log, insertEdit, idGenerator, simpleSchema.definitions),
+				validateUsageError(/invalid data provided for schema/),
+			);
 		});
 	});
 
@@ -533,101 +402,29 @@ describe("applyAgentEdit", () => {
 		const identifier = ((view.root as RootObjectPolymorphic).vectors[0] as Vector).id;
 		const identifier2 = ((view.root as RootObjectPolymorphic).vectors[1] as Vector2).id;
 
-		const expected = [
-			{
-				type: "agentSchema.RootObject",
-				fields: {
-					bools: [
-						{
-							fields: {
-								"": [
-									{
-										type: "com.fluidframework.leaf.boolean",
-										value: false,
-									},
-								],
-							},
-							type: 'agentSchema.Array<["com.fluidframework.leaf.boolean"]>',
-						},
-					],
-					str: [
-						{
-							type: "com.fluidframework.leaf.string",
-							value: "testStr",
-						},
-					],
-					vectors: [
-						{
-							fields: {
-								"": [
-									{
-										fields: {
-											id: [
-												{
-													type: "com.fluidframework.leaf.string",
-													value: identifier,
-												},
-											],
-											x: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 111,
-												},
-											],
-											y: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 3,
-												},
-											],
-											z: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 4,
-												},
-											],
-										},
-										type: "agentSchema.Vector",
-									},
-									{
-										fields: {
-											id: [
-												{
-													type: "com.fluidframework.leaf.string",
-													value: identifier2,
-												},
-											],
-											x2: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 3,
-												},
-											],
-											y2: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 4,
-												},
-											],
-											z2: [
-												{
-													type: "com.fluidframework.leaf.number",
-													value: 5,
-												},
-											],
-										},
-										type: "agentSchema.Vector2",
-									},
-								],
-							},
-							type: 'agentSchema.Array<["agentSchema.Vector","agentSchema.Vector2"]>',
-						},
-					],
+		const expected = {
+			"str": "testStr",
+			"vectors": [
+				{
+					"id": identifier,
+					"x": 111,
+					"y": 3,
+					"z": 4,
 				},
-			},
-		];
+				{
+					"id": identifier2,
+					"x2": 3,
+					"y2": 4,
+					"z2": 5,
+				},
+			],
+			"bools": [false],
+		};
 
-		assert.deepEqual(jsonableTreeFromForest(view.checkout.forest), expected);
+		assert.deepEqual(
+			JSON.stringify(view.root, undefined, 2),
+			JSON.stringify(expected, undefined, 2),
+		);
 	});
 
 	describe("Move Edits", () => {
@@ -829,18 +626,135 @@ describe("applyAgentEdit", () => {
 		});
 	});
 
+	it("treeEdits with object ids that don't exist", () => {
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const configWithMultipleVectors = new TreeViewConfiguration({
+			schema: [RootObjectWithMultipleVectorArrays],
+		});
+		const view = tree.viewWith(configWithMultipleVectors);
+		const schema = normalizeFieldSchema(view.schema);
+		const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+		view.initialize({
+			str: "testStr",
+			vectors: [new Vector({ x: 1, y: 2, z: 3 }), new Vector({ x: 2, y: 3, z: 4 })],
+			vectors2: [new Vector({ x: 3, y: 4, z: 5 })],
+			bools: [true],
+		});
+
+		const insertEdit: TreeEdit = {
+			explanation: "Insert a vector",
+			type: "insert",
+			content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
+			destination: {
+				type: "objectPlace",
+				[objectIdKey]: "testObjectId",
+				place: "after",
+			},
+		};
+
+		assert.throws(
+			() => applyAgentEdit(view, [], insertEdit, idGenerator, simpleSchema.definitions),
+			validateUsageError(/objectIdKey testObjectId does not exist/),
+		);
+
+		const insertEdit2: TreeEdit = {
+			explanation: "Insert a vector",
+			type: "insert",
+			content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
+			destination: {
+				type: "arrayPlace",
+				parentId: "testObjectId",
+				field: "vectors",
+				location: "start",
+			},
+		};
+
+		assert.throws(
+			() => applyAgentEdit(view, [], insertEdit2, idGenerator, simpleSchema.definitions),
+			validateUsageError(/objectIdKey testObjectId does not exist/),
+		);
+
+		const moveEdit: TreeEdit = {
+			type: "move",
+			explanation: "Move a vector",
+			source: {
+				from: {
+					[objectIdKey]: "testObjectId1",
+					type: "objectPlace",
+					place: "before",
+				},
+				to: {
+					[objectIdKey]: "testObjectId2",
+					type: "objectPlace",
+					place: "after",
+				},
+			},
+			destination: {
+				type: "arrayPlace",
+				parentId: "testObjectId3",
+				field: "vectors2",
+				location: "start",
+			},
+		};
+		const objectIdKeys = ["testObjectId1", "testObjectId2", "testObjectId3"];
+		const errorMessage = `objectIdKeys [${objectIdKeys.join(",")}] does not exist`;
+		assert.throws(
+			() => applyAgentEdit(view, [], moveEdit, idGenerator, simpleSchema.definitions),
+			validateUsageError(errorMessage),
+		);
+
+		const moveEdit2: TreeEdit = {
+			type: "move",
+			explanation: "Move a vector",
+			source: {
+				[objectIdKey]: "testObjectId1",
+			},
+			destination: {
+				type: "objectPlace",
+				[objectIdKey]: "testObjectId2",
+				place: "before",
+			},
+		};
+
+		const objectIdKeys2 = ["testObjectId1", "testObjectId2"];
+		const errorMessage2 = `objectIdKeys [${objectIdKeys2.join(",")}] does not exist`;
+		assert.throws(
+			() => applyAgentEdit(view, [], moveEdit2, idGenerator, simpleSchema.definitions),
+			validateUsageError(errorMessage2),
+		);
+
+		const modifyEdit: TreeEdit = {
+			explanation: "Modify a vector",
+			type: "modify",
+			target: { __fluid_objectId: "testObjectId" },
+			field: "x",
+			modification: 111,
+		};
+
+		assert.throws(
+			() => applyAgentEdit(view, [], modifyEdit, idGenerator, simpleSchema.definitions),
+			validateUsageError(/objectIdKey testObjectId does not exist/),
+		);
+	});
+
 	describe("assertValidContent content", () => {
 		it("invalid content throws", () => {
-			const validator = getJsonValidator(Vector);
 			assert.throws(
-				() => assertValidContent(12, validator),
-				validateUsageError(/invalid data with schema/),
+				() => assertValidContent(12, Vector),
+				validateUsageError(/invalid data provided for schema/),
+			);
+			assert.throws(
+				() => assertValidContent({ x: 1, test: 2 }, Vector),
+				validateUsageError(/invalid data provided for schema/),
 			);
 		});
 
 		it("valid content passes", () => {
-			const validator = getJsonValidator(Vector);
-			assertValidContent({ x: 1, y: 2, z: 3 }, validator);
+			assertValidContent({ x: 1, y: 2, z: 3 }, Vector);
 		});
 	});
 });
