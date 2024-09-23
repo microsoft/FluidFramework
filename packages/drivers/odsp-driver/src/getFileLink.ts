@@ -321,15 +321,23 @@ function renameTenantInOdspResolvedUrl(
 	odspResolvedUrl.siteUrl = newSiteUrl;
 
 	if (odspResolvedUrl.endpoints.attachmentGETStorageUrl) {
-		odspResolvedUrl.endpoints.attachmentGETStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.attachmentGETStorageUrl).pathname}`;
+		odspResolvedUrl.endpoints.attachmentGETStorageUrl = `${newSiteDomain}${
+			new URL(odspResolvedUrl.endpoints.attachmentGETStorageUrl).pathname
+		}`;
 	}
 	if (odspResolvedUrl.endpoints.attachmentPOSTStorageUrl) {
-		odspResolvedUrl.endpoints.attachmentPOSTStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.attachmentPOSTStorageUrl).pathname}`;
+		odspResolvedUrl.endpoints.attachmentPOSTStorageUrl = `${newSiteDomain}${
+			new URL(odspResolvedUrl.endpoints.attachmentPOSTStorageUrl).pathname
+		}`;
 	}
 	if (odspResolvedUrl.endpoints.deltaStorageUrl) {
-		odspResolvedUrl.endpoints.deltaStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.deltaStorageUrl).pathname}`;
+		odspResolvedUrl.endpoints.deltaStorageUrl = `${newSiteDomain}${
+			new URL(odspResolvedUrl.endpoints.deltaStorageUrl).pathname
+		}`;
 	}
 	if (odspResolvedUrl.endpoints.snapshotStorageUrl) {
-		odspResolvedUrl.endpoints.snapshotStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.snapshotStorageUrl).pathname}`;
+		odspResolvedUrl.endpoints.snapshotStorageUrl = `${newSiteDomain}${
+			new URL(odspResolvedUrl.endpoints.snapshotStorageUrl).pathname
+		}`;
 	}
 }
