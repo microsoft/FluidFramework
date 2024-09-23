@@ -157,13 +157,31 @@ export type _RecursiveTrick = never;
  * Alternative to the built in Record type which does not permit unexpected members,
  * and is readonly.
  *
+ * @remarks
+ * This does not work correctly when `K` is more specific than `string` or `symbol`.
+ * For example `{a: 5}` is not assignable to `RestrictiveReadonlyRecord<"a",: number>`
+ *
  * @privateRemarks
  * `number` is not allowed as a key here since doing so causes the compiler to reject recursive schema.
  * The cause for this is unclear, but empirically it was the case when this comment was written.
+ *
+ * @deprecated Use a more robust / specific type instead. This type never worked as intended.
  * @public
  */
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 	readonly [P in symbol | string]: P extends K ? T : never;
+};
+
+/**
+ * Alternative to the built-in `Record<string, T>` type which is readonly and does not permit symbols.
+ * @remarks
+ * It would be nice if `keyof RestrictiveStringRecord<T>` returned string, but it does not: use `keyof RestrictiveStringRecord<T> & string` instead.
+ * @system @public
+ */
+export type RestrictiveStringRecord<T> = {
+	readonly [P in string]: T;
+} & {
+	readonly [P in symbol]?: never;
 };
 
 /**
