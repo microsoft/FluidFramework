@@ -10,10 +10,12 @@ import {
 	type ForestRootId,
 	type IEditableForest,
 	type RevisionTag,
+	type TaggedChange,
 	TreeStoredSchemaRepository,
 	initializeForest,
 	mapCursorField,
 	rootFieldKey,
+	tagChange,
 } from "../../core/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../json/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -42,8 +44,11 @@ import {
 	disposeSymbol,
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
+import {
+	Change,
+	tagChangeInline,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/optional-field/optionalFieldUtils.js";
 import {
 	failCodecFamily,
 	jsonTreeFromForest,
@@ -128,24 +133,30 @@ describe("SharedTreeChangeEnricher", () => {
 		const { fork } = setupEnricher();
 		fork.applyTipChange(removeRoot, revision1);
 
-		const tag = 0 as RevisionTag;
-		const restore = Change.atOnce(
-			Change.reserve("self", { localId: brand(0), revision: tag }),
-			Change.move({ localId: brand(0), revision: tag }, "self"),
-		);
+		const tag = mintRevisionTag();
+		const restore = tagChangeInline(
+			Change.atOnce(
+				Change.reserve("self", { localId: brand(0) }),
+				Change.move({ localId: brand(0) }, "self"),
+			),
+			tag,
+		).change;
 		const restoreRoot: SharedTreeChange = {
 			changes: [
 				{
 					type: "data",
-					innerChange: modularBuilder.buildChanges([
-						{
-							type: "field",
-							field: { parent: undefined, field: rootFieldKey },
-							fieldKind: optional.identifier,
-							change: brand(restore),
-							revision: tag,
-						},
-					]),
+					innerChange: tagModularChangeInline(
+						modularBuilder.buildChanges([
+							{
+								type: "field",
+								field: { parent: undefined, field: rootFieldKey },
+								fieldKind: optional.identifier,
+								change: brand(restore),
+								revision: tag,
+							},
+						]),
+						tag,
+					).change,
 				},
 			],
 		};
@@ -181,3 +192,10 @@ describe("SharedTreeChangeEnricher", () => {
 		fork[disposeSymbol]();
 	});
 });
+
+function tagModularChangeInline(
+	change: ModularChangeset,
+	revision: RevisionTag,
+): TaggedChange<ModularChangeset> {
+	return tagChange(modularFamily.changeRevision(change, revision), revision);
+}

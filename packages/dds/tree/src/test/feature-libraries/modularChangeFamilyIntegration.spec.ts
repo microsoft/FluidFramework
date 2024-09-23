@@ -131,7 +131,10 @@ describe("ModularChangeFamily integration", () => {
 				),
 			);
 
-			assertEqual(rebased, expected);
+			// Tag changes before comparing them because default edit builder will assign tags to changes and
+			// the expected tag needs to be the same.
+			const tag = mintRevisionTag();
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("remove over cross-field move to edited field", () => {
@@ -186,7 +189,8 @@ describe("ModularChangeFamily integration", () => {
 				),
 			);
 
-			assertEqual(rebased, expected);
+			const tag = mintRevisionTag();
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("nested change over cross-field move", () => {
@@ -229,7 +233,8 @@ describe("ModularChangeFamily integration", () => {
 				),
 			);
 
-			assertEqual(rebased, expected);
+			const tag = mintRevisionTag();
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("cross-field move over remove", () => {
@@ -294,7 +299,8 @@ describe("ModularChangeFamily integration", () => {
 				Change.field(fieldB, sequence.identifier, [MarkMaker.moveOut(1, brand(2))]),
 			);
 
-			assertEqual(rebased, expected);
+			const tag = mintRevisionTag();
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("Nested moves both requiring a second pass", () => {
@@ -379,7 +385,8 @@ describe("ModularChangeFamily integration", () => {
 				),
 			);
 
-			assertEqual(rebased, expected);
+			const tag = mintRevisionTag();
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("over change which moves node upward", () => {
@@ -418,10 +425,10 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const rebasedDelta = normalizeDelta(
-				intoDelta(makeAnonChange(rebased), family.fieldKinds),
+				intoDelta(tagChangeInline(rebased, baseTag), family.fieldKinds),
 			);
 			const expectedDelta = normalizeDelta(
-				intoDelta(makeAnonChange(expected), family.fieldKinds),
+				intoDelta(tagChangeInline(expected, baseTag), family.fieldKinds),
 			);
 
 			assertDeltaEqual(rebasedDelta, expectedDelta);
@@ -484,7 +491,8 @@ describe("ModularChangeFamily integration", () => {
 				),
 			);
 
-			assertEqual(rebased, expected);
+			const tag = mintRevisionTag();
+			assertEqual(tagChangeInline(rebased, tag), tagChangeInline(expected, tag));
 		});
 
 		it("prunes its output", () => {

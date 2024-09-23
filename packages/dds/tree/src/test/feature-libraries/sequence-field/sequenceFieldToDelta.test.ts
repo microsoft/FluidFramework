@@ -77,7 +77,7 @@ export function testToDelta() {
 		it("insert", () => {
 			const changeset = Change.insert(0, 1, tag);
 			const expected = {
-				local: [{ count: 1, attach: { minor: 0 } }],
+				local: [{ count: 1, attach: { major: tag, minor: 0 } }],
 			};
 			const actual = toDelta(changeset);
 			assert.deepStrictEqual(actual, expected);

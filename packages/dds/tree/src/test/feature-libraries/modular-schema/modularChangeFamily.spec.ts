@@ -909,31 +909,31 @@ describe("ModularChangeFamily", () => {
 				tag1,
 			);
 
-			assertEqual(
-				family.invert(makeAnonChange(rootChange1a), false, mintRevisionTag()),
-				expectedInverse,
-			);
+			assertEqual(family.invert(makeAnonChange(rootChange1a), false, tag1), expectedInverse);
 		});
 
 		it("generic", () => {
-			const expectedInverse = Change.build(
-				{ family, maxId: rootChange1aGeneric.maxId },
-				Change.field(
-					fieldA,
-					genericFieldKind.identifier,
-					genericFieldKind.changeHandler.createEmpty(),
-					Change.nodeWithId(
-						0,
-						{ localId: brand(1) },
-						Change.field(fieldA, valueField.identifier, valueInverse1),
+			const expectedInverse = tagChangeInline(
+				Change.build(
+					{ family, maxId: rootChange1aGeneric.maxId },
+					Change.field(
+						fieldA,
+						genericFieldKind.identifier,
+						genericFieldKind.changeHandler.createEmpty(),
+						Change.nodeWithId(
+							0,
+							{ localId: brand(1) },
+							Change.field(fieldA, valueField.identifier, valueInverse1),
+						),
 					),
+					Change.field(fieldB, valueField.identifier, valueInverse2),
 				),
-				Change.field(fieldB, valueField.identifier, valueInverse2),
+				tag1,
 			);
 
 			assertEqual(
-				family.invert(makeAnonChange(rootChange1aGeneric), false, mintRevisionTag()),
-				expectedInverse,
+				family.invert(makeAnonChange(rootChange1aGeneric), false, tag1),
+				expectedInverse.change,
 			);
 		});
 
@@ -955,12 +955,13 @@ describe("ModularChangeFamily", () => {
 					[[tag1 as RevisionTag | undefined, brand(0)], 1],
 					[[tag2, brand(1)], 1],
 				]),
+				revisions: [{ revision: tag1 }],
 			};
-			const expectedUndo: ModularChangeset = Change.empty();
+			const expectedUndo: ModularChangeset = tagChangeInline(Change.empty(), tag1).change;
 
 			deepFreeze(change1);
-			const actualRollback = family.invert(change1, true, mintRevisionTag());
-			const actualUndo = family.invert(change1, false, mintRevisionTag());
+			const actualRollback = family.invert(change1, true, tag1);
+			const actualUndo = family.invert(change1, false, tag1);
 
 			actualRollback.crossFieldKeys.unfreeze();
 			actualUndo.crossFieldKeys.unfreeze();
@@ -976,7 +977,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, rebasedChange);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(rebasedChange, tagForCompare),
+			);
 		});
 
 		it("rebase specific ↷ generic", () => {
@@ -985,7 +990,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, rebasedChange);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(rebasedChange, tagForCompare),
+			);
 		});
 
 		it("rebase generic ↷ specific", () => {
@@ -994,7 +1003,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, genericChangeRebasedOverSpecific);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(genericChangeRebasedOverSpecific, tagForCompare),
+			);
 		});
 
 		it("rebase generic ↷ generic", () => {
@@ -1003,7 +1016,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, rebasedChangeGeneric);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(rebasedChangeGeneric, tagForCompare),
+			);
 		});
 	});
 
