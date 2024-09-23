@@ -221,13 +221,6 @@ extends:
           echo Generating .env
           echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
 
-    - task: Npm@1
-      displayName: Build devtools
-      inputs:
-        command: 'custom'
-        workingDir: ./packages/tools/devtools/devtools-browser-extension/
-        customCommand: 'run webpack'
-
     - task: 1ES.PublishPipelineArtifact@1
       displayName: Publish Artifact - Devtools Browser Extension
       inputs:
