@@ -53,7 +53,7 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
  */
 export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 	options: GenerateTreeEditsOptions<TSchema>,
-): Promise<"success" | "tooManyErrors" | "tooManyEdits"> {
+): Promise<"success" | "tooManyErrors" | "tooManyEdits" | "aborted"> {
 	const editLog: EditLog = [];
 	const idGenerator = new IdGenerator();
 	const debugLog: string[] = [];
@@ -62,7 +62,9 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 	const fieldSchema = normalizeFieldSchema(options.treeView.schema);
 	const simpleSchema = getSimpleSchema(fieldSchema.allowedTypes);
 
-	async function doNextEdit(): Promise<"success" | "tooManyErrors" | "tooManyEdits"> {
+	async function doNextEdit(): Promise<
+		"success" | "tooManyErrors" | "tooManyEdits" | "aborted"
+	> {
 		const systemPrompt = getSystemPrompt(
 			options.prompt,
 			idGenerator,
@@ -116,6 +118,8 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 				sequentialErrorCount > options.maxSequentialErrors
 			) {
 				return "tooManyErrors";
+			} else if (options.abortController?.signal.aborted === true) {
+				return "aborted";
 			}
 
 			if (!done) {

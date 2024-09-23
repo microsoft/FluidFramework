@@ -22,15 +22,9 @@ import type { typeField } from "./agentEditReducer.js";
  *
  * TODO: Could omit edit contents for setRoot edits as the tree state is the result (or the other way around).
  *
- * TODO: Abort controller should be wired up to cancel the chain-of-thought edits.
- *
- * TODO: We should have a retry count for top-level API.
- *
  * TODO: Add a prompt suggestion API!
  *
  * TODO: Could encourage the model to output more technical explanations of the edits (e.g. "insert a new Foo after "Foo2").
- *
- * TODO: Could feed LLM errors when it fails to give it a chance to correct itself (e.g. ranges not in same parent error).
  *
  * TODO: Get explanation strings from o1.
  *
