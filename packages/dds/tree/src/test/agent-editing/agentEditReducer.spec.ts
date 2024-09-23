@@ -73,6 +73,14 @@ class RootObjectWithDifferentVectorArrayTypes extends sf.object("RootObject", {
 	vectors2: sf.array([Vector2]),
 	bools: sf.array(sf.boolean),
 }) {}
+
+class RootObjectWithNonArrayVectorField extends sf.object("RootObject", {
+	str: Vector,
+	// Two different vector types to handle the polymorphic case
+	vectors: sf.array([Vector]),
+	bools: sf.array(sf.boolean),
+}) {}
+
 const config = new TreeViewConfiguration({ schema: [sf.number, RootObjectPolymorphic] });
 
 const factory = new TreeFactory({});
@@ -306,6 +314,59 @@ describe("applyAgentEdit", () => {
 			);
 		});
 
+		it("insert edit into an empty array", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const config2 = new TreeViewConfiguration({ schema: [sf.number, RootObject] });
+			const view = tree.viewWith(config2);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const vectorId = idGenerator.getId(view.root as RootObject) ?? fail("ID expected.");
+
+			const insertEdit: TreeEdit = {
+				explanation: "Insert a vector",
+				type: "insert",
+				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+				destination: {
+					type: "arrayPlace",
+					parentId: vectorId,
+					field: "vectors",
+					location: "start",
+				},
+			};
+			applyAgentEdit(view, insertEdit, idGenerator, simpleSchema.definitions);
+
+			const identifier1 = (view.root as RootObject).vectors[0].id;
+
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": identifier1,
+						"x": 2,
+						"y": 3,
+						"z": 4,
+					},
+				],
+				"bools": [true],
+			};
+
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
 		it("fails for invalid content for schema type", () => {
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -340,6 +401,41 @@ describe("applyAgentEdit", () => {
 			assert.throws(
 				() => applyAgentEdit(view, insertEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/invalid data provided for schema/),
+			);
+		});
+
+		it("inserting node into an non array node fails", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const config2 = new TreeViewConfiguration({ schema: RootObjectWithNonArrayVectorField });
+			const view = tree.viewWith(config2);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: new Vector({ x: 1, y: 2, z: 3 }),
+				vectors: [new Vector({ x: 2, y: 3, z: 4 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const vectorId = idGenerator.getId(view.root.str) ?? fail("ID expected.");
+
+			const insertEdit: TreeEdit = {
+				explanation: "Insert a vector",
+				type: "insert",
+				content: { [typeField]: Vector.identifier, x: 3, y: 4, z: 5 },
+				destination: {
+					type: "objectPlace",
+					[objectIdKey]: vectorId,
+					place: "before",
+				},
+			};
+			assert.throws(
+				() => applyAgentEdit(view, insertEdit, idGenerator, simpleSchema.definitions),
+				validateUsageError(/Expected child to be in an array node/),
 			);
 		});
 	});
@@ -423,6 +519,146 @@ describe("applyAgentEdit", () => {
 			JSON.stringify(view.root, undefined, 2),
 			JSON.stringify(expected, undefined, 2),
 		);
+	});
+
+	describe("remove edits", () => {
+		it("removes a single item", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObject],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const vectorId1 = idGenerator.getId(view.root.vectors[0]) ?? fail("ID expected.");
+
+			const removeEdit: TreeEdit = {
+				explanation: "remove a vector",
+				type: "remove",
+				source: { [objectIdKey]: vectorId1 },
+			};
+			applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions);
+
+			const expected = {
+				"str": "testStr",
+				"vectors": [],
+				"bools": [true],
+			};
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("removes a range of items", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObject],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 }), new Vector({ x: 2, y: 3, z: 4 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const vectorId1 = idGenerator.getId(view.root.vectors[0]) ?? fail("ID expected.");
+			const vectorId2 = idGenerator.getId(view.root.vectors[1]) ?? fail("ID expected.");
+
+			const removeEdit: TreeEdit = {
+				explanation: "remove a vector",
+				type: "remove",
+				source: {
+					from: {
+						[objectIdKey]: vectorId1,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						[objectIdKey]: vectorId2,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+			};
+			applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions);
+
+			const expected = {
+				"str": "testStr",
+				"vectors": [],
+				"bools": [true],
+			};
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("invalid range of items fails", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithMultipleVectorArrays],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 }), new Vector({ x: 2, y: 3, z: 4 })],
+				vectors2: [new Vector({ x: 3, y: 4, z: 5 }), new Vector({ x: 4, y: 5, z: 6 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const vectorId1 = idGenerator.getId(view.root.vectors[0]) ?? fail("ID expected.");
+			const vectorId2 = idGenerator.getId(view.root.vectors2[0]) ?? fail("ID expected.");
+
+			const removeEdit: TreeEdit = {
+				explanation: "remove a vector",
+				type: "remove",
+				source: {
+					from: {
+						[objectIdKey]: vectorId1,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						[objectIdKey]: vectorId2,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+			};
+
+			assert.throws(
+				() => applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions),
+				validateUsageError(
+					/The "from" node and "to" nodes of the range must be in the same parent array./,
+				),
+			);
+		});
 	});
 
 	describe("Move Edits", () => {
@@ -620,6 +856,145 @@ describe("applyAgentEdit", () => {
 			assert.throws(
 				() => applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/Illegal node type in destination array/),
+			);
+		});
+
+		it("moving invalid range fails", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithMultipleVectorArrays],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 }), new Vector({ x: 2, y: 3, z: 4 })],
+				vectors2: [new Vector({ x: 3, y: 4, z: 5 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const vectorId1 = idGenerator.getId(view.root.vectors[0]) ?? fail("ID expected.");
+			const vectorId2 = idGenerator.getId(view.root.vectors2[0]) ?? fail("ID expected.");
+			const vectorId3 = idGenerator.getId(view.root) ?? fail("ID expected.");
+
+			const moveEdit: TreeEdit = {
+				type: "move",
+				explanation: "Move a vector",
+				source: {
+					from: {
+						[objectIdKey]: vectorId1,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						[objectIdKey]: vectorId2,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+				destination: {
+					type: "arrayPlace",
+					parentId: vectorId3,
+					field: "vectors2",
+					location: "start",
+				},
+			};
+
+			assert.throws(
+				() => applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions),
+				validateUsageError(
+					/The "from" node and "to" nodes of the range must be in the same parent array./,
+				),
+			);
+		});
+
+		it("moving elements which aren't under an array fails", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithNonArrayVectorField],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: new Vector({ x: 1, y: 2, z: 3 }),
+				vectors: [new Vector({ x: 2, y: 3, z: 4 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const strId = idGenerator.getId(view.root.str) ?? fail("ID expected.");
+			const vectorId = idGenerator.getId(view.root) ?? fail("ID expected.");
+
+			const moveEdit: TreeEdit = {
+				type: "move",
+				explanation: "Move a vector",
+				source: {
+					[objectIdKey]: strId,
+				},
+				destination: {
+					type: "arrayPlace",
+					parentId: vectorId,
+					field: "vectors",
+					location: "start",
+				},
+			};
+
+			assert.throws(
+				() => applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions),
+				validateUsageError(/the source node must be within an arrayNode/),
+			);
+		});
+
+		it("providing arrayPlace with non-existant field fails", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithNonArrayVectorField],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: new Vector({ x: 1, y: 2, z: 3 }),
+				vectors: [new Vector({ x: 2, y: 3, z: 4 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const strId = idGenerator.getId(view.root.str) ?? fail("ID expected.");
+			const vectorId = idGenerator.getId(view.root) ?? fail("ID expected.");
+
+			const moveEdit: TreeEdit = {
+				type: "move",
+				explanation: "Move a vector",
+				source: {
+					[objectIdKey]: strId,
+				},
+				destination: {
+					type: "arrayPlace",
+					parentId: vectorId,
+					field: "nonExistantField",
+					location: "start",
+				},
+			};
+
+			assert.throws(
+				() => applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions),
+				validateUsageError(/No child under field nonExistantField/),
 			);
 		});
 	});

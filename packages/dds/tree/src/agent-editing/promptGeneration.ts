@@ -24,7 +24,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
-import type { IdGenerator } from "./idGenerator.js";
+import { IdGenerator } from "./idGenerator.js";
 
 export type EditLog = {
 	edit: TreeEdit;
@@ -52,7 +52,30 @@ export function toDecoratedJson(
 	return stringified;
 }
 
-export function getSystemPrompt(
+export function getSuggestingSystemPrompt(
+	view: TreeView<ImplicitFieldSchema>,
+	suggestionCount: number,
+	userGuidance?: string,
+): string {
+	const schema = normalizeFieldSchema(view.schema);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
+	const decoratedTreeJson = toDecoratedJson(new IdGenerator(), view.root);
+	const guidance =
+		userGuidance !== undefined
+			? `Additionally, the user has provided some guidance to help you refine your suggestions. Here is that guidance: ${userGuidance}`
+			: "";
+
+	return `
+	You are a collaborative agent who suggests possible changes to a JSON tree that follows a specific schema.
+	For example, for a schema of a digital whiteboard application, you might suggest things like "Change the color of all sticky notes to blue" or "Align all the handwritten text vertically".
+	Or, for a schema of a calendar application, you might suggest things like "Move the meeting with Alice to 3pm" or "Add a new event called 'Lunch with Bob' on Friday".
+	The tree that you are suggesting for is a JSON object with the following schema: ${promptFriendlySchema}
+	The current state of the tree is: ${decoratedTreeJson}.
+	${guidance}
+	Please generate exactly ${suggestionCount} suggestions for changes to the tree that you think would be useful.`;
+}
+
+export function getEditingSystemPrompt(
 	userPrompt: string,
 	idGenerator: IdGenerator,
 	view: TreeView<ImplicitFieldSchema>,

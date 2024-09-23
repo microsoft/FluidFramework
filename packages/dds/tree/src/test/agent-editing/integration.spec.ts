@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeViewConfiguration } from "../../simple-tree/api/index.js";
 import { getView } from "../utils.js";
 import {
+	generateSuggestions,
 	generateTreeEdits,
 	initializeOpenAIClient,
-	KLUDGE,
 } from "../../agent-editing/index.js";
 
 const sf = new SchemaFactory("Planner");
@@ -61,12 +62,30 @@ export class Conference extends sf.object("Conference", {
 }) {}
 
 describe.skip("Agent Editing Integration", () => {
-	it("Test", async () => {
-		process.env.OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
-		process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
-		process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
-		process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
+	process.env.OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
+	process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
+	process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
+	process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
 
+	it("Suggestion Test", async () => {
+		const view = getView(new TreeViewConfiguration({ schema: Conference }));
+		view.initialize({ name: "Plucky Penguins", sessions: [], days: [], sessionsPerDay: 3 });
+		const openAIClient = initializeOpenAIClient("azure");
+		const abortController = new AbortController();
+		const suggestions = await generateSuggestions(openAIClient, view, 3);
+		for (const prompt of suggestions) {
+			const result = await generateTreeEdits({
+				openAIClient,
+				treeView: view,
+				prompt,
+				abortController,
+				maxEdits: 15,
+			});
+			assert.equal(result, "success");
+		}
+	});
+
+	it("Roblox Test", async () => {
 		const view = getView(new TreeViewConfiguration({ schema: Conference }));
 		view.initialize({
 			name: "Roblox Creator x Investor Conference",
@@ -143,17 +162,12 @@ describe.skip("Agent Editing Integration", () => {
 		await generateTreeEdits({
 			openAIClient,
 			treeView: view,
-			prompt,
+			prompt: "Please remove all sessions from both days and do it in one operation.",
 			abortController,
 			maxEdits: 15,
 		});
-
-		const k = KLUDGE;
-		console.log(k);
 
 		const stringified = JSON.stringify(view.root, undefined, 2);
 		console.log(stringified);
 	});
 });
-
-const prompt = "Please remove all sessions from both days and do it in one operation.";
