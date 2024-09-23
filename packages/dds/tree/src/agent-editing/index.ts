@@ -21,15 +21,13 @@ import {
 } from "../simple-tree/index.js";
 import { getSystemPrompt, type EditLog } from "./promptGeneration.js";
 import { generateHandlers } from "./handlers.js";
-import {
-	createResponseHandler,
-	type JsonObject,
-	type StreamedType,
-} from "../json-handler/index.js";
+import { createResponseHandler, type JsonObject } from "../json-handler/index.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import { fail } from "../util/index.js";
 import { IdGenerator } from "./idGenerator.js";
 import { applyAgentEdit } from "./agentEditReducer.js";
+
+const DEBUG_LOG: string[] | undefined = [];
 
 /**
  * {@link generateTreeEdits} options.
@@ -56,26 +54,25 @@ export async function generateTreeEdits(
 ): Promise<"success" | "tooManyErrors" | "tooManyEdits" | "aborted"> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
-	const debugLog: string[] = [];
 	let editCount = 0;
 	let sequentialErrorCount = 0;
 	const fieldSchema = normalizeFieldSchema(options.treeView.schema);
 	const simpleSchema = getSimpleSchema(fieldSchema.allowedTypes);
 
-	const editGenerator = generateEdits(options, idGenerator, editLog, debugLog);
+	const editGenerator = generateEdits(options, idGenerator, editLog);
 	for await (const edit of editGenerator) {
 		try {
 			applyAgentEdit(options.treeView, edit, idGenerator, simpleSchema.definitions);
 			sequentialErrorCount = 0;
 			editLog.push({ edit });
-		} catch (e: unknown) {
-			if (e instanceof Error) {
-				const error = e.message;
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				const { message } = error;
 				sequentialErrorCount += 1;
-				editLog.push({ edit, error });
-				debugLog.push(`Error: ${error}`);
+				editLog.push({ edit, error: message });
+				DEBUG_LOG?.push(`Error: ${message}`);
 			} else {
-				throw e;
+				throw error;
 			}
 		}
 
@@ -95,7 +92,10 @@ export async function generateTreeEdits(
 		}
 	}
 
-	// debugLog.join("\n\n");
+	if (DEBUG_LOG !== undefined) {
+		debugger;
+	}
+
 	return "success";
 }
 
@@ -103,28 +103,12 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	options: GenerateTreeEditsOptions<TSchema>,
 	idGenerator: IdGenerator,
 	editLog: EditLog,
-	debugLog?: string[],
 ): AsyncGenerator<TreeEdit> {
 	const fieldSchema = normalizeFieldSchema(options.treeView.schema);
 	const simpleSchema = getSimpleSchema(fieldSchema.allowedTypes);
 
 	async function getNextEdit(): Promise<TreeEdit | undefined> {
 		return new Promise((resolve) => {
-			const editHandler = generateHandlers(
-				options.treeView,
-				simpleSchema,
-				(jsonObject: JsonObject) => {
-					debugLog?.push(JSON.stringify(jsonObject, null, 2));
-					const wrapper = jsonObject as unknown as EditWrapper;
-					if (wrapper.edit === null) {
-						debugLog?.push("No more edits.");
-						return resolve(undefined);
-					} else {
-						return resolve(wrapper.edit);
-					}
-				},
-			);
-
 			const systemPrompt = getSystemPrompt(
 				options.prompt,
 				idGenerator,
@@ -132,8 +116,30 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 				editLog,
 			);
 
-			debugLog?.push(systemPrompt);
-			void handleEditFromLlm(systemPrompt, editHandler, options);
+			DEBUG_LOG?.push(systemPrompt);
+			const editHandler = generateHandlers(
+				options.treeView,
+				simpleSchema,
+				(jsonObject: JsonObject) => {
+					DEBUG_LOG?.push(JSON.stringify(jsonObject, null, 2));
+					const wrapper = jsonObject as unknown as EditWrapper;
+					if (wrapper.edit === null) {
+						DEBUG_LOG?.push("No more edits.");
+						return resolve(undefined);
+					} else {
+						return resolve(wrapper.edit);
+					}
+				},
+			);
+
+			const responseHandler = createResponseHandler(
+				editHandler,
+				options.abortController ?? new AbortController(),
+			);
+
+			void responseHandler.processResponse(
+				streamFromLlm(systemPrompt, responseHandler.jsonSchema(), options.openAIClient),
+			);
 		});
 	}
 
@@ -146,25 +152,10 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	}
 }
 
-async function handleEditFromLlm<TSchema extends ImplicitFieldSchema>(
-	systemPrompt: string,
-	editHandler: StreamedType,
-	options: GenerateTreeEditsOptions<TSchema>,
-): Promise<void> {
-	const responseHandler = createResponseHandler(
-		editHandler,
-		options.abortController ?? new AbortController(),
-	);
-
-	await responseHandler.processResponse(
-		streamFromLlm(systemPrompt, responseHandler.jsonSchema(), options),
-	);
-}
-
 async function* streamFromLlm(
 	systemPrompt: string,
 	jsonSchema: JsonObject,
-	{ openAIClient }: GenerateTreeEditsOptions<ImplicitFieldSchema>,
+	openAIClient: OpenAI,
 ): AsyncGenerator<string> {
 	const llmJsonSchema: ResponseFormatJSONSchema.JSONSchema = {
 		schema: jsonSchema,
