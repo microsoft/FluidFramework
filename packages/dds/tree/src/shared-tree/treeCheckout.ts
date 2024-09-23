@@ -560,6 +560,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								this.disposeRevertible(revertible, revision);
 								onRevertibleDisposed?.(revertible);
 							},
+							fork: () => {
+								return this.forkRevertible(revertibleCommits, revision);
+							},
 						};
 
 						this.revertibleCommitBranches.set(revision, _branch.fork());
@@ -746,6 +749,56 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
+	 * Recursively creates a revertible for the given commit.
+	 */
+	private forkRevertible(
+		revertibleCommits: Map<
+			RevisionTag,
+			SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
+		>,
+		revision: RevisionTag,
+	): DisposableRevertible {
+		const branch = this._branch.fork();
+		const revertible: DisposableRevertible = {
+			get status(): RevertibleStatus {
+				const revertibleCommit = revertibleCommits.get(revision);
+				return revertibleCommit === undefined
+					? RevertibleStatus.Disposed
+					: RevertibleStatus.Valid;
+			},
+			revert: (release: boolean = true) => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError("Unable to revert a revertible that has been disposed.");
+				}
+				const headCommit = branch.getHead();
+				const metrics = this.revertRevertible(headCommit.revision, CommitKind.Default);
+				this.logger?.sendTelemetryEvent({
+					eventName: TreeCheckout.revertTelemetryEventName,
+					...metrics,
+				});
+				if (release) {
+					revertible.dispose();
+				}
+			},
+			dispose: () => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError(
+						"Unable to dispose a revertible that has already been disposed.",
+					);
+				}
+				this.disposeRevertible(revertible, branch.getHead().revision);
+			},
+			fork: () => {
+				return this.forkRevertible(revertibleCommits, revision);
+			},
+		};
+
+		this.revertibleCommitBranches.set(branch.getHead().revision, branch);
+		this.revertibles.add(revertible);
+		return revertible;
+	}
+
+	/**
 	 * This sets the tip revision as the latest relevant revision for any removed roots that are loaded from a summary.
 	 * This needs to be called right after loading {@link this.removedRoots} from a summary to allow loaded data to be garbage collected.
 	 */
@@ -858,4 +911,5 @@ export function runSynchronous(
 
 interface DisposableRevertible extends Revertible {
 	dispose: () => void;
+	fork: () => DisposableRevertible;
 }
