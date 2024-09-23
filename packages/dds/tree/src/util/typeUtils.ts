@@ -15,52 +15,6 @@
 export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTrick];
 
 /**
- * Remove all fields which permit undefined from `T`.
- */
-export type RequiredFields<T> = [
-	{
-		[P in keyof T as undefined extends T[P] ? never : P]: T[P];
-	},
-][_InlineTrick];
-
-/**
- * Extract fields which permit undefined but can also hold other types.
- */
-export type OptionalFields<T> = [
-	{
-		[P in keyof T as undefined extends T[P]
-			? T[P] extends undefined
-				? never
-				: P
-			: never]?: T[P];
-	},
-][_InlineTrick];
-
-/**
- * Converts properties of an object which permit undefined into optional properties.
- * Removes fields which only allow undefined.
- *
- * @remarks
- * This version does not flatten the resulting type.
- * This version exists because some cases recursive types need to avoid this
- * flattening since it causes complication issues.
- *
- * See also `AllowOptional`.
- */
-// export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
-export type AllowOptionalNotFlattened<T> = [
-	RequiredFields<T> & OptionalFields<T>,
-][_InlineTrick];
-
-/**
- * Converts properties of an object which permit undefined into optional properties.
- * Removes fields which only allow undefined.
- */
-export type AllowOptional<T> = [
-	FlattenKeys<RequiredFields<T> & OptionalFields<T>>,
-][_InlineTrick];
-
-/**
  * Use for trick to "inline" generic types.
  *
  * @remarks
@@ -183,17 +137,3 @@ export type RestrictiveStringRecord<T> = {
 } & {
 	readonly [P in symbol]?: never;
 };
-
-/**
- * Assume that `TInput` is a `TAssumeToBe`.
- *
- * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
- */
-export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe]
-	? TInput
-	: TAssumeToBe;

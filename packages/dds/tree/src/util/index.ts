@@ -94,14 +94,9 @@ export {
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
 export type {
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
 	_RecursiveTrick,
-	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
 	RestrictiveStringRecord,
-	Assume,
 	_InlineTrick,
 	FlattenKeys,
 } from "./typeUtils.js";
