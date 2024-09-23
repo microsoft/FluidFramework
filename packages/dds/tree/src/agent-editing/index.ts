@@ -81,10 +81,7 @@ export async function generateTreeEdits(
 			return "aborted";
 		}
 
-		if (
-			options.maxSequentialErrors !== undefined &&
-			sequentialErrorCount > options.maxSequentialErrors
-		) {
+		if (sequentialErrorCount > (options.maxSequentialErrors ?? Infinity)) {
 			return "tooManyErrors";
 		}
 
@@ -94,6 +91,7 @@ export async function generateTreeEdits(
 	}
 
 	if (DEBUG_LOG !== undefined) {
+		const _dump = DEBUG_LOG.join("\n\n");
 		debugger;
 	}
 
@@ -107,15 +105,16 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	editLog: EditLog,
 ): AsyncGenerator<TreeEdit> {
 	async function getNextEdit(): Promise<TreeEdit | undefined> {
-		return new Promise((resolve) => {
-			const systemPrompt = getSystemPrompt(
-				options.prompt,
-				idGenerator,
-				options.treeView,
-				editLog,
-			);
+		const systemPrompt = getSystemPrompt(
+			options.prompt,
+			idGenerator,
+			options.treeView,
+			editLog,
+		);
 
-			DEBUG_LOG?.push(systemPrompt);
+		DEBUG_LOG?.push(systemPrompt);
+
+		return new Promise((resolve) => {
 			const editHandler = generateHandlers(
 				options.treeView,
 				simpleSchema,
