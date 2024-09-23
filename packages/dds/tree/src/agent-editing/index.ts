@@ -17,6 +17,7 @@ import {
 	getSimpleSchema,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
+	type SimpleTreeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
 import { getSystemPrompt, type EditLog } from "./promptGeneration.js";
@@ -56,11 +57,11 @@ export async function generateTreeEdits(
 	const editLog: EditLog = [];
 	let editCount = 0;
 	let sequentialErrorCount = 0;
-	const fieldSchema = normalizeFieldSchema(options.treeView.schema);
-	const simpleSchema = getSimpleSchema(fieldSchema.allowedTypes);
+	const simpleSchema = getSimpleSchema(
+		normalizeFieldSchema(options.treeView.schema).allowedTypes,
+	);
 
-	const editGenerator = generateEdits(options, idGenerator, editLog);
-	for await (const edit of editGenerator) {
+	for await (const edit of generateEdits(options, simpleSchema, idGenerator, editLog)) {
 		try {
 			applyAgentEdit(options.treeView, edit, idGenerator, simpleSchema.definitions);
 			sequentialErrorCount = 0;
@@ -101,12 +102,10 @@ export async function generateTreeEdits(
 
 async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	options: GenerateTreeEditsOptions<TSchema>,
+	simpleSchema: SimpleTreeSchema,
 	idGenerator: IdGenerator,
 	editLog: EditLog,
 ): AsyncGenerator<TreeEdit> {
-	const fieldSchema = normalizeFieldSchema(options.treeView.schema);
-	const simpleSchema = getSimpleSchema(fieldSchema.allowedTypes);
-
 	async function getNextEdit(): Promise<TreeEdit | undefined> {
 		return new Promise((resolve) => {
 			const systemPrompt = getSystemPrompt(
@@ -143,12 +142,10 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		});
 	}
 
-	while (true) {
-		const edit = await getNextEdit();
-		if (edit === undefined) {
-			break;
-		}
+	let edit = await getNextEdit();
+	while (edit !== undefined) {
 		yield edit;
+		edit = await getNextEdit();
 	}
 }
 
