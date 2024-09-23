@@ -4,5 +4,8 @@
  */
 
 module.exports = {
+	/**
+	 * ts-node - required by launch.json.
+	 */
 	ignoreMatches: ["ts-node"],
 };
