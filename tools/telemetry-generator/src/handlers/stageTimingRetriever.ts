@@ -30,9 +30,10 @@ module.exports = function handler(fileData, logger): void {
 		console.log("BUILD_ID", process.env.BUILD_ID);
 	}
 
-	// Note: type == "Task" would include tasks from the stages in the result set. It might be interesting in the future - for now we will only collect stages.
 	const parsedJobs: ParsedJob[] = fileData.records
-		.filter((job) => job.type === "Stage")
+		// Note: type === "Task" or type === "Job" would include task-level (or job-level, respectively) telemetry.
+		// It might be interesting in the future - for now we will only collect stage-level telemetry.
+		.filter((job) => job.type === "Stage" && (process.env.STAGE_ID === undefined || job.identifier === process.env.STAGE_ID))
 		.map((job) => {
 			const startTime = Date.parse(job.startTime?.toString()) ?? undefined;
 			const finishTime = Date.parse(job.finishTime?.toString()) ?? undefined;

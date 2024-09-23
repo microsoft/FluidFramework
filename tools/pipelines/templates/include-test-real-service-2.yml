@@ -1,0 +1,169 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-test-real-service
+
+parameters:
+- name: poolBuild
+  type: object
+  default: Small
+
+- name: testPackage
+  type: string
+  default: "@fluid-private/test-end-to-end-tests"
+
+- name: testWorkspace
+  type: string
+
+- name: timeoutInMinutes
+  type: number
+  default: 60
+
+- name: env
+  type: object
+  default:
+
+- name: splitTestVariants
+  type: object
+  default:
+  - name: ""
+    flags: ""
+
+- name: testCommand
+  type: string
+
+- name: continueOnError
+  type: boolean
+  default: false
+
+- name: testFileTarName
+  type: string
+  default: null
+
+# Id of the pipeline run that contains the artifacts to download.
+# Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
+# incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
+- name: artifactBuildId
+  type: string
+
+# Name of the Secure File that contains the self-signed cert for the R11s deployment.
+# If not blank, the pipeline will try to install it to the local cert store.
+- name: r11sSelfSignedCertSecureFile
+  type: string
+  default: ""
+
+- name: condition
+  type: string
+  default: true
+
+- name: loggerPackage
+  type: string
+  default: '@ff-internal/aria-logger'
+
+# If true, skip publishing report files for test results.
+# Useful because our stress tests pipeline doesn't generate any test result files.
+- name: skipTestResultPublishing
+  type: boolean
+  default: false
+
+# Custom steps specified by the "caller" of this template, for any additional things that need to be done
+# after the steps in this template complete.
+- name: additionalSteps
+  type: stepList
+  default: []
+
+# If true, the versions of our packages installed for compat testing will be cached.
+- name: cacheCompatVersionsInstalls
+  type: boolean
+  default: false
+
+# Id for the stage that runs tests
+- name: stageId
+  type: string
+
+# Display name for the stage that runs tests
+- name: stageDisplayName
+  type: string
+
+stages:
+- stage: ${{ parameters.stageId}}
+  displayName: ${{ parameters.stageDisplayName }}
+  dependsOn: []
+  jobs:
+  - template: templates/include-test-real-service.yml
+    parameters:
+      poolBuild: ${{ parameters.poolBuild }}
+      testPackage: ${{ parameters.testPackage }}
+      testWorkspace: ${{ parameters.testWorkspace }}
+      timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
+      env: ${{ parameters.env }}
+      splitTestVariants: ${{ parameters.splitTestVariants }}
+      testCommand: ${{ parameters.testCommand}}
+      continueOnError: ${{ parameters.continueOnError }}
+      testFileTarName: ${{ parameters.testFileTarName }}
+      artifactBuildId: ${{ parameters.artifactBuildId }}
+      r11sSelfSignedCertSecureFile: ${{ parameters.r11sSelfSignedCertSecureFile }}
+      condition: ${{ parameters.condition }}
+      loggerPackage: ${{ parameters.loggerPackage }}
+      skipTestResultPublishing: ${{ parameters.skipTestResultPublishing }}
+      additionalSteps: ${{ parameters.additionalSteps }}
+      cacheCompatVersionsInstalls: ${{ parameters.cacheCompatVersionsInstalls }}
+
+- stage: ${{ parameters.stageId}}_upload_telemetry
+  displayName: Upload stage telemetry to Kusto - ${{ parameters.stageDisplayName }}
+  condition: succeededOrFailed()
+  dependsOn:
+    - ${{ parameters.stageId}}
+  jobs:
+  - job: upload_run_telemetry
+    displayName: Upload pipeline run telemetry to Kusto
+    pool: Small
+    variables:
+    - group: ado-feeds
+
+    steps:
+    - template: templates/include-telemetry-setup.yml
+      parameters:
+        devFeedUrl: $(ado-feeds-dev)
+        officeFeedUrl: $(ado-feeds-office)
+        isCheckoutNeeded: true
+    - task: Bash@3
+      displayName: Retrieve buildId results
+      env:
+        BUILD_ID: $(Build.BuildId)
+        ADO_API_TOKEN: $(System.AccessToken)
+        PIPELINE: 'EndToEndTests'
+        STAGE_ID: ${{ parameters.stageId }}
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(absolutePathToTelemetryGenerator)
+        script: |
+          echo "creating output folder"
+          mkdir -p ${{ variables.testWorkspace }}/timingOutput
+          echo "Retrieving pipeline run timeline data command ..."
+          echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+          curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+          pwd;
+          ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+          cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+          # node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+          # Not using aria-logger to get console output in the pipeline while I test
+          node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+
+    # Retrieve E2E test pass rate
+    # - task: Bash@3
+    #   displayName: Retrieve test pass rate
+    #   env:
+    #     BUILD_ID: $(Build.BuildId)
+    #     ADO_API_TOKEN: $(System.AccessToken)
+    #     BASE_OUTPUT_FOLDER: ${{ variables.testWorkspace }}
+    #     BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
+    #     PIPELINE: 'EndToEndTests'
+    #   inputs:
+    #     targetType: 'inline'
+    #     workingDirectory: $(absolutePathToTelemetryGenerator)
+    #     script: |
+    #       echo "Fetching pass rate data and saving into JSON files"
+    #       node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
+    #       echo "Files created. Now running telemetry-generator"
+    #       node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$BASE_OUTPUT_FOLDER/stageFiles"
