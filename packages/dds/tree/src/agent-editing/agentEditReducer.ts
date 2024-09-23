@@ -70,12 +70,10 @@ export function getJsonValidator<TSchema extends ImplicitFieldSchema>(
 	return ajv.compile(jsonSchema);
 }
 
-export function assertValidContent<TSchema>(
-	content: JsonValue,
-	validator: (data: unknown) => data is TSchema,
-): void {
+export function assertValidContent(content: JsonValue, schema: ImplicitFieldSchema): void {
+	const validator = getJsonValidator(schema);
 	if (!validator(content)) {
-		throw new UsageError("invalid data with schema");
+		throw new UsageError(`invalid data provided for schema`);
 	}
 }
 
@@ -122,11 +120,16 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	idGenerator: IdGenerator,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 ): TreeEdit {
+	objectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
 		case "setRoot": {
 			populateDefaults(treeEdit.content, definitionMap);
 
 			const treeSchema = tree.schema;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const schemaIdentifier = (treeEdit.content as any)[typeField];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-explicit-any
+			delete (treeEdit.content as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
 			// If it's a primitive, just validate the content and set
@@ -139,8 +142,8 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					(tree as any).root = treeEdit.content;
 				} else {
 					for (const allowedType of treeSchema.allowedTypeSet.values()) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						if ((treeEdit.content as any)[typeField] === allowedType.identifier) {
+						assertValidContent(treeEdit.content, allowedType);
+						if (schemaIdentifier === allowedType.identifier) {
 							if (typeof allowedType === "function") {
 								const simpleNodeSchema = allowedType as unknown as new (
 									dummy: unknown,
@@ -158,8 +161,8 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				}
 			} else if (Array.isArray(treeSchema)) {
 				for (const allowedType of treeSchema) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					if ((treeEdit.content as any)[typeField] === allowedType.identifier) {
+					if (schemaIdentifier === allowedType.identifier) {
+						assertValidContent(treeEdit.content, allowedType);
 						if (typeof allowedType === "function") {
 							const simpleNodeSchema = allowedType as unknown as new (
 								dummy: unknown,
@@ -188,16 +191,21 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
+
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const schemaIdentifier = (treeEdit.content as any)[typeField];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-explicit-any
+			delete (treeEdit.content as any)[typeField];
+
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
 			const allowedTypes = Array.from(
 				normalizeAllowedTypes(parentNodeSchema.info as ImplicitAllowedTypes),
 			);
 
-			const schemaIdentifier = treeEdit.content.__fluid_type;
-
 			for (const allowedType of allowedTypes.values()) {
 				if (allowedType.identifier === schemaIdentifier) {
 					if (typeof allowedType === "function") {
+						assertValidContent(treeEdit.content, allowedType);
 						const simpleNodeSchema = allowedType as unknown as new (
 							dummy: unknown,
 						) => TreeNode;
@@ -234,6 +242,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			const modification = treeEdit.modification;
 
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const schemaIdentifier = (modification as any)[typeField];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-explicit-any
+			delete (modification as any)[typeField];
+
 			let insertedObject: TreeNode | undefined;
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
 			if (isPrimitive(modification)) {
@@ -248,6 +261,11 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				insertedObject = constructedModification;
 
 				if (Array.isArray(modification)) {
+					for (const modificationNode of modification) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-dynamic-delete
+						delete (modificationNode as any)[typeField];
+					}
+					assertValidContent(treeEdit.modification, fieldSchema);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const field = (node as any)[treeEdit.field] as TreeArrayNode;
 					assert(Array.isArray(field), "the field must be an array node");
@@ -259,6 +277,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = constructedModification;
 				} else {
+					assertValidContent(treeEdit.modification, fieldSchema);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = constructedModification;
 				}
@@ -269,11 +288,9 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = undefined;
 				} else {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					const schemaIdentifier = (modification as any)[typeField];
-
 					for (const allowedType of fieldSchema.allowedTypeSet.values()) {
 						if (allowedType.identifier === schemaIdentifier) {
+							assertValidContent(treeEdit.modification, allowedType);
 							if (typeof allowedType === "function") {
 								const simpleSchema = allowedType as unknown as new (
 									dummy: unknown,
@@ -449,18 +466,85 @@ function getTargetInfo(
 	return { node, parentIndex };
 }
 
+function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
+	switch (treeEdit.type) {
+		case "setRoot":
+			break;
+		case "insert":
+			if (treeEdit.destination.type === "objectPlace") {
+				if (idGenerator.getNode(treeEdit.destination[objectIdKey]) === undefined) {
+					throw new UsageError(
+						`objectIdKey ${treeEdit.destination[objectIdKey]} does not exist`,
+					);
+				}
+			} else {
+				if (idGenerator.getNode(treeEdit.destination.parentId) === undefined) {
+					throw new UsageError(`objectIdKey ${treeEdit.destination.parentId} does not exist`);
+				}
+			}
+			break;
+		case "remove":
+			if (isRange(treeEdit.source)) {
+				const missingObjectIds = [
+					treeEdit.source.from[objectIdKey],
+					treeEdit.source.to[objectIdKey],
+				].filter((id) => !idGenerator.getNode(id));
+
+				if (missingObjectIds.length > 0) {
+					throw new UsageError(`objectIdKeys [${missingObjectIds}] does not exist`);
+				}
+			} else if (isObjectTarget(treeEdit.source)) {
+				if (idGenerator.getNode(treeEdit.source[objectIdKey]) === undefined) {
+					throw new UsageError(`objectIdKey ${treeEdit.source[objectIdKey]} does not exist`);
+				}
+			}
+			break;
+		case "modify":
+			if (idGenerator.getNode(treeEdit.target[objectIdKey]) === undefined) {
+				throw new UsageError(`objectIdKey ${treeEdit.target[objectIdKey]} does not exist`);
+			}
+			break;
+		case "move": {
+			const invalidObjectIds = [];
+			// check the source
+			if (isRange(treeEdit.source)) {
+				const missingObjectIds = [
+					treeEdit.source.from[objectIdKey],
+					treeEdit.source.to[objectIdKey],
+				].filter((id) => !idGenerator.getNode(id));
+
+				if (missingObjectIds.length > 0) {
+					invalidObjectIds.push(...missingObjectIds);
+				}
+			} else if (isObjectTarget(treeEdit.source)) {
+				if (idGenerator.getNode(treeEdit.source[objectIdKey]) === undefined) {
+					invalidObjectIds.push(treeEdit.source[objectIdKey]);
+				}
+			}
+
+			// check the destination
+			if (treeEdit.destination.type === "objectPlace") {
+				if (idGenerator.getNode(treeEdit.destination[objectIdKey]) === undefined) {
+					invalidObjectIds.push(treeEdit.destination[objectIdKey]);
+				}
+			} else {
+				if (idGenerator.getNode(treeEdit.destination.parentId) === undefined) {
+					invalidObjectIds.push(treeEdit.destination.parentId);
+				}
+			}
+			if (invalidObjectIds.length > 0) {
+				throw new UsageError(`objectIdKeys [${invalidObjectIds}] does not exist`);
+			}
+			break;
+		}
+		default:
+			break;
+	}
+}
+
 interface SchemaInfo {
 	treeNodeSchema: TreeNodeSchema;
 	simpleNodeSchema: new (dummy: unknown) => TreeNode;
-}
-
-export function isValidContent(content: unknown, validator: (data: unknown) => void): boolean {
-	try {
-		validator(content);
-	} catch (error) {
-		return false;
-	}
-	return true;
 }
 
 function getSimpleNodeSchema(node: TreeNode): SchemaInfo {
