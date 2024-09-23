@@ -366,8 +366,8 @@ export class SchemaFactory<
 
 	/**
 	 * @privateRemarks
-	 * This should return TreeNodeSchemaBoth, however TypeScript gives an error if one of the overloads implicitly up casts the return type of the implementation.
-	 * This seems like a TypeScript bug getting variance backwards for overload return types since its erroring when the relation between the overload
+	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
+	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
 	 * and the implementation is type safe, and forcing an unsafe typing instead.
 	 */
 	public map<const T extends ImplicitAllowedTypes>(
