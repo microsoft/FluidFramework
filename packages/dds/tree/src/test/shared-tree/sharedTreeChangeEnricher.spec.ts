@@ -128,11 +128,11 @@ describe("SharedTreeChangeEnricher", () => {
 		const { fork } = setupEnricher();
 		fork.applyTipChange(removeRoot, revision1);
 
+		const tag = 0 as RevisionTag;
 		const restore = Change.atOnce(
-			Change.reserve("self", brand(0)),
-			Change.move({ localId: brand(0) }, "self"),
+			Change.reserve("self", { localId: brand(0), revision: tag }),
+			Change.move({ localId: brand(0), revision: tag }, "self"),
 		);
-		const tag = mintRevisionTag();
 		const restoreRoot: SharedTreeChange = {
 			changes: [
 				{
@@ -164,7 +164,7 @@ describe("SharedTreeChangeEnricher", () => {
 				.toArray()
 				.map(([[revision, id], value]) => [revision, id, value]);
 
-		assert.equal(refreshers[0][0], undefined);
+		assert.equal(refreshers[0][0], 0);
 		assert.equal(refreshers[0][1], 0);
 		const refreshedTree = mapCursorField(refreshers[0][2].cursor(), cursorToJsonObject);
 		assert.deepEqual(refreshedTree, [content]);

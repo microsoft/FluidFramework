@@ -187,7 +187,7 @@ export function testRebase() {
 
 		it("pin ↷ related remove", () => {
 			const pin = [Mark.pin(3, brand(0))];
-			const deletion = Change.remove(1, 1, tag1);
+			const deletion = Change.remove(1, 1, tag2);
 			const actual = rebase(pin, deletion, tag2);
 			const expected = [
 				// Earlier revive is unaffected
@@ -235,7 +235,11 @@ export function testRebase() {
 			const removeB = Change.remove(0, 2, tag2);
 			const actual = rebase(removeA, removeB);
 			// Removes -DE
-			const expected = [Mark.tomb(tag1, brand(0), 2), Mark.skip(1), Mark.remove(2, brand(0))];
+			const expected = [
+				Mark.tomb(tag2, brand(0), 2),
+				Mark.skip(1),
+				Mark.remove(2, brand(0), { revision: tag1 }),
+			];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -245,7 +249,11 @@ export function testRebase() {
 			// Removes ---DE
 			const removeB = Change.remove(3, 2, tag2);
 			const actual = rebase(removeA, removeB);
-			const expected = [Mark.remove(2, brand(0)), Mark.skip(1), Mark.tomb(tag1, brand(0), 2)];
+			const expected = [
+				Mark.remove(2, brand(0), { revision: tag1 }),
+				Mark.skip(1),
+				Mark.tomb(tag2, brand(0), 2),
+			];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -347,7 +355,7 @@ export function testRebase() {
 				Mark.revive(2, { revision: tag1, localId: brand(1) }),
 			];
 			// TODO: test both tiebreak policies
-			const insert = Change.insert(2, 1, tag1);
+			const insert = Change.insert(2, 1, tag2);
 			const actual = rebase(revive, insert, tag2);
 			const expected = [
 				Mark.revive(1, { revision: tag1, localId: brand(0) }),
@@ -361,7 +369,11 @@ export function testRebase() {
 			const revive = Change.pin(0, 3, { revision: tag1, localId: brand(0) }, tag1);
 			const insert = Change.insert(1, 1, tag2);
 			const actual = rebase(revive, insert);
-			const expected = [Mark.pin(1, brand(0)), Mark.skip(1), Mark.pin(2, brand(1))];
+			const expected = [
+				Mark.pin(1, brand(0), { revision: tag1 }),
+				Mark.skip(1),
+				Mark.pin(2, brand(1), { revision: tag1 }),
+			];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -453,7 +465,10 @@ export function testRebase() {
 				Mark.revive(1, { revision: tag1, localId: brand(0) }),
 				Mark.tomb(tag2, brand(0), 2),
 			];
-			const expected = [Mark.skip(6), Mark.revive(2, { revision: tag2, localId: brand(0) })];
+			const expected = [
+				Mark.skip(6),
+				Mark.revive(2, { revision: tag2, localId: brand(0) }, { revision: tag2 }),
+			];
 			const actual = rebase(reviveBB, reviveA);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -863,9 +878,14 @@ export function testRebase() {
 
 		it("rebasing over transient adds tombstones", () => {
 			const insert = Change.insert(0, 1, tag1);
-			const transient = [Mark.remove(2, brand(2), { cellId: { localId: brand(0) } })];
+			const transient = [
+				Mark.remove(2, brand(2), { cellId: { localId: brand(0), revision: tag2 } }),
+			];
 			const rebased = rebase(insert, transient);
-			const expected = [Mark.insert(1, { localId: brand(0) }), Mark.tomb(tag1, brand(2), 2)];
+			const expected = [
+				Mark.insert(1, { localId: brand(0), revision: tag1 }, { revision: tag1 }),
+				Mark.tomb(tag1, brand(2), 2),
+			];
 
 			assertChangesetsEqual(rebased, expected);
 		});
@@ -884,6 +904,7 @@ export function testRebase() {
 				{ count: 1 },
 				Mark.remove(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(1) },
+					revision: tag1,
 				}),
 			];
 
@@ -902,6 +923,7 @@ export function testRebase() {
 			const expected = [
 				Mark.remove(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(1) },
+					revision: tag1,
 				}),
 				{ count: 1 },
 				Mark.tomb(tag1, brand(0)),
@@ -911,7 +933,7 @@ export function testRebase() {
 		});
 
 		it("move ↷ move and remove", () => {
-			const [moveOut, moveIn] = Mark.move(1, brand(0));
+			const [moveOut, moveIn] = Mark.move(1, { localId: brand(0), revision: tag1 });
 			const moveAndRemove = [
 				{ count: 1 },
 				Mark.attachAndDetach(moveIn, Mark.remove(1, brand(2))),
@@ -926,6 +948,7 @@ export function testRebase() {
 				{ count: 1 },
 				Mark.moveOut(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(2) },
+					revision: tag1,
 				}),
 				{ count: 1 },
 				Mark.tomb(tag1, brand(0)),
@@ -1144,7 +1167,7 @@ export function testRebase() {
 			it("insert ↷ [remove, remove]", () => {
 				const removes: SF.Changeset = shallowCompose([
 					tagChangeInline(Change.remove(1, 2, tag1), tag1),
-					tagChangeInline(Change.remove(0, 2, tag1), tag2),
+					tagChangeInline(Change.remove(0, 2, tag2), tag2),
 				]);
 
 				const insert = Change.insert(3, 1, tag3);
@@ -1160,7 +1183,7 @@ export function testRebase() {
 				const expected = [
 					Mark.tomb(tag2),
 					Mark.tomb(tag1, brand(0), 2),
-					Mark.insert(1, { localId: brand(0) }),
+					Mark.insert(1, { localId: brand(0), revision: tag3 }, { revision: tag3 }),
 					Mark.tomb(tag2, brand(1)),
 				];
 				assertChangesetsEqual(rebased, expected);
