@@ -231,7 +231,19 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
+<<<<<<< HEAD
 		"broken": {},
 		"entrypoint": "legacy"
+=======
+		"broken": {
+			"Function_isRuntimeMessage": {
+				"backCompat": false
+			},
+			"Function_ensureNoDataModelChanges": {
+				"backCompat": false
+			}
+		},
+		"entrypoint": "internal"
+>>>>>>> 98b9ca6e32 (Added function to broken list since it's meant to be removed)
 	}
 }
