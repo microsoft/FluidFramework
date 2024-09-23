@@ -129,6 +129,20 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 	}
 
+	/**
+	 * Node creation function for implementing the TreeNodeSchemaNonClass half of TreeNodeSchemaBoth.
+	 * @remarks
+	 * When used as TreeNodeSchemaNonClass and subclassed,
+	 * does not actually have the correct compile time type for the return value due to TypeScript limitations.
+	 * This is why this is not exposed as part of TreeNodeSchemaCLass where subclassing is allowed.
+	 */
+	public static create<TInput, TOut, TThis extends new (args: TInput) => TOut>(
+		this: TThis,
+		input: TInput,
+	): TOut {
+		return new this(input);
+	}
+
 	public constructor(input: TInput | InternalTreeNode) {
 		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
