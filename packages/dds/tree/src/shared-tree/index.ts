@@ -8,6 +8,7 @@ export {
 	SharedTreeFactory,
 	type SharedTreeOptions,
 	SharedTree,
+	getBranch,
 	ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
@@ -22,6 +23,8 @@ export {
 	type CheckoutEvents,
 	type ITransaction,
 	type ITreeCheckoutFork,
+	type TreeBranch,
+	type TreeBranchFork,
 } from "./treeCheckout.js";
 
 export {
@@ -33,10 +36,7 @@ export {
 	buildTreeConfiguration,
 } from "./schematizeTree.js";
 
-export {
-	CheckoutFlexTreeView,
-	type FlexTreeView,
-} from "./treeView.js";
+export { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/presence",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
