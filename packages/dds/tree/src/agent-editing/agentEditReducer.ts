@@ -187,7 +187,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				: treeEdit;
 		}
 		case "insert": {
-			const { array, index } = getObjectPlaceInfo(treeEdit.destination, idGenerator);
+			const { array, index } = getPlaceInfo(treeEdit.destination, idGenerator);
 
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
@@ -318,7 +318,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			// TODO: need to add schema check for valid moves
 			const source = treeEdit.source;
 			const destination = treeEdit.destination;
-			const { array: destinationArrayNode, index: destinationIndex } = getObjectPlaceInfo(
+			const { array: destinationArrayNode, index: destinationIndex } = getPlaceInfo(
 				destination,
 				idGenerator,
 			);
@@ -329,7 +329,10 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					idGenerator,
 				);
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
-				// assert(Array.isArray(sourceArrayNode), "the source node must be within an arrayNode");
+				const sourceArraySchema = Tree.schema(sourceArrayNode);
+				if (sourceArraySchema.kind !== NodeKind.Array) {
+					throw new UsageError("the source node must be within an arrayNode");
+				}
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
 				const allowedTypes = Array.from(
 					normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
@@ -411,18 +414,19 @@ interface RangeInfo {
 }
 
 function getRangeInfo(range: Range, idGenerator: IdGenerator): RangeInfo {
-	const { array: arrayFrom, index: startIndex } = getObjectPlaceInfo(range.from, idGenerator);
-	const { array: arrayTo, index: endIndex } = getObjectPlaceInfo(range.to, idGenerator);
+	const { array: arrayFrom, index: startIndex } = getPlaceInfo(range.from, idGenerator);
+	const { array: arrayTo, index: endIndex } = getPlaceInfo(range.to, idGenerator);
 
-	assert(
-		arrayFrom === arrayTo,
-		'The "from" node and "to" nodes of the range must be in the same parent array.',
-	);
+	if (arrayFrom !== arrayTo) {
+		throw new UsageError(
+			'The "from" node and "to" nodes of the range must be in the same parent array.',
+		);
+	}
 
 	return { array: arrayFrom, startIndex, endIndex };
 }
 
-function getObjectPlaceInfo(
+function getPlaceInfo(
 	place: ObjectPlace | ArrayPlace,
 	idGenerator: IdGenerator,
 ): {
@@ -432,9 +436,13 @@ function getObjectPlaceInfo(
 	if (place.type === "arrayPlace") {
 		const parent = idGenerator.getNode(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
-		assert(child !== undefined, `No child under field ${place.field}`);
+		if (child === undefined) {
+			throw new UsageError(`No child under field ${place.field}`);
+		}
 		const schema = Tree.schema(child as TreeNode);
-		assert(schema.kind === NodeKind.Array, "Expected child to be an array node");
+		if (schema.kind !== NodeKind.Array) {
+			throw new UsageError("Expected child to be in an array node");
+		}
 		return {
 			array: child as TreeArrayNode,
 			index: place.location === "start" ? 0 : (child as TreeArrayNode).length,
@@ -442,9 +450,13 @@ function getObjectPlaceInfo(
 	} else {
 		const { node, parentIndex } = getTargetInfo(place, idGenerator);
 		const parent = Tree.parent(node);
-		assert(parent !== undefined, "TODO: root node target not supported");
+		if (parent === undefined) {
+			throw new UsageError("TODO: root node target not supported");
+		}
 		const schema = Tree.schema(parent);
-		assert(schema.kind === NodeKind.Array, "Expected child to be an array node");
+		if (schema.kind !== NodeKind.Array) {
+			throw new UsageError("Expected child to be in an array node");
+		}
 		return {
 			array: parent as unknown as TreeArrayNode,
 			index: place.place === "before" ? parentIndex : parentIndex + 1,
