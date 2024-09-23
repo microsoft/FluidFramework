@@ -78,7 +78,7 @@ export class IdGenerator {
 		);
 
 		this.prefixMap.set(lastSegment, prefix);
-		const count = this.idCountMap.get(lastSegment) ?? 0;
+		const count = this.idCountMap.get(lastSegment) ?? 1;
 		this.idCountMap.set(lastSegment, count + 1);
 
 		return `${lastSegment}${count}`;
