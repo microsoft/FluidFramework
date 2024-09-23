@@ -709,7 +709,7 @@ describe("client.applyMsg", () => {
 	// 3:0:C4@1,2 | B-----   | 3:0:C4@1,2 | B-----   | 3:0:C4@1,2   | B--BB-
 	it.skip("sided obliterate regression test", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "BBBC", options: { mergeTreeEnableObliterate: true } },
+			{ initialState: "0123", options: { mergeTreeEnableObliterate: true } },
 			"A",
 			"B",
 			"C",
@@ -717,6 +717,14 @@ describe("client.applyMsg", () => {
 		let seq = 0;
 		const logger = new TestClientLogger(clients.all);
 		const ops: ISequencedDocumentMessage[] = [];
+
+		ops.push(
+			clients.B.makeOpMessage(clients.B.removeRangeLocal(0, clients.B.getLength()), ++seq),
+			clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BBB"), ++seq),
+			clients.C.makeOpMessage(clients.C.insertTextLocal(2, "C"), ++seq),
+		);
+		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+
 		ops.push(
 			clients.B.makeOpMessage(clients.B.insertTextLocal(3, "BB"), ++seq),
 			clients.C.makeOpMessage(
