@@ -12,17 +12,25 @@ import type { typeField } from "./agentEditReducer.js";
  *
  * TODO: We could add a "replace" edit type to avoid tons of little modifies.
  *
- * TODO: OpenAI doesn't include the schema in the input...would doing so decrease hallucination? Maybe a compact version? We will definitely need example edits.
- *
  * TODO: only 100 object fields total are allowed by OpenAI right now, so larger schemas will fail faster if we have a bunch of schema types generated for type-specific edits.
  *
  * TODO: experiment using https://github.com/outlines-dev/outlines (and maybe a llama model) to avoid many of the annoyances of OpenAI's JSON Schema subset.
  *
  * TODO: without field count limits, we could generate a schema for valid paths from the root object to any field, but it's not clear how useful that would be.
  *
- * TODO: add example of handling fields the model cannot initialize (identifiers, uuid fields, etc.)
+ * TODO: We don't supported nested arrays yet.
  *
- * TODO: We don't have a way to refer (via ID) to content that was newly inserted by the LLM. The LLM would need to provide IDs for new content.
+ * TODO: Could omit edit contents for setRoot edits as the tree state is the result (or the other way around).
+ *
+ * TODO: Add a prompt suggestion API!
+ *
+ * TODO: Could encourage the model to output more technical explanations of the edits (e.g. "insert a new Foo after "Foo2").
+ *
+ * TODO: Get explanation strings from o1.
+ *
+ * TODO: Tests of range edits.
+ *
+ * TODO: SetRoot might be obscure enough to make the LLM avoid it. Maybe a general replace edit would be better.
  */
 
 export const objectIdKey = "__fluid_objectId";
@@ -36,25 +44,27 @@ export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
 
 // For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
 export interface EditWrapper {
-	edits: TreeEdit[];
+	// eslint-disable-next-line @rushstack/no-new-null
+	edit: TreeEdit | null;
 }
 
 export type TreeEdit = SetRoot | Insert | Modify | Remove | Move;
 
 export interface Edit {
+	explanation: string;
 	type: "setRoot" | "insert" | "modify" | "remove" | "move";
 }
 
 export type Selection = ObjectTarget | Range;
 
 export interface ObjectTarget {
-	[objectIdKey]: number;
+	[objectIdKey]: string;
 }
 
 // TODO: Allow support for nested arrays
 export interface ArrayPlace {
 	type: "arrayPlace";
-	parentId: number;
+	parentId: string;
 	field: string;
 	location: "start" | "end";
 }

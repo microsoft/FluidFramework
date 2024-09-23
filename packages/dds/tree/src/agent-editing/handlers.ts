@@ -8,13 +8,12 @@ import {
 	NodeKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
-	type TreeNode,
 	type TreeView,
 } from "../simple-tree/index.js";
-import {
-	getSimpleSchema,
-	type SimpleFieldSchema,
-	type SimpleNodeSchema,
+import type {
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -25,20 +24,13 @@ import {
 	type JsonObject,
 	JsonHandler as jh,
 } from "../json-handler/index.js";
-import {
-	objectIdKey,
-	type Insert,
-	type Modify,
-	type Move,
-	type Remove,
-	type SetRoot,
-} from "./agentEditTypes.js";
-import { applyAgentEdit, typeField } from "./agentEditReducer.js";
+import { objectIdKey } from "./agentEditTypes.js";
+import { typeField } from "./agentEditReducer.js";
 
 const objectTargetHandler = jh.object(() => ({
 	description: "A pointer to an object in the tree",
 	properties: {
-		[objectIdKey]: jh.number({ description: "The id of the object that is being pointed to" }),
+		[objectIdKey]: jh.string({ description: "The id of the object that is being pointed to" }),
 	},
 }));
 
@@ -47,8 +39,8 @@ const objectPlaceHandler = jh.object(() => ({
 		"A pointer to a location either just before or just after an object that is in an array",
 	properties: {
 		type: jh.enum({ values: ["objectPlace"] }),
-		[objectIdKey]: jh.number({
-			description: `The id (${objectIdKey}) of the object that the new/moved object should be placed relative to`,
+		[objectIdKey]: jh.string({
+			description: `The id (${objectIdKey}) of the object that the new/moved object should be placed relative to. This must be the id of an object that already existed in the tree content that was originally supplied.`,
 		}),
 		place: jh.enum({
 			values: ["before", "after"],
@@ -63,8 +55,8 @@ const arrayPlaceHandler = jh.object(() => ({
 		"A location at either the beginning or the end of an array (useful for prepending or appending)",
 	properties: {
 		type: jh.enum({ values: ["arrayPlace"] }),
-		parentId: jh.number({
-			description: `The id (${objectIdKey}) of the parent object of the array`,
+		parentId: jh.string({
+			description: `The id (${objectIdKey}) of the parent object of the array. This must be the id of an object that already existed in the tree content that was originally supplied.`,
 		}),
 		field: jh.string({ "description": "The key of the array to insert into" }),
 		location: jh.enum({
@@ -75,7 +67,8 @@ const arrayPlaceHandler = jh.object(() => ({
 }));
 
 const rangeHandler = jh.object(() => ({
-	description: "A span of objects that are in an array",
+	description:
+		'A span of objects that are in an array. The "to" and "from" objects MUST be in the same array.',
 	properties: {
 		from: objectPlaceHandler(),
 		to: objectPlaceHandler(),
@@ -84,10 +77,11 @@ const rangeHandler = jh.object(() => ({
 
 export function generateHandlers(
 	view: TreeView<ImplicitFieldSchema>,
-	nodeMap: Map<number, TreeNode>,
+	simpleSchema: SimpleTreeSchema,
+	complete: (jsonObject: JsonObject) => void,
 ): StreamedType {
+	// TODO Can `schema` be removed and the same information be obtained from `simpleSchema`?
 	const schema = normalizeFieldSchema(view.schema);
-	const simpleSchema = getSimpleSchema(schema.allowedTypes);
 	const insertSet = new Set<string>();
 	const modifyFieldSet = new Set<string>();
 	const modifyTypeSet = new Set<string>();
@@ -108,6 +102,7 @@ export function generateHandlers(
 		description: "A handler for setting content to the root of the tree.",
 		properties: {
 			type: jh.enum({ values: ["setRoot"] }),
+			explanation: jh.string({ description: editDescription }),
 			content: jh.anyOf(
 				Array.from(
 					schema.allowedTypeSet.values(),
@@ -116,24 +111,17 @@ export function generateHandlers(
 				),
 			),
 		},
-		complete: (jsonObject: JsonObject) => {
-			const setRoot = jsonObject as unknown as SetRoot;
-			applyAgentEdit(view, setRoot, nodeMap, simpleSchema.definitions);
-		},
 	}));
 
 	const insertHandler = jh.object(() => ({
 		description: "A handler for inserting new content into the tree.",
 		properties: {
 			type: jh.enum({ values: ["insert"] }),
+			explanation: jh.string({ description: editDescription }),
 			content: jh.anyOf(
 				Array.from(insertSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
 			),
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
-		},
-		complete: (jsonObject: JsonObject) => {
-			const insert = jsonObject as unknown as Insert;
-			applyAgentEdit(view, insert, nodeMap, simpleSchema.definitions);
 		},
 	}));
 
@@ -141,27 +129,21 @@ export function generateHandlers(
 		description: "A handler for removing content from the tree.",
 		properties: {
 			type: jh.enum({ values: ["remove"] }),
+			explanation: jh.string({ description: editDescription }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
-		},
-		complete: (jsonObject: JsonObject) => {
-			const remove = jsonObject as unknown as Remove;
-			applyAgentEdit(view, remove, nodeMap, simpleSchema.definitions);
 		},
 	}));
 
 	const modifyHandler = jh.object(() => ({
-		description: "A handler for inserting new content into the tree.",
+		description: "A handler for modifying content in the tree.",
 		properties: {
 			type: jh.enum({ values: ["modify"] }),
+			explanation: jh.string({ description: editDescription }),
 			target: objectTargetHandler(),
 			field: jh.enum({ values: Array.from(modifyFieldSet) }),
 			modification: jh.anyOf(
 				Array.from(modifyTypeSet, (n) => schemaHandlers.get(n) ?? fail("Unexpected schema")),
 			),
-		},
-		complete: (jsonObject: JsonObject) => {
-			const modify = jsonObject as unknown as Modify;
-			applyAgentEdit(view, modify, nodeMap, simpleSchema.definitions);
 		},
 	}));
 
@@ -170,32 +152,37 @@ export function generateHandlers(
 			"A handler for moving content from one location in the tree to another location in the tree.",
 		properties: {
 			type: jh.enum({ values: ["move"] }),
+			explanation: jh.string({ description: editDescription }),
 			source: jh.anyOf([objectTargetHandler(), rangeHandler()]),
 			destination: jh.anyOf([arrayPlaceHandler(), objectPlaceHandler()]),
 		},
-		complete: (jsonObject: JsonObject) => {
-			const move = jsonObject as unknown as Move;
-			applyAgentEdit(view, move, nodeMap, simpleSchema.definitions);
-		},
 	}));
 
-	const edits = jh.array(() => ({
-		description: "A list of sequential edits to apply to the tree.",
-		items: jh.anyOf([
-			setRootHandler(),
-			insertHandler(),
-			modifyHandler(),
-			removeHandler(),
-			moveHandler(),
-		]),
+	const editWrapper = jh.object(() => ({
+		// description:
+		// 	"The next edit to apply to the tree, or null if the task is complete and no more edits are necessary.",
+		properties: {
+			edit: jh.anyOf([
+				setRootHandler(),
+				insertHandler(),
+				modifyHandler(),
+				removeHandler(),
+				moveHandler(),
+				jh.null(),
+			]),
+		},
+		complete,
 	}));
 
 	return jh.object(() => ({
 		properties: {
-			edits: edits(),
+			edit: editWrapper(),
 		},
 	}))();
 }
+
+const editDescription =
+	"A description of what this edit is meant to accomplish in human readable English";
 
 function getOrCreateHandler(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,

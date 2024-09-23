@@ -12,13 +12,16 @@ import {
 	toDecoratedJson,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/promptGeneration.js";
-import { getResponse } from "../../agent-editing/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getResponse } from "../../agent-editing/llmClient.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getJsonSchema } from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { ResponseFormatJSONSchema } from "openai/resources/shared.mjs";
 // eslint-disable-next-line import/no-internal-modules
 import { objectIdKey } from "../../agent-editing/agentEditTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdGenerator } from "../../agent-editing/idGenerator.js";
 
 const demoSf = new SchemaFactory("agentSchema");
 
@@ -35,13 +38,17 @@ class RootObject extends demoSf.object("RootObject", {
 }) {}
 
 describe("toDecoratedJson", () => {
+	let idGenerator: IdGenerator;
+	beforeEach(() => {
+		idGenerator = new IdGenerator();
+	});
 	it("adds ID fields", () => {
 		const vector = new Vector({ x: 1, y: 2 });
 		const hydratedObject = hydrate(Vector, vector);
 		assert.equal(
-			toDecoratedJson(hydratedObject).stringified,
+			toDecoratedJson(idGenerator, hydratedObject),
 			JSON.stringify({
-				[objectIdKey]: 0,
+				[objectIdKey]: "Vector0",
 				x: 1,
 				y: 2,
 			}),
@@ -53,15 +60,14 @@ describe("toDecoratedJson", () => {
 			RootObject,
 			new RootObject({ str: "hello", vectors: [{ x: 1, y: 2, z: 3 }], bools: [true] }),
 		);
-		const { stringified, idMap } = toDecoratedJson(hydratedObject);
 		assert.equal(
-			stringified,
+			toDecoratedJson(idGenerator, hydratedObject),
 			JSON.stringify({
-				[objectIdKey]: 0,
+				[objectIdKey]: "RootObject0",
 				str: "hello",
 				vectors: [
 					{
-						[objectIdKey]: 1,
+						[objectIdKey]: "Vector0",
 						x: 1,
 						y: 2,
 						z: 3,
@@ -70,15 +76,21 @@ describe("toDecoratedJson", () => {
 				bools: [true],
 			}),
 		);
-		assert.equal(idMap.get(0), hydratedObject);
-		assert.equal(idMap.get(1), hydratedObject.vectors.at(0));
+		assert.equal(idGenerator.getNode("RootObject0"), hydratedObject);
+		assert.equal(idGenerator.getNode("Vector0"), hydratedObject.vectors.at(0));
 	});
 
 	it("handles non-POJO mode arrays", () => {
 		const sf = new SchemaFactory("testSchema");
 		class NamedArray extends sf.array("Vector", sf.number) {}
-		const hydratedObject = hydrate(NamedArray, new NamedArray([1, 2, 3]));
-		assert.equal(toDecoratedJson(hydratedObject).stringified, JSON.stringify([1, 2, 3]));
+		class Root extends sf.object("Root", {
+			arr: NamedArray,
+		}) {}
+		const hydratedObject = hydrate(Root, new Root({ arr: [1, 2, 3] }));
+		assert.equal(
+			toDecoratedJson(idGenerator, hydratedObject),
+			JSON.stringify({ __fluid_objectId: "Root0", arr: [1, 2, 3] }),
+		);
 	});
 });
 

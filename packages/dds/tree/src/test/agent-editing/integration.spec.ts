@@ -62,6 +62,7 @@ export class Conference extends sf.object("Conference", {
 
 describe.skip("Agent Editing Integration", () => {
 	it("Test", async () => {
+		process.env.OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 		process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 		process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
 		process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
@@ -137,8 +138,15 @@ describe.skip("Agent Editing Integration", () => {
 			],
 			sessionsPerDay: 2,
 		});
-		const openAIClient = initializeOpenAIClient();
-		await generateTreeEdits(openAIClient, view, prompt);
+		const openAIClient = initializeOpenAIClient("azure");
+		const abortController = new AbortController();
+		await generateTreeEdits({
+			openAIClient,
+			treeView: view,
+			prompt,
+			abortController,
+			maxEdits: 15,
+		});
 
 		const k = KLUDGE;
 		console.log(k);
@@ -148,5 +156,4 @@ describe.skip("Agent Editing Integration", () => {
 	});
 });
 
-const prompt =
-	"Please add a third day with several sessions about minecraft. Focus specifically on how it competes with roblox and move the session about monetizing to the third day too.";
+const prompt = "Please remove all sessions from both days and do it in one operation.";
