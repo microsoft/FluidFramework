@@ -30,7 +30,7 @@ import { TestFluidObjectFactory, LocalCodeLoader } from "@fluidframework/test-ut
  * and the default object to be specific,
  * which maintains strong typing for both inputs, and the defaults in the result.
  * So if a user specifies a value, that values type will be strongly specified on the Result.
- * However if the user does not specify and option input, the result will also get a strong
+ * However if the user does not specify an option input, the result will also get a strong
  * type based the default.
  */
 export type OptionalToDefault<TInput, TDefault> = {
