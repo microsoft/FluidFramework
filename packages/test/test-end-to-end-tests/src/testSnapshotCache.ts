@@ -26,10 +26,10 @@ export class TestSnapshotCache implements IPersistedCache {
 	public async put(entry: ICacheEntry, value: any): Promise<void> {
 		const key = getKeyForCacheEntry(entry);
 		this.cache.set(key, value);
-		const versionKey = `${value.value?.snapshotTree?.id}`;
-		if (versionKey === undefined) {
+		if (value.value?.snapshotTree?.id === undefined) {
 			return;
 		}
+		const versionKey = `${value.value.snapshotTree.id}`;
 		this.versionCache.set(versionKey, value);
 		this.versionToCacheKey.set(versionKey, key);
 	}
