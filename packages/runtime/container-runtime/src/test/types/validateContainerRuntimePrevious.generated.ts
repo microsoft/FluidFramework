@@ -382,6 +382,7 @@ declare type current_as_old_for_Function_detectOutboundReferences = requireAssig
  * typeValidation.broken:
  * "Function_isRuntimeMessage": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Function_isRuntimeMessage = requireAssignableTo<TypeOnly<typeof current.isRuntimeMessage>, TypeOnly<typeof old.isRuntimeMessage>>
 
 /*
