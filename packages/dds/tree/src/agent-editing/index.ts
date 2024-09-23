@@ -20,9 +20,13 @@ import {
 	type SimpleTreeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
-import { getSystemPrompt, type EditLog } from "./promptGeneration.js";
+import {
+	getEditingSystemPrompt,
+	getSuggestingSystemPrompt,
+	type EditLog,
+} from "./promptGeneration.js";
 import { generateEditHandlers } from "./handlers.js";
-import { createResponseHandler, type JsonObject } from "../json-handler/index.js";
+import { createResponseHandler, JsonHandler, type JsonObject } from "../json-handler/index.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import { fail } from "../util/index.js";
 import { IdGenerator } from "./idGenerator.js";
@@ -63,9 +67,10 @@ export async function generateTreeEdits(
 
 	for await (const edit of generateEdits(options, simpleSchema, idGenerator, editLog)) {
 		try {
-			applyAgentEdit(options.treeView, edit, idGenerator, simpleSchema.definitions);
+			editLog.push({
+				edit: applyAgentEdit(options.treeView, edit, idGenerator, simpleSchema.definitions),
+			});
 			sequentialErrorCount = 0;
-			editLog.push({ edit });
 		} catch (error: unknown) {
 			if (error instanceof Error) {
 				const { message } = error;
@@ -105,7 +110,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	editLog: EditLog,
 ): AsyncGenerator<TreeEdit> {
 	async function getNextEdit(): Promise<TreeEdit | undefined> {
-		const systemPrompt = getSystemPrompt(
+		const systemPrompt = getEditingSystemPrompt(
 			options.prompt,
 			idGenerator,
 			options.treeView,
@@ -142,6 +147,37 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		yield edit;
 		edit = await getNextEdit();
 	}
+}
+
+export async function generateSuggestions(
+	openAIClient: OpenAI,
+	view: TreeView<ImplicitFieldSchema>,
+	suggestionCount: number,
+	guidance?: string,
+	abortController = new AbortController(),
+): Promise<string[]> {
+	let suggestions: string[] | undefined;
+
+	const editHandler = JsonHandler.object(() => ({
+		properties: {
+			edit: JsonHandler.array(() => ({
+				description:
+					"A list of changes that a user might want a collaborative agent to make to the tree.",
+				items: JsonHandler.string(),
+			}))(),
+		},
+		complete: (jsonObject: JsonObject) => {
+			suggestions = (jsonObject as { edit: string[] }).edit;
+		},
+	}))();
+
+	const responseHandler = createResponseHandler(editHandler, abortController);
+	const systemPrompt = getSuggestingSystemPrompt(view, suggestionCount, guidance);
+	await responseHandler.processResponse(
+		streamFromLlm(systemPrompt, responseHandler.jsonSchema(), openAIClient),
+	);
+	assert(suggestions !== undefined, "No suggestions were generated.");
+	return suggestions;
 }
 
 async function* streamFromLlm(
