@@ -7,11 +7,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeViewConfiguration } from "../../simple-tree/api/index.js";
 import { getView } from "../utils.js";
-import {
-	generateTreeEdits,
-	initializeOpenAIClient,
-	KLUDGE,
-} from "../../agent-editing/index.js";
+import { generateTreeEdits, initializeOpenAIClient } from "../../agent-editing/index.js";
 
 const sf = new SchemaFactory("Planner");
 
@@ -147,9 +143,6 @@ describe.skip("Agent Editing Integration", () => {
 			abortController,
 			maxEdits: 15,
 		});
-
-		const k = KLUDGE;
-		console.log(k);
 
 		const stringified = JSON.stringify(view.root, undefined, 2);
 		console.log(stringified);
