@@ -53,8 +53,7 @@
 		],
 		"temp-directory": "nyc/.nyc_output"
 	},
-	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
@@ -91,7 +90,10 @@
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~1.8.3",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
