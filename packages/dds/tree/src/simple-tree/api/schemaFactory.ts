@@ -18,7 +18,7 @@ import {
 	isLazy,
 } from "../../feature-libraries/index.js";
 import {
-	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
@@ -293,7 +293,7 @@ export class SchemaFactory<
 	 */
 	public object<
 		const Name extends TName,
-		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	>(
 		name: Name,
 		fields: T,
@@ -691,12 +691,12 @@ export class SchemaFactory<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 	>(name: Name, t: T) {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
-			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
@@ -789,7 +789,7 @@ export class SchemaFactory<
 				>;
 			},
 			// Ideally this would be included, but doing so breaks recursive types.
-			// | RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
 			false,
 			T
 		>;

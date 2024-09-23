@@ -44,7 +44,7 @@ import {
 	type Context,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
+import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
@@ -54,10 +54,10 @@ import { createUnhydratedContext } from "./createContext.js";
  * Helper used to produce types for object nodes.
  * @system @public
  */
-export type ObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	-readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
+export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
+	-readonly [Property in keyof T]: Property extends string
+		? TreeFieldFromImplicitField<T[Property]>
+		: unknown;
 };
 
 /**
@@ -72,7 +72,7 @@ export type ObjectFromSchemaRecord<
  * @public
  */
 export type TreeObjectNode<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	TypeName extends string = string,
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
@@ -107,15 +107,17 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  * @system @public
  */
 export type InsertableObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > = FlattenKeys<
 	{
-		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+			T[Property] & string
+		>;
 	} & {
 		// Field does not have a known default, make it required:
-		readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false
+		readonly [Property in keyof T as FieldHasDefault<T[Property] & string> extends false
 			? Property
-			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+			: never]: InsertableTreeFieldFromImplicitField<T[Property] & string>;
 	}
 >;
 
@@ -292,7 +294,7 @@ export function setField(
 }
 
 abstract class CustomObjectNodeBase<
-	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > extends TreeNodeValid<InsertableObjectFromSchemaRecord<T>> {
 	public static readonly kind = NodeKind.Object;
 }
@@ -305,7 +307,7 @@ abstract class CustomObjectNodeBase<
  */
 export function objectSchema<
 	TName extends string,
-	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
 >(
 	identifier: TName,
@@ -455,7 +457,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();
