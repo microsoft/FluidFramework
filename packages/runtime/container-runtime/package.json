@@ -233,6 +233,9 @@
 		"broken": {
 			"Function_isRuntimeMessage": {
 				"backCompat": false
+			},
+			"Function_ensureNoDataModelChanges": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "internal"
