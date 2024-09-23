@@ -437,7 +437,7 @@ function getPlaceInfo(
 		const parent = idGenerator.getNode(place.parentId) ?? fail("Expected parent node");
 		const child = (parent as unknown as Record<string, unknown>)[place.field];
 		if (child === undefined) {
-			throw new UsageError(`No child under field ${place.field}`);
+			throw new UsageError(`No child under field field`);
 		}
 		const schema = Tree.schema(child as TreeNode);
 		if (schema.kind !== NodeKind.Array) {

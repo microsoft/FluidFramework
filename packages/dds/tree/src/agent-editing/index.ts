@@ -17,19 +17,18 @@ import {
 	getSimpleSchema,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
+	type SimpleTreeSchema,
 	type TreeView,
 } from "../simple-tree/index.js";
 import { getSystemPrompt, type EditLog } from "./promptGeneration.js";
 import { generateHandlers } from "./handlers.js";
-import {
-	createResponseHandler,
-	type JsonObject,
-	type StreamedType,
-} from "../json-handler/index.js";
-import type { EditWrapper } from "./agentEditTypes.js";
+import { createResponseHandler, type JsonObject } from "../json-handler/index.js";
+import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import { fail } from "../util/index.js";
 import { IdGenerator } from "./idGenerator.js";
 import { applyAgentEdit } from "./agentEditReducer.js";
+
+const DEBUG_LOG: string[] | undefined = [];
 
 /**
  * {@link generateTreeEdits} options.
@@ -51,99 +50,112 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
  *
  * @internal
  */
-export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
-	options: GenerateTreeEditsOptions<TSchema>,
-): Promise<"success" | "tooManyErrors" | "tooManyEdits"> {
-	const editLog: EditLog = [];
+export async function generateTreeEdits(
+	options: GenerateTreeEditsOptions<ImplicitFieldSchema>,
+): Promise<"success" | "tooManyErrors" | "tooManyEdits" | "aborted"> {
 	const idGenerator = new IdGenerator();
-	const debugLog: string[] = [];
+	const editLog: EditLog = [];
 	let editCount = 0;
 	let sequentialErrorCount = 0;
-	const fieldSchema = normalizeFieldSchema(options.treeView.schema);
-	const simpleSchema = getSimpleSchema(fieldSchema.allowedTypes);
+	const simpleSchema = getSimpleSchema(
+		normalizeFieldSchema(options.treeView.schema).allowedTypes,
+	);
 
-	async function doNextEdit(): Promise<"success" | "tooManyErrors" | "tooManyEdits"> {
-		const systemPrompt = getSystemPrompt(
-			options.prompt,
-			idGenerator,
-			options.treeView,
-			editLog,
-		);
+	for await (const edit of generateEdits(options, simpleSchema, idGenerator, editLog)) {
+		try {
+			applyAgentEdit(options.treeView, edit, idGenerator, simpleSchema.definitions);
+			sequentialErrorCount = 0;
+			editLog.push({ edit });
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				const { message } = error;
+				sequentialErrorCount += 1;
+				editLog.push({ edit, error: message });
+				DEBUG_LOG?.push(`Error: ${message}`);
+			} else {
+				throw error;
+			}
+		}
 
-		debugLog.push(systemPrompt);
+		if (options.abortController?.signal.aborted === true) {
+			return "aborted";
+		}
 
-		let done = false;
+		if (
+			options.maxSequentialErrors !== undefined &&
+			sequentialErrorCount > options.maxSequentialErrors
+		) {
+			return "tooManyErrors";
+		}
 
-		const editHandler = generateHandlers(
-			options.treeView,
-			simpleSchema,
-			(jsonObject: JsonObject) => {
-				debugLog.push(JSON.stringify(jsonObject, null, 2));
-				const wrapper = jsonObject as unknown as EditWrapper;
-				if (wrapper.edit === null) {
-					done = true;
-					debugLog.push("No more edits.");
-				} else {
-					let error: string | undefined;
-					try {
-						applyAgentEdit(
-							options.treeView,
-							wrapper.edit,
-							idGenerator,
-							simpleSchema.definitions,
-						);
-						sequentialErrorCount = 0;
-					} catch (e: unknown) {
-						if (e instanceof Error) {
-							error = e.message;
-							sequentialErrorCount += 1;
-							debugLog.push(`Error: ${error}`);
-						} else {
-							throw e;
-						}
+		if (++editCount >= options.maxEdits) {
+			return "tooManyEdits";
+		}
+	}
+
+	if (DEBUG_LOG !== undefined) {
+		debugger;
+	}
+
+	return "success";
+}
+
+async function* generateEdits<TSchema extends ImplicitFieldSchema>(
+	options: GenerateTreeEditsOptions<TSchema>,
+	simpleSchema: SimpleTreeSchema,
+	idGenerator: IdGenerator,
+	editLog: EditLog,
+): AsyncGenerator<TreeEdit> {
+	async function getNextEdit(): Promise<TreeEdit | undefined> {
+		return new Promise((resolve) => {
+			const systemPrompt = getSystemPrompt(
+				options.prompt,
+				idGenerator,
+				options.treeView,
+				editLog,
+			);
+
+			DEBUG_LOG?.push(systemPrompt);
+			const editHandler = generateHandlers(
+				options.treeView,
+				simpleSchema,
+				(jsonObject: JsonObject) => {
+					DEBUG_LOG?.push(JSON.stringify(jsonObject, null, 2));
+					const wrapper = jsonObject as unknown as EditWrapper;
+					if (wrapper.edit === null) {
+						DEBUG_LOG?.push("No more edits.");
+						return resolve(undefined);
+					} else {
+						return resolve(wrapper.edit);
 					}
-					editLog.push({ edit: wrapper.edit, error });
-				}
-			},
-		);
+				},
+			);
 
-		return doEdit(systemPrompt, editHandler, options).then(async () => {
-			editCount++;
-			if (options.maxEdits !== undefined && editCount >= options.maxEdits) {
-				return "tooManyEdits";
-			} else if (
-				options.maxSequentialErrors !== undefined &&
-				sequentialErrorCount > options.maxSequentialErrors
-			) {
-				return "tooManyErrors";
-			}
+			const responseHandler = createResponseHandler(
+				editHandler,
+				options.abortController ?? new AbortController(),
+			);
 
-			if (!done) {
-				return doNextEdit();
-			}
-
-			return "success";
+			void responseHandler.processResponse(
+				streamFromLlm(systemPrompt, responseHandler.jsonSchema(), options.openAIClient),
+			);
 		});
 	}
 
-	return doNextEdit().finally(() => {
-		const dump = debugLog.join("\n\n");
-		console.error(dump);
-	});
+	let edit = await getNextEdit();
+	while (edit !== undefined) {
+		yield edit;
+		edit = await getNextEdit();
+	}
 }
 
-async function doEdit<TSchema extends ImplicitFieldSchema>(
+async function* streamFromLlm(
 	systemPrompt: string,
-	editHandler: StreamedType,
-	{ openAIClient, abortController }: GenerateTreeEditsOptions<TSchema>,
-): Promise<void> {
-	const responseHandler = createResponseHandler(
-		editHandler,
-		abortController ?? new AbortController(),
-	);
-
+	jsonSchema: JsonObject,
+	openAIClient: OpenAI,
+): AsyncGenerator<string> {
 	const llmJsonSchema: ResponseFormatJSONSchema.JSONSchema = {
-		schema: responseHandler.jsonSchema(),
+		schema: jsonSchema,
 		name: "llm-response",
 		strict: true, // Opt into structured output
 	};
@@ -161,24 +173,13 @@ async function doEdit<TSchema extends ImplicitFieldSchema>(
 	};
 
 	const result = await openAIClient.chat.completions.create(body);
-	assert(result.choices.length !== 0, "Response included no choices.");
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	assert(result.choices[0]!.finish_reason === "stop", "Response was unfinished.");
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	assert(result.choices[0]!.message.content !== null, "Response contained no contents.");
-
-	await responseHandler.processResponse({
-		async *[Symbol.asyncIterator](): AsyncGenerator<string, void> {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const content = result.choices[0]!.message.content!;
-			KLUDGE += content;
-			console.log(content);
-			yield content;
-		},
-	});
+	const choice = result.choices[0];
+	assert(choice !== undefined, "Response included no choices.");
+	assert(choice.finish_reason === "stop", "Response was unfinished.");
+	assert(choice.message.content !== null, "Response contained no contents.");
+	// TODO: There is only a single yield here because we're not actually streaming
+	yield choice.message.content ?? "<error>";
 }
-
-export let KLUDGE = "";
 
 /**
  * Creates an OpenAI Client session.
