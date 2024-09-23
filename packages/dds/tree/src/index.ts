@@ -58,6 +58,9 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	getBranch,
+	type TreeBranch,
+	type TreeBranchFork,
 } from "./shared-tree/index.js";
 
 export {
@@ -65,6 +68,7 @@ export {
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
+	type ViewableTree,
 	type ITree,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
@@ -82,6 +86,7 @@ export {
 	type TreeLeafValue,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,

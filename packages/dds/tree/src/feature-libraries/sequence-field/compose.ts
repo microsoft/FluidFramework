@@ -576,6 +576,9 @@ export class ComposeQueue {
 	private dequeueBase(length: number = Infinity): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
+		if (movedChanges !== undefined) {
+			this.moveEffects.onMoveIn(movedChanges);
+		}
 
 		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
