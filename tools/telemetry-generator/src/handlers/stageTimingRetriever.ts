@@ -47,7 +47,7 @@ module.exports = function handler(fileData, logger): void {
 		// Note: type === "Task" or type === "Job" would include task-level (or job-level, respectively) telemetry.
 		// It might be interesting in the future - for now we will only collect stage-level telemetry.
 		.filter((job) => job.type === "Stage" && job.identifier === process.env.STAGE_ID)
-		.map((job) => {
+		.map((job): ParsedJob => {
 			const startTime = Date.parse(job.startTime.toString());
 			const finishTime = Date.parse(job.finishTime.toString());
 			if (Number.isNaN(startTime) || Number.isNaN(finishTime)) {
@@ -55,7 +55,6 @@ module.exports = function handler(fileData, logger): void {
 				throw new Error("Failed to parse start or finish time. The specified pipeline stage might not have finished yet.");
 			}
 
-			const dateDiff = finishTime && startTime ? Math.abs(finishTime - startTime) / 1000 : undefined; // Seconds
 			console.log(`Processed stage - name='${job.name}' identifier='${job.identifier}' state='${job.state}' result='${job.result}'`);
 			return {
 				// Using the 'identifier' property because that's the one available in the API response for test results,
@@ -63,7 +62,7 @@ module.exports = function handler(fileData, logger): void {
 				stageName: job.identifier,
 				startTime,
 				finishTime,
-				totalTime: dateDiff,
+				totalSeconds: Math.abs(finishTime - startTime) / 1000,
 				state: job.state,
 				result: job.result,
 			};
