@@ -14,6 +14,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -37,7 +38,26 @@ export const obliterateRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
-) => client.obliterateRangeLocal(opStart, opEnd);
+	random: IRandom,
+) => {
+	let startSide: Side;
+	let endSide: Side;
+	// let startPos: number | undefined;
+	// let endPos: number | undefined;
+	// if (opStart === opEnd) {
+	// startSide = Side.Before;
+	// endSide = Side.After;
+	// } else {
+	// eslint-disable-next-line prefer-const
+	startSide = opStart === 0 && opStart !== opEnd ? Side.After : Side.Before;
+	// eslint-disable-next-line prefer-const
+	endSide = opEnd <= client.getLength() && opStart === opEnd ? Side.After : Side.Before;
+	// }
+
+	const start = { pos: opStart, side: startSide };
+	const end = { pos: opEnd, side: endSide };
+	return client.obliterateRangeLocal(start, end);
+};
 
 export const annotateRange: TestOperation = (
 	client: TestClient,

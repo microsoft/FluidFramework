@@ -256,10 +256,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param start - The start of the range to obliterate. Inclusive if the side is Before
 	 * @param end - The end of the range to obliterate. Inclusive if the side is After
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	public obliterateRangeLocal(
 		start: SequencePlace,
 		end: SequencePlace,
+		// eslint-disable-next-line import/no-deprecated
 	): IMergeTreeObliterateMsg {
 		const obliterateOp = createObliterateRangeOp(start, end);
 		this.applyObliterateRangeOp({ op: obliterateOp });
@@ -593,12 +593,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				clientArgs.clientId,
 			);
 		}
+		// eslint-disable-next-line import/no-deprecated
 		if (start !== undefined && (op as IMergeTreeObliterateMsg).before1 === false) {
 			// pos1 is after the given index. Normalize to before-sided for bounds checking
 			start += 1;
 		}
 
 		let end: number | undefined = op.pos2;
+		// eslint-disable-next-line import/no-deprecated
 		if (end !== undefined && (op as IMergeTreeObliterateMsg).before2 === false) {
 			// pos2 is after the given index. Normalize to before-sided for bounds checking
 			end += 1;
@@ -630,17 +632,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			// Validate end if not insert, or insert has end
 			//
 			if (
-				(op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
-				(end === undefined ||
-					end < start! ||
-					(end === start &&
-						!(op as IMergeTreeObliterateMsg).before1 &&
-						(op as IMergeTreeObliterateMsg).before2))
+				((op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
+					(end === undefined || end < start!)) ||
+				(end === start &&
+					// eslint-disable-next-line import/no-deprecated
+					!(op as IMergeTreeObliterateMsg).before1 &&
+					// eslint-disable-next-line import/no-deprecated
+					(op as IMergeTreeObliterateMsg).before2)
 			) {
 				invalidPositions.push("end");
 			}
 
-			if (op.type === MergeTreeDeltaType.OBLITERATE && end !== undefined && end > length) {
+			if (op.type === MergeTreeDeltaType.OBLITERATE && end !== undefined && end > length + 1) {
 				invalidPositions.push("end");
 			}
 
