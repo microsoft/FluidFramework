@@ -24,6 +24,7 @@ export {
 export {
 	type ITree,
 	type TreeView,
+	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
@@ -84,6 +85,7 @@ export {
 	type FieldProps,
 	normalizeFieldSchema,
 	type ApplyKind,
+	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
 export { getOrCreateInnerNode } from "./proxyBinding.js";
 export { toFlexSchema } from "./toFlexSchema.js";

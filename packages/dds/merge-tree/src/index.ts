@@ -70,6 +70,7 @@ export {
 	reservedMarkerSimpleTypeKey,
 	SegmentGroup,
 	toRemovalInfo,
+	ObliterateInfo,
 } from "./mergeTreeNodes.js";
 export {
 	Trackable,

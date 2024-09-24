@@ -22,9 +22,8 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions, ReferencePosition, type SequencePlace } from "../index.js";
+import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	backwardExcursion,
 	forwardExcursion,
@@ -187,26 +186,6 @@ export class TestClient extends Client {
 				}
 			}
 		});
-	}
-
-	public obliterateRange({
-		start,
-		end,
-		refSeq,
-		clientId,
-		seq,
-		overwrite = false,
-		opArgs,
-	}: {
-		start: SequencePlace;
-		end: SequencePlace;
-		refSeq: number;
-		clientId: number;
-		seq: number;
-		overwrite?: boolean;
-		opArgs: IMergeTreeDeltaOpArgs;
-	}): void {
-		this.mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
 	}
 
 	public getText(start?: number, end?: number): string {

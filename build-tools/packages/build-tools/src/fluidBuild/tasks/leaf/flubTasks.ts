@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync } from "fs";
-import path from "path";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { GitRepo } from "../../../common/gitRepo";
-import { readFileAsync } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
@@ -50,7 +50,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 		const infoFilePath = path.join(this.node.pkg.directory, infoFile);
-		return existsSync(infoFilePath) ? readFileAsync(infoFilePath) : undefined;
+		return existsSync(infoFilePath) ? readFile(infoFilePath) : undefined;
 	}
 
 	public async getDoneFileContent(): Promise<string | undefined> {

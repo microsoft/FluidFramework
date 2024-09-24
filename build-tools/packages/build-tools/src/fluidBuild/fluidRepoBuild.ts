@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 import chalk from "chalk";
 import registerDebug from "debug";
 
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
-import { ExecAsyncResult, existsSync, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
 import { BuildGraph } from "./buildGraph";
 import type { IFluidBuildDirs } from "./fluidBuildConfig";
 import { FluidRepo } from "./fluidRepo";
