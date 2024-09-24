@@ -620,7 +620,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				start === undefined ||
 				start < 0 ||
 				start > length ||
-				(start === length && op.type !== MergeTreeDeltaType.INSERT)
+				(start === length &&
+					// eslint-disable-next-line import/no-deprecated
+					((!(op as IMergeTreeObliterateMsg).before1 &&
+						// eslint-disable-next-line import/no-deprecated, @typescript-eslint/prefer-nullish-coalescing
+						(op as IMergeTreeObliterateMsg).before2) ||
+						op.type !== MergeTreeDeltaType.INSERT))
 			) {
 				invalidPositions.push("start");
 			}

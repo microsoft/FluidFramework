@@ -44,15 +44,13 @@ export const obliterateRange: TestOperation = (
 	let endSide: Side;
 	// let startPos: number | undefined;
 	// let endPos: number | undefined;
-	// if (opStart === opEnd) {
-	// startSide = Side.Before;
-	// endSide = Side.After;
-	// } else {
-	// eslint-disable-next-line prefer-const
-	startSide = opStart === 0 && opStart !== opEnd ? Side.After : Side.Before;
-	// eslint-disable-next-line prefer-const
-	endSide = opEnd <= client.getLength() && opStart === opEnd ? Side.After : Side.Before;
-	// }
+	if (opEnd - opStart <= 1) {
+		startSide = Side.Before;
+		endSide = Side.After;
+	} else {
+		startSide = random.pick([Side.Before, Side.After]);
+		endSide = random.pick([Side.Before, Side.After]);
+	}
 
 	const start = { pos: opStart, side: startSide };
 	const end = { pos: opEnd, side: endSide };

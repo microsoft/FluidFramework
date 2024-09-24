@@ -88,7 +88,7 @@ import {
 } from "./referencePositions.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
-import { Side } from "./sequencePlace.js";
+import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
 
@@ -1872,8 +1872,8 @@ export class MergeTree {
 	}
 
 	public obliterateRange(
-		start: number,
-		end: number,
+		start: SequencePlace,
+		end: SequencePlace,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -1881,9 +1881,19 @@ export class MergeTree {
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
 		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
+		const startPlace = normalizePlace(start);
+		const endPlace = normalizePlace(end);
+		const startPos =
+			startPlace.side === Side.Before || startPlace.pos === this.getLength(refSeq, clientId)
+				? startPlace.pos
+				: startPlace.pos + 1;
+		const endPos =
+			endPlace.side === Side.Before || endPlace.pos === this.getLength(refSeq, clientId)
+				? endPlace.pos
+				: endPlace.pos + 1;
 
-		this.ensureIntervalBoundary(start, refSeq, clientId);
-		this.ensureIntervalBoundary(end, refSeq, clientId);
+		this.ensureIntervalBoundary(startPos, refSeq, clientId);
+		this.ensureIntervalBoundary(endPos, refSeq, clientId);
 
 		let _overwrite = overwrite;
 		const localOverlapWithRefs: ISegment[] = [];
@@ -1901,8 +1911,8 @@ export class MergeTree {
 			segmentGroup: undefined,
 		};
 
-		const { segment: startSeg } = this.getContainingSegment(start, refSeq, clientId);
-		const { segment: endSeg } = this.getContainingSegment(end - 1, refSeq, clientId);
+		const { segment: startSeg } = this.getContainingSegment(startPos, refSeq, clientId);
+		const { segment: endSeg } = this.getContainingSegment(endPos - 1, refSeq, clientId);
 		assert(
 			startSeg !== undefined && endSeg !== undefined,
 			0xa3f /* segments cannot be undefined */,
@@ -1933,46 +1943,6 @@ export class MergeTree {
 			_end: number,
 		): boolean => {
 			const existingMoveInfo = toMoveInfo(segment);
-			if (startPlace.side === Side.Before && startPos === pos) {
-				obliterate.start = this.createLocalReferencePosition(
-					segment,
-					0,
-					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-					{ obliterate },
-				);
-			} else if (startPlace.side === Side.After && startPos === pos + segment.cachedLength) {
-				obliterate.start = this.createLocalReferencePosition(
-					segment,
-					segment.cachedLength - 1,
-					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-					{ obliterate },
-				);
-				return true; // start is exclusive, don't mark segment moved
-			}
-			if (endPlace.side === Side.Before && endPos === pos) {
-				if (obliterate.end) {
-					this.removeLocalReferencePosition(obliterate.end);
-				}
-				obliterate.end = this.createLocalReferencePosition(
-					segment,
-					0,
-					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-					{ obliterate },
-				);
-				return true; // end is exclusive, don't mark segment moved
-			} else if (
-				endPlace.side === Side.After &&
-				segment.cachedLength > 0 && // if the segment is empty we must have already set our reference
-				endPos === pos + segment.cachedLength
-			) {
-				obliterate.end = this.createLocalReferencePosition(
-					segment,
-					segment.cachedLength - 1,
-					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-					{ obliterate },
-				);
-			}
-
 			// TODO: if segment was inserted inside of a later local obliteration range
 			// then it shouldn't be obliterated.
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any

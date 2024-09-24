@@ -144,7 +144,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
-    obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
+    obliterateRangeLocal(start: SequencePlace, end: SequencePlace): IMergeTreeObliterateMsg;
     peekPendingSegmentGroups(): SegmentGroup | undefined;
     // (undocumented)
     peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
@@ -359,6 +359,10 @@ export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallba
 
 // @alpha @deprecated (undocumented)
 export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    before1?: boolean;
+    // (undocumented)
+    before2?: boolean;
     // (undocumented)
     pos1?: number;
     // (undocumented)
