@@ -122,7 +122,7 @@ stages:
     - group: ado-feeds
 
     steps:
-    - template: templates/include-telemetry-setup.yml
+    - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
       parameters:
         devFeedUrl: $(ado-feeds-dev)
         officeFeedUrl: $(ado-feeds-office)
