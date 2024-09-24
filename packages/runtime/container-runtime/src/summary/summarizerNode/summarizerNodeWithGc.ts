@@ -96,7 +96,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		_summaryHandleId: EscapedPath,
 		changeSequenceNumber: number,
 		/** Summary reference sequence number, i.e. last sequence number seen when it was created */
-		_lastSummaryReferenceSequenceNumber?: number,
+		lastSummaryReferenceSequenceNumber?: number,
 		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
@@ -109,7 +109,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			config,
 			_summaryHandleId,
 			changeSequenceNumber,
-			_lastSummaryReferenceSequenceNumber,
+			lastSummaryReferenceSequenceNumber,
 			wipSummaryLogger,
 			telemetryId,
 		);

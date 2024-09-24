@@ -74,13 +74,16 @@ export class SummarizerNode implements IRootSummarizerNode {
 	}
 
 	protected readonly children = new Map<string, SummarizerNode>();
-	/** Key value pair of summaries submitted by this client which are not yet acked. Key is the proposalHandle and value is the summary op's referece sequence number */
+	/**
+	 * Key value pair of summaries submitted by this client which are not yet acked.
+	 * Key is the proposalHandle and value is the summary op's referece sequence number.
+	 */
 	protected readonly pendingSummaries = new Map<string, PendingSummaryInfo>();
 	protected wipReferenceSequenceNumber: number | undefined;
 	/**
 	 * True if the current node was summarized during the current summary process
-	 * This flag is used to identify scenarios where a node may not have been summarized during the summary
-	 * because of application code creating data structures for data stores which were already summarized.
+	 * This flag is used to identify scenarios where summarize was not called on a node.
+	 * For example, this node was created after its parent was already summarized due to out-of-order realization via application code.
 	 */
 	private wipSummarizeCalled: boolean = false;
 	private wipSkipRecursion = false;
@@ -180,13 +183,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		// Set to wipSummarizeCalled true to represent that current node was included in the summary process.
-		this.wipSummarizeCalled = true;
 
 		// If trackState is false, call summarize internal directly and don't track any state.
 		if (!trackState) {
 			return this.summarizeInternalFn(fullTree, trackState, telemetryContext);
 		}
+
+		// Set to wipSummarizeCalled true to represent that current node was included in the summary process.
+		this.wipSummarizeCalled = true;
 
 		// Try to reuse the tree if unchanged
 		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -288,7 +292,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		// If the parent node skipped recursion, it did not call summarize on this node. So, summarize was not missed
 		// but was intentionally not called.
-		// Otherwise, summarize should have been called on this node and wipLocalPaths must be set.
+		// Otherwise, summarize should have been called on this node and wipSummarizeCalled must be set.
 		if (parentSkipRecursion || this.wipSummarizeCalled) {
 			return false;
 		}
@@ -373,8 +377,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
 	 * it becomes the latest summary. If the current summary is already ahead, we skip the update.
 	 * If the current summary is behind, then we do not refresh.
-	 * @param proposalHandle - Handle from the summary ack op
-	 * @param summaryRefSeq - Reference sequence of the summary ack op
+	 * @param proposalHandle - Handle of the generated / uploaded summary.
+	 * @param summaryRefSeq - Reference sequence of the acked summary
 	 * @returns true if the summary is tracked by this node, false otherwise.
 	 */
 	public async refreshLatestSummary(
@@ -555,8 +559,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		switch (createParam.type) {
 			case CreateSummarizerNodeSource.FromAttach: {
 				if (
-					this._lastSummaryReferenceSequenceNumber !== undefined &&
-					createParam.sequenceNumber <= this._lastSummaryReferenceSequenceNumber
+					parentLastSummaryReferenceSequenceNumber !== undefined &&
+					createParam.sequenceNumber <= parentLastSummaryReferenceSequenceNumber
 				) {
 					// Prioritize latest summary if it was after this node was attached.
 					childLastSummaryReferenceSequenceNumber = parentLastSummaryReferenceSequenceNumber;
@@ -567,7 +571,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			case CreateSummarizerNodeSource.FromSummary:
 			case CreateSummarizerNodeSource.Local: {
 				childLastSummaryReferenceSequenceNumber = parentLastSummaryReferenceSequenceNumber;
-				changeSequenceNumber = this._lastSummaryReferenceSequenceNumber ?? -1;
+				changeSequenceNumber = parentLastSummaryReferenceSequenceNumber ?? -1;
 				break;
 			}
 			default: {

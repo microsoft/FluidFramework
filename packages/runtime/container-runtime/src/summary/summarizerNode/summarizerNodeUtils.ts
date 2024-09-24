@@ -88,7 +88,7 @@ export class EscapedPath {
 	}
 }
 export interface PendingSummaryInfo {
-	/** The sequence number up until which the summary was created. */
+	/** The sequence number at which the summary was created. */
 	referenceSequenceNumber: number;
 }
 
@@ -102,7 +102,7 @@ export interface ICreateChildDetails {
 	telemetryNodeId: string;
 	/** Summary handle for child node */
 	summaryHandleId: EscapedPath;
-	/** last reference sequence number seen when last successful summary was created */
+	/** the reference sequence number of the last successful summary. */
 	lastSummaryReferenceSequenceNumber: number | undefined;
 }
 
