@@ -90,7 +90,7 @@ stages:
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: []
   jobs:
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       poolBuild: ${{ parameters.poolBuild }}
       testPackage: ${{ parameters.testPackage }}
