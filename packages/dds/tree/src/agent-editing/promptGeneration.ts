@@ -80,6 +80,7 @@ export function getEditingSystemPrompt(
 	idGenerator: IdGenerator,
 	view: TreeView<ImplicitFieldSchema>,
 	log: EditLog,
+	appGuidance?: string,
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
@@ -97,10 +98,17 @@ export function getEditingSystemPrompt(
 			.join("\n");
 	}
 
+	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
+		appGuidance === undefined
+			? ""
+			: `
+			The application that owns the JSON tree has the following guidance: ${appGuidance}`
+	}`;
+
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	You are a collaborative agent who interacts with a JSON tree by performing edits.
-	You should make the minimum number of edits to the tree to achieve the desired outcome.
+	${role}
+	You should make the minimum number of edits to the tree to achieve the desired goal.
 	Edits are made using the following primitives:
 	- ObjectTarget: a reference to an object (as specified by objectId).
 	- Place: either before or after a ObjectTarget (only makes sense for objects in arrays).

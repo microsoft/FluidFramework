@@ -38,8 +38,6 @@ import type { typeField } from "./agentEditReducer.js";
  *
  * TODO: Give the model a final chance to evaluate the result.
  *
- * TODO: Have dangerous flag be passed in.
- *
  * TODO: Separate system prompt into [system, user, system] for security.
  */
 

@@ -43,6 +43,7 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
 	openAIClient: OpenAI;
 	treeView: TreeView<TSchema>;
 	prompt: string;
+	appGuidance?: string;
 	abortController?: AbortController;
 	maxEdits: number;
 	maxSequentialErrors?: number;
@@ -123,6 +124,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 			idGenerator,
 			options.treeView,
 			editLog,
+			options.appGuidance,
 		);
 
 		DEBUG_LOG?.push(systemPrompt);
