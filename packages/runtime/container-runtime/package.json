@@ -233,6 +233,9 @@
 		"broken": {
 			"Function_isRuntimeMessage": {
 				"backCompat": false
+			},
+			"ContainerRuntime_ensureNoDataModelChanges": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "internal"
