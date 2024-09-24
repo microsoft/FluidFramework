@@ -4,11 +4,7 @@
  */
 
 import { statSync } from "node:fs";
-import {
-	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-	VersionBumpType,
-} from "@fluid-tools/version-tools";
+import { InterdependencyRange, VersionBumpType } from "@fluid-tools/version-tools";
 import { MonoRepo } from "@fluidframework/build-tools";
 import { cosmiconfigSync } from "cosmiconfig";
 import { Context } from "./library/index.js";
@@ -378,3 +374,8 @@ export function getDefaultInterdependencyRange(
 
 	return interdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE;
 }
+
+/**
+ * The default interdependency range we use when one is not provided.
+ */
+const DEFAULT_INTERDEPENDENCY_RANGE: InterdependencyRange = "workspace:~";
