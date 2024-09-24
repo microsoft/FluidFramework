@@ -1,4 +1,4 @@
-import { RequestHandler, Router } from "express";
+import { RequestHandler, Router, Request, Response, NextFunction } from "express";
 import {
 	throttle,
 	IThrottleMiddlewareOptions,
@@ -17,12 +17,16 @@ export interface IThrottlerConfig {
 	generalRestCallThrottleIdPrefix: string;
 }
 
+function noopMiddleware(req: Request, res: Response, next: NextFunction) {
+	next();
+}
+
 export function createHealthCheckEndpoints(
 	readinessCheck?: IReadinessCheck,
 	createLivenessEndpoint = true,
 	throttlerConfig?: IThrottlerConfig,
 ): Router {
-	const router = Router();
+	const router: Router = Router();
 	let tenantThrottleOptions: Partial<IThrottleMiddlewareOptions>;
 	let generalTenantThrottler: core.IThrottler;
 	let startupThrottler: RequestHandler;
@@ -55,19 +59,21 @@ export function createHealthCheckEndpoints(
 
 	router.get(
 		"/startup",
-		throttlerConfig ? startupThrottler : (req, res, next) => next(),
+		throttlerConfig ? startupThrottler : noopMiddleware,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			StartupChecker.getInstance().isStartupComplete()
-				? response.sendStatus(200)
-				: response.sendStatus(500);
+			if (StartupChecker.getInstance().isStartupComplete()) {
+				response.sendStatus(200);
+			} else {
+				response.sendStatus(500);
+			}
 		},
 	);
 
 	if (createLivenessEndpoint) {
 		router.get(
 			"/ping",
-			throttlerConfig ? pingThrottler : (req, res, next) => next(),
+			throttlerConfig ? pingThrottler : noopMiddleware,
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (request, response) => {
 				response.sendStatus(200);
@@ -77,13 +83,15 @@ export function createHealthCheckEndpoints(
 
 	router.get(
 		"/ready",
-		throttlerConfig ? readinessThrottler : (req, res, next) => next(),
+		throttlerConfig ? readinessThrottler : noopMiddleware,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			if (readinessCheck) {
-				(await readinessCheck.isReady())
-					? response.sendStatus(200)
-					: response.sendStatus(503);
+				if (await readinessCheck.isReady()) {
+					response.sendStatus(200);
+				} else {
+					response.sendStatus(503);
+				}
 			} else {
 				response.sendStatus(200);
 			}
