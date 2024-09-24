@@ -112,9 +112,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"IContainerBaseRuntime_ensureNoDataModelChanges": {
-				"backCompat": false
-			}
+            "Interface_IFluidDataStoreContext": {
+                "backCompat": false
+            }
 		},
 		"entrypoint": "internal"
 	}
