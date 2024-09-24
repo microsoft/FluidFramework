@@ -242,14 +242,6 @@ describe("Runtime", () => {
 		};
 		return mockContext;
 	};
-	// TODO: Update usages to use getMockContext2 and remove this function
-	const getMockContext = (
-		settings: Record<string, ConfigTypes> = {},
-		logger = new MockLogger(),
-		mockStorage: Partial<IDocumentStorageService> = defaultMockStorage,
-		loadedFromVersion?: IVersion,
-	): Partial<IContainerContext> =>
-		getMockContext2({ settings, logger, mockStorage, loadedFromVersion });
 
 	const mockProvideEntryPoint = async () => ({
 		myProp: "myValue",
@@ -2194,75 +2186,79 @@ describe("Runtime", () => {
 					);
 				});
 			});
-		});
 
-		//* TODO: Move into describe block
-		it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
-			const containerRuntime = await ContainerRuntime.loadRuntime({
-				context: getMockContext() as IContainerContext,
-				registryEntries: [],
-				existing: false,
-				runtimeOptions: {
-					flushMode: FlushMode.TurnBased,
-					enableRuntimeIdCompressor: "on",
-				},
-				provideEntryPoint: mockProvideEntryPoint,
-			});
-
-			// Add batchId1 to DuplicateBatchDetected via ContainerRuntime.process,
-			// and get its serialized representation from summarizing
-			containerRuntime.process(
-				{
-					sequenceNumber: 123,
-					type: MessageType.Operation,
-					contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-					metadata: { batchId: "batchId1" },
-				} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-				false,
-			);
-			const { summary } = await containerRuntime.summarize({ fullTree: true });
-			const blob = summary.tree[recentBatchInfoBlobName];
-			assert(blob.type === SummaryType.Blob, "Expected blob");
-			assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
-
-			// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
-			const mockStorage = {
-				// Hardcode readblob fn to return the blob contents put in the summary
-				readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
-			};
-			const containerRuntime2 = await ContainerRuntime.loadRuntime({
-				context: getMockContext({
-					baseSnapshot: {
-						trees: {},
-						blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
+			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
+				// Duplicate Batch Detection requires OfflineLoad enabled
+				const settings_enableOfflineLoad = { "Fluid.Container.enableOfflineLoad": true };
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
 					},
-					mockStorage,
-				}) as IContainerContext,
-				registryEntries: [],
-				existing: false,
-				runtimeOptions: {
-					flushMode: FlushMode.TurnBased,
-					enableRuntimeIdCompressor: "on",
-				},
-				provideEntryPoint: mockProvideEntryPoint,
-			});
+					provideEntryPoint: mockProvideEntryPoint,
+				});
 
-			// Process an op with a duplicate batchId to what was loaded with
-			assert.throws(
-				() => {
-					containerRuntime2.process(
-						{
-							sequenceNumber: 234,
-							type: MessageType.Operation,
-							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-							metadata: { batchId: "batchId1" },
-						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-						false,
-					);
-				},
-				(e: any) => e.message === "Duplicate batch - The same batch was sequenced twice",
-				"Expected duplicate batch detected after loading with recentBatchInfo",
-			);
+				// Add batchId1 to DuplicateBatchDetected via ContainerRuntime.process,
+				// and get its serialized representation from summarizing
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				const { summary } = await containerRuntime.summarize({ fullTree: true });
+				const blob = summary.tree[recentBatchInfoBlobName];
+				assert(blob.type === SummaryType.Blob, "Expected blob");
+				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
+
+				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
+				const mockStorage = {
+					// Hardcode readblob fn to return the blob contents put in the summary
+					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
+				};
+				const containerRuntime2 = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+						baseSnapshot: {
+							trees: {},
+							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
+						},
+						mockStorage,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Process an op with a duplicate batchId to what was loaded with
+				assert.throws(
+					() => {
+						containerRuntime2.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						);
+					},
+					(e: any) => e.message === "Duplicate batch - The same batch was sequenced twice",
+					"Expected duplicate batch detected after loading with recentBatchInfo",
+				);
+			});
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {

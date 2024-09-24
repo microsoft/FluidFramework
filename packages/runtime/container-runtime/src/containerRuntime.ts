@@ -1690,7 +1690,7 @@ export class ContainerRuntime
 		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
 		// Don't waste resources doing so if not needed.
 		if (this.offlineEnabled) {
-			this.duplicateBatchDetector = new DuplicateBatchDetector();
+			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
 		if (context.attachState === AttachState.Attached) {
@@ -2396,7 +2396,7 @@ export class ContainerRuntime
 		}
 
 		const recentBatchInfo =
-			this.duplicateBatchDetector.getRecentBatchInfoForSummary(telemetryContext);
+			this.duplicateBatchDetector?.getRecentBatchInfoForSummary(telemetryContext);
 		if (recentBatchInfo !== undefined) {
 			addBlobToSummary(summaryTree, recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
 		}
