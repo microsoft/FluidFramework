@@ -34,6 +34,7 @@ import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/in
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
 import type { ChunkedCursor, TreeChunk } from "./chunk.js";
 import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -65,6 +66,7 @@ export class ChunkedForest implements IEditableForest {
 		public readonly schema: TreeStoredSchemaSubscription,
 		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
+		public readonly idCompressor?: IIdCompressor,
 	) {}
 
 	public get isEmpty(): boolean {
@@ -122,7 +124,12 @@ export class ChunkedForest implements IEditableForest {
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
 				this.forest.events.emit("beforeChange");
-				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
+				const chunks: TreeChunk[] = content.map((c) =>
+					chunkTree(c, {
+						policy: this.forest.chunker,
+						idCompressor: this.forest.idCompressor,
+					}),
+				);
 				this.forest.roots.fields.set(destination, chunks);
 				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
@@ -221,7 +228,10 @@ export class ChunkedForest implements IEditableForest {
 					//
 					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
 					const newChunks = mapCursorField(found.cursor(), (cursor) =>
-						basicChunkTree(cursor, this.forest.chunker),
+						basicChunkTree(cursor, {
+							policy: this.forest.chunker,
+							idCompressor: this.forest.idCompressor,
+						}),
 					);
 					// TODO: this could fail for really long chunks being split (due to argument count limits).
 					// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
@@ -445,6 +455,10 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): ChunkedForest {
-	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors);
+export function buildChunkedForest(
+	chunker: IChunker,
+	anchors?: AnchorSet,
+	idCompressor?: IIdCompressor,
+): ChunkedForest {
+	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors, idCompressor);
 }

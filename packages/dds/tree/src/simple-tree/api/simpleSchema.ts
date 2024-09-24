@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ValueSchema } from "../core/index.js";
-import type { NodeKind } from "./core/index.js";
-import type { FieldKind } from "./schemaTypes.js";
+import type { ValueSchema } from "../../core/index.js";
+import type { NodeKind } from "../core/index.js";
+import type { FieldKind } from "../schemaTypes.js";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
@@ -110,6 +110,11 @@ export interface SimpleFieldSchema {
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypes: ReadonlySet<string>;
+
+	/**
+	 * {@inheritDoc FieldSchemaMetadata.description}
+	 */
+	readonly description?: string | undefined;
 }
 
 /**

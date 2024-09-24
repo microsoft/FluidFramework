@@ -155,7 +155,10 @@ data:
                 "pingPongLatencyTrackingEnabled": {{ .Values.nexus.socketIo.pingPongLatencyTrackingEnabled}}
             },
             "enableCollaborationSessionTracking": {{ .Values.nexus.enableCollaborationSessionTracking }},
-            "enableCollaborationSessionPruning": {{ .Values.nexus.enableCollaborationSessionPruning }}
+            "enableCollaborationSessionPruning": {{ .Values.nexus.enableCollaborationSessionPruning }},
+            "redisCollaborationSessionManagerOptions": {
+                "maxScanBatchSize": {{ .Values.nexus.redisCollaborationSessionManagerOptions.maxScanBatchSize }}
+            }
         },
         "client": {
             "type": "browser",

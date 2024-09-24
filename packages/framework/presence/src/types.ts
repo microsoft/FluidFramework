@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { NotificationsManager } from "./notificationsManager.js";
+
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 
 /**
@@ -23,6 +25,8 @@ import type { InternalTypes } from "@fluid-experimental/presence/internal/expose
  */
 export type PresenceWorkspaceAddress = `${string}:${string}`;
 
+// #region PresenceStates
+
 /**
  * Single entry in {@link PresenceStatesSchema}.
  *
@@ -35,7 +39,7 @@ export type PresenceStatesEntry<
 > = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
 
 /**
- * Schema for an {@link PresenceStates}.
+ * Schema for a {@link PresenceStates} workspace.
  *
  * Keys of schema are the keys of the {@link PresenceStates} providing access to `Value Manager`s.
  *
@@ -108,3 +112,34 @@ export type PresenceStates<
 	TManagerRestrictions = unknown,
 > = PresenceStatesEntries<TSchema, TManagerRestrictions> &
 	PresenceStatesMethods<TSchema, TManagerRestrictions>;
+
+// #endregion PresenceStates
+
+// #region PresenceNotifications
+
+/**
+ * Schema for a {@link PresenceNotifications} workspace.
+ *
+ * Keys of schema are the keys of the {@link PresenceNotifications} providing access to {@link NotificationsManager}s.
+ *
+ * @alpha
+ */
+export interface PresenceNotificationsSchema {
+	[key: string]: InternalTypes.ManagerFactory<
+		typeof key,
+		InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+		NotificationsManager<any>
+	>;
+}
+
+/**
+ * `PresenceNotifications` maintains a registry of {@link NotificationsManager}s
+ * that facilitate messages across client members in a session.
+ *
+ * @sealed
+ * @alpha
+ */
+export type PresenceNotifications<TSchema extends PresenceNotificationsSchema> =
+	PresenceStates<TSchema, NotificationsManager<any>>;
+
+// #endregion PresenceNotifications

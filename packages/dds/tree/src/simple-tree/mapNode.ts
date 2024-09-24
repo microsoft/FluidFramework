@@ -26,7 +26,7 @@ import {
 	getKernel,
 	type InnerNode,
 	NodeKind,
-	type TreeNodeSchemaClass,
+	type TreeNodeSchemaBoth,
 	type TreeNodeSchema,
 	type WithType,
 	// eslint-disable-next-line import/no-deprecated
@@ -40,7 +40,7 @@ import {
 	type InsertableContent,
 } from "./toMapTree.js";
 import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
-import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
+import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
 
@@ -281,7 +281,7 @@ export function mapSchema<
 			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 	}
-	const schemaErased: TreeNodeSchemaClass<
+	const schemaErased: TreeNodeSchemaBoth<
 		TName,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
@@ -298,4 +298,4 @@ export function mapSchema<
  */
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
 	| Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
-	| RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+	| RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;

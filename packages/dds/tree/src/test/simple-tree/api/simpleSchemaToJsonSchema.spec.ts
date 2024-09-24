@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FieldKind, NodeKind, type JsonTreeSchema } from "../../simple-tree/index.js";
-import { getJsonValidator } from "./jsonSchemaUtilities.js";
+import { FieldKind, NodeKind, type JsonTreeSchema } from "../../../simple-tree/index.js";
+import { getJsonValidator } from "../jsonSchemaUtilities.js";
+import type {
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/api/simpleSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpleSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toJsonSchema } from "../../simple-tree/simpleSchemaToJsonSchema.js";
-import { ValueSchema } from "../../core/index.js";
+import { toJsonSchema } from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
+import { ValueSchema } from "../../../core/index.js";
 
 describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
@@ -30,11 +33,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.string",
-				},
-			],
+			$ref: "#/$defs/test.string",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -80,7 +79,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					type: "array",
 					_treeNodeSchemaKind: NodeKind.Array,
 					items: {
-						anyOf: [{ $ref: "#/$defs/test.string" }],
+						$ref: "#/$defs/test.string",
 					},
 				},
 				"test.string": {
@@ -88,11 +87,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.array",
-				},
-			],
+			$ref: "#/$defs/test.array",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -125,7 +120,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Map,
 					patternProperties: {
-						"^.*$": { anyOf: [{ $ref: "#/$defs/test.string" }] },
+						"^.*$": { $ref: "#/$defs/test.string" },
 					},
 				},
 				"test.string": {
@@ -133,11 +128,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.map",
-				},
-			],
+			$ref: "#/$defs/test.map",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -176,10 +167,12 @@ describe("simpleSchemaToJsonSchema", () => {
 							"foo": {
 								kind: FieldKind.Optional,
 								allowedTypes: new Set<string>(["test.number"]),
+								description: "A number representing the concept of Foo.",
 							},
 							"bar": {
 								kind: FieldKind.Required,
 								allowedTypes: new Set<string>(["test.string"]),
+								description: "A string representing the concept of Bar.",
 							},
 						},
 					},
@@ -199,10 +192,12 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
-							anyOf: [{ $ref: "#/$defs/test.number" }],
+							$ref: "#/$defs/test.number",
+							description: "A number representing the concept of Foo.",
 						},
 						bar: {
-							anyOf: [{ $ref: "#/$defs/test.string" }],
+							$ref: "#/$defs/test.string",
+							description: "A string representing the concept of Bar.",
 						},
 					},
 					required: ["bar"],
@@ -217,11 +212,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -289,9 +280,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
-						id: {
-							anyOf: [{ $ref: "#/$defs/test.identifier" }],
-						},
+						id: { $ref: "#/$defs/test.identifier" },
 					},
 					required: [],
 					additionalProperties: false,
@@ -301,11 +290,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -355,11 +340,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.object",
-				},
-			],
+			$ref: "#/$defs/test.object",
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -406,11 +387,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			anyOf: [
-				{
-					$ref: "#/$defs/test.recursive-object",
-				},
-			],
+			$ref: "#/$defs/test.recursive-object",
 		};
 		assert.deepEqual(actual, expected);
 

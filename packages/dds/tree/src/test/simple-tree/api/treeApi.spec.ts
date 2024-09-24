@@ -14,6 +14,7 @@ import {
 	cursorForJsonableTreeNode,
 	MockNodeKeyManager,
 	TreeStatus,
+	type StableNodeKey,
 } from "../../../feature-libraries/index.js";
 import {
 	type NodeFromSchema,
@@ -24,7 +25,7 @@ import {
 	type TreeNode,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { getView } from "../../utils.js";
+import { getView, validateUsageError } from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
@@ -269,6 +270,41 @@ describe("treeNodeApi", () => {
 			const view = getView(config);
 			view.initialize([1, 2, 3]);
 			assert.equal(Tree.shortId(view.root), undefined);
+		});
+
+		describe("unhydrated", () => {
+			class HasIdentifier extends schema.object("HasIdentifier", {
+				identifier: schema.identifier,
+			}) {}
+			it("returns uncompressed string for unhydrated nodes", () => {
+				const node = new HasIdentifier({ identifier: "x" });
+				assert.equal(Tree.shortId(node), "x");
+			});
+			it("errors accessing defaulted", () => {
+				const node = new HasIdentifier({});
+				assert.throws(
+					() => {
+						Tree.shortId(node);
+					},
+					validateUsageError(/default/),
+				);
+			});
+
+			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
+			it("returns string when unhydrated then local id when hydrated", () => {
+				const nodeKeyManager = new MockNodeKeyManager();
+				const config = new TreeViewConfiguration({ schema: HasIdentifier });
+				const view = getView(config, nodeKeyManager);
+				view.initialize({});
+				const identifier = view.root.identifier;
+				const shortId = Tree.shortId(view.root);
+				assert.equal(shortId, nodeKeyManager.localizeNodeKey(identifier as StableNodeKey));
+
+				const node = new HasIdentifier({ identifier });
+				assert.equal(Tree.shortId(node), identifier);
+				view.root = node;
+				assert.equal(Tree.shortId(node), shortId);
+			});
 		});
 	});
 
@@ -717,7 +753,7 @@ describe("treeNodeApi", () => {
 			Tree.on(root, "nodeChanged", () => shallowChanges++);
 			Tree.on(root, "treeChanged", () => deepChanges++);
 
-			const branch = checkout.fork();
+			const branch = checkout.branch();
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop1") })
 				.set(cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 2 }));

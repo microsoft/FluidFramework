@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha
+// @alpha @sealed
 export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
     readonly attachState: AttachState;
     // (undocumented)
@@ -18,7 +18,6 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: Record<string | number, any>;
@@ -28,10 +27,10 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly storage: IDocumentStorageService;
 }
 
-// @alpha (undocumented)
+// @alpha @sealed (undocumented)
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
-// @alpha
+// @alpha @sealed
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
     (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;

@@ -34,6 +34,24 @@ declare type old_as_current_for_Class_AgentSchedulerFactory = requireAssignableT
 declare type current_as_old_for_Class_AgentSchedulerFactory = requireAssignableTo<TypeOnly<current.AgentSchedulerFactory>, TypeOnly<old.AgentSchedulerFactory>>
 
 /*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TaskSubscription": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<old.TaskSubscription>, TypeOnly<current.TaskSubscription>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TaskSubscription": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<current.TaskSubscription>, TypeOnly<old.TaskSubscription>>
+
+/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -47,9 +65,9 @@ declare type current_as_old_for_ClassStatics_AgentSchedulerFactory = requireAssi
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Variable_IAgentScheduler": {"backCompat": false}
+ * "ClassStatics_TaskSubscription": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_IAgentScheduler = requireAssignableTo<TypeOnly<typeof current.IAgentScheduler>, TypeOnly<typeof old.IAgentScheduler>>
+declare type current_as_old_for_ClassStatics_TaskSubscription = requireAssignableTo<TypeOnly<typeof current.TaskSubscription>, TypeOnly<typeof old.TaskSubscription>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -124,28 +142,10 @@ declare type old_as_current_for_Interface_ITaskSubscriptionEvents = requireAssig
 declare type current_as_old_for_Interface_ITaskSubscriptionEvents = requireAssignableTo<TypeOnly<current.ITaskSubscriptionEvents>, TypeOnly<old.ITaskSubscriptionEvents>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_TaskSubscription": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<old.TaskSubscription>, TypeOnly<current.TaskSubscription>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_TaskSubscription": {"backCompat": false}
+ * "Variable_IAgentScheduler": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<current.TaskSubscription>, TypeOnly<old.TaskSubscription>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_TaskSubscription": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_TaskSubscription = requireAssignableTo<TypeOnly<typeof current.TaskSubscription>, TypeOnly<typeof old.TaskSubscription>>
+declare type current_as_old_for_Variable_IAgentScheduler = requireAssignableTo<TypeOnly<typeof current.IAgentScheduler>, TypeOnly<typeof old.IAgentScheduler>>
