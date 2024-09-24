@@ -14,8 +14,10 @@ import {
 	IMergeTreeObliterateMsg,
 	IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
+	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
+import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties
@@ -94,6 +96,30 @@ export function createObliterateRangeOp(start: number, end: number): IMergeTreeO
 		pos1: start,
 		pos2: end,
 		type: MergeTreeDeltaType.OBLITERATE,
+	};
+}
+
+/**
+ * Creates the op to obliterate a range
+ *
+ * @param start - The start of the range to obliterate
+ * @param end - The end of the range to obliterate
+ *
+ * @internal
+ */
+export function createObliterateRangeOpSided(
+	start: SequencePlace,
+	end: SequencePlace,
+): IMergeTreeObliterateSidedMsg {
+	const startPlace = normalizePlace(start);
+	const endPlace =
+		typeof end === "number"
+			? { pos: end - 1, side: Side.After } // default to inclusive bounds
+			: normalizePlace(end);
+	return {
+		type: MergeTreeDeltaType.OBLITERATE_SIDED,
+		pos1: { pos: startPlace.pos, before: startPlace.side === Side.Before },
+		pos2: { pos: endPlace.pos, before: endPlace.side === Side.Before },
 	};
 }
 
