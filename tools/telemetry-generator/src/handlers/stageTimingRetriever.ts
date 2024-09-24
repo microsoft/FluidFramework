@@ -41,7 +41,9 @@ module.exports = function handler(fileData, logger): void {
 		throw new Error ("STAGE_ID environment variable is not set.");
 	}
 
-	console.log("BUILD_ID", process.env.BUILD_ID);
+	console.log("BUILD_ID:", process.env.BUILD_ID);
+	console.log("PIPELINE:", process.env.PIPELINE);
+	console.log("STAGE_ID:", process.env.STAGE_ID);
 
 	const parsedJobs: ParsedJob[] = fileData.records
 		// Note: type === "Task" or type === "Job" would include task-level (or job-level, respectively) telemetry.

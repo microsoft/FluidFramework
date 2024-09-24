@@ -29,6 +29,10 @@ parameters:
   - name: ""
     flags: ""
 
+- name: stageVariables
+  type: object
+  default:
+
 - name: testCommand
   type: string
 
@@ -89,6 +93,8 @@ stages:
 - stage: ${{ parameters.stageId}}
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: []
+  variables:
+    ${{ parameters.stageVariables }}
   jobs:
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
@@ -142,7 +148,7 @@ stages:
           mkdir -p ${{ parameters.testWorkspace }}/timingOutput
           echo "Retrieving pipeline run timeline data command ..."
           echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-          curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ parameters.testWorkspace }}/timingOutput/output.json
+          curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version=7.1-preview.2" > ${{ parameters.testWorkspace }}/timingOutput/output.json
           pwd;
           ls -laR ${{ parameters.testWorkspace }}/timingOutput/output.json;
           cat ${{ parameters.testWorkspace }}/timingOutput/output.json;
@@ -150,20 +156,23 @@ stages:
           # Not using aria-logger to get console output in the pipeline while I test
           node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ parameters.testWorkspace }}/timingOutput/';
 
-    # Retrieve E2E test pass rate
-    # - task: Bash@3
-    #   displayName: Retrieve test pass rate
-    #   env:
-    #     BUILD_ID: $(Build.BuildId)
-    #     ADO_API_TOKEN: $(System.AccessToken)
-    #     BASE_OUTPUT_FOLDER: ${{ parameters.testWorkspace }}
-    #     BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
-    #     PIPELINE: 'EndToEndTests'
-    #   inputs:
-    #     targetType: 'inline'
-    #     workingDirectory: $(absolutePathToTelemetryGenerator)
-    #     script: |
-    #       echo "Fetching pass rate data and saving into JSON files"
-    #       node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
-    #       echo "Files created. Now running telemetry-generator"
-    #       node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$BASE_OUTPUT_FOLDER/stageFiles"
+    # Test pass rate
+    - task: Bash@3
+      displayName: Submit telemetry for test pass rate
+      env:
+        BUILD_ID: $(Build.BuildId)
+        ADO_API_TOKEN: $(System.AccessToken)
+        WORK_FOLDER: ${{ parameters.testWorkspace }}/stageFiles
+        BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
+        PIPELINE: 'EndToEndTests'
+        STAGE_ID: ${{ parameters.stageId }}
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(absolutePathToTelemetryGenerator)
+        script: |
+          echo "Fetching test pass rate data and saving into JSON files"
+          node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
+          echo "Files created. Now running telemetry-generator."
+          # node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$WORK_FOLDER"
+          # Not using aria-logger to get console output in the pipeline while I test
+          node bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$WORK_FOLDER"
