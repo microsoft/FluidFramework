@@ -98,7 +98,6 @@ parameters:
 # Unique identifier used to identify telemetry data in Kusto for this pipeline
 - name: pipelineIdentifierForTelemetry
   type: string
-  default: 'EndToEndTests'
 
 stages:
 - stage: ${{ parameters.stageId}}
@@ -127,70 +126,9 @@ stages:
       additionalSteps: ${{ parameters.additionalSteps }}
       cacheCompatVersionsInstalls: ${{ parameters.cacheCompatVersionsInstalls }}
 
-- stage: ${{ parameters.stageId}}_upload_telemetry
-  displayName: Upload stage telemetry to Kusto ('${{ parameters.stageDisplayName }}')
-  condition: succeededOrFailed()
-  dependsOn:
-    - ${{ parameters.stageId}}
-  jobs:
-  - job: upload_run_telemetry
-    displayName: Upload stage telemetry to Kusto
-    pool: Small
-    variables:
-    - group: ado-feeds
-
-    steps:
-    - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-      parameters:
-        devFeedUrl: $(ado-feeds-dev)
-        officeFeedUrl: $(ado-feeds-office)
-        isCheckoutNeeded: true
-
-    - task: Bash@3
-      displayName: Submit telemetry for stage timing and result
-      env:
-        BUILD_ID: $(Build.BuildId)
-        ADO_API_TOKEN: $(System.AccessToken)
-        PIPELINE: 'EndToEndTests'
-        STAGE_ID: ${{ parameters.stageId }}
-      inputs:
-        targetType: 'inline'
-        workingDirectory: $(absolutePathToTelemetryGenerator)
-        script: |
-          OUTPUT_FOLDER=${{ parameters.testWorkspace }}/timingOutput
-          echo "Creating output folder '$OUTPUT_FOLDER'"
-          mkdir -p $OUTPUT_FOLDER
-
-          echo "Retrieving pipeline run timeline data command ..."
-          echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\""
-          curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version=7.1-preview.2" > $OUTPUT_FOLDER/output.json
-
-          echo "Listing files in '$OUTPUT_FOLDER'"
-          ls -laR $OUTPUT_FOLDER;
-          echo "Contents of '$OUTPUT_FOLDER/output.json'"
-          cat $OUTPUT_FOLDER/output.json;
-
-          # node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$OUTPUT_FOLDER/';
-          # Not using aria-logger to get console output in the pipeline while I test
-          node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$OUTPUT_FOLDER/';
-
-    - ${{ if parameters.uploadTestPassRateTelemetry }}:
-      - task: Bash@3
-        displayName: Submit telemetry for test pass rate
-        env:
-          BUILD_ID: $(Build.BuildId)
-          ADO_API_TOKEN: $(System.AccessToken)
-          WORK_FOLDER: ${{ parameters.testWorkspace }}/stageFiles
-          BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
-          PIPELINE: 'EndToEndTests'
-          STAGE_ID: ${{ parameters.stageId }}
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
-          script: |
-            echo "Fetching test pass rate data and saving into JSON files"
-            node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
-            echo "Files created. Now running telemetry-generator."
-            # node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$WORK_FOLDER"
-            # Not using aria-logger to get console output in the pipeline while I test
-            node bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$WORK_FOLDER"
+- template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+  parameters:
+    stageId: ${{ parameters.stageId }}
+    uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
+    pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
+    testWorkspace: ${{ parameters.testWorkspace }}
