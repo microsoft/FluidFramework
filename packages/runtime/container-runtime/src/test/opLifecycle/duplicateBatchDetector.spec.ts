@@ -52,7 +52,7 @@ describe("DuplicateBatchDetector", () => {
 
 	beforeEach("setup", () => {
 		seqNum = 1;
-		detector = new DuplicateBatchDetector(undefined) as any;
+		detector = new DuplicateBatchDetector(undefined /* batchIdsFromSnapshot */) as any;
 	});
 
 	afterEach("validation", () => {
@@ -189,6 +189,11 @@ describe("DuplicateBatchDetector", () => {
 
 	describe("getStateForSummary", () => {
 		it("If empty, return undefined", () => {
+			assert.equal(
+				detector.batchIdsBySeqNum.size,
+				0,
+				"PRECONDITION: Expected detector to start empty",
+			);
 			assert.equal(detector.getRecentBatchInfoForSummary(), undefined);
 		});
 
