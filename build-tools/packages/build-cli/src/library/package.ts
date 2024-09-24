@@ -522,6 +522,12 @@ export async function setVersion(
 			stdio: "inherit",
 			shell: true,
 		};
+		// TODO:
+		// This should not exec flub.
+		// It can just call the same code flub uses to implement this.
+		// Doing so would be more efficient, more type safe and easier to debug.
+		// It would also enable this code to work when flub is not on the path, and ensure a matching version of the code is used.
+		// Also using `npm version` to edit one field of the the package.json file when we already have code below editing it directly (for dependencies) seems needlessly complex and inefficent.
 		cmds.push(
 			[
 				`flub`,
@@ -687,7 +693,7 @@ function getDependenciesRecord(
  * there are some cases where you need to forcefully change the dependency range of packages across the whole repo. For
  * example, when setting release group package versions in the CI release pipeline.
  */
-async function setPackageDependencies(
+export async function setPackageDependencies(
 	pkg: Package,
 	dependencyVersionMap: Map<string, DependencyWithRange>,
 	updateWithinSameReleaseGroup = false,

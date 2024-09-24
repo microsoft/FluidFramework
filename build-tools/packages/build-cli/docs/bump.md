@@ -13,32 +13,38 @@ Bumps the version of a release group or package to the next minor, major, or pat
 ```
 USAGE
   $ flub bump PACKAGE_OR_RELEASE_GROUP [-v | --quiet] [-t major|minor|patch | --exact <value>] [--scheme
-    semver|internal|virtualPatch | ] [--exactDepType ^|~||workspace:*|workspace:^|workspace:~] [-d
-    ^|~||workspace:*|workspace:^|workspace:~] [-x | --install | --commit |  |  | ]
+    semver|internal|virtualPatch | ] [-d ^|~||workspace:*|workspace:^|workspace:~] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
-  -d, --interdependencyRange=<option>  Controls the type of dependency that is used between packages within the release
-                                       group. Use "" (the empty string) to indicate exact dependencies. Use the
-                                       workspace:-prefixed values to set interdependencies using the workspace protocol.
-                                       The interdependency range will be set to the workspace string specified.
-                                       <options: ^|~||workspace:*|workspace:^|workspace:~>
-  -t, --bumpType=<option>              Bump the release group or package to the next version according to this bump
-                                       type.
-                                       <options: major|minor|patch>
-  -x, --skipChecks                     Skip all checks.
-      --[no-]commit                    Commit changes to a new branch.
-      --exact=<value>                  An exact string to use as the version. The string must be a valid semver version
-                                       string.
-      --exactDepType=<option>          [DEPRECATED - Use interdependencyRange instead.] Controls the type of dependency
-                                       that is used between packages within the release group. Use "" to indicate exact
-                                       dependencies.
-                                       <options: ^|~||workspace:*|workspace:^|workspace:~>
-      --[no-]install                   Update lockfiles by running 'npm install' automatically.
-      --scheme=<option>                Override the version scheme used by the release group or package.
-                                       <options: semver|internal|virtualPatch>
+  -d, --interdependencyRange=<option>
+      [Deprecated]: Use the "SetInterdependencyRange" instead. Controls the type of dependency that is used between
+      packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the
+      workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be
+      set to the workspace string specified.
+      <options: ^|~||workspace:*|workspace:^|workspace:~>
+
+  -t, --bumpType=<option>
+      Bump the release group or package to the next version according to this bump type.
+      <options: major|minor|patch>
+
+  -x, --skipChecks
+      Skip all checks.
+
+  --[no-]commit
+      Commit changes to a new branch.
+
+  --exact=<value>
+      An exact string to use as the version. The string must be a valid semver version string.
+
+  --[no-]install
+      Update lockfiles by running 'npm install' automatically.
+
+  --scheme=<option>
+      Override the version scheme used by the release group or package.
+      <options: semver|internal|virtualPatch>
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

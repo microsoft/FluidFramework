@@ -58,7 +58,7 @@ export function getVersionRange(version: semver.SemVer | string, maxAutomaticBum
 export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperatorWithVersion | semver.SemVer;
 
 // @public
-export function isInterdependencyRange(r: unknown): r is InterdependencyRange;
+export function isInterdependencyRange(r: string): r is Exclude<InterdependencyRange, semver.SemVer>;
 
 // @public
 export function isInternalTestVersion(version: semver.SemVer | string): boolean;

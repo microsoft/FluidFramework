@@ -1,6 +1,8 @@
-# This script is used in the "update package versions" step in our CI build pipelines.
+# This script is used in the "Update Package Version (flub)" step in our CI build pipelines.
 # It takes version data from environment variables and updates the package versions accordingly.
-# The environment variables are set earlier in the pipeline, in the "set package version" step.
+# The environment variables are set earlier in the pipeline, in the "Set Package Version" step.
+
+# This Script is deprecated. Once build tools are updated, scripts/set-interdependency-range.sh should be used instead.
 
 echo SETVERSION_VERSION=$SETVERSION_VERSION
 echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
