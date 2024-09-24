@@ -72,12 +72,10 @@ stages:
 
           echo "Listing files in '$OUTPUT_FOLDER'"
           ls -laR $OUTPUT_FOLDER;
-          echo "Contents of '$OUTPUT_FOLDER/output.json'"
-          cat $OUTPUT_FOLDER/output.json;
 
-          # node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$OUTPUT_FOLDER/';
+          # node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir "$OUTPUT_FOLDER/";
           # Not using aria-logger to get console output in the pipeline while I test
-          node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$OUTPUT_FOLDER/';
+          node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir "$OUTPUT_FOLDER/";
 
     - ${{ if parameters.uploadTestPassRateTelemetry }}:
       - task: Bash@3
