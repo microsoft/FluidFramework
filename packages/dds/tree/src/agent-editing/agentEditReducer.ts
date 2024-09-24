@@ -119,6 +119,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	treeEdit: TreeEdit,
 	idGenerator: IdGenerator,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
+	validator?: (edit: TreeNode) => void,
 ): TreeEdit {
 	objectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
@@ -149,6 +150,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 									dummy: unknown,
 								) => TreeNode;
 								const rootNode = new simpleNodeSchema(treeEdit.content);
+								validator?.(rootNode);
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								(tree as any).root = rootNode;
 								insertedObject = rootNode;
@@ -168,6 +170,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 								dummy: unknown,
 							) => TreeNode;
 							const rootNode = new simpleNodeSchema(treeEdit.content);
+							validator?.(rootNode);
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							(tree as any).root = rootNode;
 							insertedObject = rootNode;
@@ -210,6 +213,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 							dummy: unknown,
 						) => TreeNode;
 						const insertNode = new simpleNodeSchema(treeEdit.content);
+						validator?.(insertNode);
 						array.insertAt(index, insertNode);
 						return {
 							...treeEdit,
@@ -258,6 +262,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				const simpleSchema = fieldSchema as unknown as new (dummy: unknown) => TreeNode;
 				populateDefaults(modification, definitionMap);
 				const constructedModification = new simpleSchema(modification);
+				validator?.(constructedModification);
 				insertedObject = constructedModification;
 
 				if (Array.isArray(modification)) {

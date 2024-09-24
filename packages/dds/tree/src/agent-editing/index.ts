@@ -18,6 +18,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	type SimpleTreeSchema,
+	type TreeNode,
 	type TreeView,
 } from "../simple-tree/index.js";
 import {
@@ -45,6 +46,8 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
 	abortController?: AbortController;
 	maxEdits: number;
 	maxSequentialErrors?: number;
+	validator?: (newContent: TreeNode) => void;
+	dumpDebugLog?: boolean;
 }
 
 /**
@@ -67,7 +70,13 @@ export async function generateTreeEdits(
 	for await (const edit of generateEdits(options, simpleSchema, idGenerator, editLog)) {
 		try {
 			editLog.push({
-				edit: applyAgentEdit(options.treeView, edit, idGenerator, simpleSchema.definitions),
+				edit: applyAgentEdit(
+					options.treeView,
+					edit,
+					idGenerator,
+					simpleSchema.definitions,
+					options.validator,
+				),
 			});
 			sequentialErrorCount = 0;
 		} catch (error: unknown) {
@@ -95,8 +104,8 @@ export async function generateTreeEdits(
 	}
 
 	if (DEBUG_LOG !== undefined) {
-		const _dump = DEBUG_LOG.join("\n\n");
-		debugger;
+		console.log(DEBUG_LOG.join("\n\n"));
+		DEBUG_LOG.length = 0;
 	}
 
 	return "success";
