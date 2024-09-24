@@ -2635,8 +2635,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public buildChanges(changes: EditDescription[]): ModularChangeset {
-		const changeMaps = changes.map((change) => {
-			return makeAnonChange(
+		const changeMaps = changes.map((change) =>
+			makeAnonChange(
 				change.type === "global"
 					? makeModularChangeset(
 							undefined /* fieldChanges */,
@@ -2665,8 +2665,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							undefined /* childId */,
 							change.revision,
 						),
-			);
-		});
+			),
+		);
 		const composedChange: Mutable<ModularChangeset> =
 			this.changeFamily.rebaser.compose(changeMaps);
 

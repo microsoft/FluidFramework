@@ -48,8 +48,8 @@ import {
  * @param change - The changeset to produce the inverse of.
  * @param isRollback - Whether the inverse is being produced for a rollback.
  * @param genId - The ID allocator to use for generating new IDs.
- * @param crossFieldManager - The cross-field manager to use for tracking cross-field changes.
  * @param revision - The revision to use for the inverse changeset.
+ * @param crossFieldManager - The cross-field manager to use for tracking cross-field changes.
  * @returns The inverse of the given `change` such that the inverse can be applied after `change`.
  *
  * WARNING! This implementation is incomplete:
