@@ -1,0 +1,48 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# common variables for pipelines that produce docker images
+
+parameters:
+# Name for the container image.
+- name: containerName
+  type: string
+
+# Whether the docker image should be pushed to our internal Azure Container Registry.
+- name: shouldPushDockerImage
+  type: boolean
+  default: false
+
+# If the build is running for a test branch
+- name: testBuild
+  type: boolean
+  default: false
+
+variables:
+- name: buildContainerName
+  ${{ if eq(parameters.testBuild, true) }}:
+    value: test/${{ parameters.containerName }}
+  ${{ else }}:
+    value: build/${{ parameters.containerName }}
+- name: containerTagSuffix
+  value: $[ format('0.0.{0}', variables['Build.BuildNumber']) ]
+- name: baseContainerTag
+  value: base:$(containerTagSuffix)
+# If docker images will be pushed, we need a variable where they are prefixed with the container registry URL.
+# $(containerRegistryUrl) comes from the container-registry-info variable group and needs to be
+# specified as a runtime variable (variables from variable groups apparently are never available "statically"
+# at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+- ${{ if eq(parameters.shouldPushDockerImage, true) }}:
+  - name: containerTag
+    value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    - name: latestContainerTag
+      value: $(containerRegistryUrl)/$(buildContainerName):latest
+  - ${{ else }}:
+    # In this case we just want latestContainerTag defined so it gets replaced by ADO and Bash tasks don't
+    # complain about "command 'latestContainerTag' not found".
+    - name: latestContainerTag
+      value: ''
+- ${{ else }}:
+  - name: containerTag
+    value: $(buildContainerName):$(containerTagSuffix)
