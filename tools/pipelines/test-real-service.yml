@@ -44,8 +44,8 @@ stages:
       poolBuild: NewLarge-linux-1ES # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:local:report:full
+      artifactBuildId: $(resources.pipeline.client.runID)
       cacheCompatVersionsInstalls: true
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -60,8 +60,8 @@ stages:
       poolBuild: Large # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:tinylicious:report:full
+      artifactBuildId: $(resources.pipeline.client.runID)
       cacheCompatVersionsInstalls: true
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 120
@@ -81,8 +81,8 @@ stages:
       poolBuild: Small
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:routerlicious:report
+      artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:
@@ -113,8 +113,8 @@ stages:
       poolBuild: Small
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:frs:report
+      artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:
@@ -145,8 +145,8 @@ stages:
       poolBuild: Small
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:odsp:report
+      artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:

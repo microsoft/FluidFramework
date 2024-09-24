@@ -44,8 +44,8 @@ stages:
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: start:odsp
+      artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -64,8 +64,8 @@ stages:
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: start:odspdf
+      artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -84,8 +84,8 @@ stages:
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: start:t9s
+      artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -103,8 +103,8 @@ stages:
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: start:frs
+      artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -122,8 +122,8 @@ stages:
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: start:frs:canary
+      artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
