@@ -28,9 +28,9 @@ import * as documents from "./documents";
 import {
 	createHealthCheckEndpoints,
 	IReadinessCheck,
+	IThrottlerConfig,
 } from "@fluidframework/server-services-shared";
 import { Constants } from "../../../utils";
-import type { IThrottlerConfig } from "@fluidframework/server-services-shared/dist/healthCheckEndpoints";
 
 export function create(
 	config: Provider,
