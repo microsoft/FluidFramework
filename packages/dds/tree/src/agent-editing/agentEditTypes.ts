@@ -31,6 +31,16 @@ import type { typeField } from "./agentEditReducer.js";
  * TODO: Tests of range edits.
  *
  * TODO: SetRoot might be obscure enough to make the LLM avoid it. Maybe a general replace edit would be better.
+ *
+ * TODO: Handle 429 rate limit error in streamFromLlm.
+ *
+ * TODO: Add an app-specific guidance string.
+ *
+ * TODO: Give the model a final chance to evaluate the result.
+ *
+ * TODO: Have dangerous flag be passed in.
+ *
+ * TODO: Separate system prompt into [system, user, system] for security.
  */
 
 export const objectIdKey = "__fluid_objectId";

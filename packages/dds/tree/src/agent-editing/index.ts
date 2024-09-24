@@ -32,7 +32,7 @@ import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
 import { applyAgentEdit } from "./agentEditReducer.js";
 
-const DEBUG_LOG: string[] | undefined = [];
+const DEBUG_LOG: string[] = [];
 
 /**
  * {@link generateTreeEdits} options.
@@ -103,7 +103,7 @@ export async function generateTreeEdits(
 		}
 	}
 
-	if (DEBUG_LOG !== undefined) {
+	if (options.dumpDebugLog ?? false) {
 		console.log(DEBUG_LOG.join("\n\n"));
 		DEBUG_LOG.length = 0;
 	}
