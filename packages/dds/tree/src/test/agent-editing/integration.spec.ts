@@ -79,7 +79,7 @@ describe.skip("Agent Editing Integration", () => {
 				treeView: view,
 				prompt,
 				abortController,
-				maxEdits: 15,
+				maxModelCalls: 15,
 			});
 			assert.equal(result, "success");
 		}
@@ -162,9 +162,10 @@ describe.skip("Agent Editing Integration", () => {
 		await generateTreeEdits({
 			openAIClient,
 			treeView: view,
-			prompt: "Please remove all sessions from both days and do it in one operation.",
+			prompt: "Please alphabetize the sessions.",
 			abortController,
-			maxEdits: 15,
+			maxModelCalls: 15,
+			finalReviewStep: true,
 		});
 
 		const stringified = JSON.stringify(view.root, undefined, 2);
