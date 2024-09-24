@@ -392,19 +392,6 @@ export interface SegmentActions<TClientData> {
 }
 
 /**
- * @legacy
- * @alpha
- */
-export interface ObliterateInfo {
-	start: LocalReferencePosition;
-	end: LocalReferencePosition;
-	refSeq: number;
-	clientId: number;
-	seq: number;
-	localSeq: number | undefined;
-}
-
-/**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @legacy
  * @alpha

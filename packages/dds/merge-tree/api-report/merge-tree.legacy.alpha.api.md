@@ -645,22 +645,6 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
-// @alpha (undocumented)
-export interface ObliterateInfo {
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    end: LocalReferencePosition;
-    // (undocumented)
-    localSeq: number | undefined;
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    seq: number;
-    // (undocumented)
-    start: LocalReferencePosition;
-}
-
 // @alpha @deprecated (undocumented)
 export interface ObliterateInfo {
     // (undocumented)
