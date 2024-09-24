@@ -130,7 +130,7 @@ export function getEditingSystemPrompt(
 			This means that the current state of the tree reflects these changes.`
 	}
 	The current state of the tree is: ${decoratedTreeJson}.
-	The user has requested you accomplish the following goal:
+	Before you made the above edits, the user requested you accomplish the following goal:
 	${userPrompt}
 	If the goal is now completed, you should return null.
 	Otherwise, you should create an edit that makes progress towards the goal. It should have an english description ("explanation") of what edit to perform (specifying one of the allowed edit types).`;
