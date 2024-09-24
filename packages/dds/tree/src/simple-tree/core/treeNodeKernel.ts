@@ -400,6 +400,12 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	}
 }
 
+/**
+ * Lookup a TreeNodeSchema from a Hydrated FlexTreeNode.
+ * @privateRemarks
+ * This provides a way to access simple tree schema from the flex tree without depending on {@link FlexTreSchema} which is in the process of being removed.
+ * This is currently limited to hydrated nodes: this limitation will have to be fixed before {@link FlexTreSchema} can be fully removed.
+ */
 export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): TreeNodeSchema {
 	assert(
 		flexNode.context.isHydrated(),

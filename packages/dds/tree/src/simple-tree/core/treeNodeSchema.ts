@@ -169,7 +169,11 @@ export interface TreeNodeSchemaCore<
 	readonly implicitlyConstructable: ImplicitlyConstructable;
 
 	/**
-	 * Schema children of this node can have.
+	 * All possible schema that a direct child of a node with this schema could have.
+	 *
+	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
+	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
+	 * This property is simply re-exposing that information is an easier to traverse format consistent across all node kinds.
 	 * @remarks
 	 * Some kinds of nodes may have additional restrictions on children:
 	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.

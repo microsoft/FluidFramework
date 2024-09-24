@@ -10,6 +10,12 @@ import { type InnerNode, mapTreeNodeToProxy, proxySlot } from "./treeNodeKernel.
 import { getSimpleNodeSchemaFromInnerNode } from "./schemaCaching.js";
 import type { TreeNode, InternalTreeNode } from "./types.js";
 
+/**
+ * Returns the TreeNode or TreeValue for the provided {@link InnerNode}.
+ * This will allocate a new one if needed, and otherwise return one from cache.
+ * @remarks
+ * This supports both hydrated and unhydrated nodes.
+ */
 export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | TreeValue {
 	const cached = isMapTreeNode(flexNode)
 		? mapTreeNodeToProxy.get(flexNode)

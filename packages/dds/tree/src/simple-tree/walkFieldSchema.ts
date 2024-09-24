@@ -7,6 +7,9 @@ import { type TreeNodeSchema, walkAllowedTypes, type SchemaVisitor } from "./cor
 
 import { type ImplicitFieldSchema, normalizeFieldSchema } from "./schemaTypes.js";
 
+/**
+ * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
+ */
 export function walkFieldSchema(
 	schema: ImplicitFieldSchema,
 	visitor: SchemaVisitor,
