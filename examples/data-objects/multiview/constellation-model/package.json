@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-constellation-model",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"private": true,
 	"description": "Constellation model for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -39,11 +39,11 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
-		"@fluid-example/multiview-coordinate-interface": "workspace:~",
-		"@fluid-example/multiview-coordinate-model": "workspace:~",
-		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/map": "workspace:~"
+		"@fluid-example/multiview-coordinate-interface": "^2.0.9",
+		"@fluid-example/multiview-coordinate-model": "^2.0.9",
+		"@fluidframework/aqueduct": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/map": "^2.0.9"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

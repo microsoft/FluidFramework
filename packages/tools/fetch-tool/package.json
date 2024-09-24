@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fetch-tool",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Console tool to fetch Fluid data from relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,20 +32,20 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/datastore": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/routerlicious-urlresolver": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/tool-utils": "workspace:~"
+		"@fluid-internal/client-utils": "^2.0.9",
+		"@fluidframework/container-runtime": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/core-utils": "^2.0.9",
+		"@fluidframework/datastore": "^2.0.9",
+		"@fluidframework/driver-definitions": "^2.0.9",
+		"@fluidframework/odsp-doclib-utils": "^2.0.9",
+		"@fluidframework/odsp-driver": "^2.0.9",
+		"@fluidframework/odsp-driver-definitions": "^2.0.9",
+		"@fluidframework/odsp-urlresolver": "^2.0.9",
+		"@fluidframework/routerlicious-driver": "^2.0.9",
+		"@fluidframework/routerlicious-urlresolver": "^2.0.9",
+		"@fluidframework/runtime-definitions": "^2.0.9",
+		"@fluidframework/tool-utils": "^2.0.9"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

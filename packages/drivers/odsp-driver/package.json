@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -121,15 +121,15 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/driver-base": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluid-internal/client-utils": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/core-utils": "^2.0.9",
+		"@fluidframework/driver-base": "^2.0.9",
+		"@fluidframework/driver-definitions": "^2.0.9",
+		"@fluidframework/driver-utils": "^2.0.9",
+		"@fluidframework/odsp-doclib-utils": "^2.0.9",
+		"@fluidframework/odsp-driver-definitions": "^2.0.9",
+		"@fluidframework/telemetry-utils": "^2.0.9",
 		"node-fetch": "^2.6.9",
 		"socket.io-client": "^4.7.3",
 		"uuid": "^9.0.0"
@@ -137,7 +137,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.7.3",
-		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "^2.0.9",
 		"@fluid-tools/build-cli": "^0.39.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0",

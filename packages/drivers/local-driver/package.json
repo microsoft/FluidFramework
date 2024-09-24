@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/local-driver",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Fluid local driver",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -110,26 +110,26 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/driver-base": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
+		"@fluid-internal/client-utils": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/core-utils": "^2.0.9",
+		"@fluidframework/driver-base": "^2.0.9",
+		"@fluidframework/driver-definitions": "^2.0.9",
+		"@fluidframework/driver-utils": "^2.0.9",
 		"@fluidframework/protocol-base": "^5.0.0",
-		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/routerlicious-driver": "^2.0.9",
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/server-services-client": "^5.0.0",
 		"@fluidframework/server-services-core": "^5.0.0",
 		"@fluidframework/server-test-utils": "^5.0.0",
-		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/telemetry-utils": "^2.0.9",
 		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.7.3",
-		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "^2.0.9",
 		"@fluid-tools/build-cli": "^0.39.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0",

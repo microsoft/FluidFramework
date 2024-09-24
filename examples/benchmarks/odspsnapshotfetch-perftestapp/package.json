@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/odspsnapshotfetch-perftestapp",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"private": true,
 	"description": "Benchmark binary vs. json download",
 	"homepage": "https://fluidframework.com",
@@ -36,13 +36,13 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/tool-utils": "workspace:~",
+		"@fluidframework/core-utils": "^2.0.9",
+		"@fluidframework/odsp-doclib-utils": "^2.0.9",
+		"@fluidframework/odsp-driver": "^2.0.9",
+		"@fluidframework/odsp-driver-definitions": "^2.0.9",
+		"@fluidframework/odsp-urlresolver": "^2.0.9",
+		"@fluidframework/telemetry-utils": "^2.0.9",
+		"@fluidframework/tool-utils": "^2.0.9",
 		"express": "^4.19.2",
 		"webpack-dev-server": "~4.15.1"
 	},

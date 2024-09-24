@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bubblebench-common",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"private": true,
 	"description": "Bubblemark inspired DDS benchmark",
 	"homepage": "https://fluidframework.com",
@@ -39,12 +39,12 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree": "workspace:~",
-		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
+		"@fluid-experimental/tree": "^2.0.9",
+		"@fluidframework/aqueduct": "^2.0.9",
+		"@fluidframework/container-definitions": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/datastore-definitions": "^2.0.9",
+		"@fluidframework/map": "^2.0.9",
 		"best-random": "^1.0.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",

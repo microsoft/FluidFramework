@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-plot-coordinate-view",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -40,7 +40,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
-		"@fluid-example/multiview-coordinate-interface": "workspace:~",
+		"@fluid-example/multiview-coordinate-interface": "^2.0.9",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

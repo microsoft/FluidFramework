@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/agent-scheduler",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Built in runtime object for distributing agents across instances of a container",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -82,17 +82,17 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/datastore": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
-		"@fluidframework/register-collection": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluid-internal/client-utils": "^2.0.9",
+		"@fluidframework/container-definitions": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/core-utils": "^2.0.9",
+		"@fluidframework/datastore": "^2.0.9",
+		"@fluidframework/datastore-definitions": "^2.0.9",
+		"@fluidframework/map": "^2.0.9",
+		"@fluidframework/register-collection": "^2.0.9",
+		"@fluidframework/runtime-definitions": "^2.0.9",
+		"@fluidframework/runtime-utils": "^2.0.9",
+		"@fluidframework/telemetry-utils": "^2.0.9",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

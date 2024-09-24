@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/last-edited",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Tracks the last edited information in the Container.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,13 +52,13 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/shared-summary-block": "workspace:~"
+		"@fluidframework/aqueduct": "^2.0.9",
+		"@fluidframework/container-runtime": "^2.0.9",
+		"@fluidframework/container-runtime-definitions": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/driver-definitions": "^2.0.9",
+		"@fluidframework/runtime-utils": "^2.0.9",
+		"@fluidframework/shared-summary-block": "^2.0.9"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

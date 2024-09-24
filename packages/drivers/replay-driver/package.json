@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/replay-driver",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Document replay version of Socket.IO implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,12 +66,12 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~"
+		"@fluid-internal/client-utils": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/core-utils": "^2.0.9",
+		"@fluidframework/driver-definitions": "^2.0.9",
+		"@fluidframework/driver-utils": "^2.0.9",
+		"@fluidframework/telemetry-utils": "^2.0.9"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

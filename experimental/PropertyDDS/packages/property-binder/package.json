@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-binder",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Data Binder for Fluid PropertyDDS",
 	"keywords": [],
 	"homepage": "https://fluidframework.com",
@@ -81,9 +81,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/property-changeset": "workspace:~",
-		"@fluid-experimental/property-dds": "workspace:~",
-		"@fluid-experimental/property-properties": "workspace:~",
+		"@fluid-experimental/property-changeset": "^2.0.9",
+		"@fluid-experimental/property-dds": "^2.0.9",
+		"@fluid-experimental/property-properties": "^2.0.9",
 		"lodash": "^4.17.21",
 		"underscore": "^1.13.6"
 	},
@@ -95,7 +95,7 @@
 		"@biomejs/biome": "^1.7.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0",
-		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "^2.0.9",
 		"@types/jest": "29.5.3",
 		"@types/lodash": "^4.14.118",
 		"@types/node": "^18.19.0",

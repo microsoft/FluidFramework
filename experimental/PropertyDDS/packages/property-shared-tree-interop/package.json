@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-shared-tree-interop",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "Utilities for migration from PropertyDDS to the new SharedTree DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -50,17 +50,17 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluid-experimental/property-changeset": "workspace:~",
-		"@fluid-experimental/property-properties": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~"
+		"@fluid-experimental/property-changeset": "^2.0.9",
+		"@fluid-experimental/property-properties": "^2.0.9",
+		"@fluidframework/core-utils": "^2.0.9",
+		"@fluidframework/tree": "^2.0.9"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.7.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0",
-		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "^2.0.9",
 		"@types/jest": "29.5.3",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",

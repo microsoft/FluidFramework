@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/shared-tree-demo",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"private": true,
 	"description": "A shared tree demo using react and odsp client",
 	"homepage": "https://fluidframework.com",
@@ -35,11 +35,11 @@
 	},
 	"dependencies": {
 		"@azure/msal-browser": "^2.34.0",
-		"@fluidframework/odsp-client": "workspace:~",
-		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
+		"@fluidframework/odsp-client": "^2.0.9",
+		"@fluidframework/odsp-doclib-utils": "^2.0.9",
+		"@fluidframework/odsp-driver-definitions": "^2.0.9",
 		"css-loader": "^6.11.0",
-		"fluid-framework": "workspace:~",
+		"fluid-framework": "^2.0.9",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^1.0.0"

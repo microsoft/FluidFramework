@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-driver-definitions",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -51,8 +51,8 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~"
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/driver-definitions": "^2.0.9"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

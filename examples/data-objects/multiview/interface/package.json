@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-coordinate-interface",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"private": true,
 	"description": "Interface for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -39,7 +39,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
-		"@fluid-example/example-utils": "workspace:~"
+		"@fluid-example/example-utils": "^2.0.9"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

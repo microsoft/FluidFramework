@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/attributable-map",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a hit counter as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -33,16 +33,16 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/attributable-map": "workspace:~",
-		"@fluid-experimental/attributor": "workspace:~",
-		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~"
+		"@fluid-example/example-utils": "^2.0.9",
+		"@fluid-experimental/attributable-map": "^2.0.9",
+		"@fluid-experimental/attributor": "^2.0.9",
+		"@fluidframework/aqueduct": "^2.0.9",
+		"@fluidframework/container-definitions": "^2.0.9",
+		"@fluidframework/container-runtime": "^2.0.9",
+		"@fluidframework/container-runtime-definitions": "^2.0.9",
+		"@fluidframework/core-interfaces": "^2.0.9",
+		"@fluidframework/runtime-definitions": "^2.0.9",
+		"@fluidframework/runtime-utils": "^2.0.9"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
