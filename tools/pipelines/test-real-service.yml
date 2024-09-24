@@ -97,8 +97,6 @@ stages:
         - name: Cross-version
           flags: --compatVersion=CROSS_VERSION
       cacheCompatVersionsInstalls: true
-      # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
-      timeoutInMinutes: 120
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -114,8 +112,9 @@ stages:
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
-      testCommand: test:realsvc:frs:report
+      timeoutInMinutes: 360
       continueOnError: true
+      testCommand: test:realsvc:frs:report
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:
         - group: e2e-frs-lock
@@ -126,11 +125,9 @@ stages:
           flags: --compatVersion=-1
         - name: LTS
           flags: --compatVersion=LTS
-        - name: Cross-version
+        - name: Cross-Version
           flags: --compatVersion=CROSS_VERSION
       cacheCompatVersionsInstalls: true
-      # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
-      timeoutInMinutes: 360
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -146,9 +143,9 @@ stages:
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
-      testCommand: test:realsvc:odsp:report
+      timeoutInMinutes: 360
       continueOnError: true
-      r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
+      testCommand: test:realsvc:odsp:report
       stageVariables:
         - group: e2e-odsp-lock
       splitTestVariants:
@@ -164,8 +161,6 @@ stages:
         - name: N-2ToLTS+1-back-compat
           flags: --compatVersion=V2_INT_3 --tenantIndex=3
       cacheCompatVersionsInstalls: true
-      # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
-      timeoutInMinutes: 360
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
