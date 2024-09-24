@@ -12,7 +12,6 @@ export {
 	IContainerRuntimeOptions,
 	loadContainerRuntime,
 	LoadContainerRuntimeParams,
-	isRuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,
