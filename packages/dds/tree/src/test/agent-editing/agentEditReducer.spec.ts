@@ -75,7 +75,7 @@ class RootObjectWithDifferentVectorArrayTypes extends sf.object("RootObject", {
 }) {}
 
 class RootObjectWithNonArrayVectorField extends sf.object("RootObject", {
-	str: Vector,
+	singleVector: sf.optional(Vector),
 	// Two different vector types to handle the polymorphic case
 	vectors: sf.array([Vector]),
 	bools: sf.array(sf.boolean),
@@ -415,13 +415,14 @@ describe("applyAgentEdit", () => {
 			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
 			view.initialize({
-				str: new Vector({ x: 1, y: 2, z: 3 }),
+				singleVector: new Vector({ x: 1, y: 2, z: 3 }),
 				vectors: [new Vector({ x: 2, y: 3, z: 4 })],
 				bools: [true],
 			});
 
 			idGenerator.assignIds(view.root);
-			const vectorId = idGenerator.getId(view.root.str) ?? fail("ID expected.");
+			assert(view.root.singleVector !== undefined);
+			const vectorId = idGenerator.getId(view.root.singleVector) ?? fail("ID expected.");
 
 			const insertEdit: TreeEdit = {
 				explanation: "Insert a vector",
@@ -522,7 +523,7 @@ describe("applyAgentEdit", () => {
 	});
 
 	describe("remove edits", () => {
-		it("removes a single item", () => {
+		it("removes a single item in an array", () => {
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
@@ -558,6 +559,113 @@ describe("applyAgentEdit", () => {
 			assert.deepEqual(
 				JSON.stringify(view.root, undefined, 2),
 				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("removes an item in a non array field", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObjectWithNonArrayVectorField],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				singleVector: new Vector({ x: 1, y: 2, z: 3 }),
+				vectors: [],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			assert(view.root.singleVector !== undefined);
+
+			const singleVectorId = idGenerator.getId(view.root.singleVector) ?? fail("ID expected.");
+
+			const removeEdit: TreeEdit = {
+				explanation: "remove a vector",
+				type: "remove",
+				source: { [objectIdKey]: singleVectorId },
+			};
+			applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions);
+
+			const expected = {
+				"vectors": [],
+				"bools": [true],
+			};
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("can remove an optional root", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: sf.optional(RootObject),
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			assert(view.root !== undefined);
+			const rootId = idGenerator.getId(view.root) ?? fail("ID expected.");
+
+			const removeEdit: TreeEdit = {
+				explanation: "remove the root",
+				type: "remove",
+				source: { [objectIdKey]: rootId },
+			};
+			applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions);
+			assert.equal(view.root, undefined);
+		});
+
+		it("removing a required root fails", () => {
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const configWithMultipleVectors = new TreeViewConfiguration({
+				schema: [RootObject],
+			});
+			const view = tree.viewWith(configWithMultipleVectors);
+			const schema = normalizeFieldSchema(view.schema);
+			const simpleSchema = getSimpleSchema(schema.allowedTypes);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
+			const rootId = idGenerator.getId(view.root) ?? fail("ID expected.");
+
+			const removeEdit: TreeEdit = {
+				explanation: "remove the root",
+				type: "remove",
+				source: { [objectIdKey]: rootId },
+			};
+
+			assert.throws(
+				() => applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions),
+
+				validateUsageError(
+					/The root is required, and cannot be removed. Please use modify edit instead./,
+				),
 			);
 		});
 
@@ -927,13 +1035,15 @@ describe("applyAgentEdit", () => {
 			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
 			view.initialize({
-				str: new Vector({ x: 1, y: 2, z: 3 }),
+				singleVector: new Vector({ x: 1, y: 2, z: 3 }),
 				vectors: [new Vector({ x: 2, y: 3, z: 4 })],
 				bools: [true],
 			});
 
 			idGenerator.assignIds(view.root);
-			const strId = idGenerator.getId(view.root.str) ?? fail("ID expected.");
+			assert(view.root.singleVector !== undefined);
+
+			const strId = idGenerator.getId(view.root.singleVector) ?? fail("ID expected.");
 			const vectorId = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
@@ -969,13 +1079,15 @@ describe("applyAgentEdit", () => {
 			const simpleSchema = getSimpleSchema(schema.allowedTypes);
 
 			view.initialize({
-				str: new Vector({ x: 1, y: 2, z: 3 }),
+				singleVector: new Vector({ x: 1, y: 2, z: 3 }),
 				vectors: [new Vector({ x: 2, y: 3, z: 4 })],
 				bools: [true],
 			});
 
 			idGenerator.assignIds(view.root);
-			const strId = idGenerator.getId(view.root.str) ?? fail("ID expected.");
+			assert(view.root.singleVector !== undefined);
+
+			const strId = idGenerator.getId(view.root.singleVector) ?? fail("ID expected.");
 			const vectorId = idGenerator.getId(view.root) ?? fail("ID expected.");
 
 			const moveEdit: TreeEdit = {
@@ -994,7 +1106,7 @@ describe("applyAgentEdit", () => {
 
 			assert.throws(
 				() => applyAgentEdit(view, moveEdit, idGenerator, simpleSchema.definitions),
-				validateUsageError(/No child under field nonExistantField/),
+				validateUsageError(/No child under field field/),
 			);
 		});
 	});

@@ -224,8 +224,35 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const source = treeEdit.source;
 			if (isObjectTarget(source)) {
 				const { node, parentIndex } = getTargetInfo(source, idGenerator);
-				const parentNode = Tree.parent(node) as TreeArrayNode;
-				parentNode.removeAt(parentIndex);
+				const parentNode = Tree.parent(node);
+				// Case for deleting rootNode
+				if (parentNode === undefined) {
+					const treeSchema = tree.schema;
+					if (treeSchema instanceof FieldSchema && treeSchema.kind === FieldKind.Optional) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						(tree as any).root = undefined;
+					} else {
+						throw new UsageError(
+							"The root is required, and cannot be removed. Please use modify edit instead.",
+						);
+					}
+				} else if (Tree.schema(parentNode).kind === NodeKind.Array) {
+					(parentNode as TreeArrayNode).removeAt(parentIndex);
+				} else {
+					const fieldKey = Tree.key(node);
+					const parentSchema = Tree.schema(parentNode);
+					const fieldSchema =
+						(parentSchema.info as Record<string, ImplicitFieldSchema>)[fieldKey] ??
+						fail("Expected field schema");
+					if (fieldSchema instanceof FieldSchema && fieldSchema.kind === FieldKind.Optional) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						(parentNode as any)[fieldKey] = undefined;
+					} else {
+						throw new UsageError(
+							`${fieldKey} is required, and cannot be removed. Please use modify edit instead.`,
+						);
+					}
+				}
 			} else if (isRange(source)) {
 				const { array, startIndex, endIndex } = getRangeInfo(source, idGenerator);
 				array.removeRange(startIndex, endIndex);
