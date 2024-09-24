@@ -8,8 +8,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { fail } from "../util/utils.js";
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import ajvModuleOrClass from "ajv";
 import {
 	type TreeEdit,
 	type ObjectTarget,
@@ -22,7 +20,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../agent-editing/agentEditTypes.js";
 import {
-	getJsonSchema,
 	getOrCreateInnerNode,
 	NodeKind,
 	type ImplicitAllowedTypes,
@@ -38,7 +35,9 @@ import type { SimpleNodeSchema } from "../simple-tree/api/simpleSchema.js";
 import {
 	FieldKind,
 	FieldSchema,
+	isTreeNodeSchemaClass,
 	normalizeAllowedTypes,
+	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/schemaTypes.js";
@@ -48,34 +47,6 @@ import { toDecoratedJson } from "./promptGeneration.js";
 import type { IdGenerator } from "./idGenerator.js";
 
 export const typeField = "__fluid_type";
-
-// The first case here covers the esm mode, and the second the cjs one.
-// Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
-const Ajv =
-	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(ajvModuleOrClass as any);
-
-/**
- * Creates a JSON Schema validator for the provided schema, using `ajv`.
- */
-export function getJsonValidator<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-): (data: unknown) => data is TSchema {
-	const jsonSchema = getJsonSchema(schema);
-	const ajv = new Ajv({
-		strict: false,
-		allErrors: true,
-	});
-	return ajv.compile(jsonSchema);
-}
-
-export function assertValidContent(content: JsonValue, schema: ImplicitFieldSchema): void {
-	const validator = getJsonValidator(schema);
-	if (!validator(content)) {
-		throw new UsageError(`invalid data provided for schema`);
-	}
-}
 
 function populateDefaults(
 	json: JsonValue,
@@ -126,46 +97,18 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 		case "setRoot": {
 			populateDefaults(treeEdit.content, definitionMap);
 
-			const treeSchema = tree.schema;
+			const treeSchema = normalizeFieldSchema(tree.schema);
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-explicit-any
-			delete (treeEdit.content as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
-			// If it's a primitive, just validate the content and set
-			if (isPrimitive(treeEdit.content)) {
+			if (treeSchema.kind === FieldKind.Optional && treeEdit.content === undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(tree as any).root = treeEdit.content;
-			} else if (treeSchema instanceof FieldSchema) {
-				if (treeSchema.kind === FieldKind.Optional && treeEdit.content === undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(tree as any).root = treeEdit.content;
-				} else {
-					for (const allowedType of treeSchema.allowedTypeSet.values()) {
-						assertValidContent(treeEdit.content, allowedType);
-						if (schemaIdentifier === allowedType.identifier) {
-							if (typeof allowedType === "function") {
-								const simpleNodeSchema = allowedType as unknown as new (
-									dummy: unknown,
-								) => TreeNode;
-								const rootNode = new simpleNodeSchema(treeEdit.content);
-								validator?.(rootNode);
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								(tree as any).root = rootNode;
-								insertedObject = rootNode;
-							} else {
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								(tree as any).root = treeEdit.content;
-							}
-						}
-					}
-				}
-			} else if (Array.isArray(treeSchema)) {
-				for (const allowedType of treeSchema) {
+			} else {
+				for (const allowedType of treeSchema.allowedTypeSet.values()) {
 					if (schemaIdentifier === allowedType.identifier) {
-						assertValidContent(treeEdit.content, allowedType);
-						if (typeof allowedType === "function") {
+						if (isTreeNodeSchemaClass(allowedType)) {
 							const simpleNodeSchema = allowedType as unknown as new (
 								dummy: unknown,
 							) => TreeNode;
@@ -197,8 +140,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-explicit-any
-			delete (treeEdit.content as any)[typeField];
 
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
 			const allowedTypes = Array.from(
@@ -208,7 +149,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			for (const allowedType of allowedTypes.values()) {
 				if (allowedType.identifier === schemaIdentifier) {
 					if (typeof allowedType === "function") {
-						assertValidContent(treeEdit.content, allowedType);
 						const simpleNodeSchema = allowedType as unknown as new (
 							dummy: unknown,
 						) => TreeNode;
@@ -275,8 +215,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const schemaIdentifier = (modification as any)[typeField];
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-explicit-any
-			delete (modification as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
 			// if fieldSchema is a LeafnodeSchema, we can check that it's a valid type and set the field.
@@ -293,11 +231,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				insertedObject = constructedModification;
 
 				if (Array.isArray(modification)) {
-					for (const modificationNode of modification) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-dynamic-delete
-						delete (modificationNode as any)[typeField];
-					}
-					assertValidContent(treeEdit.modification, fieldSchema);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const field = (node as any)[treeEdit.field] as TreeArrayNode;
 					assert(Array.isArray(field), "the field must be an array node");
@@ -309,7 +242,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = constructedModification;
 				} else {
-					assertValidContent(treeEdit.modification, fieldSchema);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(node as any)[treeEdit.field] = constructedModification;
 				}
@@ -322,7 +254,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				} else {
 					for (const allowedType of fieldSchema.allowedTypeSet.values()) {
 						if (allowedType.identifier === schemaIdentifier) {
-							assertValidContent(treeEdit.modification, allowedType);
 							if (typeof allowedType === "function") {
 								const simpleSchema = allowedType as unknown as new (
 									dummy: unknown,
