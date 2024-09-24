@@ -12,7 +12,10 @@ import {
 	IWebSocketTracker,
 	IServiceMessageResourceManager,
 } from "@fluidframework/server-services-core";
-import type { SocketIoAdapterCreator } from "@fluidframework/server-services-shared";
+import type {
+	IReadinessCheck,
+	SocketIoAdapterCreator,
+} from "@fluidframework/server-services-shared";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 /**
@@ -33,4 +36,5 @@ export interface INexusResourcesCustomizations {
 	redisClientConnectionManagerForSub?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForPub?: IRedisClientConnectionManager;
 	customCreateSocketIoAdapter?: SocketIoAdapterCreator;
+	readinessCheck?: IReadinessCheck;
 }

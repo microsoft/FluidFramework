@@ -30,7 +30,8 @@ import {
 	configureWebSocketServices,
 	ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
-import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import * as app from "./app";
+import { runnerHttpServerStop, type IReadinessCheck } from "@fluidframework/server-services-shared";
 
 export class NexusRunner implements IRunner {
 	private server: IWebServer;
@@ -60,6 +61,7 @@ export class NexusRunner implements IRunner {
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
+		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -67,7 +69,9 @@ export class NexusRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		// Create an HTTP server with a blank request listener
-		this.server = this.serverFactory.create();
+		const nexus = app.create(this.config, this.readinessCheck);
+		nexus.set("port", this.port);
+		this.server = this.serverFactory.create(nexus);
 
 		const usingClusterModule: boolean | undefined = this.config.get("nexus:useNodeCluster");
 		// Don't include application logic in primary thread when Node.js cluster module is enabled.

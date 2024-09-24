@@ -25,7 +25,7 @@ import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { runnerHttpServerStop, IReadinessCheck } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
@@ -57,6 +57,7 @@ export class AlfredRunner implements IRunner {
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
+		private readonly readinessChecker?: IReadinessCheck,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -86,6 +87,7 @@ export class AlfredRunner implements IRunner {
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.enableClientIPLogging,
+				this.readinessChecker,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);

@@ -25,6 +25,12 @@ import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
+import {
+	createHealthCheckEndpoints,
+	IReadinessCheck,
+} from "@fluidframework/server-services-shared";
+import { Constants } from "../../../utils";
+import type { IThrottlerConfig } from "@fluidframework/server-services-shared/dist/healthCheckEndpoints";
 
 export function create(
 	config: Provider,
@@ -42,6 +48,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	readinessChecker?: IReadinessCheck,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -79,10 +86,22 @@ export function create(
 		collaborationSessionEventEmitter,
 	);
 
+	const throttlerConfig: IThrottlerConfig = {
+		tenantThrottlers,
+		restThrottleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+		generalRestCallThrottleIdPrefix: Constants.generalRestCallThrottleIdPrefix,
+	};
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		readinessChecker,
+		false,
+		throttlerConfig,
+	);
+
 	router.use(cors());
 	router.use("/deltas", deltasRoute);
 	router.use("/documents", documentsRoute);
 	router.use("/api/v1", apiRoute);
+	router.use("/healthz", healthCheckEndpoints);
 
 	return router;
 }
