@@ -8,10 +8,11 @@
 
 parameters:
 # Expected form:
-# name: string
-# affectedPaths: string[]
-# testFileTarName: string
-# testCommand: string
+# - name: string
+# - affectedPaths: string[]
+# - testFileTarName: string
+# - testCommand: string
+# - stageId: string
 - name: packages
   type: object
 
@@ -62,7 +63,7 @@ stages:
 
   - ${{ each package in parameters.packages }}:
     # The ids for these stages should be kept in sync with the dependency on them in tools/pipelines/test-dds-stress.yml
-    - stage: ${{ replace(replace(package.name, '@fluidframework/', ''), '@fluid-experimental/', 'experimental_') }}_stress_tests
+    - stage: ${{ package.stageId }}
       dependsOn: CheckAffectedPaths
       displayName: Run ${{ package.name }} stress tests
       jobs:
@@ -82,3 +83,50 @@ stages:
             testCommand: ${{ package.testCommand }}
             env:
               FUZZ_STRESS_RUN: true
+
+    # Submit telemetry
+    - stage: ${{ package.stageId }}_upload_run_telemetry
+      displayName: Upload pipeline run telemetry to Kusto ('${{ package.stageId }}')
+      condition: succeededOrFailed()
+      dependsOn:
+        - ${{ package.stageId }}
+      jobs:
+      - job: upload_run_telemetry
+        displayName: Upload pipeline run telemetry to Kusto
+        pool: Small
+        variables:
+        - group: ado-feeds
+
+        steps:
+        - template: templates/include-telemetry-setup.yml
+          parameters:
+            devFeedUrl: $(ado-feeds-dev)
+            officeFeedUrl: $(ado-feeds-office)
+            isCheckoutNeeded: true
+        - task: Bash@3
+          displayName: Submit telemetry for stage timing and result
+          env:
+            BUILD_ID: $(Build.BuildId)
+            ADO_API_TOKEN: $(System.AccessToken)
+            PIPELINE: 'DdsStressService'
+            STAGE_ID: ${{ package.stageId }}
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(absolutePathToTelemetryGenerator)
+            script: |
+              OUTPUT_FOLDER=${{ parameters.testWorkspace }}/timingOutput
+              echo "Creating output folder '$OUTPUT_FOLDER'"
+              mkdir -p $OUTPUT_FOLDER
+
+              echo "Retrieving pipeline run timeline data command ..."
+              echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\""
+              curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version=7.1-preview.2" > $OUTPUT_FOLDER/output.json
+
+              echo "Listing files in '$OUTPUT_FOLDER'"
+              ls -laR $OUTPUT_FOLDER;
+              echo "Contents of '$OUTPUT_FOLDER/output.json'"
+              cat $OUTPUT_FOLDER/output.json;
+
+              # node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$OUTPUT_FOLDER/';
+              # Not using aria-logger to get console output in the pipeline while I test
+              node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$OUTPUT_FOLDER/';
