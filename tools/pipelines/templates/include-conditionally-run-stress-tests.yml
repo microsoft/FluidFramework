@@ -8,11 +8,10 @@
 
 parameters:
 # Expected form:
-# - name: string
-# - affectedPaths: string[]
-# - testFileTarName: string
-# - testCommand: string
-# - stageId: string
+# name: string
+# affectedPaths: string[]
+# testFileTarName: string
+# testCommand: string
 - name: packages
   type: object
 
@@ -64,7 +63,7 @@ stages:
   - ${{ each package in parameters.packages }}:
     - template: /tools/pipelines/templates/include-test-real-service.yml@self
       parameters:
-        stageId: ${{ package.stageId }}
+        stageId: ${{ replace(replace(package.name, '@fluidframework/', ''), '@fluid-experimental/', 'experimental_') }}_stress_tests
         stageDisplayName: Run ${{ package.name }} stress tests
         stageDependencies:
           - CheckAffectedPaths

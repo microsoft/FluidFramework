@@ -36,33 +36,28 @@ parameters:
     - packages/dds/merge-tree
     testFileTarName: sequence
     testCommand: test:stress
-    stageId: sequence_stress_tests
   - name: "@fluid-experimental/tree"
     affectedPaths:
     - experimental/dds/tree
     testFileTarName: experimental-tree
     testCommand: test:stress
-    stageId: experimental_tree_stress_tests
   - name: "@fluidframework/tree"
     affectedPaths:
     - packages/dds/tree
     testFileTarName: tree
     testCommand: test:stress
-    stageId: tree_stress_tests
   - name: "@fluidframework/map"
     affectedPaths:
     - packages/dds/map
     - packages/dds/merge-tree
     testFileTarName: map
     testCommand: test:stress
-    stageId: map_stress_tests
   - name: "@fluidframework/matrix"
     affectedPaths:
     - packages/dds/matrix
     - packages/dds/merge-tree
     testFileTarName: matrix
     testCommand: test:stress
-    stageId: matrix_stress_tests
 
 stages:
   - template: templates/include-conditionally-run-stress-tests.yml
