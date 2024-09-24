@@ -49,7 +49,7 @@ export class AlfredResources implements core.IResources {
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
-		public readinessChecker?: IReadinessCheck,
+		public readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -393,7 +393,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
-			customizations?.readinessChecker,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -422,7 +422,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			null,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
-			resources.readinessChecker,
+			resources.readinessCheck,
 		);
 	}
 }

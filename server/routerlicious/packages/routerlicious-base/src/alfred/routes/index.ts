@@ -45,7 +45,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
-	readinessChecker?: IReadinessCheck,
+	readinessCheck?: IReadinessCheck,
 ) {
 	return {
 		api: api.create(
@@ -64,7 +64,7 @@ export function create(
 			revokedTokenChecker,
 			collaborationSessionEventEmitter,
 			clusterDrainingChecker,
-			readinessChecker,
+			readinessCheck,
 		),
 	};
 }

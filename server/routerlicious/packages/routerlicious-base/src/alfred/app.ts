@@ -55,7 +55,7 @@ export function create(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
-	readinessChecker?: IReadinessCheck,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -171,7 +171,7 @@ export function create(
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
 		clusterDrainingChecker,
-		readinessChecker,
+		readinessCheck,
 	);
 
 	app.use(routes.api);

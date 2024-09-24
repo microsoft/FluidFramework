@@ -48,7 +48,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
-	readinessChecker?: IReadinessCheck,
+	readinessCheck?: IReadinessCheck,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -91,11 +91,7 @@ export function create(
 		restThrottleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 		generalRestCallThrottleIdPrefix: Constants.generalRestCallThrottleIdPrefix,
 	};
-	const healthCheckEndpoints = createHealthCheckEndpoints(
-		readinessChecker,
-		false,
-		throttlerConfig,
-	);
+	const healthCheckEndpoints = createHealthCheckEndpoints(readinessCheck, false, throttlerConfig);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);
