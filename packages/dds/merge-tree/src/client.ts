@@ -492,19 +492,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
-		assert(
-			op.pos1 !== undefined && op.pos2 !== undefined,
-			"Obliterate op missing start or end",
-		);
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			/*
 			const _start: InteriorSequencePlace =
 				typeof op.pos1 === "object"
-					? { pos: op.pos1.pos ?? 0, side: op.pos1.before ? Side.Before : Side.After }
+					? { pos: op.pos1.pos, side: op.pos1.before ? Side.Before : Side.After }
 					: { pos: op.pos1, side: Side.Before };
 			const _end: InteriorSequencePlace =
 				typeof op.pos2 === "object"
-					? { pos: op.pos2.pos ?? 0, side: op.pos2.before ? Side.Before : Side.After }
+					? { pos: op.pos2.pos, side: op.pos2.before ? Side.Before : Side.After }
 					: { pos: op.pos2 - 1, side: Side.After };
 			*/
 			assert(false, "TODO: sided obliterate will come in a follow-up PR shortly.");

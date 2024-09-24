@@ -169,13 +169,13 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
  */
 export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.OBLITERATE_SIDED;
-	pos1?: { pos: number; before: boolean };
+	pos1: { pos: number; before: boolean };
 	/**
 	 * This field is currently unused, but we keep it around to make the union
 	 * type of all merge-tree messages have the same fields
 	 */
 	relativePos1?: never;
-	pos2?: { pos: number; before: boolean };
+	pos2: { pos: number; before: boolean };
 	/**
 	 * This field is currently unused, but we keep it around to make the union
 	 * type of all merge-tree messages have the same fields

@@ -102,8 +102,12 @@ export function createObliterateRangeOp(start: number, end: number): IMergeTreeO
 /**
  * Creates the op to obliterate a range
  *
- * @param start - The start of the range to obliterate
- * @param end - The end of the range to obliterate
+ * @param start - The start of the range to obliterate.
+ * If a number is provided, the range will start before that index.
+ * @param end - The end of the range to obliterate.
+ * If a number is provided, the range will end after that index -1.
+ * This preserves the previous behavior of not expanding obliteration ranges at the endpoints
+ * for uses which predate the availability of endpoint expansion.
  *
  * @internal
  */
@@ -112,6 +116,8 @@ export function createObliterateRangeOpSided(
 	end: SequencePlace,
 ): IMergeTreeObliterateSidedMsg {
 	const startPlace = normalizePlace(start);
+	// If a number is provided, default to after the previous index.
+	// This preserves the behavior of obliterate prior to the introduction of endpoint expansion.
 	const endPlace =
 		typeof end === "number"
 			? { pos: end - 1, side: Side.After } // default to inclusive bounds
