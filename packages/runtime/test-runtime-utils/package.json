@@ -157,9 +157,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Function_ensureNoDataModelChanges": {
-				"backCompat": false
-			}
 		},
 		"entrypoint": "internal"
 	}
