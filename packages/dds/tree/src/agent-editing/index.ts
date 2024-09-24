@@ -28,7 +28,6 @@ import {
 import { generateEditHandlers } from "./handlers.js";
 import { createResponseHandler, JsonHandler, type JsonObject } from "../json-handler/index.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
-import { fail } from "../util/index.js";
 import { IdGenerator } from "./idGenerator.js";
 import { applyAgentEdit } from "./agentEditReducer.js";
 
@@ -149,6 +148,11 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	}
 }
 
+/**
+ * Prompts the provided LLM client to generate a list of suggested tree edits to perform.
+ *
+ * @internal
+ */
 export async function generateSuggestions(
 	openAIClient: OpenAI,
 	view: TreeView<ImplicitFieldSchema>,
@@ -193,7 +197,7 @@ async function* streamFromLlm(
 
 	const body: ChatCompletionCreateParams = {
 		messages: [{ role: "system", content: systemPrompt }],
-		model: clientModel.get(openAIClient) ?? fail("Model not set"),
+		model: clientModel.get(openAIClient) ?? "gpt-4o",
 		response_format: {
 			type: "json_schema",
 			json_schema: llmJsonSchema,
