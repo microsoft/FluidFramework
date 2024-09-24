@@ -93,8 +93,9 @@ stages:
 - stage: ${{ parameters.stageId}}
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: []
-  variables:
-    ${{ parameters.stageVariables }}
+  ${{ if parameters.stageVariables }}:
+    variables:
+      ${{ parameters.stageVariables }}
   jobs:
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
