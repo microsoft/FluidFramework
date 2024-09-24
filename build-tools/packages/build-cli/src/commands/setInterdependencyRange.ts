@@ -27,7 +27,8 @@ export default class SetInterdependencyRangeCommand extends BaseCommand<
 
 	static readonly args = {
 		group: Args.string({
-			description: "The release group to modify.",
+			description:
+				"The release group to modify. If a package is provided instead of a group, the command is a no-op.",
 			required: true,
 		}),
 		interdependencyRange: Args.string({
@@ -43,8 +44,13 @@ export default class SetInterdependencyRangeCommand extends BaseCommand<
 
 		const context = await this.getContext();
 		const releaseRepo = findPackageOrReleaseGroup(args.group, context);
-		if (!(releaseRepo instanceof MonoRepo)) {
+		if (releaseRepo === undefined) {
 			this.error(`Release Group not found: ${args.group}`);
+		} else if (!(releaseRepo instanceof MonoRepo)) {
+			this.warning(
+				`Found package not release group. Since packages have no interdependencies no changes will be made.`,
+			);
+			return;
 		}
 
 		const newRange = `${args.interdependencyRange}${releaseRepo.version}`;

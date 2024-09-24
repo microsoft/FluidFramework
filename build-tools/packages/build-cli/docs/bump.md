@@ -20,8 +20,8 @@ ARGUMENTS
 
 FLAGS
   -d, --interdependencyRange=<option>
-      [Deprecated]: Use the "SetInterdependencyRange" instead. Controls the type of dependency that is used between
-      packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the
+      [Deprecated]: Use the "SetInterdependencyRange" command instead. Controls the type of dependency that is used
+      between packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the
       workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be
       set to the workspace string specified.
       <options: ^|~||workspace:*|workspace:^|workspace:~>
