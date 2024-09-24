@@ -18,7 +18,6 @@ import { strict as assert, fail } from "node:assert";
 import { jsonableTreeFromForest } from "../../feature-libraries/treeTextCursor.js";
 import {
 	applyAgentEdit,
-	assertValidContent,
 	typeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../agent-editing/agentEditReducer.js";
@@ -1224,22 +1223,5 @@ describe("applyAgentEdit", () => {
 			() => applyAgentEdit(view, modifyEdit, idGenerator, simpleSchema.definitions),
 			validateUsageError(/objectIdKey testObjectId does not exist/),
 		);
-	});
-
-	describe("assertValidContent content", () => {
-		it("invalid content throws", () => {
-			assert.throws(
-				() => assertValidContent(12, Vector),
-				validateUsageError(/invalid data provided for schema/),
-			);
-			assert.throws(
-				() => assertValidContent({ x: 1, test: 2 }, Vector),
-				validateUsageError(/invalid data provided for schema/),
-			);
-		});
-
-		it("valid content passes", () => {
-			assertValidContent({ x: 1, y: 2, z: 3 }, Vector);
-		});
 	});
 });
