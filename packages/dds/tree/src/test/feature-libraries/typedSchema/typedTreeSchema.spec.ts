@@ -9,8 +9,6 @@ import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	FlexFieldSchema,
 	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
 
@@ -32,18 +30,10 @@ describe("typedTreeSchema", () => {
 		foo: builder.optionalRecursive([() => recursiveObject]),
 	});
 
-	it("schema is", () => {
+	it("schemaIsLeaf", () => {
 		assert(schemaIsLeaf(getFlexSchema(booleanSchema)));
-		assert(!schemaIsObjectNode(getFlexSchema(booleanSchema)));
-		assert(!schemaIsMap(getFlexSchema(booleanSchema)));
-
 		assert(!schemaIsLeaf(emptyObjectSchema));
-		assert(schemaIsObjectNode(emptyObjectSchema));
-		assert(!schemaIsMap(emptyObjectSchema));
-
 		assert(!schemaIsLeaf(basicObjectSchema));
-		assert(schemaIsObjectNode(basicObjectSchema));
-		assert(!schemaIsMap(basicObjectSchema));
 	});
 
 	describe("TreeFieldSchema", () => {
