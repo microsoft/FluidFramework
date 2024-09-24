@@ -42,8 +42,6 @@ export const obliterateRange: TestOperation = (
 ) => {
 	let startSide: Side;
 	let endSide: Side;
-	// let startPos: number | undefined;
-	// let endPos: number | undefined;
 	if (opEnd - opStart <= 1) {
 		startSide = Side.Before;
 		endSide = Side.After;
