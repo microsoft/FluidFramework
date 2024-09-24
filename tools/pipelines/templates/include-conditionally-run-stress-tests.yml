@@ -86,13 +86,13 @@ stages:
 
     # Submit telemetry
     - stage: ${{ package.stageId }}_upload_run_telemetry
-      displayName: Upload pipeline run telemetry to Kusto ('${{ package.stageId }}')
+      displayName: Upload stage telemetry to Kusto ('${{ package.stageId }}')
       condition: succeededOrFailed()
       dependsOn:
         - ${{ package.stageId }}
       jobs:
       - job: upload_run_telemetry
-        displayName: Upload pipeline run telemetry to Kusto
+        displayName: Upload stage telemetry to Kusto
         pool: Small
         variables:
         - group: ado-feeds

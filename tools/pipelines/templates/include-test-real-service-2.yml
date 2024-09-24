@@ -134,7 +134,7 @@ stages:
     - ${{ parameters.stageId}}
   jobs:
   - job: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
+    displayName: Upload stage telemetry to Kusto
     pool: Small
     variables:
     - group: ado-feeds
