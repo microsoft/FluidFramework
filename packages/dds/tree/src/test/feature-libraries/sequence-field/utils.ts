@@ -468,8 +468,8 @@ export function invert(
 		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
-		table,
 		revision,
+		table,
 	);
 
 	if (table.isInvalidated) {
@@ -481,8 +481,8 @@ export function invert(
 			isRollback,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
-			table,
 			revision,
+			table,
 		);
 	}
 

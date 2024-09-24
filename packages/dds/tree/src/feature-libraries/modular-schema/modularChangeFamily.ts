@@ -202,8 +202,6 @@ export class ModularChangeFamily
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
-		const revInfoSet: Set<RevisionInfo> = new Set(revInfos);
-		console.log(revInfoSet);
 		const idState: IdAllocationState = { maxId };
 
 		if (changes.length === 0) {
@@ -768,8 +766,8 @@ export class ModularChangeFamily
 					originalFieldChange,
 					isRollback,
 					genId,
-					new InvertManager(crossFieldTable, fieldChange, fieldId),
 					revisionForInvert,
+					new InvertManager(crossFieldTable, fieldChange, fieldId),
 					revisionMetadata,
 				);
 				invertedField.change = brand(amendedChange);
@@ -813,8 +811,8 @@ export class ModularChangeFamily
 				fieldChange.change,
 				isRollback,
 				genId,
-				manager,
 				revisionForInvert,
+				manager,
 				revisionMetadata,
 			);
 

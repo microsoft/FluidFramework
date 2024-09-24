@@ -328,8 +328,8 @@ describe("optionalField", () => {
 					change.change,
 					false,
 					idAllocatorFromMaxId(),
-					failCrossFieldManager,
 					mintRevisionTag(),
+					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change]),
 				);
 			}
@@ -338,8 +338,8 @@ describe("optionalField", () => {
 					change.change,
 					true,
 					idAllocatorFromMaxId(),
-					failCrossFieldManager,
 					mintRevisionTag(),
+					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change]),
 				);
 			}
@@ -519,8 +519,8 @@ describe("optionalField", () => {
 						deletion.change,
 						false,
 						idAllocatorFromMaxId(),
-						failCrossFieldManager,
 						tag2,
+						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([deletion]),
 					),
 					tag2,
@@ -786,8 +786,8 @@ describe("optionalField", () => {
 					clear.change,
 					false,
 					idAllocatorFromMaxId(),
-					failCrossFieldManager,
 					mintRevisionTag(),
+					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([clear]),
 				);
 				const actual = Array.from(
@@ -852,8 +852,8 @@ describe("optionalField", () => {
 						clear.change,
 						false,
 						idAllocatorFromMaxId(),
-						failCrossFieldManager,
 						mintRevisionTag(),
+						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([clear]),
 					),
 					mintRevisionTag(),

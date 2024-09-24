@@ -59,8 +59,8 @@ export function invert(
 	change: Changeset,
 	isRollback: boolean,
 	genId: IdAllocator,
-	crossFieldManager: CrossFieldManager,
 	revision: RevisionTag | undefined,
+	crossFieldManager: CrossFieldManager,
 ): Changeset {
 	return invertMarkList(
 		change,

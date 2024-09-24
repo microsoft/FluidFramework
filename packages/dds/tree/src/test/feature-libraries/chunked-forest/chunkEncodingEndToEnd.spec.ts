@@ -12,7 +12,6 @@ import {
 	type FieldKey,
 	type JsonableTree,
 	mapCursorField,
-	type RevisionTag,
 	RevisionTagCodec,
 	rootFieldKey,
 	type TaggedChange,
@@ -149,10 +148,10 @@ describe("End to end chunked encoding", () => {
 		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
-		const changeLog: ModularChangeset[] = [];
+		const changeLog: TaggedChange<ModularChangeset>[] = [];
 
 		const changeReceiver = (taggedChange: TaggedChange<ModularChangeset>) => {
-			changeLog.push(taggedChange.change);
+			changeLog.push(taggedChange);
 		};
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -170,9 +169,9 @@ describe("End to end chunked encoding", () => {
 			.sequenceField({ field: rootFieldKey, parent: undefined })
 			.insert(0, chunk.cursor());
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
-		const insertedChange = changeLog[0];
+		const { change: insertedChange, revision } = changeLog[0];
 		assert(insertedChange.builds !== undefined);
-		const insertedChunk = insertedChange.builds.get([0 as RevisionTag, 0 as ChangesetLocalId]);
+		const insertedChunk = insertedChange.builds.get([revision, 0 as ChangesetLocalId]);
 		assert.equal(insertedChunk, chunk);
 		assert(chunk.isShared());
 	});

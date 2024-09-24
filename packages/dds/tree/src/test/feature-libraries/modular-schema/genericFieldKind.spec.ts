@@ -174,8 +174,8 @@ describe("GenericField", () => {
 			forward,
 			true,
 			idAllocatorFromMaxId(),
-			crossFieldManager,
 			mintRevisionTag(),
+			crossFieldManager,
 			defaultRevisionMetadataFromChanges([]),
 		);
 		assert.deepEqual(actual, expected);

@@ -160,8 +160,8 @@ function invert(
 		change.change,
 		isRollback,
 		idAllocatorFromMaxId(),
-		failCrossFieldManager,
 		revision,
+		failCrossFieldManager,
 		defaultRevisionMetadataFromChanges([change]),
 	);
 	verifyContextChain(change, makeAnonChange(inverted));

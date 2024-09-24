@@ -266,6 +266,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
+		revision: RevisionTag | undefined,
 	): OptionalChangeset => {
 		const { moves, childChanges } = change;
 
@@ -298,11 +299,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					change.valueReplace.src === undefined
 						? {
 								isEmpty: true,
-								dst: makeChangeAtomId(genId.allocate()),
+								dst: makeChangeAtomId(genId.allocate(), revision),
 							}
 						: {
 								isEmpty: false,
-								dst: isRollback ? change.valueReplace.src : makeChangeAtomId(genId.allocate()),
+								dst: isRollback
+									? change.valueReplace.src
+									: makeChangeAtomId(genId.allocate(), revision),
 							};
 				if (change.valueReplace.isEmpty === false) {
 					replace.src = change.valueReplace.dst;
@@ -312,7 +315,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				inverted.valueReplace = {
 					isEmpty: false,
 					src: "self",
-					dst: makeChangeAtomId(genId.allocate()),
+					dst: makeChangeAtomId(genId.allocate(), revision),
 				};
 			}
 		}
