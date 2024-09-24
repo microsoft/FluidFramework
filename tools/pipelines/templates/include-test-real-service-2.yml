@@ -139,16 +139,16 @@ stages:
         workingDirectory: $(absolutePathToTelemetryGenerator)
         script: |
           echo "creating output folder"
-          mkdir -p ${{ variables.testWorkspace }}/timingOutput
+          mkdir -p ${{ parameters.testWorkspace }}/timingOutput
           echo "Retrieving pipeline run timeline data command ..."
           echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-          curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+          curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ parameters.testWorkspace }}/timingOutput/output.json
           pwd;
-          ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-          cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-          # node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+          ls -laR ${{ parameters.testWorkspace }}/timingOutput/output.json;
+          cat ${{ parameters.testWorkspace }}/timingOutput/output.json;
+          # node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ parameters.testWorkspace }}/timingOutput/';
           # Not using aria-logger to get console output in the pipeline while I test
-          node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+          node bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ parameters.testWorkspace }}/timingOutput/';
 
     # Retrieve E2E test pass rate
     # - task: Bash@3
@@ -156,7 +156,7 @@ stages:
     #   env:
     #     BUILD_ID: $(Build.BuildId)
     #     ADO_API_TOKEN: $(System.AccessToken)
-    #     BASE_OUTPUT_FOLDER: ${{ variables.testWorkspace }}
+    #     BASE_OUTPUT_FOLDER: ${{ parameters.testWorkspace }}
     #     BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
     #     PIPELINE: 'EndToEndTests'
     #   inputs:
