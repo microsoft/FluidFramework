@@ -103,40 +103,37 @@ export function getEditingSystemPrompt(
 		appGuidance === undefined
 			? ""
 			: `
-			The application that owns the JSON tree has the following guidance: ${appGuidance}`
+			The application that owns the JSON tree has the following guidance about your role: ${appGuidance}`
 	}`;
 
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
 	${role}
-	You should make the minimum number of edits to the tree to achieve the desired goal.
-	Edits are made using the following primitives:
+	Edits are composed of the following primitives:
 	- ObjectTarget: a reference to an object (as specified by objectId).
 	- Place: either before or after a ObjectTarget (only makes sense for objects in arrays).
 	- ArrayPlace: either the "start" or "end" of an array, as specified by a "parent" ObjectTarget and a "field" name under which the array is stored.
 	- Range: a range of objects within the same array specified by a "start" and "end" Place. The range MUST be in the same array.
 	- Selection: a ObjectTarget or a Range.
-	The allowed edits are:
+	The edits you may perform are:
 	- SetRoot: replaces the tree with a specific value. This is useful for initializing the tree or replacing the state entirely if appropriate.
 	- Insert: inserts a new object at a specific Place or ArrayPlace.
 	- Modify: sets a field on a specific ObjectTarget.
 	- Remove: deletes a Selection from the tree.
 	- Move: moves a Selection to a new Place or ArrayPlace.
-	Note that you may not remove the root object itself, but you can use SetRoot to replace it.
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state of the tree is: ${decoratedTreeJson}.
-	The user has requested that, after you have performed your series of actions, the following goal should be accomplished:
-	${userPrompt}
 	${
 		log.length === 0
-			? "You have not performed any actions to accomplish this goal yet."
-			: `You have already performed the following actions to accomplish this goal thus far:
+			? ""
+			: `You have already performed the following edits:
 			${createEditList(log)}
-			This means that the current state of the tree already reflects your prior successful changes being applied.`
+			This means that the current state of the tree reflects these changes.`
 	}
-	You should produce one of the following things:
-	1. An english description ("explanation") of the next edit to perform (using one of the allowed edit types) that makes progress towards accomplishing the user's request as well as a JSON object representing the edit you want to perform.
-	2. null if the tree is now in the desired state or if the goal cannot be accomplished.`;
+	The current state of the tree is: ${decoratedTreeJson}.
+	The user has requested you accomplish the following goal:
+	${userPrompt}
+	If the goal is now completed, you should return null.
+	Otherwise, you should create an edit that makes progress towards the goal. It should have an english description ("explanation") of what edit to perform (specifying one of the allowed edit types).`;
 	return systemPrompt;
 }
 
