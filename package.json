@@ -405,5 +405,10 @@
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
 		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }
