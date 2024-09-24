@@ -12,6 +12,8 @@ import type {
 } from "openai/resources/index.mjs";
 
 import { assert } from "@fluidframework/core-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { fail } from "../util/utils.js";
 
 import {
 	getSimpleSchema,
@@ -23,7 +25,9 @@ import {
 } from "../simple-tree/index.js";
 import {
 	getEditingSystemPrompt,
+	getReviewSystemPrompt,
 	getSuggestingSystemPrompt,
+	toDecoratedJson,
 	type EditLog,
 } from "./promptGeneration.js";
 import { generateEditHandlers } from "./handlers.js";
@@ -32,7 +36,7 @@ import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
 import { applyAgentEdit } from "./agentEditReducer.js";
 
-const DEBUG_LOG: string[] | undefined = [];
+const DEBUG_LOG: string[] = [];
 
 /**
  * {@link generateTreeEdits} options.
@@ -43,8 +47,10 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
 	openAIClient: OpenAI;
 	treeView: TreeView<TSchema>;
 	prompt: string;
+	maxModelCalls: number;
+	finalReviewStep?: boolean;
+	appGuidance?: string;
 	abortController?: AbortController;
-	maxEdits: number;
 	maxSequentialErrors?: number;
 	validator?: (newContent: TreeNode) => void;
 	dumpDebugLog?: boolean;
@@ -58,7 +64,7 @@ export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
  */
 export async function generateTreeEdits(
 	options: GenerateTreeEditsOptions<ImplicitFieldSchema>,
-): Promise<"success" | "tooManyErrors" | "tooManyEdits" | "aborted"> {
+): Promise<"success" | "tooManyErrors" | "tooManyModelCalls" | "aborted"> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
 	let editCount = 0;
@@ -69,15 +75,14 @@ export async function generateTreeEdits(
 
 	for await (const edit of generateEdits(options, simpleSchema, idGenerator, editLog)) {
 		try {
-			editLog.push({
-				edit: applyAgentEdit(
-					options.treeView,
-					edit,
-					idGenerator,
-					simpleSchema.definitions,
-					options.validator,
-				),
-			});
+			const result = applyAgentEdit(
+				options.treeView,
+				edit,
+				idGenerator,
+				simpleSchema.definitions,
+				options.validator,
+			);
+			editLog.push({ edit: result });
 			sequentialErrorCount = 0;
 		} catch (error: unknown) {
 			if (error instanceof Error) {
@@ -98,17 +103,21 @@ export async function generateTreeEdits(
 			return "tooManyErrors";
 		}
 
-		if (++editCount >= options.maxEdits) {
-			return "tooManyEdits";
+		if (++editCount >= options.maxModelCalls) {
+			return "tooManyModelCalls";
 		}
 	}
 
-	if (DEBUG_LOG !== undefined) {
+	if (options.dumpDebugLog ?? false) {
 		console.log(DEBUG_LOG.join("\n\n"));
 		DEBUG_LOG.length = 0;
 	}
 
 	return "success";
+}
+
+interface ReviewResult {
+	goalAccomplished: "yes" | "no";
 }
 
 async function* generateEdits<TSchema extends ImplicitFieldSchema>(
@@ -117,17 +126,24 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	idGenerator: IdGenerator,
 	editLog: EditLog,
 ): AsyncGenerator<TreeEdit> {
+	const originalDecoratedJson =
+		options.finalReviewStep ?? false
+			? toDecoratedJson(idGenerator, options.treeView.root)
+			: undefined;
+	// reviewed is implicitly true if finalReviewStep is false
+	let hasReviewed = options.finalReviewStep ?? false ? false : true;
 	async function getNextEdit(): Promise<TreeEdit | undefined> {
 		const systemPrompt = getEditingSystemPrompt(
 			options.prompt,
 			idGenerator,
 			options.treeView,
 			editLog,
+			options.appGuidance,
 		);
 
 		DEBUG_LOG?.push(systemPrompt);
 
-		return new Promise((resolve) => {
+		return new Promise((resolve: (value: TreeEdit | undefined) => void) => {
 			const editHandler = generateEditHandlers(simpleSchema, (jsonObject: JsonObject) => {
 				DEBUG_LOG?.push(JSON.stringify(jsonObject, null, 2));
 				const wrapper = jsonObject as unknown as EditWrapper;
@@ -141,6 +157,56 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 
 			const responseHandler = createResponseHandler(
 				editHandler,
+				options.abortController ?? new AbortController(),
+			);
+
+			void responseHandler.processResponse(
+				streamFromLlm(systemPrompt, responseHandler.jsonSchema(), options.openAIClient),
+			);
+		}).then(async (result): Promise<TreeEdit | undefined> => {
+			if (result === undefined && (options.finalReviewStep ?? false) && !hasReviewed) {
+				const reviewResult = await reviewGoal();
+				hasReviewed = true;
+				if (reviewResult.goalAccomplished) {
+					return undefined;
+				} else {
+					editLog.length = 0;
+					return getNextEdit();
+				}
+			} else {
+				return result;
+			}
+		});
+	}
+
+	async function reviewGoal(): Promise<ReviewResult> {
+		const systemPrompt = getReviewSystemPrompt(
+			options.prompt,
+			idGenerator,
+			options.treeView,
+			originalDecoratedJson ?? fail("Original decorated tree not provided."),
+			options.appGuidance,
+		);
+
+		DEBUG_LOG?.push(systemPrompt);
+
+		return new Promise((resolve: (value: ReviewResult) => void) => {
+			const reviewHandler = JsonHandler.object(() => ({
+				properties: {
+					goalAccomplished: JsonHandler.enum({
+						description:
+							'Whether the difference the user\'s goal was met in the "after" tree.',
+						values: ["yes", "no"],
+					}),
+				},
+				complete: (jsonObject: JsonObject) => {
+					DEBUG_LOG?.push(`Review result: ${JSON.stringify(jsonObject, null, 2)}`);
+					resolve(jsonObject as unknown as ReviewResult);
+				},
+			}))();
+
+			const responseHandler = createResponseHandler(
+				reviewHandler,
 				options.abortController ?? new AbortController(),
 			);
 
@@ -171,7 +237,7 @@ export async function generateSuggestions(
 ): Promise<string[]> {
 	let suggestions: string[] | undefined;
 
-	const editHandler = JsonHandler.object(() => ({
+	const suggestionsHandler = JsonHandler.object(() => ({
 		properties: {
 			edit: JsonHandler.array(() => ({
 				description:
@@ -184,7 +250,7 @@ export async function generateSuggestions(
 		},
 	}))();
 
-	const responseHandler = createResponseHandler(editHandler, abortController);
+	const responseHandler = createResponseHandler(suggestionsHandler, abortController);
 	const systemPrompt = getSuggestingSystemPrompt(view, suggestionCount, guidance);
 	await responseHandler.processResponse(
 		streamFromLlm(systemPrompt, responseHandler.jsonSchema(), openAIClient),

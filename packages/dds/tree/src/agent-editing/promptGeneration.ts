@@ -65,6 +65,7 @@ export function getSuggestingSystemPrompt(
 			? `Additionally, the user has provided some guidance to help you refine your suggestions. Here is that guidance: ${userGuidance}`
 			: "";
 
+	// TODO: security: user prompt in system prompt
 	return `
 	You are a collaborative agent who suggests possible changes to a JSON tree that follows a specific schema.
 	For example, for a schema of a digital whiteboard application, you might suggest things like "Change the color of all sticky notes to blue" or "Align all the handwritten text vertically".
@@ -80,6 +81,7 @@ export function getEditingSystemPrompt(
 	idGenerator: IdGenerator,
 	view: TreeView<ImplicitFieldSchema>,
 	log: EditLog,
+	appGuidance?: string,
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
@@ -97,10 +99,17 @@ export function getEditingSystemPrompt(
 			.join("\n");
 	}
 
+	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
+		appGuidance === undefined
+			? ""
+			: `
+			The application that owns the JSON tree has the following guidance: ${appGuidance}`
+	}`;
+
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	You are a collaborative agent who interacts with a JSON tree by performing edits.
-	You should make the minimum number of edits to the tree to achieve the desired outcome.
+	${role}
+	You should make the minimum number of edits to the tree to achieve the desired goal.
 	Edits are made using the following primitives:
 	- ObjectTarget: a reference to an object (as specified by objectId).
 	- Place: either before or after a ObjectTarget (only makes sense for objects in arrays).
@@ -128,6 +137,38 @@ export function getEditingSystemPrompt(
 	You should produce one of the following things:
 	1. An english description ("explanation") of the next edit to perform (using one of the allowed edit types) that makes progress towards accomplishing the user's request as well as a JSON object representing the edit you want to perform.
 	2. null if the tree is now in the desired state or if the goal cannot be accomplished.`;
+	return systemPrompt;
+}
+
+export function getReviewSystemPrompt(
+	userPrompt: string,
+	idGenerator: IdGenerator,
+	view: TreeView<ImplicitFieldSchema>,
+	originalDecoratedJson: string,
+	appGuidance?: string,
+): string {
+	const schema = normalizeFieldSchema(view.schema);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
+	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
+
+	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
+		appGuidance === undefined
+			? ""
+			: `
+			The application that owns the JSON tree has the following guidance: ${appGuidance}`
+	}`;
+
+	// TODO: security: user prompt in system prompt
+	const systemPrompt = `
+	${role}
+	You have performed a number of actions already to accomplish a user request.
+	You must review the resulting state to determine if the actions you performed successfully accomplished the user's goal.
+	The tree is a JSON object with the following schema: ${promptFriendlySchema}
+	The state of the tree BEFORE changes was: ${originalDecoratedJson}.
+	The state of the tree AFTER changes is: ${decoratedTreeJson}.
+	The user requested that the following goal should be accomplished:
+	${userPrompt}
+	Was the goal accomplished?`;
 	return systemPrompt;
 }
 
