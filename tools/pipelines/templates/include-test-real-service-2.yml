@@ -117,7 +117,7 @@ stages:
       cacheCompatVersionsInstalls: ${{ parameters.cacheCompatVersionsInstalls }}
 
 - stage: ${{ parameters.stageId}}_upload_telemetry
-  displayName: Upload stage telemetry to Kusto - ${{ parameters.stageDisplayName }}
+  displayName: Upload stage telemetry to Kusto ('${{ parameters.stageDisplayName }}')
   condition: succeededOrFailed()
   dependsOn:
     - ${{ parameters.stageId}}
