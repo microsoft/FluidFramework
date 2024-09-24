@@ -36,7 +36,7 @@ variables:
 
 stages:
   # Run Azure Client FRS Tests
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_azure_client_frs
       stageDisplayName: e2e - azure client with frs
@@ -52,7 +52,7 @@ stages:
         azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
         azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
 
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_azure_client_local_server
       stageDisplayName: e2e - azure client with azure local service
@@ -68,7 +68,7 @@ stages:
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
 
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_odsp_client_odsp_server
       stageDisplayName: e2e - odsp client with odsp service

@@ -37,7 +37,7 @@ variables:
 lockBehavior: sequential
 stages:
 
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_local_server
       stageDisplayName: e2e - local server
@@ -53,7 +53,7 @@ stages:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests tinylicious
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_tinylicious
       stageDisplayName: e2e - tinylicious
@@ -74,7 +74,7 @@ stages:
         logger__morganFormat: tiny
 
   # end-to-end tests routerlicious
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_routerlicious
       stageDisplayName: e2e - routerlicious
@@ -106,7 +106,7 @@ stages:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests frs
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_frs
       stageDisplayName: e2e - frs
@@ -138,7 +138,7 @@ stages:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests odsp
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp

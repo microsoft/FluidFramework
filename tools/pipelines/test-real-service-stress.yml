@@ -37,16 +37,16 @@ variables:
 lockBehavior: sequential
 stages:
   # stress tests odsp
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: stress_tests_odsp
       stageDisplayName: Stress tests - Odsp
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: start:odsp
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
+      testCommand: start:odsp
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:
@@ -57,16 +57,16 @@ stages:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
 
   # stress tests odsp dogfood
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: stress_tests_odspdf
       stageDisplayName: Stress tests - Odspdf
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: start:odspdf
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
+      testCommand: start:odspdf
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:
@@ -77,16 +77,16 @@ stages:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
 
   # stress tests tinylicious
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: stress_tests_tinylicious
       stageDisplayName: Stress tests - tinylicious
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: start:t9s
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
+      testCommand: start:t9s
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -96,16 +96,16 @@ stages:
         logger__morganFormat: tiny
 
   # stress tests frs
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: stress_tests_frs
       stageDisplayName: Stress tests - frs
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: start:frs
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
+      testCommand: start:frs
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:
@@ -115,16 +115,16 @@ stages:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
 
   # stress tests frs canary
-  - template: templates/include-test-real-service-2.yml
+  - template: templates/include-test-real-service.yml
     parameters:
       stageId: stress_tests_frs_canary
       stageDisplayName: Stress tests - frs canary
       poolBuild: Large
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: start:frs:canary
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
+      testCommand: start:frs:canary
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:
