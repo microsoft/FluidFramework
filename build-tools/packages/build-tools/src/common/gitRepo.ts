@@ -204,17 +204,6 @@ export class GitRepo {
 	}
 
 	/**
-	 * Returns an array containing all the modified files in the repo.
-	 */
-	public async getModifiedFiles(): Promise<string[]> {
-		const results = await this.exec(`status --porcelain`, `get modified files`);
-		return results
-			.split("\n")
-			.filter((t) => t !== "" && !t.startsWith(" D "))
-			.map((t) => t.substring(3));
-	}
-
-	/**
 	 * Returns an array containing repo root-relative paths to files that are deleted in the working tree.
 	 */
 	public async getDeletedFiles(): Promise<string[]> {
@@ -297,7 +286,7 @@ export class GitRepo {
 	 * @param command the git command
 	 * @param error description of command line to print when error happens
 	 */
-	private async exec(command: string, error: string, pipeStdIn?: string) {
+	public async exec(command: string, error: string, pipeStdIn?: string) {
 		return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn);
 	}
 
@@ -305,7 +294,6 @@ export class GitRepo {
 	 * Execute git command
 	 *
 	 * @param command the git command
-	 * @param error description of command line to print when error happens
 	 */
 	private async execNoError(command: string, pipeStdIn?: string) {
 		return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
