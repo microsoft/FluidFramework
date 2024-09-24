@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { RestrictiveStringRecord } from "../util/index.js";
 import type {
 	TreeObjectNode,
 	InsertableObjectFromSchemaRecord,
@@ -20,10 +20,8 @@ import type { FieldKey } from "../core/index.js";
  */
 export interface ObjectNodeSchema<
 	TName extends string = string,
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
-		string,
-		ImplicitFieldSchema
-	>,
+	T extends
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 > extends TreeNodeSchemaClass<
 		TName,

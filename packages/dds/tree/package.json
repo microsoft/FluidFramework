@@ -227,6 +227,12 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"TypeAlias_MapNodeInsertableData": {
+				"backCompat": false
+			},
+			"Interface_InternalTypes_TreeNodeSchemaNonClass": {
+				"backCompat": false
+			},
 			"Interface_FieldSchemaUnsafe": {
 				"forwardCompat": false
 			},
