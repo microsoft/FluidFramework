@@ -73,7 +73,7 @@ stages:
       stageId: e2e_odsp_client_odsp_server
       stageDisplayName: e2e - odsp client with odsp service
       poolBuild: Small
-      testPackage: ${{ variables.testPackage }}
+      testPackage: ${{ variables.testOdspPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:odsp:run
       artifactBuildId: $(resources.pipeline.client.runID)
