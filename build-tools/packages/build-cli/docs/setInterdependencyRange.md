@@ -14,7 +14,7 @@ USAGE
   $ flub setInterdependencyRange GROUP INTERDEPENDENCYRANGE [-v | --quiet]
 
 ARGUMENTS
-  GROUP                 The release group to modify. In a package is provided instead of a group, the command is a
+  GROUP                 The release group to modify. If a package is provided instead of a group, the command is a
                         no-op.
   INTERDEPENDENCYRANGE  (^|~||workspace:*|workspace:^|workspace:~) Controls the type of dependency that is used between
                         packages within the release group. Use "" (the empty string) to indicate exact dependencies.
