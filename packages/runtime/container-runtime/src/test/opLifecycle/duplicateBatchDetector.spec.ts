@@ -8,10 +8,12 @@ import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 
-import { DuplicateBatchDetector, type InboundBatch } from "../../opLifecycle/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DuplicateBatchDetector } from "../../opLifecycle/duplicateBatchDetector.js";
+import type { BatchStartInfo } from "../../opLifecycle/index.js";
 
 /**
- * Helper function to create (enough of) an InboundBatch for testing.
+ * Helper function to create (enough of) a BatchStartInfo for testing.
  * Inbound batch may have explicit batchId, or merely clientId and batchStartCsn and batchId must be computed - allow either as inputs
  */
 function makeBatch({
@@ -23,7 +25,7 @@ function makeBatch({
 }: { sequenceNumber: number; minimumSequenceNumber: number } & (
 	| { batchId: string; clientId?: undefined; batchStartCsn?: undefined }
 	| { batchId?: undefined; clientId: string; batchStartCsn: number }
-)): InboundBatch {
+)): BatchStartInfo {
 	return {
 		keyMessage: {
 			sequenceNumber,
@@ -32,7 +34,7 @@ function makeBatch({
 		batchId,
 		clientId,
 		batchStartCsn,
-	} satisfies Partial<InboundBatch> as InboundBatch;
+	} satisfies Partial<BatchStartInfo> as BatchStartInfo;
 }
 
 type Patch<T, U> = Omit<T, keyof U> & U;
@@ -173,7 +175,7 @@ describe("DuplicateBatchDetector", () => {
 		assert.deepEqual(
 			[...detector.batchIdsAll].sort(),
 			["batch1", "batch2"],
-			"Unexpected batchIds (after 2)",
+			"Incorrect batchIds (after 2)",
 		);
 
 		detector.processInboundBatch(inboundBatch3);
@@ -181,7 +183,7 @@ describe("DuplicateBatchDetector", () => {
 		assert.deepEqual(
 			[...detector.batchIdsAll].sort(),
 			["batch2", "batch3"],
-			"Unexpected batchIds (after 3)",
+			"Incorrect batchIds (after 3)",
 		);
 	});
 

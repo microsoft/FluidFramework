@@ -8,9 +8,60 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
+import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
 import type { IPresence } from "./presence.js";
+import { createPresenceManager } from "./presenceManager.js";
+
+import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+
+function assertSignalMessageIsValid(
+	message: IInboundSignalMessage | IExtensionMessage,
+): asserts message is IExtensionMessage {
+	assert(message.clientId !== null, "Signal must have a client ID");
+	// The other difference between messages is that `content` for
+	// IExtensionMessage is JsonDeserialized and we are fine assuming that.
+}
+
+/**
+ * Simple FluidObject holding Presence Manager.
+ */
+class PresenceManagerDataObject extends LoadableFluidObject {
+	// Creation of presence manager is deferred until first acquisition to avoid
+	// instantiations and stand-up by Summarizer that has no actual use.
+	private _presenceManager: IPresence | undefined;
+
+	public presenceManager(): IPresence {
+		if (!this._presenceManager) {
+			// TODO: investigate if ContainerExtensionStore (path-based address routing for
+			// Signals) is readily detectable here and use that presence manager directly.
+			const manager = createPresenceManager(this.runtime);
+			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+				assertSignalMessageIsValid(message);
+				manager.processSignal("", message, local);
+			});
+			this._presenceManager = manager;
+		}
+		return this._presenceManager;
+	}
+}
+
+/**
+ * Factory class to create {@link IPresence} in own data store.
+ */
+class PresenceManagerFactory {
+	public is(value: IFluidLoadable | ExperimentalPresenceDO): value is ExperimentalPresenceDO {
+		return value instanceof PresenceManagerDataObject;
+	}
+
+	public readonly factory = new BasicDataStoreFactory(
+		"@fluid-experimental/presence",
+		PresenceManagerDataObject,
+	);
+}
 
 /**
  * Brand for Experimental Presence Data Object.
@@ -32,7 +83,7 @@ export declare class ExperimentalPresenceDO {
  * @alpha
  */
 export const ExperimentalPresenceManager =
-	undefined /* new PresenceManagerFactory() */ as unknown as SharedObjectKind<
+	new PresenceManagerFactory() as unknown as SharedObjectKind<
 		IFluidLoadable & ExperimentalPresenceDO
 	>;
 
@@ -56,8 +107,12 @@ export const ExperimentalPresenceManager =
  *
  * @alpha
  */
-export async function acquirePresenceViaDataObject(
+export function acquirePresenceViaDataObject(
 	fluidLoadable: ExperimentalPresenceDO,
-): Promise<IPresence> {
-	throw new Error("Not implemented");
+): IPresence {
+	if (fluidLoadable instanceof PresenceManagerDataObject) {
+		return fluidLoadable.presenceManager();
+	}
+
+	throw new Error("Incompatible loadable; make sure to use ExperimentalPresenceManager");
 }
