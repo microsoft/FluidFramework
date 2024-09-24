@@ -112,10 +112,10 @@
 	},
 	"typeValidation": {
 		"broken": {
-            "Interface_IFluidDataStoreContext": {
-                "backCompat": false
-            }
-		},
+			"Interface_IFluidDataStoreContext": {
+				"backCompat": false
+			}
+},
 		"entrypoint": "internal"
 	}
 }
