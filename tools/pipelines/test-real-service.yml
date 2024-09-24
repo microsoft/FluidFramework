@@ -30,6 +30,9 @@ variables:
 - name: absolutePathToTelemetryGenerator
   value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
+- name: pipelineIdentifierForTelemetry
+  value: 'EndToEndTests'
+  readonly: true
 
 lockBehavior: sequential
 stages:
@@ -44,6 +47,8 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:local:report:full
       cacheCompatVersionsInstalls: true
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
@@ -60,6 +65,8 @@ stages:
       cacheCompatVersionsInstalls: true
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 120
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         # Disable colorization for tinylicious logs (not useful when printing to a file)
@@ -92,6 +99,8 @@ stages:
       cacheCompatVersionsInstalls: true
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 120
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -122,6 +131,8 @@ stages:
       cacheCompatVersionsInstalls: true
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 360
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -155,6 +166,8 @@ stages:
       cacheCompatVersionsInstalls: true
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 360
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
