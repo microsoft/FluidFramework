@@ -167,7 +167,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 			if (result === undefined && (options.finalReviewStep ?? false) && !hasReviewed) {
 				const reviewResult = await reviewGoal();
 				hasReviewed = true;
-				if (reviewResult.goalAccomplished) {
+				if (reviewResult.goalAccomplished === "yes") {
 					return undefined;
 				} else {
 					editLog.length = 0;
