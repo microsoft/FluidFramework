@@ -179,7 +179,7 @@ export interface TreeNodeSchemaCore<
 	 * users must wait until after the schema are defined to access this set.
 	 * @privateRemarks
 	 * Currently there isn't much use for this in the public API,
-	 * and its possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
+	 * and it's possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
 	 * To keep options option, this is marked `@system` for now.
 	 * @system
 	 */
