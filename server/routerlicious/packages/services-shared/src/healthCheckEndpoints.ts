@@ -6,6 +6,7 @@ import {
 } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { StartupChecker } from "./startupChecker";
+import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface IReadinessCheck {
 	isReady(): Promise<boolean>;
@@ -22,6 +23,7 @@ function noopMiddleware(req: Request, res: Response, next: NextFunction) {
 }
 
 export function createHealthCheckEndpoints(
+	serviceName: string,
 	readinessCheck?: IReadinessCheck,
 	createLivenessEndpoint = true,
 	throttlerConfig?: IThrottlerConfig,
@@ -57,14 +59,23 @@ export function createHealthCheckEndpoints(
 		});
 	}
 
+	const probeProps = {
+		serviceName,
+	};
+	const startupProbe = Lumberjack.newLumberMetric(LumberEventName.StartupProbe, probeProps);
+	const livenessProbe = Lumberjack.newLumberMetric(LumberEventName.LivenessProbe, probeProps);
+	const readinessProbe = Lumberjack.newLumberMetric(LumberEventName.ReadinessProbe, probeProps);
+
 	router.get(
 		"/startup",
 		throttlerConfig ? startupThrottler : noopMiddleware,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			if (StartupChecker.getInstance().isStartupComplete()) {
+				startupProbe.success("Startup probe successful");
 				response.sendStatus(200);
 			} else {
+				startupProbe.error("Startup probe failed");
 				response.sendStatus(500);
 			}
 		},
@@ -76,6 +87,7 @@ export function createHealthCheckEndpoints(
 			throttlerConfig ? pingThrottler : noopMiddleware,
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (request, response) => {
+				livenessProbe.success("Liveness probe successful");
 				response.sendStatus(200);
 			},
 		);
@@ -88,11 +100,14 @@ export function createHealthCheckEndpoints(
 		async (request, response) => {
 			if (readinessCheck) {
 				if (await readinessCheck.isReady()) {
+					readinessProbe.success("Readiness probe successful");
 					response.sendStatus(200);
 				} else {
+					readinessProbe.error("Readiness probe failed");
 					response.sendStatus(503);
 				}
 			} else {
+				readinessProbe.success("Readiness probe successful");
 				response.sendStatus(200);
 			}
 		},

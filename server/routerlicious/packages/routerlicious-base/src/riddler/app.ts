@@ -70,7 +70,7 @@ export function create(
 		),
 	);
 
-	const healthEndpoints = createHealthCheckEndpoints(readinessCheck);
+	const healthEndpoints = createHealthCheckEndpoints("riddler", readinessCheck);
 
 	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler

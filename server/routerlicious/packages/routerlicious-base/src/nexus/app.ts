@@ -41,7 +41,7 @@ export function create(config: Provider, readinessCheck?: IReadinessCheck) {
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
 
-	const healthEndpoints = createHealthCheckEndpoints(readinessCheck);
+	const healthEndpoints = createHealthCheckEndpoints("nexus", readinessCheck);
 
 	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler

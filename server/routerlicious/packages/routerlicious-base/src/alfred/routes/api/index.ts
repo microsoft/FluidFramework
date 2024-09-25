@@ -91,7 +91,12 @@ export function create(
 		restThrottleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 		generalRestCallThrottleIdPrefix: Constants.generalRestCallThrottleIdPrefix,
 	};
-	const healthCheckEndpoints = createHealthCheckEndpoints(readinessCheck, false, throttlerConfig);
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		"alfred",
+		readinessCheck,
+		false,
+		throttlerConfig,
+	);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);
