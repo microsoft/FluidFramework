@@ -45,6 +45,7 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - flub.config.cjs
     - fluidBuild.config.cjs
     - server/historian
     - tools/pipelines/server-historian.yml
@@ -71,6 +72,7 @@ pr:
   paths:
     include:
     - .prettierignore
+    - flub.config.cjs
     - fluidBuild.config.cjs
     - server/historian
     - tools/pipelines/server-historian.yml
