@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type Anchor,
 	AnchorSet,
+	type AnnouncedVisitor,
 	type CursorLocationType,
 	type DeltaVisitor,
 	type DetachedField,
@@ -31,6 +32,7 @@ import {
 	type UpPath,
 	type Value,
 	aboveRootPlaceholder,
+	combineVisitors,
 	deepCopyMapTree,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
@@ -72,6 +74,7 @@ export class ObjectForest implements IEditableForest {
 
 	// All cursors that are in the "Current" state. Must be empty when editing.
 	public readonly currentCursors: Set<Cursor> = new Set();
+	private readonly deltaVisitors: AnnouncedVisitor[] = [];
 
 	private readonly events = createEmitter<ForestEvents>();
 
@@ -260,9 +263,14 @@ export class ObjectForest implements IEditableForest {
 			}
 		}
 
-		const visitor = new Visitor(this);
-		this.activeVisitor = visitor;
-		return visitor;
+		const forestVisitor = new Visitor(this);
+		const combinedVisitor = combineVisitors([forestVisitor, ...this.deltaVisitors]);
+		this.activeVisitor = combinedVisitor;
+		return combinedVisitor;
+	}
+
+	public registerAnnouncedVisitor(visitor: AnnouncedVisitor): void {
+		this.deltaVisitors.push(visitor);
 	}
 
 	private nextRange = 0;

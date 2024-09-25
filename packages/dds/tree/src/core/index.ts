@@ -47,6 +47,7 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	createAnnouncedVisitor,
 	combineVisitors,
 	announceDelta,
 	applyDelta,

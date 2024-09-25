@@ -9,11 +9,13 @@ import {
 	type Anchor,
 	type AnchorNode,
 	type FieldKey,
-	type IForestSubscription,
-	type ITreeSubscriptionCursor,
+	type ProtoNodes,
 	type TreeNodeSchemaIdentifier,
 	forEachField,
 	forEachNode,
+	type ITreeSubscriptionCursor,
+	createAnnouncedVisitor,
+	type IForestSubscription,
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
 import { TreeStatus } from "../flex-tree/index.js";
@@ -70,65 +72,26 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	public constructor(
 		private readonly forest: IForestSubscription,
-		indexer: (schemaId: TreeNodeSchemaIdentifier) => KeyFinder<TKey> | undefined,
+		// TODO design a deterministic way to do the key finder
+		private readonly indexer: (
+			schemaId: TreeNodeSchemaIdentifier,
+		) => KeyFinder<TKey> | undefined,
 		private readonly getValue: (anchorNodes: TreeIndexNodes<AnchorNode>) => TValue | undefined,
 		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
 	) {
-		/**
-		 * Given a cursor in field mode, recursively indexes all nodes under the field.
-		 */
-		const indexField = (fieldCursor: ITreeSubscriptionCursor): void => {
-			forEachNode(fieldCursor, (nodeCursor) => {
-				const keyFinder = getOrCreate(
-					this.keyFinders,
-					// the node schema type to look up
-					nodeCursor.type,
-					// if the indexer does not return a key finder for this schema, we cache a null value to indicate the indexer
-					// does not need to be called if this schema is encountered in the future
-					(schema) => indexer(schema) ?? null,
-				);
-
-				if (keyFinder !== null) {
-					const key = keyFinder(nodeCursor);
-					const anchor = nodeCursor.buildAnchor();
-					const anchorNode = forest.anchors.locate(anchor) ?? fail("expected anchor node");
-
-					const nodes = this.nodes.get(key);
-					if (nodes !== undefined) {
-						// if the key already exists in the index, the anchor node is appended to its list of nodes
-						nodes.push(anchorNode);
-					} else {
-						this.nodes.set(key, [anchorNode]);
-					}
-
-					this.anchors.set(anchorNode, anchor);
-					// when the anchor node is destroyed, delete it from the index
-					anchorNode.on("afterDestroy", () => {
-						const indexedNodes = this.nodes.get(key);
-						assert(
-							indexedNodes !== undefined,
-							"destroyed anchor node should be tracked by index",
-						);
-						const index = indexedNodes.indexOf(anchorNode);
-						assert(index !== -1, "destroyed anchor node should be tracked by index");
-						const newNodes = filterNodes(nodes, (n) => n !== anchorNode);
-						if (newNodes !== undefined) {
-							this.nodes.set(key, newNodes);
-						} else {
-							this.nodes.delete(key);
-						}
-						assert(
-							this.anchors.delete(anchorNode),
-							"destroyed anchor should be tracked by index",
-						);
-					});
-				}
-
-				forEachField(nodeCursor, (f) => {
-					indexField(f);
-				});
-			});
-		};
+		this.forest.registerAnnouncedVisitor(
+			createAnnouncedVisitor({
+				afterCreate: (content: ProtoNodes, destination: FieldKey) => {
+					const cursor = this.forest.allocateCursor();
+					this.forest.tryMoveCursorToField(
+						{ fieldKey: destination, parent: undefined },
+						cursor,
+					);
+					this.indexField(cursor);
+					cursor.free();
+				},
+			}),
+		);
 
 		const detachedFieldKeys: FieldKey[] = [];
 		const detachedFieldsCursor = forest.getCursorAboveDetachedFields();
@@ -140,18 +103,9 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		for (const fieldKey of detachedFieldKeys) {
 			const cursor = forest.allocateCursor();
 			forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
-			indexField(cursor);
+			this.indexField(cursor);
 			cursor.free();
 		}
-
-		// index any new trees that are created later
-		// TODO this event isn't fired when leaf values are changed
-		forest.on("afterRootFieldCreated", (fieldKey) => {
-			const cursor = forest.allocateCursor();
-			forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
-			indexField(cursor);
-			cursor.free();
-		});
 	}
 
 	/**
@@ -247,6 +201,62 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			value: () => {
 				throw new Error("Index is already disposed");
 			},
+		});
+	}
+
+	/**
+	 * Given a cursor in field mode, recursively indexes all nodes under the field.
+	 */
+	private indexField(fieldCursor: ITreeSubscriptionCursor): void {
+		forEachNode(fieldCursor, (nodeCursor) => {
+			const keyFinder = getOrCreate(
+				this.keyFinders,
+				// the node schema type to look up
+				nodeCursor.type,
+				// if the indexer does not return a key finder for this schema, we cache a null value to indicate the indexer
+				// does not need to be called if this schema is encountered in the future
+				(schema) => this.indexer(schema) ?? null,
+			);
+
+			if (keyFinder !== null) {
+				const key = keyFinder(nodeCursor);
+				const anchor = nodeCursor.buildAnchor();
+				const anchorNode = this.forest.anchors.locate(anchor) ?? fail("expected anchor node");
+
+				const nodes = this.nodes.get(key);
+				if (nodes !== undefined) {
+					// if the key already exists in the index, the anchor node is appended to its list of nodes
+					nodes.push(anchorNode);
+				} else {
+					this.nodes.set(key, [anchorNode]);
+				}
+
+				this.anchors.set(anchorNode, anchor);
+				// when the anchor node is destroyed, delete it from the index
+				anchorNode.on("afterDestroy", () => {
+					const indexedNodes = this.nodes.get(key);
+					assert(
+						indexedNodes !== undefined,
+						"destroyed anchor node should be tracked by index",
+					);
+					const index = indexedNodes.indexOf(anchorNode);
+					assert(index !== -1, "destroyed anchor node should be tracked by index");
+					const newNodes = filterNodes(nodes, (n) => n !== anchorNode);
+					if (newNodes !== undefined) {
+						this.nodes.set(key, newNodes);
+					} else {
+						this.nodes.delete(key);
+					}
+					assert(
+						this.anchors.delete(anchorNode),
+						"destroyed anchor should be tracked by index",
+					);
+				});
+			}
+
+			forEachField(nodeCursor, (f) => {
+				this.indexField(f);
+			});
 		});
 	}
 

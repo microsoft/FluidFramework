@@ -8,6 +8,7 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import {
 	type Anchor,
 	AnchorSet,
+	type AnnouncedVisitor,
 	type DeltaVisitor,
 	type DetachedField,
 	type FieldAnchor,
@@ -24,6 +25,7 @@ import {
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	aboveRootPlaceholder,
+	combineVisitors,
 	detachedFieldAsKey,
 	mapCursorField,
 	rootFieldKey,
@@ -53,6 +55,7 @@ export class ChunkedForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
 	private readonly events = createEmitter<ForestEvents>();
+	private readonly deltaVisitors: AnnouncedVisitor[] = [];
 
 	/**
 	 * @param roots - dummy node above the root under which detached fields are stored. All content of the forest is reachable from this.
@@ -87,6 +90,10 @@ export class ChunkedForest implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
+	public registerAnnouncedVisitor(visitor: AnnouncedVisitor): void {
+		this.deltaVisitors.push(visitor);
+	}
+
 	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
@@ -97,7 +104,7 @@ export class ChunkedForest implements IEditableForest {
 			this.roots = this.roots.clone();
 		}
 
-		const visitor = {
+		const forestVisitor = {
 			forest: this,
 			// Current location in the tree, as a non-shared BasicChunk (TODO: support in-place modification of other chunk formats when possible).
 			// Start above root detached sequences.
@@ -253,8 +260,10 @@ export class ChunkedForest implements IEditableForest {
 				this.mutableChunk = top.mutableChunk;
 			},
 		};
-		this.activeVisitor = visitor;
-		return visitor;
+
+		const combinedVisitor = combineVisitors([...this.deltaVisitors, forestVisitor]);
+		this.activeVisitor = combinedVisitor;
+		return combinedVisitor;
 	}
 
 	private nextDetachedFieldIdentifier = 0;
