@@ -35,7 +35,7 @@ export const SimpleContextSlot = anchorSlot<HydratedContext>();
  */
 export class Context {
 	/**
-	 * All schema which could transitively be used under the node who's context this is.
+	 * All schema which could transitively be used under the associated node.
 	 * @remarks
 	 * While generally {@link TreeNodeSchema} are referenced as objects and thus do not need to be looked up by identifier,
 	 * there are a few cases (mainly constructing new TreeNodes from existing tree data) where such a lookup is useful.
