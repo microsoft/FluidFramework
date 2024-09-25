@@ -132,23 +132,89 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 
 	/**
 	 * Moves the specified item to the desired location in the array.
-	 * @param index - The index to move the item to.
-	 * This is based on the state of the array before moving the source item.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationIndex` parameter carefully.
+	 *
+	 * @param destinationIndex - The index to move the item to in the range [0, `array.length`].
+	 *
+	 * WARNING - `destinationIndex` is interpreted based on the state of the array *before* the move operation is applied.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationIndex` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationIndex` to be `2`.
+	 *
+	 * This interpretation of `destinationIndex` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item Foo: `array.moveToIndex(indexOfFoo, ...)`
+	 * - Move to after some item Foo: `array.moveToIndex(indexOfFoo + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationIndex` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if any of the input indices are not in the range [0, `array.length`).
 	 */
-	moveToIndex(index: number, sourceIndex: number): void;
+	moveToIndex(destinationIndex: number, sourceIndex: number): void;
 
 	/**
 	 * Moves the specified item to the desired location in the array.
-	 * @param index - The index to move the item to in the range [0, `array.length`].
-	 * This is based on the state of the array before moving the source item.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationIndex` parameter carefully.
+	 *
+	 * @param destinationIndex - The index to move the item to in the range [0, `array.length`].
+	 *
+	 * WARNING - `destinationIndex` is interpreted based on the state of the array *before* the move operation is applied.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationIndex` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationIndex` to be `2`.
+	 *
+	 * This interpretation of `destinationIndex` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item Foo: `array.moveToIndex(indexOfFoo, ...)`
+	 * - Move to after some item Foo: `array.moveToIndex(indexOfFoo + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationIndex` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceIndex - The index of the item to move.
 	 * @param source - The source array to move the item out of.
 	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
 	 * or if the index is not in the range [0, `array.length`].
 	 */
-	moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
+	moveToIndex(destinationIndex: number, sourceIndex: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified items to the start of the array.
@@ -192,18 +258,85 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 
 	/**
 	 * Moves the specified items to the desired location within the array.
-	 * @param index - The index to move the items to.
-	 * This is based on the state of the array before moving the source items.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationIndex` parameter carefully.
+	 *
+	 * @param destinationIndex - The index to move the item to in the range [0, `array.length`].
+	 *
+	 * WARNING - `destinationIndex` is interpreted based on the state of the array *before* the move operation is applied.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationIndex` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationIndex` to be `2`.
+	 *
+	 * This interpretation of `destinationIndex` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item Foo: `array.moveToIndex(indexOfFoo, ...)`
+	 * - Move to after some item Foo: `array.moveToIndex(indexOfFoo + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationIndex` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+	moveRangeToIndex(destinationIndex: number, sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
-	 * @param index - The index to move the items to.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationIndex` parameter carefully.
+	 *
+	 * @param destinationIndex - The index to move the item to in the range [0, `array.length`].
+	 *
+	 * WARNING - `destinationIndex` is interpreted based on the state of the array *before* the move operation is applied.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationIndex` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationIndex` to be `2`.
+	 *
+	 * This interpretation of `destinationIndex` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item Foo: `array.moveToIndex(indexOfFoo, ...)`
+	 * - Move to after some item Foo: `array.moveToIndex(indexOfFoo + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationIndex` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source array to move items out of.
@@ -211,7 +344,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(
-		index: number,
+		destinationIndex: number,
 		sourceStart: number,
 		sourceEnd: number,
 		source: TMoveFrom,
