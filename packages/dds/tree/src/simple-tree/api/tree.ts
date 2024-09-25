@@ -23,7 +23,7 @@ import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js
 import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
-import { walkFieldSchema } from "../walkSchema.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  * @system @sealed @public
