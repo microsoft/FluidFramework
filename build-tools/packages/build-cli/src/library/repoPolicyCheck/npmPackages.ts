@@ -10,6 +10,7 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
+import depcheck from "depcheck";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
@@ -1971,6 +1972,44 @@ export const handlers: Handler[] = [
 			});
 
 			return result;
+		},
+	},
+	{
+		name: "npm-check-unused-dependencies",
+		match,
+		handler: async (file: string): Promise<string | undefined> => {
+			const depcheckConfigFileName = ".depcheckrc.cjs";
+			const packageDir = path.resolve(path.dirname(file));
+			const depcheckConfigFilePath = path.resolve(
+				path.join(packageDir, depcheckConfigFileName),
+			);
+			const configExists = fs.existsSync(depcheckConfigFilePath);
+			let options: depcheck.Options = {};
+			if (configExists) {
+				try {
+					options = require(depcheckConfigFilePath) as depcheck.Options;
+				} catch (error) {
+					console.log(`Error reading ${depcheckConfigFileName} file:`, error);
+					return;
+				}
+			}
+			try {
+				const result = await depcheck(packageDir, options);
+				const packageErrors: string[] = [];
+				if (result.dependencies.length > 0) {
+					packageErrors.push(
+						`---Unused dependencies---${newline}${result.dependencies.join(newline)}`,
+					);
+				}
+				if (result.devDependencies.length > 0) {
+					packageErrors.push(
+						`---Unused devDependencies---${newline}${result.devDependencies.join(newline)}`,
+					);
+				}
+				return packageErrors.length > 0 ? `${newline}${packageErrors.join("")}` : undefined;
+			} catch (error) {
+				return `Error running depcheck for ${packageDir}: ${error}`;
+			}
 		},
 	},
 ];
