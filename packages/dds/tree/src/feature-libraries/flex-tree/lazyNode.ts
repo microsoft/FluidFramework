@@ -13,6 +13,7 @@ import {
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type Value,
 	inCursorField,
 	mapCursorFields,
@@ -52,10 +53,9 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 		context.checkout.forest.anchors.forget(anchor);
 		assert(cached.context === context, 0x782 /* contexts must match */);
 		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
-		return cached as LazyTreeNode;
+		return cached;
 	}
-	const schema = context.flexSchema.nodeSchema.get(cursor.type) ?? fail("missing schema");
-	return new LazyTreeNode(context, schema, cursor, anchorNode, anchor);
+	return new LazyTreeNode(context, cursor.type, cursor, anchorNode, anchor);
 }
 
 function cleanupTree(anchor: AnchorNode): void {
@@ -67,45 +67,35 @@ function cleanupTree(anchor: AnchorNode): void {
 /**
  * Lazy implementation of {@link FlexTreeNode}.
  */
-export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchema>
-	extends LazyEntity<TSchema, Anchor>
-	implements FlexTreeNode
-{
+export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
 		return FlexTreeEntityKind.Node;
-	}
-
-	public get schema(): TreeNodeSchemaIdentifier {
-		return this.flexSchema.name;
 	}
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
+	private readonly storedSchema: TreeNodeStoredSchema;
+	private readonly flexSchema: FlexTreeNodeSchema;
+
 	public constructor(
 		context: Context,
-		schema: TSchema,
+		public readonly schema: TreeNodeSchemaIdentifier,
 		cursor: ITreeSubscriptionCursor,
 		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
-		super(context, schema, cursor, anchor);
+		super(context, cursor, anchor);
+		this.storedSchema = context.schema.nodeSchema.get(this.schema) ?? fail("missing schema");
+		this.flexSchema = context.flexSchema.nodeSchema.get(this.schema) ?? fail("missing schema");
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
-			this.context.flexSchema.nodeSchema.get(this.flexSchema.name) !== undefined,
+			this.context.flexSchema.nodeSchema.get(this.schema) !== undefined,
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
-	}
-
-	public is(schema: FlexTreeNodeSchema): boolean {
-		assert(
-			this.context.flexSchema.nodeSchema.get(schema.name) === schema,
-			0x785 /* Narrowing must be done to a schema that exists in this context */,
-		);
-		return this.flexSchema === (schema as unknown);
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
@@ -133,20 +123,24 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
-			return makeField(this.context, schema, cursor);
+			return makeField(this.context, schema.stored, cursor);
 		});
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
 		const fieldSchema = this.flexSchema.getFieldSchema(key);
 		return inCursorField(this[cursorSymbol], key, (cursor) => {
-			return makeField(this.context, fieldSchema, cursor);
+			return makeField(this.context, fieldSchema.stored, cursor);
 		});
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
-			makeField(this.context, this.flexSchema.getFieldSchema(cursor.getFieldKey()), cursor),
+			makeField(
+				this.context,
+				this.flexSchema.getFieldSchema(cursor.getFieldKey()).stored,
+				cursor,
+			),
 		).values();
 	}
 
@@ -194,7 +188,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 			fieldSchema = nodeSchema.getFieldSchema(key);
 		}
 
-		const proxifiedField = makeField(this.context, fieldSchema, cursor);
+		const proxifiedField = makeField(this.context, fieldSchema.stored, cursor);
 		cursor.enterNode(index);
 
 		return { parent: proxifiedField, index };

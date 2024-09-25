@@ -159,7 +159,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
-		const field = makeField(this, this.flexSchema.rootFieldSchema, cursor);
+		const field = makeField(this, this.schema.rootFieldSchema, cursor);
 		cursor.free();
 		return field;
 	}
