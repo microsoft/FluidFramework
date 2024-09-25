@@ -3,22 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
 import {
 	FieldKinds,
-	type FlexObjectNodeSchema,
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
-	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
-	isMapTreeNode,
-	type MapTreeNode,
-	UnhydratedContext,
 } from "../feature-libraries/index.js";
 import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
@@ -42,12 +37,14 @@ import {
 	typeSchemaSymbol,
 	type InternalTreeNode,
 	type TreeNode,
+	type Context,
+	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
-import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
+import { createUnhydratedContext } from "./createContext.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -181,7 +178,10 @@ function createProxyHandler(
 				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
 				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
 				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
-				if (fieldInfo.schema.kind === FieldKind.Identifier && isMapTreeNode(flexNode)) {
+				if (
+					fieldInfo.schema.kind === FieldKind.Identifier &&
+					flexNode instanceof UnhydratedFlexTreeNode
+				) {
 					throw new UsageError(
 						"An automatically generated node identifier may not be queried until the node is inserted into the tree",
 					);
@@ -320,10 +320,13 @@ export function objectSchema<
 	// Performance optimization: cache property key => stored key and schema.
 	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
+	const lazyChildTypes = new Lazy(
+		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
+	);
+
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
-	let flexSchema: FlexObjectNodeSchema;
-	let unhydratedContext: UnhydratedContext;
+	let unhydratedContext: Context;
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
@@ -374,23 +377,21 @@ export function objectSchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): MapTreeNode {
-			return getOrCreateMapTreeNode(
-				unhydratedContext,
-				flexSchema,
+		): UnhydratedFlexTreeNode {
+			return UnhydratedFlexTreeNode.getOrCreate(
+				unhydratedContext.flexContext,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
 			handler = createProxyHandler(flexKeyMap, customizable);
 			const schema = this as unknown as TreeNodeSchema;
-			flexSchema = getFlexSchema(schema) as FlexObjectNodeSchema;
-			unhydratedContext = new UnhydratedContext(toFlexSchema(schema));
+			unhydratedContext = createUnhydratedContext(schema);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
@@ -416,12 +417,17 @@ export function objectSchema<
 					prototype = Reflect.getPrototypeOf(prototype) as object;
 				}
 			}
+
+			return unhydratedContext;
 		}
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
+		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
+			return lazyChildTypes.value;
+		}
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
