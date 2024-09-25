@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import { existsSync } from "node:fs";
+import { readFile, stat } from "node:fs/promises";
+import * as path from "node:path";
 import ignore from "ignore";
 
-import { existsSync, readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { getInstalledPackageVersion, getRecursiveFiles, globFn } from "../taskUtils";
 import { LeafWithDoneFileTask } from "./leafTask";
@@ -59,7 +60,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 		const ignoreFile = this.getPackageFileFullPath(ignorePath);
 		try {
 			if (existsSync(ignoreFile)) {
-				const ignoreFileContent = await readFileAsync(ignoreFile, "utf8");
+				const ignoreFileContent = await readFile(ignoreFile, "utf8");
 				ignoreEntries = ignoreFileContent.split(/\r?\n/);
 				ignoreEntries = ignoreEntries.filter((value) => value && !value.startsWith("#"));
 			} else if (this.ignorePath) {
@@ -81,7 +82,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				const entry = this.entries[i];
 				const fullPath = this.getPackageFileFullPath(entry);
 				if (existsSync(fullPath)) {
-					if ((await statAsync(fullPath)).isDirectory()) {
+					if ((await stat(fullPath)).isDirectory()) {
 						// TODO: This includes files that prettier might not check
 						const recursiveFiles = await getRecursiveFiles(fullPath);
 						files.push(

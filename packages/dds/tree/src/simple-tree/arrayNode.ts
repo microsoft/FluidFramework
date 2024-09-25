@@ -36,9 +36,9 @@ import {
 	NodeKind,
 	type TreeNode,
 	type InternalTreeNode,
-	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
 	typeSchemaSymbol,
+	type TreeNodeSchemaBoth,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
@@ -52,7 +52,7 @@ import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
  * @privateRemarks
  * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
- * @sealed @public
+ * @system @sealed @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -910,7 +910,7 @@ export function arraySchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
 ) {
-	type Output = TreeNodeSchemaClass<
+	type Output = TreeNodeSchemaBoth<
 		TName,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,

@@ -29,16 +29,16 @@ import {
 	type requireAssignableTo,
 	filterIterable,
 	brand,
+	objectToMap,
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import type { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
 
 import type { LazyItem } from "./flexList.js";
-import { type ObjectToMap, objectToMapTyped } from "./typeUtils.js";
 
 /**
  */
-export interface FlexObjectNodeFields {
+interface FlexObjectNodeFields {
 	readonly [key: string]: FlexFieldSchema;
 }
 
@@ -74,15 +74,15 @@ export abstract class TreeNodeSchemaBase<const out Specification = unknown> {
 
 /**
  */
-export class FlexMapNodeSchema extends TreeNodeSchemaBase {
+export class FlexMapNodeSchema extends TreeNodeSchemaBase<FlexMapFieldSchema> {
 	public get mapFields(): FlexMapFieldSchema {
-		return this.info as FlexMapFieldSchema;
+		return this.info;
 	}
 
 	protected _typeCheck2?: MakeNominal;
-	public static create<const Name extends string>(
+	public static create(
 		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
+		name: TreeNodeSchemaIdentifier,
 		specification: FlexMapFieldSchema,
 	): FlexMapNodeSchema {
 		return new FlexMapNodeSchema(
@@ -94,7 +94,7 @@ export class FlexMapNodeSchema extends TreeNodeSchemaBase {
 	}
 
 	public override getFieldSchema(field: FieldKey): FlexMapFieldSchema {
-		return this.info as FlexMapFieldSchema;
+		return this.info;
 	}
 }
 
@@ -123,8 +123,7 @@ export class FlexObjectNodeSchema extends TreeNodeSchemaBase {
 		specification: FlexObjectNodeFields,
 	): FlexObjectNodeSchema {
 		const objectNodeFieldsObject = normalizeStructFields(specification);
-		const objectNodeFields: ObjectToMap<FlexObjectNodeFields, FieldKey, FlexFieldSchema> =
-			objectToMapTyped(objectNodeFieldsObject);
+		const objectNodeFields = objectToMap<FieldKey, FlexFieldSchema>(objectNodeFieldsObject);
 		return new FlexObjectNodeSchema(
 			builder,
 			name,
@@ -168,9 +167,7 @@ export class FlexObjectNodeSchema extends TreeNodeSchemaBase {
  */
 export type FlexTreeNodeSchema = TreeNodeSchemaBase;
 
-function normalizeStructFields<T extends FlexObjectNodeFields>(
-	fields: T,
-): FlexObjectNodeFields {
+function normalizeStructFields(fields: FlexObjectNodeFields): FlexObjectNodeFields {
 	const out: Record<string, FlexFieldSchema> = {};
 	// eslint-disable-next-line no-restricted-syntax
 	for (const key in fields) {
@@ -363,7 +360,7 @@ export type AllowedTypeSet = ReadonlySet<FlexTreeNodeSchema>;
 /**
  * Convert {@link FlexAllowedTypes} to {@link TreeTypeSet}.
  */
-export function allowedTypesSchemaSet(t: FlexAllowedTypes): AllowedTypeSet {
+function allowedTypesSchemaSet(t: FlexAllowedTypes): AllowedTypeSet {
 	const list: FlexTreeNodeSchema[] = t.map((value: LazyItem<FlexTreeNodeSchema>) => {
 		if (typeof value === "function") {
 			return value();
@@ -376,7 +373,7 @@ export function allowedTypesSchemaSet(t: FlexAllowedTypes): AllowedTypeSet {
 /**
  * Convert {@link FlexAllowedTypes} to {@link TreeTypeSet}.
  */
-export function allowedTypesToTypeSet(t: FlexAllowedTypes): TreeTypeSet {
+function allowedTypesToTypeSet(t: FlexAllowedTypes): TreeTypeSet {
 	const list = allowedTypesSchemaSet(t);
 	const names = Array.from(list, (type) => {
 		assert(type instanceof TreeNodeSchemaBase, 0x7bf /* invalid allowed type */);
@@ -446,27 +443,9 @@ export interface SchemaCollection {
 	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>;
 }
 
-// These schema type narrowing functions are preferred over `instanceof` due to being easier to migrate to class based schema.
-
-/**
- * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexMapNodeSchema}.
- */
-export function schemaIsMap(schema: FlexTreeNodeSchema): schema is FlexMapNodeSchema {
-	return schema instanceof FlexMapNodeSchema;
-}
-
 /**
  * Checks if a {@link FlexTreeNodeSchema} is a {@link LeafNodeSchema}.
  */
 export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSchema {
 	return schema instanceof LeafNodeSchema;
-}
-
-/**
- * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexObjectNodeSchema}.
- */
-export function schemaIsObjectNode(
-	schema: FlexTreeNodeSchema,
-): schema is FlexObjectNodeSchema {
-	return schema instanceof FlexObjectNodeSchema;
 }

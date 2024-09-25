@@ -42,9 +42,8 @@ function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 			: // eslint-disable-next-line @typescript-eslint/dot-notation
 				`@${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}`}`;
 
-	const seq =
-		msg.sequenceNumber < 0 ? "L" : (msg.sequenceNumber - msg.minimumSequenceNumber).toString();
-	const ref = (msg.referenceSequenceNumber - msg.minimumSequenceNumber).toString();
+	const seq = msg.sequenceNumber < 0 ? "L" : msg.sequenceNumber.toString();
+	const ref = msg.referenceSequenceNumber.toString();
 	const client = msg.clientId;
 	return `${seq}:${ref}:${client}${opType}${opPos}`;
 }
@@ -271,7 +270,7 @@ export class TestClientLogger {
 			}
 			let pos = 0;
 			depthFirstNodeWalk(c.mergeTree.root, c.mergeTree.root.children[0], undefined, (seg) => {
-				if (toRemovalInfo(seg) === undefined) {
+				if (toMoveOrRemove(seg) === undefined) {
 					const segProps = seg.properties;
 					for (let i = 0; i < seg.cachedLength; i++) {
 						if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
@@ -316,7 +315,7 @@ export class TestClientLogger {
 				`${this.clients[0].getCollabWindow().minSeq}: msn/offset\n` +
 				`Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>\n` +
 				`sequence number represented as offset from msn. L means local.\n` +
-				`op types: 0) insert 1) remove 2) annotate\n`;
+				`op types: 0) insert 1) remove 2) annotate 4) obliterate\n`;
 
 			if (this.title) {
 				str += `${this.title}\n`;

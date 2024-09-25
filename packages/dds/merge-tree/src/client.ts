@@ -255,8 +255,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param start - The inclusive start of the range to obliterate
 	 * @param end - The exclusive end of the range to obliterate
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	public obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg {
+	public obliterateRangeLocal(
+		start: number,
+		end: number,
+		// eslint-disable-next-line import/no-deprecated
+	): IMergeTreeObliterateMsg {
 		const obliterateOp = createObliterateRangeOp(start, end);
 		this.applyObliterateRangeOp({ op: obliterateOp });
 		return obliterateOp;
@@ -611,7 +614,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				invalidPositions.push("start");
 			}
 			// Validate end if not insert, or insert has end
-			//
 			if (
 				(op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
 				(end === undefined || end <= start!)
@@ -765,6 +767,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			segments: [],
 			localSeq: segmentGroup.localSeq,
 			refSeq: this.getCollabWindow().currentSeq,
+			obliterateInfo: {
+				...segmentGroup.obliterateInfo!,
+			},
 		};
 
 		const opList: IMergeTreeDeltaOp[] = [];
