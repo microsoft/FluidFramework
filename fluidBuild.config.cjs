@@ -539,7 +539,7 @@ module.exports = {
 			"server": "workspace:~",
 			"gitrest": "^",
 			"historian": "^",
-		}
+		},
 	},
 
 	// This defines the branch release types for type tests. It applies only to the client release group. Settings for
