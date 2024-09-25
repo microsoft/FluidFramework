@@ -193,7 +193,7 @@ export class FluidDataStoreRuntime
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public readonly options: Record<string | number, any>;
 	public readonly deltaManagerInternal: IDeltaManager<
 		ISequencedDocumentMessage,
@@ -435,6 +435,21 @@ export class FluidDataStoreRuntime
 		this.createChannelContext(channel);
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+	}
+
+	/**
+	 * This is written for expediency sake, when actually building the solution, we should create a shim that does all this magic.
+	 * @param id - channel ID.
+	 */
+	protected deleteChannel(id: string): void {
+		this.verifyNotClosed();
+
+		const context = this.contexts.get(id);
+		if (context === undefined) {
+			throw new Error("Channel does not exist");
+		}
+		this.dataStoreContext.deleteChildSummarizerNode(id);
+		this.contexts.delete(id);
 	}
 
 	public createChannel(idArg: string | undefined, type: string): IChannel {
@@ -1026,7 +1041,7 @@ export class FluidDataStoreRuntime
 		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
 	}
 
-	private submit(
+	protected submit(
 		type: DataStoreMessageType,
 		content: any,
 		localOpMetadata: unknown = undefined,
@@ -1163,7 +1178,7 @@ export class FluidDataStoreRuntime
 		});
 	}
 
-	private verifyNotClosed() {
+	protected verifyNotClosed() {
 		if (this._disposed) {
 			throw new LoggingError("Runtime is closed");
 		}

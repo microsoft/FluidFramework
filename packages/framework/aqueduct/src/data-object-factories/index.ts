@@ -4,4 +4,4 @@
  */
 
 export { DataObjectFactory } from "./dataObjectFactory.js";
-export { PureDataObjectFactory } from "./pureDataObjectFactory.js";
+export { PureDataObjectFactory, createDataObject } from "./pureDataObjectFactory.js";

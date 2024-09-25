@@ -44,7 +44,7 @@ import type {
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
  */
-async function createDataObject<
+export async function createDataObject<
 	TObj extends PureDataObject,
 	I extends DataObjectTypes = DataObjectTypes,
 >(
@@ -141,19 +141,19 @@ export class PureDataObjectFactory<
 	I extends DataObjectTypes = DataObjectTypes,
 > implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
-	private readonly sharedObjectRegistry: ISharedObjectRegistry;
-	private readonly registry: IFluidDataStoreRegistry | undefined;
+	protected readonly sharedObjectRegistry: ISharedObjectRegistry;
+	protected readonly registry: IFluidDataStoreRegistry | undefined;
 
 	public constructor(
 		/**
 		 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
 		 */
 		public readonly type: string,
-		private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
+		protected readonly ctor: new (props: IDataObjectProps<I>) => TObj,
 		sharedObjects: readonly IChannelFactory[],
-		private readonly optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
+		protected readonly optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
-		private readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		protected readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 	) {
 		if (this.type === "") {
 			throw new Error("undefined type member");
