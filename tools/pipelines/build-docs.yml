@@ -315,7 +315,10 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
-              flub check latestVersions $(RELEASE_VERSION)
+
+              # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
+              flub generate buildVersion
+              flub check latestVersions $(version)
 
 - stage: deploy
   displayName: 'Deploy website'
