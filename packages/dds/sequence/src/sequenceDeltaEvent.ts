@@ -131,7 +131,6 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 	public readonly isLocal: boolean;
 
 	/**
-	 *
 	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
 	 */
 	constructor(
@@ -156,7 +155,6 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
 	/**
-	 *
 	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
 	 */
 	constructor(
