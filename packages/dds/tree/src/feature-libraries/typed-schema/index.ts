@@ -6,7 +6,6 @@
 export {
 	type FlexTreeNodeSchema,
 	FlexFieldSchema,
-	allowedTypesToTypeSet,
 	type FlexAllowedTypes,
 	type LazyTreeNodeSchema,
 	LeafNodeSchema,
@@ -18,12 +17,8 @@ export {
 	type FlexMapFieldSchema,
 	type SchemaCollection,
 	TreeNodeSchemaBase,
-	type FlexObjectNodeFields,
 	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
 	intoStoredSchema,
-	allowedTypesSchemaSet,
 	intoStoredSchemaCollection,
 } from "./typedTreeSchema.js";
 

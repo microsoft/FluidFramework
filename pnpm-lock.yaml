@@ -13491,10 +13491,7 @@ importers:
         version: 5.1.4(webpack-bundle-analyzer@4.10.1)(webpack@5.94.0)
 
   packages/test/local-server-tests:
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
+    dependencies:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
@@ -13606,6 +13603,10 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1

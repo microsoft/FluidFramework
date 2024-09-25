@@ -20,6 +20,8 @@ export {
 	type InternalTreeNode,
 	isTreeNode,
 	tryDisposeTreeNode,
+	HydratedContext,
+	SimpleContextSlot,
 } from "./core/index.js";
 export {
 	type ITree,
