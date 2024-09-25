@@ -56,6 +56,84 @@ declare type current_as_old_for_Class_DocumentsSchemaController = requireAssigna
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+<<<<<<< HEAD
+=======
+ * "Class_FluidDataStoreContext": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_FluidDataStoreContext = requireAssignableTo<TypeOnly<old.FluidDataStoreContext>, TypeOnly<current.FluidDataStoreContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_FluidDataStoreContext": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_Class_FluidDataStoreContext = requireAssignableTo<TypeOnly<current.FluidDataStoreContext>, TypeOnly<old.FluidDataStoreContext>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_FluidDataStoreRegistry": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_FluidDataStoreRegistry = requireAssignableTo<TypeOnly<old.FluidDataStoreRegistry>, TypeOnly<current.FluidDataStoreRegistry>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_FluidDataStoreRegistry": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_FluidDataStoreRegistry = requireAssignableTo<TypeOnly<current.FluidDataStoreRegistry>, TypeOnly<old.FluidDataStoreRegistry>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_LocalFluidDataStoreContext": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContext>, TypeOnly<current.LocalFluidDataStoreContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_LocalFluidDataStoreContext": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_Class_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<current.LocalFluidDataStoreContext>, TypeOnly<old.LocalFluidDataStoreContext>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_LocalFluidDataStoreContextBase": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContextBase>, TypeOnly<current.LocalFluidDataStoreContextBase>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_LocalFluidDataStoreContextBase": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_Class_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<current.LocalFluidDataStoreContextBase>, TypeOnly<old.LocalFluidDataStoreContextBase>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+>>>>>>> db764ead58 (Disabled backCompat for failing types)
  * "Class_Summarizer": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_Summarizer = requireAssignableTo<TypeOnly<old.Summarizer>, TypeOnly<current.Summarizer>>
@@ -92,6 +170,28 @@ declare type current_as_old_for_Class_SummaryCollection = requireAssignableTo<Ty
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+<<<<<<< HEAD
+=======
+ * "ClassStatics_ChannelCollection": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_ClassStatics_ChannelCollection = requireAssignableTo<TypeOnly<typeof current.ChannelCollection>, TypeOnly<typeof old.ChannelCollection>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ChannelCollectionFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ChannelCollectionFactory = requireAssignableTo<TypeOnly<typeof current.ChannelCollectionFactory>, TypeOnly<typeof old.ChannelCollectionFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+>>>>>>> db764ead58 (Disabled backCompat for failing types)
  * "ClassStatics_ContainerRuntime": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_ContainerRuntime = requireAssignableTo<TypeOnly<typeof current.ContainerRuntime>, TypeOnly<typeof old.ContainerRuntime>>
@@ -110,6 +210,48 @@ declare type current_as_old_for_ClassStatics_DocumentsSchemaController = require
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+<<<<<<< HEAD
+=======
+ * "ClassStatics_FluidDataStoreContext": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_ClassStatics_FluidDataStoreContext = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreContext>, TypeOnly<typeof old.FluidDataStoreContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FluidDataStoreRegistry": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FluidDataStoreRegistry = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreRegistry>, TypeOnly<typeof old.FluidDataStoreRegistry>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalFluidDataStoreContext": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_ClassStatics_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<typeof current.LocalFluidDataStoreContext>, TypeOnly<typeof old.LocalFluidDataStoreContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalFluidDataStoreContextBase": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_ClassStatics_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<typeof current.LocalFluidDataStoreContextBase>, TypeOnly<typeof old.LocalFluidDataStoreContextBase>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+>>>>>>> db764ead58 (Disabled backCompat for failing types)
  * "ClassStatics_Summarizer": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_Summarizer = requireAssignableTo<TypeOnly<typeof current.Summarizer>, TypeOnly<typeof old.Summarizer>>
@@ -515,6 +657,65 @@ declare type current_as_old_for_Interface_IFluidDataStoreAttributes2 = requireAs
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+<<<<<<< HEAD
+=======
+ * "Interface_IFluidDataStoreContextEvents": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IFluidDataStoreContextEvents = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextEvents>, TypeOnly<current.IFluidDataStoreContextEvents>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidDataStoreContextEvents": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IFluidDataStoreContextEvents = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextEvents>, TypeOnly<old.IFluidDataStoreContextEvents>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidDataStoreContextInternal": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IFluidDataStoreContextInternal = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextInternal>, TypeOnly<current.IFluidDataStoreContextInternal>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidDataStoreContextInternal": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_Interface_IFluidDataStoreContextInternal = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextInternal>, TypeOnly<old.IFluidDataStoreContextInternal>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidDataStoreContextProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextProps>, TypeOnly<current.IFluidDataStoreContextProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidDataStoreContextProps": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_Interface_IFluidDataStoreContextProps = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextProps>, TypeOnly<old.IFluidDataStoreContextProps>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+>>>>>>> db764ead58 (Disabled backCompat for failing types)
  * "Interface_IGCMetadata": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IGCMetadata = requireAssignableTo<TypeOnly<old.IGCMetadata>, TypeOnly<current.IGCMetadata>>
@@ -605,6 +806,47 @@ declare type current_as_old_for_Interface_IGenerateSummaryTreeResult = requireAs
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+<<<<<<< HEAD
+=======
+ * "Interface_ILocalDetachedFluidDataStoreContextProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ILocalDetachedFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.ILocalDetachedFluidDataStoreContextProps>, TypeOnly<current.ILocalDetachedFluidDataStoreContextProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILocalDetachedFluidDataStoreContextProps": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_Interface_ILocalDetachedFluidDataStoreContextProps = requireAssignableTo<TypeOnly<current.ILocalDetachedFluidDataStoreContextProps>, TypeOnly<old.ILocalDetachedFluidDataStoreContextProps>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILocalFluidDataStoreContextProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ILocalFluidDataStoreContextProps = requireAssignableTo<TypeOnly<old.ILocalFluidDataStoreContextProps>, TypeOnly<current.ILocalFluidDataStoreContextProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ILocalFluidDataStoreContextProps": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_Interface_ILocalFluidDataStoreContextProps = requireAssignableTo<TypeOnly<current.ILocalFluidDataStoreContextProps>, TypeOnly<old.ILocalFluidDataStoreContextProps>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+>>>>>>> db764ead58 (Disabled backCompat for failing types)
  * "Interface_IMarkPhaseStats": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IMarkPhaseStats = requireAssignableTo<TypeOnly<old.IMarkPhaseStats>, TypeOnly<current.IMarkPhaseStats>>

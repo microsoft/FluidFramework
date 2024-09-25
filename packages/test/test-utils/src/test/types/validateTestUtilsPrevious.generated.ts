@@ -47,6 +47,73 @@ declare type current_as_old_for_ClassStatics_LoaderContainerTracker = requireAss
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+<<<<<<< HEAD
+=======
+ * "ClassStatics_LocalCodeLoader": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LocalCodeLoader = requireAssignableTo<TypeOnly<typeof current.LocalCodeLoader>, TypeOnly<typeof old.LocalCodeLoader>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TestFluidObject": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_ClassStatics_TestFluidObject = requireAssignableTo<TypeOnly<typeof current.TestFluidObject>, TypeOnly<typeof old.TestFluidObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TestFluidObjectFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TestFluidObjectFactory = requireAssignableTo<TypeOnly<typeof current.TestFluidObjectFactory>, TypeOnly<typeof old.TestFluidObjectFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TestObjectProvider": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TestObjectProvider = requireAssignableTo<TypeOnly<typeof current.TestObjectProvider>, TypeOnly<typeof old.TestObjectProvider>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TestObjectProviderWithVersionedLoad": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TestObjectProviderWithVersionedLoad = requireAssignableTo<TypeOnly<typeof current.TestObjectProviderWithVersionedLoad>, TypeOnly<typeof old.TestObjectProviderWithVersionedLoad>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_DataObjectFactoryType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_DataObjectFactoryType = requireAssignableTo<TypeOnly<old.DataObjectFactoryType>, TypeOnly<current.DataObjectFactoryType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_DataObjectFactoryType": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_DataObjectFactoryType = requireAssignableTo<TypeOnly<current.DataObjectFactoryType>, TypeOnly<old.DataObjectFactoryType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+>>>>>>> db764ead58 (Disabled backCompat for failing types)
  * "Function_createAndAttachContainer": {"backCompat": false}
  */
 declare type current_as_old_for_Function_createAndAttachContainer = requireAssignableTo<TypeOnly<typeof current.createAndAttachContainer>, TypeOnly<typeof old.createAndAttachContainer>>
@@ -85,6 +152,7 @@ declare type old_as_current_for_Interface_IProvideTestFluidObject = requireAssig
  * typeValidation.broken:
  * "Interface_IProvideTestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IProvideTestFluidObject = requireAssignableTo<TypeOnly<current.IProvideTestFluidObject>, TypeOnly<old.IProvideTestFluidObject>>
 
 /*
@@ -103,4 +171,5 @@ declare type old_as_current_for_Interface_ITestFluidObject = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ITestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ITestFluidObject = requireAssignableTo<TypeOnly<current.ITestFluidObject>, TypeOnly<old.ITestFluidObject>>
