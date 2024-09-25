@@ -29,16 +29,16 @@ interface ParsedJob {
  */
 module.exports = function handler(fileData, logger): void {
 	if (fileData.records?.length === undefined || fileData.records?.length === 0) {
-		throw new Error ("No records found in the input data.");
+		throw new Error("No records found in the input data.");
 	}
 	if (process.env.BUILD_ID === undefined) {
-		throw new Error ("BUILD_ID environment variable is not set.");
+		throw new Error("BUILD_ID environment variable is not set.");
 	}
 	if (process.env.PIPELINE === undefined) {
-		throw new Error ("PIPELINE environment variable is not set.");
+		throw new Error("PIPELINE environment variable is not set.");
 	}
 	if (process.env.STAGE_ID === undefined) {
-		throw new Error ("STAGE_ID environment variable is not set.");
+		throw new Error("STAGE_ID environment variable is not set.");
 	}
 
 	console.log("BUILD_ID:", process.env.BUILD_ID);
@@ -52,24 +52,28 @@ module.exports = function handler(fileData, logger): void {
 		.map((job): ParsedJob => {
 			const finishTime = Date.parse(job.finishTime?.toString());
 			if (Number.isNaN(finishTime)) {
-					// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
-					throw new Error(`Failed to parse finishTime '${job.finishTime}'. The specified pipeline stage might not have finished yet.`);
+				// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
+				throw new Error(
+					`Failed to parse finishTime '${job.finishTime}'. The specified pipeline stage might not have finished yet.`,
+				);
 			}
 
 			let startTime: number = finishTime;
 			if (job.state === "completed" && job.startTime === null) {
-					// A null start time when 'state === completed' indicates the stage was skipped.
-					// Set startTime to finishTime so duration ends up being 0.
-					startTime = finishTime;
+				// A null start time when 'state === completed' indicates the stage was skipped.
+				// Set startTime to finishTime so duration ends up being 0.
+				startTime = finishTime;
 			} else {
-					startTime = Date.parse(job.startTime?.toString());
-					if (Number.isNaN(startTime)) {
-							// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
-							throw new Error(`Failed to parse startTime '${job.startTime}'.`);
-					}
+				startTime = Date.parse(job.startTime?.toString());
+				if (Number.isNaN(startTime)) {
+					// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
+					throw new Error(`Failed to parse startTime '${job.startTime}'.`);
+				}
 			}
 
-			console.log(`Processed stage - name='${job.name}' identifier='${job.identifier}' state='${job.state}' result='${job.result}'`);
+			console.log(
+				`Processed stage - name='${job.name}' identifier='${job.identifier}' state='${job.state}' result='${job.result}'`,
+			);
 			return {
 				// Using the 'identifier' property because that's the one available in the API response for test results,
 				// and we want the values to be consistent so we can correlate them later.

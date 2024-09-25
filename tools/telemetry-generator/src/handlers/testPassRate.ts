@@ -18,13 +18,13 @@ module.exports = function handler(fileData, logger): void {
 	}
 
 	if (process.env.BUILD_ID === undefined) {
-		throw new Error ("BUILD_ID environment variable is not set.");
+		throw new Error("BUILD_ID environment variable is not set.");
 	}
 	if (process.env.PIPELINE === undefined) {
-		throw new Error ("PIPELINE environment variable is not set.");
+		throw new Error("PIPELINE environment variable is not set.");
 	}
 	if (process.env.STAGE_ID === undefined) {
-		throw new Error ("STAGE_ID environment variable is not set.");
+		throw new Error("STAGE_ID environment variable is not set.");
 	}
 
 	console.log("BUILD_ID:", process.env.BUILD_ID);
