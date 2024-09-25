@@ -9,8 +9,9 @@ import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 
+import type { IEphemeralRuntime } from "./internalTypes.js";
 import type { IPresence } from "./presence.js";
-import type { IEphemeralRuntime } from "./presenceDatastoreManager.js";
+import type { PresenceExtensionInterface } from "./presenceManager.js";
 import { createPresenceManager } from "./presenceManager.js";
 
 import type {
@@ -27,22 +28,18 @@ function isContainerExtensionStore(
 }
 
 /**
- * @internal
- */
-export interface IPresenceManager
-	extends IPresence,
-		Pick<Required<IContainerExtension<[]>>, "processSignal"> {}
-
-/**
  * Common Presence manager for a container
  */
 class ContainerPresenceManager implements IContainerExtension<never> {
-	public readonly extension: IPresenceManager;
-	public readonly interface = this;
+	public readonly interface: IPresence;
+	public readonly extension = this;
+	private readonly manager: PresenceExtensionInterface;
 
 	public constructor(runtime: IExtensionRuntime) {
 		// TODO create the appropriate ephemeral runtime (map address must be in submitSignal, etc.)
-		this.extension = createPresenceManager(runtime as unknown as IEphemeralRuntime);
+		this.interface = this.manager = createPresenceManager(
+			runtime as unknown as IEphemeralRuntime,
+		);
 	}
 
 	public onNewContext(): void {
@@ -52,7 +49,7 @@ class ContainerPresenceManager implements IContainerExtension<never> {
 	public static readonly extensionId = "dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a";
 
 	public processSignal(address: string, message: IExtensionMessage, local: boolean): void {
-		this.extension.processSignal(address, message, local);
+		this.manager.processSignal(address, message, local);
 	}
 }
 
@@ -75,9 +72,9 @@ export function acquirePresence(fluidContainer: IFluidContainer): IPresence {
 		0xa39 /* Container does not support extensions. Use acquirePresenceViaDataObject. */,
 	);
 
-	const pm = innerContainer.acquireExtension(
+	const presence = innerContainer.acquireExtension(
 		ContainerPresenceManager.extensionId,
 		ContainerPresenceManager,
 	);
-	return pm;
+	return presence;
 }

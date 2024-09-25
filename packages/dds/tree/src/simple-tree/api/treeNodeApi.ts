@@ -12,12 +12,9 @@ import {
 	isLazy,
 	isTreeValue,
 	FlexObjectNodeSchema,
-	isMapTreeNode,
 	FieldKinds,
 } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
 import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
@@ -44,6 +41,8 @@ import {
 	type TreeNode,
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
+	getOrCreateNodeFromInnerNode,
+	UnhydratedFlexTreeNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
@@ -141,7 +140,7 @@ export const treeNodeApi: TreeNodeApi = {
 			return undefined;
 		}
 
-		const output = getOrCreateNodeFromFlexTreeNode(editNode);
+		const output = getOrCreateNodeFromInnerNode(editNode);
 		assert(
 			!isTreeValue(output),
 			0x87f /* Parent can't be a leaf, so it should be a node not a value */,
@@ -241,7 +240,7 @@ export const treeNodeApi: TreeNodeApi = {
 				return undefined;
 			case 1: {
 				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
-				if (isMapTreeNode(flexNode)) {
+				if (flexNode instanceof UnhydratedFlexTreeNode) {
 					if (identifier === undefined) {
 						throw new UsageError(
 							"Tree.shortId cannot access default identifiers on unhydrated nodes",

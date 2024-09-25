@@ -967,6 +967,7 @@ declare type old_as_current_for_Interface_IMergeTreeDeltaOpArgs = requireAssigna
  * typeValidation.broken:
  * "Interface_IMergeTreeDeltaOpArgs": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeDeltaOpArgs = requireAssignableTo<TypeOnly<current.IMergeTreeDeltaOpArgs>, TypeOnly<old.IMergeTreeDeltaOpArgs>>
 
 /*
@@ -985,6 +986,7 @@ declare type old_as_current_for_Interface_IMergeTreeGroupMsg = requireAssignable
  * typeValidation.broken:
  * "Interface_IMergeTreeGroupMsg": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeGroupMsg = requireAssignableTo<TypeOnly<current.IMergeTreeGroupMsg>, TypeOnly<old.IMergeTreeGroupMsg>>
 
 /*
@@ -1343,6 +1345,24 @@ declare type current_as_old_for_Interface_MergeTreeRevertibleDriver = requireAss
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_ObliterateInfo": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ObliterateInfo = requireAssignableTo<TypeOnly<old.ObliterateInfo>, TypeOnly<current.ObliterateInfo>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ObliterateInfo": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ObliterateInfo = requireAssignableTo<TypeOnly<current.ObliterateInfo>, TypeOnly<old.ObliterateInfo>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_Property": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_Property = requireAssignableTo<TypeOnly<old.Property<any,any>>, TypeOnly<current.Property<any,any>>>
@@ -1552,6 +1572,7 @@ declare type old_as_current_for_TypeAlias_IMergeTreeDeltaOp = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_IMergeTreeDeltaOp": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IMergeTreeDeltaOp = requireAssignableTo<TypeOnly<current.IMergeTreeDeltaOp>, TypeOnly<old.IMergeTreeDeltaOp>>
 
 /*
@@ -1570,6 +1591,7 @@ declare type old_as_current_for_TypeAlias_IMergeTreeOp = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_IMergeTreeOp": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IMergeTreeOp = requireAssignableTo<TypeOnly<current.IMergeTreeOp>, TypeOnly<old.IMergeTreeOp>>
 
 /*

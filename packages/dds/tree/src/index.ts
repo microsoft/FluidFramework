@@ -58,6 +58,9 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	getBranch,
+	type TreeBranch,
+	type TreeBranchFork,
 } from "./shared-tree/index.js";
 
 export {
@@ -65,6 +68,7 @@ export {
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
+	type ViewableTree,
 	type ITree,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
@@ -82,6 +86,7 @@ export {
 	type TreeLeafValue,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
@@ -112,6 +117,7 @@ export {
 	type FieldSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
+	type TreeNodeSchemaNonClass,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -154,6 +160,7 @@ export {
 	type Covariant,
 	BrandedType,
 	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	type MakeNominal,
 } from "./util/index.js";
 
