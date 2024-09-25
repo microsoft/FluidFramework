@@ -14,16 +14,12 @@ import {
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {
-	UnhydratedContext,
 	UnhydratedFlexTreeNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
-import {
-	getFlexSchema,
-	SchemaFactory,
-	stringSchema,
-	toFlexSchema,
-} from "../../../simple-tree/index.js";
+import { getFlexSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 
 describe("unhydratedFlexTree", () => {
 	// #region The schema used in this test suite
@@ -74,9 +70,11 @@ describe("unhydratedFlexTree", () => {
 	// #endregion
 
 	// The `MapTreeNode`s used in this test suite:
-	const context = new UnhydratedContext(
-		toFlexSchema([mapSchemaSimple, arrayNodeSchemaSimple, objectSchemaSimple]),
-	);
+	const context = getUnhydratedContext([
+		mapSchemaSimple,
+		arrayNodeSchemaSimple,
+		objectSchemaSimple,
+	]);
 	const map = UnhydratedFlexTreeNode.getOrCreate(context, mapMapTree);
 	const arrayNode = UnhydratedFlexTreeNode.getOrCreate(context, fieldNodeMapTree);
 	const object = UnhydratedFlexTreeNode.getOrCreate(context, objectMapTree);

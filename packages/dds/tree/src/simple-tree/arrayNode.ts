@@ -42,7 +42,7 @@ import {
 	UnhydratedTreeSequenceField,
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
-import { createUnhydratedContext } from "./createContext.js";
+import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -956,7 +956,7 @@ export function arraySchema<
 			input: T2,
 		): UnhydratedFlexTreeNode {
 			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext.flexContext,
+				unhydratedContext,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
@@ -965,7 +965,7 @@ export function arraySchema<
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = createUnhydratedContext(schema);
+			unhydratedContext = getUnhydratedContext(schema);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
