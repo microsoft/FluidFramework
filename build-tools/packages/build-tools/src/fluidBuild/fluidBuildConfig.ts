@@ -59,7 +59,7 @@ export interface IFluidBuildDir {
 	 * @deprecated This property is now configured in the bump.defaultInterdependencyRange setting in the flub config.
 	 * This property will be removed in a future release.
 	 */
-	defaultInterdependencyRange?: InterdependencyRange,
+	defaultInterdependencyRange?: InterdependencyRange;
 }
 
 export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
