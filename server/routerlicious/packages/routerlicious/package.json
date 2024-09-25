@@ -83,6 +83,7 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {},
 		"entrypoint": "public"
 	}
