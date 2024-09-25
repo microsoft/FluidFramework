@@ -397,7 +397,7 @@ describe("LazySequence", () => {
 			initialTree: content,
 		});
 		const context = getTreeContext(
-			schema,
+			schema.policy,
 			new MockTreeCheckout(forest, {
 				schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
 			}),

@@ -18,7 +18,6 @@ import type { Listenable } from "../../events/index.js";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { FieldGenerator } from "../fieldGenerator.js";
 import type { NodeKeyManager } from "../node-key/index.js";
-import type { FlexTreeSchema } from "../typed-schema/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
@@ -29,12 +28,6 @@ import type { ITreeCheckout } from "../../shared-tree/index.js";
  * Context for FlexTrees.
  */
 export interface FlexTreeContext {
-	/**
-	 * Schema used within this context.
-	 * All data must conform to these schema.
-	 */
-	readonly flexSchema: FlexTreeSchema;
-
 	/**
 	 * Schema used within this context.
 	 * All data must conform to these schema.
@@ -97,7 +90,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * @param nodeKeyManager - An object which handles node key generation and conversion
 	 */
 	public constructor(
-		public readonly flexSchema: FlexTreeSchema,
+		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
@@ -112,10 +105,6 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 			0x92b /* Cannot create second flex-tree from checkout */,
 		);
 		this.checkout.forest.anchors.slots.set(ContextSlot, this);
-	}
-
-	public get schemaPolicy(): SchemaPolicy {
-		return this.flexSchema.policy;
 	}
 
 	public isHydrated(): this is FlexTreeHydratedContext {
@@ -201,7 +190,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(
-	schema: FlexTreeSchema,
+	schema: SchemaPolicy,
 	checkout: ITreeCheckout,
 	nodeKeyManager: NodeKeyManager,
 ): Context {

@@ -35,8 +35,6 @@ import {
 	indexForAt,
 	type FlexTreeHydratedContext,
 	FlexFieldSchema,
-	type FlexTreeSchema,
-	intoStoredSchemaCollection,
 	type FlexFieldKind,
 	FieldKinds,
 	type SequenceFieldEditBuilder,
@@ -92,7 +90,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 		return nodeCache.get(mapTree) ?? new UnhydratedFlexTreeNode(context, mapTree, undefined);
 	}
 
-	public get context(): UnhydratedContext {
+	public get context(): FlexTreeContext {
 		return this.simpleContext.flexContext;
 	}
 
@@ -222,24 +220,16 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
  * @remarks An editor is required to edit the FlexTree.
  */
 export class UnhydratedContext implements FlexTreeContext {
-	public readonly schema: TreeStoredSchema;
-
 	/**
 	 * @param flexSchema - Schema to use when working with the tree.
 	 */
-	public constructor(public readonly flexSchema: FlexTreeSchema) {
-		this.schema = {
-			rootFieldSchema: flexSchema.rootFieldSchema.stored,
-			...intoStoredSchemaCollection(flexSchema),
-		};
-	}
+	public constructor(
+		public readonly schemaPolicy: SchemaPolicy,
+		public readonly schema: TreeStoredSchema,
+	) {}
 
 	public isHydrated(): this is FlexTreeHydratedContext {
 		return false;
-	}
-
-	public get schemaPolicy(): SchemaPolicy {
-		return this.flexSchema.policy;
 	}
 }
 
@@ -282,7 +272,7 @@ const unparentedLocation: LocationInField = {
 class UnhydratedFlexTreeField implements FlexTreeField {
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
-	public get context(): UnhydratedContext {
+	public get context(): FlexTreeContext {
 		return this.simpleContext.flexContext;
 	}
 
