@@ -25,12 +25,10 @@ import {
 	flexTreeSlot,
 	isFlexTreeNode,
 	isFreedSymbol,
-	isMapTreeNode,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
-	type MapTreeNode,
 } from "../../feature-libraries/index.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import { fail } from "../../util/index.js";
@@ -38,6 +36,7 @@ import { fail } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import { SimpleContextSlot, type Context } from "./context.js";
+import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -149,7 +148,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		assert(!treeNodeToKernel.has(node), 0xa1a /* only one kernel per node can be made */);
 		treeNodeToKernel.set(node, this);
 
-		if (isMapTreeNode(innerNode)) {
+		if (innerNode instanceof UnhydratedFlexTreeNode) {
 			// Unhydrated case
 			mapTreeNodeToProxy.set(innerNode, node);
 		} else {
@@ -178,14 +177,14 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	 * Bi-directionally associates the given hydrated TreeNode to the given anchor node.
 	 * @remarks
 	 * Happens at most once for any given node.
-	 * Cleans up mappings to {@link MapTreeNode} - it is assumed that they are no longer needed once the proxy has an anchor node.
+	 * Cleans up mappings to {@link UnhydratedFlexTreeNode} - it is assumed that they are no longer needed once the proxy has an anchor node.
 	 */
 	public hydrate(anchorNode: AnchorNode): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(this.#hydrated === undefined, 0xa2b /* hydration should only happen once */);
 
 		// If the this node is raw and thus has a MapTreeNode, forget it:
-		if (isMapTreeNode(this.innerNode)) {
+		if (this.innerNode instanceof UnhydratedFlexTreeNode) {
 			mapTreeNodeToProxy.delete(this.innerNode);
 		}
 
@@ -264,7 +263,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
 	 */
 	public getOrCreateInnerNode(allowFreed = false): InnerNode {
-		if (!isMapTreeNode(this.innerNode)) {
+		if (!(this.innerNode instanceof UnhydratedFlexTreeNode)) {
 			// Cooked case
 			return this.innerNode;
 		}
@@ -370,12 +369,12 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
  * TODO: The inconsistent handling of "marinated" cases should be cleaned up.
  * Maybe getOrCreateInnerNode should cook marinated nodes so they have a proper InnerNode?
  */
-export type InnerNode = FlexTreeNode | MapTreeNode;
+export type InnerNode = FlexTreeNode | UnhydratedFlexTreeNode;
 
 /**
  * {@inheritdoc proxyToMapTreeNode}
  */
-export const mapTreeNodeToProxy = new WeakMap<MapTreeNode, TreeNode>();
+export const mapTreeNodeToProxy = new WeakMap<UnhydratedFlexTreeNode, TreeNode>();
 
 /**
  * An anchor slot which associates an anchor with its corresponding TreeNode, if there is one.
@@ -388,7 +387,9 @@ export const proxySlot = anchorSlot<TreeNode>();
 /**
  * Retrieves the node associated with the given MapTreeNode node if any.
  */
-export function tryGetTreeNodeFromMapNode(flexNode: MapTreeNode): TreeNode | undefined {
+export function tryGetTreeNodeFromMapNode(
+	flexNode: UnhydratedFlexTreeNode,
+): TreeNode | undefined {
 	return mapTreeNodeToProxy.get(flexNode);
 }
 

@@ -17,13 +17,9 @@ import {
 	typeSchemaSymbol,
 	type InnerNode,
 	type Context,
+	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import {
-	type FlexTreeNode,
-	type MapTreeNode,
-	isFlexTreeNode,
-	markEager,
-} from "../feature-libraries/index.js";
+import { type FlexTreeNode, isFlexTreeNode, markEager } from "../feature-libraries/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../util/index.js";
 
@@ -61,7 +57,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		this: typeof TreeNodeValid<T>,
 		instance: TreeNodeValid<T>,
 		input: T,
-	): MapTreeNode {
+	): UnhydratedFlexTreeNode {
 		return fail("Schema must override buildRawNode");
 	}
 
