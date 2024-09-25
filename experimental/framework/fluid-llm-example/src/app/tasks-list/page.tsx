@@ -54,7 +54,7 @@ export default function TasksListPage() {
 
 			{isFluidInitialized === false && <CircularProgress />}
 
-			{isFluidInitialized === true && taskGroups !== undefined && selectedTaskGroup !== undefined && <React.Fragment>
+			{isFluidInitialized === true && sharedTreeBranch !== undefined && taskGroups !== undefined && selectedTaskGroup !== undefined && <React.Fragment>
 
 				<Stack direction='row' spacing={2} alignItems='center' >
 					<Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -64,7 +64,7 @@ export default function TasksListPage() {
 								setSelectedTaskGroup(foundTaskGroup);
 							}}
 						>
-							{taskGroups?.map(taskGroup => <Tab label={taskGroup.title} value={taskGroup.id} />)}
+							{taskGroups?.map(taskGroup => <Tab label={taskGroup.title} value={taskGroup.id} key={taskGroup.id} />)}
 						</Tabs>
 					</Box>
 

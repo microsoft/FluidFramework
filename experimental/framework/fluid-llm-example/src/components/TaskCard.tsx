@@ -33,7 +33,6 @@ export function TaskCard(props: {
 
 	const deleteTask = () => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
-		console.log('initiated delete of task at index: ', taskIndex);
 		props.sharedTreeTaskGroup.tasks.removeAt(taskIndex);
 	};
 
@@ -83,8 +82,7 @@ export function TaskCard(props: {
 		{fieldDifferences.moved &&
 			<Box component='span' sx={{ position: 'absolute', top: 5, left: 5 }}>
 				<Tooltip title={`This was moved from index: ${fieldDifferences.moved.path[fieldDifferences.moved.path.length - 1]}`}>
-					<Icon icon='material-symbols:move-down' width={35} height={35} color='blue' />
-
+					<Icon icon='material-symbols:move-down' width={30} height={30} color='blue' />
 				</Tooltip>
 			</Box>
 		}
@@ -122,40 +120,25 @@ export function TaskCard(props: {
 								e.preventDefault();
 								const formData = new FormData(e.currentTarget);
 								const query = formData.get('searchQuery') as string;
-								console.log('evoking server action w/ query: ', query);
+
 								setIsAiTaskRunning(true);
 								enqueueSnackbar(
 									`Copilot: I'm working on your request - "${query}"`,
 									{ variant: 'info', autoHideDuration: 5000 }
 								);
-								const resp = await editTask({ ...task } as Task, query);
+
+								const response = await editTask({ ...task } as Task, query);
+
 								setIsAiTaskRunning(false);
 								enqueueSnackbar(
 									`Copilot: I've completed your request - "${query}"`,
 									{ variant: 'success', autoHideDuration: 5000 }
 								);
-								// METHOD 1: Overwrite the entire task object
-								// if (resp.success) {
-								// 	// We don't know what exactly changed, So we just update everything.
-								// 	props.sharedTreeTask.description = resp.data.description;
-								// 	props.sharedTreeTask.priority = resp.data.priority;
-								// 	props.sharedTreeTask.status = resp.data.status
-								// }
 
-								// METHOD 2: Update only the changed fields using a merge function
-								if (resp.success) {
+								if (response.success) {
 									const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: 'id' });
-									branchManager.merge(props.sharedTreeTask as unknown as Record<string, unknown>, resp.data as unknown as Record<string, unknown>);
+									branchManager.merge(props.sharedTreeTask as unknown as Record<string, unknown>, response.data as unknown as Record<string, unknown>);
 								}
-
-								// METHOD 3: Update only the changed fields into a new branch of the data
-								// if (resp.success) {
-								// 	const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: 'id' });
-								// 	const { differences, newBranch, newBranchTargetNode } = branchManager.checkoutNewMergedBranch(props.sharedTreeBranch, [], resp.data as unknown as Record<string, unknown>);
-								// 	// Do something with the new branch, like a preview.
-								// 	console.log('newBranch: ', newBranch);
-								// 	console.log('newBranchTargetNode: ', { ...newBranchTargetNode });
-								// }
 							}}
 						>
 							<TextField

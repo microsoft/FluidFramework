@@ -6,13 +6,13 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { Tree, type TreeView } from "@fluidframework/tree";
 import { editTaskGroup } from "@/actions/task";
 import { LoadingButton } from "@mui/lab";
-import { merge, SharedTreeBranchManager, type Difference, type DifferenceChange } from "@fluid-experimental/fluid-llm";
+import { branch, merge, SharedTreeBranchManager, type Difference, type DifferenceChange } from "@fluid-experimental/fluid-llm";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 import { useSnackbar } from 'notistack';
 
 
 export function TaskGroup(props: {
-	sharedTreeBranch?: TreeView<typeof SharedTreeAppState>,
+	sharedTreeBranch: TreeView<typeof SharedTreeAppState>,
 	branchDifferences?: Difference[],
 	sharedTreeTaskGroup: SharedTreeTaskGroup
 }) {
@@ -173,55 +173,45 @@ export function TaskGroup(props: {
 						e.preventDefault();
 						const formData = new FormData(e.currentTarget);
 						const query = formData.get('searchQuery') as string;
-						console.log('evoking server action w/ query: ', query);
 						setIsAiTaskRunning(true);
 						enqueueSnackbar(
 							`Copilot: I'm working on your request - "${query}"`,
 							{ variant: 'info', autoHideDuration: 5000 }
 						);
-						const resp = await editTaskGroup(sharedTreeTaskGroupToJson(props.sharedTreeTaskGroup), query);
-						setIsAiTaskRunning(false);
-						enqueueSnackbar(
-							`Copilot: I've completed your request - "${query}"`,
-							{ variant: 'success', autoHideDuration: 5000 }
-						);
 
-						// METHOD 1: Overwrite the entire task object
-						// if (resp.success) {
-						// 	// We don't know what exactly changed, So we just update everything.
-						// 	props.sharedTreeTaskGroup.title = resp.data.title;
-						// 	props.sharedTreeTaskGroup.description = resp.data.description;
-						// 	props.sharedTreeTaskGroup.tasks = new SharedTreeTaskList(resp.data.tasks);
-						// 	props.sharedTreeTaskGroup.engineers = new SharedTreeEngineerList(resp.data.engineers);
-						// }
+						const llmChangeBranch = branch(props.sharedTreeBranch);
+						const indexOfTaskGroup = props.sharedTreeBranch.root.taskGroups.indexOf(props.sharedTreeTaskGroup);
+						const targetTaskGroup = llmChangeBranch.root.taskGroups[indexOfTaskGroup];
 
-						// METHOD 2: Update only the changed fields using a merge function
-						// Still will be stale work because the "branch" the llm recieved was at request initiation, not at response time.
-						// if (resp.success) {
-						// 	const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: 'id' });
-						// 	console.log('merginging llm response in to the following tree', sharedTreeTaskGroupToJson(props.sharedTreeTaskGroup))
-						// 	branchManager.merge(props.sharedTreeTaskGroup as unknown as Record<string, unknown>, resp.data as unknown as Record<string, unknown>);
-						// }
-
-						// METHOD 3: Update only the changed fields into a new branch of the data
-						if (resp.success && props.sharedTreeBranch) {
+						const resp = await editTaskGroup(sharedTreeTaskGroupToJson(targetTaskGroup), query);
+						if (resp.success) {
 							console.log('initiating checkoutNewMergedBranch')
 							const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: 'id' });
 
-							const { differences, newBranch, newBranchTargetNode } =
-								branchManager.checkoutNewMergedBranch(
-									props.sharedTreeBranch,
-									['taskGroups', props.sharedTreeBranch.root.taskGroups.indexOf(props.sharedTreeTaskGroup)],
-									resp.data as unknown as Record<string, unknown>
-								);
+							const differences = branchManager.compare(targetTaskGroup as unknown as Record<string, unknown>, resp.data as unknown as Record<string, unknown>);
+							const { newBranch, newBranchTargetNode } = branchManager.checkoutNewMergedBranchV2(
+								props.sharedTreeBranch,
+								['taskGroups', indexOfTaskGroup],
+								differences
+							)
 
-							// Do something with the new branch, like a preview.
 							console.log('newBranch: ', newBranch);
 							console.log('newBranchTargetNode: ', { ...newBranchTargetNode });
 							console.log('differences: ', { ...differences });
 							setLlmBranchData({ differences, newBranch, newBranchTargetNode: newBranchTargetNode as unknown as SharedTreeTaskGroup });
 							setIsDiffModelOpen(true);
+							enqueueSnackbar(
+								`Copilot: I've completed your request - "${query}"`,
+								{ variant: 'success', autoHideDuration: 5000 }
+							);
+						} else {
+							enqueueSnackbar(
+								`Copilot: Something went wrong processing your request - "${query}"`,
+								{ variant: 'error', autoHideDuration: 5000 }
+							);
 						}
+
+						setIsAiTaskRunning(false);
 					}}
 				>
 					<TextField
@@ -279,7 +269,7 @@ export function TaskGroup(props: {
 		</Stack>
 
 
-		{/* Render Task Cards */}
+		{/* Render Task Card list */}
 		<Stack spacing={2} sx={{ alignItems: 'center' }}>
 			{props.sharedTreeTaskGroup.tasks.map(task => {
 				const taskDiffs: Difference[] = [];

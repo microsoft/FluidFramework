@@ -10,6 +10,10 @@ import bgImg from '/public/msft-bg.webp';
 
 const inter = Inter({ subsets: ["latin"] });
 
+/**
+ * A root page layout used with NextJS.
+ * Note that because this layout includes the base <html> and <body> tags, it should only be used once per page.
+ */
 export default function PageLayout({
 	children,
 }: Readonly<{

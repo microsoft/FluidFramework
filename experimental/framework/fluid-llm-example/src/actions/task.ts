@@ -78,6 +78,7 @@ export async function editTaskGroup(
 	console.log("sending prompt: ", prompt);
 	const response = await translator.translate(prompt);
 	console.log("response: ", response);
+
 	if (response.success) {
 		console.log(
 			"response tasks before id replacement:",

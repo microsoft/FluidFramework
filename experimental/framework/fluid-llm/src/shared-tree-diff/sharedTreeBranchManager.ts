@@ -110,6 +110,26 @@ export class SharedTreeBranchManager {
 	}
 
 	/**
+	 * produces a diff between two objects and merges the differences.
+	 */
+	public checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(
+		treeView: TreeView<T>,
+		absolutePathToObjectNode: ObjectPath,
+		differences: Difference[],
+	): {
+		newBranch: TreeView<T>;
+		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
+	} {
+		const newBranch = sharedTreeBranch(treeView);
+		const newBranchTargetNode = sharedTreeTraverse(
+			newBranch.root as Record<string, unknown> | unknown[],
+			absolutePathToObjectNode,
+		) as Record<string, unknown> | TreeArrayNode;
+		this.mergeDiffs(differences, newBranchTargetNode);
+		return { newBranch, newBranchTargetNode };
+	}
+
+	/**
 	 * Handles applying an array of differences to an object in the proper order and making any necessary adjustments as each diff
 	 * is applied.
 	 *
