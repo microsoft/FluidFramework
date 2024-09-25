@@ -68,7 +68,7 @@ export class NexusRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create an HTTP server with a blank request listener
+		// Create an HTTP server with a request listener for health endpoints.
 		const nexus = app.create(this.config, this.readinessCheck);
 		nexus.set("port", this.port);
 		this.server = this.serverFactory.create(nexus);
