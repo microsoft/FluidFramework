@@ -41,7 +41,7 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 			? getOrCreateNodeFromInnerNode(maybeContent)
 			: maybeContent;
 	}
-	switch (field.schema.kind) {
+	switch (field.schema) {
 		case FieldKinds.required.identifier: {
 			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);

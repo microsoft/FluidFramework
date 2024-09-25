@@ -14,7 +14,6 @@ import {
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	type TreeFieldStoredSchema,
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
@@ -75,7 +74,7 @@ const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new Weak
 
 export function makeField(
 	context: Context,
-	schema: TreeFieldStoredSchema,
+	schema: FieldKindIdentifier,
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
@@ -83,7 +82,7 @@ export function makeField(
 
 	const makeFlexTreeField = (): FlexTreeField => {
 		usedAnchor = true;
-		const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
+		const field = new (kindToClass.get(schema) ?? fail("missing field implementation"))(
 			context,
 			schema,
 			cursor,
@@ -139,7 +138,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 
 	public constructor(
 		context: Context,
-		public readonly schema: TreeFieldStoredSchema,
+		public readonly schema: FieldKindIdentifier,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -160,11 +159,11 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
 		assert(
-			this.context.flexSchema.policy.fieldKinds.get(kind.identifier) === kind,
+			this.context.schemaPolicy.fieldKinds.get(kind.identifier) === kind,
 			0xa26 /* Narrowing must be done to a kind that exists in this context */,
 		);
 
-		return this.schema.kind === kind.identifier;
+		return this.schema === kind.identifier;
 	}
 
 	public get parent(): FlexTreeNode | undefined {
@@ -339,7 +338,7 @@ export class LazyForbiddenField extends LazyField {}
 type Builder = new (
 	context: Context,
 	// Correct use of these builders requires the builder of the matching type to be used.
-	schema: TreeFieldStoredSchema,
+	schema: FieldKindIdentifier,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
 ) => LazyField;

@@ -183,16 +183,6 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(object.parentField.parent.parent, undefined);
 	});
 
-	it("can downcast", () => {
-		assert.equal(map.is(mapSchema), true);
-		assert.equal(arrayNode.is(arrayNodeSchema), true);
-		assert.equal(object.is(objectSchema), true);
-
-		assert.equal(map.is(arrayNodeSchema), false);
-		assert.equal(arrayNode.is(objectSchema), false);
-		assert.equal(object.is(mapSchema), false);
-	});
-
 	describe("cannot", () => {
 		it("get their context", () => {
 			assert.equal(map.context.isHydrated(), false);

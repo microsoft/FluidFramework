@@ -44,12 +44,10 @@ import {
 	rootFieldAnchor,
 } from "./utils.js";
 import {
-	booleanSchema,
 	cursorFromInsertable,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	toFlexSchema,
 } from "../../../simple-tree/index.js";
 import { getFlexSchema, toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { JsonObject, singleJsonCursor } from "../../json/index.js";
@@ -74,13 +72,13 @@ describe("LazyField", () => {
 
 		const optionalField = new LazyOptionalField(
 			context,
-			FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(JsonObject)]).stored,
+			FieldKinds.optional.identifier,
 			cursor,
 			detachedFieldAnchor,
 		);
 		const valueField = new LazyValueField(
 			context,
-			FlexFieldSchema.create(FieldKinds.required, [getFlexSchema(JsonObject)]).stored,
+			FieldKinds.required.identifier,
 			cursor,
 			detachedFieldAnchor,
 		);
@@ -116,7 +114,7 @@ describe("LazyField", () => {
 
 		const booleanOptionalField = new LazyOptionalField(
 			context,
-			FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(booleanSchema)]).stored,
+			FieldKinds.optional.identifier,
 			cursor,
 			detachedFieldAnchor,
 		);
@@ -141,7 +139,7 @@ describe("LazyField", () => {
 
 		const rootField = new TestLazyField(
 			context,
-			schema.rootFieldSchema,
+			schema.rootFieldSchema.kind,
 			cursor,
 			rootFieldAnchor,
 		);
@@ -158,15 +156,10 @@ describe("LazyField", () => {
 		cursor.enterNode(0);
 		cursor.enterField(brand("foo"));
 
-		const leafField = new TestLazyField(
-			context,
-			toFlexSchema(factory.number).rootFieldSchema.stored,
-			cursor,
-			{
-				parent: parentAnchor,
-				fieldKey: brand("foo"),
-			},
-		);
+		const leafField = new TestLazyField(context, FieldKinds.required.identifier, cursor, {
+			parent: parentAnchor,
+			fieldKey: brand("foo"),
+		});
 		assert.equal(leafField.parent, rootField.boxedAt(0));
 	});
 
@@ -182,7 +175,7 @@ describe("LazyField", () => {
 
 		const field = new TestLazyField(
 			context,
-			schema.rootFieldSchema,
+			schema.rootFieldSchema.kind,
 			cursor,
 			detachedFieldAnchor,
 		);
@@ -251,7 +244,7 @@ describe("LazyOptionalField", () => {
 			schema,
 			initialTree: singleJsonCursor(42),
 		});
-		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+		const field = new LazyOptionalField(context, rootSchema.kind, cursor, rootFieldAnchor);
 
 		it("atIndex", () => {
 			assert.equal(field.atIndex(0), 42);
@@ -280,7 +273,7 @@ describe("LazyOptionalField", () => {
 			schema,
 			initialTree: undefined,
 		});
-		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+		const field = new LazyOptionalField(context, rootSchema.kind, cursor, rootFieldAnchor);
 
 		it("atIndex", () => {
 			// Invalid to request the value if there isn't one.
@@ -342,7 +335,7 @@ describe("LazyValueField", () => {
 		initialTree: singleJsonCursor(initialTree),
 	});
 
-	const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
+	const field = new LazyValueField(context, rootSchema.kind, cursor, rootFieldAnchor);
 
 	it("atIndex", () => {
 		assert.equal(field.atIndex(0), initialTree);
@@ -412,7 +405,7 @@ describe("LazySequence", () => {
 		);
 		const cursor = initializeCursor(context, rootFieldAnchor);
 
-		return new LazySequence(context, rootSchema.stored, cursor, rootFieldAnchor);
+		return new LazySequence(context, rootSchema.stored.kind, cursor, rootFieldAnchor);
 	}
 
 	it("atIndex", () => {
