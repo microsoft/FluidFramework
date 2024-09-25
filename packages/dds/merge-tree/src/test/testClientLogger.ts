@@ -36,15 +36,15 @@ function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 	const op = msg.contents as IMergeTreeOp;
 	const opType = op.type.toString();
 	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const pos1Side = op?.["before1"] === undefined ? "" : op["before1"] ? "before" : "after";
+	const pos1Side = op?.["before1"] === undefined ? "" : op["before1"] ? "[" : "(";
 	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const pos2Side = op?.["before2"] === undefined ? "" : op["before2"] ? "before" : "after";
+	const pos2Side = op?.["before2"] === undefined ? "" : op["before2"] ? ")" : "]";
 	const opPos =
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		op?.["pos1"] === undefined
 			? ""
 			: // eslint-disable-next-line @typescript-eslint/dot-notation
-				`@${pos1Side}${op["pos1"]}${op["pos2"] === undefined ? "" : `,${pos2Side}${op["pos2"]}`}`;
+				`@${pos1Side}${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}${pos2Side}`}`;
 
 	const seq = msg.sequenceNumber < 0 ? "L" : msg.sequenceNumber.toString();
 	const ref = msg.referenceSequenceNumber.toString();
@@ -317,9 +317,11 @@ export class TestClientLogger {
 				`-: Deleted    ~:Deleted <= MinSeq\n` +
 				`*: Unacked Insert and Delete\n` +
 				`${this.clients[0].getCollabWindow().minSeq}: msn/offset\n` +
-				`Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>\n` +
+				`Op format <seq>:<ref>:<client><type>@<side1><pos1>,<pos2><side2>\n` +
 				`sequence number represented as offset from msn. L means local.\n` +
-				`op types: 0) insert 1) remove 2) annotate 4) obliterate\n`;
+				`op types: 0) insert 1) remove 2) annotate 4) obliterate\n` +
+				`for obliterates: [] indicates that the range includes the position,\n` +
+				`and () indicates that the range excludes that position from the obliterate.\n`;
 
 			if (this.title) {
 				str += `${this.title}\n`;
