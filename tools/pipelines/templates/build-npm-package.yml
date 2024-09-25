@@ -630,7 +630,7 @@ extends:
               variables:
               - group: ado-feeds
               - name: pipelineTelemetryWorkdir
-                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
                 readonly: true
               - name: absolutePathToTelemetryGenerator
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
@@ -642,21 +642,29 @@ extends:
                   officeFeedUrl: $(ado-feeds-office)
                   isCheckoutNeeded: true
               - task: Bash@3
-                displayName: Retrieve buildId results
+                displayName: Get stage timing and result data from ADO
+                env:
+                  BUILD_ID: $(Build.BuildId)
+                  ADO_API_TOKEN: $(System.AccessToken)
+                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
+                inputs:
+                  targetType: inline
+                  script: |
+                    echo "Creating work folder '$WORK_FOLDER'";
+                    mkdir -p $WORK_FOLDER;
+
+                    echo "Retrieving data from ADO API";
+                    echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\""
+                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+              - task: Bash@3
+                displayName: Submit telemetry for stage timing and result
+                env:
+                  BUILD_ID: $(Build.BuildId)
+                  PIPELINE: BuildClient
                 inputs:
                   targetType: inline
                   workingDirectory: $(absolutePathToTelemetryGenerator)
                   script: |
-                    echo "Creating output folder ..."
-                    mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
-                    echo "Retrieving pipeline run timeline data ..."
-                    echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
-                    pwd;
-                    ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-                    cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-                    node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
-                env:
-                  BUILD_ID: $(Build.BuildId)
-                  ADO_API_TOKEN: $(System.AccessToken)
-                  PIPELINE: BuildClient
+                    echo "Listing files in '$WORK_FOLDER'"
+                    ls -laR $WORK_FOLDER;
+                    node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
