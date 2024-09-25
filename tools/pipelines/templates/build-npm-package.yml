@@ -643,7 +643,6 @@ extends:
                 env:
                   BUILD_ID: $(Build.BuildId)
                   ADO_API_TOKEN: $(System.AccessToken)
-                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
                 inputs:
                   targetType: inline
                   script: |
