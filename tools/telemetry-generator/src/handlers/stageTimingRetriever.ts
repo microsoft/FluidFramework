@@ -50,11 +50,23 @@ module.exports = function handler(fileData, logger): void {
 		// It might be interesting in the future - for now we will only collect stage-level telemetry.
 		.filter((job) => job.type === "Stage" && job.identifier === process.env.STAGE_ID)
 		.map((job): ParsedJob => {
-			const startTime = Date.parse(job.startTime.toString());
-			const finishTime = Date.parse(job.finishTime.toString());
-			if (Number.isNaN(startTime) || Number.isNaN(finishTime)) {
-				// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
-				throw new Error("Failed to parse start or finish time. The specified pipeline stage might not have finished yet.");
+			const finishTime = Date.parse(job.finishTime?.toString());
+			if (Number.isNaN(finishTime)) {
+					// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
+					throw new Error(`Failed to parse finishTime '${job.finishTime}'. The specified pipeline stage might not have finished yet.`);
+			}
+
+			let startTime: number = finishTime;
+			if (job.state === "completed" && job.startTime === null) {
+					// A null start time when 'state === completed' indicates the stage was skipped.
+					// Set startTime to finishTime so duration ends up being 0.
+					startTime = finishTime;
+			} else {
+					startTime = Date.parse(job.startTime?.toString());
+					if (Number.isNaN(startTime)) {
+							// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
+							throw new Error(`Failed to parse startTime '${job.startTime}'.`);
+					}
 			}
 
 			console.log(`Processed stage - name='${job.name}' identifier='${job.identifier}' state='${job.state}' result='${job.result}'`);
