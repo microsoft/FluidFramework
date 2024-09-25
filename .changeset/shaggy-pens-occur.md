@@ -18,7 +18,7 @@ Most of these types are not meant to be used directly, and direct use is not sup
  - SharedSegmentSequence
  - SharedStringClass
 
-Some of the deprecations are for class constructors and in those cases we plan to replace the class with an interface which has an equivalent API. Direct instantiation of these classes is not currently supported or necessary for any supported scenario, so the change to an interface should not impact usage:
+Some of the deprecations are for class constructors, and in those cases, we plan to replace the class with an interface which has an equivalent API. Direct instantiation of these classes is not currently supported or necessary for any supported scenario, so the change to an interface should not impact usage:
 - SequenceInterval
 - SequenceEvent
 - SequenceDeltaEvent
