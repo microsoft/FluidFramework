@@ -183,7 +183,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-
 		// If trackState is false, call summarize internal directly and don't track any state.
 		if (!trackState) {
 			return this.summarizeInternalFn(fullTree, trackState, telemetryContext);
