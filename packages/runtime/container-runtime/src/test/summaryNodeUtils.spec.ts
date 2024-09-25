@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+
+// eslint-disable-next-line import/no-internal-modules
 import { EscapedPath } from "../summary/summarizerNode/summarizerNodeUtils.js";
 
 /**
