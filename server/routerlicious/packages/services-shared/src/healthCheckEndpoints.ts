@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { RequestHandler, Router, Request, Response, NextFunction } from "express";
 import {
 	throttle,
@@ -22,6 +27,13 @@ function noopMiddleware(req: Request, res: Response, next: NextFunction) {
 	next();
 }
 
+/**
+ * Creates the health check endpoints for the service.
+ * @param serviceName - The name of the service.
+ * @param readinessCheck - Optional readiness check.
+ * @param createLivenessEndpoint - Whether to create the liveness endpoint. Services like Alfred already have a ping endpoint, so this can be set to false.
+ * @param throttlerConfig - Optional throttler configuration.
+ */
 export function createHealthCheckEndpoints(
 	serviceName: string,
 	readinessCheck?: IReadinessCheck,
