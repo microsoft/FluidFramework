@@ -3,33 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { Lazy, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
-	type FlexTreeNodeSchema,
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
-	type MapTreeNode,
-	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isFlexTreeNode,
-	isMapTreeSequenceField,
-	UnhydratedContext,
 } from "../feature-libraries/index.js";
-import { getOrCreateNodeFromFlexTreeNode, prepareContentForHydration } from "./proxies.js";
+import { prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
-// This import seems to trigger a false positive `Type import "TreeNodeFromImplicitAllowedTypes" is used by decorator metadata` lint error.
-// Other ways to import (ex: import the module with the items as type imports) give different more real errors, and auto fix to this format,
-// so there does not seem to be a clean workaround to make the linter happy.
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-import type {
-	ImplicitAllowedTypes,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeSchemaMetadata,
-	NodeSchemaProps,
-	TreeNodeFromImplicitAllowedTypes,
+import {
+	normalizeAllowedTypes,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
+	type NodeSchemaProps,
+	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	type WithType,
@@ -38,15 +30,22 @@ import {
 	NodeKind,
 	type TreeNode,
 	type InternalTreeNode,
-	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
 	typeSchemaSymbol,
+	type Context,
+	getOrCreateNodeFromInnerNode,
+	type TreeNodeSchemaBoth,
+	getSimpleNodeSchemaFromInnerNode,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
-import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
-import { getKernel } from "./core/index.js";
+import {
+	getKernel,
+	UnhydratedFlexTreeNode,
+	UnhydratedTreeSequenceField,
+} from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
+import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -561,7 +560,7 @@ function createArrayNodeProxy(
 
 			const maybeContent = field.at(maybeIndex);
 			return isFlexTreeNode(maybeContent)
-				? getOrCreateNodeFromFlexTreeNode(maybeContent)
+				? getOrCreateNodeFromInnerNode(maybeContent)
 				: maybeContent;
 		},
 		set: (target, key, newValue, receiver) => {
@@ -621,7 +620,7 @@ function createArrayNodeProxy(
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					value: isFlexTreeNode(val) ? getOrCreateNodeFromFlexTreeNode(val) : val,
+					value: isFlexTreeNode(val) ? getOrCreateNodeFromInnerNode(val) : val,
 					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
@@ -667,6 +666,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public static readonly kind = NodeKind.Array;
 
 	protected abstract get simpleSchema(): T;
+	protected abstract get allowedTypes(): ReadonlySet<TreeNodeSchema>;
 
 	public constructor(
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
@@ -738,7 +738,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			return val;
 		}
 
-		return getOrCreateNodeFromFlexTreeNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
@@ -823,6 +823,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		source?: TreeArrayNode,
 	): void {
 		const destinationField = getSequenceField(this);
+		const destinationSchema = this.allowedTypes;
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
@@ -832,7 +833,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
 				const sourceNode = sourceField.boxedAt(i) ?? oob();
-				if (!destinationField.schema.types.has(sourceNode.schema)) {
+				const sourceSchema = getSimpleNodeSchemaFromInnerNode(sourceNode);
+				if (!destinationSchema.has(sourceSchema)) {
 					throw new UsageError("Type in source sequence is not allowed in destination.");
 				}
 			}
@@ -840,7 +842,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const movedCount = sourceEnd - sourceStart;
 		if (!destinationField.context.isHydrated()) {
-			if (!isMapTreeSequenceField(sourceField)) {
+			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+				throw new UsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				);
+			}
+
+			if (sourceField.context.isHydrated()) {
 				throw new UsageError(
 					"Cannot move elements from an unhydrated array to a hydrated array.",
 				);
@@ -914,7 +922,7 @@ export function arraySchema<
 	customizable: boolean,
 	props?: NodeSchemaProps<TCustomMetadata>,
 ) {
-	type Output = TreeNodeSchemaClass<
+	type Output = TreeNodeSchemaBoth<
 		TName,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
@@ -923,8 +931,10 @@ export function arraySchema<
 		T,
 		TCustomMetadata
 	>;
-	let flexSchema: FlexTreeNodeSchema;
-	let unhydratedContext: UnhydratedContext;
+
+	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+
+	let unhydratedContext: Context;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
@@ -953,20 +963,18 @@ export function arraySchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): MapTreeNode {
-			return getOrCreateMapTreeNode(
+		): UnhydratedFlexTreeNode {
+			return UnhydratedFlexTreeNode.getOrCreate(
 				unhydratedContext,
-				flexSchema,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			const schema = this as unknown as TreeNodeSchema;
-			flexSchema = getFlexSchema(schema);
-			unhydratedContext = new UnhydratedContext(toFlexSchema(schema));
+			unhydratedContext = getUnhydratedContext(schema);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
@@ -992,12 +1000,17 @@ export function arraySchema<
 					prototype = Reflect.getPrototypeOf(prototype) as object;
 				}
 			}
+
+			return unhydratedContext;
 		}
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
+		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
+			return lazyChildTypes.value;
+		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
 			props?.metadata;
 
@@ -1011,6 +1024,9 @@ export function arraySchema<
 
 		protected get simpleSchema(): T {
 			return info;
+		}
+		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
+			return lazyChildTypes.value;
 		}
 	}
 

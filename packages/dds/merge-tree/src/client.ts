@@ -56,6 +56,7 @@ import {
 	createGroupOp,
 	createInsertSegmentOp,
 	createObliterateRangeOp,
+	createObliterateRangeOpSided,
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
@@ -72,9 +73,11 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import { type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -252,15 +255,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Obliterates the range. This is similar to removing the range, but also
 	 * includes any concurrently inserted content.
 	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
+	 * @param start - The start of the range to obliterate. Inclusive is side is Before (default).
+	 * @param end - The end of the range to obliterate. Exclusive is side is After
+	 * (default is to be after the last included character, but number index is exclusive).
 	 */
 	public obliterateRangeLocal(
-		start: number,
-		end: number,
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
 		// eslint-disable-next-line import/no-deprecated
-	): IMergeTreeObliterateMsg {
-		const obliterateOp = createObliterateRangeOp(start, end);
+	): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg {
+		// eslint-disable-next-line import/no-deprecated
+		let obliterateOp: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
+		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
+			obliterateOp = createObliterateRangeOpSided(start, end);
+		} else {
+			assert(
+				typeof start === "number" && typeof end === "number",
+				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+			);
+			obliterateOp = createObliterateRangeOp(start, end);
+		}
 		this.applyObliterateRangeOp({ op: obliterateOp });
 		return obliterateOp;
 	}
@@ -472,22 +486,40 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.OBLITERATE,
+			opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED,
 			0x866 /* Unexpected op type on range obliterate! */,
 		);
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
-
-		this._mergeTree.obliterateRange(
-			range.start,
-			range.end,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
-			false,
-			opArgs,
-		);
+		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
+			/*
+			const _start: InteriorSequencePlace =
+				typeof op.pos1 === "object"
+					? { pos: op.pos1.pos, side: op.pos1.before ? Side.Before : Side.After }
+					: { pos: op.pos1, side: Side.Before };
+			const _end: InteriorSequencePlace =
+				typeof op.pos2 === "object"
+					? { pos: op.pos2.pos, side: op.pos2.before ? Side.Before : Side.After }
+					: { pos: op.pos2 - 1, side: Side.After };
+			*/
+			assert(false, "TODO: sided obliterate will come in a follow-up PR shortly.");
+		} else {
+			assert(
+				op.type === MergeTreeDeltaType.OBLITERATE,
+				"Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled",
+			);
+			const range = this.getValidOpRange(op, clientArgs);
+			this._mergeTree.obliterateRange(
+				range.start,
+				range.end,
+				clientArgs.referenceSequenceNumber,
+				clientArgs.clientId,
+				clientArgs.sequenceNumber,
+				false,
+				opArgs,
+			);
+		}
 	}
 
 	/**
@@ -614,7 +646,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				invalidPositions.push("start");
 			}
 			// Validate end if not insert, or insert has end
-			//
 			if (
 				(op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
 				(end === undefined || end <= start!)
@@ -892,7 +923,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				const first = opList[0];
 
-				if (!!first && first.pos2 !== undefined) {
+				if (
+					!!first &&
+					first.pos2 !== undefined &&
+					first.type !== MergeTreeDeltaType.OBLITERATE_SIDED &&
+					newOp.type !== MergeTreeDeltaType.OBLITERATE_SIDED
+				) {
 					first.pos2 += newOp.pos2! - newOp.pos1!;
 				} else {
 					opList.push(newOp);
@@ -975,6 +1011,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 			case MergeTreeDeltaType.OBLITERATE: {
 				this.applyObliterateRangeOp({ op });
+				break;
+			}
+			case MergeTreeDeltaType.OBLITERATE_SIDED: {
+				assert(false, "TODO: sided obliterate will come in a follow-up PR shortly.");
 				break;
 			}
 			case MergeTreeDeltaType.GROUP: {
