@@ -41,7 +41,7 @@ export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchem
 		definitions,
 	};
 
-	// Don't include "description" property at all if it's not present on the input.
+	// Include the "description" property only if it's present on the input.
 	if (normalizedSchema.metadata?.description !== undefined) {
 		output.description = normalizedSchema.metadata.description;
 	}
