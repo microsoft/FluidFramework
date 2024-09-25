@@ -345,6 +345,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 /**
  * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>

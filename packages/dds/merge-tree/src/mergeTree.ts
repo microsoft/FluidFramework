@@ -221,6 +221,7 @@ export function errorIfOptionNotTrue(
 /**
  * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export interface IMergeTreeAttributionOptions {
 	/**
@@ -248,6 +249,7 @@ export interface IMergeTreeAttributionOptions {
  * @sealed
  * @legacy
  * @alpha
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  */
 export interface AttributionPolicy {
 	/**
