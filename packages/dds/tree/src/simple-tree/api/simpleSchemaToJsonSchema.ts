@@ -105,7 +105,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 		items,
 	};
 
-	// Don't include "description" property at all if it's not present.
+	// Only include "description" property if it is present on the input.
 	if (schema.description !== undefined) {
 		output.description = schema.description;
 	}
@@ -176,7 +176,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 		additionalProperties: false,
 	};
 
-	// Don't include "description" property at all if it's not present in the input.
+	// Only include "description" property if it is present on the input.
 	if (schema.description !== undefined) {
 		transformedNode.description = schema.description;
 	}
@@ -203,7 +203,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		},
 	};
 
-	// Don't include "description" property at all if it's not present.
+	// Only include "description" property if it is present on the input.
 	if (schema.description !== undefined) {
 		output.description = schema.description;
 	}
