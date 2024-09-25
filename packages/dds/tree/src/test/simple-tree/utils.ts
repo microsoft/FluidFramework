@@ -12,9 +12,12 @@ import {
 	MockNodeKeyManager,
 } from "../../feature-libraries/index.js";
 import {
+	HydratedContext,
 	isTreeNode,
 	isTreeNodeSchemaClass,
 	mapTreeFromNodeData,
+	normalizeFieldSchema,
+	SimpleContextSlot,
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableTreeFieldFromImplicitField,
@@ -119,8 +122,12 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 	});
 	const manager = new MockNodeKeyManager();
-	const field = new CheckoutFlexTreeView(branch, toFlexSchema(schema), manager).flexTree;
-
+	const checkout = new CheckoutFlexTreeView(branch, toFlexSchema(schema), manager);
+	const field = checkout.flexTree;
+	branch.forest.anchors.slots.set(
+		SimpleContextSlot,
+		new HydratedContext(normalizeFieldSchema(schema).allowedTypeSet, checkout.context),
+	);
 	assert(field.context.isHydrated(), "Expected LazyField");
 	const mapTree = mapTreeFromNodeData(
 		initialTree as InsertableContent,

@@ -19,7 +19,6 @@ import {
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
 	type Unhydrated,
-	UnhydratedContext,
 } from "../core/index.js";
 import {
 	cursorForMapTreeNode,
@@ -39,6 +38,7 @@ import {
 	type VerboseTree,
 	type VerboseTreeNode,
 } from "./verboseTree.js";
+import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -151,12 +151,12 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const mapTrees = cursor === undefined ? [] : [mapTreeFromCursor(cursor)];
-	const flexSchema = toFlexSchema(schema);
+	const context = getUnhydratedContext(schema);
+	const flexSchema = context.flexContext.flexSchema;
 
 	const schemaValidationPolicy: SchemaAndPolicy = {
 		policy: defaultSchemaPolicy,
-		// TODO: optimize: This isn't the most efficient operation since its not cached, and has to convert all the schema.
-		schema: intoStoredSchema(flexSchema),
+		schema: context.flexContext.schema,
 	};
 
 	const maybeError = isFieldInSchema(
@@ -174,8 +174,7 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mapTree = mapTrees[0]!;
 	const mapTreeNode = UnhydratedFlexTreeNode.getOrCreate(
-		// TODO: Provide a way to get simple-tree context here, then make UnhydratedFlexTreeNode's hold simple-tree contexts. Use this for InnerNode -> TreeSchemaSchema
-		new UnhydratedContext(flexSchema),
+		getUnhydratedContext(schema),
 		mapTree,
 	);
 
