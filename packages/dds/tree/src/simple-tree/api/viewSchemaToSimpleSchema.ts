@@ -91,7 +91,7 @@ function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchem
 		allowedTypes,
 	};
 
-	// Only include "description" property if it is present on the input.
+	// Only include "description" property if it is present in the input.
 	if (schema.metadata?.description !== undefined) {
 		output.description = schema.metadata.description;
 	}
@@ -108,7 +108,7 @@ function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 		allowedTypes,
 	};
 
-	// Only include "description" property if it is present on the input.
+	// Only include "description" property if it is present in the input.
 	if (schema.metadata?.description !== undefined) {
 		output.description = schema.metadata.description;
 	}
@@ -127,7 +127,7 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 		fields,
 	};
 
-	// Only include "description" property if it is present on the input.
+	// Only include "description" property if it is present in the input.
 	if (schema.metadata?.description !== undefined) {
 		output.description = schema.metadata.description;
 	}
