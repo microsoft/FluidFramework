@@ -39,3 +39,9 @@ export {
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
+export {
+	UnhydratedFlexTreeNode,
+	UnhydratedTreeSequenceField,
+	tryUnhydratedFlexTreeNode,
+	UnhydratedContext,
+} from "./unhydratedFlexTree.js";

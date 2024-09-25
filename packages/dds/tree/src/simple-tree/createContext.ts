@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UnhydratedContext } from "../feature-libraries/index.js";
-import { Context, type TreeNodeSchema } from "./core/index.js";
+import { Context, type TreeNodeSchema, UnhydratedContext } from "./core/index.js";
 import { toFlexSchema } from "./toFlexSchema.js";
 
 /**

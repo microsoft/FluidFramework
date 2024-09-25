@@ -8,21 +8,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
-	type FlexTreeNodeSchema,
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
-	type MapTreeNode,
-	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isFlexTreeNode,
-	isMapTreeSequenceField,
 } from "../feature-libraries/index.js";
 import { prepareContentForHydration } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
-// This import seems to trigger a false positive `Type import "TreeNodeFromImplicitAllowedTypes" is used by decorator metadata` lint error.
-// Other ways to import (ex: import the module with the items as type imports) give different more real errors, and auto fix to this format,
-// so there does not seem to be a clean workaround to make the linter happy.
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
@@ -44,8 +36,11 @@ import {
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
-import { getFlexSchema } from "./toFlexSchema.js";
-import { getKernel } from "./core/index.js";
+import {
+	getKernel,
+	UnhydratedFlexTreeNode,
+	UnhydratedTreeSequenceField,
+} from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { createUnhydratedContext } from "./createContext.js";
 
@@ -841,7 +836,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const movedCount = sourceEnd - sourceStart;
 		if (!destinationField.context.isHydrated()) {
-			if (!isMapTreeSequenceField(sourceField)) {
+			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+				throw new UsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				);
+			}
+
+			if (sourceField.context.isHydrated()) {
 				throw new UsageError(
 					"Cannot move elements from an unhydrated array to a hydrated array.",
 				);
@@ -924,7 +925,6 @@ export function arraySchema<
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 
-	let flexSchema: FlexTreeNodeSchema;
 	let unhydratedContext: Context;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
@@ -954,10 +954,9 @@ export function arraySchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): MapTreeNode {
-			return getOrCreateMapTreeNode(
+		): UnhydratedFlexTreeNode {
+			return UnhydratedFlexTreeNode.getOrCreate(
 				unhydratedContext.flexContext,
-				flexSchema,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
@@ -966,7 +965,6 @@ export function arraySchema<
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			const schema = this as unknown as TreeNodeSchema;
-			flexSchema = getFlexSchema(schema);
 			unhydratedContext = createUnhydratedContext(schema);
 
 			// First run, do extra validation.

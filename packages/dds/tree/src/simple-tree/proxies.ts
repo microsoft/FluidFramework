@@ -16,7 +16,6 @@ import {
 import {
 	FieldKinds,
 	type FlexTreeField,
-	tryGetMapTreeNode,
 	isFlexTreeNode,
 	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
@@ -27,6 +26,7 @@ import {
 	type TreeNode,
 	tryGetTreeNodeFromMapNode,
 	getOrCreateNodeFromInnerNode,
+	tryUnhydratedFlexTreeNode,
 } from "./core/index.js";
 
 /**
@@ -134,7 +134,7 @@ function walkMapTree(
 	path: UpPath,
 	onVisitTreeNode: (path: UpPath, treeNode: TreeNode) => void,
 ): void {
-	if (tryGetMapTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
+	if (tryUnhydratedFlexTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
 		throw new UsageError(
 			"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
 		);
@@ -144,7 +144,7 @@ function walkMapTree(
 	const nexts: Next[] = [];
 	for (let next: Next | undefined = [path, mapTree]; next !== undefined; next = nexts.pop()) {
 		const [p, m] = next;
-		const mapTreeNode = tryGetMapTreeNode(m);
+		const mapTreeNode = tryUnhydratedFlexTreeNode(m);
 		if (mapTreeNode !== undefined) {
 			const treeNode = tryGetTreeNodeFromMapNode(mapTreeNode);
 			if (treeNode !== undefined) {

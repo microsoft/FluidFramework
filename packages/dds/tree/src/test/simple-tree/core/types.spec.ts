@@ -25,18 +25,18 @@ import {
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
 } from "../../../simple-tree/index.js";
-import type { FlexTreeNode, MapTreeNode } from "../../../feature-libraries/index.js";
+import type { FlexTreeNode } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexSchema, toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { validateUsageError } from "../../utils.js";
 import { brand } from "../../../util/index.js";
 import {
-	EagerMapTreeNode,
+	UnhydratedFlexTreeNode,
 	UnhydratedContext,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-map-tree/mapTreeNode.js";
+} from "../../../simple-tree/core/unhydratedFlexTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createUnhydratedContext } from "../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -118,11 +118,10 @@ describe("simple-tree types", () => {
 	});
 
 	describe("TreeNodeValid", () => {
-		class MockFlexNode extends EagerMapTreeNode {
+		class MockFlexNode extends UnhydratedFlexTreeNode {
 			public constructor(public readonly simpleSchema: TreeNodeSchema) {
 				super(
 					new UnhydratedContext(toFlexSchema(simpleSchema)),
-					getFlexSchema(simpleSchema),
 					{ fields: new Map(), type: brand(simpleSchema.identifier) },
 					undefined,
 				);
@@ -156,7 +155,7 @@ describe("simple-tree types", () => {
 					this: typeof TreeNodeValid<T2>,
 					instance: TreeNodeValid<T2>,
 					input: T2,
-				): MapTreeNode {
+				): UnhydratedFlexTreeNode {
 					assert.equal(this, Subclass);
 					assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
 					log.push(`buildRawNode ${input}`);
@@ -244,7 +243,7 @@ describe("simple-tree types", () => {
 					this: typeof TreeNodeValid<T2>,
 					instance: TreeNodeValid<T2>,
 					input: T2,
-				): MapTreeNode {
+				): UnhydratedFlexTreeNode {
 					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 
@@ -297,7 +296,7 @@ describe("simple-tree types", () => {
 					this: typeof TreeNodeValid<T2>,
 					instance: TreeNodeValid<T2>,
 					input: T2,
-				): MapTreeNode {
+				): UnhydratedFlexTreeNode {
 					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 

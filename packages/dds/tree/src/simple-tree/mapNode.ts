@@ -5,12 +5,9 @@
 
 import { Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type FlexMapNodeSchema,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
-	type MapTreeNode,
 	type OptionalFieldEditBuilder,
-	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
@@ -35,13 +32,13 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 	type Context,
+	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import {
 	mapTreeFromNodeData,
 	type FactoryContent,
 	type InsertableContent,
 } from "./toMapTree.js";
-import { getFlexSchema } from "./toFlexSchema.js";
 import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
@@ -238,7 +235,6 @@ export function mapSchema<
 ) {
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 
-	let flexSchema: FlexMapNodeSchema;
 	let unhydratedContext: Context;
 
 	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
@@ -257,10 +253,9 @@ export function mapSchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): MapTreeNode {
-			return getOrCreateMapTreeNode(
+		): UnhydratedFlexTreeNode {
+			return UnhydratedFlexTreeNode.getOrCreate(
 				unhydratedContext.flexContext,
-				flexSchema,
 				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
 			);
 		}
@@ -269,7 +264,6 @@ export function mapSchema<
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			const schema = this as unknown as TreeNodeSchema;
-			flexSchema = getFlexSchema(schema) as FlexMapNodeSchema;
 			unhydratedContext = createUnhydratedContext(schema);
 			return unhydratedContext;
 		}
