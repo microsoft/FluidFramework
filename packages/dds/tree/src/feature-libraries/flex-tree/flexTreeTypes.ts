@@ -194,12 +194,6 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	 * If well-formed, it must follow this schema.
 	 */
 	readonly schema: TreeNodeSchemaIdentifier;
-
-	/**
-	 * Schema for this entity.
-	 * If well-formed, it must follow this schema.
-	 */
-	readonly flexSchema: FlexTreeNodeSchema;
 }
 
 /**

@@ -37,10 +37,10 @@ import {
 	type FlexTreeSchema,
 	intoStoredSchemaCollection,
 	type FlexFieldKind,
-	defaultSchemaPolicy,
 	FieldKinds,
 	type SequenceFieldEditBuilder,
 } from "../../feature-libraries/index.js";
+import type { Context } from "./context.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<ExclusiveMapTree[]> {
@@ -85,10 +85,14 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	 * @remarks It must conform to the `nodeSchema`.
 	 */
 	public static getOrCreate(
-		context: UnhydratedContext,
+		context: Context,
 		mapTree: ExclusiveMapTree,
 	): UnhydratedFlexTreeNode {
 		return nodeCache.get(mapTree) ?? new UnhydratedFlexTreeNode(context, mapTree, undefined);
+	}
+
+	public get context(): UnhydratedContext {
+		return this.simpleContext.flexContext;
 	}
 
 	/**
@@ -100,7 +104,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	 * Instead, it should always be acquired via {@link getOrCreateNode}.
 	 */
 	public constructor(
-		public readonly context: UnhydratedContext,
+		public readonly simpleContext: Context,
 		/** The underlying {@link MapTree} that this `UnhydratedFlexTreeNode` reads its data from */
 		public readonly mapTree: ExclusiveMapTree,
 		private location = unparentedLocation,
@@ -198,7 +202,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 		for (const [key, mapTrees] of this.mapTree.fields) {
 			const field = getOrCreateField(this, key, this.flexSchema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
-				const child = getOrCreateChild(this.context, mapTrees[index] ?? oob(), {
+				const child = getOrCreateChild(this.simpleContext, mapTrees[index] ?? oob(), {
 					parent: field,
 					index,
 				});
@@ -240,13 +244,6 @@ export class UnhydratedContext implements FlexTreeContext {
 
 // #region Fields
 
-const emptyContext = new UnhydratedContext({
-	adapters: {},
-	nodeSchema: new Map(),
-	policy: defaultSchemaPolicy,
-	rootFieldSchema: FlexFieldSchema.empty,
-});
-
 /**
  * A special singleton that is the implicit {@link LocationInField} of all un-parented {@link UnhydratedFlexTreeNode}s.
  * @remarks This exists because {@link UnhydratedFlexTreeNode.parentField} must return a field.
@@ -271,7 +268,9 @@ const unparentedLocation: LocationInField = {
 			return undefined;
 		},
 		schema: FlexFieldSchema.empty.stored,
-		context: emptyContext,
+		get context(): never {
+			return fail("unsupported");
+		},
 		getFieldPath() {
 			fail("unsupported");
 		},
@@ -286,8 +285,12 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		return this.flexSchema.stored;
 	}
 
+	public get context(): UnhydratedContext {
+		return this.simpleContext.flexContext;
+	}
+
 	public constructor(
-		public readonly context: UnhydratedContext,
+		public readonly simpleContext: Context,
 		public readonly flexSchema: FlexFieldSchema,
 		public readonly key: FieldKey,
 		public readonly parent: UnhydratedFlexTreeNode,
@@ -325,7 +328,7 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		return this.mapTrees
 			.map(
 				(m, index) =>
-					getOrCreateChild(this.context, m, {
+					getOrCreateChild(this.simpleContext, m, {
 						parent: this,
 						index,
 					}) as FlexTreeNode,
@@ -340,7 +343,7 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		}
 		const m = this.mapTrees[i];
 		if (m !== undefined) {
-			return getOrCreateChild(this.context, m, {
+			return getOrCreateChild(this.simpleContext, m, {
 				parent: this,
 				index: i,
 			}) as FlexTreeNode;
@@ -370,16 +373,14 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 	}
 
 	/** Unboxes leaf nodes to their values */
-	protected unboxed(
-		mapTree: ExclusiveMapTree,
-		parent: LocationInField,
-	): FlexTreeUnknownUnboxed {
+	protected unboxed(index: number): FlexTreeUnknownUnboxed {
+		const mapTree: ExclusiveMapTree = this.mapTrees[index] ?? oob();
 		const value = mapTree.value;
 		if (value !== undefined) {
 			return value;
 		}
 
-		return getOrCreateChild(parent.parent.context, mapTree, parent);
+		return getOrCreateChild(this.simpleContext, mapTree, { parent: this, index });
 	}
 }
 
@@ -412,10 +413,7 @@ class EagerMapTreeOptionalField
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		const value = this.mapTrees[0];
 		if (value !== undefined) {
-			return this.unboxed(value, {
-				parent: this,
-				index: 0,
-			});
+			return this.unboxed(0);
 		}
 
 		return undefined;
@@ -471,15 +469,15 @@ export class UnhydratedTreeSequenceField
 		if (i === undefined) {
 			return undefined;
 		}
-		return this.unboxed(this.mapTrees[i] ?? oob(), { parent: this, index: i });
+		return this.unboxed(i);
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
 	}
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
-		for (const [i, mapTree] of this.mapTrees.entries()) {
-			yield this.unboxed(mapTree, { parent: this, index: i });
+		for (const [i] of this.mapTrees.entries()) {
+			yield this.unboxed(i);
 		}
 	}
 }
@@ -512,7 +510,7 @@ export function tryUnhydratedFlexTreeNode(
 
 /** Helper for creating a `UnhydratedFlexTreeNode` given the parent field (e.g. when "walking down") */
 function getOrCreateChild(
-	context: UnhydratedContext,
+	context: Context,
 	mapTree: ExclusiveMapTree,
 	parent: LocationInField | undefined,
 ): UnhydratedFlexTreeNode {
@@ -539,18 +537,18 @@ function getOrCreateField(
 		schema.kind.identifier === FieldKinds.required.identifier ||
 		schema.kind.identifier === FieldKinds.identifier.identifier
 	) {
-		return new EagerMapTreeRequiredField(parent.context, schema, key, parent);
+		return new EagerMapTreeRequiredField(parent.simpleContext, schema, key, parent);
 	}
 
 	if (schema.kind.identifier === FieldKinds.optional.identifier) {
-		return new EagerMapTreeOptionalField(parent.context, schema, key, parent);
+		return new EagerMapTreeOptionalField(parent.simpleContext, schema, key, parent);
 	}
 
 	if (schema.kind.identifier === FieldKinds.sequence.identifier) {
-		return new UnhydratedTreeSequenceField(parent.context, schema, key, parent);
+		return new UnhydratedTreeSequenceField(parent.simpleContext, schema, key, parent);
 	}
 
-	return new UnhydratedFlexTreeField(parent.context, schema, key, parent);
+	return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent);
 }
 
 // #endregion Caching and unboxing utilities
