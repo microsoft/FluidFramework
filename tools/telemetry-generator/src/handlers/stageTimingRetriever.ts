@@ -47,7 +47,11 @@ module.exports = function handler(fileData, logger): void {
 		// Note: type === "Task" or type === "Job" would include task-level (or job-level, respectively) telemetry.
 		// It might be interesting in the future - for now we will only collect stage-level telemetry.
 		// If given a specific STAGE_ID, only process that stage. Otherwise process all stages.
-		.filter((job) => job.type === "Stage" && (process.env.STAGE_ID === undefined || job.identifier === process.env.STAGE_ID))
+		.filter(
+			(job) =>
+				job.type === "Stage" &&
+				(process.env.STAGE_ID === undefined || job.identifier === process.env.STAGE_ID),
+		)
 		.map((job): ParsedJob | undefined => {
 			console.log(
 				`Processing stage - name='${job.name}' identifier='${job.identifier}' state='${job.state}' result='${job.result}'`,
@@ -61,17 +65,17 @@ module.exports = function handler(fileData, logger): void {
 				return undefined;
 			}
 
-			let startTime: number = finishTime;
-			if (job.state === "completed" && job.startTime === null) {
-				// A null start time when 'state === completed' indicates the stage was skipped.
-				// Set startTime to finishTime so duration ends up being 0.
-				startTime = finishTime;
-			} else {
-				startTime = Date.parse(job.startTime?.toString());
-				if (Number.isNaN(startTime)) {
-					console.error(`Failed to parse startTime '${job.startTime}'. Telemetry for this stage will not be sent.`);
-					return undefined;
-				}
+			// A null start time when 'state === completed' indicates the stage was skipped.
+			// In that case set startTime = finishTime so duration ends up being 0.
+			const startTime: number =
+				job.state === "completed" && job.startTime === null
+					? finishTime
+					: Date.parse(job.startTime?.toString());
+			if (Number.isNaN(startTime)) {
+				console.error(
+					`Failed to parse startTime '${job.startTime}'. Telemetry for this stage will not be sent.`,
+				);
+				return undefined;
 			}
 
 			return {
@@ -80,7 +84,7 @@ module.exports = function handler(fileData, logger): void {
 				stageName: job.identifier,
 				startTime,
 				finishTime,
-				totalSeconds: Math.abs(finishTime - startTime) / 1000,
+				totalSeconds: (finishTime - startTime) / 1000,
 				state: job.state,
 				result: job.result,
 			};
