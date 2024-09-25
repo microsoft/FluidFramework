@@ -8,7 +8,7 @@
 
 parameters:
 
-# Id for the stage that runs tests, whose telemetry will be uploaded to Kusto.
+# Id for the stage whose runtime + result telemetry will be uploaded to Kusto.
 - name: stageId
   type: string
 
