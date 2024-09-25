@@ -16,11 +16,12 @@ interface ParsedJob {
 }
 
 /**
- * This handler is used to extract timing and result data for a stage in a pipeline from a JSON file that
- * contains the output from the ADO REST API that gives us information about a pipeline run.
- * It then sends telemetry events to Kusto with the extracted data.
+ * This handler is used to process a JSON payload with timing and result data for one or more stages in a pipeline.
+ * The payload is assumed to be the output from the ADO REST API that gives us information about a pipeline run.
+ * The handler then sends telemetry events to Kusto with the processed data.
  *
- * It assumes the specified stage has already completed, and will throw otherwise.
+ * It assumes the specified stage (or if no specific stage is specified, all other stages in the pipeline) has already
+ * completed, and will throw otherwise.
  *
  * @param fileData - A JSON object obtained by calling JSON.parse() on the output of the ADO REST API that gives us
  * information about a pipeline run, i.e.
@@ -37,9 +38,6 @@ module.exports = function handler(fileData, logger): void {
 	if (process.env.PIPELINE === undefined) {
 		throw new Error("PIPELINE environment variable is not set.");
 	}
-	if (process.env.STAGE_ID === undefined) {
-		throw new Error("STAGE_ID environment variable is not set.");
-	}
 
 	console.log("BUILD_ID:", process.env.BUILD_ID);
 	console.log("PIPELINE:", process.env.PIPELINE);
@@ -48,14 +46,19 @@ module.exports = function handler(fileData, logger): void {
 	const parsedJobs: ParsedJob[] = fileData.records
 		// Note: type === "Task" or type === "Job" would include task-level (or job-level, respectively) telemetry.
 		// It might be interesting in the future - for now we will only collect stage-level telemetry.
-		.filter((job) => job.type === "Stage" && job.identifier === process.env.STAGE_ID)
-		.map((job): ParsedJob => {
+		// If given a specific STAGE_ID, only process that stage. Otherwise process all stages.
+		.filter((job) => job.type === "Stage" && (process.env.STAGE_ID === undefined || job.identifier === process.env.STAGE_ID))
+		.map((job): ParsedJob | undefined => {
+			console.log(
+				`Processing stage - name='${job.name}' identifier='${job.identifier}' state='${job.state}' result='${job.result}'`,
+			);
+
 			const finishTime = Date.parse(job.finishTime?.toString());
 			if (Number.isNaN(finishTime)) {
-				// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
-				throw new Error(
-					`Failed to parse finishTime '${job.finishTime}'. The specified pipeline stage might not have finished yet.`,
+				console.error(
+					`Failed to parse finishTime '${job.finishTime}'. The specified pipeline stage might not have finished yet. Telemetry for this stage will not be sent.`,
 				);
+				return undefined;
 			}
 
 			let startTime: number = finishTime;
@@ -66,14 +69,11 @@ module.exports = function handler(fileData, logger): void {
 			} else {
 				startTime = Date.parse(job.startTime?.toString());
 				if (Number.isNaN(startTime)) {
-					// eslint-disable-next-line unicorn/prefer-type-error -- TypeError feels weird to me here; doesn't really matter, we just want to terminate the process
-					throw new Error(`Failed to parse startTime '${job.startTime}'.`);
+					console.error(`Failed to parse startTime '${job.startTime}'. Telemetry for this stage will not be sent.`);
+					return undefined;
 				}
 			}
 
-			console.log(
-				`Processed stage - name='${job.name}' identifier='${job.identifier}' state='${job.state}' result='${job.result}'`,
-			);
 			return {
 				// Using the 'identifier' property because that's the one available in the API response for test results,
 				// and we want the values to be consistent so we can correlate them later.
@@ -86,7 +86,7 @@ module.exports = function handler(fileData, logger): void {
 			};
 		});
 
-	for (const job of parsedJobs) {
+	for (const job of parsedJobs.filter((x) => x !== undefined)) {
 		logger.send({
 			namespace: "FFEngineering", // Transfer the telemetry associated with pipeline status to namespace "FFEngineering".
 			category: "performance",
