@@ -658,6 +658,7 @@ extends:
                 env:
                   BUILD_ID: $(Build.BuildId)
                   PIPELINE: BuildClient
+                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
                 inputs:
                   targetType: inline
                   workingDirectory: $(absolutePathToTelemetryGenerator)
