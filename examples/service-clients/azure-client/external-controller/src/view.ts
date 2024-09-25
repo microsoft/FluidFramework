@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { IPresence, LatestValueManager } from "@fluid-experimental/presence";
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";
+import type { DiceValues } from "./presence.js";
 
 function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
 	const wrapperDiv = document.createElement("div");
@@ -84,16 +86,125 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 	return wrapperDiv;
 }
 
+function makeTextDivs(texts: string[]): HTMLDivElement[] {
+	return texts.map((text) => {
+		const valueElement = document.createElement("div");
+		valueElement.textContent = text;
+		return valueElement;
+	});
+}
+
+function makeDiceHeaderElement(): HTMLDivElement[] {
+	return makeTextDivs(["id", "Die 1", "Die 2"]);
+}
+
+function makeDiceValueElement(id: string, value: DiceValues): HTMLDivElement[] {
+	return makeTextDivs([
+		id.slice(0, 8),
+		`${value.die1 ?? "not rolled"}`,
+		`${value.die2 ?? "not rolled"}`,
+	]);
+}
+
+export function makeDiceValuesView(
+	target: HTMLDivElement,
+	lastRoll: LatestValueManager<DiceValues>,
+): void {
+	const children = makeDiceHeaderElement();
+	for (const clientValue of lastRoll.clientValues()) {
+		children.push(...makeDiceValueElement(clientValue.client.sessionId, clientValue.value));
+	}
+	target.replaceChildren(...children);
+}
+
+function addLogEntry(logDiv: HTMLDivElement, entry: string): void {
+	const entryDiv = document.createElement("div");
+	entryDiv.textContent = entry;
+	logDiv.prepend(entryDiv);
+}
+
+function makePresenceView(
+	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
+	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
+	presenceConfig?: { presence: IPresence; lastRoll: LatestValueManager<DiceValues> },
+	audience?: IAzureAudience,
+): HTMLDivElement {
+	const presenceDiv = document.createElement("div");
+	// Accommodating the test which doesn't provide a presence
+	if (presenceConfig === undefined) {
+		presenceDiv.textContent = "No presence provided";
+		return presenceDiv;
+	}
+
+	presenceDiv.style.display = "flex";
+	presenceDiv.style.justifyContent = "center";
+
+	const statesDiv = document.createElement("div");
+	statesDiv.style.width = "30%";
+	statesDiv.style.marginRight = "10px";
+	statesDiv.style.border = "1px solid black";
+	const statesHeaderDiv = document.createElement("div");
+	statesHeaderDiv.textContent = "Last Rolls";
+	statesHeaderDiv.style.border = "1px solid black";
+	const statesContentDiv = document.createElement("div");
+	statesContentDiv.style.height = "120px";
+	statesContentDiv.style.overflowY = "scroll";
+	statesContentDiv.style.border = "1px solid black";
+	statesContentDiv.style.display = "grid";
+	statesContentDiv.style.gridTemplateColumns = "1fr 1fr 1fr";
+	statesContentDiv.style.alignContent = "start";
+	statesDiv.append(statesHeaderDiv, statesContentDiv);
+
+	const logDiv = document.createElement("div");
+	logDiv.style.width = "70%";
+	logDiv.style.border = "1px solid black";
+	const logHeaderDiv = document.createElement("div");
+	logHeaderDiv.textContent = "Remote Activity Log";
+	logHeaderDiv.style.border = "1px solid black";
+	const logContentDiv = document.createElement("div");
+	logContentDiv.style.height = "120px";
+	logContentDiv.style.overflowY = "scroll";
+	logContentDiv.style.border = "1px solid black";
+	if (audience !== undefined) {
+		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
+			const name = audience.getMembers().get(attendee.currentConnectionId())?.name;
+			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} joined`;
+			addLogEntry(logContentDiv, update);
+		});
+	}
+	logDiv.append(logHeaderDiv, logContentDiv);
+
+	presenceConfig.lastRoll.events.on("updated", (update) => {
+		const updateText = `updated ${update.client.sessionId.slice(0, 8)}'s last rolls to ${JSON.stringify(update.value)}`;
+		addLogEntry(logContentDiv, updateText);
+
+		makeDiceValuesView(statesContentDiv, presenceConfig.lastRoll);
+	});
+
+	presenceDiv.append(statesDiv, logDiv);
+	return presenceDiv;
+}
+
 export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
+	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
+	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
+	presenceConfig?: { presence: IPresence; lastRoll: LatestValueManager<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
 	const diceRollerViews = diceRollerControllers.map((controller) =>
 		makeDiceRollerView(controller),
 	);
+	const diceView = document.createElement("div");
+	diceView.style.display = "flex";
+	diceView.style.justifyContent = "center";
+	diceView.append(...diceRollerViews);
+
 	const audienceView = makeAudienceView(audience);
 
+	const presenceView = makePresenceView(presenceConfig, audience);
+
 	const wrapperDiv = document.createElement("div");
-	wrapperDiv.append(...diceRollerViews, audienceView);
+	wrapperDiv.append(diceView, audienceView, presenceView);
 	return wrapperDiv;
 }

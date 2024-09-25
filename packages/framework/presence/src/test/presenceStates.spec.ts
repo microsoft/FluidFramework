@@ -20,7 +20,7 @@ describe("LatestValueManager", () => {
 
 declare function createValueManager<T, Key extends string>(
 	initial: JsonSerializable<T> & JsonDeserialized<T>,
-): (
+): { instanceBase: new () => unknown } & ((
 	key: Key,
 	datastoreHandle: InternalTypes.StateDatastoreHandle<
 		Key,
@@ -29,7 +29,7 @@ declare function createValueManager<T, Key extends string>(
 ) => {
 	value: InternalTypes.ValueRequiredState<T>;
 	manager: InternalTypes.StateValue<JsonDeserialized<T>>;
-};
+});
 
 // ---- test (example) code ----
 
@@ -41,11 +41,12 @@ export function checkCompiles(): void {
 	const presence = {} as IPresence;
 	const statesWorkspace = presence.getStates("name:testWorkspaceA", {
 		cursor: createValueManager({ x: 0, y: 0 }),
-		camera: () => ({
+		// eslint-disable-next-line prefer-object-spread
+		camera: Object.assign({ instanceBase: undefined as unknown as new () => unknown }, () => ({
 			value: { rev: 0, timestamp: Date.now(), value: { x: 0, y: 0, z: 0 } },
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			manager: {} as InternalTypes.StateValue<{ x: number; y: number; z: number }>,
-		}),
+		})),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const states: typeof statesWorkspace = statesWorkspace;

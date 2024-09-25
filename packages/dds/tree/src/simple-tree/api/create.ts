@@ -7,7 +7,6 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ITreeCursorSynchronous, SchemaAndPolicy } from "../../core/index.js";
-import { fail } from "../../util/index.js";
 import type {
 	TreeLeafValue,
 	ImplicitFieldSchema,
@@ -16,18 +15,21 @@ import type {
 	FieldSchema,
 	FieldKind,
 } from "../schemaTypes.js";
-import type { Unhydrated } from "../core/index.js";
+import {
+	getOrCreateNodeFromInnerNode,
+	UnhydratedFlexTreeNode,
+	type Unhydrated,
+	UnhydratedContext,
+} from "../core/index.js";
 import {
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	FieldKinds,
 	intoStoredSchema,
 	mapTreeFromCursor,
-	UnhydratedContext,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
-import { getOrCreateMapTreeNode, isFieldInSchema } from "../../feature-libraries/index.js";
+import { isFieldInSchema } from "../../feature-libraries/index.js";
 import { toFlexSchema } from "../toFlexSchema.js";
 import { inSchemaOrThrow, mapTreeFromNodeData, type InsertableContent } from "../toMapTree.js";
 import {
@@ -171,14 +173,12 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mapTree = mapTrees[0]!;
-	const rootSchema = flexSchema.nodeSchema.get(mapTree.type) ?? fail("missing schema");
-	const mapTreeNode = getOrCreateMapTreeNode(
+	const mapTreeNode = UnhydratedFlexTreeNode.getOrCreate(
+		// TODO: Provide a way to get simple-tree context here, then make UnhydratedFlexTreeNode's hold simple-tree contexts. Use this for InnerNode -> TreeSchemaSchema
 		new UnhydratedContext(flexSchema),
-		rootSchema,
 		mapTree,
 	);
 
-	// TODO: ensure this works for InnerNodes to create unhydrated nodes
-	const result = getOrCreateNodeFromFlexTreeNode(mapTreeNode);
+	const result = getOrCreateNodeFromInnerNode(mapTreeNode);
 	return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 }

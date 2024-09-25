@@ -72,7 +72,6 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     addAttachment(id: string): void;
     // (undocumented)
     addBlob(key: string, content: string | Uint8Array): void;
-    // (undocumented)
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
     // (undocumented)
     addWithStats(key: string, summarizeResult: ISummarizeResult): void;
