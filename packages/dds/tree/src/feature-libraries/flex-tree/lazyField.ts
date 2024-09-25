@@ -10,6 +10,7 @@ import {
 	type ExclusiveMapTree,
 	type FieldAnchor,
 	type FieldKey,
+	type FieldKindIdentifier,
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
@@ -27,7 +28,6 @@ import {
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import type { FlexFieldSchema } from "../typed-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
@@ -75,7 +75,7 @@ const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new Weak
 
 export function makeField(
 	context: Context,
-	schema: FlexFieldSchema,
+	schema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
@@ -125,18 +125,11 @@ export function makeField(
 /**
  * Base type for fields implementing {@link FlexTreeField} using cursors.
  */
-export abstract class LazyField<out TKind extends FlexFieldKind>
-	extends LazyEntity<FlexFieldSchema<TKind>, FieldAnchor>
-	implements FlexTreeField
-{
+export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexTreeField {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
 		return FlexTreeEntityKind.Field;
 	}
 	public readonly key: FieldKey;
-
-	public get schema(): TreeFieldStoredSchema {
-		return this.flexSchema.stored;
-	}
 
 	/**
 	 * If this field ends its lifetime before the Anchor does, this needs to be invoked to avoid a double free
@@ -146,11 +139,11 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<TKind>,
+		public readonly schema: TreeFieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
-		super(context, schema, cursor, fieldAnchor);
+		super(context, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
 		// Fields currently live as long as their parent does.
@@ -171,7 +164,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 			0xa26 /* Narrowing must be done to a kind that exists in this context */,
 		);
 
-		return this.flexSchema.kind === (kind as unknown);
+		return this.schema.kind === kind.identifier;
 	}
 
 	public get parent(): FlexTreeNode | undefined {
@@ -259,19 +252,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 	}
 }
 
-export class LazySequence
-	extends LazyField<typeof FieldKinds.sequence>
-	implements FlexTreeSequenceField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.sequence>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
+export class LazySequence extends LazyField implements FlexTreeSequenceField {
 	public at(index: number): FlexTreeUnknownUnboxed | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
@@ -302,19 +283,7 @@ export class LazySequence
 	}
 }
 
-export class ReadonlyLazyValueField
-	extends LazyField<typeof FieldKinds.required>
-	implements FlexTreeRequiredField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
+export class ReadonlyLazyValueField extends LazyField implements FlexTreeRequiredField {
 	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent) => {
 			assert(false, 0xa0c /* Unexpected set of readonly field */);
@@ -327,15 +296,6 @@ export class ReadonlyLazyValueField
 }
 
 export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRequiredField {
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
 	public override editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent) => {
 			this.valueFieldEditor().set(cursorForMapTreeNode(newContent));
@@ -353,19 +313,7 @@ export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRe
 	}
 }
 
-export class LazyOptionalField
-	extends LazyField<typeof FieldKinds.optional>
-	implements FlexTreeOptionalField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.optional>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
+export class LazyOptionalField extends LazyField implements FlexTreeOptionalField {
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent, wasEmpty) => {
 			this.optionalEditor().set(
@@ -386,25 +334,22 @@ export class LazyOptionalField
 	}
 }
 
-export class LazyForbiddenField extends LazyField<typeof FieldKinds.forbidden> {}
+export class LazyForbiddenField extends LazyField {}
 
 type Builder = new (
 	context: Context,
 	// Correct use of these builders requires the builder of the matching type to be used.
-	// Since this has to be done at runtime anyway, trying to use safer typing than `any` here (such as `never`, which is only slightly safer)
-	// does not seem worth it (ends up requiring type casts that are just as unsafe).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	schema: FlexFieldSchema<any>,
+	schema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
-) => LazyField<FlexFieldKind>;
+) => LazyField;
 
-const builderList: [FlexFieldKind, Builder][] = [
-	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.optional, LazyOptionalField],
-	[FieldKinds.sequence, LazySequence],
-	[FieldKinds.required, LazyValueField],
-	[FieldKinds.identifier, LazyValueField],
+const builderList: [FieldKindIdentifier, Builder][] = [
+	[FieldKinds.forbidden.identifier, LazyForbiddenField],
+	[FieldKinds.optional.identifier, LazyOptionalField],
+	[FieldKinds.sequence.identifier, LazySequence],
+	[FieldKinds.required.identifier, LazyValueField],
+	[FieldKinds.identifier.identifier, LazyValueField],
 ];
 
-const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);
+const kindToClass: ReadonlyMap<FieldKindIdentifier, Builder> = new Map(builderList);

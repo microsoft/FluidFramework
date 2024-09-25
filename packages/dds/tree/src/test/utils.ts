@@ -141,6 +141,7 @@ import {
 	toStoredSchema,
 	type TreeViewEvents,
 	type TreeView,
+	toFlexSchema,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -154,6 +155,8 @@ import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-ut
 import type { Client } from "@fluid-private/test-dds-utils";
 import { cursorFromInsertable } from "../simple-tree/index.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 
 // Testing utilities
 
@@ -722,8 +725,8 @@ function createCheckoutWithContent(
 	return { checkout, logger };
 }
 
-export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
-	content: TreeContent<TRoot>,
+export function flexTreeViewWithContent(
+	content: TreeSimpleContent,
 	args?: {
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
@@ -732,12 +735,12 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
-		{ initialTree: content.initialTree, schema: intoStoredSchema(content.schema) },
+		{ initialTree: content.initialTree, schema: toStoredSchema(content.schema) },
 		args,
 	);
 	return new CheckoutFlexTreeView(
 		view,
-		content.schema,
+		toFlexSchema(content.schema),
 		args?.nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
@@ -1212,13 +1215,13 @@ export function viewCheckout<TSchema extends ImplicitFieldSchema>(
  * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
  */
 export class MockTreeCheckout implements ITreeCheckout {
-	private readonly _editor: ISharedTreeEditor | undefined;
 	public constructor(
 		public readonly forest: IForestSubscription,
-		editor?: ISharedTreeEditor,
-	) {
-		this._editor = editor;
-	}
+		private readonly options?: {
+			schema?: TreeStoredSchemaSubscription;
+			editor?: ISharedTreeEditor;
+		},
+	) {}
 
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
@@ -1227,13 +1230,16 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 
 	public get storedSchema(): TreeStoredSchemaSubscription {
-		throw new Error("'storedSchema' property not implemented in MockTreeCheckout.");
+		if (this.options?.schema === undefined) {
+			throw new Error("No schema provided to MockTreeCheckout.");
+		}
+		return this.options.schema;
 	}
 	public get editor(): ISharedTreeEditor {
-		if (this._editor === undefined) {
+		if (this.options?.editor === undefined) {
 			throw new Error("No editor provided to MockTreeCheckout.");
 		}
-		return this._editor;
+		return this.options.editor;
 	}
 	public get transaction(): ITransaction {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
