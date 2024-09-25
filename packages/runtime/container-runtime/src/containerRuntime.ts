@@ -2016,6 +2016,20 @@ export class ContainerRuntime
 			eventName: "SchemaChangeAccept",
 			sessionRuntimeSchema: JSON.stringify(schema),
 		});
+
+		// If IdCompressor has migrated to "on", but we did not load/create the IdCompressor during initialization,
+		// we stop processing operations and throw/log an error.
+		//
+		// This can happen in the rare case that a long-lived client has remained connected through the full
+		// "off" -> "delayed" -> "on" transitions.
+		if (schema.runtime.idCompressorMode === "on" && this._idCompressor === undefined) {
+			throw DataProcessingError.create(
+				"Illegal IdCompressorMode transition",
+				"onSchemaChange",
+				undefined,
+				{},
+			);
+		}
 	}
 
 	public getCreateChildSummarizerNodeFn(

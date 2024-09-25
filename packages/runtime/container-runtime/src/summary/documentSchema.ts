@@ -197,9 +197,12 @@ class MultiChoice implements IProperty<string | undefined> {
 }
 
 class IdCompressorProperty extends MultiChoice {
-	// document schema always wins!
-	public and(currentDocSchema?: string, desiredDocSchema?: string) {
-		return currentDocSchema;
+	public and(current?: string, desired?: string) {
+		// Attempting to transition to "on" will load the ID compressor chunk,
+		// but not enable it until a migration op is processed.
+		//
+		// Otherwise the behavior is "sticky" once Id Compressor is enabled.
+		return current !== "on" && desired === "on" ? "delayed" : super.or(current, desired);
 	}
 }
 

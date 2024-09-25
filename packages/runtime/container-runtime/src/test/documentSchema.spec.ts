@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
+	type IdCompressorMode,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
@@ -40,19 +41,19 @@ describe("Runtime", () => {
 		disallowedVersions: [],
 	};
 
-	function createController(config: unknown) {
+	function createController(oldSchema: IDocumentSchemaCurrent, desiredFeatures = features) {
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			config as IDocumentSchemaCurrent, // old schema,
-			features,
+			oldSchema,
+			desiredFeatures,
 			() => {}, // onSchemaChange
 		);
 	}
 
 	function testWrongConfig(config: unknown) {
 		assert.throws(() => {
-			createController(config);
+			createController(config as IDocumentSchemaCurrent);
 		}, "should throw on unknown property");
 
 		const controller = createController(validConfig);
@@ -71,12 +72,18 @@ describe("Runtime", () => {
 		createController(validConfig);
 	});
 
-	// It's hard to say if we will allow additional propeorty trees here like this sample shows.
+	// It's hard to say if we will allow additional property trees here like this sample shows.
 	// More likely that will require version bump, to ensure that old code does not run with such structure.
 	// If if such configs will be backward compatible (similar to runtime options we are listing that were in use for very long time),
 	// then maybe ability to add them in such back-compat way is a plus
-	it("extra global property ois Ok", () => {
-		createController({ ...validConfig, appProperty: { foo: 5 } });
+	it("extra global property is Ok", () => {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- cast required due to extra property
+		const schema = {
+			...validConfig,
+			appProperty: { foo: 5 },
+		} as IDocumentSchemaCurrent;
+
+		createController(schema);
 	});
 
 	it("empty object", () => {
@@ -240,7 +247,7 @@ describe("Runtime", () => {
 		if (existing && explicitSchemaControl) {
 			assert(controller.sessionSchema.runtime.compressionLz4 === undefined, "lz4");
 			assert(
-				controller.sessionSchema.runtime.idCompressorMode === undefined,
+				controller.sessionSchema.runtime.idCompressorMode === "delayed",
 				"idCompressorMode",
 			);
 		} else {
@@ -488,8 +495,8 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 		);
 
-		// setting is not on yet
-		assert(controller3.sessionSchema.runtime.idCompressorMode === undefined);
+		// Attempted "off" -> "on" will transition to "delayed".
+		assert(controller3.sessionSchema.runtime.idCompressorMode === "delayed");
 
 		const message = controller3.maybeSendSchemaMessage();
 		assert(message !== undefined, "message sent");
@@ -501,7 +508,12 @@ describe("Runtime", () => {
 			100,
 		); // sequenceNumber
 		assert(schemaChanged, "schema changed");
-		assert(controller3.sessionSchema.runtime.idCompressorMode === "on");
+
+		// 'as unknown' works around a TypeScript 5.4.5 bug where the compiler reports TS2367
+		// because it doesn't recognize that the value of 'idCompressorMode' may have changed
+		// since asserting '=== "delayed"' above.
+		assert((controller3.sessionSchema.runtime.idCompressorMode as unknown) === "on");
+
 		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert(schema.runtime.idCompressorMode === "on", "now on");
 
@@ -539,5 +551,62 @@ describe("Runtime", () => {
 		// Validate same summaries by two clients.
 		const schema2 = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert.deepEqual(schema, schema2, "same summaries");
+	});
+
+	describe("IdCompressorMode", () => {
+		it("correctly computes pre/post migrations states", () => {
+			// IdCompressorMode transations must obey the following rules:
+			//   1. They are "sticky" (as the mode advances from off -> delayed -> on, it never goes back).
+			//   2. You cannot transition directly from 'off' to 'on' (you must go through 'delayed').
+			//   3. 'off' -> 'delayed' transitions have no observable effect, and so always take effect immediately.
+
+			// Map from existing container state to pre-migration state.
+			const preTable = {
+				undefined: { undefined, delayed: "delayed", on: "delayed" },
+				delayed: { undefined: "delayed", delayed: "delayed", on: "delayed" },
+				on: { undefined: "on", delayed: "on", on: "on" },
+			};
+
+			// Map from pre-migration state to post-migration state.
+			const postTable = {
+				undefined: { undefined, delayed: "delayed", on: "on" },
+				delayed: { undefined: "delayed", delayed: "delayed", on: "on" },
+				on: { undefined: "on", delayed: "on", on: "on" },
+			};
+
+			const modes: IdCompressorMode[] = [undefined, "delayed", "on"];
+
+			for (const oldMode of modes) {
+				for (const newMode of modes) {
+					const current = { ...validConfig, runtime: { idCompressorMode: oldMode } };
+					const desired = { ...features, idCompressorMode: newMode };
+
+					const controller = createController(current, desired);
+					const expectedPre = preTable[`${oldMode}`][`${newMode}`];
+					const actualPre = controller.sessionSchema.runtime.idCompressorMode;
+					assert.equal(
+						actualPre,
+						expectedPre,
+						`Pre-migration '${oldMode}' -> '${newMode}' must be '${expectedPre}' (actual: '${actualPre}')`,
+					);
+
+					const message = controller.maybeSendSchemaMessage();
+					assert(message !== undefined, "Schema message must be generated.");
+
+					controller.processDocumentSchemaOp(
+						message,
+						/* local: */ true,
+						/* sequenceNumber: */ 100,
+					);
+					const expectedPost = postTable[`${oldMode}`][`${newMode}`];
+					const actualPost = controller.sessionSchema.runtime.idCompressorMode;
+					assert.equal(
+						actualPost,
+						expectedPost,
+						`Post-migration '${oldMode}' -> '${newMode}' must be '${expectedPost}' (actual: '${actualPost}')`,
+					);
+				}
+			}
+		});
 	});
 });
