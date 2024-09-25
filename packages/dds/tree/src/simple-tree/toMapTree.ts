@@ -39,7 +39,7 @@ import {
 } from "./schemaTypes.js";
 import {
 	getKernel,
-	getSimpleNodeSchemaFromNode,
+	getSimpleNodeSchemaFromInnerNode,
 	isTreeNode,
 	NodeKind,
 	type InnerNode,
@@ -162,7 +162,7 @@ function nodeDataToMapTree(
 	const innerNode = tryGetInnerNode(data);
 	if (innerNode !== undefined) {
 		if (isMapTreeNode(innerNode)) {
-			if (!allowedTypes.has(getSimpleNodeSchemaFromNode(innerNode))) {
+			if (!allowedTypes.has(getSimpleNodeSchemaFromInnerNode(innerNode))) {
 				throw new UsageError("Invalid schema for this context.");
 			}
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.

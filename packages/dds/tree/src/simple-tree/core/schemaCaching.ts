@@ -65,7 +65,7 @@ export function getSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSch
 /**
  * Gets the {@link TreeNodeSchema} for the {@link InnerNode}.
  */
-export function getSimpleNodeSchemaFromNode(innerNode: InnerNode): TreeNodeSchema {
+export function getSimpleNodeSchemaFromInnerNode(innerNode: InnerNode): TreeNodeSchema {
 	// TODO: to make this work without depending on flex tree schema, a new caching/lookup mechanism will be required, likely leveraging the FlexTreeContext:
 	// A SimpleTreeContext could be defined and associated with the FlexTreeContext, and used to look up simple-tree schema by identifier.
 	return getSimpleNodeSchema(innerNode.flexSchema);

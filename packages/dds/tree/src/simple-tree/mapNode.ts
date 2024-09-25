@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { Lazy } from "@fluidframework/core-utils/internal";
 import {
 	type FlexMapNodeSchema,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type MapTreeNode,
 	type OptionalFieldEditBuilder,
-	UnhydratedContext,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
@@ -18,6 +18,7 @@ import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	createFieldSchema,
 	FieldKind,
+	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -33,16 +34,18 @@ import {
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
+	type Context,
 } from "./core/index.js";
 import {
 	mapTreeFromNodeData,
 	type FactoryContent,
 	type InsertableContent,
 } from "./toMapTree.js";
-import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
+import { getFlexSchema } from "./toFlexSchema.js";
 import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
+import { createUnhydratedContext } from "./createContext.js";
 
 /**
  * A map of string keys to tree objects.
@@ -233,8 +236,10 @@ export function mapSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
 ) {
+	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+
 	let flexSchema: FlexMapNodeSchema;
-	let unhydratedContext: UnhydratedContext;
+	let unhydratedContext: Context;
 
 	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
 		public static override prepareInstance<T2>(
@@ -254,7 +259,7 @@ export function mapSchema<
 			input: T2,
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
-				unhydratedContext,
+				unhydratedContext.flexContext,
 				flexSchema,
 				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
 			);
@@ -262,16 +267,20 @@ export function mapSchema<
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			const schema = this as unknown as TreeNodeSchema;
 			flexSchema = getFlexSchema(schema) as FlexMapNodeSchema;
-			unhydratedContext = new UnhydratedContext(toFlexSchema(schema));
+			unhydratedContext = createUnhydratedContext(schema);
+			return unhydratedContext;
 		}
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
+		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
+			return lazyChildTypes.value;
+		}
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

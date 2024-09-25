@@ -9,8 +9,8 @@ export {
 	getKernel,
 	tryGetTreeNodeSchema,
 	type InnerNode,
-	tryGetCachedTreeNode,
 	tryDisposeTreeNode,
+	tryGetTreeNodeFromMapNode,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
@@ -34,5 +34,8 @@ export {
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
 	cachedFlexSchemaFromClassSchema,
-	getSimpleNodeSchemaFromNode,
+	getSimpleNodeSchemaFromInnerNode,
 } from "./schemaCaching.js";
+export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
+export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
+export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
