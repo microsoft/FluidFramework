@@ -16,8 +16,6 @@ import {
 	FieldKinds,
 } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
 import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
@@ -44,6 +42,7 @@ import {
 	type TreeNode,
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
+	getOrCreateNodeFromInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
@@ -141,7 +140,7 @@ export const treeNodeApi: TreeNodeApi = {
 			return undefined;
 		}
 
-		const output = getOrCreateNodeFromFlexTreeNode(editNode);
+		const output = getOrCreateNodeFromInnerNode(editNode);
 		assert(
 			!isTreeValue(output),
 			0x87f /* Parent can't be a leaf, so it should be a node not a value */,

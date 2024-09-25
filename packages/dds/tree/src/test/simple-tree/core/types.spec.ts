@@ -37,6 +37,10 @@ import {
 	UnhydratedContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-map-tree/mapTreeNode.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createUnhydratedContext } from "../../../simple-tree/createContext.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { Context } from "../../../simple-tree/core/index.js";
 
 describe("simple-tree types", () => {
 	describe("TreeNode", () => {
@@ -161,9 +165,12 @@ describe("simple-tree types", () => {
 
 				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push("oneTimeSetup");
+					return createUnhydratedContext(Subclass);
 				}
+
+				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
 
 				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
@@ -231,6 +238,7 @@ describe("simple-tree types", () => {
 				public static readonly identifier = "Subclass";
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
+				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
 
 				public static override buildRawNode<T2>(
 					this: typeof TreeNodeValid<T2>,
@@ -254,16 +262,18 @@ describe("simple-tree types", () => {
 			class A extends Subclass {
 				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push("A");
+					return createUnhydratedContext(A);
 				}
 			}
 
 			class B extends Subclass {
 				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push("B");
+					return createUnhydratedContext(A);
 				}
 			}
 
@@ -281,6 +291,7 @@ describe("simple-tree types", () => {
 				public static readonly identifier = "Subclass";
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
+				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
 
 				public static override buildRawNode<T2>(
 					this: typeof TreeNodeValid<T2>,
@@ -304,8 +315,9 @@ describe("simple-tree types", () => {
 			class A extends Subclass {
 				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push(this.name);
+					return createUnhydratedContext(A);
 				}
 			}
 
