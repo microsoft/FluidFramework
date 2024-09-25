@@ -35,12 +35,16 @@ function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 	}
 	const op = msg.contents as IMergeTreeOp;
 	const opType = op.type.toString();
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const pos1Side = op?.["before1"] === undefined ? "" : op["before1"] ? "before" : "after";
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const pos2Side = op?.["before2"] === undefined ? "" : op["before2"] ? "before" : "after";
 	const opPos =
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		op?.["pos1"] === undefined
 			? ""
 			: // eslint-disable-next-line @typescript-eslint/dot-notation
-				`@${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}`}`;
+				`@${pos1Side}${op["pos1"]}${op["pos2"] === undefined ? "" : `,${pos2Side}${op["pos2"]}`}`;
 
 	const seq = msg.sequenceNumber < 0 ? "L" : msg.sequenceNumber.toString();
 	const ref = msg.referenceSequenceNumber.toString();
