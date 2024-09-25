@@ -17,6 +17,11 @@ parameters:
   type: object
   default: []
 
+# Variables to be set in the stage that runs tests
+- name: stageVariables
+  type: object
+  default:
+
 # If true, the stage that uploads pipeline telemetry to Kusto will include a task to upload
 # test pass rate telemetry.
 - name: uploadTestPassRateTelemetry
