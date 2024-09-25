@@ -90,7 +90,6 @@ export {
 	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
 export { getOrCreateInnerNode } from "./proxyBinding.js";
-export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
