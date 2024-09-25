@@ -62,16 +62,16 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IOrdererManager": {
+			"Class_CombinedProducer": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IProducer": {
+			"Interface_IOrdererConnection": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_CombinedProducer": {
+			"Interface_IOrdererManager": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IOrdererConnection": {
+			"Interface_IProducer": {
 				"forwardCompat": false
 			}
 		},

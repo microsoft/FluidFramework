@@ -79,7 +79,19 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_ITelemetryContextProperties": {
+			"Class_Lumber": {
+				"backCompat": false
+			},
+			"Enum_BaseTelemetryProperties": {
+				"backCompat": false
+			},
+			"Enum_HttpProperties": {
+				"backCompat": false
+			},
+			"Enum_LumberEventName": {
+				"backCompat": false
+			},
+			"Interface_ITelemetryContextProperties": {
 				"forwardCompat": false
 			}
 		},
