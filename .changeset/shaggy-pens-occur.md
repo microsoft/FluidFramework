@@ -11,6 +11,7 @@ Further MergeTree Client Legacy Deprecations
 In an effort the reduce exposure of the Client class in the merge-tree package, this change additionally deprecates a number of types which either directly or indirectly expose the merge-tree Client class.
 
 Most of these types are not meant to be used directly, and direct use is not supported:
+
  - AttributionPolicy
  - IClientEvents
  - IMergeTreeAttributionOptions
