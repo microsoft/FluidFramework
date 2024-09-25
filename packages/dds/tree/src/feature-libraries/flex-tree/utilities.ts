@@ -83,7 +83,7 @@ export interface DetachedFieldCache {
 export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
 	return {
 		schema: nodeOrField.context.schema,
-		policy: nodeOrField.context.flexSchema.policy,
+		policy: nodeOrField.context.schemaPolicy,
 	};
 }
 

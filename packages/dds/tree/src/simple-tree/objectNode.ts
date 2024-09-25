@@ -283,7 +283,7 @@ export function setField(
 		prepareContentForHydration(mapTree, field.context.checkout.forest);
 	}
 
-	switch (field.schema.kind) {
+	switch (field.schema) {
 		case FieldKinds.required.identifier: {
 			assert(mapTree !== undefined, 0xa04 /* Cannot set a required field to undefined */);
 			const typedField = field as FlexTreeRequiredField;

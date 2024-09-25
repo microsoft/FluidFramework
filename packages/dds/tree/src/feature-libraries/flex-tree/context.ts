@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type FieldKey,
 	type ForestEvents,
+	type SchemaPolicy,
 	type TreeFieldStoredSchema,
 	type TreeStoredSchema,
 	anchorSlot,
@@ -39,6 +40,11 @@ export interface FlexTreeContext {
 	 * All data must conform to these schema.
 	 */
 	readonly schema: TreeStoredSchema;
+
+	/**
+	 * SchemaPolicy used within this context.
+	 */
+	readonly schemaPolicy: SchemaPolicy;
 
 	/**
 	 * If true, this context is the canonical context instance for a given view,
@@ -108,6 +114,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		this.checkout.forest.anchors.slots.set(ContextSlot, this);
 	}
 
+	public get schemaPolicy(): SchemaPolicy {
+		return this.flexSchema.policy;
+	}
+
 	public isHydrated(): this is FlexTreeHydratedContext {
 		return true;
 	}
@@ -159,7 +169,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
-		const field = makeField(this, this.schema.rootFieldSchema, cursor);
+		const field = makeField(this, this.schema.rootFieldSchema.kind, cursor);
 		cursor.free();
 		return field;
 	}

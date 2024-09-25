@@ -7,8 +7,8 @@ import {
 	type AnchorNode,
 	type ExclusiveMapTree,
 	type FieldKey,
+	type FieldKindIdentifier,
 	type FieldUpPath,
-	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	anchorSlot,
@@ -252,7 +252,7 @@ export interface FlexTreeField extends FlexTreeEntity {
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
 	 */
-	readonly schema: TreeFieldStoredSchema;
+	readonly schema: FieldKindIdentifier;
 }
 
 // #region Field Kinds

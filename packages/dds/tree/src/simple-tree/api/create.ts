@@ -152,7 +152,7 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const mapTrees = cursor === undefined ? [] : [mapTreeFromCursor(cursor)];
 	const context = getUnhydratedContext(schema);
-	const flexSchema = context.flexContext.flexSchema;
+	const flexSchema = context.flexContext.schema;
 
 	const schemaValidationPolicy: SchemaAndPolicy = {
 		policy: defaultSchemaPolicy,
@@ -161,7 +161,7 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 
 	const maybeError = isFieldInSchema(
 		mapTrees,
-		flexSchema.rootFieldSchema.stored,
+		flexSchema.rootFieldSchema,
 		schemaValidationPolicy,
 	);
 	inSchemaOrThrow(maybeError);
