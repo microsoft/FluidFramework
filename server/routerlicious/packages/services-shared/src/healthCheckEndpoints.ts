@@ -50,8 +50,6 @@ export function createHealthCheckEndpoints(
 	const router: Router = Router();
 	let tenantThrottleOptions: Partial<IThrottleMiddlewareOptions>;
 	let generalTenantThrottler: core.IThrottler;
-	let startupThrottler: RequestHandler;
-	let pingThrottler: RequestHandler;
 	let readinessThrottler: RequestHandler;
 
 	if (throttlerConfig) {
@@ -62,15 +60,6 @@ export function createHealthCheckEndpoints(
 		generalTenantThrottler = throttlerConfig.tenantThrottlers.get(
 			throttlerConfig.generalRestCallThrottleIdPrefix,
 		) as core.IThrottler;
-		startupThrottler = throttle(generalTenantThrottler, undefined, {
-			...tenantThrottleOptions,
-			throttleIdPrefix: "startup",
-		});
-
-		pingThrottler = throttle(generalTenantThrottler, undefined, {
-			...tenantThrottleOptions,
-			throttleIdPrefix: "ping",
-		});
 
 		readinessThrottler = throttle(generalTenantThrottler, undefined, {
 			...tenantThrottleOptions,
@@ -84,7 +73,6 @@ export function createHealthCheckEndpoints(
 
 	router.get(
 		"/startup",
-		throttlerConfig ? startupThrottler : noopMiddleware,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const startupProbeMetric = Lumberjack.newLumberMetric(
@@ -104,7 +92,6 @@ export function createHealthCheckEndpoints(
 	if (createLivenessEndpoint) {
 		router.get(
 			"/ping",
-			throttlerConfig ? pingThrottler : noopMiddleware,
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (request, response) => {
 				const livenessProbeMetric = Lumberjack.newLumberMetric(
