@@ -15,6 +15,9 @@ parameters:
   type: boolean
   default: false
 
+- name: buildDirectory
+  type: string
+
 stages:
 
 # This stage only runs for test-branch builds
@@ -49,6 +52,14 @@ stages:
       # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
+
+  # Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main and release branch, and
+  # for the build of the client release group (we don't need manifests for anything else).
+  # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
+  - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))) }}:
+    - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
+      parameters:
+        buildDirectory: '${{ parameters.buildDirectory }}'
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.

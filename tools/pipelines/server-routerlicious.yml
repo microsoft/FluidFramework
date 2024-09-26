@@ -94,7 +94,6 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
