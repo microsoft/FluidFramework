@@ -12,6 +12,8 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	type FieldAnchor,
 	type FieldKey,
+	type TreeFieldStoredSchema,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type UpPath,
 	rootFieldKey,
@@ -25,14 +27,11 @@ import {
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	FieldKinds,
-	FlexFieldSchema,
 	MockNodeKeyManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	getTreeContext,
-	intoStoredSchema,
 	mapTreeFromCursor,
-	type FlexTreeSchema,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
 import { flexTreeViewWithContent, forestWithContent, MockTreeCheckout } from "../../utils.js";
@@ -49,7 +48,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 } from "../../../simple-tree/index.js";
-import { getFlexSchema, toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { JsonObject, singleJsonCursor } from "../../json/index.js";
 
 const detachedField: FieldKey = brand("detached");
@@ -377,14 +376,13 @@ describe("LazyValueField", () => {
 });
 
 describe("LazySequence", () => {
-	const rootSchema = FlexFieldSchema.create(FieldKinds.sequence, [
-		getFlexSchema(numberSchema),
-	]);
-	const schema: FlexTreeSchema = {
+	const rootSchema: TreeFieldStoredSchema = {
+		kind: FieldKinds.sequence.identifier,
+		types: new Set([brand(numberSchema.identifier)]),
+	};
+	const schema: TreeStoredSchema = {
 		rootFieldSchema: rootSchema,
-		nodeSchema: new Map([[brand(numberSchema.identifier), getFlexSchema(numberSchema)]]),
-		policy: defaultSchemaPolicy,
-		adapters: {},
+		nodeSchema: new Map([[brand(numberSchema.identifier), getStoredSchema(numberSchema)]]),
 	};
 
 	/**
@@ -393,19 +391,19 @@ describe("LazySequence", () => {
 	function testSequence(data: number[]) {
 		const content = data.map((n) => singleJsonCursor(n));
 		const forest = forestWithContent({
-			schema: intoStoredSchema(schema),
+			schema,
 			initialTree: content,
 		});
 		const context = getTreeContext(
-			schema,
+			defaultSchemaPolicy,
 			new MockTreeCheckout(forest, {
-				schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
+				schema: new TreeStoredSchemaRepository(schema),
 			}),
 			new MockNodeKeyManager(),
 		);
 		const cursor = initializeCursor(context, rootFieldAnchor);
 
-		return new LazySequence(context, rootSchema.stored.kind, cursor, rootFieldAnchor);
+		return new LazySequence(context, rootSchema.kind, cursor, rootFieldAnchor);
 	}
 
 	it("atIndex", () => {
