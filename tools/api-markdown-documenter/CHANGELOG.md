@@ -1,5 +1,10 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.16.1
+
+-   Promote `toHtml` transformation functions to `@beta` so they can actually be consumed (via `@fluid-tools/api-markdown-documenter/beta`).
+    Makes the API surface a bit more flexible, allowing users to specify only a partial config, or the full transformation context if they have it.
+
 ## 0.16.0
 
 -   Added the following new utility function to `ApiItemUtilities`:
