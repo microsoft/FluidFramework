@@ -278,3 +278,25 @@ pipelines:
           lastModifiedDate: 2024-09-26
         roslyn:
           lastModifiedDate: 2024-09-26
+  13:
+    retail:
+      source:
+        credscan:
+          lastModifiedDate: 2024-09-26
+        eslint:
+          lastModifiedDate: 2024-09-26
+        bandit:
+          lastModifiedDate: 2024-09-26
+        psscriptanalyzer:
+          lastModifiedDate: 2024-09-26
+        armory:
+          lastModifiedDate: 2024-09-26
+      binary:
+        credscan:
+          lastModifiedDate: 2024-09-26
+        binskim:
+          lastModifiedDate: 2024-09-26
+        spotbugs:
+          lastModifiedDate: 2024-09-26
+        roslyn:
+          lastModifiedDate: 2024-09-26
