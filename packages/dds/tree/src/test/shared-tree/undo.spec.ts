@@ -21,6 +21,7 @@ const rootField = {
 	field: rootFieldKey,
 };
 
+// TODO: Document the meaning of these various test case properties
 const testCases: {
 	name: string;
 	edit: (undoRedoBranch: ITreeCheckout, otherBranch: ITreeCheckout) => void;
