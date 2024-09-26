@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IReadinessCheck } from "./healthCheckEndpoints";
+/**
+ * Adding a duplicate of the IReadinessCheck interface from server-services-shared
+ * to prevent a cyclic dependency between server-services-shared and test-utils
+ */
+export interface IReadinessCheck {
+	isReady(): Promise<boolean>;
+}
 
 export class TestReadinessCheck implements IReadinessCheck {
 	private ready = false;

@@ -7,7 +7,7 @@ import request from "supertest";
 import express from "express";
 import { createHealthCheckEndpoints } from "../healthCheckEndpoints";
 import { StartupChecker } from "../startupChecker";
-import { TestReadinessCheck } from "../testReadinessCheck";
+import { TestReadinessCheck } from "@fluidframework/server-test-utils";
 
 describe("Health Check Endpoints", () => {
 	let app: express.Express;
