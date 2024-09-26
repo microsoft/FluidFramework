@@ -11,13 +11,14 @@ import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
 	Multiplicity,
+	ObjectNodeStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
+	type TreeTypeSet,
 } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexFieldKind,
-	FlexFieldSchema,
-	FlexObjectNodeSchema,
 	type FullSchemaPolicy,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
@@ -28,7 +29,6 @@ import type { TreeStoredContent } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	cursorFromInsertable,
-	getFlexSchema,
 	getStoredSchema,
 	numberSchema,
 	SchemaFactory,
@@ -115,14 +115,32 @@ export class HasOptionalField extends factory.object("hasOptionalField", {
 export class HasIdentifierField extends factory.object("hasIdentifierField", {
 	field: factory.identifier,
 }) {}
-export const allTheFields = FlexObjectNodeSchema.create(
-	{ name: "test" },
-	brand("test.allTheFields"),
-	{
-		optional: FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(numberSchema)]),
-		valueField: FlexFieldSchema.create(FieldKinds.required, [getFlexSchema(numberSchema)]),
-		sequence: FlexFieldSchema.create(FieldKinds.sequence, [getFlexSchema(numberSchema)]),
-	},
+
+const numberSet: TreeTypeSet = new Set([brand(numberSchema.identifier)]);
+export const allTheFields = new ObjectNodeStoredSchema(
+	new Map([
+		[
+			brand("optional"),
+			{
+				kind: FieldKinds.optional.identifier,
+				types: numberSet,
+			},
+		],
+		[
+			brand("valueField"),
+			{
+				kind: FieldKinds.required.identifier,
+				types: numberSet,
+			},
+		],
+		[
+			brand("sequence"),
+			{
+				kind: FieldKinds.sequence.identifier,
+				types: numberSet,
+			},
+		],
+	]),
 );
 
 export class NumericMap extends factory.map("numericMap", factory.number) {}
@@ -134,10 +152,12 @@ export class RecursiveType extends factory.objectRecursive("recursiveType", {
 	type _check = ValidateRecursiveSchema<typeof RecursiveType>;
 }
 
+const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
+
 const library = {
 	nodeSchema: new Map([
 		[brand(Minimal.identifier), getStoredSchema(Minimal)],
-		[allTheFields.name, allTheFields.stored],
+		[allTheFieldsName, allTheFields],
 		[brand(factory.number.identifier), getStoredSchema(factory.number)],
 	]),
 } satisfies Partial<TreeStoredSchema>;
@@ -152,9 +172,7 @@ export const testTrees: readonly TestTree[] = [
 		"numericSequence",
 		{
 			...toStoredSchema(factory.number),
-			rootFieldSchema: FlexFieldSchema.create(FieldKinds.sequence, [
-				getFlexSchema(numberSchema),
-			]).stored,
+			rootFieldSchema: { kind: FieldKinds.sequence.identifier, types: numberSet },
 		},
 		jsonableTreesFromFieldCursor(fieldJsonCursor([1, 2, 3])),
 	),
@@ -188,11 +206,14 @@ export const testTrees: readonly TestTree[] = [
 		"allTheFields-minimal",
 		{
 			...library,
-			rootFieldSchema: FlexFieldSchema.create(FieldKinds.required, [allTheFields]).stored,
+			rootFieldSchema: {
+				kind: FieldKinds.required.identifier,
+				types: new Set([allTheFieldsName]),
+			},
 		},
 		[
 			{
-				type: allTheFields.name,
+				type: allTheFieldsName,
 				fields: { valueField: [{ type: brand(numberSchema.identifier), value: 5 }] },
 			},
 		],
@@ -201,11 +222,14 @@ export const testTrees: readonly TestTree[] = [
 		"allTheFields-full",
 		{
 			...library,
-			rootFieldSchema: FlexFieldSchema.create(FieldKinds.required, [allTheFields]).stored,
+			rootFieldSchema: {
+				kind: FieldKinds.required.identifier,
+				types: new Set([allTheFieldsName]),
+			},
 		},
 		[
 			{
-				type: allTheFields.name,
+				type: allTheFieldsName,
 				fields: {
 					valueField: [{ type: brand(numberSchema.identifier), value: 5 }],
 					optional: [{ type: brand(numberSchema.identifier), value: 5 }],
