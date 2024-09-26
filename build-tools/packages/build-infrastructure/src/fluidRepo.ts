@@ -15,14 +15,12 @@ import type {
 	ReleaseGroupName,
 	WorkspaceName,
 } from "./types.js";
-import { findGitRoot } from "./utils.js";
 import { Workspace } from "./workspace.js";
 
 export class FluidRepo implements IFluidRepo {
-	public readonly root: string;
+	// public readonly root: string;
 
-	public constructor(root?: string) {
-		this.root = root === undefined ? findGitRoot() : path.resolve(root);
+	public constructor(public readonly root: string) {
 		const config = getFluidRepoLayout(this.root);
 
 		// if (config.repoPackages !== undefined) {
@@ -96,6 +94,6 @@ export class FluidRepo implements IFluidRepo {
 	}
 }
 
-export function loadFluidRepo(root?: string): IFluidRepo {
+export function loadFluidRepo(root: string): IFluidRepo {
 	return new FluidRepo(root);
 }

@@ -135,7 +135,7 @@ export interface IWorkspace extends Installable, Reloadable {
 }
 
 // @public (undocumented)
-export function loadFluidRepo(root?: string): IFluidRepo;
+export function loadFluidRepo(root: string): IFluidRepo;
 
 // @public (undocumented)
 export abstract class PackageBase<TAddProps extends AdditionalPackageProps = undefined, J extends PackageJson = PackageJson> implements IPackage {
