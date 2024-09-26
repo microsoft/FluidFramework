@@ -81,6 +81,7 @@ trigger:
     - CredScanSuppressions.json
     - examples
     - experimental
+    - flub.config.cjs
     - fluidBuild.config.cjs
     - layerInfo.json
     - lerna.json
@@ -142,6 +143,7 @@ pr:
     - CredScanSuppressions.json
     - examples
     - experimental
+    - flub.config.cjs
     - fluidBuild.config.cjs
     - layerInfo.json
     - lerna.json

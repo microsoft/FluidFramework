@@ -37,6 +37,7 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - flub.config.cjs
     - fluidBuild.config.cjs
     - common/build/build-common
     - common/lib/protocol-definitions
