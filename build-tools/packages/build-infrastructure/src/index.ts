@@ -22,7 +22,8 @@ export type {
 	WorkspaceName,
 	FluidPackageJsonFields,
 	PackageDependency,
-	PackageManager,
+	IPackageManager,
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
 export { PackageBase } from "./package.js";
+export { createPackageManager } from "./packageManagers.js";

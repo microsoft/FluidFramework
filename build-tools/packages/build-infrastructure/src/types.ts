@@ -24,8 +24,6 @@ export type PackageJson = SetRequired<
 
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
-export type PackageManager = "npm" | "pnpm" | "yarn";
-
 export interface IFluidRepo {
 	/**
 	 * Absolute path to the root of the repo.
@@ -39,9 +37,14 @@ export interface IFluidRepo {
 	packages: Map<PackageName, IPackage>;
 }
 
+export interface Installable {
+	checkInstall(): Promise<boolean>;
+	install(updateLockfile: boolean): Promise<boolean>;
+}
+
 export type WorkspaceName = Opaque<string, "WorkspaceName">;
 
-export interface IWorkspace {
+export interface IWorkspace extends Installable {
 	name: WorkspaceName;
 	directory: string;
 	rootPackage: IPackage;
@@ -56,11 +59,8 @@ export interface IReleaseGroup {
 	readonly version: string;
 	readonly rootPackage?: IPackage;
 	readonly packages: IPackage[];
+	readonly workspace: IWorkspace;
 	readonly adoPipelineUrl?: string;
-
-	// TODO: is there a better way to implement a type guard than unique names of properties? Maybe something with the
-	// opaque types?
-	readonly rgPackages: IPackage[];
 }
 
 export function isIReleaseGroup(
@@ -72,10 +72,19 @@ export function isIReleaseGroup(
 	}
 
 	if (typeof toCheck === "object") {
-		return "rgPackages" in toCheck;
+		// TODO: is there a better way to implement a type guard than unique names of properties? Maybe something with the
+		// opaque types?
+		return "workspace" in toCheck && "packages" in toCheck;
 	}
 
 	return false;
+}
+
+export type PackageManagerName = "npm" | "pnpm" | "yarn";
+
+export interface IPackageManager {
+	readonly name: PackageManagerName;
+	installCommand(updateLockfile: boolean): string;
 }
 
 /**
@@ -89,12 +98,13 @@ export interface PackageDependency {
 
 export type PackageName = Opaque<string, "PackageName">;
 
-export interface IPackage<J extends PackageJson = PackageJson> {
+export interface IPackage<J extends PackageJson = PackageJson>
+	extends Pick<Installable, "checkInstall"> {
 	readonly name: PackageName;
 	readonly nameColored: string;
 	readonly directory: string;
 	packageJson: J;
-	readonly packageManager: PackageManager;
+	readonly packageManager: IPackageManager;
 	readonly version: string;
 	readonly private: boolean;
 	readonly isWorkspaceRoot: boolean;
@@ -102,12 +112,9 @@ export interface IPackage<J extends PackageJson = PackageJson> {
 	isReleaseGroupRoot: boolean;
 	readonly packageJsonFilePath: string;
 	readonly dependencies: PackageName[];
-
-	checkInstall(): Promise<boolean>;
 	getScript(name: string): string | undefined;
 	savePackageJson(): Promise<void>;
 	reload(): void;
-
 	combinedDependencies: Generator<PackageDependency, void>;
 }
 

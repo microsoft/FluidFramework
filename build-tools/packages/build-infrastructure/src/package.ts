@@ -14,7 +14,7 @@ import type {
 	IPackage,
 	PackageDependency,
 	PackageJson,
-	PackageManager,
+	IPackageManager,
 	PackageName,
 	ReleaseGroupName,
 } from "./types.js";
@@ -64,7 +64,7 @@ export abstract class PackageBase<
 	 */
 	public constructor(
 		public readonly packageJsonFilePath: string,
-		public readonly packageManager: PackageManager,
+		public readonly packageManager: IPackageManager,
 		public readonly isWorkspaceRoot: boolean,
 		public readonly releaseGroup: ReleaseGroupName,
 		public isReleaseGroupRoot: boolean,
@@ -197,7 +197,7 @@ export class Package<
 	>(
 		this: T,
 		packageJsonFilePath: string,
-		packageManager: PackageManager,
+		packageManager: IPackageManager,
 		isWorkspaceRoot: boolean,
 		workspaceDefinition: WorkspaceDefinition,
 		additionalProperties?: TAddProps,
@@ -235,7 +235,7 @@ export class Package<
 
 export function loadPackageFromWorkspaceDefinition(
 	packageJsonFilePath: string,
-	packageManager: PackageManager,
+	packageManager: IPackageManager,
 	isWorkspaceRoot: boolean,
 	workspaceDefinition: WorkspaceDefinition,
 ) {

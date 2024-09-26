@@ -5,6 +5,7 @@
 
 import path from "node:path";
 import { getPackagesSync } from "@manypkg/get-packages";
+import execa from "execa";
 
 import type { ReleaseGroupDefinition, WorkspaceDefinition } from "./config.js";
 import { loadPackageFromWorkspaceDefinition } from "./package.js";
@@ -13,11 +14,12 @@ import type {
 	IPackage,
 	IReleaseGroup,
 	IWorkspace,
-	PackageManager,
+	IPackageManager,
 	ReleaseGroupName,
 	WorkspaceName,
 } from "./types.js";
 import { findGitRoot } from "./utils.js";
+import { PackageManager } from "./packageManagers.js";
 
 export class Workspace implements IWorkspace {
 	public readonly name: WorkspaceName;
@@ -30,12 +32,12 @@ export class Workspace implements IWorkspace {
 	 */
 	public readonly directory: string;
 
+	private readonly packageManager: IPackageManager;
+
 	private constructor(name: string, definition: WorkspaceDefinition) {
 		this.name = name as WorkspaceName;
 		const repoRoot = findGitRoot();
 		this.directory = path.resolve(repoRoot, definition.directory);
-
-		let packageManager: PackageManager;
 
 		const {
 			tool,
@@ -59,7 +61,7 @@ export class Workspace implements IWorkspace {
 			case "npm":
 			case "pnpm":
 			case "yarn":
-				packageManager = tool.type;
+				this.packageManager = PackageManager.load(tool.type);
 				break;
 			default:
 				throw new Error(`Unknown package manager ${tool.type}`);
@@ -69,7 +71,7 @@ export class Workspace implements IWorkspace {
 		for (const pkg of foundPackages) {
 			const loadedPackage = loadPackageFromWorkspaceDefinition(
 				path.join(pkg.dir, "package.json"),
-				packageManager,
+				this.packageManager,
 				/* isWorkspaceRoot */ false,
 				definition,
 			);
@@ -79,7 +81,7 @@ export class Workspace implements IWorkspace {
 		// Load the workspace root IPackage
 		this.rootPackage = loadPackageFromWorkspaceDefinition(
 			path.join(this.directory, "package.json"),
-			packageManager,
+			this.packageManager,
 			/* isWorkspaceRoot */ true,
 			definition,
 		);
@@ -99,7 +101,7 @@ export class Workspace implements IWorkspace {
 
 		this.releaseGroups = new Map();
 		for (const [groupName, def] of rGroupDefinitions) {
-			this.releaseGroups.set(groupName, new ReleaseGroup(groupName, def, this.packages));
+			this.releaseGroups.set(groupName, new ReleaseGroup(groupName, def, this));
 		}
 
 		// sanity check - make sure that all packages are in a release group.
@@ -115,6 +117,29 @@ export class Workspace implements IWorkspace {
 			const message = `Found packages in the ${name} workspace that are not in any release groups. Check your config.\n${packageList}`;
 			throw new Error(message);
 		}
+	}
+
+	public async checkInstall() {
+		let succeeded = true;
+		for (const buildPackage of this.packages) {
+			if (!(await buildPackage.checkInstall())) {
+				succeeded = false;
+			}
+		}
+		return succeeded;
+	}
+
+	public async install(updateLockfile: boolean): Promise<boolean> {
+		const command = this.packageManager.installCommand(updateLockfile);
+		const output = await execa(
+			this.packageManager.name,
+			command.split(" "),
+			{
+				cwd: this.directory,
+			},
+		);
+		console.debug(output);
+		return true;
 	}
 
 	public static load(name: string, definition: WorkspaceDefinition): IWorkspace {

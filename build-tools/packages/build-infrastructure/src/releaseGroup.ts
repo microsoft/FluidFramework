@@ -4,7 +4,7 @@
  */
 
 import { type ReleaseGroupDefinition, matchesReleaseGroupDefinition } from "./config.js";
-import type { IPackage, IReleaseGroup, ReleaseGroupName } from "./types.js";
+import type { IPackage, IReleaseGroup, IWorkspace, ReleaseGroupName } from "./types.js";
 
 export class ReleaseGroup implements IReleaseGroup {
 	public readonly name: ReleaseGroupName;
@@ -12,12 +12,12 @@ export class ReleaseGroup implements IReleaseGroup {
 	public constructor(
 		name: string,
 		releaseGroupDefinition: ReleaseGroupDefinition,
-		packagesInWorkspace: IPackage[],
+		public workspace: IWorkspace,
 		public readonly rootPackage?: IPackage,
 	) {
 		this.name = name as ReleaseGroupName;
 		this.adoPipelineUrl = releaseGroupDefinition.adoPipelineUrl;
-		this.packages = packagesInWorkspace
+		this.packages = workspace.packages
 			.filter((pkg) => matchesReleaseGroupDefinition(pkg, releaseGroupDefinition))
 			.map((pkg) => {
 				// update the release group in the package object so we have an easy way to get from packages to release groups
