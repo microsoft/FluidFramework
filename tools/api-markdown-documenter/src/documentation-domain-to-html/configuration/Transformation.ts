@@ -51,7 +51,7 @@ import type { TransformationContext } from "../TransformationContext.js";
  * For any other custom {@link DocumentationNode}s, transformations must be specified or the system will throw an error
  * when handling an unknown node kind.
  *
- * @alpha
+ * @beta
  */
 // Prefer index signature for documentation, since it allows documenting the key name.
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
@@ -69,7 +69,7 @@ export interface Transformations {
  * @param node - The input node to be transformed.
  * @param context - Transformation context, including custom transformation implementations.
  *
- * @alpha
+ * @beta
  */
 export type Transformation = (node: DocumentationNode, context: TransformationContext) => HastNodes;
 

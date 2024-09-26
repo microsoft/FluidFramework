@@ -224,6 +224,18 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly type: string;
 }
 
+// @beta
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
+
+// @beta
+export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
+
+// @beta
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+
+// @beta
+export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
+
 // @public
 export enum DocumentationNodeType {
     BlockQuote = "BlockQuote",
@@ -299,6 +311,9 @@ export interface DocumentNodeProps {
     readonly children: SectionNode[];
     readonly documentPath: string;
 }
+
+// @beta
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
 export interface DocumentWriter {
@@ -713,6 +728,28 @@ export interface TextFormatting {
     readonly bold?: boolean;
     readonly italic?: boolean;
     readonly strikethrough?: boolean;
+}
+
+// @beta
+export interface ToHtmlConfig extends ConfigurationBase {
+    readonly customTransformations?: ToHtmlTransformations;
+    readonly language?: string;
+    readonly startingHeadingLevel?: number;
+}
+
+// @beta
+export interface ToHtmlContext {
+    readonly headingLevel: number;
+    readonly logger: Logger;
+    readonly transformations: ToHtmlTransformations;
+}
+
+// @beta
+export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
+
+// @beta
+export interface ToHtmlTransformations {
+    [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public
