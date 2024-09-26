@@ -198,13 +198,15 @@ export function Notifications<
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	NotificationsManager<T>
 > {
-	return (
+	const factory = (
 		key: Key,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-	) => ({
+	): {
+		manager: InternalTypes.StateValue<NotificationsManager<T>>;
+	} => ({
 		manager: brandIVM<
 			NotificationsManagerImpl<T, Key>,
 			InternalTypes.NotificationType,
@@ -217,4 +219,5 @@ export function Notifications<
 			),
 		),
 	});
+	return Object.assign(factory, { instanceBase: NotificationsManagerImpl });
 }

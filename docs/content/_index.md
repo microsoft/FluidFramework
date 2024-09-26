@@ -241,7 +241,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 </div>
 <div class="row">
     <div class="col-md-12 text-center">
-        <p><br/><a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important; text-decoration: none;" href="/docs/start/examples/"><small>Try the other samples</small></a><br/><br/></p>
+        <p><br/><a class="cta link-button btn-info get-started" style="background-color: #107b8c !important; text-decoration: none;" href="/docs/start/examples/"><small>Try the other samples</small></a><br/><br/></p>
     </div>
 </div>
 </div>
@@ -274,7 +274,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                                         <p>Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.</p>
                                     </div>
                                     <div>
-                                        <a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important; text-decoration: none;" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"><small>Learn more about Azure Fluid Relay</small></a>
+                                        <a class="cta link-button btn-info get-started" style="background-color: #107b8c !important; text-decoration: none;" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"><small>Learn more about Azure Fluid Relay</small></a>
                                     </div>
                             </div>
                             <div class="col-md-6">
@@ -286,7 +286,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                                         <p>Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
                                     </div>
                                     <div>
-                                        <a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important; text-decoration: none;" href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"><small>Learn more about SharePoint Embedded</small></a>
+                                        <a class="cta link-button btn-info get-started" style="background-color: #107b8c !important; text-decoration: none;" href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"><small>Learn more about SharePoint Embedded</small></a>
                                     </div>
                                 </div>
                         </div>

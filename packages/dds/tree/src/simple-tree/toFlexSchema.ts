@@ -57,7 +57,7 @@ type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
  *
  * This also has the side effect of populating the cached view schema on the class-based schema.
  */
-export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
+function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const schemaMap: SchemaMap = new Map();
 	const field = convertField(schemaMap, root);
 	const nodeSchema = new Map(
