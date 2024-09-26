@@ -276,7 +276,13 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
 
 	return (
-		<div className={style} onClick={onClick} onKeyDown={handleKeyDown} tabIndex={0}>
+		<div
+			role="button"
+			className={style}
+			onClick={onClick}
+			onKeyDown={handleKeyDown}
+			tabIndex={0}
+		>
 			{text}
 		</div>
 	);
