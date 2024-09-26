@@ -1,8 +1,5 @@
 ---
 "@fluidframework/server-routerlicious-base": major
-"@fluidframework/server-services": major
-"@fluidframework/server-services-shared": major
-"@fluidframework/server-services-telemetry": major
 ---
 ---
 "section": feature
