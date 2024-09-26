@@ -107,7 +107,8 @@ USAGE
   $ flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
 
 ARGUMENTS
-  VERSION                   The version corresponding to the pipeline trigger branch.
+  VERSION                   The version to check. When running in CI, this value corresponds to the pipeline trigger
+                            branch.
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 LOGGING FLAGS
