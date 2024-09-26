@@ -98,7 +98,7 @@ export class ViewSchema {
 	 */
 	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
 		// Sanity check on adapters:
-		// it's probably a bug it they use the never types,
+		// it's probably a bug if they use the never types,
 		// since there never is a reason to have a never type as an adapter input,
 		// and its impossible for an adapter to be correctly implemented if its output type is never
 		// (unless its input is also never).
