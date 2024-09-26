@@ -113,6 +113,7 @@ export {
 	type FieldKindConfigurationEntry,
 	getAllowedContentIncompatibilities,
 	isRepoSuperset,
+	isNeverTree,
 } from "./modular-schema/index.js";
 
 export {
@@ -120,10 +121,7 @@ export {
 	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexTreeSchema,
-	type SchemaLibraryData,
 	type LazyTreeNodeSchema,
-	ViewSchema,
-	type SchemaLintConfiguration,
 	LeafNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,

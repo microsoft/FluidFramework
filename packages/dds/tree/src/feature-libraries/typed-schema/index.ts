@@ -22,15 +22,6 @@ export {
 	intoStoredSchemaCollection,
 } from "./typedTreeSchema.js";
 
-export { ViewSchema } from "./view.js";
-
-export {
-	type SchemaLibraryData,
-	type SchemaLintConfiguration,
-	aggregateSchemaLibraries,
-	schemaLintDefault,
-} from "./schemaCollection.js";
-
 export {
 	type FlexList,
 	markEager,

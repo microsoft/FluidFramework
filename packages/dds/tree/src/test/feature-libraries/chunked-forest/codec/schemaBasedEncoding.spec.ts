@@ -36,7 +36,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import {
-	FlexFieldSchema,
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
@@ -60,7 +59,6 @@ import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
-	getFlexSchema,
 	getStoredSchema,
 	toStoredSchema,
 	// eslint-disable-next-line import/no-internal-modules
@@ -154,7 +152,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				FlexFieldSchema.create(FieldKinds.sequence, [getFlexSchema(Minimal)]).stored,
+				{ kind: FieldKinds.sequence.identifier, types: new Set([brand(Minimal.identifier)]) },
 				cache,
 				{ nodeSchema: new Map() },
 			);
@@ -181,10 +179,11 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 			);
 			const log: string[] = [];
-			const identifierField = FlexFieldSchema.create(FieldKinds.identifier, [
-				getFlexSchema(stringSchema),
-			]);
-			const storedSchema = identifierField.stored;
+			const storedSchema: TreeFieldStoredSchema = {
+				kind: FieldKinds.identifier.identifier,
+				types: new Set([brand(stringSchema.identifier)]),
+			};
+
 			const shape = fieldShaper(
 				{
 					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
