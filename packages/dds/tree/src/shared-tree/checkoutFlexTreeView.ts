@@ -7,10 +7,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type Context,
 	type FlexTreeField,
-	type FlexTreeSchema,
 	type NodeKeyManager,
 	getTreeContext,
 	type FlexTreeHydratedContext,
+	type FullSchemaPolicy,
 } from "../feature-libraries/index.js";
 import { tryDisposeTreeNode } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
@@ -42,7 +42,7 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
 		 * This is a non-owning reference: disposing of this view does not impact the branch.
 		 */
 		public readonly checkout: TCheckout,
-		public readonly schema: FlexTreeSchema,
+		public readonly schema: FullSchemaPolicy,
 		public readonly nodeKeyManager: NodeKeyManager,
 		private readonly onDispose?: () => void,
 	) {

@@ -16,8 +16,6 @@ import {
 import {
 	FieldKinds,
 	type FlexTreeField,
-	type FlexTreeNode,
-	tryGetMapTreeNode,
 	isFlexTreeNode,
 	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
@@ -25,10 +23,10 @@ import {
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 import {
 	getKernel,
-	tryGetCachedTreeNode,
 	type TreeNode,
-	getSimpleNodeSchemaFromNode,
-	type InternalTreeNode,
+	tryGetTreeNodeFromMapNode,
+	getOrCreateNodeFromInnerNode,
+	tryUnhydratedFlexTreeNode,
 } from "./core/index.js";
 
 /**
@@ -40,10 +38,10 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 	): TreeNode | TreeValue | undefined {
 		const maybeContent = flexField.content;
 		return isFlexTreeNode(maybeContent)
-			? getOrCreateNodeFromFlexTreeNode(maybeContent)
+			? getOrCreateNodeFromInnerNode(maybeContent)
 			: maybeContent;
 	}
-	switch (field.schema.kind) {
+	switch (field.schema) {
 		case FieldKinds.required.identifier: {
 			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);
@@ -59,22 +57,6 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 
 		default:
 			fail("invalid field kind");
-	}
-}
-
-export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNode | TreeValue {
-	const cachedProxy = tryGetCachedTreeNode(flexNode);
-	if (cachedProxy !== undefined) {
-		return cachedProxy;
-	}
-
-	const classSchema = getSimpleNodeSchemaFromNode(flexNode);
-	const node = flexNode as unknown as InternalTreeNode;
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (typeof classSchema === "function") {
-		return new classSchema(node) as TreeNode;
-	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
 	}
 }
 
@@ -152,7 +134,7 @@ function walkMapTree(
 	path: UpPath,
 	onVisitTreeNode: (path: UpPath, treeNode: TreeNode) => void,
 ): void {
-	if (tryGetMapTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
+	if (tryUnhydratedFlexTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
 		throw new UsageError(
 			"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
 		);
@@ -162,9 +144,9 @@ function walkMapTree(
 	const nexts: Next[] = [];
 	for (let next: Next | undefined = [path, mapTree]; next !== undefined; next = nexts.pop()) {
 		const [p, m] = next;
-		const mapTreeNode = tryGetMapTreeNode(m);
+		const mapTreeNode = tryUnhydratedFlexTreeNode(m);
 		if (mapTreeNode !== undefined) {
-			const treeNode = tryGetCachedTreeNode(mapTreeNode);
+			const treeNode = tryGetTreeNodeFromMapNode(mapTreeNode);
 			if (treeNode !== undefined) {
 				onVisitTreeNode(p, treeNode);
 			}
