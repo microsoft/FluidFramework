@@ -13,6 +13,7 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type FieldUpPath,
+	forbiddenFieldKindIdentifier,
 	type MapTree,
 	type SchemaPolicy,
 	type TreeNodeSchemaIdentifier,
@@ -34,7 +35,6 @@ import {
 	flexTreeMarker,
 	indexForAt,
 	type FlexTreeHydratedContext,
-	FlexFieldSchema,
 	type FlexFieldKind,
 	FieldKinds,
 	type SequenceFieldEditBuilder,
@@ -258,7 +258,7 @@ const unparentedLocation: LocationInField = {
 		boxedAt(index: number): FlexTreeNode | undefined {
 			return undefined;
 		},
-		schema: FlexFieldSchema.empty.stored.kind,
+		schema: brand(forbiddenFieldKindIdentifier),
 		get context(): never {
 			return fail("unsupported");
 		},
