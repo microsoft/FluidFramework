@@ -426,8 +426,8 @@ export class SharedTreeBranch<
 
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
-	 * @param commit - the commit to base the new branch off of. Defaults to the head of this branch.
-	 * @remarks Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
+	 * @param commit - The commit to base the new branch off of. Defaults to the head of this branch.
+	 * @remarks Changes made to the new branch will not be applied to this branch until the new branch is {@link SharedTreeBranch.merge | merged} back in.
 	 * Forks created during a transaction will be disposed when the transaction ends.
 	 */
 	public fork(commit: GraphCommit<TChange> = this.head): SharedTreeBranch<TEditor, TChange> {
