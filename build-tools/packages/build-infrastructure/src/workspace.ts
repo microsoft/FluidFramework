@@ -9,17 +9,17 @@ import execa from "execa";
 
 import type { ReleaseGroupDefinition, WorkspaceDefinition } from "./config.js";
 import { loadPackageFromWorkspaceDefinition } from "./package.js";
+import { PackageManager } from "./packageManagers.js";
 import { ReleaseGroup } from "./releaseGroup.js";
 import type {
 	IPackage,
+	IPackageManager,
 	IReleaseGroup,
 	IWorkspace,
-	IPackageManager,
 	ReleaseGroupName,
 	WorkspaceName,
 } from "./types.js";
 import { findGitRoot } from "./utils.js";
-import { PackageManager } from "./packageManagers.js";
 
 export class Workspace implements IWorkspace {
 	public readonly name: WorkspaceName;
@@ -131,13 +131,9 @@ export class Workspace implements IWorkspace {
 
 	public async install(updateLockfile: boolean): Promise<boolean> {
 		const command = this.packageManager.installCommand(updateLockfile);
-		const output = await execa(
-			this.packageManager.name,
-			command.split(" "),
-			{
-				cwd: this.directory,
-			},
-		);
+		const output = await execa(this.packageManager.name, command.split(" "), {
+			cwd: this.directory,
+		});
 		console.debug(output);
 		return true;
 	}

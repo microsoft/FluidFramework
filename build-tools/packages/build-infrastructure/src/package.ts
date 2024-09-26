@@ -12,9 +12,9 @@ import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.j
 import type {
 	AdditionalPackageProps,
 	IPackage,
+	IPackageManager,
 	PackageDependency,
 	PackageJson,
-	IPackageManager,
 	PackageName,
 	ReleaseGroupName,
 } from "./types.js";

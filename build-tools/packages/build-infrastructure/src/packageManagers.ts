@@ -6,8 +6,7 @@
 import type { IPackageManager, PackageManagerName } from "./types";
 
 export class PackageManager implements IPackageManager {
-	private constructor(public readonly name: PackageManagerName) {
-	}
+	private constructor(public readonly name: PackageManagerName) {}
 
 	public installCommand(updateLockfile: boolean): string {
 		switch (this.name) {
