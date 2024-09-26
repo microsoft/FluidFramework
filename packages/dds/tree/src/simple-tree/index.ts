@@ -67,6 +67,7 @@ export {
 	type JsonLeafSchemaType,
 	getJsonSchema,
 	getSimpleSchema,
+	ViewSchema,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
