@@ -111,7 +111,8 @@ export function convertNodeSchema(schema: TreeNodeSchema): TreeNodeStoredSchema 
 		}
 		case NodeKind.Map: {
 			const fieldInfo = schema.info as ImplicitAllowedTypes;
-			return new MapNodeStoredSchema(convertField(fieldInfo));
+			const types = convertAllowedTypes(fieldInfo);
+			return new MapNodeStoredSchema({ kind: FieldKinds.optional.identifier, types });
 		}
 		case NodeKind.Array: {
 			const fieldInfo = schema.info as ImplicitAllowedTypes;
