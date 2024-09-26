@@ -612,7 +612,7 @@ export class DocumentsSchemaController {
 	) {
 		this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
 		this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
-		// validate is strictly less, not equal
+		// validate is strickly less, not equal
 		assert(
 			this.documentSchema.refSeq < sequenceNumber,
 			0x950 /* time should move forward only! */,

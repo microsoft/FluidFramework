@@ -41,11 +41,11 @@ describe("Runtime", () => {
 		disallowedVersions: [],
 	};
 
-	function createController(oldSchema: IDocumentSchemaCurrent, desiredFeatures = features) {
+	function createController(config: unknown, desiredFeatures = features) {
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			oldSchema,
+			config as IDocumentSchemaCurrent, // old schema,
 			desiredFeatures,
 			() => {}, // onSchemaChange
 		);
@@ -53,7 +53,7 @@ describe("Runtime", () => {
 
 	function testWrongConfig(config: unknown) {
 		assert.throws(() => {
-			createController(config as IDocumentSchemaCurrent);
+			createController(config);
 		}, "should throw on unknown property");
 
 		const controller = createController(validConfig);
@@ -72,11 +72,11 @@ describe("Runtime", () => {
 		createController(validConfig);
 	});
 
-	// It's hard to say if we will allow additional property trees here like this sample shows.
+	// It's hard to say if we will allow additional propeorty trees here like this sample shows.
 	// More likely that will require version bump, to ensure that old code does not run with such structure.
 	// If if such configs will be backward compatible (similar to runtime options we are listing that were in use for very long time),
 	// then maybe ability to add them in such back-compat way is a plus
-	it("extra global property is Ok", () => {
+	it("extra global property ois Ok", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- cast required due to extra property
 		const schema = {
 			...validConfig,
@@ -513,7 +513,6 @@ describe("Runtime", () => {
 		// because it doesn't recognize that the value of 'idCompressorMode' may have changed
 		// since asserting '=== "delayed"' above.
 		assert((controller3.sessionSchema.runtime.idCompressorMode as unknown) === "on");
-
 		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert(schema.runtime.idCompressorMode === "on", "now on");
 
@@ -555,22 +554,40 @@ describe("Runtime", () => {
 
 	describe("IdCompressorMode", () => {
 		it("correctly computes pre/post migrations states", () => {
-			// IdCompressorMode transations must obey the following rules:
+			// IdCompressorMode transitions must obey the following rules:
 			//   1. They are "sticky" (as the mode advances from off -> delayed -> on, it never goes back).
 			//   2. You cannot transition directly from 'off' to 'on' (you must go through 'delayed').
 			//   3. 'off' -> 'delayed' transitions have no observable effect, and so always take effect immediately.
 
 			// Map from existing container state to pre-migration state.
+			// This is the initial state of the container on load.
 			const preTable = {
+				// off -> off = off
+				// off -> delayed = delayed
+				// off -> on = delayed (waiting for migration op)
 				undefined: { undefined, delayed: "delayed", on: "delayed" },
+
+				// delayed -> off = delayed (sticky)
+				// delayed -> delayed = delayed
+				// delayed -> on = delayed (waiting for migration op)
 				delayed: { undefined: "delayed", delayed: "delayed", on: "delayed" },
+
+				// on -> * = on (sticky)
 				on: { undefined: "on", delayed: "on", on: "on" },
 			};
 
 			// Map from pre-migration state to post-migration state.
+			// This is the state of the container after processing the migration op.
 			const postTable = {
+				// off -> off = off
+				// off -> delayed = delayed
+				// off -> on = on (note that pre-migration state was coerced to delayed)
 				undefined: { undefined, delayed: "delayed", on: "on" },
+				// delayed -> off = delayed (sticky)
+				// delayed -> delayed = delayed
+				// delayed -> on = on
 				delayed: { undefined: "delayed", delayed: "delayed", on: "on" },
+				// on -> * = on (sticky)
 				on: { undefined: "on", delayed: "on", on: "on" },
 			};
 

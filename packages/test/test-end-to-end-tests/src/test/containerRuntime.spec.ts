@@ -199,6 +199,8 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		provider = getTestObjectProvider();
 	});
 
+
+
 	it("upgrade with explicitSchemaControl = false", async () => {
 		await testUpgrade(false);
 	});
