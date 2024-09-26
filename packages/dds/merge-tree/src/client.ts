@@ -77,7 +77,7 @@ import {
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
-import { type InteriorSequencePlace } from "./sequencePlace.js";
+import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -493,17 +493,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
-			/*
-			const _start: InteriorSequencePlace =
-				typeof op.pos1 === "object"
-					? { pos: op.pos1.pos, side: op.pos1.before ? Side.Before : Side.After }
-					: { pos: op.pos1, side: Side.Before };
-			const _end: InteriorSequencePlace =
-				typeof op.pos2 === "object"
-					? { pos: op.pos2.pos, side: op.pos2.before ? Side.Before : Side.After }
-					: { pos: op.pos2 - 1, side: Side.After };
-			*/
-			assert(false, "TODO: sided obliterate will come in a follow-up PR shortly.");
+			const { start, end } = this.getValidSidedRange(op);
+			this._mergeTree.obliterateRange(
+				start,
+				end,
+				clientArgs.referenceSequenceNumber,
+				clientArgs.clientId,
+				clientArgs.sequenceNumber,
+				false,
+				opArgs,
+			);
 		} else {
 			assert(
 				op.type === MergeTreeDeltaType.OBLITERATE,
@@ -595,6 +594,45 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.sequenceNumber,
 			opArgs,
 		);
+	}
+
+	/**
+	 * Returns a valid range for the op, or throws if the range is invalid
+	 * @param op - The op to generate the range for
+	 */
+	// eslint-disable-next-line import/no-deprecated
+	private getValidSidedRange(op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg): {
+		start: InteriorSequencePlace;
+		end: InteriorSequencePlace;
+	} {
+		assert(op.pos1 !== undefined, "Expected start of obliterated range to be specified");
+		assert(op.pos2 !== undefined, "Expected end of obliterated range to be specified");
+		const start: InteriorSequencePlace =
+			typeof op.pos1 === "object"
+				? { pos: op.pos1.pos, side: op.pos1.before ? Side.Before : Side.After }
+				: { pos: op.pos1, side: Side.Before };
+		const end: InteriorSequencePlace =
+			typeof op.pos2 === "object"
+				? { pos: op.pos2.pos, side: op.pos2.before ? Side.Before : Side.After }
+				: { pos: op.pos2 - 1, side: Side.After };
+		if (
+			// start is the end of the sequence.
+			(start.pos === -1 && start.side === Side.Before) ||
+			// end's position value is less than start (only valid if end is at the end of the sequence)
+			start.pos > end.pos
+		) {
+			// If end is anything other than the end of the sequence, the range is invalid.
+			assert(end.pos === -1 && end.side === Side.Before, "Inverted obliterate range");
+		} else if (start.pos === end.pos) {
+			assert(
+				// both before or both after
+				start.side === end.side ||
+					// start before and end after (because we know start.side !== end.side)
+					start.side === Side.Before,
+				"Inverted obliterate range on either side of the same character",
+			);
+		}
+		return { start, end };
 	}
 
 	/**
@@ -975,7 +1013,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				this.applyAnnotateRangeOp(opArgs);
 				break;
 			}
-			case MergeTreeDeltaType.OBLITERATE: {
+			case MergeTreeDeltaType.OBLITERATE:
+			case MergeTreeDeltaType.OBLITERATE_SIDED: {
 				this.applyObliterateRangeOp(opArgs);
 				break;
 			}
@@ -1014,7 +1053,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				break;
 			}
 			case MergeTreeDeltaType.OBLITERATE_SIDED: {
-				assert(false, "TODO: sided obliterate will come in a follow-up PR shortly.");
+				this.applyObliterateRangeOp({ op });
 				break;
 			}
 			case MergeTreeDeltaType.GROUP: {

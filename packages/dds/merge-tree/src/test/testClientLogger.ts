@@ -23,7 +23,7 @@ import {
 	toRemovalInfo,
 	type ISegment,
 } from "../mergeTreeNodes.js";
-import { IMergeTreeOp } from "../ops.js";
+import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -35,16 +35,21 @@ function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 	}
 	const op = msg.contents as IMergeTreeOp;
 	const opType = op.type.toString();
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const pos1Side = op?.["before1"] === undefined ? "" : op["before1"] ? "[" : "(";
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const pos2Side = op?.["before2"] === undefined ? "" : op["before2"] ? ")" : "]";
-	const opPos =
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		op?.["pos1"] === undefined
-			? ""
-			: // eslint-disable-next-line @typescript-eslint/dot-notation
-				`@${pos1Side}${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}${pos2Side}`}`;
+	let opPos;
+	if (op.type === MergeTreeDeltaType.OBLITERATE_SIDED) {
+		const pos1Side =
+			op.type === MergeTreeDeltaType.OBLITERATE_SIDED ? (op.pos1.before ? "[" : "(") : "";
+		const pos2Side =
+			op.type === MergeTreeDeltaType.OBLITERATE_SIDED ? (op.pos2.before ? ")" : "]") : "";
+		opPos = `@${pos1Side}${op.pos1.pos},${op.pos2.pos}${pos2Side}`;
+	} else {
+		opPos =
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			op?.["pos1"] === undefined
+				? ""
+				: // eslint-disable-next-line @typescript-eslint/dot-notation
+					`@${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}`}`;
+	}
 
 	const seq = msg.sequenceNumber < 0 ? "L" : msg.sequenceNumber.toString();
 	const ref = msg.referenceSequenceNumber.toString();
