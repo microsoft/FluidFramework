@@ -22,7 +22,7 @@ import {
  * @param document - The document to transform.
  * @param config - HTML transformation configuration.
  *
- * @beta
+ * @public
  */
 export function documentToHtml(document: DocumentNode, config: TransformationConfig): HastRoot {
 	const transformationContext = createTransformationContext(config);
@@ -52,7 +52,7 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
  * @param node - The documentation node to transform.
  * @param config - The HTML transformation configuration. Unspecified options will be filled with defaults.
  *
- * @beta
+ * @public
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
@@ -64,7 +64,7 @@ export function documentationNodeToHtml(
  * @param node - The documentation node to transform.
  * @param context - The HTML transformation context.
  *
- * @beta
+ * @public
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
@@ -91,7 +91,7 @@ export function documentationNodeToHtml(
 /**
  * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
  *
- * @beta
+ * @public
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
@@ -100,7 +100,7 @@ export function documentationNodesToHtml(
 /**
  * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
  *
- * @beta
+ * @public
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],

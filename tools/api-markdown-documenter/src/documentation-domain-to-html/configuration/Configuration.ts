@@ -10,7 +10,7 @@ import { type Transformations } from "./Transformation.js";
 /**
  * Configuration for transforming {@link DocumentationNode}s to HTML.
  *
- * @beta
+ * @public
  */
 export interface TransformationConfig extends ConfigurationBase {
 	/**
