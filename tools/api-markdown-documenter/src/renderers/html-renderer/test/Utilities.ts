@@ -4,21 +4,17 @@
  */
 
 import type { DocumentationNode } from "../../../documentation-domain/index.js";
-import { DocumentWriter } from "../../DocumentWriter.js";
-import { renderNode } from "../Render.js";
-import { type RenderContext, getContextWithDefaults } from "../RenderContext.js";
+import {
+	documentationNodeToHtml,
+	treeFromBody,
+} from "../../../documentation-domain-to-html/index.js";
+import { renderHtml, type RenderDocumentConfig } from "../Render.js";
 
 /**
  * Tests the rendering of an individual {@link DocumentationNode}, returning the generated string content.
  */
-export function testRender(
-	node: DocumentationNode,
-	partialContext?: Partial<RenderContext>,
-): string {
-	const context = getContextWithDefaults(partialContext);
-	const writer = DocumentWriter.create();
-
-	renderNode(node, writer, context);
-
-	return writer.getText();
+export function testRender(node: DocumentationNode, maybeConfig?: RenderDocumentConfig): string {
+	const config = maybeConfig ?? {};
+	const html = treeFromBody([documentationNodeToHtml(node, config)], config);
+	return renderHtml(html, config);
 }

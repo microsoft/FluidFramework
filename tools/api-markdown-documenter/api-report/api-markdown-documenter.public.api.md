@@ -440,9 +440,7 @@ declare namespace HtmlRenderer {
     export {
         renderApiModelAsHtml as renderApiModel,
         renderDocumentsAsHtml as renderDocuments,
-        renderDocument,
-        renderNode,
-        renderNodes
+        renderDocument
     }
 }
 export { HtmlRenderer }
@@ -542,8 +540,8 @@ declare namespace MarkdownRenderer {
         renderApiModelAsMarkdown as renderApiModel,
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
-        renderNode_2 as renderNode,
-        renderNodes_2 as renderNodes
+        renderNode,
+        renderNodes
     }
 }
 export { MarkdownRenderer }
@@ -595,16 +593,28 @@ export { ReleaseTag }
 function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
+function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
+
+// @public
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
+
+// @public @sealed
+export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+}
 
 // @public
 function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
-// @public
-function renderNode_2(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+// @public @sealed
+export interface RenderHtmlConfig {
+    prettyFormatting?: boolean;
+}
 
 // @public
-function renderNodes_2(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+function renderNode(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+
+// @public
+function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {

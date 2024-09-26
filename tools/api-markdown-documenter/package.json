@@ -76,7 +76,9 @@
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/node-core-library": "^3.55.2",
 		"chalk": "^4.1.2",
+		"hast-util-format": "^1.1.0",
 		"hast-util-raw": "^9.0.2",
+		"hast-util-to-html": "^9.0.3",
 		"hastscript": "^9.0.0"
 	},
 	"devDependencies": {
