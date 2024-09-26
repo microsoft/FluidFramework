@@ -1,5 +1,5 @@
 ---
-"@fluidframework/server-routerlicious-base": major
+"@fluidframework/server-routerlicious-base": minor
 ---
 ---
 "section": feature
