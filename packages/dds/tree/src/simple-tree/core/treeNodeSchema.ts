@@ -33,7 +33,7 @@ export type TreeNodeSchema<
  * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
  * @privateRemarks
  * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface TreeNodeSchemaNonClass<
 	out Name extends string = string,
@@ -108,6 +108,20 @@ export interface TreeNodeSchemaClass<
 	 */
 	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
+
+/**
+ * Internal helper for utilities that return schema which can be used in class and non class formats depending on the API exposing it.
+ */
+export type TreeNodeSchemaBoth<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TNode = unknown,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+> = TreeNodeSchemaClass<Name, Kind, TNode, TInsertable, ImplicitlyConstructable, Info> &
+	TreeNodeSchemaNonClass<Name, Kind, TNode, TInsertable, ImplicitlyConstructable, Info>;
+
 /**
  * Data common to all tree node schema.
  * @remarks

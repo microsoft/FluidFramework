@@ -100,6 +100,7 @@ export interface SchemaPolicy {
  */
 export interface TreeFieldStoredSchema {
 	readonly kind: FieldKindIdentifier;
+
 	/**
 	 * The set of allowed child types.
 	 * If not specified, types are unconstrained.

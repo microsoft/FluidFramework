@@ -301,9 +301,6 @@ const unparentedLocation: LocationInField = {
 		is<TKind2 extends FlexFieldKind>(kind: TKind2) {
 			return this.schema.kind === kind.identifier;
 		},
-		isExactly(schema: FlexFieldSchema) {
-			return schema === FlexFieldSchema.empty;
-		},
 		boxedIterator(): IterableIterator<FlexTreeNode> {
 			return [].values();
 		},
@@ -360,10 +357,6 @@ class EagerMapTreeField implements MapTreeField {
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
 		return this.schema.kind === kind.identifier;
-	}
-
-	public isExactly(schema: FlexFieldSchema): boolean {
-		return this.flexSchema.equals(schema);
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeNode> {
@@ -555,7 +548,7 @@ function getOrCreateChild(
 		return cached;
 	}
 
-	assert(isReadonlyArray(allowedTypes), "invalid types");
+	assert(isReadonlyArray(allowedTypes), 0xa25 /* invalid types */);
 	const nodeSchema =
 		allowedTypes
 			.map((t) => (isLazy(t) ? t() : t))
