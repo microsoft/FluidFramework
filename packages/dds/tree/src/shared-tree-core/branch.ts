@@ -509,6 +509,10 @@ export class SharedTreeBranch<
 			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
 
+		if (branch === this) {
+			return undefined;
+		}
+
 		// Rebase the given branch onto this branch
 		const rebaseResult = this.rebaseBranch(branch, this);
 		if (rebaseResult === undefined) {

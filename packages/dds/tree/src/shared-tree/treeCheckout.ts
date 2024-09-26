@@ -700,9 +700,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public merge(checkout: TreeCheckout): void;
 	public merge(checkout: TreeCheckout, disposeMerged: boolean): void;
 	public merge(checkout: TreeCheckout, disposeMerged = true): void {
-		if (checkout === this) {
-			return;
-		}
 		this.checkNotDisposed(
 			"The target of the branch merge has been disposed and cannot be merged.",
 		);
