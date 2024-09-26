@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
@@ -41,6 +42,14 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	walkFieldSchema(root, {
 		node(schema) {
+			if (nodeSchema.has(brand(schema.identifier))) {
+				// Use JSON.stringify to quote and escape identifier string.
+				throw new UsageError(
+					`Multiple schema encountered with the identifier ${JSON.stringify(
+						schema.identifier,
+					)}. Remove or rename them to avoid the collision.`,
+				);
+			}
 			nodeSchema.set(brand(schema.identifier), convertNodeSchema(schema));
 		},
 	});
