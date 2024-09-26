@@ -404,11 +404,13 @@ describe("Undo and redo", () => {
 		tree.merge(branch, false);
 		expectJsonTree(tree, ["A", "B", "C"]);
 		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
 
 		branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
 		tree.merge(branch);
 		expectJsonTree(tree, ["A", "B", "C"]);
 		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
 
 		unsubscribe();
 	});

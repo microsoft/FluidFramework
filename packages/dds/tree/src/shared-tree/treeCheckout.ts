@@ -512,7 +512,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		_branch.on("afterChange", (event) => {
 			// The following logic allows revertibles to be generated for the change.
 			// Currently only appends (including merges) and transaction commits are supported.
-			// In both cases they must not be part of an (outer) transaction.
 			if (!_branch.isTransacting()) {
 				if (
 					event.type === "append" ||
