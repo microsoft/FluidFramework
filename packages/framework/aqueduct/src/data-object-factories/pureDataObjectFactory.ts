@@ -43,6 +43,8 @@ import type {
 /**
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
+ * @legacy
+ * @alpha
  */
 export async function createDataObject<
 	TObj extends PureDataObject,

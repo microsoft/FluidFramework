@@ -36,6 +36,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get connected(): boolean;
     // (undocumented)
     createChannel(idArg: string | undefined, type: string): IChannel;
+    protected deleteChannel(id: string): void;
     // (undocumented)
     get deltaManager(): IDeltaManagerErased;
     // (undocumented)
@@ -89,6 +90,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
+    protected submit(type: DataStoreMessageType, content: any, localOpMetadata?: unknown): void;
+    // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
@@ -96,6 +99,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     protected validateChannelId(id: string): void;
+    // (undocumented)
+    protected verifyNotClosed(): void;
     // (undocumented)
     visibilityState: VisibilityState;
     waitAttached(): Promise<void>;
