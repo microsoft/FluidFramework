@@ -221,7 +221,7 @@ describeCompat("migrationPrototype", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	// Test ==========================================
-	it("migrates", async () => {
+	it("migrates 1 LST to 1 ST", async () => {
 		// Load the document as v2 of the code
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const testObj = (await container1.getEntryPoint()) as TestDataObjectB;
@@ -245,6 +245,7 @@ describeCompat("migrationPrototype", "NoCompat", (getTestObjectProvider, apis) =
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObjectB;
+		await provider.ensureSynchronized();
 		const newTree2 = testObj2.tree as ITree;
 		const view2 = newTree2.viewWith(treeConfig);
 		assert(view2.root.quantity === originalValue, "Should be able to load from the op stream");
