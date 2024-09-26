@@ -153,11 +153,13 @@
         <li>
             <select name="API version" aria-label="API version" id="api-version" onchange="window.location.href = this.value;">
                 {{ range $name, $version := $.Site.Data.versions.apiVersionOptionName }}
-                    {{ $path := printf "%s%s/" $.Site.Data.versions.apiDocsDirectory $version }}
-                    {{ $isCurrentVersion := strings.Contains $version $selectedApiVersion }}
-                    <option value="{{ $path }}" {{ if $isCurrentVersion }} selected {{end}}>
-                        {{ $name }}
-                    </option>
+                    {{ if not (and (eq $name "Fluid Framework local") (not $.Site.IsServer)) }}
+                        {{ $path := printf "%s%s/" $.Site.Data.versions.apiDocsDirectory $version }}
+                        {{ $isCurrentVersion := strings.Contains $version $selectedApiVersion }}
+                        <option value="{{ $path }}" {{ if $isCurrentVersion }} selected {{end}}>
+                            {{ $name }}
+                        </option>
+                    {{ end }}
                 {{ end }}
             </select>
         </li>

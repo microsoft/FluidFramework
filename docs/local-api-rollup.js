@@ -17,7 +17,7 @@ import fs from "fs-extra";
 import path from "path";
 
 const sourceDir = "../_api-extractor-temp/doc-models";
-const destinationDir = "./_doc-models/v2";
+const destinationDir = "./_doc-models/local";
 
 async function copyDocModels(files) {
 	// Create the destination directory if it doesn't exist
