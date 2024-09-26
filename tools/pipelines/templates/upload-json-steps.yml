@@ -7,9 +7,6 @@ parameters:
 - name: STORAGE_ACCOUNT
   type: string
 
-- name: STORAGE_KEY
-  type: string
-
 - name: uploadAsLatest
   type: boolean
   default: false
