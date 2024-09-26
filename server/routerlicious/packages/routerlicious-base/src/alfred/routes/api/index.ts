@@ -94,7 +94,7 @@ export function create(
 	const healthCheckEndpoints = createHealthCheckEndpoints(
 		"alfred",
 		readinessCheck,
-		false,
+		false /* createLivenessEndpoint */,
 		throttlerConfig,
 	);
 

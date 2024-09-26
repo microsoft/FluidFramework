@@ -13,7 +13,14 @@ import * as core from "@fluidframework/server-services-core";
 import { StartupChecker } from "./startupChecker";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
+/**
+ * Checks if a service or functionality is ready for use.
+ * @internal
+ */
 export interface IReadinessCheck {
+	/**
+	 * Whether the service/functionality is ready for use.
+	 */
 	isReady(): Promise<boolean>;
 }
 
@@ -110,14 +117,9 @@ export function createHealthCheckEndpoints(
 		throttlerConfig ? readinessThrottler : noopMiddleware,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			if (readinessCheck) {
-				if (await readinessCheck.isReady()) {
-					readinessProbe.success("Readiness probe successful");
-					response.sendStatus(200);
-				} else {
-					readinessProbe.error("Readiness probe failed");
-					response.sendStatus(503);
-				}
+			if ((await readinessCheck?.isReady()) === false) {
+				readinessProbe.error("Readiness probe failed");
+				response.sendStatus(503);
 			} else {
 				readinessProbe.success("Readiness probe successful");
 				response.sendStatus(200);
