@@ -10,7 +10,11 @@ import {
 	IDocumentRepository,
 	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	LumberEventName,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 
@@ -285,10 +289,25 @@ export async function getSession(
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
-	if (!document || document.scheduledDeletionTime !== undefined) {
-		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+	const docExistenceMetric = Lumberjack.newLumberMetric(
+		LumberEventName.GetSessionCheckDocExistence,
+		baseLumberjackProperties,
+	);
+
+	let document: IDocument;
+	try {
+		document = await documentRepository.readOne({ tenantId, documentId });
+	} catch (error) {
+		docExistenceMetric.error("Error while checking for document existence", error);
+		throw error;
 	}
+
+	if (!document || document.scheduledDeletionTime !== undefined) {
+		const deletedError = "Document is deleted and cannot be accessed.";
+		docExistenceMetric.error(deletedError);
+		throw new NetworkError(404, deletedError);
+	}
+	docExistenceMetric.success("Successfully checked for document existence");
 
 	const lumberjackProperties = {
 		...baseLumberjackProperties,
@@ -324,17 +343,30 @@ export async function getSession(
 	);
 
 	if (!existingSession) {
-		// Create a new session for the document and persist to DB.
-		const newSession: ISession = await createNewSession(
-			ordererUrl,
-			historianUrl,
-			deltaStreamUrl,
-			tenantId,
-			documentId,
-			documentRepository,
+		const createNewSessionMetric = Lumberjack.newLumberMetric(
+			LumberEventName.GetSessionCreateNew,
 			lumberjackProperties,
-			messageBrokerId,
 		);
+
+		// Create a new session for the document and persist to DB.
+		let newSession: ISession;
+		try {
+			newSession = await createNewSession(
+				ordererUrl,
+				historianUrl,
+				deltaStreamUrl,
+				tenantId,
+				documentId,
+				documentRepository,
+				lumberjackProperties,
+				messageBrokerId,
+			);
+			createNewSessionMetric.success("Successfully created new session");
+		} catch (error) {
+			createNewSessionMetric.error("Error while creating new session", error);
+			throw error;
+		}
+
 		return convertSessionToFreshSession(newSession, lumberjackProperties);
 	}
 
@@ -361,19 +393,31 @@ export async function getSession(
 
 	// Session is not alive/discovered, so update and persist changes to DB.
 	const ignoreSessionStickiness = existingSession.ignoreSessionStickiness ?? false;
-	const updatedSession: ISession = await updateExistingSession(
-		ordererUrl,
-		historianUrl,
-		deltaStreamUrl,
-		document,
-		existingSession,
-		documentId,
-		tenantId,
-		documentRepository,
-		sessionStickinessDurationMs,
+
+	const updateSessionMetric = Lumberjack.newLumberMetric(
+		LumberEventName.GetSessionUpdateExisting,
 		lumberjackProperties,
-		messageBrokerId,
-		ignoreSessionStickiness,
 	);
-	return convertSessionToFreshSession(updatedSession, lumberjackProperties);
+
+	try {
+		const updatedSession: ISession = await updateExistingSession(
+			ordererUrl,
+			historianUrl,
+			deltaStreamUrl,
+			document,
+			existingSession,
+			documentId,
+			tenantId,
+			documentRepository,
+			sessionStickinessDurationMs,
+			lumberjackProperties,
+			messageBrokerId,
+			ignoreSessionStickiness,
+		);
+		updateSessionMetric.success("Successfully updated existing session");
+		return convertSessionToFreshSession(updatedSession, lumberjackProperties);
+	} catch (error) {
+		updateSessionMetric.error("Error while updating existing session", error);
+		throw error;
+	}
 }

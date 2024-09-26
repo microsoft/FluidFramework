@@ -40,7 +40,11 @@ import {
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 } from "@fluidframework/server-services-client";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	LumberEventName,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, getSession } from "../../../utils";
@@ -287,6 +291,13 @@ export function create(
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
+
+			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+			const getSessionMetric = Lumberjack.newLumberMetric(
+				LumberEventName.GetSession,
+				lumberjackProperties,
+			);
+
 			const session = getSession(
 				externalOrdererUrl,
 				externalHistorianUrl,
@@ -299,7 +310,16 @@ export function create(
 				clusterDrainingChecker,
 				ephemeralDocumentTTLSec,
 			);
-			handleResponse(session, response, false);
+
+			const onSuccess = (result: ISession): void => {
+				getSessionMetric.success("GetSession succeeded.");
+			};
+
+			const onError = (error: any): void => {
+				getSessionMetric.error("GetSession failed.", error);
+			};
+
+			handleResponse(session, response, false, undefined, undefined, onSuccess, onError);
 		},
 	);
 

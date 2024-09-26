@@ -76,6 +76,7 @@ export function handleResponse<T>(
 	errorStatus?: number,
 	successStatus: number = 200,
 	onSuccess: (value: T) => void = () => {},
+	onError: (error: any) => void = () => {},
 ) {
 	resultP
 		.then((result) => {
@@ -96,6 +97,7 @@ export function handleResponse<T>(
 			response.status(successStatus).json(result);
 		})
 		.catch((error) => {
+			onError(error);
 			// Only log unexpected errors on the assumption that explicitly thrown
 			// NetworkErrors have additional logging in place at the source.
 			if (error instanceof Error && error?.name === "NetworkError") {

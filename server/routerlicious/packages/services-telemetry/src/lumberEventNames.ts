@@ -45,6 +45,13 @@ export enum LumberEventName {
 	NexusSessionStart = "NexusSessionStart",
 	NexusSessionResult = "NexusSessionResult",
 
+	// Session Discovery
+	GetSession = "GetSession",
+	ValdateStorageToken = "ValdateStorageToken",
+	GetSessionCheckDocExistence = "GetSessionCheckDocExistence",
+	GetSessionCreateNew = "GetSessionCreateNew",
+	GetSessionUpdateExisting = "GetSessionUpdateExisting",
+
 	// Miscellaneous
 	ConnectDocument = "ConnectDocument",
 	ConnectDocumentAddClient = "ConnectDocumentAddClient",
