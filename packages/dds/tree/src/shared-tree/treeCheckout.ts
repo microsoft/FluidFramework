@@ -117,6 +117,7 @@ export interface TreeBranch extends ViewableTree {
 	 * @param view - a branch which was created by a call to `branch()`.
 	 * It is automatically disposed after the merge completes.
 	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
+	 * A "commitApplied" event and a corresponding {@link Revertible} will be emitted on this branch for each new change merged from 'branch'.
 	 */
 	merge(branch: TreeBranchFork): void;
 
