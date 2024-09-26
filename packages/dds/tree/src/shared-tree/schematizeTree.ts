@@ -18,7 +18,6 @@ import {
 	FieldKinds,
 	type FlexFieldSchema,
 	type FlexTreeSchema,
-	type ViewSchema,
 	allowsRepoSuperset,
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -27,6 +26,7 @@ import {
 import { fail, isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
+import type { ViewSchema } from "../simple-tree/index.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -246,7 +246,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(viewSchema.storedSchema);
+			checkout.updateSchema(viewSchema.schema);
 			return true;
 		}
 		case UpdateType.Initialize: {
