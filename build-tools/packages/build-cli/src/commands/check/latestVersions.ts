@@ -4,10 +4,11 @@
  */
 
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
-import { Args } from "@oclif/core";
 import * as semver from "semver";
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
 import { BaseCommand, sortVersions } from "../../library/index.js";
+
+type MajorVersion = number;
 
 export default class LatestVersionsCommand extends BaseCommand<typeof LatestVersionsCommand> {
 	static readonly summary =
@@ -16,19 +17,12 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 	static readonly description =
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
 
-	static semverArg = Args.custom({
-		required: true,
-		description: "The version corresponding to the pipeline trigger branch.",
-		parse: async (input: string) => {
-			if (semver.valid(input) === null || semver.valid(input) === undefined) {
-				throw new Error(`Invalid version: ${input}. Please provide a valid SemVer version.`);
-			}
-			return input;
-		},
-	});
-
 	static readonly args = {
-		version: this.semverArg(),
+		version: semverArg({
+			required: true,
+			description:
+				"The version to check. When running in CI, this value corresponds to the pipeline trigger branch.",
+		}),
 		package_or_release_group: packageOrReleaseGroupArg({ required: true }),
 	} as const;
 
@@ -36,11 +30,6 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		const { args } = this;
 		const context = await this.getContext();
 		const versionInput = this.args.version;
-
-		// adding check since the custom parser return type is string | undefined
-		if (versionInput === undefined) {
-			throw new Error("Version input is undefined.");
-		}
 
 		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {
@@ -53,32 +42,41 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.error(`No versions found for ${rgOrPackage.name}`);
 		}
 
-		// Filter out pre-releases and versions with metadata
+		// Filter out pre-release versions
 		const stableVersions = versions.filter((v) => {
 			return !isInternalVersionScheme(v.version);
 		});
 
+		// Sort the semver versions ordered from highest to lowest
 		const sortedByVersion = sortVersions(stableVersions, "version");
 
-		const latestVersions: Map<number, string> = new Map<number, string>();
+		const inputMajorVersion: MajorVersion = semver.major(versionInput.version);
 
 		for (const v of sortedByVersion) {
-			const majorVersion: number = semver.major(v.version);
+			const majorVersion: MajorVersion = semver.major(v.version);
 
-			// Check if the map already has the major version
 			// Since sortedByVersion is sorted, the first encountered version is the highest one
-			if (!latestVersions.has(majorVersion)) {
-				latestVersions.set(majorVersion, v.version);
+			if (majorVersion === inputMajorVersion) {
+				if (v.version === versionInput.version) {
+					// Check if the input version is the latest version for the major version
+					this.log(
+						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
+					);
+					return;
+				}
+
+				// If versions do not match on first major version encounter, then the input version is not the latest
+				this.error(
+					`skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
+					{ exit: 1 },
+				);
 			}
 		}
 
-		// Extract the latest versions into an array
-		const latestVersionsArray = [...latestVersions.values()];
-
-		const shouldDeploy = latestVersionsArray.includes(versionInput);
-
-		if (!shouldDeploy) {
-			this.error("skipping deployment stage", { exit: 1 });
-		}
+		// Error if no major version corresponds to input version
+		this.error(
+			`No major version found corresponding to input version ${versionInput.version}`,
+			{ exit: 1 },
+		);
 	}
 }
