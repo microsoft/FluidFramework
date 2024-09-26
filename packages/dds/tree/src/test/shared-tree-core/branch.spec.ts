@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	CommitKind,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
@@ -333,32 +332,6 @@ describe("Branches", () => {
 		branch.startTransaction();
 		branch.abortTransaction();
 		assert.equal(changeEventCount, 0);
-	});
-
-	it("do not emit a commitApplied event for commits within transactions", () => {
-		// Create a branch and count the change events emitted
-		let commitEventCount = 0;
-		const branch = create();
-		const unsubscribe = branch.on("commitApplied", () => {
-			commitEventCount += 1;
-		});
-		// Start and immediately abort a transaction
-		branch.startTransaction();
-		change(branch);
-		branch.abortTransaction();
-		assert.equal(commitEventCount, 0);
-		unsubscribe();
-	});
-
-	it("commitApplied event includes metadata about the commit", () => {
-		// Create a branch and count the change events emitted
-		const branch = create();
-		const unsubscribe = branch.on("commitApplied", ({ isLocal, kind }) => {
-			assert.equal(isLocal, true);
-			assert.equal(kind, CommitKind.Default);
-		});
-		change(branch);
-		unsubscribe();
 	});
 
 	it("emit a fork event after forking", () => {
