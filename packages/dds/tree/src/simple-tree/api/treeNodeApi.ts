@@ -305,7 +305,7 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind === FieldKinds.sequence.identifier) {
+	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(
 			parentField.parent.key === EmptyKey,

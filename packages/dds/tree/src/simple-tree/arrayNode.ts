@@ -33,6 +33,7 @@ import {
 	type Context,
 	getOrCreateNodeFromInnerNode,
 	type TreeNodeSchemaBoth,
+	getSimpleNodeSchemaFromInnerNode,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
@@ -663,6 +664,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public static readonly kind = NodeKind.Array;
 
 	protected abstract get simpleSchema(): T;
+	protected abstract get allowedTypes(): ReadonlySet<TreeNodeSchema>;
 
 	public constructor(
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
@@ -819,6 +821,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		source?: TreeArrayNode,
 	): void {
 		const destinationField = getSequenceField(this);
+		const destinationSchema = this.allowedTypes;
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
@@ -828,7 +831,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
 				const sourceNode = sourceField.boxedAt(i) ?? oob();
-				if (!destinationField.schema.types.has(sourceNode.schema)) {
+				const sourceSchema = getSimpleNodeSchemaFromInnerNode(sourceNode);
+				if (!destinationSchema.has(sourceSchema)) {
 					throw new UsageError("Type in source sequence is not allowed in destination.");
 				}
 			}
@@ -1013,6 +1017,9 @@ export function arraySchema<
 
 		protected get simpleSchema(): T {
 			return info;
+		}
+		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
+			return lazyChildTypes.value;
 		}
 	}
 
