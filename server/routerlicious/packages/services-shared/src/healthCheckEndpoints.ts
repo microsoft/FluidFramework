@@ -81,20 +81,21 @@ export function createHealthCheckEndpoints(
 	const probeProps = {
 		serviceName,
 	};
-	const startupProbe = Lumberjack.newLumberMetric(LumberEventName.StartupProbe, probeProps);
-	const livenessProbe = Lumberjack.newLumberMetric(LumberEventName.LivenessProbe, probeProps);
-	const readinessProbe = Lumberjack.newLumberMetric(LumberEventName.ReadinessProbe, probeProps);
 
 	router.get(
 		"/startup",
 		throttlerConfig ? startupThrottler : noopMiddleware,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
+			const startupProbeMetric = Lumberjack.newLumberMetric(
+				LumberEventName.StartupProbe,
+				probeProps,
+			);
 			if (StartupChecker.getInstance().isStartupComplete()) {
-				startupProbe.success("Startup probe successful");
+				startupProbeMetric.success("Startup probe successful");
 				response.sendStatus(200);
 			} else {
-				startupProbe.error("Startup probe failed");
+				startupProbeMetric.error("Startup probe failed");
 				response.sendStatus(500);
 			}
 		},
@@ -106,7 +107,11 @@ export function createHealthCheckEndpoints(
 			throttlerConfig ? pingThrottler : noopMiddleware,
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (request, response) => {
-				livenessProbe.success("Liveness probe successful");
+				const livenessProbeMetric = Lumberjack.newLumberMetric(
+					LumberEventName.LivenessProbe,
+					probeProps,
+				);
+				livenessProbeMetric.success("Liveness probe successful");
 				response.sendStatus(200);
 			},
 		);
@@ -117,11 +122,15 @@ export function createHealthCheckEndpoints(
 		throttlerConfig ? readinessThrottler : noopMiddleware,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
+			const readinessProbeMetric = Lumberjack.newLumberMetric(
+				LumberEventName.ReadinessProbe,
+				probeProps,
+			);
 			if ((await readinessCheck?.isReady()) === false) {
-				readinessProbe.error("Readiness probe failed");
+				readinessProbeMetric.error("Readiness probe failed");
 				response.sendStatus(503);
 			} else {
-				readinessProbe.success("Readiness probe successful");
+				readinessProbeMetric.success("Readiness probe successful");
 				response.sendStatus(200);
 			}
 		},
