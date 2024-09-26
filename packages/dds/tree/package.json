@@ -241,6 +241,9 @@
 			},
 			"TypeAlias_ImplicitFieldSchema": {
 				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitAllowedTypes": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "internal"
