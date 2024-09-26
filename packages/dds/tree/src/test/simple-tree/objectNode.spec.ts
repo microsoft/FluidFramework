@@ -9,6 +9,8 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	SchemaFactory,
+	typeNameSymbol,
+	typeSchemaSymbol,
 	type NodeBuilderData,
 	type NodeKind,
 	type TreeNodeSchema,
@@ -452,6 +454,29 @@ describeHydration(
 			const newNode = new HasId({ id: "x" });
 			assert.equal(newNode.id, "x");
 			assert.equal(Tree.shortId(newNode), "x");
+		});
+
+		it("custom identifier access works on POJO mode object", () => {
+			const HasId = schemaFactory.object("hasID", { id: schemaFactory.identifier });
+			const newNode = new HasId({ id: "x" });
+			assert.equal(newNode.id, "x");
+			assert.equal(Tree.shortId(newNode), "x");
+		});
+
+		it("schema access POJO", () => {
+			const Pojo = schemaFactory.object("A", {});
+			const node = new Pojo({});
+			assert.equal(Tree.schema(node), Pojo);
+			assert.equal(node[typeNameSymbol], Pojo.identifier);
+			assert.equal(node[typeSchemaSymbol], Pojo);
+		});
+
+		it("schema access Customizable", () => {
+			const Customizable = schemaFactory.object("A", {});
+			const node = new Customizable({});
+			assert.equal(Tree.schema(node), Customizable);
+			assert.equal(node[typeNameSymbol], Customizable.identifier);
+			assert.equal(node[typeSchemaSymbol], Customizable);
 		});
 	},
 );

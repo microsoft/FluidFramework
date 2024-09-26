@@ -11,13 +11,9 @@ import {
 	type TreeStatus,
 	isLazy,
 	isTreeValue,
-	FlexObjectNodeSchema,
-	isMapTreeNode,
 	FieldKinds,
 } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
 import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
@@ -44,6 +40,9 @@ import {
 	type TreeNode,
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
+	getOrCreateNodeFromInnerNode,
+	UnhydratedFlexTreeNode,
+	typeSchemaSymbol,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
@@ -141,7 +140,7 @@ export const treeNodeApi: TreeNodeApi = {
 			return undefined;
 		}
 
-		const output = getOrCreateNodeFromFlexTreeNode(editNode);
+		const output = getOrCreateNodeFromInnerNode(editNode);
 		assert(
 			!isTreeValue(output),
 			0x87f /* Parent can't be a leaf, so it should be a node not a value */,
@@ -231,17 +230,20 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
+		const schema = node[typeSchemaSymbol];
+		if (!isObjectNodeSchema(schema)) {
+			return undefined;
+		}
+
 		const flexNode = getOrCreateInnerNode(node);
-		const flexSchema = flexNode.flexSchema;
-		const identifierFieldKeys =
-			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
+		const identifierFieldKeys = schema.identifierFieldKeys;
 
 		switch (identifierFieldKeys.length) {
 			case 0:
 				return undefined;
 			case 1: {
 				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
-				if (isMapTreeNode(flexNode)) {
+				if (flexNode instanceof UnhydratedFlexTreeNode) {
 					if (identifier === undefined) {
 						throw new UsageError(
 							"Tree.shortId cannot access default identifiers on unhydrated nodes",
@@ -303,7 +305,7 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind === FieldKinds.sequence.identifier) {
+	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(
 			parentField.parent.key === EmptyKey,

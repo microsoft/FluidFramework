@@ -40,7 +40,6 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
-	intoStoredSchema,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
@@ -336,7 +335,7 @@ describe("schemaBasedEncoding", () => {
 				const idCompressor = createIdCompressor(
 					assertIsSessionId("00000000-0000-4000-b000-000000000000"),
 				);
-				const storedSchema = intoStoredSchema(schemaData);
+				const storedSchema = schemaData;
 				const tree = treeFactory(idCompressor);
 				// Check with checkFieldEncode
 				const cache = buildCache(storedSchema, defaultSchemaPolicy, idCompressor);

@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
+import { brandedObjectEntries } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import { handleFromDatastore, type StateDatastore } from "./stateDatastore.js";
 import type { PresenceStates, PresenceStatesMethods, PresenceStatesSchema } from "./types.js";
@@ -192,13 +193,6 @@ export function mergeUntrackedDatastore(
 	}
 }
 
-/**
- * Object.entries retyped to support branded string-based keys.
- */
-const brandedObjectEntries = Object.entries as <K extends string, T>(
-	o: Record<K, T>,
-) => [K, T][];
-
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements
 		PresenceStatesInternal,
@@ -290,7 +284,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	): asserts this is PresenceStates<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TValueManager>>
 	> {
-		assert(!(key in this.nodes), "Already have entry for key in map");
+		assert(!(key in this.nodes), 0xa3c /* Already have entry for key in map */);
 		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
 		if ("value" in nodeData) {
@@ -309,7 +303,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		content: TSchemaAdditional,
 	): PresenceStates<TSchema & TSchemaAdditional> {
 		for (const [key, nodeFactory] of Object.entries(content)) {
-			this.add(key, nodeFactory);
+			if (key in this.nodes) {
+				const node = unbrandIVM(this.nodes[key]);
+				if (!(node instanceof nodeFactory.instanceBase)) {
+					throw new TypeError(`State "${key}" previously created by different value manager.`);
+				}
+			} else {
+				this.add(key, nodeFactory);
+			}
 		}
 		return this as PresenceStates<TSchema & TSchemaAdditional>;
 	}

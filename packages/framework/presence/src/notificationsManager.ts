@@ -167,7 +167,7 @@ class NotificationsManagerImpl<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-		_initialSubscriptions: NotificationSubscriptions<T>,
+		_initialSubscriptions: Partial<NotificationSubscriptions<T>>,
 	) {}
 
 	public update(
@@ -182,11 +182,15 @@ class NotificationsManagerImpl<
 /**
  * Factory for creating a {@link NotificationsManager}.
  *
+ * @remarks
+ * Typescript inference for `Notifications` is not working correctly yet.
+ * Explicitly specify generics to make result types usable.
+ *
  * @alpha
  */
 export function Notifications<
 	T extends InternalUtilityTypes.NotificationEvents<T>,
-	Key extends string,
+	Key extends string = string,
 >(
 	initialSubscriptions: NotificationSubscriptions<T>,
 ): InternalTypes.ManagerFactory<
@@ -194,13 +198,15 @@ export function Notifications<
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	NotificationsManager<T>
 > {
-	return (
+	const factory = (
 		key: Key,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-	) => ({
+	): {
+		manager: InternalTypes.StateValue<NotificationsManager<T>>;
+	} => ({
 		manager: brandIVM<
 			NotificationsManagerImpl<T, Key>,
 			InternalTypes.NotificationType,
@@ -213,4 +219,5 @@ export function Notifications<
 			),
 		),
 	});
+	return Object.assign(factory, { instanceBase: NotificationsManagerImpl });
 }
