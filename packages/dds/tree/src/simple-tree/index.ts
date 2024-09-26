@@ -20,6 +20,8 @@ export {
 	type InternalTreeNode,
 	isTreeNode,
 	tryDisposeTreeNode,
+	HydratedContext,
+	SimpleContextSlot,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -88,7 +90,6 @@ export {
 	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
 export { getOrCreateInnerNode } from "./proxyBinding.js";
-export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,

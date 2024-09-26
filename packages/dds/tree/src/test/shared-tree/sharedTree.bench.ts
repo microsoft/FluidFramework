@@ -28,11 +28,11 @@ import {
 	WideRoot,
 	deepPath,
 	localFieldKey,
-	makeDeepContent,
+	makeDeepContentSimple,
 	makeDeepStoredContent,
 	makeJsDeepTree,
 	makeJsWideTreeWithEndValue,
-	makeWideContentWithEndValue,
+	makeWideContentWithEndValueSimple,
 	makeWideStoredContentWithEndValue,
 	readDeepCursorTree,
 	readDeepFlexTree,
@@ -158,7 +158,7 @@ describe("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepCursorTree(tree);
@@ -180,7 +180,7 @@ describe("SharedTree benchmarks", () => {
 						expected += index;
 					}
 					tree = flexTreeViewWithContent(
-						makeWideContentWithEndValue(numberOfNodes, numberOfNodes - 1),
+						makeWideContentWithEndValueSimple(numberOfNodes, numberOfNodes - 1),
 					);
 				},
 				benchmarkFn: () => {
@@ -198,7 +198,7 @@ describe("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepFlexTree(tree);
@@ -215,7 +215,7 @@ describe("SharedTree benchmarks", () => {
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
-					tree = flexTreeViewWithContent(makeWideContentWithEndValue(numberOfNodes));
+					tree = flexTreeViewWithContent(makeWideContentWithEndValueSimple(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { nodesCount, sum } = readWideFlexTree(tree);

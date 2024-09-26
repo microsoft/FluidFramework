@@ -99,7 +99,7 @@ export function getBranch(tree: ITree): TreeBranch;
 export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 
 // @alpha
-export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
+export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -585,6 +585,7 @@ export interface TreeNodeSchemaClass<out Name extends string = string, out Kind 
 
 // @public @sealed
 export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown> {
+    readonly childTypes: ReadonlySet<TreeNodeSchema>;
     readonly identifier: Name;
     readonly implicitlyConstructable: ImplicitlyConstructable;
     readonly info: Info;

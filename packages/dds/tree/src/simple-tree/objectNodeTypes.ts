@@ -50,6 +50,11 @@ export interface ObjectNodeSchemaInternalData {
 	 * Lookup the property keys from the stored keys.
 	 */
 	readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string>;
+
+	/**
+	 * Stored keys which hold identifiers.
+	 */
+	readonly identifierFieldKeys: readonly FieldKey[];
 }
 
 export const ObjectNodeSchema = {
