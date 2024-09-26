@@ -12,6 +12,9 @@ import type { SetRequired } from 'type-fest';
 // @public (undocumented)
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
+// @public (undocumented)
+export function createPackageManager(name: PackageManagerName): IPackageManager;
+
 // @public
 export type FluidPackageJsonFields = {
     pnpm?: {
@@ -23,9 +26,10 @@ export type FluidPackageJsonFields = {
 export const FLUIDREPO_CONFIG_VERSION = 1;
 
 // @public (undocumented)
-export interface IFluidRepo {
+export interface IFluidRepo extends Reloadable {
     // (undocumented)
     packages: Map<PackageName, IPackage>;
+    relativeToRepo(p: string): string;
     // (undocumented)
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
     root: string;
@@ -45,9 +49,15 @@ export interface IFluidRepoLayout {
 }
 
 // @public (undocumented)
-export interface IPackage<J extends PackageJson = PackageJson> {
+export interface Installable {
     // (undocumented)
     checkInstall(): Promise<boolean>;
+    // (undocumented)
+    install(updateLockfile: boolean): Promise<boolean>;
+}
+
+// @public (undocumented)
+export interface IPackage<J extends PackageJson = PackageJson> extends Pick<Installable, "checkInstall">, Reloadable {
     // (undocumented)
     combinedDependencies: Generator<PackageDependency, void>;
     // (undocumented)
@@ -69,13 +79,11 @@ export interface IPackage<J extends PackageJson = PackageJson> {
     // (undocumented)
     readonly packageJsonFilePath: string;
     // (undocumented)
-    readonly packageManager: PackageManager;
+    readonly packageManager: IPackageManager;
     // (undocumented)
     readonly private: boolean;
     // (undocumented)
     releaseGroup: ReleaseGroupName;
-    // (undocumented)
-    reload(): void;
     // (undocumented)
     savePackageJson(): Promise<void>;
     // (undocumented)
@@ -83,7 +91,15 @@ export interface IPackage<J extends PackageJson = PackageJson> {
 }
 
 // @public (undocumented)
-export interface IReleaseGroup {
+export interface IPackageManager {
+    // (undocumented)
+    installCommand(updateLockfile: boolean): string;
+    // (undocumented)
+    readonly name: PackageManagerName;
+}
+
+// @public (undocumented)
+export interface IReleaseGroup extends Reloadable {
     // (undocumented)
     readonly adoPipelineUrl?: string;
     // (undocumented)
@@ -91,11 +107,11 @@ export interface IReleaseGroup {
     // (undocumented)
     readonly packages: IPackage[];
     // (undocumented)
-    readonly rgPackages: IPackage[];
-    // (undocumented)
     readonly rootPackage?: IPackage;
     // (undocumented)
     readonly version: string;
+    // (undocumented)
+    readonly workspace: IWorkspace;
 }
 
 // @public (undocumented)
@@ -105,7 +121,7 @@ export function isIPackage(pkg: any): pkg is IPackage;
 export function isIReleaseGroup(toCheck: Exclude<any, string | number | ReleaseGroupName | PackageName>): toCheck is IReleaseGroup;
 
 // @public (undocumented)
-export interface IWorkspace {
+export interface IWorkspace extends Installable, Reloadable {
     // (undocumented)
     directory: string;
     // (undocumented)
@@ -123,7 +139,7 @@ export function loadFluidRepo(root?: string): IFluidRepo;
 
 // @public (undocumented)
 export abstract class PackageBase<TAddProps extends AdditionalPackageProps = undefined, J extends PackageJson = PackageJson> implements IPackage {
-    constructor(packageJsonFilePath: string, packageManager: PackageManager, isWorkspaceRoot: boolean, releaseGroup: ReleaseGroupName, isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
+    constructor(packageJsonFilePath: string, packageManager: IPackageManager, isWorkspaceRoot: boolean, releaseGroup: ReleaseGroupName, isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
     // (undocumented)
     checkInstall(print?: boolean): Promise<boolean>;
     // (undocumented)
@@ -145,7 +161,7 @@ export abstract class PackageBase<TAddProps extends AdditionalPackageProps = und
     // (undocumented)
     readonly packageJsonFilePath: string;
     // (undocumented)
-    readonly packageManager: PackageManager;
+    readonly packageManager: IPackageManager;
     // (undocumented)
     get private(): boolean;
     // (undocumented)
@@ -174,7 +190,7 @@ export interface PackageDependency {
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
 // @public (undocumented)
-export type PackageManager = "npm" | "pnpm" | "yarn";
+export type PackageManagerName = "npm" | "pnpm" | "yarn";
 
 // @public (undocumented)
 export type PackageName = Opaque<string, "PackageName">;
@@ -190,6 +206,12 @@ export interface ReleaseGroupDefinition {
 
 // @public (undocumented)
 export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
+
+// @public (undocumented)
+export interface Reloadable {
+    // (undocumented)
+    reload(): void;
+}
 
 // @public (undocumented)
 export interface WorkspaceDefinition {

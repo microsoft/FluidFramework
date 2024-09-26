@@ -79,6 +79,21 @@ export class FluidRepo implements IFluidRepo {
 
 		return pkgs;
 	}
+
+	/**
+	 * Transforms an absolute path to a path relative to the repo root.
+	 *
+	 * @param p - The path to make relative to the repo root.
+	 * @returns the relative path.
+	 */
+	public relativeToRepo(p: string): string {
+		// Replace \ in result with / in case OS is Windows.
+		return path.relative(this.root, p).replace(/\\/g, "/");
+	}
+
+	public reload(): void {
+		this.workspaces.forEach((ws) => ws.reload());
+	}
 }
 
 export function loadFluidRepo(root?: string): IFluidRepo {

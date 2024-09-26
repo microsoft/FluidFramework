@@ -12,13 +12,16 @@ export {
 export { loadFluidRepo } from "./fluidRepo.js";
 export type {
 	AdditionalPackageProps,
+	Installable,
 	IFluidRepo,
 	IPackage,
 	IReleaseGroup,
 	IWorkspace,
 	PackageJson,
+	PackageManagerName,
 	PackageName,
 	ReleaseGroupName,
+	Reloadable,
 	WorkspaceName,
 	FluidPackageJsonFields,
 	PackageDependency,

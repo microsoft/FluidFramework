@@ -24,7 +24,7 @@ export type PackageJson = SetRequired<
 
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
-export interface IFluidRepo {
+export interface IFluidRepo extends Reloadable {
 	/**
 	 * Absolute path to the root of the repo.
 	 */
@@ -35,6 +35,14 @@ export interface IFluidRepo {
 	releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
 	packages: Map<PackageName, IPackage>;
+
+	/**
+	 * Transforms an absolute path to a path relative to the repo root.
+	 *
+	 * @param p - The path to make relative to the repo root.
+	 * @returns the relative path.
+	 */
+	relativeToRepo(p: string): string;
 }
 
 export interface Installable {
@@ -42,9 +50,13 @@ export interface Installable {
 	install(updateLockfile: boolean): Promise<boolean>;
 }
 
+export interface Reloadable {
+	reload(): void;
+}
+
 export type WorkspaceName = Opaque<string, "WorkspaceName">;
 
-export interface IWorkspace extends Installable {
+export interface IWorkspace extends Installable, Reloadable {
 	name: WorkspaceName;
 	directory: string;
 	rootPackage: IPackage;
@@ -54,7 +66,7 @@ export interface IWorkspace extends Installable {
 
 export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 
-export interface IReleaseGroup {
+export interface IReleaseGroup extends Reloadable {
 	readonly name: ReleaseGroupName;
 	readonly version: string;
 	readonly rootPackage?: IPackage;
@@ -99,7 +111,8 @@ export interface PackageDependency {
 export type PackageName = Opaque<string, "PackageName">;
 
 export interface IPackage<J extends PackageJson = PackageJson>
-	extends Pick<Installable, "checkInstall"> {
+	extends Pick<Installable, "checkInstall">,
+		Reloadable {
 	readonly name: PackageName;
 	readonly nameColored: string;
 	readonly directory: string;
@@ -114,7 +127,6 @@ export interface IPackage<J extends PackageJson = PackageJson>
 	readonly dependencies: PackageName[];
 	getScript(name: string): string | undefined;
 	savePackageJson(): Promise<void>;
-	reload(): void;
 	combinedDependencies: Generator<PackageDependency, void>;
 }
 

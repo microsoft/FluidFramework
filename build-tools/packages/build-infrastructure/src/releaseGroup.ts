@@ -48,4 +48,8 @@ export class ReleaseGroup implements IReleaseGroup {
 	public get rgPackages(): IPackage[] {
 		return this.packages;
 	}
+
+	public reload(): void {
+		this.packages.forEach((pkg) => pkg.reload());
+	}
 }
