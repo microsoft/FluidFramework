@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { IEphemeralRuntime, PresenceManagerInternal } from "./internalTypes.js";
 import type { ClientSessionId } from "./presence.js";
 import type {
@@ -16,7 +15,12 @@ import type {
 	ValueElementMap,
 } from "./presenceStates.js";
 import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
-import type { PresenceStates, PresenceStatesSchema } from "./types.js";
+import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import type {
+	PresenceStates,
+	PresenceStatesSchema,
+	PresenceWorkspaceAddress,
+} from "./types.js";
 
 import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
 
@@ -26,14 +30,10 @@ interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 }
 
 interface SystemDatastore {
-	"system:presence": {
-		clientToSessionId: {
-			[
-				ClientConnectionId: ClientConnectionId
-			]: InternalTypes.ValueRequiredState<ClientSessionId>;
-		};
-	};
+	"system:presence": SystemWorkspaceDatastore;
 }
+
+type InternalWorkspaceAddress = `${"s" | "n"}:${PresenceWorkspaceAddress}`;
 
 type PresenceDatastore = {
 	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
@@ -82,7 +82,7 @@ function isPresenceMessage(
  */
 export interface PresenceDatastoreManager {
 	getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: string,
+		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
@@ -92,9 +92,7 @@ export interface PresenceDatastoreManager {
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastore = {
-		"system:presence": { clientToSessionId: {} },
-	};
+	private readonly datastore: PresenceDatastore;
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -105,7 +103,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly clientSessionId: ClientSessionId,
 		private readonly runtime: IEphemeralRuntime,
 		private readonly presence: PresenceManagerInternal,
+		systemWorkspaceDatastore: SystemWorkspaceDatastore,
+		systemWorkspace: PresenceStatesEntry<PresenceStatesSchema>,
 	) {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
+		this.workspaces.set("system:presence", systemWorkspace);
+
 		runtime.on("connected", this.onConnect.bind(this));
 
 		// Check if already connected at the time of construction.
@@ -145,7 +149,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: string,
+		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
@@ -167,7 +171,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				return;
 			}
 
-			const updates: GeneralDatastoreMessageContent[string] = {};
+			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
 			for (const [key, value] of Object.entries(states)) {
 				updates[key] = { [this.clientSessionId]: value };
 			}

@@ -17,6 +17,8 @@ import type {
 } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
+import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
 	PresenceStates,
 	PresenceWorkspaceAddress,
@@ -83,7 +85,7 @@ class PresenceManager
 			this.attendees.set(clientId, this.selfAttendee);
 		});
 
-		this.datastoreManager = new PresenceDatastoreManagerImpl(
+		this.datastoreManager = createPresenceDatastoreManager(
 			this.selfAttendee.sessionId,
 			runtime,
 			this,
@@ -151,4 +153,27 @@ export function createPresenceManager(
 	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
 ): IPresence & PresenceExtensionInterface {
 	return new PresenceManager(runtime, clientSessionId);
+}
+
+/**
+ * Creates the PresenceDatastoreManager.
+ *
+ * @internal
+ */
+export function createPresenceDatastoreManager(
+	clientSessionId: ClientSessionId,
+	runtime: IEphemeralRuntime,
+	presenceManager: PresenceManagerInternal,
+): PresenceDatastoreManager {
+	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
+		clientToSessionId: {},
+	};
+	const systemWorkspaceConfig = createSystemWorkspace(systemWorkspaceDatastore);
+	return new PresenceDatastoreManagerImpl(
+		clientSessionId,
+		runtime,
+		presenceManager,
+		systemWorkspaceDatastore,
+		systemWorkspaceConfig.statesEntry,
+	);
 }
