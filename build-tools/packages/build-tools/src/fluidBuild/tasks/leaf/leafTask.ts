@@ -14,6 +14,7 @@ import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { defaultLogger } from "../../../common/logging";
 import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
+import type { BuildContext } from "../../buildContext";
 import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
@@ -47,10 +48,11 @@ export abstract class LeafTask extends Task {
 	constructor(
 		node: BuildPackage,
 		command: string,
+		context: BuildContext,
 		taskName: string | undefined,
 		private readonly isTemp: boolean = false, // indicate if the task is for temporary and not for execution.
 	) {
-		super(node, command, taskName);
+		super(node, command, context, taskName);
 		if (!this.isDisabled) {
 			this.node.buildContext.taskStats.leafTotalCount++;
 		}
@@ -151,7 +153,10 @@ export abstract class LeafTask extends Task {
 	}
 
 	public get executable() {
-		return getExecutableFromCommand(this.command);
+		return getExecutableFromCommand(
+			this.command,
+			this.context.fluidBuildConfig?.multiCommandExecutables ?? [],
+		);
 	}
 
 	protected get useWorker() {
@@ -530,8 +535,13 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 }
 
 export class UnknownLeafTask extends LeafTask {
-	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
-		super(node, command, taskName);
+	constructor(
+		node: BuildPackage,
+		command: string,
+		context: BuildContext,
+		taskName: string | undefined,
+	) {
+		super(node, command, context, taskName);
 	}
 
 	protected get isIncremental() {
@@ -621,6 +631,11 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+
+			// sort by name for determinism
+			srcHashes.sort(sortByName);
+			dstHashes.sort(sortByName);
+
 			const output = JSON.stringify({
 				srcHashes,
 				dstHashes,
@@ -632,4 +647,14 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return undefined;
 		}
 	}
+}
+
+function sortByName(a: { name: string }, b: { name: string }): number {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
 }

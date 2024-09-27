@@ -106,11 +106,11 @@ module.exports = {
 		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
-			dependsOn: ["build:manifest"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"build:manifest": {
-			dependsOn: ["tsc"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"depcruise": [],
@@ -157,6 +157,23 @@ module.exports = {
 			script: false,
 		},
 	},
+
+	multiCommandExecutables: ["oclif"],
+	declarativeTasks: {
+		"oclif manifest": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["oclif.manifest.json"],
+		},
+		"oclif readme": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["README.md", "docs/**"],
+		},
+		"jssm-viz": {
+			inputGlobs: ["src/**/*.fsl"],
+			outputGlobs: ["src/**/*.fsl.svg"],
+		}
+	},
+
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
 		// Release groups

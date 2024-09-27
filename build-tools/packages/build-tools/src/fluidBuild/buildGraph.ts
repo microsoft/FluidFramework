@@ -12,6 +12,7 @@ import registerDebug from "debug";
 import { defaultLogger } from "../common/logging";
 import { Package } from "../common/npmPackage";
 import { Timer } from "../common/timer";
+import type { BuildContext } from "./buildContext";
 import { FileHashCache } from "./fileHashCache";
 import {
 	TaskDefinition,
@@ -60,12 +61,13 @@ class TaskStats {
 	public leafQueueWaitTimeTotal = 0;
 }
 
-class BuildContext {
+class BuildContextInternal {
 	public readonly fileHashCache = new FileHashCache();
 	public readonly taskStats = new TaskStats();
 	public readonly failedTaskLines: string[] = [];
 	constructor(
 		public readonly repoPackageMap: Map<string, Package>,
+		public readonly context: BuildContext,
 		public readonly workerPool?: WorkerPool,
 	) {}
 }
@@ -84,7 +86,7 @@ export class BuildPackage {
 	private readonly _taskDefinitions: TaskDefinitions;
 
 	constructor(
-		public readonly buildContext: BuildContext,
+		public readonly buildContext: BuildContextInternal,
 		public readonly pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
@@ -156,7 +158,7 @@ export class BuildPackage {
 	private createTask(taskName: string, pendingInitDep: Task[]) {
 		const config = this.getTaskDefinition(taskName);
 		if (config?.script === false) {
-			const task = TaskFactory.CreateTargetTask(this, taskName);
+			const task = TaskFactory.CreateTargetTask(this, this.buildContext.context, taskName);
 			pendingInitDep.push(task);
 			return task;
 		}
@@ -169,7 +171,13 @@ export class BuildPackage {
 			// Find the script task (without the lifecycle task)
 			let scriptTask = this.scriptTasks.get(taskName);
 			if (scriptTask === undefined) {
-				scriptTask = TaskFactory.Create(this, command, pendingInitDep, taskName);
+				scriptTask = TaskFactory.Create(
+					this,
+					command,
+					this.buildContext.context,
+					pendingInitDep,
+					taskName,
+				);
 				pendingInitDep.push(scriptTask);
 				this.scriptTasks.set(taskName, scriptTask);
 			}
@@ -179,6 +187,7 @@ export class BuildPackage {
 			// script task will depend on this instance instead of the standalone script task without the lifecycle.
 			const task = TaskFactory.CreateTaskWithLifeCycle(
 				this,
+				this.buildContext.context,
 				scriptTask,
 				this.ensureScriptTask(`pre${taskName}`, pendingInitDep),
 				this.ensureScriptTask(`post${taskName}`, pendingInitDep),
@@ -207,7 +216,13 @@ export class BuildPackage {
 			throw new Error(`${this.pkg.nameColored}: '${taskName}' must be a script task`);
 		}
 
-		const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
+		const task = TaskFactory.Create(
+			this,
+			command,
+			this.buildContext.context,
+			pendingInitDep,
+			taskName,
+		);
 		pendingInitDep.push(task);
 		return task;
 	}
@@ -474,17 +489,19 @@ export class BuildPackage {
 export class BuildGraph {
 	private matchedPackages = 0;
 	private readonly buildPackages = new Map<Package, BuildPackage>();
-	private readonly buildContext;
+	private readonly buildContext: BuildContextInternal;
 
 	public constructor(
 		packages: Map<string, Package>,
 		releaseGroupPackages: Package[],
+		context: BuildContext,
 		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
-		this.buildContext = new BuildContext(
+		this.buildContext = new BuildContextInternal(
 			packages,
+			context,
 			options.worker
 				? new WorkerPool(options.workerThreads, options.workerMemoryLimit)
 				: undefined,

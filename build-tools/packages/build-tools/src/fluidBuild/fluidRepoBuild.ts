@@ -12,6 +12,7 @@ import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
 import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
 import type { IFluidBuildDirs } from "./fluidBuildConfig";
 import { FluidRepo } from "./fluidRepo";
@@ -32,16 +33,20 @@ export interface IPackageMatchedOptions {
 }
 
 export class FluidRepoBuild extends FluidRepo {
-	public static create(resolvedRoot: string) {
+	public static create(context: BuildContext) {
 		// Default to just resolveRoot if no config is found
-		const packageManifest = getFluidBuildConfig(resolvedRoot) ?? {
+		const packageManifest = context.fluidBuildConfig ?? {
 			repoPackages: {
 				root: "",
 			},
 		};
-		return new FluidRepoBuild(resolvedRoot, packageManifest.repoPackages);
+		return new FluidRepoBuild(context.repoRoot, context, packageManifest.repoPackages);
 	}
-	private constructor(resolvedRoot: string, repoPackages?: IFluidBuildDirs) {
+	private constructor(
+		resolvedRoot: string,
+		protected context: BuildContext,
+		repoPackages?: IFluidBuildDirs,
+	) {
 		super(resolvedRoot, repoPackages);
 	}
 
@@ -145,6 +150,7 @@ export class FluidRepoBuild extends FluidRepo {
 		return new BuildGraph(
 			this.createPackageMap(),
 			this.getReleaseGroupPackages(),
+			this.context,
 			buildTargetNames,
 			getFluidBuildConfig(this.resolvedRoot)?.tasks,
 			(pkg: Package) => {

@@ -32,6 +32,19 @@ export interface IFluidBuildConfig {
 	tasks?: TaskDefinitionsOnDisk;
 
 	/**
+	 * Add task handlers based on configuration only. This allows you to add incremental build support for executables and
+	 * commands that don't support it.
+	 */
+	declarativeTasks?: DeclarativeTasks;
+
+	/**
+	 * An array of commands that are known to have subcommands and should be parsed as such.
+	 *
+	 * These values will be combined with the default values: ["flub", "biome"]
+	 */
+	multiCommandExecutables?: string[];
+
+	/**
 	 * A mapping of package or release group names to metadata about the package or release group. This can only be
 	 * configured in the repo-wide Fluid build config (the repo-root package.json).
 	 */
@@ -66,4 +79,13 @@ export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuil
 
 export interface IFluidBuildDirs {
 	[name: string]: IFluidBuildDirEntry;
+}
+
+export interface DeclarativeTasks {
+	[executable: string]: DeclarativeTask;
+}
+
+export interface DeclarativeTask {
+	inputGlobs: string[];
+	outputGlobs: string[];
 }

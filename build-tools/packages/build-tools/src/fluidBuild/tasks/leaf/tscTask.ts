@@ -79,7 +79,13 @@ export class TscTask extends LeafTask {
 				continue;
 			}
 			checkedProjects.add(dir);
-			const tempTscTask = new TscTask(this.node, `tsc -p ${dir}`, undefined, true);
+			const tempTscTask = new TscTask(
+				this.node,
+				`tsc -p ${dir}`,
+				this.context,
+				undefined,
+				true,
+			);
 			if (!(await tempTscTask.checkTscIsUpToDate(checkedProjects))) {
 				this.traceTrigger(`project reference ${dir} is not up to date`);
 				return false;

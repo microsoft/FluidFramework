@@ -7,7 +7,11 @@ import { AsyncPriorityQueue, priorityQueue } from "async";
 
 import * as assert from "assert";
 import registerDebug from "debug";
+import { findGitRootSync } from "../../common/gitRepo";
+import type { BuildContext } from "../buildContext";
 import { BuildPackage, BuildResult } from "../buildGraph";
+import type { IFluidBuildConfig } from "../fluidBuildConfig";
+import { getFluidBuildConfig } from "../fluidUtils";
 import { options } from "../options";
 import { LeafTask } from "./leaf/leafTask";
 
@@ -47,9 +51,13 @@ export abstract class Task {
 	public get nameColored() {
 		return `${this.node.pkg.nameColored}#${this.taskName ?? `<${this.command}>`}`;
 	}
+
+	public readonly fluidBuildConfig: IFluidBuildConfig;
+
 	protected constructor(
 		protected readonly node: BuildPackage,
 		public readonly command: string,
+		protected readonly context: BuildContext,
 		public readonly taskName: string | undefined,
 	) {
 		traceTaskInit(`${this.nameColored}`);
@@ -57,6 +65,10 @@ export abstract class Task {
 			// initializeDependentTasks won't be called for unnamed tasks
 			this.dependentTasks = [];
 		}
+
+		// Load the fluidBuild config
+		const root = findGitRootSync();
+		this.fluidBuildConfig = getFluidBuildConfig(root);
 	}
 
 	public get package() {
