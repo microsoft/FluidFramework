@@ -256,9 +256,18 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// If it isn't then, not really a problem; just won't be in provider or quorum list.
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const clientId = this.runtime.clientId!;
+			const requestor = message.clientId;
 			if (updateProviders.includes(clientId)) {
 				// Send all current state to the new client
 				this.broadcastAllKnownState();
+				this.presence.mc?.logger.sendTelemetryEvent({
+					eventName: "JoinResponse",
+					type: "broadcastAll",
+					// TODO: this is EUPI; how should it be tagged?
+					// If it can't be logged, then we can establish a correlation in the join request.
+					requestor,
+					role: "primary",
+				});
 			} else {
 				// Schedule a broadcast to the new client after a delay only to send if
 				// another broadcast hasn't been seen in the meantime. The delay is based
@@ -278,8 +287,15 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					// Make sure a broadcast is still needed and we are currently connected.
 					// If not connected, nothing we can do.
 					if (this.refreshBroadcastRequested && this.runtime.connected) {
-						// TODO: Add telemetry for this attempt to satisfy join
 						this.broadcastAllKnownState();
+						this.presence.mc?.logger.sendTelemetryEvent({
+							eventName: "JoinResponse",
+							type: "broadcastAll",
+							// TODO: this is EUPI; how should it be tagged?
+							requestor,
+							role: "secondary",
+							order: indexOfSelf,
+						});
 					}
 				}, waitTime);
 			}

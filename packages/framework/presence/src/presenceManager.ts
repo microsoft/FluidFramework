@@ -4,6 +4,8 @@
  */
 
 import { createSessionId } from "@fluidframework/id-compressor/internal";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { IEphemeralRuntime, PresenceManagerInternal } from "./internalTypes.js";
@@ -53,7 +55,15 @@ class PresenceManager
 		[this.selfAttendee.sessionId, this.selfAttendee],
 	]);
 
+	public readonly mc: MonitoringContext | undefined = undefined;
+
 	public constructor(runtime: IEphemeralRuntime) {
+		const logger = runtime.logger;
+		if (logger) {
+			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
+			this.mc.logger.sendTelemetryEvent({ eventName: "PresenceInstantiated" });
+		}
+
 		// If already connected (now or in the past), populate self and attendees.
 		const originalClientId = runtime.clientId;
 		if (originalClientId !== undefined) {
