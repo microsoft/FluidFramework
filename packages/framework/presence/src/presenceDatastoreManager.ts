@@ -5,10 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { IEphemeralRuntime, PresenceManagerInternal } from "./internalTypes.js";
-import type { ClientSessionId } from "./presence.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
+import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	PresenceStatesInternal,
@@ -81,6 +82,7 @@ function isPresenceMessage(
  * @internal
  */
 export interface PresenceDatastoreManager {
+	joinSession(clientId: ClientConnectionId): void;
 	getWorkspace<TSchema extends PresenceStatesSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
@@ -102,35 +104,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public constructor(
 		private readonly clientSessionId: ClientSessionId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly presence: PresenceManagerInternal,
+		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
+		private readonly logger: ITelemetryLoggerExt | undefined,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: PresenceStatesEntry<PresenceStatesSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
-
-		runtime.on("connected", this.onConnect.bind(this));
-
-		// Check if already connected at the time of construction.
-		// If constructed during data store load, the runtime may already be connected
-		// and the "connected" event will be raised during completion. With construction
-		// delayed we expect that "connected" event has passed.
-		// Note: In some manual testing, this does not appear to be enough to
-		// always trigger an initial connect.
-		const clientId = runtime.clientId;
-		if (clientId !== undefined && runtime.connected) {
-			this.onConnect(clientId);
-		}
 	}
 
-	private onConnect(clientId: ClientConnectionId): void {
-		this.datastore["system:presence"].clientToSessionId[clientId] = {
-			rev: 0,
-			timestamp: Date.now(),
-			value: this.clientSessionId,
-		};
-
+	public joinSession(clientId: ClientConnectionId): void {
 		// Broadcast join message to all clients
 		const updateProviders = [...this.runtime.getQuorum().getMembers().keys()].filter(
 			(quorumClientId) => quorumClientId !== clientId,
@@ -186,7 +170,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const entry = createPresenceStates(
 			{
 				clientSessionId: this.clientSessionId,
-				lookupClient: this.presence.getAttendee.bind(this.presence),
+				lookupClient: this.lookupClient,
 				localUpdate,
 			},
 			workspaceDatastore,
@@ -308,7 +292,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (updateProviders.includes(clientId)) {
 			// Send all current state to the new client
 			this.broadcastAllKnownState();
-			this.presence.mc?.logger.sendTelemetryEvent({
+			this.logger?.sendTelemetryEvent({
 				eventName: "JoinResponse",
 				details: {
 					type: "broadcastAll",
@@ -336,7 +320,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				// If not connected, nothing we can do.
 				if (this.refreshBroadcastRequested && this.runtime.connected) {
 					this.broadcastAllKnownState();
-					this.presence.mc?.logger.sendTelemetryEvent({
+					this.logger?.sendTelemetryEvent({
 						eventName: "JoinResponse",
 						details: {
 							type: "broadcastAll",
