@@ -23,7 +23,6 @@ export interface IReadinessCheck {
  * @param serviceName - The name of the service.
  * @param readinessCheck - Optional readiness check.
  * @param createLivenessEndpoint - Whether to create the liveness endpoint. Services like Alfred already have a ping endpoint, so this can be set to false.
- * @param throttlerConfig - Optional throttler configuration.
  */
 export function createHealthCheckEndpoints(
 	serviceName: string,
