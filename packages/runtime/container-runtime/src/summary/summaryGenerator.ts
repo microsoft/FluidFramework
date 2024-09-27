@@ -509,7 +509,11 @@ export class SummaryGenerator {
 			this.pendingAckTimer.clear();
 		}
 	}
-
+	/** Helper function to get the size of the summary */
+	private getSizeOfVariable(variable: any): number {
+		const jsonString = JSON.stringify(variable);
+		return new TextEncoder().encode(jsonString).length;
+	}
 	private addSummaryDataToTelemetryProps(
 		summaryData: SubmitSummaryResult,
 		initialProps: SummaryGeneratorTelemetry,
@@ -546,6 +550,7 @@ export class SummaryGenerator {
 					opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
 					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
 					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
+					sizeOfSummary: this.getSizeOfVariable(summaryData),
 				};
 
 			default:
