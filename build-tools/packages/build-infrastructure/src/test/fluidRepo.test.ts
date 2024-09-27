@@ -17,7 +17,7 @@ describe("loadFluidRepo", () => {
 		assert.strictEqual(
 			repo.workspaces.size,
 			14,
-			`Expected 5 workspaces, found ${repo.workspaces.size}`,
+			`Expected 14 workspaces, found ${repo.workspaces.size}`,
 		);
 
 		const client = repo.workspaces.get("client" as WorkspaceName);
@@ -27,7 +27,7 @@ describe("loadFluidRepo", () => {
 			"client workspace has the wrong number of packages",
 		);
 		expect(client?.releaseGroups.size).to.equal(
-			2,
+			1,
 			"client workspace has the wrong number of release groups",
 		);
 

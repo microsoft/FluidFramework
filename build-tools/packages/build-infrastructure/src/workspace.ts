@@ -72,22 +72,27 @@ export class Workspace implements IWorkspace {
 			const loadedPackage = loadPackageFromWorkspaceDefinition(
 				path.join(pkg.dir, "package.json"),
 				this.packageManager,
-				/* isWorkspaceRoot */ false,
+				/* isWorkspaceRoot */ foundPackages.length === 1,
 				definition,
 			);
 			this.packages.push(loadedPackage);
 		}
 
-		// Load the workspace root IPackage
-		this.rootPackage = loadPackageFromWorkspaceDefinition(
-			path.join(this.directory, "package.json"),
-			this.packageManager,
-			/* isWorkspaceRoot */ true,
-			definition,
-		);
+		// Load the workspace root IPackage; only do this if more than one package was found in the workspace; otherwise the
+		// single package loaded will be the workspace root.
+		if (foundPackages.length > 1) {
+			this.rootPackage = loadPackageFromWorkspaceDefinition(
+				path.join(this.directory, "package.json"),
+				this.packageManager,
+				/* isWorkspaceRoot */ true,
+				definition,
+			);
 
-		// Prepend the root package to the list of packages
-		this.packages.unshift(this.rootPackage);
+			// Prepend the root package to the list of packages
+			this.packages.unshift(this.rootPackage);
+		} else {
+			this.rootPackage = this.packages[0]!;
+		}
 
 		const rGroupDefinitions: Map<ReleaseGroupName, ReleaseGroupDefinition> =
 			definition.releaseGroups === undefined
@@ -147,5 +152,3 @@ export class Workspace implements IWorkspace {
 		return workspace;
 	}
 }
-
-// type PackageKinds = "WorkspaceRoot" | "ReleaseGroupMember" | "ReleaseGroupRoot";

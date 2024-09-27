@@ -4,7 +4,6 @@
 
 ```ts
 
-import { InterdependencyRange } from '@fluid-tools/version-tools';
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
 import type { SetRequired } from 'type-fest';
@@ -25,6 +24,20 @@ export type FluidPackageJsonFields = {
 // @public
 export const FLUIDREPO_CONFIG_VERSION = 1;
 
+// @public @deprecated
+export interface IFluidBuildDir {
+    directory: string;
+}
+
+// @public @deprecated (undocumented)
+export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
+
+// @public @deprecated (undocumented)
+export interface IFluidBuildDirs {
+    // (undocumented)
+    [name: string]: IFluidBuildDirEntry;
+}
+
 // @public (undocumented)
 export interface IFluidRepo extends Reloadable {
     // (undocumented)
@@ -39,12 +52,13 @@ export interface IFluidRepo extends Reloadable {
 
 // @public
 export interface IFluidRepoLayout {
-    // (undocumented)
     repoLayout?: {
         workspaces: {
             [name: string]: WorkspaceDefinition;
         };
     };
+    // @deprecated
+    repoPackages?: IFluidBuildDirs;
     version: typeof FLUIDREPO_CONFIG_VERSION;
 }
 
@@ -198,7 +212,6 @@ export type PackageName = Opaque<string, "PackageName">;
 // @public (undocumented)
 export interface ReleaseGroupDefinition {
     adoPipelineUrl?: string;
-    defaultInterdependencyRange: InterdependencyRange;
     exclude?: string[];
     include: string[];
     rootPackageName?: string;

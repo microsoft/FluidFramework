@@ -6,6 +6,9 @@
 export {
 	ReleaseGroupDefinition,
 	WorkspaceDefinition,
+	IFluidBuildDir,
+	IFluidBuildDirs,
+	IFluidBuildDirEntry,
 	IFluidRepoLayout,
 	FLUIDREPO_CONFIG_VERSION,
 } from "./config.js";

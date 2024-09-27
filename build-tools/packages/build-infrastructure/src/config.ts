@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { InterdependencyRange } from "@fluid-tools/version-tools";
 import { cosmiconfigSync } from "cosmiconfig";
 
 import {
@@ -31,11 +30,18 @@ export interface IFluidRepoLayout {
 	 */
 	version: typeof FLUIDREPO_CONFIG_VERSION;
 
-	// TODO: Can we infer enough from the old config to use it as is?
-	// repoPackages?: {
-	// 	[name: string]: IFluidBuildDirs;
-	// };
+	/**
+	 * **BACK-COMPAT ONLY**
+	 *
+	 * A mapping of package or release group names to metadata about the package or release group.
+	 *
+	 * @deprecated Use the repoLayout property instead.
+	 */
+	repoPackages?: IFluidBuildDirs;
 
+	/**
+	 * The layout of repo into workspaces and release groups.
+	 */
 	repoLayout?: {
 		workspaces: {
 			/**
@@ -83,7 +89,7 @@ export interface ReleaseGroupDefinition {
 	 * group. This setting controls the default range that will be used when updating the version of a release
 	 * group. The default can be overridden using the `--interdependencyRange` flag in the `flub bump` command.
 	 */
-	defaultInterdependencyRange: InterdependencyRange;
+	// defaultInterdependencyRange: InterdependencyRange;
 
 	/**
 	 * A URL to the ADO CI pipeline that builds the release group.
@@ -91,14 +97,22 @@ export interface ReleaseGroupDefinition {
 	adoPipelineUrl?: string;
 }
 
+/**
+ * @deprecated Use repoLayout and associated types instead.
+ */
 export interface IFluidBuildDirs {
 	[name: string]: IFluidBuildDirEntry;
 }
 
+/**
+ * @deprecated Use repoLayout and associated types instead.
+ */
 export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
 
 /**
  * Configures a package or release group
+ *
+ * @deprecated Use repoLayout and associated types instead.
  */
 export interface IFluidBuildDir {
 	/**
@@ -109,7 +123,7 @@ export interface IFluidBuildDir {
 	/**
 	 * An array of paths under `directory` that should be ignored.
 	 */
-	ignoredDirs?: string[];
+	// ignoredDirs?: string[];
 }
 
 export function matchesReleaseGroupDefinition(
@@ -118,7 +132,10 @@ export function matchesReleaseGroupDefinition(
 ): boolean {
 	const name = isIPackage(pkg) ? pkg.name : pkg;
 	let shouldInclude = false;
+
 	if (
+		// Special case: include with a single element, "*", should include all packages.
+		(include.length === 1 && include[0] === "*") ||
 		// If the package name matches an entry in the include list, it should be included
 		include.includes(name) ||
 		// If the package name starts with any of the include list entries, it should be included
