@@ -14,6 +14,7 @@ import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { defaultLogger } from "../../../common/logging";
 import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
+import type { BuildContext } from "../../buildContext";
 import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
@@ -47,10 +48,11 @@ export abstract class LeafTask extends Task {
 	constructor(
 		node: BuildPackage,
 		command: string,
+		context: BuildContext,
 		taskName: string | undefined,
 		private readonly isTemp: boolean = false, // indicate if the task is for temporary and not for execution.
 	) {
-		super(node, command, taskName);
+		super(node, command, context, taskName);
 		if (!this.isDisabled) {
 			this.node.buildContext.taskStats.leafTotalCount++;
 		}
@@ -530,8 +532,13 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 }
 
 export class UnknownLeafTask extends LeafTask {
-	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
-		super(node, command, taskName);
+	constructor(
+		node: BuildPackage,
+		command: string,
+		context: BuildContext,
+		taskName: string | undefined,
+	) {
+		super(node, command, context, taskName);
 	}
 
 	protected get isIncremental() {
