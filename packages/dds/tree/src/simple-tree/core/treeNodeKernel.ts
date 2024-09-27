@@ -120,6 +120,9 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	 * Events registered before hydration.
 	 * @remarks
 	 * As an optimization these are allocated lazily as they are usually unused.
+	 * The laziness also avoids extra forwarding overhead for events from anchorNode and also avoids registering for events that are unneeded.
+	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
+	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
 	 */
 	readonly #getUnhydratedEvents = lazy<
 		Listenable<KernelEvents> & IEmitter<KernelEvents> & HasListeners<KernelEvents>
@@ -257,12 +260,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	}
 
 	public on<K extends keyof KernelEvents>(eventName: K, listener: KernelEvents[K]): Off {
-		// If before hydration, allocates (if necessary) and uses `#preHydrationEvents`, otherwise the anchorNode.
-		// This design avoids allocating `#preHydrationEvents` if unneeded.
-		// This design also avoids extra forwarding overhead for events from anchorNode and also avoids registering for events that are unneeded.
-		// This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
-		// since this code does not unconditionally subscribe to those events (like a design simply forwarding all events would).
-
+		// Retrieve the correct events object based on whether this node is pre or post hydration.
 		const events: Listenable<KernelEvents> = isHydrated(this.#hydrationState)
 			? this.#hydrationState.anchorNode
 			: this.#getUnhydratedEvents();
