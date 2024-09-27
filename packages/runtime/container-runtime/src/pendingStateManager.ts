@@ -23,8 +23,8 @@ import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
-	getEffectiveBatchId,
 	BatchStartInfo,
+	generateBatchId,
 	InboundMessageResult,
 } from "./opLifecycle/index.js";
 
@@ -466,24 +466,15 @@ export class PendingStateManager implements IDisposable {
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
 
-		// If this batch became empty on resubmit, batch.messages will be empty (so firstMessage undefined)
-		// and the next pending message should be an empty batch marker.
-		// More Info: We must submit empty batches and track them in case a different fork
-		// of this container also submitted the same batch (and it may not be empty for that fork).
+		// Note: This could be undefined if this batch became empty on resubmit.
+		// In this case the next pending message is an empty batch marker.
+		// Empty batches became empty on Resubmit, and submit them and track them in case
+		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batchStart.keyMessage;
 		// -1 length is for back compat, undefined length means we actually don't know it
 		const skipLengthCheck =
 			pendingMessage.batchInfo.length === -1 || batchLength === undefined;
-		const expectedPendingBatchLength =
-			batchLength === 0
-				? 1 // For an empty batch, expect a singleton array with the empty batch marker
-				: batchLength; // Otherwise, the lengths should actually match
-
-		// Note: We don't need to use getEffectiveBatchId here, just check the explicit stamped batchID
-		// That logic is needed only when comparing across potential container forks.
-		// Furthermore, we also are comparing the batch IDs constituent data - clientId (it's local) and batchStartCsn.
-		const pendingBatchId = asBatchMetadata(pendingMessage.opMetadata)?.batchId;
-		const inboundBatchId = batchStart.batchId;
+		const expectedPendingBatchLength = batchLength === 0 ? 1 : batchLength;
 
 		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
 		// as the batch we originally submitted.
@@ -491,8 +482,7 @@ export class PendingStateManager implements IDisposable {
 		// so we don't throw here, merely log.  In a later release this check may replace that one.
 		if (
 			pendingMessage.batchInfo.batchStartCsn !== batchStart.batchStartCsn ||
-			(!skipLengthCheck && pendingMessage.batchInfo.length !== expectedPendingBatchLength) ||
-			pendingBatchId !== inboundBatchId
+			(!skipLengthCheck && pendingMessage.batchInfo.length !== expectedPendingBatchLength)
 		) {
 			this.logger?.sendErrorEvent({
 				eventName: "BatchInfoMismatch",
