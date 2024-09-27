@@ -48,7 +48,7 @@ export enum FieldKind {
 }
 
 // @public
-export interface FieldProps<TCustomMetadata = unknown> {
+export interface FieldProps<out TCustomMetadata = unknown> {
     readonly defaultProvider?: DefaultProvider;
     readonly key?: string;
     readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
@@ -66,7 +66,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 }
 
 // @public @sealed
-export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
+export interface FieldSchemaMetadata<out TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata;
     readonly description?: string | undefined;
 }
@@ -327,13 +327,13 @@ export enum NodeKind {
 }
 
 // @public @sealed
-export interface NodeSchemaMetadata<TCustomMetadata = unknown> {
+export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata;
     readonly description?: string | undefined;
 }
 
 // @public
-export interface NodeSchemaProps<TCustomMetadata = unknown> {
+export interface NodeSchemaProps<out TCustomMetadata = unknown> {
     readonly metadata?: NodeSchemaMetadata<TCustomMetadata>;
 }
 

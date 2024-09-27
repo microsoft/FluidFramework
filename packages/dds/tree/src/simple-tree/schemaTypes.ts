@@ -56,7 +56,7 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
  *
  * @public
  */
-export interface NodeSchemaProps<TCustomMetadata = unknown> {
+export interface NodeSchemaProps<out TCustomMetadata = unknown> {
 	/**
 	 * Optional metadata to associate with the Node Schema.
 	 * @remarks Note: this metadata is not persisted in the document.
@@ -72,7 +72,7 @@ export interface NodeSchemaProps<TCustomMetadata = unknown> {
  * @sealed
  * @public
  */
-export interface NodeSchemaMetadata<TCustomMetadata = unknown> {
+export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 	/**
 	 * User-defined metadata.
 	 */
@@ -145,7 +145,7 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
  *
  * @public
  */
-export interface FieldProps<TCustomMetadata = unknown> {
+export interface FieldProps<out TCustomMetadata = unknown> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -259,7 +259,7 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
  * @sealed
  * @public
  */
-export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
+export interface FieldSchemaMetadata<out TCustomMetadata = unknown> {
 	/**
 	 * User-defined metadata.
 	 */
