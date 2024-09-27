@@ -338,8 +338,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param local - true if we submitted these messages and expect corresponding pending messages
 	 * @returns The inbound messages with localOpMetadata "zipped" in.
 	 *
-	 * @throws a DataProcessingError if: //* Check
-	 * - The batchStartCsn doesn't match for local batches
+	 * @throws a DataProcessingError if the pending message content doesn't match the incoming message content (for local messages)
 	 */
 	public processInboundMessages(
 		inbound: InboundMessageResult,
