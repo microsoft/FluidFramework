@@ -18,7 +18,6 @@ import {
 import { singleJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
-	ViewSchema,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
@@ -42,6 +41,7 @@ import { checkoutWithContent, validateViewConsistency } from "../utils.js";
 import type { Listenable } from "../../events/index.js";
 import {
 	SchemaFactory,
+	ViewSchema,
 	type ImplicitFieldSchema,
 	type TreeView,
 	type TreeViewConfiguration,
