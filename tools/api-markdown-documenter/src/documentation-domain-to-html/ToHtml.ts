@@ -17,12 +17,12 @@ import {
 } from "./TransformationContext.js";
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
+ * Generates an HTML AST from the provided {@link DocumentNode}.
  *
- * @param document - The document to render.
- * @param config - HTML rendering configuration.
+ * @param document - The document to transform.
+ * @param config - HTML transformation configuration.
  *
- * @alpha
+ * @public
  */
 export function documentToHtml(document: DocumentNode, config: TransformationConfig): HastRoot {
 	const transformationContext = createTransformationContext(config);
@@ -47,32 +47,80 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 }
 
 /**
- * Renders the provided {@link DocumentationNode} per the configured
- * {@link HtmlRenderContext.customRenderers | renderers}.
+ * Generates an HTML AST from the provided {@link DocumentationNode}.
  *
- * @alpha
+ * @param node - The documentation node to transform.
+ * @param config - The HTML transformation configuration. Unspecified options will be filled with defaults.
+ *
+ * @public
+ */
+export function documentationNodeToHtml(
+	node: DocumentationNode,
+	config: TransformationConfig,
+): HastNodes;
+/**
+ * Generates an HTML AST from the provided {@link DocumentationNode}.
+ *
+ * @param node - The documentation node to transform.
+ * @param context - The HTML transformation context.
+ *
+ * @public
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
 	context: TransformationContext,
+): HastNodes;
+/**
+ * `documentationNodeToHtml` implementation.
+ */
+export function documentationNodeToHtml(
+	node: DocumentationNode,
+	configOrContext: TransformationConfig | TransformationContext,
 ): HastNodes {
+	const context = getContext(configOrContext);
+
 	if (context.transformations[node.type] === undefined) {
 		throw new Error(
 			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: "${node.type}". Please provide a transformation for this type.`,
 		);
 	}
+
 	return context.transformations[node.type](node, context);
 }
 
 /**
- * Renders a list of {@link DocumentationNode}s per the configured
- * {@link HtmlRenderContext.customRenderers | renderers}.
+ * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
  *
- * @alpha
+ * @public
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
-	context: TransformationContext,
+	config: TransformationConfig,
+): HastNodes[];
+/**
+ * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
+ *
+ * @public
+ */
+export function documentationNodesToHtml(
+	nodes: DocumentationNode[],
+	transformationContext: TransformationContext,
+): HastNodes[];
+/**
+ * `documentationNodesToHtml` implementation.
+ */
+export function documentationNodesToHtml(
+	nodes: DocumentationNode[],
+	configOrContext: TransformationConfig | TransformationContext,
 ): HastNodes[] {
+	const context = getContext(configOrContext);
 	return nodes.map((node) => documentationNodeToHtml(node, context));
+}
+
+function getContext(
+	configOrContext: TransformationConfig | TransformationContext,
+): TransformationContext {
+	return (configOrContext as Partial<TransformationContext>).transformations === undefined
+		? createTransformationContext(configOrContext)
+		: (configOrContext as TransformationContext);
 }

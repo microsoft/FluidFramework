@@ -7,17 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { type TreeValue, ValueSchema } from "../core/index.js";
 import {
-	LeafNodeSchema as FlexLeafNodeSchema,
 	type FlexTreeNode,
 	isFlexTreeNode,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import {
-	setFlexSchemaFromClassSchema,
-	NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaNonClass,
-} from "./core/index.js";
+import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaNonClass } from "./core/index.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -47,8 +41,6 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 	}
 
 	public constructor(name: Name, t: T) {
-		const schema: FlexLeafNodeSchema = new FlexLeafNodeSchema({ name: "makeLeaf" }, name, t);
-		setFlexSchemaFromClassSchema(this, schema);
 		this.identifier = name;
 		this.info = t;
 	}
