@@ -827,10 +827,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		local: boolean,
 	) {
 		const messagesType = messagesWithMetadata[0]?.message.type;
-		if (messagesType === undefined) {
-			return;
-		}
-
 		if (messagesType === ContainerMessageType.FluidDataStoreOp) {
 			this.processChannelOps(messagesWithMetadata, local);
 		}
@@ -843,10 +839,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					break;
 				case ContainerMessageType.Attach:
 					this.processAttachMessage(message, local);
-					return;
+					break;
 				case ContainerMessageType.Alias:
 					this.processAliasMessage(message, localOpMetadata, local);
-					return;
+					break;
 				default:
 					assert(false, 0x8e9 /* unreached */);
 			}

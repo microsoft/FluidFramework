@@ -650,19 +650,13 @@ export class FluidDataStoreRuntime
 		);
 	}
 
-	public processMessages(
+	private processBunchedOps(
 		messagesWithMetadata: {
 			message: ISequencedDocumentMessage;
 			localOpMetadata: unknown;
 		}[],
 		local: boolean,
 	) {
-		this.verifyNotClosed();
-
-		if (messagesWithMetadata.length === 0) {
-			return;
-		}
-
 		const messagesType = messagesWithMetadata[0]?.message.type;
 		if (messagesType === undefined) {
 			return;
@@ -725,6 +719,46 @@ export class FluidDataStoreRuntime
 					message,
 				);
 			}
+		}
+	}
+
+	public processMessages(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
+		local: boolean,
+	) {
+		this.verifyNotClosed();
+
+		let bunchedOps: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[] = [];
+		let previousMessageType: DataStoreMessageType | undefined;
+
+		messagesWithMetadata.forEach(({ message, localOpMetadata }) => {
+			const maybeProcessBunch = (messageType: DataStoreMessageType) => {
+				if (previousMessageType === undefined || messageType === previousMessageType) {
+					return;
+				}
+				if (bunchedOps.length > 0) {
+					this.processBunchedOps(bunchedOps, local);
+					bunchedOps = [];
+				}
+			};
+
+			const currentMessageType = message.type as DataStoreMessageType;
+			maybeProcessBunch(currentMessageType);
+			previousMessageType = currentMessageType;
+			bunchedOps.push({
+				message,
+				localOpMetadata,
+			});
+		});
+
+		if (bunchedOps.length > 0) {
+			this.processBunchedOps(bunchedOps, local);
 		}
 	}
 
@@ -1158,10 +1192,6 @@ export class FluidDataStoreRuntime
 		local: boolean,
 	) {
 		this.verifyNotClosed();
-
-		if (messagesWithMetadata.length === 0) {
-			return;
-		}
 
 		let previousAddress: string | undefined;
 		let contextMessagesWithMetadata: {
