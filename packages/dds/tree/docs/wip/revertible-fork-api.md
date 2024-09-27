@@ -65,7 +65,7 @@ This is accomplished by allowing revertibles to be _cloned_ (or "forked"). Cloni
 
 > The original "non-cloned" revertible, which came from the `"commitApplied"` event, is implicitly associated with the branch that raised the event.
 
-There is a precise scenario in which this matters to a user.
+There is a particular scenario in which this is necessary for a user.
 If a user wants to create a new branch and allow that branch to undo past the commit at which it was created (i.e., undo "back into its parent branch"), then all the relevant revertibles from the parent branch must be cloned and the clones must be associated with the new branch. For example:
 
 1. Parent branch **P** appends commits _X_, _Y_, and _Z_.
@@ -88,31 +88,62 @@ Typically this would look something like the following.
 
 ### Cloning
 
-Revertibles are cloned at a specific point in time - namely, when creating a branch.
-A branch's `branch()` method allows an array of revertibles to be passed in, and a corresponding array of cloned revertibles is returned.
+Revertibles are cloned via a `clone()` method on the revertible object.
 
 ```ts
-interface Branch {
-	branch(): Branch;
-	branch(revertiblesToClone: Revertible[]): Revertible[];
+interface Revertible {
+	revert(): void;
+	dispose(): void;
+	clone(branch?: Branch): Revertible;
 }
 ```
 
-The returned array has the same number of revertibles as the input array, and the clones are in the same order as their sources.
-This allows the caller to correlate each revertible to its clone based on its position in the array.
-
-It would also be possible to have a simpler input interface like:
-
-```ts
-interface Branch {
-	branch(cloneRevertibles: boolean): Revertible[];
-}
-```
-
-However, even if the returned array has a well defined order (e.g. revertibles are ordered by when they were created), it is now more difficult or perhaps impossible copy an arbitrary data structure of revertibles on one branch to another branch, because it's unknown which revertibles correspond to which.
-
+Note the optional `branch` parameter to the clone method.
+If a branch is provided, then the resulting clone is associated with that branch (recall that every revertible is associated with one branch, which is the branch that the revert is applied to when `revert()` is called);
+If a branch is not provided, then the clone is associated with the same branch as the original revertible.
 The cloned revertibles may be disposed, just like the original revertibles.
 Disposing a clone doesn't affect original.
+
+There is one additional consequence of associating a revertible with a branch.
+When a branch is disposed, all revertibles that are associated with it are also automatically disposed.
+This makes sense because those revertibles could not possible do anything thereafter (they can't modify a disposed branch).
+
+Clones create multiple references to the same commit.
+The data associated with a commit required for reverting is only garbage collected when _all_ revertibles (original and clones) for that commit have been disposed.
+This is essentially a ref-counting scheme where the revertibles are the references.
+
+This lets us support the following scenarios:
+
+1. An application creates a branch and delegates the management of that branch to a limited scope of the application code.
+   For example, a particular UI component is responsible for displaying and interacting with a branch, but does not know about the parent branch and the rest of the application.
+   That UI component owns the branch and owns its revertibles.
+   Thus, when it and its branch X are being created, it is given a clone of the parent branch's revertibles via `parentRevertible.clone(X)'.
+   When the component's lifecycle ends, it disposes the branch (and therefore its revertibles too) and there is no cleanup required by the parent branch/context.
+2. An application creates multiple UI components that share the same branch.
+   Like in scenario 1, each component and its code is concerned only with itself and does not want to reason about the state of other components and contexts.
+   When each component is created, it is given a clone of the branch's revertible via 'branch.clone()' (no branch argument).
+   Each component is responsible for its revertible, and can safely dispose it when the component lifecycle ends.
+   The actual commit data will only be dropped when all the components have disposed.
+3. The application doesn't want to do any pre-emptive cloning, and will just share the revertible objects across its entire architecture.
+   The application is small and/or its developers are accustomed to monolithic development, so they are comfortable managing the lifetimes of the revertibles without the aid of `clone()`.
+   In this case, to apply a revertible to a branch that is not the branch it is associated with, the application can simply do: `revertible.clone(branch)` immediately followed by `clone.revert()` and `clone.dispose()`.
+   
+If we make revertibles dispose themselves by default after reverting:
+
+```ts
+interface Revertible {
+	revert(dispose = true): void; // Pass `false` to prevent disposal
+	dispose(): void;
+	clone(branch?: Branch): Revertible;
+}
+```
+
+Then scenario 3 doesn't even have to dispose the clone, and can do it all in one go: `revertible.clone(branch).revert()`.
+
+One way to categorize the scenarios above is that 1 and 2 are "preemptive" - the application is doing a clone ahead of time and giving ownership of that clone to a specific scope.
+That scope has a limited lifetime and will dispose the clone when it dies.
+Scenario 3, on the other hand, is not preemptive but rather applies the revert to a branch only at the moment when it is necessary - the branch is not known ahead of time.
+Supporting both of these kinds of scenarios is straightforward with this API.
 
 > Open question: should disposing a clone also dispose transitive clones that originated from it?
 > In a strictly hierarchical branching setup, this makes sense, but branches can have an arbitrary fork and merge structure.
@@ -140,34 +171,37 @@ Applications often desire to scope their code such that a branch and its associa
 But in this case, that code would still need to know whether it is _forbidden_ to dispose its revertibles (because they are used elsewhere, e.g. by a parent branch) or whether it is _required_ to dispose its revertibles (because nobody else is going to).
 So, such an API removes the need for forking but introduces the need for global knowledge of the revertible lifetimes, which is a dangerous source of mistakes and something we'd like to discourage where we can.
 
-### Branchless Cloning
+### Cloning when Branching
 
-What if we iterated on the above by adding an explicit clone method?
-This puts cloning in the hands of the user to do if and when they wish.
+Another possibility is to have no `clone` method at all.
+Instead, cloning could be an explicit part of the branching API.
 
 ```ts
-interface Revertible {
-	revert();
-	dispose();
-	/* Create an additional reference to this revertible. */
-	clone();
+interface Branch {
+	branch(): Branch;
+	branch(revertiblesToClone: Revertible[]): Revertible[];
 }
 ```
 
-Revertibles remain unassociated with a branch, but can be cloned as many times as necessary.
-Only when all clones of the same revertible are disposed is the underlying data disposed (i.e. the revertibles are ref-counted).
-This means that an application could clone revertibles and distribute them across isolated portions of its architecture without having to worry about one area's `dispose()` adversely affecting another area that shares the same (clone of a) revertible.
-Now we have the benefits of "commit tokens" being decoupled from branches and have also alleviated the lifetime/disposal concerns.
+The returned array has the same number of revertibles as the input array, and the clones are in the same order as their sources.
+This allows the caller to correlate each revertible to its clone based on its position in the array.
 
-However, this is also to be avoided because **revertibles are disposed when they are reverted**.
-Put another way, _a revertible isn't meant to be invoked twice on the same branch_.
-It doesn't make much sense for a revertible to apply twice to the same branch, so much so that we don't support it in the underlying system.
-It would be (maybe) possible to support, but it seems extremely low value if it has any value at all.
-Therefore, it actually makes sense that each revertible ought to be associated with a branch because after it does a revert on that branch, it's dead.
-That same commit should not be reverted on the same branch again.
-Therefore, it also makes sense to disallow the creation of multiple revertibles for the same branch.
-If we did allow that, then it would require the same ref-counting scheme as above to manage manual disposing, but it would have no way to prevent two parts of the application (with no knowledge of each other) from both attempting to revert (the second one would fail).
+It would also be possible to have a simpler input interface like:
 
-This leads us back to the original API above - cloning only happens at most one time when a new branch is created.
-Since the cloning happens at this one distinct time, it make sense to have it baked into the branch API rather than exposing some kind of `clone()` to the user.
-And since a revertible is implicitly associated with both a commit _and_ a branch, it makes sense for its API to expose a single parameterless `revert()` method.
+```ts
+interface Branch {
+	branch(cloneRevertibles: boolean): Revertible[];
+}
+```
+
+However, even if the returned array has a well defined order (e.g. revertibles are ordered by when they were created), it is now more difficult or perhaps impossible copy an arbitrary data structure of revertibles on one branch to another branch, because it's unknown which revertibles correspond to which.
+
+In either case, these options suffer from a couple of drawbacks.
+Revertibles are now explicitly coupled to branching - two features that are only tangentially related are now tightly bonded by the API.
+Additionally, scenario 2 (see the "Cloning" section) is no longer possible, nor is forking a revertible after a branch is created.
+A revertible for a branch, if it is to exist at all, _must_ be cloned exactly when a branch is created, and no more than one clone can exist for that branch.
+This seems unnecessarily restrictive and is assuming too much about the patterns we expect application developers to employ.
+Additionally, the API is simply clumsy - passing/receiving arrays, and packing and unpacking those arrays, is cumbersome.
+
+> Admittedly, there is a pleasing symmetry to the idea that clones can only be created at exactly one moment, because the original revertibles can only be created at exactly one moment (via the `"commitApplied"` event).
+  But, that alone does not outweigh the drawbacks to this approach.
