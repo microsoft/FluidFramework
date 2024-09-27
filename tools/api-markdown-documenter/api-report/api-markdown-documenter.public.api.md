@@ -440,7 +440,8 @@ declare namespace HtmlRenderer {
     export {
         renderApiModelAsHtml as renderApiModel,
         renderDocumentsAsHtml as renderDocuments,
-        renderDocument
+        renderDocument,
+        renderHtml
     }
 }
 export { HtmlRenderer }
@@ -604,6 +605,11 @@ export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConf
 
 // @public
 function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+
+// @public
+function renderHtml(html: Nodes, { prettyFormatting }: {
+    prettyFormatting?: boolean;
+}): string;
 
 // @public @sealed
 export interface RenderHtmlConfig {

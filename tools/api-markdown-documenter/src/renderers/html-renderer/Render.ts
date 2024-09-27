@@ -53,6 +53,8 @@ export function renderDocument(document: DocumentNode, config: RenderDocumentCon
  *
  * @param document - The document to render.
  * @param config - HTML transformation configuration.
+ *
+ * @public
  */
 export function renderHtml(
 	html: HastTree,
