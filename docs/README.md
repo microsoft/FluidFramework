@@ -200,6 +200,12 @@ The replacement syntax to use in `.mdx` files would be:
 -   Add markdown-lint (same as above)
 -   Add eslint for components
 
+-   Preserve existing redirects that are still needed
+    -   TODO
+-   Add new redirects to accommodate changes:
+    -   `docs/api/v*` => `docs/v*/api`
+    -   `docs/data-structures/counter` => `docs/v1/data-structures/counter`
+    -   etc.
 
 ## Site changes relative to current website
 
