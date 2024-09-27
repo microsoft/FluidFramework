@@ -319,6 +319,17 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
+	 * Processes a set of messages.
+	 */
+	processMessages?(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
+		local: boolean,
+	): void;
+
+	/**
 	 * Processes the op.
 	 */
 	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;

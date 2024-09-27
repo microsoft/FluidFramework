@@ -37,12 +37,16 @@ import {
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,
+	type IPendingMessagesState,
 } from "./channelContext.js";
 import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
-	private pending: ISequencedDocumentMessage[] | undefined = [];
+	private pendingMessagesState: IPendingMessagesState | undefined = {
+		messagesWithMetadata: [],
+		pendingCount: 0,
+	};
 	private readonly channelP: Promise<IChannel>;
 	private channel: IChannel | undefined;
 	private readonly services: ChannelServiceEndpoints;
@@ -100,16 +104,19 @@ export class RemoteChannelContext implements IChannelContext {
 				this.id,
 			);
 
-			// Send all pending messages to the channel
-			assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
-			for (const message of this.pending) {
-				this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
+			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
+			const pendingMessagesWithMetadata = this.pendingMessagesState.messagesWithMetadata;
+			for (const messagesWithMetadata of pendingMessagesWithMetadata) {
+				this.services.deltaConnection.processMessages(messagesWithMetadata, false);
 			}
-			this.thresholdOpsCounter.send("ProcessPendingOps", this.pending.length);
+			this.thresholdOpsCounter.send(
+				"ProcessPendingOps",
+				this.pendingMessagesState.pendingCount,
+			);
 
 			// Commit changes.
 			this.channel = channel;
-			this.pending = undefined;
+			this.pendingMessagesState = undefined;
 			this.isLoaded = true;
 
 			// Because have some await between we created the service and here, the connection state might have changed
@@ -161,20 +168,32 @@ export class RemoteChannelContext implements IChannelContext {
 		return this.services.deltaConnection.applyStashedOp(content);
 	}
 
-	public processOp(
-		message: ISequencedDocumentMessage,
+	public processOps(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
-		this.summarizerNode.invalidate(message.sequenceNumber);
+		if (messagesWithMetadata.length === 0) {
+			return;
+		}
+		this.summarizerNode.invalidate(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			messagesWithMetadata[messagesWithMetadata.length - 1]!.message.sequenceNumber,
+		);
 
 		if (this.isLoaded) {
-			this.services.deltaConnection.process(message, local, localOpMetadata);
+			this.services.deltaConnection.processMessages(messagesWithMetadata, local);
 		} else {
 			assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
-			assert(this.pending !== undefined, 0x23e /* "pending is undefined" */);
-			this.pending.push(message);
-			this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
+			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
+			this.pendingMessagesState.messagesWithMetadata.push(Array.from(messagesWithMetadata));
+			this.pendingMessagesState.pendingCount += messagesWithMetadata.length;
+			this.thresholdOpsCounter.sendIfMultiple(
+				"StorePendingOps",
+				this.pendingMessagesState.pendingCount,
+			);
 		}
 	}
 

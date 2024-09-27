@@ -73,6 +73,11 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
+    processMessages(messagesWithMetadata: {
+        message: ISequencedDocumentMessage;
+        localOpMetadata: unknown;
+    }[], local: boolean): void;
+    // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;

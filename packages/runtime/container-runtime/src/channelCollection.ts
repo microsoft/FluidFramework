@@ -819,84 +819,139 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	public process(
-		message: ISequencedDocumentMessage,
+	public processMessages(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
 		local: boolean,
-		localMessageMetadata: unknown,
 	) {
-		switch (message.type) {
-			case ContainerMessageType.Attach:
-				this.processAttachMessage(message, local);
-				return;
-			case ContainerMessageType.Alias:
-				this.processAliasMessage(message, localMessageMetadata, local);
-				return;
-			case ContainerMessageType.FluidDataStoreOp: {
-				const envelope = message.contents as IEnvelope;
-				const innerContents = envelope.contents as FluidDataStoreMessage;
-				const transformed = {
-					...message,
-					type: innerContents.type,
-					contents: innerContents.content,
-				};
-
-				this.processChannelOp(envelope.address, transformed, local, localMessageMetadata);
-
-				// Notify GC of any outbound references that were added by this op.
-				detectOutboundReferences(
-					envelope.address,
-					transformed.contents,
-					(fromPath: string, toPath: string) =>
-						this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp),
-				);
-				break;
-			}
-			default:
-				assert(false, 0x8e9 /* unreached */);
-		}
-	}
-
-	protected processChannelOp(
-		address: string,
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localMessageMetadata: unknown,
-	) {
-		const context = this.contexts.get(address);
-
-		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
-		// corruption in case a deleted data store accidentally submitted an op.
-		if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
+		const messagesType = messagesWithMetadata[0]?.message.type;
+		if (messagesType === undefined) {
 			return;
 		}
 
-		if (context === undefined) {
-			// Former assert 0x162
-			throw DataProcessingError.create(
-				"No context for op",
-				"processFluidDataStoreOp",
-				message,
-				{
-					local,
-					messageDetails: JSON.stringify({
-						type: message.type,
-						contentType: typeof message.contents,
-					}),
-					...tagCodeArtifacts({ address }),
-				},
-			);
+		if (messagesType === ContainerMessageType.FluidDataStoreOp) {
+			this.processChannelOps(messagesWithMetadata, local);
 		}
 
-		context.process(message, local, localMessageMetadata);
+		for (const messageWithMetadata of messagesWithMetadata) {
+			const { message, localOpMetadata } = messageWithMetadata;
+			assert(message.type === messagesType, "Messages should have the same type");
+			switch (message.type) {
+				case ContainerMessageType.FluidDataStoreOp:
+					break;
+				case ContainerMessageType.Attach:
+					this.processAttachMessage(message, local);
+					return;
+				case ContainerMessageType.Alias:
+					this.processAliasMessage(message, localOpMetadata, local);
+					return;
+				default:
+					assert(false, 0x8e9 /* unreached */);
+			}
+		}
+	}
 
-		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
-		// being used.
-		this.gcNodeUpdated({
-			node: { type: "DataStore", path: `/${address}` },
-			reason: "Changed",
-			timestampMs: message.timestamp,
-			packagePath: context.isLoaded ? context.packagePath : undefined,
+	public process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
+		this.processMessages([{ message, localOpMetadata }], local);
+	}
+
+	protected processChannelOps(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
+		local: boolean,
+	) {
+		if (messagesWithMetadata.length === 0) {
+			return;
+		}
+
+		let previousAddress: string | undefined;
+		let contextMessages: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[] = [];
+
+		messagesWithMetadata.forEach((messageWithMetadata) => {
+			const { message, localOpMetadata } = messageWithMetadata;
+			const envelope = message.contents as IEnvelope;
+			const address = envelope.address;
+			const context = this.contexts.get(address);
+
+			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+			// corruption in case a deleted data store accidentally submitted an op.
+			if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
+				return;
+			}
+
+			if (context === undefined) {
+				// Former assert 0x162
+				throw DataProcessingError.create(
+					"No context for op",
+					"processFluidDataStoreOp",
+					message,
+					{
+						local,
+						messageDetails: JSON.stringify({
+							type: message.type,
+							contentType: typeof message.contents,
+						}),
+						...tagCodeArtifacts({ address }),
+					},
+				);
+			}
+
+			const innerContents = envelope.contents as FluidDataStoreMessage;
+			const contextMessage: ISequencedDocumentMessage = {
+				...message,
+				type: innerContents.type,
+				contents: innerContents.content,
+			};
+
+			if (previousAddress !== undefined && previousAddress !== address) {
+				if (contextMessages.length > 0) {
+					const previousContext = this.contexts.get(previousAddress);
+					assert(!!previousContext, "Context not found");
+					previousContext.processMessages(contextMessages, local);
+					contextMessages = [];
+				}
+			}
+			contextMessages.push({ message: contextMessage, localOpMetadata });
+			previousAddress = address;
+
+			// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
+			// being used.
+			this.gcNodeUpdated({
+				node: { type: "DataStore", path: `/${address}` },
+				reason: "Changed",
+				timestampMs: message.timestamp,
+				packagePath: context.isLoaded ? context.packagePath : undefined,
+			});
+
+			detectOutboundReferences(
+				envelope.address,
+				contextMessage.contents,
+				(fromPath: string, toPath: string) =>
+					this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp),
+			);
 		});
+
+		if (contextMessages.length > 0) {
+			assert(
+				previousAddress !== undefined,
+				"previous address must exist if there are messages to process",
+			);
+			// process the last set of channel ops
+			const previousContext = this.contexts.get(previousAddress);
+			assert(!!previousContext, "Context not found");
+			previousContext.processMessages(contextMessages, local);
+		}
 	}
 
 	private async getDataStore(

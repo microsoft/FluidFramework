@@ -100,6 +100,15 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		return this.treeDeltaHandler.process(message, local, localOpMetadata);
 	}
 
+	public processMessages(
+		messagesWithMetadata: { message: ISequencedDocumentMessage; localOpMetadata: unknown }[],
+		local: boolean
+	): void {
+		for (const messageWithMetadata of messagesWithMetadata) {
+			this.process(messageWithMetadata.message, local, messageWithMetadata.localOpMetadata);
+		}
+	}
+
 	public setConnectionState(connected: boolean): void {
 		return this.treeDeltaHandler.setConnectionState(connected);
 	}

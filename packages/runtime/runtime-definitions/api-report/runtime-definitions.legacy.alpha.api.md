@@ -135,6 +135,10 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    processMessages?(messagesWithMetadata: {
+        message: ISequencedDocumentMessage;
+        localOpMetadata: unknown;
+    }[], local: boolean): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;

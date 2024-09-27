@@ -650,66 +650,90 @@ export class FluidDataStoreRuntime
 		);
 	}
 
+	public processMessages(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
+		local: boolean,
+	) {
+		this.verifyNotClosed();
+
+		if (messagesWithMetadata.length === 0) {
+			return;
+		}
+
+		const messagesType = messagesWithMetadata[0]?.message.type;
+		if (messagesType === undefined) {
+			return;
+		}
+
+		if (messagesType === DataStoreMessageType.ChannelOp) {
+			this.processChannelOps(messagesWithMetadata, local);
+		}
+
+		for (const { message } of messagesWithMetadata) {
+			assert(message.type === messagesType, "Messages should have the same type");
+			try {
+				// catches as data processing error whether or not they come from async pending queues
+				switch (message.type) {
+					case DataStoreMessageType.ChannelOp:
+						break;
+					case DataStoreMessageType.Attach: {
+						const attachMessage = message.contents as IAttachMessage;
+						const id = attachMessage.id;
+
+						// We need to process the GC Data for both local and remote attach messages
+						processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+							// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
+							const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
+							this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
+						});
+
+						// If a non-local operation then go and create the object
+						// Otherwise mark it as officially attached.
+						if (local) {
+							assert(
+								this.pendingAttach.delete(id),
+								0x17c /* "Unexpected attach (local) channel OP" */,
+							);
+						} else {
+							assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
+
+							const summarizerNodeParams = {
+								type: CreateSummarizerNodeSource.FromAttach,
+								sequenceNumber: message.sequenceNumber,
+								snapshot: attachMessage.snapshot,
+							};
+
+							const remoteChannelContext = this.createRemoteChannelContext(
+								attachMessage,
+								summarizerNodeParams,
+							);
+							this.contexts.set(id, remoteChannelContext);
+						}
+						break;
+					}
+					default:
+				}
+
+				this.emit("op", message);
+			} catch (error) {
+				throw DataProcessingError.wrapIfUnrecognized(
+					error,
+					"fluidDataStoreRuntimeFailedToProcessMessage",
+					message,
+				);
+			}
+		}
+	}
+
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		this.verifyNotClosed();
-
-		try {
-			// catches as data processing error whether or not they come from async pending queues
-			switch (message.type) {
-				case DataStoreMessageType.Attach: {
-					const attachMessage = message.contents as IAttachMessage;
-					const id = attachMessage.id;
-
-					// We need to process the GC Data for both local and remote attach messages
-					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
-						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
-						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
-						this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
-					});
-
-					// If a non-local operation then go and create the object
-					// Otherwise mark it as officially attached.
-					if (local) {
-						assert(
-							this.pendingAttach.delete(id),
-							0x17c /* "Unexpected attach (local) channel OP" */,
-						);
-					} else {
-						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
-
-						const summarizerNodeParams = {
-							type: CreateSummarizerNodeSource.FromAttach,
-							sequenceNumber: message.sequenceNumber,
-							snapshot: attachMessage.snapshot,
-						};
-
-						const remoteChannelContext = this.createRemoteChannelContext(
-							attachMessage,
-							summarizerNodeParams,
-						);
-						this.contexts.set(id, remoteChannelContext);
-					}
-					break;
-				}
-
-				case DataStoreMessageType.ChannelOp:
-					this.processChannelOp(message, local, localOpMetadata);
-					break;
-				default:
-			}
-
-			this.emit("op", message);
-		} catch (error) {
-			throw DataProcessingError.wrapIfUnrecognized(
-				error,
-				"fluidDataStoreRuntimeFailedToProcessMessage",
-				message,
-			);
-		}
+		this.processMessages([{ message, localOpMetadata }], local);
 	}
 
 	public processSignal(message: IInboundSignalMessage, local: boolean) {
@@ -1126,25 +1150,54 @@ export class FluidDataStoreRuntime
 		this.dataStoreContext.setChannelDirty(address);
 	}
 
-	private processChannelOp(
-		message: ISequencedDocumentMessage,
+	private processChannelOps(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata?: unknown;
+		}[],
 		local: boolean,
-		localOpMetadata: unknown,
 	) {
 		this.verifyNotClosed();
 
-		const envelope = message.contents as IEnvelope;
+		if (messagesWithMetadata.length === 0) {
+			return;
+		}
 
-		const transformed: ISequencedDocumentMessage = {
-			...message,
-			contents: envelope.contents,
-		};
+		let previousAddress: string | undefined;
+		let contextMessagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[] = [];
 
-		const channelContext = this.contexts.get(envelope.address);
-		assert(!!channelContext, 0x185 /* "Channel not found" */);
-		channelContext.processOp(transformed, local, localOpMetadata);
+		messagesWithMetadata.forEach((messageWithMetadata) => {
+			const { message, localOpMetadata } = messageWithMetadata;
+			const envelope = message.contents as IEnvelope;
+			const contextMessage: ISequencedDocumentMessage = {
+				...message,
+				contents: envelope.contents,
+			};
 
-		return channelContext;
+			if (previousAddress !== undefined && previousAddress !== envelope.address) {
+				const channelContext = this.contexts.get(previousAddress);
+				assert(!!channelContext, "Channel context not found");
+				channelContext.processOps(contextMessagesWithMetadata, local);
+				contextMessagesWithMetadata = [];
+			}
+
+			contextMessagesWithMetadata.push({ message: contextMessage, localOpMetadata });
+			previousAddress = envelope.address;
+		});
+
+		if (contextMessagesWithMetadata.length > 0) {
+			assert(
+				previousAddress !== undefined,
+				"previous address must exist if there are messages to process",
+			);
+			// process the last set of channel ops
+			const channelContext = this.contexts.get(previousAddress);
+			assert(!!channelContext, "Channel context not found");
+			channelContext.processOps(contextMessagesWithMetadata, local);
+		}
 	}
 
 	private attachListener() {

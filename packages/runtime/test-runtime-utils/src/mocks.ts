@@ -116,6 +116,13 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.process(message, local, localOpMetadata);
 	}
 
+	public processMessages(
+		messagesWithMetadata: { message: ISequencedDocumentMessage; localOpMetadata: unknown }[],
+		local: boolean,
+	) {
+		this.handler?.processMessages?.(messagesWithMetadata, local);
+	}
+
 	public reSubmit(content: any, localOpMetadata: unknown) {
 		this.handler?.reSubmit(content, localOpMetadata);
 	}
@@ -997,6 +1004,18 @@ export class MockFluidDataStoreRuntime
 	) {
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
+		});
+	}
+
+	public processMessages(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
+		local: boolean,
+	) {
+		this.deltaConnections.forEach((dc) => {
+			dc.processMessages(messagesWithMetadata, local);
 		});
 	}
 

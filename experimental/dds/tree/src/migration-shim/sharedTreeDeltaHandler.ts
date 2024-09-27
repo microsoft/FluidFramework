@@ -62,6 +62,15 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		return this.handler.process(message, local, localOpMetadata);
 	}
 
+	public processMessages(
+		messagesWithMetadata: { message: ISequencedDocumentMessage; localOpMetadata: unknown }[],
+		local: boolean
+	): void {
+		for (const messageWithMetadata of messagesWithMetadata) {
+			this.process(messageWithMetadata.message, local, messageWithMetadata.localOpMetadata);
+		}
+	}
+
 	// No idea whether any of the below 4 methods work as expected
 	public setConnectionState(connected: boolean): void {
 		return this.handler.setConnectionState(connected);

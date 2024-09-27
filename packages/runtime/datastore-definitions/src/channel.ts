@@ -138,6 +138,16 @@ export interface IDeltaHandler {
 	) => void;
 
 	/**
+	 * Processes the ops.
+	 * @param messagesWithMetadata - The messages to process
+	 * @param local - Whether the message originated from the local client
+	 */
+	processMessages?: (
+		messagesWithMetadata: { message: ISequencedDocumentMessage; localOpMetadata: unknown }[],
+		local: boolean,
+	) => void;
+
+	/**
 	 * State change events to indicate changes to the delta connection
 	 * @param connected - true if connected, false otherwise
 	 */

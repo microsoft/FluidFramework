@@ -496,6 +496,15 @@ export abstract class SharedObjectCore<
 					localOpMetadata,
 				);
 			},
+			processMessages: (
+				messagesWithMetadata: {
+					message: ISequencedDocumentMessage;
+					localOpMetadata: unknown;
+				}[],
+				local: boolean,
+			) => {
+				this.processMessages(messagesWithMetadata, local);
+			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
@@ -570,6 +579,24 @@ export abstract class SharedObjectCore<
 		);
 
 		this.emitInternal("op", message, local, this);
+	}
+
+	/**
+	 * Handles messages being received from the remote delta server.
+	 * @param messagesWithMetadata - The messages to process
+	 * @param local - Whether the message originated from the local client
+	 */
+	private processMessages(
+		messagesWithMetadata: { message: ISequencedDocumentMessage; localOpMetadata: unknown }[],
+		local: boolean,
+	) {
+		for (const { message, localOpMetadata } of messagesWithMetadata) {
+			this.process(
+				{ ...message, contents: parseHandles(message.contents, this.serializer) },
+				local,
+				localOpMetadata,
+			);
+		}
 	}
 
 	/**

@@ -178,6 +178,11 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
+export interface IPendingMessagesState {
+	messagesWithMetadata: { message: ISequencedDocumentMessage; localOpMetadata: unknown }[][];
+	pendingCount: number;
+}
+
 /**
  * Represents the context for the store. This context is passed to the store runtime.
  * @internal
@@ -313,7 +318,7 @@ export abstract class FluidDataStoreContext
 	 * Returns the count of pending messages that are stored until the data store is realized.
 	 */
 	public get pendingCount(): number {
-		return this.pending?.length ?? 0;
+		return this.pendingMessagesState?.pendingCount ?? 0;
 	}
 
 	protected registry: IFluidDataStoreRegistry | undefined;
@@ -321,7 +326,10 @@ export abstract class FluidDataStoreContext
 	protected detachedRuntimeCreation = false;
 	protected channel: IFluidDataStoreChannel | undefined;
 	private loaded = false;
-	protected pending: ISequencedDocumentMessage[] | undefined = [];
+	private pendingMessagesState: IPendingMessagesState | undefined = {
+		messagesWithMetadata: [],
+		pendingCount: 0,
+	};
 	protected channelP: Promise<IFluidDataStoreChannel> | undefined;
 	protected _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
@@ -561,25 +569,55 @@ export abstract class FluidDataStoreContext
 		this.channel!.setConnectionState(connected, clientId);
 	}
 
-	public process(
-		message: ISequencedDocumentMessage,
+	private processMessagesCompat(
+		channel: IFluidDataStoreChannel,
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
 		local: boolean,
-		localOpMetadata: unknown,
+	) {
+		if (channel.processMessages !== undefined) {
+			return channel.processMessages(messagesWithMetadata, local);
+		}
+		for (const messageWithMetadata of messagesWithMetadata) {
+			channel.process(messageWithMetadata.message, local, messageWithMetadata.localOpMetadata);
+		}
+	}
+
+	public processMessages(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
+		local: boolean,
 	): void {
-		const safeTelemetryProps = extractSafePropertiesFromMessage(message);
+		if (messagesWithMetadata.length === 0) {
+			return;
+		}
+		const safeTelemetryProps = extractSafePropertiesFromMessage(
+			messagesWithMetadata[0].message,
+		);
 		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
 		// "verifyNotClosed" which logs tombstone errors.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 
-		this.summarizerNode.recordChange(message);
+		this.summarizerNode.recordChange(
+			messagesWithMetadata[messagesWithMetadata.length - 1].message,
+		);
 
 		if (this.loaded) {
-			return this.channel?.process(message, local, localOpMetadata);
+			assert(this.channel !== undefined, "Channel is not loaded");
+			this.processMessagesCompat(this.channel, messagesWithMetadata, local);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
-			assert(this.pending !== undefined, 0x23d /* "pending is undefined" */);
-			this.pending.push(message);
-			this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
+			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
+			this.pendingMessagesState.messagesWithMetadata.push(Array.from(messagesWithMetadata));
+			this.pendingMessagesState.pendingCount += messagesWithMetadata.length;
+			this.thresholdOpsCounter.sendIfMultiple(
+				"StorePendingOps",
+				this.pendingMessagesState.pendingCount,
+			);
 		}
 	}
 
@@ -788,20 +826,22 @@ export abstract class FluidDataStoreContext
 	}
 
 	protected processPendingOps(channel: IFluidDataStoreChannel) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const pending = this.pending!;
+		// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
+		const baseSequenceNumber = this.baseSnapshotSequenceNumber ?? -1;
 
-		// Apply all pending ops
-		for (const op of pending) {
-			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
-			const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
-			if (op.sequenceNumber > seqNumber) {
-				channel.process(op, false, undefined /* localOpMetadata */);
+		assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
+		const pendingMessagesWithMetadata = this.pendingMessagesState.messagesWithMetadata;
+		for (const messagesWithMetadata of pendingMessagesWithMetadata) {
+			if (messagesWithMetadata.length === 0) {
+				continue;
+			}
+			if (messagesWithMetadata[0].message.sequenceNumber > baseSequenceNumber) {
+				this.processMessagesCompat(channel, messagesWithMetadata, false);
 			}
 		}
-		this.pending = undefined;
 
-		this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
+		this.thresholdOpsCounter.send("ProcessPendingOps", this.pendingMessagesState.pendingCount);
+		this.pendingMessagesState = undefined;
 	}
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel) {

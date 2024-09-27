@@ -36,15 +36,22 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
+export interface IPendingMessagesState {
+	messagesWithMetadata: { message: ISequencedDocumentMessage; localOpMetadata: unknown }[][];
+	pendingCount: number;
+}
+
 export interface IChannelContext {
 	getChannel(): Promise<IChannel>;
 
 	setConnectionState(connected: boolean, clientId?: string);
 
-	processOp(
-		message: ISequencedDocumentMessage,
+	processOps(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
 		local: boolean,
-		localOpMetadata?: unknown,
 	): void;
 
 	summarize(

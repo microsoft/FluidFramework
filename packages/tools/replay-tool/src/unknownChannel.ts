@@ -36,6 +36,13 @@ class UnknownChannel implements IChannel {
 				local: boolean,
 				localOpMetadata: unknown,
 			) => {},
+			processMessages: (
+				messagesWithMetadata: {
+					message: ISequencedDocumentMessage;
+					localOpMetadata: unknown;
+				}[],
+				local: boolean,
+			) => {},
 			setConnectionState: (connected: boolean) => {},
 			reSubmit: (content: any, localOpMetadata: unknown) => {},
 			applyStashedOp: (content: any) => {},

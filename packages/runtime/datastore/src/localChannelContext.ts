@@ -41,7 +41,10 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
 	private globallyVisible = false;
-	protected readonly pending: ISequencedDocumentMessage[] = [];
+	protected pendingMessagesWithMetadata: {
+		message: ISequencedDocumentMessage;
+		localOpMetadata: unknown;
+	}[][] = [];
 	constructor(
 		protected readonly id: string,
 		protected readonly runtime: IFluidDataStoreRuntime,
@@ -74,10 +77,12 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		}
 	}
 
-	public processOp(
-		message: ISequencedDocumentMessage,
+	public processOps(
+		messagesWithMetadata: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata: unknown;
+		}[],
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
 		assert(
 			this.globallyVisible,
@@ -88,13 +93,13 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		// delay loading. So after the container is attached and some other client joins which start generating
 		// ops for this channel. So not loaded local channel can still receive ops and we store them to process later.
 		if (this.isLoaded) {
-			this.services.value.deltaConnection.process(message, local, localOpMetadata);
+			this.services.value.deltaConnection.processMessages(messagesWithMetadata, local);
 		} else {
 			assert(
-				local === false,
+				!local,
 				0x189 /* "Should always be remote because a local dds shouldn't generate ops before loading" */,
 			);
-			this.pending.push(message);
+			this.pendingMessagesWithMetadata.push(Array.from(messagesWithMetadata));
 		}
 	}
 
@@ -254,12 +259,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						this.id,
 					);
 					// Send all pending messages to the channel
-					for (const message of this.pending) {
-						this.services.value.deltaConnection.process(
-							message,
-							false,
-							undefined /* localOpMetadata */,
-						);
+					for (const messagesWithMetadata of this.pendingMessagesWithMetadata) {
+						this.services.value.deltaConnection.processMessages(messagesWithMetadata, false);
 					}
 					return channel;
 				} catch (err) {

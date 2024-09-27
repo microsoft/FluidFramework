@@ -63,7 +63,7 @@ describe("Runtime batching", () => {
 		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
 			channelCollection: Partial<ChannelCollection>;
 		};
-		return sandbox.stub(patched.channelCollection, "process").callsFake(process);
+		return sandbox.stub(patched.channelCollection, "processMessages").callsFake(process);
 	}
 
 	before(() => {

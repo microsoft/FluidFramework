@@ -2846,20 +2846,64 @@ export class ContainerRuntime
 
 		let error: unknown;
 		try {
-			messages.forEach(({ message, localOpMetadata }) => {
-				this.ensureNoDataModelChanges(() => {
-					if (runtimeBatch) {
-						this.validateAndProcessRuntimeMessage({
-							message: message as InboundSequencedContainerRuntimeMessage,
-							local,
-							savedOp,
-							localOpMetadata,
-						});
-					} else {
+			if (!runtimeBatch) {
+				// If this is not a runtime message, we need to process it here.
+				messages.forEach(({ message }) => {
+					this.ensureNoDataModelChanges(() => {
 						this.observeNonRuntimeMessage(message);
+					});
+				});
+				return;
+			}
+
+			let bunchedOps: {
+				message: InboundSequencedContainerRuntimeMessage;
+				localOpMetadata: unknown;
+			}[] = [];
+			let previousMessageType:
+				| ContainerMessageType
+				| UnknownContainerRuntimeMessage["type"]
+				| undefined;
+
+			messages.forEach(({ message, localOpMetadata }) => {
+				const runtimeMessage = message as InboundSequencedContainerRuntimeMessage;
+				// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
+				if (
+					this.useDeltaManagerOpsProxy &&
+					this.deltaManager.minimumSequenceNumber < runtimeMessage.minimumSequenceNumber
+				) {
+					runtimeMessage.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
+				}
+				this._processedClientSequenceNumber = runtimeMessage.clientSequenceNumber;
+
+				const maybeProcessBunch = (
+					messageType: ContainerMessageType | UnknownContainerRuntimeMessage["type"],
+				) => {
+					if (previousMessageType === undefined || messageType === previousMessageType) {
+						return;
 					}
+					if (bunchedOps.length > 0) {
+						this.ensureNoDataModelChanges(() => {
+							this.validateAndProcessRuntimeMessages(bunchedOps, local, savedOp);
+						});
+						bunchedOps = [];
+					}
+				};
+
+				const currentMessageType = runtimeMessage.type;
+				maybeProcessBunch(currentMessageType);
+				previousMessageType = currentMessageType;
+				bunchedOps.push({
+					message: runtimeMessage,
+					localOpMetadata,
 				});
 			});
+
+			if (bunchedOps.length > 0) {
+				this.ensureNoDataModelChanges(() => {
+					this.validateAndProcessRuntimeMessages(bunchedOps, local, savedOp);
+				});
+			}
 		} catch (e) {
 			error = e;
 			throw error;
@@ -2898,106 +2942,111 @@ export class ContainerRuntime
 	 * checks its type and dispatches the message to the appropriate handler in the runtime.
 	 * Throws a DataProcessingError if the message looks like but doesn't conform to a known TypedContainerRuntimeMessage type.
 	 */
-
-	private validateAndProcessRuntimeMessage(messageWithContext: {
-		message: InboundSequencedContainerRuntimeMessage;
-		local: boolean;
-		savedOp?: boolean;
-		localOpMetadata?: unknown;
-	}): void {
-		const { local, message, savedOp, localOpMetadata } = messageWithContext;
-
-		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
-		if (
-			this.useDeltaManagerOpsProxy &&
-			this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber
-		) {
-			message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
-		}
-
-		this._processedClientSequenceNumber = message.clientSequenceNumber;
-
+	private validateAndProcessRuntimeMessages(
+		messages: {
+			message: InboundSequencedContainerRuntimeMessage;
+			localOpMetadata: unknown;
+		}[],
+		local: boolean,
+		savedOp?: boolean,
+	): void {
 		// If there are no more pending messages after processing a local message,
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
 
-		switch (message.type) {
-			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
-			case ContainerMessageType.FluidDataStoreOp:
-				this.channelCollection.process(message, local, localOpMetadata);
-				break;
-			case ContainerMessageType.BlobAttach:
-				this.blobManager.processBlobAttachOp(message, local);
-				break;
-			case ContainerMessageType.IdAllocation:
-				// Don't re-finalize the range if we're processing a "savedOp" in
-				// stashed ops flow. The compressor is stashed with these ops already processed.
-				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
-				// thus we need to process all the ops.
-				if (!(this.skipSavedCompressorOps && savedOp === true)) {
-					const range = message.contents;
-					// Some other client turned on the id compressor. If we have not turned it on,
-					// put it in a pending queue and delay finalization.
-					if (this._idCompressor === undefined) {
-						assert(
-							this.idCompressorMode !== undefined,
-							0x93c /* id compressor should be enabled */,
-						);
-						this.pendingIdCompressorOps.push(range);
-					} else {
-						assert(
-							this.pendingIdCompressorOps.length === 0,
-							0x979 /* there should be no pending ops! */,
-						);
-						this._idCompressor.finalizeCreationRange(range);
-					}
-				}
-				break;
-			case ContainerMessageType.GC:
-				this.garbageCollector.processMessage(message, message.timestamp, local);
-				break;
-			case ContainerMessageType.ChunkedOp:
-				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
-				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
-			case ContainerMessageType.Rejoin:
-				break;
-			case ContainerMessageType.DocumentSchemaChange:
-				this.documentsSchemaController.processDocumentSchemaOp(
-					message.contents,
-					local,
-					message.sequenceNumber,
-				);
-				break;
-			default: {
-				const compatBehavior = message.compatDetails?.behavior;
-				if (!compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
-					const error = DataProcessingError.create(
-						// Former assert 0x3ce
-						"Runtime message of unknown type",
-						"OpProcessing",
-						message,
-						{
-							local,
-							messageDetails: JSON.stringify({
-								type: message.type,
-								contentType: typeof message.contents,
-								compatBehavior,
-								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
-								compression: message.compression,
-							}),
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
-			}
+		const firstMessage = messages[0];
+		if (firstMessage === undefined) {
+			return;
 		}
 
-		this.emit("op", message, true /* runtimeMessage */);
+		const messagesType = firstMessage.message.type;
+		if (
+			messagesType === ContainerMessageType.Attach ||
+			messagesType === ContainerMessageType.Alias ||
+			messagesType === ContainerMessageType.FluidDataStoreOp
+		) {
+			this.channelCollection.processMessages(messages, local);
+		}
+
+		for (const { message } of messages) {
+			assert(message.type === messagesType, "Messages should have the same type");
+			switch (message.type) {
+				case ContainerMessageType.Attach:
+				case ContainerMessageType.Alias:
+				case ContainerMessageType.FluidDataStoreOp:
+					break;
+				case ContainerMessageType.BlobAttach:
+					this.blobManager.processBlobAttachOp(message, local);
+					break;
+				case ContainerMessageType.IdAllocation:
+					// Don't re-finalize the range if we're processing a "savedOp" in
+					// stashed ops flow. The compressor is stashed with these ops already processed.
+					// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
+					// thus we need to process all the ops.
+					if (!(this.skipSavedCompressorOps && savedOp === true)) {
+						const range = message.contents;
+						// Some other client turned on the id compressor. If we have not turned it on,
+						// put it in a pending queue and delay finalization.
+						if (this._idCompressor === undefined) {
+							assert(
+								this.idCompressorMode !== undefined,
+								0x93c /* id compressor should be enabled */,
+							);
+							this.pendingIdCompressorOps.push(range);
+						} else {
+							assert(
+								this.pendingIdCompressorOps.length === 0,
+								0x979 /* there should be no pending ops! */,
+							);
+							this._idCompressor.finalizeCreationRange(range);
+						}
+					}
+					break;
+				case ContainerMessageType.GC:
+					this.garbageCollector.processMessage(message, message.timestamp, local);
+					break;
+				case ContainerMessageType.ChunkedOp:
+					// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
+					// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
+					assert(false, 0x93d /* should not even get here */);
+				case ContainerMessageType.Rejoin:
+					break;
+				case ContainerMessageType.DocumentSchemaChange:
+					this.documentsSchemaController.processDocumentSchemaOp(
+						message.contents,
+						local,
+						message.sequenceNumber,
+					);
+					break;
+				default: {
+					const compatBehavior = message.compatDetails?.behavior;
+					if (!compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
+						const error = DataProcessingError.create(
+							// Former assert 0x3ce
+							"Runtime message of unknown type",
+							"OpProcessing",
+							message,
+							{
+								local,
+								messageDetails: JSON.stringify({
+									type: message.type,
+									contentType: typeof message.contents,
+									compatBehavior,
+									batch: (message.metadata as IBatchMetadata | undefined)?.batch,
+									compression: message.compression,
+								}),
+							},
+						);
+						this.closeFn(error);
+						throw error;
+					}
+				}
+			}
+
+			this.emit("op", message, true /* runtimeMessage */);
+		}
 	}
 
 	/**
