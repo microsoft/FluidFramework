@@ -47,7 +47,7 @@ export enum LumberEventName {
 
 	// Session Discovery
 	GetSession = "GetSession",
-	ValdateStorageToken = "ValdateStorageToken",
+	VerifyStorageToken = "VerifyStorageToken",
 	GetSessionCheckDocExistence = "GetSessionCheckDocExistence",
 	GetSessionCreateNew = "GetSessionCreateNew",
 	GetSessionUpdateExisting = "GetSessionUpdateExisting",

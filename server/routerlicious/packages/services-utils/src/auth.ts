@@ -29,6 +29,7 @@ import type { Provider } from "nconf";
 import {
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
+	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
@@ -298,6 +299,12 @@ export function verifyStorageToken(
 		const moreOptions: IVerifyTokenOptions = options;
 		moreOptions.maxTokenLifetimeSec = maxTokenLifetimeSec;
 		moreOptions.requireTokenExpiryCheck = isTokenExpiryEnabled;
+
+		const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+		const VerifyStorageTokenMetric = Lumberjack.newLumberMetric(
+			LumberEventName.VerifyStorageToken,
+			lumberjackProperties,
+		);
 		try {
 			await verifyToken(
 				tenantId,
@@ -308,12 +315,16 @@ export function verifyStorageToken(
 			);
 			// Riddler is known to take too long sometimes. Check timeout before continuing.
 			getGlobalTimeoutContext().checkTimeout();
+
+			VerifyStorageTokenMetric.success("Token verified successfully.");
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
 				async () => next(),
 			);
 		} catch (error) {
+			VerifyStorageTokenMetric.error("Failed to verify token.", error);
+
 			if (isNetworkError(error)) {
 				return respondWithNetworkError(res, error);
 			}
