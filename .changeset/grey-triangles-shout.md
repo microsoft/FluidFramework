@@ -62,3 +62,7 @@ class Point extends schemaFactory.object("Point", {
 ```
 
 Search can then be implemented to look for the appropriate metadata, and leverage it to omit the unwanted position data from search.
+
+**Note:** these changes add a new property to the base type from which all node schema derive.
+If you have existing node schema subclasses that include a property of this name, there is a chance for potential conflict here that could be breaking.
+If you encounter issues here, consider renaming your property.
