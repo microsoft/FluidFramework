@@ -228,7 +228,7 @@ export interface TreeNodeSchemaCore<
 	readonly childTypes: ReadonlySet<TreeNodeSchema>;
 
 	/**
-	 * Gets the user-provided {@link NodeSchemaMetadata} for this node.
+	 * User-provided {@link NodeSchemaMetadata} for this schema.
 	 */
 	readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
