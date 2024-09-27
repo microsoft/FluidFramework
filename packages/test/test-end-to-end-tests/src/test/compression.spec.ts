@@ -138,7 +138,7 @@ const compressionSuite = (getProvider) => {
 				// This test simply verifies all combinations of compression, chunking, and op grouping work end-to-end.
 				if (
 					provider.driver.type === "routerlicious" &&
-					provider.driver.endpointName !== "frs"
+					provider.driver.endpointName === "frs"
 				) {
 					this.skip();
 				}

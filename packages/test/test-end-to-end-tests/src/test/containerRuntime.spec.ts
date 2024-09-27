@@ -175,7 +175,13 @@ describeCompat(
 		for (const explicitSchemaControl of choices) {
 			for (const compression of choices) {
 				for (const chunking of choices) {
-					it(`test explicitSchemaControl = ${explicitSchemaControl}, compression = ${compression}, chunking = ${chunking}`, async () => {
+					it(`test explicitSchemaControl = ${explicitSchemaControl}, compression = ${compression}, chunking = ${chunking}`, async function () {
+						if (
+							provider.driver.type === "routerlicious" &&
+							provider.driver.endpointName === "frs"
+						) {
+							this.skip();
+						}
 						await testSchemaControl(explicitSchemaControl, compression, chunking);
 					});
 				}

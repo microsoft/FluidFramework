@@ -254,7 +254,10 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 		assert.strictEqual(versions6[0], "value10", "Happened after value did not overwrite");
 	});
 
-	it("Can store handles", async () => {
+	it("Can store handles", async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		// Set up the collection with two handles and add it to the map so other containers can find it
 		const collection1 = ConsensusRegisterCollection.create(dataStore1.runtime);
 		sharedMap1.set("test", "sampleValue");

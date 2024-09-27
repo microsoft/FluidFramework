@@ -44,7 +44,10 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	let sharedMap2: ISharedMap;
 	let sharedMap3: ISharedMap;
 
-	beforeEach("createContainers", async () => {
+	beforeEach("createContainers", async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);

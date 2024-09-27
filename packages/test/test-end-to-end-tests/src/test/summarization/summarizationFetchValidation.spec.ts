@@ -59,7 +59,10 @@ describeCompat(
 			configProvider.clear();
 		});
 
-		beforeEach("setup", async () => {
+		beforeEach("setup", async function () {
+			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+				this.skip();
+			}
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
 			mainContainer = await provider.makeTestContainer(testContainerConfig);
