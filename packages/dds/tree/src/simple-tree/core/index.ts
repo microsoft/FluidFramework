@@ -29,13 +29,7 @@ export {
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
 } from "./treeNodeSchema.js";
-export {
-	getSimpleNodeSchema,
-	setFlexSchemaFromClassSchema,
-	tryGetSimpleNodeSchema,
-	cachedFlexSchemaFromClassSchema,
-	getSimpleNodeSchemaFromInnerNode,
-} from "./schemaCaching.js";
+export { getSimpleNodeSchemaFromInnerNode } from "./schemaCaching.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
