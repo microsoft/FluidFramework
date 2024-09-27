@@ -21,6 +21,7 @@ const rootField = {
 	field: rootFieldKey,
 };
 
+// TODO: Document the meaning of these various test case properties
 const testCases: {
 	name: string;
 	edit: (undoRedoBranch: ITreeCheckout, otherBranch: ITreeCheckout) => void;
@@ -28,6 +29,7 @@ const testCases: {
 	initialState: JsonCompatible[];
 	editedState: JsonCompatible[];
 	undoState?: JsonCompatible[];
+	mergeState?: JsonCompatible[];
 	skip?: true;
 }[] = [
 	{
@@ -47,10 +49,11 @@ const testCases: {
 			insert(actedOn, 0, "x");
 			insert(actedOn, 3, "z");
 		},
-		undoCount: 2,
+		undoCount: 3,
 		initialState: ["A", "B"],
 		editedState: ["x", "A", "y", "B", "z"],
 		undoState: ["A", "y", "B"],
+		mergeState: ["A", "B"],
 	},
 	{
 		name: "the remove of a node",
@@ -121,6 +124,7 @@ const testCases: {
 				4,
 			);
 		},
+		undoCount: 2,
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "C", "D", "B"],
 		undoState: ["A", "x", "B", "C", "D"],
@@ -148,6 +152,7 @@ describe("Undo and redo", () => {
 		initialState,
 		editedState,
 		undoState,
+		mergeState,
 	} of testCases) {
 		const count = undoCount ?? 1;
 		const itFn = skip ? it.skip : it;
@@ -219,7 +224,7 @@ describe("Undo and redo", () => {
 			}
 
 			view.merge(fork, false);
-			expectJsonTree(view, undoState ?? initialState);
+			expectJsonTree(view, mergeState ?? initialState);
 
 			while (redoStack.length > 0) {
 				redoStack.pop()?.revert();
@@ -269,7 +274,7 @@ describe("Undo and redo", () => {
 			while (undoStack.length > 0) {
 				undoStack.pop()?.revert();
 			}
-			expectJsonTree(tree, undoState ?? initialState);
+			expectJsonTree(tree, mergeState ?? initialState);
 			while (redoStack.length > 0) {
 				redoStack.pop()?.revert();
 			}
@@ -277,7 +282,7 @@ describe("Undo and redo", () => {
 			while (undoStack.length > 0) {
 				undoStack.pop()?.revert();
 			}
-			expectJsonTree(tree, undoState ?? initialState);
+			expectJsonTree(tree, mergeState ?? initialState);
 			while (redoStack.length > 0) {
 				redoStack.pop()?.revert();
 			}
@@ -365,6 +370,49 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["A", "B"]);
 		redoStack.pop()?.revert();
 		expectJsonTree(tree, ["B", "C"]);
+		unsubscribe();
+	});
+
+	it("can undo/redo a merge", () => {
+		const tree = makeTreeFromJsonSequence(["A", "B"]);
+
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+		const branch = tree.branch();
+		branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+		branch.editor.sequenceField(rootField).remove(0, 1);
+		tree.merge(branch);
+
+		expectJsonTree(tree, ["B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B", "C"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["B", "C"]);
+		unsubscribe();
+	});
+
+	it("can undo multiple merges", () => {
+		const tree = makeTreeFromJsonSequence(["A", "B"]);
+
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+
+		const branch = tree.branch();
+
+		branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+		tree.merge(branch, false);
+		expectJsonTree(tree, ["A", "B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+
+		branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+		tree.merge(branch);
+		expectJsonTree(tree, ["A", "B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+
 		unsubscribe();
 	});
 });

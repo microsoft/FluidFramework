@@ -91,13 +91,10 @@ import {
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	type FlexFieldSchema,
 	type NodeKeyManager,
-	ViewSchema,
 	buildForest,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
-	intoStoredSchema,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
@@ -113,22 +110,19 @@ import {
 	CheckoutFlexTreeView,
 	type ISharedTree,
 	type ITreeCheckout,
-	type InitializeAndSchematizeConfiguration,
 	SharedTree,
 	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
 	type TreeCheckout,
-	type TreeContent,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITransaction,
 	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ensureSchema, type TreeStoredContent } from "../shared-tree/schematizeTree.js";
+import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 import {
 	SchematizingSimpleTreeView,
-	requireSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -141,7 +135,6 @@ import {
 	toStoredSchema,
 	type TreeViewEvents,
 	type TreeView,
-	toFlexSchema,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -581,13 +574,22 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(content: TreeContent): JsonableTree[] {
+function contentToJsonableTree(
+	content: TreeSimpleContent | TreeStoredContent,
+): JsonableTree[] {
 	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
 }
 
-export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
+export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
 	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, intoStoredSchema(content.schema));
+	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
+}
+export function validateTreeStoredContent(
+	tree: ITreeCheckout,
+	content: TreeStoredContent,
+): void {
+	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
+	expectSchemaEqual(tree.storedSchema, content.schema);
 }
 
 export function expectSchemaEqual(
@@ -740,12 +742,12 @@ export function flexTreeViewWithContent(
 	);
 	return new CheckoutFlexTreeView(
 		view,
-		toFlexSchema(content.schema),
+		defaultSchemaPolicy,
 		args?.nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
-export function forestWithContent(content: TreeStoredContent | TreeContent): IEditableForest {
+export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
@@ -1103,34 +1105,6 @@ export function mintRevisionTag(): RevisionTag {
 }
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
-
-/**
- * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
- */
-export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
-	tree: SharedTree,
-	config: InitializeAndSchematizeConfiguration<TRoot>,
-	onDispose?: () => void,
-	nodeKeyManager?: NodeKeyManager,
-): CheckoutFlexTreeView {
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, intoStoredSchema(config.schema));
-	if (
-		!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, {
-			initialTree: config.initialTree,
-			schema: viewSchema.storedSchema,
-		})
-	) {
-		assert.fail("Schematize failed");
-	}
-
-	return requireSchema(
-		tree.checkout,
-		viewSchema,
-		onDispose ?? (() => {}),
-		nodeKeyManager ?? new MockNodeKeyManager(),
-		config.schema,
-	);
-}
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
