@@ -128,6 +128,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eux -o pipefail
               TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
               cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -179,6 +180,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
             script: |
+              set -eux -o pipefail
               echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
               rm -rf ${{ testPackage }};
 
@@ -188,6 +190,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eux -o pipefail
             echo "Write the following benchmark output to Aria/Kusto"
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
@@ -198,6 +201,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eux -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -259,6 +263,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eux -o pipefail
               TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
               cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -310,6 +315,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
             script: |
+              set -eux -o pipefail
               echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
               rm -rf ${{ testPackage }};
 
@@ -319,6 +325,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eux -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
@@ -329,6 +336,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eux -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -390,6 +398,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eux -o pipefail
               TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
               cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -441,6 +450,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
             script: |
+              set -eux -o pipefail
               echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
               rm -rf ${{ testPackage }};
 
@@ -450,6 +460,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eux -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
@@ -460,6 +471,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eux -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -547,6 +559,8 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
+              # Note: we explicitly do not use 'set -eux -o pipefail' here because we want to run both sets of tests
+              # no matter what. Probably should be refactored later to use separate steps for each set of tests.
 
               echo "FLUID_LOGGER_PROPS = $FLUID_LOGGER_PROPS"
 
@@ -598,6 +612,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eux -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
@@ -611,6 +626,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eux -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
@@ -624,6 +640,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eux -o pipefail
               echo "Writing execution time performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
               node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -639,6 +656,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eux -o pipefail
               echo "Writing memory usage performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
               node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -668,6 +686,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eux -o pipefail
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
               echo "Cleanup  ${{ variables.executionTimeTestOutputFolder }}"
               rm -rf ${{ variables.executionTimeTestOutputFolder }};
