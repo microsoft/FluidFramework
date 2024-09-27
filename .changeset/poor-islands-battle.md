@@ -2,7 +2,7 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": fix
+"section": tree
 ---
 
 Unhydrated SharedTree nodes emit change events when edited
