@@ -171,7 +171,7 @@ module.exports = {
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
 			outputGlobs: ["src/**/*.fsl.svg"],
-		}
+		},
 	},
 
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
