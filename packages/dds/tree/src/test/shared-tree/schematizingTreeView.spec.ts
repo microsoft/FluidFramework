@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { intoStoredSchema, MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -19,7 +19,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -153,7 +153,7 @@ describe("SchematizingSimpleTreeView", () => {
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
-		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number, schema.string])));
+		checkout.updateSchema(toStoredSchema([schema.number, schema.string]));
 
 		assert.deepEqual(log, [
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
@@ -169,7 +169,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
+		checkout.updateSchema(toStoredSchema([schema.number]));
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);

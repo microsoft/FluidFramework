@@ -468,6 +468,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.ongoingResubmitRefSeq ?? this.deltaManager.lastSequenceNumber;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;

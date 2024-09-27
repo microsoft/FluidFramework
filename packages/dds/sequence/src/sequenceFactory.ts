@@ -13,6 +13,7 @@ import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
+// eslint-disable-next-line import/no-deprecated
 import { SharedStringClass, SharedStringSegment, type ISharedString } from "./sharedString.js";
 
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
@@ -56,7 +57,9 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
+		// eslint-disable-next-line import/no-deprecated
 	): Promise<SharedStringClass> {
+		// eslint-disable-next-line import/no-deprecated
 		const sharedString = new SharedStringClass(runtime, id, attributes);
 		await sharedString.load(services);
 		return sharedString;
@@ -65,7 +68,9 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
+		// eslint-disable-next-line import/no-deprecated
 		const sharedString = new SharedStringClass(document, id, this.attributes);
 		sharedString.initializeLocal();
 		return sharedString;

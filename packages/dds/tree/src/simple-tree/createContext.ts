@@ -3,13 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Context, type TreeNodeSchema, UnhydratedContext } from "./core/index.js";
-import { toFlexSchema } from "./toFlexSchema.js";
+import { defaultSchemaPolicy } from "../feature-libraries/index.js";
+import { getOrCreate } from "../util/index.js";
+import { Context, UnhydratedContext } from "./core/index.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
+import { toStoredSchema } from "./toFlexSchema.js";
+
+const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
 
 /**
  * Utility for creating {@link Context}s for unhydrated nodes.
  */
-export function createUnhydratedContext(schema: TreeNodeSchema): Context {
-	const flexContext = new UnhydratedContext(toFlexSchema(schema));
-	return new Context([schema], flexContext);
+export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
+	return getOrCreate(contextCache, schema, (s) => {
+		const normalized = normalizeFieldSchema(schema);
+
+		const flexContext = new UnhydratedContext(defaultSchemaPolicy, toStoredSchema(schema));
+		return new Context(normalized.allowedTypeSet, flexContext);
+	});
 }

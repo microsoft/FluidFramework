@@ -28,17 +28,14 @@ import {
 import type { FlexTreeNode } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../../simple-tree/leafNodeSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { validateUsageError } from "../../utils.js";
 import { brand } from "../../../util/index.js";
 import {
 	UnhydratedFlexTreeNode,
-	UnhydratedContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { createUnhydratedContext } from "../../../simple-tree/createContext.js";
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Context } from "../../../simple-tree/core/index.js";
 
@@ -121,7 +118,7 @@ describe("simple-tree types", () => {
 		class MockFlexNode extends UnhydratedFlexTreeNode {
 			public constructor(public readonly simpleSchema: TreeNodeSchema) {
 				super(
-					new UnhydratedContext(toFlexSchema(simpleSchema)),
+					getUnhydratedContext(simpleSchema),
 					{ fields: new Map(), type: brand(simpleSchema.identifier) },
 					undefined,
 				);
@@ -166,7 +163,7 @@ describe("simple-tree types", () => {
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push("oneTimeSetup");
-					return createUnhydratedContext(Subclass);
+					return getUnhydratedContext(Subclass);
 				}
 
 				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
@@ -263,7 +260,7 @@ describe("simple-tree types", () => {
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push("A");
-					return createUnhydratedContext(A);
+					return getUnhydratedContext(A);
 				}
 			}
 
@@ -272,7 +269,7 @@ describe("simple-tree types", () => {
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push("B");
-					return createUnhydratedContext(A);
+					return getUnhydratedContext(A);
 				}
 			}
 
@@ -316,7 +313,7 @@ describe("simple-tree types", () => {
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 					log.push(this.name);
-					return createUnhydratedContext(A);
+					return getUnhydratedContext(A);
 				}
 			}
 

@@ -18,6 +18,7 @@ import { ValueSchema } from "../../../core/index.js";
 describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
@@ -50,6 +51,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	// Ensure the code throws if a handle is encountered.
 	it("Leaf node (Fluid Handle)", async () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.handle", { leafKind: ValueSchema.FluidHandle, kind: NodeKind.Leaf }],
 			]),
@@ -61,6 +63,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Array schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.array",
@@ -105,6 +108,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Map schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.map", { kind: NodeKind.Map, allowedTypes: new Set<string>(["test.string"]) }],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
@@ -158,6 +162,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Object schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
@@ -254,6 +259,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Object schema including an identifier field", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
@@ -297,6 +303,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Object schema including a union field", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
@@ -347,6 +354,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Recursive object schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.recursive-object",

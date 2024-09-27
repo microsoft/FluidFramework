@@ -8,7 +8,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type TreeNodeSchema,
 	NodeKind,
-	tryGetSimpleNodeSchema,
 	isTreeNode,
 	TreeNodeKernel,
 	privateToken,
@@ -23,7 +22,7 @@ import { type FlexTreeNode, isFlexTreeNode, markEager } from "../feature-librari
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../util/index.js";
 
-import { getFlexSchema } from "./toFlexSchema.js";
+import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -147,11 +146,6 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
 		const cache = schema.markMostDerived();
 		if (cache.oneTimeInitialized === undefined) {
-			const flexSchema = getFlexSchema(schema);
-			assert(
-				tryGetSimpleNodeSchema(flexSchema) === schema,
-				0x961 /* Schema class not properly configured */,
-			);
 			cache.oneTimeInitialized = schema.oneTimeSetup();
 		}
 
@@ -164,7 +158,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 
 		const node: InnerNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
 		assert(
-			tryGetSimpleNodeSchema(node.flexSchema) === schema,
+			getSimpleNodeSchemaFromInnerNode(node) === schema,
 			0x83b /* building node with wrong schema */,
 		);
 

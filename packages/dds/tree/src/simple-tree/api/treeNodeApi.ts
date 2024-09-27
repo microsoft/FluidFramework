@@ -11,7 +11,6 @@ import {
 	type TreeStatus,
 	isLazy,
 	isTreeValue,
-	FlexObjectNodeSchema,
 	FieldKinds,
 } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
@@ -43,6 +42,7 @@ import {
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
+	typeSchemaSymbol,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
@@ -230,10 +230,13 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
+		const schema = node[typeSchemaSymbol];
+		if (!isObjectNodeSchema(schema)) {
+			return undefined;
+		}
+
 		const flexNode = getOrCreateInnerNode(node);
-		const flexSchema = flexNode.flexSchema;
-		const identifierFieldKeys =
-			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
+		const identifierFieldKeys = schema.identifierFieldKeys;
 
 		switch (identifierFieldKeys.length) {
 			case 0:
@@ -302,7 +305,7 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind === FieldKinds.sequence.identifier) {
+	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(
 			parentField.parent.key === EmptyKey,
