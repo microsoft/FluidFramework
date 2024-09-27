@@ -262,11 +262,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				this.broadcastAllKnownState();
 				this.presence.mc?.logger.sendTelemetryEvent({
 					eventName: "JoinResponse",
-					type: "broadcastAll",
-					// TODO: this is EUPI; how should it be tagged?
-					// If it can't be logged, then we can establish a correlation in the join request.
-					requestor,
-					role: "primary",
+					details: {
+						type: "broadcastAll",
+						requestor,
+						role: "primary",
+					},
 				});
 			} else {
 				// Schedule a broadcast to the new client after a delay only to send if
@@ -290,11 +290,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 						this.broadcastAllKnownState();
 						this.presence.mc?.logger.sendTelemetryEvent({
 							eventName: "JoinResponse",
-							type: "broadcastAll",
-							// TODO: this is EUPI; how should it be tagged?
-							requestor,
-							role: "secondary",
-							order: indexOfSelf,
+							details: {
+								type: "broadcastAll",
+								requestor,
+								role: "secondary",
+								order: indexOfSelf,
+							},
 						});
 					}
 				}, waitTime);
