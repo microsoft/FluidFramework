@@ -50,8 +50,8 @@ function insertMarkers(
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
 
-	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
 	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
 }
 
 /**
