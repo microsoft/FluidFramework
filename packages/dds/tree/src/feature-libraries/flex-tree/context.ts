@@ -6,18 +6,15 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	type FieldKey,
 	type ForestEvents,
-	type TreeFieldStoredSchema,
+	type SchemaPolicy,
 	type TreeStoredSchema,
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
 import type { Listenable } from "../../events/index.js";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
-import type { FieldGenerator } from "../fieldGenerator.js";
 import type { NodeKeyManager } from "../node-key/index.js";
-import type { FlexTreeSchema } from "../typed-schema/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
 import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
@@ -32,13 +29,12 @@ export interface FlexTreeContext {
 	 * Schema used within this context.
 	 * All data must conform to these schema.
 	 */
-	readonly flexSchema: FlexTreeSchema;
+	readonly schema: TreeStoredSchema;
 
 	/**
-	 * Schema used within this context.
-	 * All data must conform to these schema.
+	 * SchemaPolicy used within this context.
 	 */
-	readonly schema: TreeStoredSchema;
+	readonly schemaPolicy: SchemaPolicy;
 
 	/**
 	 * If true, this context is the canonical context instance for a given view,
@@ -91,7 +87,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * @param nodeKeyManager - An object which handles node key generation and conversion
 	 */
 	public constructor(
-		public readonly flexSchema: FlexTreeSchema,
+		public readonly schemaPolicy: SchemaPolicy,
 		public readonly checkout: ITreeCheckout,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
@@ -159,7 +155,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
-		const field = makeField(this, this.flexSchema.rootFieldSchema, cursor);
+		const field = makeField(this, this.schema.rootFieldSchema.kind, cursor);
 		cursor.free();
 		return field;
 	}
@@ -170,15 +166,6 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	): () => void {
 		return this.checkout.forest.on(eventName, listener);
 	}
-
-	/**
-	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
-	 */
-	// TODO: Use this to automatically provide node keys where required.
-	public fieldSource?(
-		key: FieldKey,
-		schema: TreeFieldStoredSchema,
-	): undefined | FieldGenerator;
 }
 
 /**
@@ -191,7 +178,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(
-	schema: FlexTreeSchema,
+	schema: SchemaPolicy,
 	checkout: ITreeCheckout,
 	nodeKeyManager: NodeKeyManager,
 ): Context {

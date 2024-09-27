@@ -12,24 +12,24 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 } from "../../core/index.js";
-import { type Named, fail } from "../../util/index.js";
+import { fail } from "../../util/index.js";
 import {
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
 	isNeverTree,
-} from "../modular-schema/index.js";
+} from "../../feature-libraries/index.js";
 
 /**
  * A collection of View information for schema, including policy.
  */
 export class ViewSchema {
 	/**
-	 * @param storedSchema - Cached conversion of view schema into a stored schema.
+	 * @param schema - Cached conversion of view schema in the stored schema format.
 	 */
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		public readonly storedSchema: TreeStoredSchema,
+		public readonly schema: TreeStoredSchema,
 	) {}
 
 	/**
@@ -50,7 +50,7 @@ export class ViewSchema {
 		// TODO: support adapters
 		// const adapted = this.adaptRepo(stored);
 
-		const read = allowsRepoSuperset(this.policy, stored, this.storedSchema)
+		const read = allowsRepoSuperset(this.policy, stored, this.schema)
 			? Compatibility.Compatible
 			: // TODO: support adapters
 				// : allowsRepoSuperset(this.policy, adapted.adaptedForViewSchema, this.storedSchema)
@@ -58,7 +58,7 @@ export class ViewSchema {
 				Compatibility.Incompatible;
 		// TODO: Extract subset of adapters that are valid to use on stored
 		// TODO: separate adapters from schema updates
-		const write = allowsRepoSuperset(this.policy, this.storedSchema, stored)
+		const write = allowsRepoSuperset(this.policy, this.schema, stored)
 			? Compatibility.Compatible
 			: // TODO: support adapters
 				// : allowsRepoSuperset(this.policy, this.storedSchema, adapted.adaptedForViewSchema)
@@ -74,7 +74,7 @@ export class ViewSchema {
 		let writeAllowingStoredSchemaUpdates =
 			// TODO: This should consider just the updates needed
 			// (ex: when view covers a subset of stored after stored has a update to that subset).
-			allowsRepoSuperset(this.policy, stored, this.storedSchema)
+			allowsRepoSuperset(this.policy, stored, this.schema)
 				? Compatibility.Compatible
 				: // TODO: this assumes adapters can translate in both directions. In general this will not be true.
 					// TODO: this also assumes that schema updates to the adapted repo would translate to
@@ -98,18 +98,12 @@ export class ViewSchema {
 	 */
 	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
 		// Sanity check on adapters:
-		// it's probably a bug it they use the never types,
+		// it's probably a bug if they use the never types,
 		// since there never is a reason to have a never type as an adapter input,
 		// and its impossible for an adapter to be correctly implemented if its output type is never
 		// (unless its input is also never).
 		for (const adapter of this.adapters?.tree ?? []) {
-			if (
-				isNeverTree(
-					this.policy,
-					this.storedSchema,
-					this.storedSchema.nodeSchema.get(adapter.output),
-				)
-			) {
+			if (isNeverTree(this.policy, this.schema, this.schema.nodeSchema.get(adapter.output))) {
 				fail("tree adapter for stored adapter.output should not be never");
 			}
 		}
@@ -150,11 +144,4 @@ export class ViewSchema {
 		// TODO: support adapters like missing field adapters.
 		return original;
 	}
-}
-
-/**
- * Record where a schema came from for error reporting purposes.
- */
-export interface Sourced {
-	readonly builder: Named<string>;
 }

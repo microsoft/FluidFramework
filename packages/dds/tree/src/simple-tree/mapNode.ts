@@ -42,7 +42,7 @@ import {
 import { brand, count, type RestrictiveStringRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import type { ExclusiveMapTree } from "../core/index.js";
-import { createUnhydratedContext } from "./createContext.js";
+import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * A map of string keys to tree objects.
@@ -255,7 +255,7 @@ export function mapSchema<
 			input: T2,
 		): UnhydratedFlexTreeNode {
 			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext.flexContext,
+				unhydratedContext,
 				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
 			);
 		}
@@ -264,7 +264,7 @@ export function mapSchema<
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = createUnhydratedContext(schema);
+			unhydratedContext = getUnhydratedContext(schema);
 			return unhydratedContext;
 		}
 
