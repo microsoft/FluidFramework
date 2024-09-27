@@ -190,6 +190,9 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Other TODOs
 
+-   Add component-level unit testing (with accessibility tests)
+-   Add end-to-end testing
+-   Add button for users to report docs issues / edit pages on github
 -   Verify specific browser support
 -   Remove sample blog contents
 -   Remove "new website features" demo page
