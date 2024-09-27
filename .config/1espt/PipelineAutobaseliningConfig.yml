@@ -29,13 +29,13 @@ pipelines:
           lastModifiedDate: 2024-09-17
       binary:
         credscan:
-          lastModifiedDate: 2024-09-23
+          lastModifiedDate: 2024-09-27
         binskim:
-          lastModifiedDate: 2024-09-23
+          lastModifiedDate: 2024-09-27
         spotbugs:
-          lastModifiedDate: 2024-09-23
+          lastModifiedDate: 2024-09-27
         roslyn:
-          lastModifiedDate: 2024-09-23
+          lastModifiedDate: 2024-09-27
   129:
     retail:
       source:
