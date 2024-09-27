@@ -421,18 +421,16 @@ describe("Unhydrated nodes", () => {
 
 		const log: string[] = [];
 		TreeBeta.on(leaf, "nodeChanged", ({ changedProperties }) =>
-			log.push([...changedProperties].sort().join(",")),
+			log.push(...changedProperties),
 		);
-		TreeBeta.on(map, "nodeChanged", ({ changedProperties }) =>
-			log.push([...changedProperties].sort().join(",")),
-		);
+		TreeBeta.on(map, "nodeChanged", ({ changedProperties }) => log.push(...changedProperties));
 		TreeBeta.on(array, "nodeChanged", ({ changedProperties }) => {
 			assert.equal(changedProperties, undefined);
 			// Arrays do not supply a changedProperties, but we still want to validate that the event is emitted.
 			log.push("<arrayChanged>");
 		});
 		TreeBeta.on(object, "nodeChanged", ({ changedProperties }) =>
-			log.push([...changedProperties].sort().join(",")),
+			log.push(...changedProperties),
 		);
 
 		leaf.value = "value 2";
