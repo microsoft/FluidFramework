@@ -28,9 +28,7 @@ import * as documents from "./documents";
 import {
 	createHealthCheckEndpoints,
 	IReadinessCheck,
-	IThrottlerConfig,
 } from "@fluidframework/server-services-shared";
-import { Constants } from "../../../utils";
 
 export function create(
 	config: Provider,
@@ -86,16 +84,10 @@ export function create(
 		collaborationSessionEventEmitter,
 	);
 
-	const throttlerConfig: IThrottlerConfig = {
-		tenantThrottlers,
-		restThrottleIdSuffix: Constants.alfredRestThrottleIdSuffix,
-		generalRestCallThrottleIdPrefix: Constants.generalRestCallThrottleIdPrefix,
-	};
 	const healthCheckEndpoints = createHealthCheckEndpoints(
 		"alfred",
 		readinessCheck,
 		false /* createLivenessEndpoint */,
-		throttlerConfig,
 	);
 
 	router.use(cors());

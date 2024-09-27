@@ -37,8 +37,4 @@ export {
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
 export { StartupChecker } from "./startupChecker";
-export {
-	createHealthCheckEndpoints,
-	IReadinessCheck,
-	IThrottlerConfig,
-} from "./healthCheckEndpoints";
+export { createHealthCheckEndpoints, IReadinessCheck } from "./healthCheckEndpoints";
