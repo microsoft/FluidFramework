@@ -33,6 +33,11 @@ This includes the generation of API documentation contents.
 To *just* build the API documentation, run `build:api-documentation`.
 To *just* build the static site (without rebuilding the API documentation), run `build:docusaurus`.
 
+Note: the Docusaurus build is fairly slow.
+If you don't need to test search, it is recommended to run `npm start` instead.
+This is faster, and will watch for content changes and update automatically.
+You will still need to build the API documentation first.
+
 ## Docusaurus
 
 ### Notes
