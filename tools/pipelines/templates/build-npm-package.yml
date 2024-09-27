@@ -234,6 +234,7 @@ extends:
                   targetType: inline
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
+                    set -eux -o pipefail
                     # Show all task group conditions
 
                     echo "
@@ -379,6 +380,7 @@ extends:
                       inputs:
                         targetType: inline
                         script: |
+                          set -eux -o pipefail
                           PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
                           if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
                             echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
@@ -402,6 +404,7 @@ extends:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
+                            set -eux -o pipefail
                             test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
                       - task: Bash@3
                         displayName: Patch Coverage Results
@@ -410,6 +413,7 @@ extends:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
                           script: |
+                            set -eux -o pipefail
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
                       - task: PublishCodeCoverageResults@2
                         displayName: Publish Code Coverage
@@ -514,6 +518,7 @@ extends:
                           targetType: inline
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
+                            set -eux -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
                             BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
                             echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
@@ -530,6 +535,7 @@ extends:
                           targetType: inline
                           workingDirectory: $(absolutePathToTelemetryGenerator)
                           script: |
+                            set -eux -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
                             ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
@@ -566,6 +572,7 @@ extends:
                     targetType: inline
                     workingDirectory: '${{ parameters.buildDirectory }}'
                     script: |
+                      set -eux -o pipefail
                       git checkout HEAD -- pnpm-lock.yaml
 
                 # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
@@ -575,6 +582,7 @@ extends:
                     targetType: inline
                     workingDirectory: '${{ parameters.buildDirectory }}'
                     script: |
+                      set -eux -o pipefail
                       pnpm store prune
 
               - task: Bash@3
@@ -582,6 +590,7 @@ extends:
                 inputs:
                   targetType: inline
                   script: |
+                    set -eux -o pipefail
                     git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
                     if [ `cat git_status.log | wc -l` != "0" ]; then
                       cat git_status.log
@@ -691,6 +700,7 @@ extends:
                 inputs:
                   targetType: inline
                   script: |
+                    set -eux -o pipefail
                     echo "Creating work folder '$WORK_FOLDER'";
                     mkdir -p $WORK_FOLDER;
 
@@ -707,6 +717,7 @@ extends:
                   targetType: inline
                   workingDirectory: $(absolutePathToTelemetryGenerator)
                   script: |
+                    set -eux -o pipefail
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
                     node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
