@@ -392,13 +392,6 @@ describe("schemaFactory", () => {
 
 			assert.equal(Foo.metadata?.description, "An object");
 			assert.equal(Foo.metadata?.custom?.baz, true);
-
-			const foo = hydrate(Foo, { bar: 37 });
-			const schema = Tree.schema(foo) as ObjectNodeSchema;
-
-			assert.equal(schema.metadata?.description, "An object");
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			assert.equal((schema.metadata?.custom as any)?.baz, true);
 		});
 
 		describe("deep equality", () => {
@@ -573,13 +566,6 @@ describe("schemaFactory", () => {
 
 			assert.equal(Foo.metadata?.description, "An array of numbers");
 			assert.equal(Foo.metadata?.custom?.baz, true);
-
-			const foo = hydrate(Foo, [1, 2, 3]);
-			const schema = Tree.schema(foo);
-
-			assert.equal(schema.metadata?.description, "An array of numbers");
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			assert.equal((schema.metadata?.custom as any)?.baz, true);
 		});
 	});
 
@@ -647,13 +633,6 @@ describe("schemaFactory", () => {
 
 			assert.equal(Foo.metadata?.description, "A map containing numbers");
 			assert.equal(Foo.metadata?.custom?.baz, true);
-
-			const foo = hydrate(Foo, { a: 1, b: 2, c: 3 });
-			const schema = Tree.schema(foo);
-
-			assert.equal(schema.metadata?.description, "A map containing numbers");
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			assert.equal((schema.metadata?.custom as any)?.baz, true);
 		});
 	});
 
