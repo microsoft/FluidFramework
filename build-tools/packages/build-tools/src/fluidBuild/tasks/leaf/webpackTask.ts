@@ -37,7 +37,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			const srcFiles = await globFn(srcGlob);
 			for (const srcFile of srcFiles) {
 				content.sources[srcFile] =
-					await this.node.buildContext.fileHashCache.getFileHash(srcFile);
+					await this.node.statsContext.fileHashCache.getFileHash(srcFile);
 			}
 
 			return JSON.stringify(content);

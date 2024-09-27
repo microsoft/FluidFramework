@@ -31,7 +31,7 @@ export class EsLintTask extends TscDependentTask {
 	protected get useWorker() {
 		if (this.command === "eslint --format stylish src") {
 			// eslint can't use worker thread as it needs to change the current working directory
-			return this.node.buildContext.workerPool?.useWorkerThreads === false;
+			return this.node.statsContext.workerPool?.useWorkerThreads === false;
 		}
 		return false;
 	}

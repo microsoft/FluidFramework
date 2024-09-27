@@ -28,7 +28,7 @@ export class FlubListTask extends LeafWithDoneFileTask {
 		if (resourceGroup === undefined) {
 			return undefined;
 		}
-		const packages = Array.from(this.node.buildContext.repoPackageMap.values()).filter(
+		const packages = Array.from(this.node.statsContext.repoPackageMap.values()).filter(
 			(pkg) => pkg.monoRepo?.kind === resourceGroup,
 		);
 		if (packages.length === 0) {
@@ -58,7 +58,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 		return layerInfoFile
 			? JSON.stringify({
 					layerInfo: layerInfoFile,
-					packageJson: Array.from(this.node.buildContext.repoPackageMap.values()).map(
+					packageJson: Array.from(this.node.statsContext.repoPackageMap.values()).map(
 						(pkg) => pkg.packageJson,
 					),
 				})
@@ -73,7 +73,7 @@ export class FlubCheckPolicyTask extends LeafWithDoneFileTask {
 		const fileHashP = Promise.all(
 			modifiedFiles.map(async (file) => [
 				file,
-				await this.node.buildContext.fileHashCache.getFileHash(
+				await this.node.statsContext.fileHashCache.getFileHash(
 					this.getPackageFileFullPath(file),
 				),
 			]),
