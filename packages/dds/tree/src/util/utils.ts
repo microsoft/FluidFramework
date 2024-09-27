@@ -486,7 +486,7 @@ export function compareStrings<T extends string>(a: T, b: T): number {
 }
 
 /**
- * Returns a function which, when invoked for the first time, will run `evaluate` and cache its result for future invocations.
+ * Returns a function which, when invoked for the first time, will run `evaluate` and cache the result for future invocations.
  * @remarks Use the `evaluated` property of the returned function to check if the value has been cached yet.
  */
 export function lazy<T>(evaluate: () => T): (() => T) & { readonly evaluated: boolean } {

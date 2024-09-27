@@ -81,7 +81,9 @@ type UnhydratedState = Off;
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} after the kernel is hydrated */
 interface HydratedState {
+	/** The {@link AnchorNode} that this node is associated with. */
 	anchorNode: AnchorNode;
+	/** All {@link Off | event deregistration functions} that should be run when the kernel is disposed. */
 	offAnchorNode: Set<Off>;
 }
 
@@ -119,8 +121,8 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	/**
 	 * Events registered before hydration.
 	 * @remarks
-	 * As an optimization these are allocated lazily as they are usually unused.
-	 * The laziness also avoids extra forwarding overhead for events from anchorNode and also avoids registering for events that are unneeded.
+	 * Since these are usually not used, they are allocated lazily as an optimization.
+	 * The laziness also avoids extra forwarding overhead for events from this kernel's anchor node and also avoids registering for events that are unneeded.
 	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
 	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
 	 */
