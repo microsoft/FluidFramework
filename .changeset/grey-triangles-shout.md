@@ -24,7 +24,7 @@ class Point extends schemaFactory.object("Point", {
 
 ```
 
-Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/). (`getJsonSchema`) can leverage such system-understood metadata to generate useful information.
+Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/) (`getJsonSchema`) can leverage such system-understood metadata to generate useful information.
 In the case of the `description` property, this is mapped directly to the `description` property supported by JSON Schema.
 
 Custom, user-defined properties can also be specified.
