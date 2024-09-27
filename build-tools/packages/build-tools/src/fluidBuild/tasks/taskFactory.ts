@@ -159,12 +159,15 @@ export class TaskFactory {
 			return new GroupTask(node, command, [subTask], taskName);
 		}
 
-		// Leaf task
+		// Leaf tasks; first try to map the executable to a known task type
 		const executable = getExecutableFromCommand(command).toLowerCase();
 		const ctor = executableToLeafTask[executable];
 		if (ctor) {
 			return new ctor(node, command, taskName);
 		}
+
+		
+
 		return new UnknownLeafTask(node, command, taskName);
 	}
 
