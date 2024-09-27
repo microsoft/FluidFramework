@@ -13,7 +13,7 @@ import {
 	rootFieldKey,
 } from "../core/index.js";
 import { FieldKinds, isFlexTreeNode, type FlexTreeNode } from "../feature-libraries/index.js";
-import type { CheckoutFlexTreeView, TreeContent } from "../shared-tree/index.js";
+import type { CheckoutFlexTreeView } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
 	cursorFromInsertable,
@@ -23,7 +23,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema, toStoredSchema } from "../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../simple-tree/toFlexSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 
@@ -67,14 +67,6 @@ export function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | n
 	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
-export function makeDeepContent(depth: number, leafValue: number = 1): TreeContent {
-	const content = makeDeepContentSimple(depth, leafValue);
-	return {
-		...content,
-		schema: toFlexSchema(content.schema),
-	};
-}
-
 export function makeDeepContentSimple(
 	depth: number,
 	leafValue: number = 1,
@@ -115,23 +107,6 @@ export function makeWideContentWithEndValueSimple(
 	return {
 		initialTree: cursorFromInsertable(WideRoot, initialTree),
 		schema: WideRoot,
-	};
-}
-
-/**
- *
- * @param numberOfNodes - number of nodes of the tree
- * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
- * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
- */
-export function makeWideContentWithEndValue(
-	numberOfNodes: number,
-	endLeafValue?: number,
-): TreeContent {
-	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
-	return {
-		...content,
-		schema: toFlexSchema(content.schema),
 	};
 }
 
