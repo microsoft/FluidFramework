@@ -1,5 +1,5 @@
 ---
-"@fluidframework/container-runtime": minor
+"@fluidframework/container-runtime": patch
 ---
 ---
 "section": "fix"
