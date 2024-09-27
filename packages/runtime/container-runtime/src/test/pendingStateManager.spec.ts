@@ -20,7 +20,8 @@ import type {
 } from "../messageTypes.js";
 import {
 	BatchManager,
-	BatchMessage, generateBatchId,
+	BatchMessage,
+	generateBatchId,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
