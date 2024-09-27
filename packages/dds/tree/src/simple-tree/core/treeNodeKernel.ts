@@ -234,11 +234,6 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		}
 	}
 
-	public isHydrated(): boolean {
-		assert(!this.disposed, 0xa2c /* cannot use a disposed node */);
-		return this.#hydrationState !== undefined;
-	}
-
 	public getStatus(): TreeStatus {
 		if (this.disposed) {
 			return TreeStatus.Deleted;
