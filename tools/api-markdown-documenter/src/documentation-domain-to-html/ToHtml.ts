@@ -71,7 +71,7 @@ export function documentationNodeToHtml(
 	context: TransformationContext,
 ): HastNodes;
 /**
- * Generates an HTML AST from the provided {@link DocumentationNode}.
+ * `documentationNodeToHtml` implementation.
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
@@ -107,7 +107,7 @@ export function documentationNodesToHtml(
 	transformationContext: TransformationContext,
 ): HastNodes[];
 /**
- * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
+ * `documentationNodesToHtml` implementation.
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
