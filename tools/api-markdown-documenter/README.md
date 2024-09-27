@@ -162,7 +162,7 @@ graph LR
 
     A-->|transformApiModel|B
     B-->|documentToMarkdown~|C
-    C-->|HtmlRenderer.renderMarkdown~|D
+    C-->|MarkdownRenderer.renderMarkdown~|D
 
     A-.->|MarkdownRenderer.renderApiModel|D
     B-.->|MarkdownRenderer.renderDocument|D
