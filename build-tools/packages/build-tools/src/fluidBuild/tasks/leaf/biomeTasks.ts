@@ -24,25 +24,31 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		return true;
 	}
 
+	private _configReader: BiomeConfigReader | undefined;
+
+	private async getBiomeConfigReader(): Promise<BiomeConfigReader> {
+		if (this._configReader === undefined) {
+			this._configReader = await BiomeConfigReader.create(
+				this.node.pkg.directory,
+				this.context.gitRepo,
+			);
+		}
+		return this._configReader;
+	}
+
 	/**
 	 * Includes all files in the the task's package directory that Biome would format and any Biome config files that
 	 * apply to the directory. Files ignored by git are excluded.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
-		const biomeConfig = await BiomeConfigReader.create(
-			this.node.pkg.directory,
-			this.context.gitRepo,
-		);
+		const biomeConfig = await this.getBiomeConfigReader();
 		// Absolute paths to files that would be formatted by biome.
 		const { formattedFiles, allConfigs } = biomeConfig;
 		return [...new Set([...allConfigs, ...formattedFiles])];
 	}
 
 	protected async getOutputFiles(): Promise<string[]> {
-		const biomeConfig = await BiomeConfigReader.create(
-			this.node.pkg.directory,
-			this.context.gitRepo,
-		);
+		const biomeConfig = await this.getBiomeConfigReader();
 		return biomeConfig.formattedFiles;
 	}
 }

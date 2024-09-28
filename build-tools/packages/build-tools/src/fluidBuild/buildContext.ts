@@ -14,15 +14,15 @@ export interface BuildContext {
 	/**
 	 * The fluid-build configuration for the repo.
 	 */
-	fluidBuildConfig: IFluidBuildConfig | undefined;
+	readonly fluidBuildConfig: IFluidBuildConfig | undefined;
 
 	/**
 	 * The absolute path to the root of the repo.
 	 */
-	repoRoot: string;
+	readonly repoRoot: string;
 
 	/**
 	 * A GitRepo object that can be used to call git operations.
 	 */
-	gitRepo: GitRepo;
+	readonly gitRepo: GitRepo;
 }

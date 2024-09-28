@@ -104,7 +104,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 			}
 			files = ignoreObject.filter(files);
 			const hashesP = files.map(async (name) => {
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				const hash = await this.node.context.fileHashCache.getFileHash(
 					this.getPackageFileFullPath(name),
 				);
 				return { name, hash };
