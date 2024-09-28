@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ConfigurationBase } from "../ConfigurationBase.js";
-import { defaultConsoleLogger } from "../Logging.js";
+import { defaultConsoleLogger, type Logger } from "../Logging.js";
 import {
 	defaultTransformations,
 	type TransformationConfig,
@@ -14,9 +13,9 @@ import {
 /**
  * Context passed to recursive {@link DocumentationNode} transformations.
  *
- * @alpha
+ * @public
  */
-export interface TransformationContext extends ConfigurationBase {
+export interface TransformationContext {
 	/**
 	 * Contextual heading level.
 	 *
@@ -31,6 +30,11 @@ export interface TransformationContext extends ConfigurationBase {
 	 * Complete set of transformations (includes defaults and user-specified).
 	 */
 	readonly transformations: Transformations;
+
+	/**
+	 * Receiver of system log data.
+	 */
+	readonly logger: Logger;
 }
 
 /**
@@ -38,7 +42,7 @@ export interface TransformationContext extends ConfigurationBase {
  * system defaults.
  */
 export function createTransformationContext(
-	config: Partial<TransformationConfig> | undefined,
+	config: TransformationConfig | undefined,
 ): TransformationContext {
 	const headingLevel = config?.startingHeadingLevel ?? 1;
 	const transformations: Transformations = {

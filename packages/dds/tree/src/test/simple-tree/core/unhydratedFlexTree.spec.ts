@@ -14,18 +14,14 @@ import {
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {
-	getOrCreateMapTreeNode,
-	UnhydratedContext,
+	UnhydratedFlexTreeNode,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-map-tree/index.js";
-import {
-	getFlexSchema,
-	SchemaFactory,
-	stringSchema,
-	toFlexSchema,
-} from "../../../simple-tree/index.js";
+} from "../../../simple-tree/core/unhydratedFlexTree.js";
+import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 
-describe("MapTreeNodes", () => {
+describe("unhydratedFlexTree", () => {
 	// #region The schema used in this test suite
 	const objectMapKey = "map" as FieldKey;
 	const objectFieldNodeKey = "fieldNode" as FieldKey;
@@ -38,9 +34,6 @@ describe("MapTreeNodes", () => {
 		[objectFieldNodeKey]: arrayNodeSchemaSimple,
 	});
 
-	const mapSchema = getFlexSchema(mapSchemaSimple);
-	const arrayNodeSchema = getFlexSchema(arrayNodeSchemaSimple);
-	const objectSchema = getFlexSchema(objectSchemaSimple);
 	// #endregion
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s
@@ -52,7 +45,7 @@ describe("MapTreeNodes", () => {
 	};
 	const mapKey = "key" as FieldKey;
 	const mapMapTree: ExclusiveMapTree = {
-		type: mapSchema.name,
+		type: brand(mapSchemaSimple.identifier),
 		fields: new Map([[mapKey, [mapChildMapTree]]]),
 	};
 	const fieldNodeChildMapTree: ExclusiveMapTree = {
@@ -61,11 +54,11 @@ describe("MapTreeNodes", () => {
 		fields: new Map(),
 	};
 	const fieldNodeMapTree: ExclusiveMapTree = {
-		type: arrayNodeSchema.name,
+		type: brand(arrayNodeSchemaSimple.identifier),
 		fields: new Map([[EmptyKey, [fieldNodeChildMapTree]]]),
 	};
 	const objectMapTree: ExclusiveMapTree = {
-		type: objectSchema.name,
+		type: brand(objectSchemaSimple.identifier),
 		fields: new Map([
 			[objectMapKey, [mapMapTree]],
 			[objectFieldNodeKey, [fieldNodeMapTree]],
@@ -74,20 +67,19 @@ describe("MapTreeNodes", () => {
 	// #endregion
 
 	// The `MapTreeNode`s used in this test suite:
-	const context = new UnhydratedContext(
-		toFlexSchema([mapSchemaSimple, arrayNodeSchemaSimple, objectSchemaSimple]),
-	);
-	const map = getOrCreateMapTreeNode(context, mapSchema, mapMapTree);
-	const arrayNode = getOrCreateMapTreeNode(context, arrayNodeSchema, fieldNodeMapTree);
-	const object = getOrCreateMapTreeNode(context, objectSchema, objectMapTree);
+	const context = getUnhydratedContext([
+		mapSchemaSimple,
+		arrayNodeSchemaSimple,
+		objectSchemaSimple,
+	]);
+	const map = UnhydratedFlexTreeNode.getOrCreate(context, mapMapTree);
+	const arrayNode = UnhydratedFlexTreeNode.getOrCreate(context, fieldNodeMapTree);
+	const object = UnhydratedFlexTreeNode.getOrCreate(context, objectMapTree);
 
 	it("are cached", () => {
-		assert.equal(getOrCreateMapTreeNode(context, mapSchema, mapMapTree), map);
-		assert.equal(
-			getOrCreateMapTreeNode(context, arrayNodeSchema, fieldNodeMapTree),
-			arrayNode,
-		);
-		assert.equal(getOrCreateMapTreeNode(context, objectSchema, objectMapTree), object);
+		assert.equal(UnhydratedFlexTreeNode.getOrCreate(context, mapMapTree), map);
+		assert.equal(UnhydratedFlexTreeNode.getOrCreate(context, fieldNodeMapTree), arrayNode);
+		assert.equal(UnhydratedFlexTreeNode.getOrCreate(context, objectMapTree), object);
 	});
 
 	it("can get their type", () => {
@@ -105,9 +97,9 @@ describe("MapTreeNodes", () => {
 	});
 
 	it("can get their schema", () => {
-		assert.equal(map.schema, mapSchema.name);
-		assert.equal(arrayNode.schema, arrayNodeSchema.name);
-		assert.equal(object.schema, objectSchema.name);
+		assert.equal(map.schema, mapSchemaSimple.identifier);
+		assert.equal(arrayNode.schema, arrayNodeSchemaSimple.identifier);
+		assert.equal(object.schema, objectSchemaSimple.identifier);
 		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.schema, schemaFactory.string.identifier);
 		assert.equal(
 			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema,
@@ -157,7 +149,7 @@ describe("MapTreeNodes", () => {
 
 	it("cannot be multiparented", () => {
 		assert.throws(() =>
-			getOrCreateMapTreeNode(context, objectSchema, {
+			UnhydratedFlexTreeNode.getOrCreate(context, {
 				type: brand("Parent of a node that already has another parent"),
 				fields: new Map([[brand("fieldKey"), [mapMapTree]]]),
 			}),
@@ -169,7 +161,7 @@ describe("MapTreeNodes", () => {
 			fields: new Map(),
 		};
 		assert.throws(() => {
-			getOrCreateMapTreeNode(context, arrayNodeSchema, {
+			UnhydratedFlexTreeNode.getOrCreate(context, {
 				type: brand("Parent with the same child twice in the same field"),
 				fields: new Map([[EmptyKey, [duplicateChild, duplicateChild]]]),
 			});
@@ -186,16 +178,6 @@ describe("MapTreeNodes", () => {
 		assert.equal(map.parentField.parent.parent, object);
 		assert.equal(arrayNode.parentField.parent.parent, object);
 		assert.equal(object.parentField.parent.parent, undefined);
-	});
-
-	it("can downcast", () => {
-		assert.equal(map.is(mapSchema), true);
-		assert.equal(arrayNode.is(arrayNodeSchema), true);
-		assert.equal(object.is(objectSchema), true);
-
-		assert.equal(map.is(arrayNodeSchema), false);
-		assert.equal(arrayNode.is(objectSchema), false);
-		assert.equal(object.is(mapSchema), false);
 	});
 
 	describe("cannot", () => {
@@ -217,16 +199,12 @@ describe("MapTreeNodes", () => {
 			const mutableObjectMapTree = deepCopyMapTree(objectMapTree);
 			const mutableObjectMapTreeMap = mutableObjectMapTree.fields.get(objectMapKey)?.[0];
 			assert(mutableObjectMapTreeMap !== undefined);
-			const mutableObject = getOrCreateMapTreeNode(
-				context,
-				objectSchema,
-				mutableObjectMapTree,
-			);
+			const mutableObject = UnhydratedFlexTreeNode.getOrCreate(context, mutableObjectMapTree);
 			const field = mutableObject.getBoxed(objectMapKey) as FlexTreeOptionalField;
 			const oldMap = field.boxedAt(0);
 			assert(oldMap !== undefined);
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
-			const newMap = getOrCreateMapTreeNode(context, mapSchema, deepCopyMapTree(mapMapTree));
+			const newMap = UnhydratedFlexTreeNode.getOrCreate(context, deepCopyMapTree(mapMapTree));
 			assert.notEqual(newMap, oldMap);
 			assert.equal(newMap.parentField.parent.parent, undefined);
 			// Replace the old map with a new map
@@ -242,9 +220,8 @@ describe("MapTreeNodes", () => {
 		});
 
 		it("optional fields", () => {
-			const mutableMap = getOrCreateMapTreeNode(
+			const mutableMap = UnhydratedFlexTreeNode.getOrCreate(
 				context,
-				mapSchema,
 				deepCopyMapTree(mapMapTree),
 			);
 			const field = mutableMap.getBoxed(mapKey) as FlexTreeOptionalField;
@@ -259,9 +236,8 @@ describe("MapTreeNodes", () => {
 
 		describe("arrays", () => {
 			it("insert and remove", () => {
-				const mutableFieldNode = getOrCreateMapTreeNode(
+				const mutableFieldNode = UnhydratedFlexTreeNode.getOrCreate(
 					context,
-					arrayNodeSchema,
 					deepCopyMapTree(fieldNodeMapTree),
 				);
 				const field = mutableFieldNode.getBoxed(EmptyKey);
@@ -283,7 +259,7 @@ describe("MapTreeNodes", () => {
 
 			it("with a large sequence of new content", () => {
 				// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
-				const mutableFieldNode = getOrCreateMapTreeNode(context, arrayNodeSchema, {
+				const mutableFieldNode = UnhydratedFlexTreeNode.getOrCreate(context, {
 					...fieldNodeMapTree,
 					fields: new Map(),
 				});

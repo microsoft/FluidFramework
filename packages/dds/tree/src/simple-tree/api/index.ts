@@ -6,6 +6,7 @@
 export {
 	type ITree,
 	type TreeView,
+	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
@@ -44,6 +45,7 @@ export {
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
+export { ViewSchema } from "./view.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
 

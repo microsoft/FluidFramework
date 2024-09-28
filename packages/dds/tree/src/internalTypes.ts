@@ -12,7 +12,6 @@ export type {
 	ApplyKind,
 	NodeBuilderData,
 	FieldHasDefault,
-	TreeNodeSchemaNonClass,
 	TreeArrayNodeBase,
 	ScopedSchemaName,
 	DefaultProvider,

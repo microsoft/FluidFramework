@@ -6,7 +6,6 @@
 import { testCompose } from "./compose.test.js";
 import { testInvert } from "./invert.test.js";
 import { testMarkListFactory } from "./markListFactory.test.js";
-import { testGenerateRandomChange } from "./randomChangeGenerator.test.js";
 import { testRebase } from "./rebase.test.js";
 import { testRelevantRemovedRoots } from "./relevantRemovedRoots.test.js";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
@@ -27,7 +26,6 @@ import { testGetNestedChanges } from "./sequenceGetNestedChanges.test.js";
 
 describe("SequenceField", () => {
 	testEditor();
-	testGenerateRandomChange();
 	testUtils();
 	testMarkListFactory();
 	testInvert();

@@ -53,7 +53,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	map.add("pointers", LatestMap<PointerData, "pointers">({}));
+	map.add("pointers", LatestMap<PointerData>({}));
 
 	const pointers = map.pointers;
 	const localPointers = pointers.local;
@@ -75,8 +75,8 @@ export function checkCompiles(): void {
 	pointerItemUpdatedOff();
 
 	for (const client of pointers.clients()) {
-		const clientData = pointers.clientValue(client);
-		for (const [key, { value }] of clientData.items.entries()) {
+		const items = pointers.clientValue(client);
+		for (const [key, { value }] of items.entries()) {
 			logClientValue({ client, key, value });
 		}
 	}

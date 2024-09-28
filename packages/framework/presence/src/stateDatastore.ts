@@ -12,23 +12,23 @@ import type { ClientSessionId, ISessionClient } from "./presence.js";
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
 // > = TValue extends InternalTypes.ValueDirectoryOrState<infer T> ? InternalTypes.ValueDirectoryOrState<T> : never;
 
-/**
- * @internal
- */
-export interface StateDatastoreSchema {
-	// This type is not precise. It may
-	// need to be replaced with PresenceStates schema pattern
-	// similar to what is commented out.
-	[key: string]: InternalTypes.ValueDirectoryOrState<unknown>;
-	// [key: string]: StateDatastoreSchemaNode;
-}
+// /**
+//  * @internal
+//  */
+// export interface StateDatastoreSchema {
+// 	// This type is not precise. It may
+// 	// need to be replaced with PresenceStates schema pattern
+// 	// similar to what is commented out.
+// 	[key: string]: InternalTypes.ValueDirectoryOrState<unknown>;
+// 	// [key: string]: StateDatastoreSchemaNode;
+// }
 
 /**
  * @internal
  */
 export interface StateDatastore<
 	TKey extends string,
-	TValue extends InternalTypes.ValueDirectoryOrState<any>,
+	TValue extends InternalTypes.ValueDirectoryOrState<any> | undefined,
 > {
 	localUpdate(
 		key: TKey,
@@ -55,9 +55,14 @@ export function handleFromDatastore<
 	// TSchema as `unknown` still provides some type safety.
 	// TSchema extends StateDatastoreSchema,
 	TKey extends string /* & keyof TSchema */,
-	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
->(datastore: StateDatastore<TKey, TValue>): InternalTypes.StateDatastoreHandle<TKey, TValue> {
-	return datastore as unknown as InternalTypes.StateDatastoreHandle<TKey, TValue>;
+	TValue extends InternalTypes.ValueDirectoryOrState<unknown> | undefined,
+>(
+	datastore: StateDatastore<TKey, TValue>,
+): InternalTypes.StateDatastoreHandle<TKey, Exclude<TValue, undefined>> {
+	return datastore as unknown as InternalTypes.StateDatastoreHandle<
+		TKey,
+		Exclude<TValue, undefined>
+	>;
 }
 
 /**

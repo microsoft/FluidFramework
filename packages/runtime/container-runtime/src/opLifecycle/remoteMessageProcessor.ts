@@ -46,15 +46,30 @@ export interface BatchStartInfo {
 
 /**
  * Result of processing the next inbound message.
- * Right now we only return full batches, but soon we will add support for individual messages within the batch too.
+ * Depending on the message and configuration of RemoteMessageProcessor, the result may be:
+ * - A full batch of messages (including a single-message batch)
+ * - The first message of a multi-message batch
+ * - The next message in a multi-message batch
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- Preparing to add other union cases
-export type InboundMessageResult = {
-	type: "fullBatch";
-	messages: InboundSequencedContainerRuntimeMessage[];
-	batchStart: BatchStartInfo;
-	length: number;
-};
+export type InboundMessageResult =
+	| {
+			type: "fullBatch";
+			messages: InboundSequencedContainerRuntimeMessage[];
+			batchStart: BatchStartInfo;
+			length: number;
+	  }
+	| {
+			type: "batchStartingMessage";
+			batchStart: BatchStartInfo;
+			nextMessage: InboundSequencedContainerRuntimeMessage;
+			length?: never;
+	  }
+	| {
+			type: "nextBatchMessage";
+			batchEnd?: boolean;
+			nextMessage: InboundSequencedContainerRuntimeMessage;
+			length?: never;
+	  };
 
 function assertHasClientId(
 	message: ISequencedDocumentMessage,
@@ -72,14 +87,7 @@ function assertHasClientId(
  * @internal
  */
 export class RemoteMessageProcessor {
-	/**
-	 * The current batch being received, with details needed to process it.
-	 *
-	 * @remarks If undefined, we are expecting the next message to start a new batch.
-	 */
-	private batchInProgress:
-		| (BatchStartInfo & { messages: InboundSequencedContainerRuntimeMessage[] })
-		| undefined;
+	private batchInProgress: boolean = false;
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -146,11 +154,8 @@ export class RemoteMessageProcessor {
 		}
 
 		if (isGroupedBatch(message)) {
-			// We should be awaiting a new batch (batchInProgress undefined)
-			assert(
-				this.batchInProgress === undefined,
-				0x9d3 /* Grouped batch interrupting another batch */,
-			);
+			// We should be awaiting a new batch (batchInProgress false)
+			assert(!this.batchInProgress, 0x9d3 /* Grouped batch interrupting another batch */);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
 
@@ -170,67 +175,63 @@ export class RemoteMessageProcessor {
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message, logLegacyCase);
 
-		const { batchEnded } = this.addMessageToBatch(
+		return this.getResultBasedOnBatchMetadata(
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
-
-		if (!batchEnded) {
-			// batch not yet complete
-			return undefined;
-		}
-
-		assert(this.batchInProgress !== undefined, "Completed batch should be non-empty");
-		const { messages, ...batchStart } = this.batchInProgress;
-		this.batchInProgress = undefined;
-		return {
-			type: "fullBatch",
-			messages,
-			batchStart,
-			length: messages.length,
-		};
 	}
 
 	/**
-	 * Add the given message to the current batch, and indicate whether the batch is now complete.
-	 *
-	 * @returns batchEnded: true if the batch is now complete, batchEnded: false if more messages are expected
+	 * Now that the message has been "unwrapped" as to any virtualization (grouping, compression, chunking),
+	 * inspect the batch metadata flag and determine what kind of result to return.
 	 */
-	private addMessageToBatch(
+	private getResultBasedOnBatchMetadata(
 		message: InboundSequencedContainerRuntimeMessage & { clientId: string },
-	): { batchEnded: boolean } {
+	): InboundMessageResult {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
-		if (this.batchInProgress === undefined) {
+		if (!this.batchInProgress) {
 			// We are waiting for a new batch
 			assert(batchMetadataFlag !== false, 0x9d5 /* Unexpected batch end marker */);
 
 			// Start of a new multi-message batch
 			if (batchMetadataFlag === true) {
-				this.batchInProgress = {
-					messages: [message],
-					batchId: asBatchMetadata(message.metadata)?.batchId,
-					clientId: message.clientId,
-					batchStartCsn: message.clientSequenceNumber,
-					keyMessage: message,
+				this.batchInProgress = true;
+				return {
+					type: "batchStartingMessage",
+					batchStart: {
+						batchId: asBatchMetadata(message.metadata)?.batchId,
+						clientId: message.clientId,
+						batchStartCsn: message.clientSequenceNumber,
+						keyMessage: message,
+					},
+					nextMessage: message,
 				};
-
-				return { batchEnded: false };
 			}
 
 			// Single-message batch (Since metadata flag is undefined)
-			this.batchInProgress = {
+			return {
+				type: "fullBatch",
 				messages: [message],
-				batchStartCsn: message.clientSequenceNumber,
-				clientId: message.clientId,
-				batchId: asBatchMetadata(message.metadata)?.batchId,
-				keyMessage: message,
+				batchStart: {
+					batchStartCsn: message.clientSequenceNumber,
+					clientId: message.clientId,
+					batchId: asBatchMetadata(message.metadata)?.batchId,
+					keyMessage: message,
+				},
+				length: 1,
 			};
-			return { batchEnded: true };
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
 
-		this.batchInProgress.messages.push(message);
+		// Clear batchInProgress state if the batch is ending
+		if (batchMetadataFlag === false) {
+			this.batchInProgress = false;
+		}
 
-		return { batchEnded: batchMetadataFlag === false };
+		return {
+			type: "nextBatchMessage",
+			nextMessage: message,
+			batchEnd: batchMetadataFlag === false,
+		};
 	}
 }
 

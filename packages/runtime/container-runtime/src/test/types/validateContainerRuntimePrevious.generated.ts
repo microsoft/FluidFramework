@@ -160,6 +160,15 @@ declare type old_as_current_for_Enum_ContainerMessageType = requireAssignableTo<
 declare type current_as_old_for_Enum_ContainerMessageType = requireAssignableTo<TypeOnly<current.ContainerMessageType>, TypeOnly<old.ContainerMessageType>>
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_loadContainerRuntime": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_loadContainerRuntime = requireAssignableTo<TypeOnly<typeof current.loadContainerRuntime>, TypeOnly<typeof old.loadContainerRuntime>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -1076,6 +1085,24 @@ declare type old_as_current_for_Interface_IUploadSummaryResult = requireAssignab
  * "Interface_IUploadSummaryResult": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IUploadSummaryResult = requireAssignableTo<TypeOnly<current.IUploadSummaryResult>, TypeOnly<old.IUploadSummaryResult>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_LoadContainerRuntimeParams": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<old.LoadContainerRuntimeParams>, TypeOnly<current.LoadContainerRuntimeParams>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_LoadContainerRuntimeParams": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<current.LoadContainerRuntimeParams>, TypeOnly<old.LoadContainerRuntimeParams>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

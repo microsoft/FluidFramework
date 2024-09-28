@@ -16,7 +16,7 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
  *
- * @type {import("@fluidframework/build-tools").IFluidBuildConfig}
+ * @type {import("@fluidframework/build-tools").IFluidBuildConfig & import("@fluid-tools/build-cli").FlubConfig}
  */
 module.exports = {
 	version: 1,
@@ -167,19 +167,15 @@ module.exports = {
 		},
 		"build-tools": {
 			directory: "build-tools",
-			defaultInterdependencyRange: "workspace:~",
 		},
 		"server": {
 			directory: "server/routerlicious",
-			defaultInterdependencyRange: "workspace:~",
 		},
 		"gitrest": {
 			directory: "server/gitrest",
-			defaultInterdependencyRange: "^",
 		},
 		"historian": {
 			directory: "server/historian",
-			defaultInterdependencyRange: "^",
 		},
 
 		// Independent packages
@@ -328,6 +324,8 @@ module.exports = {
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
+				// comments in api-extractor JSON files fail parsing - PR #22498 to fix
+				"^packages/framework/presence/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -529,6 +527,18 @@ module.exports = {
 		],
 		assertionFunctions: {
 			assert: 1,
+		},
+	},
+
+	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be
+	// overridden usig explicit CLI flags like `--interdependencyRange`.
+	bump: {
+		defaultInterdependencyRange: {
+			"client": "workspace:~",
+			"build-tools": "workspace:~",
+			"server": "workspace:~",
+			"gitrest": "^",
+			"historian": "^",
 		},
 	},
 
