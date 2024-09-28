@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { capitalize, lazy, mapIterable, transformObjectMap } from "../../util/index.js";
+import { capitalize, mapIterable, transformObjectMap } from "../../util/index.js";
 import { benchmark } from "@fluid-tools/benchmark";
 
 describe("Utils", () => {
@@ -49,21 +49,5 @@ describe("Utils", () => {
 		benchmarkFn: () => {
 			const m = new Map(mapIterable(testMap, ([k, v]) => [k, v] as const));
 		},
-	});
-
-	it("lazy", () => {
-		let evaluations = 0;
-		const getThree = lazy(() => {
-			evaluations += 1;
-			return 3;
-		});
-
-		assert.equal(evaluations, 0);
-		assert.equal(getThree.evaluated, false);
-		assert.equal(getThree(), 3);
-		assert.equal(evaluations, 1);
-		assert.equal(getThree.evaluated, true);
-		assert.equal(getThree(), 3);
-		assert.equal(evaluations, 1);
 	});
 });

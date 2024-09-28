@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import {
-	createEmitter,
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	type Off,
-} from "../../events/index.js";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { createEmitter, type Listenable, type Off } from "../../events/index.js";
 import type { TreeNode, Unhydrated } from "./types.js";
 import {
 	anchorSlot,
@@ -31,7 +25,7 @@ import {
 	type FlexTreeNode,
 } from "../../feature-libraries/index.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
-import { fail, lazy } from "../../util/index.js";
+import { fail } from "../../util/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
@@ -126,9 +120,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
 	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
 	 */
-	readonly #getUnhydratedEvents = lazy<
-		Listenable<KernelEvents> & IEmitter<KernelEvents> & HasListeners<KernelEvents>
-	>(createEmitter<KernelEvents>);
+	readonly #unhydratedEvents = new Lazy(createEmitter<KernelEvents>);
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -155,7 +147,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 			this.#hydrationState = innerNode.events.on(
 				"childrenChangedAfterBatch",
 				({ changedFields }) => {
-					this.#getUnhydratedEvents().emit("childrenChangedAfterBatch", {
+					this.#unhydratedEvents.value.emit("childrenChangedAfterBatch", {
 						changedFields,
 					});
 
@@ -164,7 +156,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 						const treeNode = mapTreeNodeToProxy.get(n);
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
-							kernel.#getUnhydratedEvents().emit("subtreeChangedAfterBatch");
+							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
 						}
 						// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
 						n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
@@ -222,8 +214,8 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		};
 
 		// If needed, register forwarding emitters for events from before hydration
-		if (this.#getUnhydratedEvents.evaluated) {
-			const events = this.#getUnhydratedEvents();
+		if (this.#unhydratedEvents.evaluated) {
+			const events = this.#unhydratedEvents.value;
 			for (const eventName of kernelEvents) {
 				if (events.hasListeners(eventName)) {
 					this.#hydrationState.offAnchorNode.add(
@@ -260,7 +252,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		// Retrieve the correct events object based on whether this node is pre or post hydration.
 		const events: Listenable<KernelEvents> = isHydrated(this.#hydrationState)
 			? this.#hydrationState.anchorNode
-			: this.#getUnhydratedEvents();
+			: this.#unhydratedEvents.value;
 
 		return events.on(eventName, listener);
 	}

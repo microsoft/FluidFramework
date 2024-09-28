@@ -484,17 +484,3 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
 }
-
-/**
- * Returns a function which, when invoked for the first time, will run `evaluate` and cache the result for future invocations.
- * @remarks Use the `evaluated` property of the returned function to check if the value has been cached yet.
- */
-export function lazy<T>(evaluate: () => T): (() => T) & { readonly evaluated: boolean } {
-	let value: T | undefined;
-	const get = (): T => {
-		get.evaluated = true;
-		return (value ??= evaluate());
-	};
-	get.evaluated = false;
-	return get;
-}
