@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Required in order to register the `raw` type with the `hast` ecosystem.
-// eslint-disable-next-line import/no-unassigned-import
-import "hast-util-raw";
-
 import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";

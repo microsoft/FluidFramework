@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Nodes as HastNodes } from "hast";
+import type { Nodes as HastTree } from "hast";
 import { PlainTextNode } from "../../documentation-domain/index.js";
 import { assertTransformation } from "./Utilities.js";
 
@@ -21,7 +21,31 @@ describe("PlainText HTML rendering tests", () => {
 
 	it("HTML content (escaped: true)", () => {
 		const input = new PlainTextNode("This is some <b>bold</b> text!", /* escaped: */ true);
-		const expected: HastNodes = { type: "raw", value: "This is some <b>bold</b> text!" };
+		// const expected: HastNodes = { type: "text", value: "This is some <b>bold</b> text!" };
+		const expected: HastTree = {
+			type: "root",
+			children: [
+				{
+					type: "text",
+					value: "This is some ",
+				},
+				{
+					type: "element",
+					tagName: "b",
+					children: [
+						{
+							type: "text",
+							value: "bold",
+						},
+					],
+					properties: {},
+				},
+				{
+					type: "text",
+					value: " text!",
+				},
+			],
+		};
 		assertTransformation(input, expected);
 	});
 });
