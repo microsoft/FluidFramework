@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { BuildContext } from "../buildContext";
 import type { BuildPackage } from "../buildGraph";
 import type { LeafTask } from "./leaf/leafTask";
