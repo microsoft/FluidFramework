@@ -226,7 +226,26 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_MapNodeInsertableData": {
+				"backCompat": false
+			},
+			"Interface_InternalTypes_TreeNodeSchemaNonClass": {
+				"backCompat": false
+			},
+			"Interface_FieldSchemaUnsafe": {
+				"forwardCompat": false
+			},
+			"Interface_ITreeViewConfiguration": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitFieldSchema": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitAllowedTypes": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
