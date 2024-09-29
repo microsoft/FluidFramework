@@ -1,5 +1,9 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.16.2
+
+-   Fixed a bug where text formatting was not applied correctly in some cases in the `toHtml` transformation.
+
 ## 0.16.1
 
 -   Promote `toHtml` transformation functions to `@public`.
