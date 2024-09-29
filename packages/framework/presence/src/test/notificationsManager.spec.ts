@@ -7,11 +7,13 @@ import type { ISessionClient } from "../index.js";
 import { Notifications } from "../index.js";
 import type { IPresence } from "../presence.js";
 
-describe("NotificationsManager", () => {
-	/**
-	 * See {@link checkCompiles} below
-	 */
-	it("API use compiles", () => {});
+describe("Presence", () => {
+	describe("NotificationsManager", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
 });
 
 // ---- test (example) code ----

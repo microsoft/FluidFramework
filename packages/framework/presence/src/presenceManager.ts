@@ -45,19 +45,20 @@ class PresenceManager
 	implements IPresence, PresenceExtensionInterface, PresenceManagerInternal
 {
 	private readonly datastoreManager: PresenceDatastoreManager;
-	private readonly selfAttendee: ISessionClient = {
-		sessionId: createSessionId() as ClientSessionId,
-		currentConnectionId: () => {
-			throw new Error("Client has never been connected");
-		},
-	};
-	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, ISessionClient>([
-		[this.selfAttendee.sessionId, this.selfAttendee],
-	]);
+	private readonly selfAttendee: ISessionClient;
+	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, ISessionClient>();
 
 	public readonly mc: MonitoringContext | undefined = undefined;
 
-	public constructor(runtime: IEphemeralRuntime) {
+	public constructor(runtime: IEphemeralRuntime, clientSessionId: ClientSessionId) {
+		this.selfAttendee = {
+			sessionId: clientSessionId,
+			currentConnectionId: () => {
+				throw new Error("Client has never been connected");
+			},
+		};
+		this.attendees.set(clientSessionId, this.selfAttendee);
+
 		const logger = runtime.logger;
 		if (logger) {
 			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
@@ -147,6 +148,7 @@ class PresenceManager
  */
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
+	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
 ): IPresence & PresenceExtensionInterface {
-	return new PresenceManager(runtime);
+	return new PresenceManager(runtime, clientSessionId);
 }
