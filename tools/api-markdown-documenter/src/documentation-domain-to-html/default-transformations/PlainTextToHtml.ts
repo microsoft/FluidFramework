@@ -25,13 +25,13 @@ export function plainTextToHtml(node: PlainTextNode, context: TransformationCont
 		// `fromHtml` currently includes position data in its output, despite the `verbose: false` option, which is supposed to disable this.
 		// See <https://github.com/syntax-tree/hast-util-from-html/issues/7>
 		// To ensure output is simple and testable, strip the positioning data out.
-		removePosition(parsed, {
+		removePosition(transformed, {
 			// Remove properties entirely, rather than setting them to `undefined`.
 			force: true,
 		});
 
 		// `fromHtml` also adds a `data` property to the root node, which we don't need.
-		delete parsed.data;
+		delete transformed.data;
 	} else {
 		transformed = {
 			type: "text",
