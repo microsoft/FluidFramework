@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {Nodes as HastTree} from "hast";
+import type { Nodes as HastTree } from "hast";
 
 import type { CodeSpanNode } from "../../index.js";
 import type { TransformationContext } from "../TransformationContext.js";
