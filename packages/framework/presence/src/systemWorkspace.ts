@@ -77,11 +77,19 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			};
 		},
 	): void {
+		const postUpdateActions: (() => void)[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
 			const clientSessionId = value.value;
-			const attendee = this.ensureAttendee(clientSessionId, clientConnectionId, value.rev);
+			const { attendee, isNew } = this.ensureAttendee(
+				clientSessionId,
+				clientConnectionId,
+				value.rev,
+			);
+			if (isNew) {
+				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
+			}
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
 				this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
@@ -89,9 +97,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			} else {
 				assert(knownSessionId.value === value.value, "Mismatched SessionId");
 			}
-			if (!(clientSessionId in this.datastore.clientToSessionId)) {
-				this.events.emit("attendeeJoined", attendee);
-			}
+		}
+		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
+		for (const action of postUpdateActions) {
+			action();
 		}
 	}
 
@@ -127,9 +136,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientSessionId: ClientSessionId,
 		clientConnectionId: ClientConnectionId,
 		order: number,
-	): SessionClient {
+	): { attendee: SessionClient; isNew: boolean } {
 		const currentConnectionId = (): ClientConnectionId => clientConnectionId;
 		let attendee = this.attendees.get(clientSessionId);
+		let isNew = false;
 		if (attendee === undefined) {
 			attendee = {
 				sessionId: clientSessionId,
@@ -137,12 +147,13 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				currentConnectionId,
 			};
 			this.attendees.set(clientSessionId, attendee);
+			isNew = true;
 		} else if (order > attendee.order) {
 			attendee.order = order;
 			attendee.currentConnectionId = currentConnectionId;
 		}
 		this.attendees.set(clientConnectionId, attendee);
-		return attendee;
+		return { attendee, isNew };
 	}
 }
 

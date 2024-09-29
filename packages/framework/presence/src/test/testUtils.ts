@@ -12,26 +12,37 @@ import { createPresenceManager } from "../presenceManager.js";
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type { ClientConnectionId, ClientSessionId } from "@fluid-experimental/presence";
+import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
 
 /**
  * Generates expected join signal for a client that was initialized while connected.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
-export function craftInitializationClientJoin(
+export function generateBasicClientJoin(
 	fixedTime: number,
-	clientSessionId: string = "seassionId-2",
-	clientConnectionId: ClientConnectionId = "client2",
-	updateProviders: string[] = ["client0", "client1", "client3"],
+	{
+		clientSessionId = "seassionId-2",
+		clientConnectionId = "client2",
+		updateProviders = ["client0", "client1", "client3"],
+		connectionOrder = 0,
+		averageLatency = 0,
+	}: {
+		clientSessionId?: string;
+		clientConnectionId?: ClientConnectionId;
+		updateProviders?: string[];
+		connectionOrder?: number;
+		averageLatency?: number;
+	},
 ) {
 	return {
 		type: "Pres:ClientJoin",
 		content: {
-			"avgLatency": 0,
+			"avgLatency": averageLatency,
 			"data": {
 				"system:presence": {
 					"clientToSessionId": {
 						[clientConnectionId]: {
-							"rev": 0,
+							"rev": connectionOrder,
 							"timestamp": fixedTime,
 							"value": clientSessionId,
 						},
@@ -41,7 +52,8 @@ export function craftInitializationClientJoin(
 			"sendTimestamp": fixedTime,
 			updateProviders,
 		},
-	};
+		clientId: clientConnectionId,
+	} satisfies IExtensionMessage<"Pres:ClientJoin">;
 }
 
 /**
@@ -76,12 +88,11 @@ export function prepareConnectedPresence(
 		quorumClientIds.length = 3;
 	}
 
-	const expectedClientJoin = craftInitializationClientJoin(
-		clock.now,
+	const expectedClientJoin = generateBasicClientJoin(clock.now, {
 		clientSessionId,
 		clientConnectionId,
-		quorumClientIds,
-	);
+		updateProviders: quorumClientIds,
+	});
 	runtime.signalsExpected.push([expectedClientJoin.type, expectedClientJoin.content]);
 
 	const presence = createPresenceManager(runtime, clientSessionId as ClientSessionId);
