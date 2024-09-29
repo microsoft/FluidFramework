@@ -319,10 +319,19 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// list across all clients. We need something to provide suggested order
 			// to prevent a flood of broadcasts.
 			const quorumMembers = this.runtime.getQuorum().getMembers();
-			const indexOfSelf =
-				quorumMembers.get(clientId)?.sequenceNumber ??
+			let indexOfSelf;
+			const self = quorumMembers.get(clientId);
+			if (self) {
+				indexOfSelf = 0;
+				for (const { sequenceNumber } of quorumMembers.values()) {
+					if (sequenceNumber < self.sequenceNumber) {
+						indexOfSelf++;
+					}
+				}
+			} else {
 				// Index past quorum members + arbitrary additional offset up to 10
-				quorumMembers.size + Math.random() * 10;
+				indexOfSelf = quorumMembers.size + Math.random() * 10;
+			}
 			// These numbers have been chosen arbitrarily to start with.
 			// 20 is minimum wait time, 20 is the additional wait time per provider
 			// given an chance before us with named providers given more time.

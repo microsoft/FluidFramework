@@ -113,8 +113,7 @@ describe("Presence", () => {
 				assertFinalExpectations(runtime, logger);
 			});
 
-			// Delayed secondary response uses quorum sequenceNumber incorrectly.
-			it.skip("with broadcast after delay when NOT preferred responder", () => {
+			it("with broadcast after delay when NOT preferred responder", () => {
 				// #region Part 1 (no response)
 				// Act
 				presence.processSignal(
