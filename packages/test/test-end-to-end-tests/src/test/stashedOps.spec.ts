@@ -1853,6 +1853,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("can stash between summary op and ack", async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		map1.set("test op 1", "test op 1");
 		const container: IContainerExperimental =
 			await provider.loadTestContainer(testContainerConfig);
