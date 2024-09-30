@@ -34,7 +34,7 @@ export type CoverageReport = {
 
 ### Generating the coverage report on PR build
 
-As mentioned earlier, the PR build also uploads coverage reports as artifacts that can be used to run coverage analysis against baseline build. To help with this, we make use of the `getCoverageMetricsForPr` helper to generate an array of objects of the type `CoverageReport` that contains code coverage metrics corresponding to the PR.
+As mentioned earlier, the PR build also uploads coverage reports as artifacts that can be used to run coverage analysis against a baseline build. To help with this, we use the `getCoverageMetricsForPr` helper function to generate an array of objects of the type `CoverageReport` that contains code coverage metrics corresponding to the PR.
 
 ### Comparing code coverage reports
 
