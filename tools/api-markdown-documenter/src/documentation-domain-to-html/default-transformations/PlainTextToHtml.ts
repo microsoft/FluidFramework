@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Required in order to register the `raw` type with the `hast` ecosystem.
+// Required for use of "raw" element.
 // eslint-disable-next-line import/no-unassigned-import
 import "hast-util-raw";
 
