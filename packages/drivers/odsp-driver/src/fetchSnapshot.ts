@@ -505,8 +505,7 @@ async function fetchLatestSnapshotCore(
 			const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
 			const seqNumberFromOps =
 				snapshot.ops && snapshot.ops.length > 0
-					? // Non null asserting here because of the length check above
-						snapshot.ops[0]!.sequenceNumber - 1
+					? snapshot.ops[0].sequenceNumber - 1
 					: undefined;
 
 			if (

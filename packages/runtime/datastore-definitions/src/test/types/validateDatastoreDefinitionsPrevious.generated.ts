@@ -142,24 +142,6 @@ declare type old_as_current_for_Interface_IDeltaHandler = requireAssignableTo<Ty
 declare type current_as_old_for_Interface_IDeltaHandler = requireAssignableTo<TypeOnly<current.IDeltaHandler>, TypeOnly<old.IDeltaHandler>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IDeltaManagerErased": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<old.IDeltaManagerErased>, TypeOnly<current.IDeltaManagerErased>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IDeltaManagerErased": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<current.IDeltaManagerErased>, TypeOnly<old.IDeltaManagerErased>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -203,6 +185,24 @@ declare type old_as_current_for_Interface_Internal_InterfaceOfJsonableTypesWith 
  * "Interface_Internal_InterfaceOfJsonableTypesWith": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_Internal_InterfaceOfJsonableTypesWith = requireAssignableTo<TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<any>>, TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IDeltaManagerErased": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<old.IDeltaManagerErased>, TypeOnly<current.IDeltaManagerErased>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IDeltaManagerErased": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<current.IDeltaManagerErased>, TypeOnly<old.IDeltaManagerErased>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

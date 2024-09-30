@@ -18,6 +18,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { TestSnapshotCache } from "../testSnapshotCache.js";
@@ -46,6 +47,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		provider = getTestObjectProvider({ persistedCache: testSnapshotCache });
 		container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		await waitForContainerConnection(container1);
 
 		await provider.ensureSynchronized();
 

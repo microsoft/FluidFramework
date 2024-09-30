@@ -9,8 +9,6 @@
 	// We prefer to use type-only imports, so we want the autoimporter to do that by default.
 	"typescript.preferences.preferTypeOnlyAutoImports": true,
 	"typescript.preferences.autoImportFileExcludePatterns": [
-		"**/dist/**",
-		"**/lib/**",
 		// Avoid suggesting autoimports for the 'previous' version packages which are used for typetesting.
 		"**/node_modules/**/@fluid*/*-previous",
 		"**/node_modules/**/@fluid*/*-previous/*",

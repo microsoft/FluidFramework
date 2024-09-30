@@ -337,7 +337,7 @@ export function isExternalError(error: unknown): boolean {
 			const props = error.getTelemetryProperties();
 			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
 			// we can switch to writing this more explicit property
-			return props.untrustedOrigin === 1 || !!props.errorRunningExternalCode;
+			return props.untrustedOrigin === 1 || Boolean(props.errorRunningExternalCode);
 		}
 		return false;
 	}

@@ -19,7 +19,6 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
@@ -61,6 +60,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
+import { numberSchema } from "../../simple-tree/index.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -546,6 +546,7 @@ describe("ModularChangeFamily integration", () => {
 			const remove = makeAnonChange(removeD);
 
 			const composed = family.compose([moves, remove]);
+			family.validateChangeset(composed);
 			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
@@ -593,7 +594,10 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({
+				type: brand(numberSchema.identifier),
+				value: newValue,
+			});
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -634,6 +638,7 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
+			family.validateChangeset(composed);
 			const delta = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			assertDeltaEqual(delta, expected);
 		});
@@ -650,7 +655,10 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({
+				type: brand(numberSchema.identifier),
+				value: newValue,
+			});
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -668,6 +676,8 @@ describe("ModularChangeFamily integration", () => {
 
 			const moveAndInsert = family.compose([tagChangeInline(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
+			family.validateChangeset(composed);
+
 			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			const expected: DeltaRoot = {
 				build: [
@@ -729,6 +739,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const [move1, move2, expected] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
+			family.validateChangeset(composed);
 			const actualDelta = normalizeDelta(
 				intoDelta(makeAnonChange(composed), family.fieldKinds),
 			);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "2.2.0",
+	"version": "2.4.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -106,12 +106,12 @@
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.43.0",
-		"@fluidframework/build-tools": "^0.43.0",
+		"@fluid-tools/build-cli": "^0.46.0",
+		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/sinon": "^17.0.3",
@@ -131,13 +131,19 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:esnext": [
+				"...",
+				"typetests:gen"
+			],
 			"tsc": [
+				"...",
 				"typetests:gen"
 			]
 		}
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

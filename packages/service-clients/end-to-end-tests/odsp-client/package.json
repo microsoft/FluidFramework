@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/odsp-end-to-end-tests",
-	"version": "2.2.0",
+	"version": "2.4.0",
 	"description": "Odsp client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -81,8 +81,8 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.43.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/build-tools": "^0.46.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
@@ -106,6 +106,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

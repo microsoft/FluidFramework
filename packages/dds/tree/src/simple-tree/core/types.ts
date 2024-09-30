@@ -20,6 +20,11 @@ import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
+ * @remarks
+ * Nodes which are Unhydrated report {@link TreeStatus}.new from `Tree.status(node)`.
+ * @privateRemarks
+ * TODO: Linking tree status is failing in intellisense and linking directly to its .new item is failing in API extractor as well.
+ * WOuld be nice to have a working link here.
  * @public
  */
 export type Unhydrated<T> = T;
@@ -47,15 +52,18 @@ export type Unhydrated<T> = T;
  */
 export interface TreeChangeEvents {
 	/**
-	 * Emitted by a node after a batch of changes has been applied to the tree, if a change affected the node, where a
-	 * change is:
+	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
-	 * - For an object node, when the value of one of its properties changes (i.e., the property's value is set
-	 * to something else, including `undefined`).
+	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
 	 *
-	 * - For an array node, when an element is added, removed, or moved.
+	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
 	 *
-	 * - For a map node, when an entry is added, updated, or removed.
+	 * - Map nodes define a change as when an entry is added, updated, or removed.
+	 *
+	 * @param unstable - Future versions of this API (such as the one in beta on TreeBeta) may use this argument to provide additional data to the event.
+	 * users of this event should ensure that they do not provide a listener callback which has an optional parameter in this position, since unexpected data might get provided to it.
+	 * This parameter exists to capture this fact in the type system.
+	 * Using an inline lambda expression as the listener callback is a good pattern to avoid cases like this were arguments are added from breaking due to optional arguments.
 	 *
 	 * @remarks
 	 * This event is not emitted when:
@@ -70,15 +78,17 @@ export interface TreeChangeEvents {
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
 	 *
-	 * When it is emitted, the tree is guaranteed to be in-schema.
+	 * When the event is emitted, the tree is guaranteed to be in-schema.
 	 *
 	 * @privateRemarks
 	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
 	 * For example, it will fire when the local client reassigns a child, when part of a remote edit is applied to the
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
+	 *
+	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeChange on each level).
 	 */
-	nodeChanged(): void;
+	nodeChanged(unstable?: unknown): void;
 
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the

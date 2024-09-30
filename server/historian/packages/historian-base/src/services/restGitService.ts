@@ -18,7 +18,7 @@ import {
 	LatestSummaryId,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
-import * as uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 import {
 	BaseTelemetryProperties,
@@ -114,7 +114,10 @@ export class RestGitService {
 			undefined,
 			undefined,
 			undefined,
-			() => getGlobalTelemetryContext().getProperties().correlationId ?? uuid.v4(),
+			() =>
+				getGlobalTelemetryContext().getProperties().correlationId ??
+				uuid() /* getCorrelationId */,
+			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 		);
 	}
 

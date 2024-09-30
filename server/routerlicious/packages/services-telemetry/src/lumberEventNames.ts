@@ -41,6 +41,10 @@ export enum LumberEventName {
 	StartSessionResult = "StartSessionResult",
 	ScribeSessionResult = "ScribeSessionResult",
 
+	// Collaboration Sessions
+	NexusSessionStart = "NexusSessionStart",
+	NexusSessionResult = "NexusSessionResult",
+
 	// Miscellaneous
 	ConnectDocument = "ConnectDocument",
 	ConnectDocumentAddClient = "ConnectDocumentAddClient",

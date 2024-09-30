@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-tests",
-	"version": "2.2.0",
+	"version": "2.4.0",
 	"private": true,
 	"description": "Tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -30,7 +30,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"dist/test/**/*.spec.*js\"  --exit",
+		"test:mocha": "mocha \"lib/test/**/*.spec.*js\"  --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
@@ -53,15 +53,14 @@
 		],
 		"temp-directory": "nyc/.nyc_output"
 	},
-	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.43.0",
+		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -74,7 +73,7 @@
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
@@ -91,7 +90,10 @@
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~1.8.3",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
@@ -106,11 +108,11 @@
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"ts-loader": "^9.3.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
 		"uuid": "^9.0.0",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2"
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -122,6 +124,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

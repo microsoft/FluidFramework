@@ -4,47 +4,10 @@
  */
 
 export {
-	createDataBinderBuffering,
-	createDataBinderDirect,
-	createDataBinderInvalidating,
-	createBinderOptions,
-	createFlushableBinderOptions,
-	type DataBinder,
-	type BinderOptions,
-	type Flushable,
-	type FlushableBinderOptions,
-	type FlushableDataBinder,
-	type MatchPolicy,
-	type SubtreePolicy,
-	type BindSyntaxTree,
-	indexSymbol,
-	type BindPolicy,
-	type BindTree,
-	type BindTreeDefault,
 	type DownPath,
-	type BindPath,
-	type PathStep,
-	BindingType,
-	type BindingContextType,
-	type BindingContext,
-	type VisitorBindingContext,
-	type RemoveBindingContext,
-	type InsertBindingContext,
-	type BatchBindingContext,
-	type InvalidationBindingContext,
-	type OperationBinderEvents,
-	type InvalidationBinderEvents,
-	type CompareFunction,
-	type BinderEventsCompare,
-	type AnchorsCompare,
 	toDownPath,
-	comparePipeline,
-	compileSyntaxTree,
 } from "./editableTreeBinder.js";
-
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
-
-export type { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
 export { ForestSummarizer } from "./forest-summary/index.js";
 export {
@@ -113,55 +76,18 @@ export {
 	type FieldKindConfigurationEntry,
 	getAllowedContentIncompatibilities,
 	isRepoSuperset,
+	isNeverTree,
 } from "./modular-schema/index.js";
 
 export {
-	type FlexTreeNodeSchema,
-	type FlexAllowedTypes,
-	FlexFieldSchema,
-	type FlexTreeSchema,
-	Any,
-	type SchemaLibraryData,
-	type LazyTreeNodeSchema,
-	ViewSchema,
-	type SchemaLintConfiguration,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
 	type Unenforced,
-	type AllowedTypeSet,
 	markEager,
-	type FlexMapFieldSchema,
-	type SchemaCollection,
-	TreeNodeSchemaBase,
 	type LazyItem,
 	type FlexListToUnion,
 	type ExtractItemType,
 	isLazy,
-	type NormalizeObjectNodeFields,
-	type NormalizeField as NormalizeFieldSchema,
-	type FlexObjectNodeFields,
-	intoStoredSchema,
-	intoStoredSchemaCollection,
-	type NormalizeLazyItem,
 	type FlexList,
 } from "./typed-schema/index.js";
-
-export {
-	SchemaBuilderBase,
-	type SchemaLibrary,
-	type FlexImplicitFieldSchema,
-	type NormalizeField,
-	type FlexImplicitAllowedTypes,
-	type NormalizeAllowedTypes,
-	type SchemaBuilderOptions,
-	normalizeAllowedTypes,
-	normalizeField,
-} from "./schemaBuilderBase.js";
-export { SchemaBuilderInternal } from "./schemaBuilder.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
 
@@ -214,26 +140,17 @@ export {
 } from "./default-schema/index.js";
 
 export {
-	type AssignableFieldKinds,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
-	type FlexTreeLeafNode,
-	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
 	Skip,
-	type FlexTreeObjectNode,
-	type FlexTreeObjectNodeTyped,
 	type FlexTreeContext,
+	type FlexTreeHydratedContext,
 	type FlexTreeTypedField,
-	type FlexTreeTypedNode,
-	type FlexTreeTypedNodeUnion,
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,
 	getTreeContext,
-	type CheckTypesOverlap,
 	TreeStatus,
 	Context,
 	type FlexTreeNodeEvents,
@@ -241,31 +158,16 @@ export {
 	isFlexTreeNode,
 	ContextSlot,
 	// Internal
-	type FlexTreeTypedFieldInner,
-	type FlexTreeUnboxFieldInner,
-	type FlexTreeObjectNodeFields,
-	type FlexTreeUnboxField,
-	type FlexTreeUnboxNode,
-	type FlexTreeUnboxNodeUnion,
-	type IsArrayOfOne,
-	type FlexibleNodeSubSequence,
 	flexTreeMarker,
-	FlexTreeEntityKind,
-	type PropertyNameFromFieldKey,
-	type ReservedObjectNodeFieldPropertyNames,
-	type ReservedObjectNodeFieldPropertyNamePrefixes,
-	reservedObjectNodeFieldPropertyNames,
-	reservedObjectNodeFieldPropertyNamePrefixes,
-	type FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
 	isFreedSymbol,
 	LazyEntity,
 	treeStatusFromAnchorCache,
+	indexForAt,
+	FlexTreeEntityKind,
 } from "./flex-tree/index.js";
-
-export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
@@ -280,12 +182,3 @@ export {
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
-
-export {
-	type MapTreeNode,
-	type MapTreeSequenceField,
-	isMapTreeNode,
-	isMapTreeSequenceField,
-	getOrCreateMapTreeNode,
-	tryGetMapTreeNode,
-} from "./flex-map-tree/index.js";

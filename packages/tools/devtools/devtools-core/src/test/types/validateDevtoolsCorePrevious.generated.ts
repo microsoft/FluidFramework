@@ -20,6 +20,105 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Enum_ContainerStateChangeKind": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_ContainerStateChangeKind = requireAssignableTo<TypeOnly<old.ContainerStateChangeKind>, TypeOnly<current.ContainerStateChangeKind>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_ContainerStateChangeKind": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_ContainerStateChangeKind = requireAssignableTo<TypeOnly<current.ContainerStateChangeKind>, TypeOnly<old.ContainerStateChangeKind>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_MemberChangeKind": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_MemberChangeKind = requireAssignableTo<TypeOnly<old.MemberChangeKind>, TypeOnly<current.MemberChangeKind>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_MemberChangeKind": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_MemberChangeKind = requireAssignableTo<TypeOnly<current.MemberChangeKind>, TypeOnly<old.MemberChangeKind>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_VisualNodeKind": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_VisualNodeKind = requireAssignableTo<TypeOnly<old.VisualNodeKind>, TypeOnly<current.VisualNodeKind>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_VisualNodeKind": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_VisualNodeKind = requireAssignableTo<TypeOnly<current.VisualNodeKind>, TypeOnly<old.VisualNodeKind>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_createDevtoolsLogger": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_createDevtoolsLogger = requireAssignableTo<TypeOnly<typeof current.createDevtoolsLogger>, TypeOnly<typeof old.createDevtoolsLogger>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_handleIncomingMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_handleIncomingMessage = requireAssignableTo<TypeOnly<typeof current.handleIncomingMessage>, TypeOnly<typeof old.handleIncomingMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_handleIncomingWindowMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_handleIncomingWindowMessage = requireAssignableTo<TypeOnly<typeof current.handleIncomingWindowMessage>, TypeOnly<typeof old.handleIncomingWindowMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_initializeDevtools": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_initializeDevtools = requireAssignableTo<TypeOnly<typeof current.initializeDevtools>, TypeOnly<typeof old.initializeDevtools>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isDevtoolsMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isDevtoolsMessage = requireAssignableTo<TypeOnly<typeof current.isDevtoolsMessage>, TypeOnly<typeof old.isDevtoolsMessage>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_AudienceChangeLogEntry": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_AudienceChangeLogEntry = requireAssignableTo<TypeOnly<old.AudienceChangeLogEntry>, TypeOnly<current.AudienceChangeLogEntry>>
@@ -110,42 +209,6 @@ declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssign
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ContainerKey": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<old.ContainerKey>, TypeOnly<current.ContainerKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ContainerKey": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<current.ContainerKey>, TypeOnly<old.ContainerKey>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_ContainerStateChangeKind": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_ContainerStateChangeKind = requireAssignableTo<TypeOnly<old.ContainerStateChangeKind>, TypeOnly<current.ContainerStateChangeKind>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_ContainerStateChangeKind": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_ContainerStateChangeKind = requireAssignableTo<TypeOnly<current.ContainerStateChangeKind>, TypeOnly<old.ContainerStateChangeKind>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ContainerStateMetadata": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ContainerStateMetadata = requireAssignableTo<TypeOnly<old.ContainerStateMetadata>, TypeOnly<current.ContainerStateMetadata>>
@@ -200,69 +263,6 @@ declare type current_as_old_for_Interface_Edit = requireAssignableTo<TypeOnly<cu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_EditData": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_EditData = requireAssignableTo<TypeOnly<old.EditData>, TypeOnly<current.EditData>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_EditData": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_EditData = requireAssignableTo<TypeOnly<current.EditData>, TypeOnly<old.EditData>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_EditSharedObject": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_EditSharedObject = requireAssignableTo<TypeOnly<old.EditSharedObject>, TypeOnly<current.EditSharedObject>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_EditSharedObject": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_EditSharedObject = requireAssignableTo<TypeOnly<current.EditSharedObject>, TypeOnly<old.EditSharedObject>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_EditType": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_EditType = requireAssignableTo<TypeOnly<typeof current.EditType>, TypeOnly<typeof old.EditType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_EditType": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_EditType = requireAssignableTo<TypeOnly<old.EditType>, TypeOnly<current.EditType>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_EditType": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_EditType = requireAssignableTo<TypeOnly<current.EditType>, TypeOnly<old.EditType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_FluidDevtoolsProps": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_FluidDevtoolsProps = requireAssignableTo<TypeOnly<old.FluidDevtoolsProps>, TypeOnly<current.FluidDevtoolsProps>>
@@ -293,42 +293,6 @@ declare type old_as_current_for_Interface_FluidHandleNode = requireAssignableTo<
  * "Interface_FluidHandleNode": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_FluidHandleNode = requireAssignableTo<TypeOnly<current.FluidHandleNode>, TypeOnly<old.FluidHandleNode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_FluidObjectId": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_FluidObjectId = requireAssignableTo<TypeOnly<old.FluidObjectId>, TypeOnly<current.FluidObjectId>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_FluidObjectId": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_FluidObjectId = requireAssignableTo<TypeOnly<current.FluidObjectId>, TypeOnly<old.FluidObjectId>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_FluidObjectNode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_FluidObjectNode = requireAssignableTo<TypeOnly<old.FluidObjectNode>, TypeOnly<current.FluidObjectNode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_FluidObjectNode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_FluidObjectNode = requireAssignableTo<TypeOnly<current.FluidObjectNode>, TypeOnly<old.FluidObjectNode>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -524,6 +488,24 @@ declare type current_as_old_for_Interface_IMessageRelayEvents = requireAssignabl
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_InboundHandlers": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_InboundHandlers = requireAssignableTo<TypeOnly<old.InboundHandlers>, TypeOnly<current.InboundHandlers>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_InboundHandlers": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_InboundHandlers = requireAssignableTo<TypeOnly<current.InboundHandlers>, TypeOnly<old.InboundHandlers>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_ISourcedDevtoolsMessage": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ISourcedDevtoolsMessage = requireAssignableTo<TypeOnly<old.ISourcedDevtoolsMessage>, TypeOnly<current.ISourcedDevtoolsMessage>>
@@ -560,24 +542,6 @@ declare type current_as_old_for_Interface_ITimestampedTelemetryEvent = requireAs
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_InboundHandlers": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_InboundHandlers = requireAssignableTo<TypeOnly<old.InboundHandlers>, TypeOnly<current.InboundHandlers>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_InboundHandlers": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_InboundHandlers = requireAssignableTo<TypeOnly<current.InboundHandlers>, TypeOnly<old.InboundHandlers>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_LogEntry": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_LogEntry = requireAssignableTo<TypeOnly<old.LogEntry>, TypeOnly<current.LogEntry>>
@@ -596,24 +560,6 @@ declare type current_as_old_for_Interface_LogEntry = requireAssignableTo<TypeOnl
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_MemberChangeKind": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_MemberChangeKind = requireAssignableTo<TypeOnly<old.MemberChangeKind>, TypeOnly<current.MemberChangeKind>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_MemberChangeKind": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_MemberChangeKind = requireAssignableTo<TypeOnly<current.MemberChangeKind>, TypeOnly<old.MemberChangeKind>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_MessageLoggingOptions": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_MessageLoggingOptions = requireAssignableTo<TypeOnly<old.MessageLoggingOptions>, TypeOnly<current.MessageLoggingOptions>>
@@ -626,42 +572,6 @@ declare type old_as_current_for_Interface_MessageLoggingOptions = requireAssigna
  * "Interface_MessageLoggingOptions": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_MessageLoggingOptions = requireAssignableTo<TypeOnly<current.MessageLoggingOptions>, TypeOnly<old.MessageLoggingOptions>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_Primitive": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_Primitive = requireAssignableTo<TypeOnly<old.Primitive>, TypeOnly<current.Primitive>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_Primitive": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_Primitive = requireAssignableTo<TypeOnly<current.Primitive>, TypeOnly<old.Primitive>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_RootHandleNode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_RootHandleNode = requireAssignableTo<TypeOnly<old.RootHandleNode>, TypeOnly<current.RootHandleNode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_RootHandleNode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_RootHandleNode = requireAssignableTo<TypeOnly<current.RootHandleNode>, TypeOnly<old.RootHandleNode>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -758,42 +668,6 @@ declare type current_as_old_for_Interface_ValueNodeBase = requireAssignableTo<Ty
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_VisualChildNode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_VisualChildNode = requireAssignableTo<TypeOnly<old.VisualChildNode>, TypeOnly<current.VisualChildNode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_VisualChildNode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_VisualChildNode = requireAssignableTo<TypeOnly<current.VisualChildNode>, TypeOnly<old.VisualChildNode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_VisualNode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_VisualNode = requireAssignableTo<TypeOnly<old.VisualNode>, TypeOnly<current.VisualNode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_VisualNode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_VisualNode = requireAssignableTo<TypeOnly<current.VisualNode>, TypeOnly<old.VisualNode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_VisualNodeBase": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_VisualNodeBase = requireAssignableTo<TypeOnly<old.VisualNodeBase>, TypeOnly<current.VisualNodeBase>>
@@ -806,24 +680,6 @@ declare type old_as_current_for_Interface_VisualNodeBase = requireAssignableTo<T
  * "Interface_VisualNodeBase": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_VisualNodeBase = requireAssignableTo<TypeOnly<current.VisualNodeBase>, TypeOnly<old.VisualNodeBase>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_VisualNodeKind": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_VisualNodeKind = requireAssignableTo<TypeOnly<old.VisualNodeKind>, TypeOnly<current.VisualNodeKind>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_VisualNodeKind": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_VisualNodeKind = requireAssignableTo<TypeOnly<current.VisualNodeKind>, TypeOnly<old.VisualNodeKind>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -862,13 +718,184 @@ declare type old_as_current_for_Interface_VisualValueNode = requireAssignableTo<
 declare type current_as_old_for_Interface_VisualValueNode = requireAssignableTo<TypeOnly<current.VisualValueNode>, TypeOnly<old.VisualValueNode>>
 
 /*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ContainerKey": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<old.ContainerKey>, TypeOnly<current.ContainerKey>>
+
+/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_createDevtoolsLogger": {"backCompat": false}
+ * "TypeAlias_ContainerKey": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createDevtoolsLogger = requireAssignableTo<TypeOnly<typeof current.createDevtoolsLogger>, TypeOnly<typeof old.createDevtoolsLogger>>
+declare type current_as_old_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<current.ContainerKey>, TypeOnly<old.ContainerKey>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_EditData": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_EditData = requireAssignableTo<TypeOnly<old.EditData>, TypeOnly<current.EditData>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_EditData": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_EditData = requireAssignableTo<TypeOnly<current.EditData>, TypeOnly<old.EditData>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_EditSharedObject": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_EditSharedObject = requireAssignableTo<TypeOnly<old.EditSharedObject>, TypeOnly<current.EditSharedObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_EditSharedObject": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_EditSharedObject = requireAssignableTo<TypeOnly<current.EditSharedObject>, TypeOnly<old.EditSharedObject>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_EditType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_EditType = requireAssignableTo<TypeOnly<old.EditType>, TypeOnly<current.EditType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_EditType": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_EditType = requireAssignableTo<TypeOnly<current.EditType>, TypeOnly<old.EditType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_FluidObjectId": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_FluidObjectId = requireAssignableTo<TypeOnly<old.FluidObjectId>, TypeOnly<current.FluidObjectId>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_FluidObjectId": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_FluidObjectId = requireAssignableTo<TypeOnly<current.FluidObjectId>, TypeOnly<old.FluidObjectId>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_FluidObjectNode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_FluidObjectNode = requireAssignableTo<TypeOnly<old.FluidObjectNode>, TypeOnly<current.FluidObjectNode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_FluidObjectNode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_FluidObjectNode = requireAssignableTo<TypeOnly<current.FluidObjectNode>, TypeOnly<old.FluidObjectNode>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Primitive": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_Primitive = requireAssignableTo<TypeOnly<old.Primitive>, TypeOnly<current.Primitive>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Primitive": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_Primitive = requireAssignableTo<TypeOnly<current.Primitive>, TypeOnly<old.Primitive>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_RootHandleNode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_RootHandleNode = requireAssignableTo<TypeOnly<old.RootHandleNode>, TypeOnly<current.RootHandleNode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_RootHandleNode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_RootHandleNode = requireAssignableTo<TypeOnly<current.RootHandleNode>, TypeOnly<old.RootHandleNode>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_VisualChildNode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_VisualChildNode = requireAssignableTo<TypeOnly<old.VisualChildNode>, TypeOnly<current.VisualChildNode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_VisualChildNode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_VisualChildNode = requireAssignableTo<TypeOnly<current.VisualChildNode>, TypeOnly<old.VisualChildNode>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_VisualNode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_VisualNode = requireAssignableTo<TypeOnly<old.VisualNode>, TypeOnly<current.VisualNode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_VisualNode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_VisualNode = requireAssignableTo<TypeOnly<current.VisualNode>, TypeOnly<old.VisualNode>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -884,33 +911,6 @@ declare type current_as_old_for_Variable_devtoolsMessageSource = requireAssignab
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_handleIncomingMessage": {"backCompat": false}
+ * "Variable_EditType": {"backCompat": false}
  */
-declare type current_as_old_for_Function_handleIncomingMessage = requireAssignableTo<TypeOnly<typeof current.handleIncomingMessage>, TypeOnly<typeof old.handleIncomingMessage>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_handleIncomingWindowMessage": {"backCompat": false}
- */
-declare type current_as_old_for_Function_handleIncomingWindowMessage = requireAssignableTo<TypeOnly<typeof current.handleIncomingWindowMessage>, TypeOnly<typeof old.handleIncomingWindowMessage>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_initializeDevtools": {"backCompat": false}
- */
-declare type current_as_old_for_Function_initializeDevtools = requireAssignableTo<TypeOnly<typeof current.initializeDevtools>, TypeOnly<typeof old.initializeDevtools>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_isDevtoolsMessage": {"backCompat": false}
- */
-declare type current_as_old_for_Function_isDevtoolsMessage = requireAssignableTo<TypeOnly<typeof current.isDevtoolsMessage>, TypeOnly<typeof old.isDevtoolsMessage>>
+declare type current_as_old_for_Variable_EditType = requireAssignableTo<TypeOnly<typeof current.EditType>, TypeOnly<typeof old.EditType>>

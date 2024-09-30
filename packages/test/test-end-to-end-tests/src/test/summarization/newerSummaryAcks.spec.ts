@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type {
-	ContainerRuntime,
 	ISummaryAckMessage,
 	ISummaryOpMessage,
 	Summarizer,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	MessageType,
 	type ISequencedDocumentMessage,
@@ -42,7 +42,7 @@ type SummarizerWithPrivates = WithPrivates<
 	Summarizer,
 	{
 		summaryCollection: SummaryCollectionWithPrivates;
-		runtime: ContainerRuntime;
+		runtime: IContainerRuntime;
 	}
 >;
 

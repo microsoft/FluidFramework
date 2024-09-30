@@ -14,7 +14,6 @@ import {
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
@@ -22,7 +21,6 @@ import {
 	ModularChangeFamily,
 	type ModularChangeset,
 	type TreeChunk,
-	cursorForJsonableTreeNode,
 	fieldKinds,
 	type SchemaChange,
 } from "../../feature-libraries/index.js";
@@ -38,6 +36,7 @@ import type {
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
 import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
+import { singleJsonCursor } from "../json/index.js";
 
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
@@ -51,16 +50,13 @@ const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
 	dataChanges.push(change),
 );
 
-const nodeX = { type: leaf.string.name, value: "X" };
-const nodeY = { type: leaf.string.name, value: "Y" };
-
 // Side effects results in `dataChanges` being populated
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(cursorForJsonableTreeNode(nodeX));
+	.set(singleJsonCursor("X"));
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(cursorForJsonableTreeNode(nodeY));
+	.set(singleJsonCursor("Y"));
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];
@@ -74,6 +70,7 @@ const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: {
 		kind: forbidden.identifier,
+		types: new Set(),
 	},
 };
 const stSchemaChange: SharedTreeChange = {

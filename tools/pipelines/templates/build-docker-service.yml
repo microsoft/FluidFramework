@@ -156,41 +156,11 @@ extends:
       displayName: Build Stage
       dependsOn: [] # this stage doesn't depend on preceding stage
       variables:
-        - ${{ if eq(parameters.testBuild, true) }}:
-          - name: buildContainerName
-            value: test/${{ parameters.containerName }}
-        - ${{ else }}:
-          - name: buildContainerName
-            value: build/${{ parameters.containerName }}
-        - name: containerTagSuffix
-          value: $[ format('0.0.{0}', variables['Build.BuildNumber']) ]
-        - name: baseContainerTag
-          value: base:$(containerTagSuffix)
-        - ${{ if eq(parameters.shouldPushDockerImage, false) }}:
-          - name: containerTag
-            value: $(buildContainerName):$(containerTagSuffix)
-        - ${{ else }}:
-          - name: containerTag
-            value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
-          - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-            - name: latestContainerTag
-              value: $(containerRegistryUrl)/$(buildContainerName):latest
-          - ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/next') }}:
-            - name: latestContainerTag
-              value: $(containerRegistryUrl)/$(buildContainerName):next
-          - ${{ else }}:
-            # In this case we just want latestContainerTag defined so it gets replaced by ADO and Bash tasks don't
-            # complain about "command 'latestContainerTag' not found".
-            - name: latestContainerTag
-              value: ''
-        # tag the git repo when we published the docker image if the releaseKind is docker,
-        # otherwise tag with the publishing the packages (where the releaseKind is both or npm)
-        - ${{ if ne(parameters.releaseKind, 'docker') }}:
-          - name: tagNameOnReleaseImage
-            value:
-        - ${{ if eq(parameters.releaseKind, 'docker') }}:
-          - name: tagNameOnReleaseImage
-            value: ${{ parameters.tagName }}
+      - template: /tools/pipelines/templates/include-vars-docker.yml@self
+        parameters:
+          containerName: ${{ parameters.containerName }}
+          shouldPushDockerImage: ${{ parameters.shouldPushDockerImage }}
+          testBuild: ${{ parameters.testBuild }}
       jobs:
       - job: build
         displayName: Build Container - ${{ parameters.containerName }}
@@ -400,10 +370,10 @@ extends:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  flub list --no-private $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build --outFile $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev --outFile $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test --outFile $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.
@@ -565,7 +535,11 @@ extends:
               publishLocation: 'pipeline'
               sbomEnabled: false
 
-    # Publish stage
+    # Publish stages
+    # Note: normally (i.e. when the releaseKind is 'both') we tag the git repo when we publish the npm packages.
+    # This is also true if the releaseKind is 'npm' (meaning we only want to publish the npm packages).
+    # But if the releaseKind is 'docker' (meaning we only want to publish the docker images, not the npm packages),
+    # then those steps should tag the repo.
     - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
@@ -575,10 +549,26 @@ extends:
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
-      - template: /tools/pipelines/templates/include-publish-docker-service.yml@self
-        parameters:
-          containerRegistry: $(containerRegistryConnection)
-          containerTag: $(containerTag)
-          containerRegistryUrl: $(containerRegistryUrl)
-          containerName: ${{ parameters.containerName }}
-          tagName: $(tagNameOnReleaseImage)
+      - stage: publish_docker_official
+        dependsOn: build
+        displayName: Publish Official Docker Image
+        condition: and(succeeded(), eq(variables['release'], 'release'))
+        variables:
+        - template: /tools/pipelines/templates/include-vars-docker.yml@self
+          parameters:
+            containerName: ${{ parameters.containerName }}
+            shouldPushDockerImage: ${{ parameters.shouldPushDockerImage }}
+            testBuild: ${{ parameters.testBuild }}
+        jobs:
+        - template: /tools/pipelines/templates/include-publish-docker-service-steps.yml@self
+          parameters:
+            environment: container-registry-public
+            # $(containerRegistryConnection) and $(containerRegistryUrl) come from the container-registry-info variable
+            # group and need to be specified as runtime variables (variables from variable groups apparently are never
+            # available "statically" at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+            containerRegistry: $(containerRegistryConnection)
+            containerRegistryUrl: $(containerRegistryUrl)
+            containerTag: $(containerTag)
+            containerName: public/${{ parameters.containerName }}
+            ${{ if eq(parameters.releaseKind, 'docker') }}:
+              tagName: ${{ parameters.tagName }}

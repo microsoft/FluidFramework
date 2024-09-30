@@ -20,6 +20,33 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_Loader": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.Loader>, TypeOnly<current.Loader>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_Loader": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_Loader": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOnly<typeof current.Loader>, TypeOnly<typeof old.Loader>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Enum_ConnectionState": {"forwardCompat": false}
  */
 declare type old_as_current_for_Enum_ConnectionState = requireAssignableTo<TypeOnly<old.ConnectionState>, TypeOnly<current.ConnectionState>>
@@ -32,6 +59,51 @@ declare type old_as_current_for_Enum_ConnectionState = requireAssignableTo<TypeO
  * "Enum_ConnectionState": {"backCompat": false}
  */
 declare type current_as_old_for_Enum_ConnectionState = requireAssignableTo<TypeOnly<current.ConnectionState>, TypeOnly<old.ConnectionState>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isLocationRedirectionError": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isLocationRedirectionError = requireAssignableTo<TypeOnly<typeof current.isLocationRedirectionError>, TypeOnly<typeof old.isLocationRedirectionError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_loadContainerPaused": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_loadContainerPaused = requireAssignableTo<TypeOnly<typeof current.loadContainerPaused>, TypeOnly<typeof old.loadContainerPaused>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_resolveWithLocationRedirectionHandling": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_resolveWithLocationRedirectionHandling = requireAssignableTo<TypeOnly<typeof current.resolveWithLocationRedirectionHandling>, TypeOnly<typeof old.resolveWithLocationRedirectionHandling>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_tryParseCompatibleResolvedUrl": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_tryParseCompatibleResolvedUrl = requireAssignableTo<TypeOnly<typeof current.tryParseCompatibleResolvedUrl>, TypeOnly<typeof old.tryParseCompatibleResolvedUrl>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_waitContainerToCatchUp": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_waitContainerToCatchUp = requireAssignableTo<TypeOnly<typeof current.waitContainerToCatchUp>, TypeOnly<typeof old.waitContainerToCatchUp>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -86,24 +158,6 @@ declare type old_as_current_for_Interface_IContainerExperimental = requireAssign
  * "Interface_IContainerExperimental": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IContainerExperimental = requireAssignableTo<TypeOnly<current.IContainerExperimental>, TypeOnly<old.IContainerExperimental>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IDetachedBlobStorage": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_IDetachedBlobStorage = requireAssignableTo<TypeOnly<old.IDetachedBlobStorage>, TypeOnly<current.IDetachedBlobStorage>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IDetachedBlobStorage": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_IDetachedBlobStorage = requireAssignableTo<TypeOnly<current.IDetachedBlobStorage>, TypeOnly<old.IDetachedBlobStorage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -254,27 +308,18 @@ declare type current_as_old_for_Interface_IScribeProtocolState = requireAssignab
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_Loader": {"forwardCompat": false}
+ * "TypeAlias_IDetachedBlobStorage": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.Loader>, TypeOnly<current.Loader>>
+declare type old_as_current_for_TypeAlias_IDetachedBlobStorage = requireAssignableTo<TypeOnly<old.IDetachedBlobStorage>, TypeOnly<current.IDetachedBlobStorage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_Loader": {"backCompat": false}
+ * "TypeAlias_IDetachedBlobStorage": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_Loader": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOnly<typeof current.Loader>, TypeOnly<typeof old.Loader>>
+declare type current_as_old_for_TypeAlias_IDetachedBlobStorage = requireAssignableTo<TypeOnly<current.IDetachedBlobStorage>, TypeOnly<old.IDetachedBlobStorage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -329,48 +374,3 @@ declare type old_as_current_for_TypeAlias_QuorumProposalsSnapshot = requireAssig
  * "TypeAlias_QuorumProposalsSnapshot": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_QuorumProposalsSnapshot = requireAssignableTo<TypeOnly<current.QuorumProposalsSnapshot>, TypeOnly<old.QuorumProposalsSnapshot>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_isLocationRedirectionError": {"backCompat": false}
- */
-declare type current_as_old_for_Function_isLocationRedirectionError = requireAssignableTo<TypeOnly<typeof current.isLocationRedirectionError>, TypeOnly<typeof old.isLocationRedirectionError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_loadContainerPaused": {"backCompat": false}
- */
-declare type current_as_old_for_Function_loadContainerPaused = requireAssignableTo<TypeOnly<typeof current.loadContainerPaused>, TypeOnly<typeof old.loadContainerPaused>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_resolveWithLocationRedirectionHandling": {"backCompat": false}
- */
-declare type current_as_old_for_Function_resolveWithLocationRedirectionHandling = requireAssignableTo<TypeOnly<typeof current.resolveWithLocationRedirectionHandling>, TypeOnly<typeof old.resolveWithLocationRedirectionHandling>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_tryParseCompatibleResolvedUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_tryParseCompatibleResolvedUrl = requireAssignableTo<TypeOnly<typeof current.tryParseCompatibleResolvedUrl>, TypeOnly<typeof old.tryParseCompatibleResolvedUrl>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_waitContainerToCatchUp": {"backCompat": false}
- */
-declare type current_as_old_for_Function_waitContainerToCatchUp = requireAssignableTo<TypeOnly<typeof current.waitContainerToCatchUp>, TypeOnly<typeof old.waitContainerToCatchUp>>

@@ -208,21 +208,39 @@ export class GitRepo {
 	 */
 	public async getModifiedFiles(): Promise<string[]> {
 		const results = await this.exec(`status --porcelain`, `get modified files`);
-		return results
-			.split("\n")
-			.filter((t) => t !== "" && !t.startsWith(" D "))
-			.map((t) => t.substring(3));
+		return (
+			results
+				.split("\n")
+				// Filter out empty lines and files that are deleted locally.
+				// Deleted files are marked with D in the first (staged) or second (unstaged) column.
+				// If a file is deleted in staged and then revived in unstaged, it will have two entries.
+				// The first entry will be "D " and the second entry will be "??". The second entry is
+				// will be enough to keep it.
+				.filter((t) => t !== "" && !t.match(/^.?D /))
+				.map((t) => t.substring(3))
+		);
 	}
 
 	/**
-	 * Returns an array containing repo root-relative paths to files that are deleted in the working tree.
+	 * Returns a set containing repo root-relative paths to files that are deleted in the working tree.
 	 */
-	public async getDeletedFiles(): Promise<string[]> {
+	public async getDeletedFiles(): Promise<Set<string>> {
 		const results = await this.exec(`status --porcelain`, `get deleted files`);
-		return results
-			.split("\n")
-			.filter((t) => t.startsWith(" D "))
+		const allStatus = results.split("\n");
+		// Deleted files are marked with D in the first (staged) or second (unstaged) column.
+		// If a file is deleted in staged and then revived in unstaged, it will have two entries.
+		// The first entry will be "D " and the second entry will be "??". Look for unstaged
+		// files and remove them from deleted set.
+		const deletedFiles = new Set(
+			allStatus.filter((t) => t.match(/^.?D /)).map((t) => t.substring(3)),
+		);
+		const untrackedFiles = allStatus
+			.filter((t) => t.startsWith("??"))
 			.map((t) => t.substring(3));
+		for (const untrackedFile of untrackedFiles) {
+			deletedFiles.delete(untrackedFile);
+		}
+		return deletedFiles;
 	}
 
 	/**
@@ -241,19 +259,27 @@ export class GitRepo {
 		 * --cached: Includes cached (staged) files.
 		 * --others: Includes other (untracked) files that are not ignored.
 		 * --exclude-standard: Excludes files that are ignored by standard ignore rules.
-		 * --deduplicate: Removes duplicate entries from the output.
 		 * --full-name: Shows the full path of the files relative to the repository root.
 		 * ```
+		 *
+		 * Note that `--deduplicate` is not used here because it is not available until git version 2.31.0.
 		 */
-		const command = `ls-files --cached --others --exclude-standard --deduplicate --full-name -- ${directory}`;
+		const command = `ls-files --cached --others --exclude-standard --full-name ${directory}`;
 		const [fileResults, deletedFiles] = await Promise.all([
 			this.exec(command, `get files`),
 			this.getDeletedFiles(),
 		]);
 
+		// Deduplicate the list of files by building a Set.
 		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
 		// those from the full list.
-		const allFiles = new Set(fileResults.split("\n").map((line) => line.trim()));
+		const allFiles = new Set(
+			fileResults
+				.split("\n")
+				.map((line) => line.trim())
+				// filter out empty lines
+				.filter((line) => line !== ""),
+		);
 
 		for (const deletedFile of deletedFiles) {
 			allFiles.delete(deletedFile);

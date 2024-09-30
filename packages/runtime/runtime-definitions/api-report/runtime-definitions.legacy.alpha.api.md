@@ -65,7 +65,7 @@ export interface IAttachMessage {
     type: string;
 }
 
-// @alpha
+// @alpha @sealed
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;
@@ -79,6 +79,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly disposed: boolean;
     generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
     getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
@@ -91,7 +92,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @alpha (undocumented)
+// @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
     (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;

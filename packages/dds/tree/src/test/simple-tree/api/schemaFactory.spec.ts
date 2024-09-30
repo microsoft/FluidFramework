@@ -31,6 +31,8 @@ import {
 	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
@@ -324,7 +326,7 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Stored key collides with view key", () => {
+		it("Stored key collides with property key", () => {
 			const schema = new SchemaFactory("com.example");
 			assert.throws(
 				() =>
@@ -342,7 +344,7 @@ describe("schemaFactory", () => {
 
 		// This is a somewhat neurotic test case, and likely not something we would expect a user to do.
 		// But just in case, we should ensure it is handled correctly.
-		it("Stored key / view key swap", () => {
+		it("Stored key / property key swap", () => {
 			const schema = new SchemaFactory("com.example");
 			assert.doesNotThrow(() =>
 				schema.object("Object", {
@@ -352,13 +354,31 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Explicit stored key === view key", () => {
+		it("Explicit stored key === property key", () => {
 			const schema = new SchemaFactory("com.example");
 			assert.doesNotThrow(() =>
 				schema.object("Object", {
 					foo: schema.optional(schema.string, { key: "foo" }),
 				}),
 			);
+		});
+
+		it("Field Metadata", () => {
+			const schemaFactory = new SchemaFactory("com.example");
+			const barMetadata = {
+				description: "Bar",
+				custom: { prop1: "Custom metadata property." },
+			};
+
+			class Foo extends schemaFactory.object("Foo", {
+				bar: schemaFactory.required(schemaFactory.number, { metadata: barMetadata }),
+			}) {}
+
+			const foo = hydrate(Foo, { bar: 37 });
+
+			const schema = Tree.schema(foo) as ObjectNodeSchema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
 		});
 
 		describe("deep equality", () => {

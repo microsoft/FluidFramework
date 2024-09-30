@@ -21,7 +21,7 @@ import type {
 	TreeNodeSchemaClass,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
-import type { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./toMapTree.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
@@ -76,15 +76,15 @@ export enum FieldKind {
 }
 
 /**
- * Maps from a view key to its corresponding {@link FieldProps.key | stored key} for the provided
+ * Maps from a property key to its corresponding {@link FieldProps.key | stored key} for the provided
  * {@link ImplicitFieldSchema | field schema}.
  *
  * @remarks
  * If an explicit stored key was specified in the schema, it will be used.
- * Otherwise, the stored key is the same as the view key.
+ * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
-	return brand(getExplicitStoredKey(fieldSchema) ?? viewKey);
+export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
 /**
@@ -98,9 +98,12 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
 /**
  * Additional information to provide to a {@link FieldSchema}.
  *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
  * @public
  */
-export interface FieldProps {
+export interface FieldProps<TCustomMetadata = unknown> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -152,12 +155,19 @@ export interface FieldProps {
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
 	readonly key?: string;
+
 	/**
 	 * A default provider used for fields which were not provided any values.
 	 * @privateRemarks
 	 * We are using an erased type here, as we want to expose this API but `InsertableContent` and `NodeKeyManager` are not public.
 	 */
 	readonly defaultProvider?: DefaultProvider;
+
+	/**
+	 * Optional metadata to associate with the field.
+	 * @remarks Note: this metadata is not persisted in the document.
+	 */
+	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
 
 /**
@@ -187,7 +197,7 @@ export function isConstant(
  * Provides a default value for a field.
  * @remarks
  * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
@@ -200,16 +210,43 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
 }
 
 /**
+ * Metadata associated with a {@link FieldSchema}.
+ *
+ * @remarks Specified via {@link FieldProps.metadata}.
+ *
+ * @sealed
+ * @public
+ */
+export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
+	/**
+	 * User-defined metadata.
+	 */
+	readonly custom?: TCustomMetadata;
+
+	/**
+	 * The description of the field.
+	 *
+	 * @remarks
+	 *
+	 * If provided, will be used by the system in scenarios where a description of the field is useful.
+	 * E.g., when converting a field schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * used as the `description` field.
+	 */
+	readonly description?: string | undefined;
+}
+
+/**
  * Package internal construction API.
  */
 export let createFieldSchema: <
 	Kind extends FieldKind = FieldKind,
 	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	allowedTypes: Types,
-	props?: FieldProps,
-) => FieldSchema<Kind, Types>;
+	props?: FieldProps<TCustomMetadata>,
+) => FieldSchema<Kind, Types, TCustomMetadata>;
 
 /**
  * All policy for a specific field,
@@ -220,20 +257,26 @@ export let createFieldSchema: <
  * @privateRemarks
  * Public access to the constructor is removed to prevent creating expressible but unsupported (or not stable) configurations.
  * {@link createFieldSchema} can be used internally to create instances.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
  * @sealed @public
  */
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	out TCustomMetadata = unknown,
 > {
 	static {
 		createFieldSchema = <
 			Kind2 extends FieldKind = FieldKind,
 			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+			TCustomMetadata2 = unknown,
 		>(
 			kind: Kind2,
 			allowedTypes: Types2,
-			props?: FieldProps,
+			props?: FieldProps<TCustomMetadata2>,
 		) => new FieldSchema(kind, allowedTypes, props);
 	}
 	/**
@@ -257,6 +300,13 @@ export class FieldSchema<
 	 */
 	public readonly requiresValue: boolean;
 
+	/**
+	 * {@inheritDoc FieldProps.metadata}
+	 */
+	public get metadata(): FieldSchemaMetadata<TCustomMetadata> | undefined {
+		return this.props?.metadata;
+	}
+
 	private constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
@@ -270,7 +320,7 @@ export class FieldSchema<
 		/**
 		 * Optional properties associated with the field.
 		 */
-		public readonly props?: FieldProps,
+		public readonly props?: FieldProps<TCustomMetadata>,
 	) {
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
 		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
@@ -360,7 +410,7 @@ export type InsertableTreeFieldFromImplicitField<
 /**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
- * @public
+ * @system @public
  */
 export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
 	[FieldKind.Required]: T;
@@ -420,7 +470,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * This could be changed if needed.
  *
  * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
- * @public
+ * @system @public
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,

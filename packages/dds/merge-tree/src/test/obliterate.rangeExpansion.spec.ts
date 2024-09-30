@@ -13,28 +13,25 @@ function itCorrectlyObliterates({
 	title,
 	action,
 	expectedText,
-	expectedEventCount,
 }: {
 	title: string;
 	action: (helper: ReconnectTestHelper) => void;
 	expectedText: string;
-	expectedEventCount: number;
 }): Mocha.Test {
 	return it(title, () => {
 		const events: number[] = [];
 
-		const helper = new ReconnectTestHelper();
+		const helper = new ReconnectTestHelper({
+			// TODO: uncomment this once the flag is checked in
+			/* mergeTreeEnableSidedObliterate: true */
+		});
 		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
 			events.push(deltaArgs.operation);
 		});
 		action(helper);
 		helper.processAllOps();
-		assert.equal(helper.clients.A.getText(), expectedText);
-		assert.equal(helper.clients.B.getText(), expectedText);
-		assert.equal(helper.clients.C.getText(), expectedText);
-		assert.equal(events.length, expectedEventCount, `events: ${events.join(", ")}`);
 
-		helper.logger.validate();
+		helper.logger.validate({ baseText: expectedText });
 	});
 }
 
@@ -44,15 +41,14 @@ describe.skip("obliterate", () => {
 		action: (helper) => {
 			helper.insertText("A", 0, "|ABC>");
 			helper.processAllOps();
-			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 4, side: Side.After });
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 4, side: Side.Before });
 			// not concurrent to A's obliterate - ops on the same client are never concurrent to one another
 			// because they are all sequenced locally
-			helper.insertText("A", 1, "XYZ");
-			helper.obliterateRange("B", { pos: 0, side: Side.After }, { pos: 4, side: Side.After });
-			helper.insertText("B", 1, "XYZ");
+			helper.insertText("A", 1, "AAA");
+			helper.obliterateRange("B", { pos: 0, side: Side.After }, { pos: 4, side: Side.Before });
+			helper.insertText("B", 1, "BBB");
 		},
-		expectedText: "|XYZ>",
-		expectedEventCount: 3,
+		expectedText: "|BBB>",
 	});
 	itCorrectlyObliterates({
 		title: "does not obliterate non-adjacent insert",
@@ -63,8 +59,89 @@ describe.skip("obliterate", () => {
 			// do not obliterate the XYZ - outside the obliterated range without expansion
 			helper.insertText("B", 0, "XYZ");
 		},
-		expectedText: "XYZheo world",
-		expectedEventCount: 3,
+		expectedText: "XYZhe world",
+	});
+	itCorrectlyObliterates({
+		title: "zero length obliterate in the middle of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.Before });
+			helper.insertText("B", 0, "more ");
+		},
+		expectedText: "hello world",
+	});
+	itCorrectlyObliterates({
+		title: "obliterate, then insert at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange(
+				"A",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+			helper.insertText("B", 10, "123");
+		},
+		expectedText: "hello",
+	});
+	itCorrectlyObliterates({
+		title: "insert, then obliterate at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.insertText("A", 10, "123");
+			helper.obliterateRange(
+				"B",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+		},
+		expectedText: "hello",
+	});
+	itCorrectlyObliterates({
+		title: "zero length obliterate in the middle of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.Before });
+			helper.insertText("B", 0, "more ");
+		},
+		expectedText: "hello world",
+	});
+	itCorrectlyObliterates({
+		title: "obliterate, then insert at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.obliterateRange(
+				"A",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+			helper.insertText("B", 10, "123");
+		},
+		expectedText: "hello",
+	});
+	itCorrectlyObliterates({
+		title: "insert, then obliterate at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.insertText("A", 10, "123");
+			helper.obliterateRange(
+				"B",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+		},
+		expectedText: "hello",
 	});
 });
 
@@ -79,27 +156,25 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange(
 				"A",
 				{ pos: 0, side: Side.Before },
-				{ pos: text.length, side: Side.After },
+				{ pos: text.length - 1, side: Side.After },
 			);
 			helper.obliterateRange(
 				"B",
 				{ pos: 0, side: Side.Before },
-				{ pos: text.length, side: Side.After },
+				{ pos: text.length - 1, side: Side.After },
 			);
 		},
 		expectedText: "",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "adjacent obliterates",
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
-			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
-			helper.obliterateRange("B", { pos: 4, side: Side.Before }, { pos: 6, side: Side.After });
+			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 3, side: Side.After });
+			helper.obliterateRange("B", { pos: 4, side: Side.Before }, { pos: 5, side: Side.After });
 		},
 		expectedText: "heworld",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "remove within obliterated range",
@@ -109,8 +184,7 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 5, side: Side.After });
 			helper.removeRange("B", 3, 4);
 		},
-		expectedText: "he world",
-		expectedEventCount: 2,
+		expectedText: "heworld",
 	});
 	itCorrectlyObliterates({
 		title: "obliterate, then remove adjacent to range start",
@@ -120,8 +194,7 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange("A", { pos: 1, side: Side.After }, { pos: 5, side: Side.After });
 			helper.removeRange("B", 1, 2);
 		},
-		expectedText: "he world",
-		expectedEventCount: 2,
+		expectedText: "hworld",
 	});
 	itCorrectlyObliterates({
 		title: "obliterate, then remove adjacent to range end",
@@ -131,8 +204,7 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			helper.removeRange("B", 4, 6);
 		},
-		expectedText: "he world",
-		expectedEventCount: 2,
+		expectedText: "heworld",
 	});
 	itCorrectlyObliterates({
 		title: "remove, then obliterate adjacent to range start",
@@ -143,7 +215,6 @@ describe.skip("overlapping edits", () => {
 			helper.obliterateRange("B", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 		},
 		expectedText: "heworld",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "remove, then obliterate adjacent to range end",
@@ -153,8 +224,7 @@ describe.skip("overlapping edits", () => {
 			helper.removeRange("A", 2, 4);
 			helper.obliterateRange("B", { pos: 3, side: Side.After }, { pos: 6, side: Side.After });
 		},
-		expectedText: "heworld",
-		expectedEventCount: 3,
+		expectedText: "heorld",
 	});
 });
 
@@ -177,7 +247,6 @@ describe.skip("reconnect", () => {
 			helper.insertText("A", 2, "123");
 		},
 		expectedText: "heo world",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "add text, disconnect, obliterate, insert adjacent to obliterated range, reconnect",
@@ -196,7 +265,6 @@ describe.skip("reconnect", () => {
 			helper.submitDisconnectedOp("C", op);
 		},
 		expectedText: "heo world",
-		expectedEventCount: 2,
 	});
 });
 
@@ -223,10 +291,9 @@ describe.skip("sided obliterates", () => {
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
 			helper.obliterateRange("B", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			helper.insertText("C", 2, "123");
-			helper.insertText("C", 5, "456");
+			helper.insertText("C", 8, "456");
 		},
 		expectedText: "he world",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "2. A expand start endpoint, B expand end endpoint",
@@ -237,15 +304,18 @@ describe.skip("sided obliterates", () => {
 			helper.insertText("A", 0, "ABC");
 			helper.processAllOps();
 			helper.insertText("A", 2, "D");
-			// ( 1]: after 0, after 1 => A( B] C
-			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 2, side: Side.After });
+			// ( 1]: after 0, after 1 => A( B] D C
+			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.After });
 			// included in the range -- should get obliterated
-			helper.insertText("B", 2, "E");
-			// [1 ): before 1, before 2 => A [B )C
-			helper.obliterateRange("B", { pos: 1, side: Side.After }, { pos: 3, side: Side.Before });
+			helper.insertText("B", 1, "E");
+			// [1 ): before 1, before 2 => A E [B )C
+			helper.obliterateRange(
+				"B",
+				{ pos: 1, side: Side.Before },
+				{ pos: 3, side: Side.Before },
+			);
 		},
-		expectedText: "ADC",
-		expectedEventCount: 2,
+		expectedText: "AC",
 	});
 	itCorrectlyObliterates({
 		title: "3. A expand both endpoints, B expand start",
@@ -262,7 +332,6 @@ describe.skip("sided obliterates", () => {
 			helper.insertText("C", 4, "456");
 		},
 		expectedText: "he world",
-		expectedEventCount: 2,
 	});
 	itCorrectlyObliterates({
 		title: "4. A expand both endpoints, B expand end",
@@ -278,12 +347,11 @@ describe.skip("sided obliterates", () => {
 				{ pos: 2, side: Side.Before },
 				{ pos: 5, side: Side.Before },
 			);
-			helper.insertText("C", 2, "123");
+			helper.insertText("C", 2, "123"); // he123llo world
 			// for this to be interesting, might want to insert at 5
-			helper.insertText("C", 4, "456");
+			helper.insertText("C", 8, "456"); // he123llo456 world
 		},
 		expectedText: "he world",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "5. A expand neither endpoint, B expand start",
@@ -295,8 +363,9 @@ describe.skip("sided obliterates", () => {
 			helper.obliterateRange("A", { pos: 2, side: Side.Before }, { pos: 4, side: Side.After });
 			// ( 2, 4]: after 1, after 4 => h e( l l o] _ w o r l d
 			helper.obliterateRange("B", { pos: 1, side: Side.After }, { pos: 4, side: Side.After });
-			helper.insertText("C", 2, "123");
-			helper.insertText("C", 5, "456");
+
+			helper.insertText("C", 2, "123"); // h e( 123 l l o] _ w o r l d
+			helper.insertText("C", 8, "456"); // h e( 123 l l o) 456 _ w o r l d
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he456 world");
@@ -306,7 +375,6 @@ describe.skip("sided obliterates", () => {
 			helper.logger.validate();
 		},
 		expectedText: "he456 world",
-		expectedEventCount: 3,
 	});
 	itCorrectlyObliterates({
 		title: "6. A expand neither endpoint, B expand end",
@@ -322,8 +390,10 @@ describe.skip("sided obliterates", () => {
 				{ pos: 2, side: Side.Before },
 				{ pos: 5, side: Side.Before },
 			);
+
 			helper.insertText("C", 2, "123");
-			helper.insertText("C", 5, "456");
+			helper.insertText("C", 8, "456");
+
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he123 world");
@@ -333,6 +403,5 @@ describe.skip("sided obliterates", () => {
 			helper.logger.validate();
 		},
 		expectedText: "he123 world",
-		expectedEventCount: 3,
 	});
 });

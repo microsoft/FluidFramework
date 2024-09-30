@@ -28,6 +28,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
+	type RevertibleFactory,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
@@ -50,7 +51,6 @@ export {
 	type SharedTreeOptions,
 	ForestType,
 	type SharedTreeContentSnapshot,
-	type RevertibleFactory,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -58,6 +58,9 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	getBranch,
+	type TreeBranch,
+	type TreeBranchFork,
 } from "./shared-tree/index.js";
 
 export {
@@ -65,6 +68,7 @@ export {
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
+	type ViewableTree,
 	type ITree,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
@@ -82,6 +86,7 @@ export {
 	type TreeLeafValue,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
@@ -93,6 +98,7 @@ export {
 	type FieldProps,
 	type InternalTreeNode,
 	type WithType,
+	type NodeChangedData,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -111,6 +117,7 @@ export {
 	type FieldSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
+	type TreeNodeSchemaNonClass,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -124,6 +131,9 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
+	// Beta APIs
+	TreeBeta,
+	type TreeChangeEventsBeta,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
@@ -150,6 +160,7 @@ export {
 	type Covariant,
 	BrandedType,
 	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	type MakeNominal,
 } from "./util/index.js";
 

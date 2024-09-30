@@ -120,6 +120,12 @@ export {
 	shouldRetryNetworkError,
 } from "./runWithRetry";
 export { ISecretManager } from "./secretManager";
+export {
+	ICollaborationSession,
+	ICollaborationSessionClient,
+	ICollaborationSessionManager,
+	ICollaborationSessionTracker,
+} from "./collabSession";
 export { IStorageNameAllocator } from "./storageNameAllocator";
 export { IStorageNameRetriever } from "./storageNameRetriever";
 export {

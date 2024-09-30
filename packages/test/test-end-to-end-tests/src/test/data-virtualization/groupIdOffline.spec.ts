@@ -8,10 +8,8 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
@@ -51,7 +49,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		public get containerRuntime() {
-			return this.context.containerRuntime as ContainerRuntime;
+			return this.context.containerRuntime as IContainerRuntime;
 		}
 
 		public get loadingGroupId() {

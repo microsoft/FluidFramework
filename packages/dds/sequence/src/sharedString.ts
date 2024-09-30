@@ -20,6 +20,7 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
@@ -141,8 +142,10 @@ export type SharedStringSegment = TextSegment | Marker;
  * image or Fluid object that should be rendered with the text.
  * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export class SharedStringClass
+	// eslint-disable-next-line import/no-deprecated
 	extends SharedSegmentSequence<SharedStringSegment>
 	implements ISharedString
 {

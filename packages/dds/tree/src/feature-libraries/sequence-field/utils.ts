@@ -10,6 +10,7 @@ import {
 	type ChangesetLocalId,
 	type RevisionMetadataSource,
 	type RevisionTag,
+	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
@@ -118,10 +119,7 @@ export function isActiveReattach(
 }
 
 export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): boolean {
-	if (a === undefined || b === undefined) {
-		return a === b;
-	}
-	return areEqualChangeAtomIds(a, b);
+	return areEqualChangeAtomIdOpts(a, b);
 }
 
 export function getInputCellId(mark: Mark): CellId | undefined {

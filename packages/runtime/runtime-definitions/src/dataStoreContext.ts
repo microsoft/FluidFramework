@@ -119,6 +119,7 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
 /**
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
@@ -176,6 +177,7 @@ export interface IDataStore {
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -235,6 +237,14 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached;
+
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
+	 */
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.

@@ -20,96 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_AliasResult": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_AliasResult = requireAssignableTo<TypeOnly<old.AliasResult>, TypeOnly<current.AliasResult>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_AliasResult": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_AliasResult = requireAssignableTo<TypeOnly<current.AliasResult>, TypeOnly<old.AliasResult>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_AttributionInfo": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<old.AttributionInfo>, TypeOnly<current.AttributionInfo>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_AttributionInfo": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<current.AttributionInfo>, TypeOnly<old.AttributionInfo>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_AttributionKey": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_AttributionKey = requireAssignableTo<TypeOnly<old.AttributionKey>, TypeOnly<current.AttributionKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_AttributionKey": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_AttributionKey = requireAssignableTo<TypeOnly<current.AttributionKey>, TypeOnly<old.AttributionKey>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CreateChildSummarizerNodeFn": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeFn = requireAssignableTo<TypeOnly<old.CreateChildSummarizerNodeFn>, TypeOnly<current.CreateChildSummarizerNodeFn>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CreateChildSummarizerNodeFn": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeFn = requireAssignableTo<TypeOnly<current.CreateChildSummarizerNodeFn>, TypeOnly<old.CreateChildSummarizerNodeFn>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CreateChildSummarizerNodeParam": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeParam = requireAssignableTo<TypeOnly<old.CreateChildSummarizerNodeParam>, TypeOnly<current.CreateChildSummarizerNodeParam>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CreateChildSummarizerNodeParam": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeParam = requireAssignableTo<TypeOnly<current.CreateChildSummarizerNodeParam>, TypeOnly<old.CreateChildSummarizerNodeParam>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Enum_CreateSummarizerNodeSource": {"forwardCompat": false}
  */
 declare type old_as_current_for_Enum_CreateSummarizerNodeSource = requireAssignableTo<TypeOnly<old.CreateSummarizerNodeSource>, TypeOnly<current.CreateSummarizerNodeSource>>
@@ -122,42 +32,6 @@ declare type old_as_current_for_Enum_CreateSummarizerNodeSource = requireAssigna
  * "Enum_CreateSummarizerNodeSource": {"backCompat": false}
  */
 declare type current_as_old_for_Enum_CreateSummarizerNodeSource = requireAssignableTo<TypeOnly<current.CreateSummarizerNodeSource>, TypeOnly<old.CreateSummarizerNodeSource>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_DetachedAttributionKey": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_DetachedAttributionKey = requireAssignableTo<TypeOnly<old.DetachedAttributionKey>, TypeOnly<current.DetachedAttributionKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_DetachedAttributionKey": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_DetachedAttributionKey = requireAssignableTo<TypeOnly<current.DetachedAttributionKey>, TypeOnly<old.DetachedAttributionKey>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_FluidDataStoreRegistryEntry": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_FluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<old.FluidDataStoreRegistryEntry>, TypeOnly<current.FluidDataStoreRegistryEntry>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_FluidDataStoreRegistryEntry": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_FluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<current.FluidDataStoreRegistryEntry>, TypeOnly<old.FluidDataStoreRegistryEntry>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -200,6 +74,42 @@ declare type current_as_old_for_Enum_FlushModeExperimental = requireAssignableTo
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_AttributionInfo": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<old.AttributionInfo>, TypeOnly<current.AttributionInfo>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_AttributionInfo": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<current.AttributionInfo>, TypeOnly<old.AttributionInfo>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_DetachedAttributionKey": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_DetachedAttributionKey = requireAssignableTo<TypeOnly<old.DetachedAttributionKey>, TypeOnly<current.DetachedAttributionKey>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_DetachedAttributionKey": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_DetachedAttributionKey = requireAssignableTo<TypeOnly<current.DetachedAttributionKey>, TypeOnly<old.DetachedAttributionKey>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IAttachMessage": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IAttachMessage = requireAssignableTo<TypeOnly<old.IAttachMessage>, TypeOnly<current.IAttachMessage>>
@@ -214,15 +124,6 @@ declare type old_as_current_for_Interface_IAttachMessage = requireAssignableTo<T
 declare type current_as_old_for_Interface_IAttachMessage = requireAssignableTo<TypeOnly<current.IAttachMessage>, TypeOnly<old.IAttachMessage>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IContainerRuntimeBase": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IContainerRuntimeBase = requireAssignableTo<TypeOnly<old.IContainerRuntimeBase>, TypeOnly<current.IContainerRuntimeBase>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -230,15 +131,6 @@ declare type old_as_current_for_Interface_IContainerRuntimeBase = requireAssigna
  * "Interface_IContainerRuntimeBase": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IContainerRuntimeBase = requireAssignableTo<TypeOnly<current.IContainerRuntimeBase>, TypeOnly<old.IContainerRuntimeBase>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IContainerRuntimeBaseEvents": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IContainerRuntimeBaseEvents = requireAssignableTo<TypeOnly<old.IContainerRuntimeBaseEvents>, TypeOnly<current.IContainerRuntimeBaseEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -358,15 +250,6 @@ declare type old_as_current_for_Interface_IFluidDataStoreContextDetached = requi
 declare type current_as_old_for_Interface_IFluidDataStoreContextDetached = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextDetached>, TypeOnly<old.IFluidDataStoreContextDetached>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_IFluidDataStoreFactory": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_IFluidDataStoreFactory = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreFactory>, TypeOnly<typeof old.IFluidDataStoreFactory>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -383,15 +266,6 @@ declare type old_as_current_for_Interface_IFluidDataStoreFactory = requireAssign
  * "Interface_IFluidDataStoreFactory": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IFluidDataStoreFactory = requireAssignableTo<TypeOnly<current.IFluidDataStoreFactory>, TypeOnly<old.IFluidDataStoreFactory>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_IFluidDataStoreRegistry": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_IFluidDataStoreRegistry = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreRegistry>, TypeOnly<typeof old.IFluidDataStoreRegistry>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -518,22 +392,6 @@ declare type old_as_current_for_Interface_IProvideFluidDataStoreRegistry = requi
  * "Interface_IProvideFluidDataStoreRegistry": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IProvideFluidDataStoreRegistry = requireAssignableTo<TypeOnly<current.IProvideFluidDataStoreRegistry>, TypeOnly<old.IProvideFluidDataStoreRegistry>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterface_ISignalEnvelope": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterface_ISignalEnvelope": {"backCompat": false}
- */
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -720,24 +578,6 @@ declare type current_as_old_for_Interface_ITelemetryContextExt = requireAssignab
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_InboundAttachMessage": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<old.InboundAttachMessage>, TypeOnly<current.InboundAttachMessage>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_InboundAttachMessage": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<current.InboundAttachMessage>, TypeOnly<old.InboundAttachMessage>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_LocalAttributionKey": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_LocalAttributionKey = requireAssignableTo<TypeOnly<old.LocalAttributionKey>, TypeOnly<current.LocalAttributionKey>>
@@ -750,6 +590,132 @@ declare type old_as_current_for_Interface_LocalAttributionKey = requireAssignabl
  * "Interface_LocalAttributionKey": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_LocalAttributionKey = requireAssignableTo<TypeOnly<current.LocalAttributionKey>, TypeOnly<old.LocalAttributionKey>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_OpAttributionKey": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_OpAttributionKey = requireAssignableTo<TypeOnly<old.OpAttributionKey>, TypeOnly<current.OpAttributionKey>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_OpAttributionKey": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_OpAttributionKey = requireAssignableTo<TypeOnly<current.OpAttributionKey>, TypeOnly<old.OpAttributionKey>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_AliasResult": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_AliasResult = requireAssignableTo<TypeOnly<old.AliasResult>, TypeOnly<current.AliasResult>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_AliasResult": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_AliasResult = requireAssignableTo<TypeOnly<current.AliasResult>, TypeOnly<old.AliasResult>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_AttributionKey": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_AttributionKey = requireAssignableTo<TypeOnly<old.AttributionKey>, TypeOnly<current.AttributionKey>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_AttributionKey": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_AttributionKey = requireAssignableTo<TypeOnly<current.AttributionKey>, TypeOnly<old.AttributionKey>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CreateChildSummarizerNodeFn": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeFn = requireAssignableTo<TypeOnly<old.CreateChildSummarizerNodeFn>, TypeOnly<current.CreateChildSummarizerNodeFn>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CreateChildSummarizerNodeFn": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeFn = requireAssignableTo<TypeOnly<current.CreateChildSummarizerNodeFn>, TypeOnly<old.CreateChildSummarizerNodeFn>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CreateChildSummarizerNodeParam": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_CreateChildSummarizerNodeParam = requireAssignableTo<TypeOnly<old.CreateChildSummarizerNodeParam>, TypeOnly<current.CreateChildSummarizerNodeParam>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CreateChildSummarizerNodeParam": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_CreateChildSummarizerNodeParam = requireAssignableTo<TypeOnly<current.CreateChildSummarizerNodeParam>, TypeOnly<old.CreateChildSummarizerNodeParam>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_FluidDataStoreRegistryEntry": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_FluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<old.FluidDataStoreRegistryEntry>, TypeOnly<current.FluidDataStoreRegistryEntry>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_FluidDataStoreRegistryEntry": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_FluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<current.FluidDataStoreRegistryEntry>, TypeOnly<old.FluidDataStoreRegistryEntry>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InboundAttachMessage": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<old.InboundAttachMessage>, TypeOnly<current.InboundAttachMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InboundAttachMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_InboundAttachMessage = requireAssignableTo<TypeOnly<current.InboundAttachMessage>, TypeOnly<old.InboundAttachMessage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -792,24 +758,6 @@ declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry = req
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_OpAttributionKey": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_OpAttributionKey = requireAssignableTo<TypeOnly<old.OpAttributionKey>, TypeOnly<current.OpAttributionKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_OpAttributionKey": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_OpAttributionKey = requireAssignableTo<TypeOnly<current.OpAttributionKey>, TypeOnly<old.OpAttributionKey>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "TypeAlias_SummarizeInternalFn": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_SummarizeInternalFn = requireAssignableTo<TypeOnly<old.SummarizeInternalFn>, TypeOnly<current.SummarizeInternalFn>>
@@ -822,15 +770,6 @@ declare type old_as_current_for_TypeAlias_SummarizeInternalFn = requireAssignabl
  * "TypeAlias_SummarizeInternalFn": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_SummarizeInternalFn = requireAssignableTo<TypeOnly<current.SummarizeInternalFn>, TypeOnly<old.SummarizeInternalFn>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_VisibilityState": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_VisibilityState = requireAssignableTo<TypeOnly<typeof current.VisibilityState>, TypeOnly<typeof old.VisibilityState>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -918,6 +857,33 @@ declare type current_as_old_for_Variable_gcTreeKey = requireAssignableTo<TypeOnl
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_IFluidDataStoreFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_IFluidDataStoreFactory = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreFactory>, TypeOnly<typeof old.IFluidDataStoreFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_IFluidDataStoreRegistry": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_IFluidDataStoreRegistry = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreRegistry>, TypeOnly<typeof old.IFluidDataStoreRegistry>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Variable_totalBlobSizePropertyName": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_totalBlobSizePropertyName = requireAssignableTo<TypeOnly<typeof current.totalBlobSizePropertyName>, TypeOnly<typeof old.totalBlobSizePropertyName>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_VisibilityState": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_VisibilityState = requireAssignableTo<TypeOnly<typeof current.VisibilityState>, TypeOnly<typeof old.VisibilityState>>

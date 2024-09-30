@@ -168,6 +168,11 @@
 		},
 		"jwtTokenCache": {
 			"enable": true
+		},
+		"enableCollaborationSessionTracking": false,
+		"enableCollaborationSessionPruning": false,
+		"redisCollaborationSessionManagerOptions": {
+			"maxScanBatchSize": 800
 		}
 	},
 	"client": {

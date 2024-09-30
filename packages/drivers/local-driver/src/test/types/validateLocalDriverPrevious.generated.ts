@@ -34,15 +34,6 @@ declare type old_as_current_for_Class_LocalDeltaStorageService = requireAssignab
 declare type current_as_old_for_Class_LocalDeltaStorageService = requireAssignableTo<TypeOnly<current.LocalDeltaStorageService>, TypeOnly<old.LocalDeltaStorageService>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocalDeltaStorageService": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocalDeltaStorageService = requireAssignableTo<TypeOnly<typeof current.LocalDeltaStorageService>, TypeOnly<typeof old.LocalDeltaStorageService>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -59,15 +50,6 @@ declare type old_as_current_for_Class_LocalDocumentDeltaConnection = requireAssi
  * "Class_LocalDocumentDeltaConnection": {"backCompat": false}
  */
 declare type current_as_old_for_Class_LocalDocumentDeltaConnection = requireAssignableTo<TypeOnly<current.LocalDocumentDeltaConnection>, TypeOnly<old.LocalDocumentDeltaConnection>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocalDocumentDeltaConnection": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocalDocumentDeltaConnection = requireAssignableTo<TypeOnly<typeof current.LocalDocumentDeltaConnection>, TypeOnly<typeof old.LocalDocumentDeltaConnection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -88,15 +70,6 @@ declare type old_as_current_for_Class_LocalDocumentService = requireAssignableTo
 declare type current_as_old_for_Class_LocalDocumentService = requireAssignableTo<TypeOnly<current.LocalDocumentService>, TypeOnly<old.LocalDocumentService>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocalDocumentService": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocalDocumentService = requireAssignableTo<TypeOnly<typeof current.LocalDocumentService>, TypeOnly<typeof old.LocalDocumentService>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -113,15 +86,6 @@ declare type old_as_current_for_Class_LocalDocumentServiceFactory = requireAssig
  * "Class_LocalDocumentServiceFactory": {"backCompat": false}
  */
 declare type current_as_old_for_Class_LocalDocumentServiceFactory = requireAssignableTo<TypeOnly<current.LocalDocumentServiceFactory>, TypeOnly<old.LocalDocumentServiceFactory>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocalDocumentServiceFactory": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocalDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.LocalDocumentServiceFactory>, TypeOnly<typeof old.LocalDocumentServiceFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -142,15 +106,6 @@ declare type old_as_current_for_Class_LocalDocumentStorageService = requireAssig
 declare type current_as_old_for_Class_LocalDocumentStorageService = requireAssignableTo<TypeOnly<current.LocalDocumentStorageService>, TypeOnly<old.LocalDocumentStorageService>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocalDocumentStorageService": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocalDocumentStorageService = requireAssignableTo<TypeOnly<typeof current.LocalDocumentStorageService>, TypeOnly<typeof old.LocalDocumentStorageService>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -169,15 +124,6 @@ declare type old_as_current_for_Class_LocalResolver = requireAssignableTo<TypeOn
 declare type current_as_old_for_Class_LocalResolver = requireAssignableTo<TypeOnly<current.LocalResolver>, TypeOnly<old.LocalResolver>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocalResolver": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocalResolver = requireAssignableTo<TypeOnly<typeof current.LocalResolver>, TypeOnly<typeof old.LocalResolver>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -194,6 +140,60 @@ declare type old_as_current_for_Class_LocalSessionStorageDbFactory = requireAssi
  * "Class_LocalSessionStorageDbFactory": {"backCompat": false}
  */
 declare type current_as_old_for_Class_LocalSessionStorageDbFactory = requireAssignableTo<TypeOnly<current.LocalSessionStorageDbFactory>, TypeOnly<old.LocalSessionStorageDbFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalDeltaStorageService": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LocalDeltaStorageService = requireAssignableTo<TypeOnly<typeof current.LocalDeltaStorageService>, TypeOnly<typeof old.LocalDeltaStorageService>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalDocumentDeltaConnection": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LocalDocumentDeltaConnection = requireAssignableTo<TypeOnly<typeof current.LocalDocumentDeltaConnection>, TypeOnly<typeof old.LocalDocumentDeltaConnection>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalDocumentService": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LocalDocumentService = requireAssignableTo<TypeOnly<typeof current.LocalDocumentService>, TypeOnly<typeof old.LocalDocumentService>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalDocumentServiceFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LocalDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.LocalDocumentServiceFactory>, TypeOnly<typeof old.LocalDocumentServiceFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalDocumentStorageService": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LocalDocumentStorageService = requireAssignableTo<TypeOnly<typeof current.LocalDocumentStorageService>, TypeOnly<typeof old.LocalDocumentStorageService>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LocalResolver": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LocalResolver = requireAssignableTo<TypeOnly<typeof current.LocalResolver>, TypeOnly<typeof old.LocalResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

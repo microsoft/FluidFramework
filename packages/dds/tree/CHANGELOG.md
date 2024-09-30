@@ -1,5 +1,97 @@
 # @fluidframework/tree
 
+## 2.3.0
+
+### Minor Changes
+
+-   Add /alpha import path to @fluidframework/tree and fluid-framework packages ([#22483](https://github.com/microsoft/FluidFramework/pull/22483)) [12242cfdb5a](https://github.com/microsoft/FluidFramework/commit/12242cfdb5aa4c342cc62f11cbf1c072840bec44)
+
+    `@fluidframework/tree` and `fluid-framework` now have a `/alpha` import path where their `@alpha` APIs are exported.
+
+-   Refactor code for emitting events to make it easier to copy into other projects ([#22275](https://github.com/microsoft/FluidFramework/pull/22275)) [49849bb5f6b](https://github.com/microsoft/FluidFramework/commit/49849bb5f6bf92765bc63e19cdaf4f7d0498bebc)
+
+    Factored event emitting utilities into their own file, `events/emitter.ts`.
+    Applications wishing to use SharedTree's eventing library for custom events can copy this file (and its referenced utility function) as a starting point for defining and emitting their own custom events.
+    See `createEmitter`'s documentation for example usage.
+
+    Currently there are no published or officially supported versions of these utilities, but they are relatively simple, and can be copied and customized as needed.
+
+-   Implicitly constructed object nodes now only consider own properties during validation ([#22453](https://github.com/microsoft/FluidFramework/pull/22453)) [27faa56f5ae](https://github.com/microsoft/FluidFramework/commit/27faa56f5ae334e0b65fdd84c75764645e64f063)
+
+    When determining if some given data is compatible with a particular ObjectNode schema, both inherited and own properties were considered.
+    However, when constructing the node from this data, only own properties were used.
+    This allowed input which provided required values in inherited fields to pass validation.
+    When the node was constructed, it would lack these fields, and end up out of schema.
+    This has been fixed: both validation and node construction now only consider own properties.
+
+    This may cause some cases which previously exhibited data corruption to now throw a usage error reporting the data is incompatible.
+    Such cases may need to copy data from the objects with inherited properties into new objects with own properties before constructing nodes from them.
+
+-   A `@beta` version of `nodeChanged` which includes the list of properties has been added ([#22229](https://github.com/microsoft/FluidFramework/pull/22229)) [aae34dd9fe1](https://github.com/microsoft/FluidFramework/commit/aae34dd9fe1aa6c153c26035f1486f4d8944c810)
+
+    ```typescript
+    const factory = new SchemaFactory("example");
+    class Point2d extends factory.object("Point2d", {
+    	x: factory.number,
+    	y: factory.number,
+    }) {}
+
+    const point = new Point2d({ x: 0, y: 0 });
+
+    TreeBeta.on(point, "nodeChanged", (data) => {
+    	const changed: ReadonlySet<"x" | "y"> = data.changedProperties;
+    	if (changed.has("x")) {
+    		// ...
+    	}
+    });
+    ```
+
+    The payload of the `nodeChanged` event emitted by SharedTree's `TreeBeta` includes a `changedProperties` property that indicates
+    which properties of the node changed.
+
+    For object nodes, the list of properties uses the property identifiers defined in the schema, and not the persisted
+    identifiers (or "stored keys") that can be provided through `FieldProps` when defining a schema.
+    See the documentation for `FieldProps` for more details about the distinction between "property keys" and "stored keys".
+
+    For map nodes, every key that was added, removed, or updated by a change to the tree is included in the list of properties.
+
+    For array nodes, the set of properties will always be undefined: there is currently no API to get details about changes to an array.
+
+    Object nodes revieve strongly types sets of changed keys, allowing compile time detection of incorrect keys:
+
+    ```typescript
+    TreeBeta.on(point, "nodeChanged", (data) => {
+    	// @ts-expect-error Strong typing for changed properties of object nodes detects incorrect keys:
+    	if (data.changedProperties.has("z")) {
+    		// ...
+    	}
+    });
+    ```
+
+    The existing stable "nodeChanged" event's callback now is given a parameter called `unstable` of type `unknown` which is used to indicate that additional data can be provided there.
+    This could break existing code using "nodeChanged" in a particularly fragile way.
+
+    ```typescript
+    function f(optional?: number) {
+    	// ...
+    }
+    Tree.on(point, "nodeChanged", f); // Bad
+    ```
+
+    Code like this which is implicitly discarding an optional argument from the function used as the listener will be broken.
+    It can be fixed by using an inline lambda expression:
+
+    ```typescript
+    function f(optional?: number) {
+    	// ...
+    }
+    Tree.on(point, "nodeChanged", () => f()); // Safe
+    ```
+
+-   Make SharedTree usable with legacy APIs ([#22320](https://github.com/microsoft/FluidFramework/pull/22320)) [bbdf869b8a1](https://github.com/microsoft/FluidFramework/commit/bbdf869b8a1aae266bc8cb6f6016dcd8c22f0f88)
+
+    SharedTree was not previously exported in a way that made it usable with @fluidframework/aqueduct or other lower-level legacy APIs. This fixes that issue by making it consistent with other DDSes: such usages can `import { SharedTree } from "@fluidframework/tree/legacy";`.
+
 ## 2.2.0
 
 ### Minor Changes

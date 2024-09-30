@@ -219,6 +219,7 @@ export class Repository {
 	 * return all files in the repo use the value `"."`.
 	 */
 	public async getFiles(directory: string): Promise<string[]> {
+		// Note that `--deduplicate` is not used here because it is not available until git version 2.31.0.
 		const results = await this.gitClient.raw(
 			"ls-files",
 			// Includes cached (staged) files.
@@ -227,17 +228,21 @@ export class Repository {
 			"--others",
 			// Excludes files that are ignored by standard ignore rules.
 			"--exclude-standard",
-			// Removes duplicate entries from the output.
-			"--deduplicate",
 			// Shows the full path of the files relative to the repository root.
 			"--full-name",
-			"--",
 			directory,
 		);
 
+		// Deduplicate the list of files by building a Set.
 		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
 		// those from the full list.
-		const allFiles = new Set(results.split("\n").map((line) => line.trim()));
+		const allFiles = new Set(
+			results
+				.split("\n")
+				.map((line) => line.trim())
+				// filter out empty lines
+				.filter((line) => line !== ""),
+		);
 		const status = await this.gitClient.status();
 		for (const deletedFile of status.deleted) {
 			allFiles.delete(deletedFile);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ChangeFamilyEditor, TreeStoredSchema } from "../core/index.js";
 import {
 	DefaultEditBuilder,
@@ -48,11 +49,15 @@ export class SharedTreeEditBuilder
 	public constructor(
 		modularChangeFamily: ModularChangeFamily,
 		private readonly changeReceiver: (change: SharedTreeChange) => void,
+		idCompressor?: IIdCompressor,
 	) {
-		super(modularChangeFamily, (change) =>
-			changeReceiver({
-				changes: [{ type: "data", innerChange: change }],
-			}),
+		super(
+			modularChangeFamily,
+			(change) =>
+				changeReceiver({
+					changes: [{ type: "data", innerChange: change }],
+				}),
+			idCompressor,
 		);
 
 		this.schema = {
