@@ -22,9 +22,8 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions, ReferencePosition, type SequencePlace } from "../index.js";
+import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	backwardExcursion,
 	forwardExcursion,
@@ -189,26 +188,6 @@ export class TestClient extends Client {
 		});
 	}
 
-	public obliterateRange({
-		start,
-		end,
-		refSeq,
-		clientId,
-		seq,
-		overwrite = false,
-		opArgs,
-	}: {
-		start: SequencePlace;
-		end: SequencePlace;
-		refSeq: number;
-		clientId: number;
-		seq: number;
-		overwrite?: boolean;
-		opArgs: IMergeTreeDeltaOpArgs;
-	}): void {
-		this.mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
-	}
-
 	public getText(start?: number, end?: number): string {
 		return this.textHelper.getText(this.getCurrentSeq(), this.getClientId(), "", start, end);
 	}
@@ -245,10 +224,7 @@ export class TestClient extends Client {
 		text: string,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = TextSegment.make(text, props);
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -260,10 +236,7 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = TextSegment.make(text, props);
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);
@@ -299,10 +272,8 @@ export class TestClient extends Client {
 		behaviors: ReferenceType,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new Marker(behaviors);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = Marker.make(behaviors, props);
+
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -314,10 +285,8 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new Marker(markerDef.refType ?? ReferenceType.Tile);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = Marker.make(markerDef.refType ?? ReferenceType.Tile, props);
+
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);

@@ -490,7 +490,7 @@ export interface INackSummaryResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
-// @alpha
+// @alpha @deprecated
 export const InactiveResponseHeaderKey = "isInactive";
 
 // @alpha (undocumented)
@@ -709,6 +709,21 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     // (undocumented)
     readonly stage: "upload";
     readonly uploadDuration: number;
+}
+
+// @alpha
+export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
+
+// @alpha
+export interface LoadContainerRuntimeParams {
+    containerScope?: FluidObject;
+    context: IContainerContext;
+    existing: boolean;
+    provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
+    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @alpha @deprecated (undocumented)

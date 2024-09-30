@@ -62,7 +62,7 @@ export class OpGroupingManager {
 	): IBatch<[BatchMessage]> {
 		assert(
 			this.config.groupedBatchingEnabled,
-			"cannot create empty grouped batch when grouped batching is disabled",
+			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
@@ -99,9 +99,7 @@ export class OpGroupingManager {
 				length: batch.messages.length,
 				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
+				referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 			});
 		}
 		// We expect this will be on the first message, if present at all.
@@ -130,9 +128,7 @@ export class OpGroupingManager {
 			messages: [
 				{
 					metadata: { batchId: groupedBatchId },
-					// TODO why are we non null asserting here?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
+					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],

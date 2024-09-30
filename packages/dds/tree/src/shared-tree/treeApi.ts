@@ -4,21 +4,21 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { Context, TreeStatus } from "../feature-libraries/index.js";
+import { TreeStatus } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
 	type TreeNodeApi,
 	type TreeView,
-	getFlexNode,
+	getOrCreateInnerNode,
 	treeNodeApi,
 } from "../simple-tree/index.js";
-import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { contextToTreeView } from "./treeView.js";
+import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
@@ -324,9 +324,7 @@ export interface RunTransaction {
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the public `Tree` export.
- * @privateRemarks
- * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface TreeApi extends TreeNodeApi {
 	/**
@@ -435,11 +433,13 @@ export function runTransaction<
 	} else {
 		const node = treeOrNode as TNode;
 		const t = transaction as (node: TNode) => TResult | typeof rollback;
-		const context = getFlexNode(node).context;
-		assert(context instanceof Context, 0x901 /* Unsupported context */);
-		const treeView =
-			contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
-
+		const context = getOrCreateInnerNode(node).context;
+		if (context.isHydrated() === false) {
+			throw new UsageError(
+				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
+			);
+		}
+		const treeView = getCheckoutFlexTreeView(context);
 		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
 	}
 }
@@ -453,7 +453,7 @@ function runTransactionInCheckout<TResult>(
 	for (const constraint of preconditions) {
 		switch (constraint.type) {
 			case "nodeInDocument": {
-				const node = getFlexNode(constraint.node);
+				const node = getOrCreateInnerNode(constraint.node);
 				assert(
 					treeApi.status(constraint.node) === TreeStatus.InDocument,
 					0x90f /* Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document. */,

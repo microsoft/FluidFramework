@@ -58,9 +58,6 @@ parameters:
     - packages/dds/merge-tree
     testFileTarName: matrix
     testCommand: test:stress
-- name: stressMode
-  type: string
-  default: normal
 
 
 stages:

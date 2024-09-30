@@ -10,7 +10,8 @@ export {
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
-	isRuntimeMessage,
+	loadContainerRuntime,
+	LoadContainerRuntimeParams,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,
@@ -37,7 +38,6 @@ export {
 	RuntimeHeaders,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 } from "./channelCollection.js";
 export {
 	GCNodeType,

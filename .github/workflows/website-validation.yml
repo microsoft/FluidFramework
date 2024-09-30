@@ -6,7 +6,9 @@ on:
       - "docs/**"
       - "*.md"
       - "**/*.md"
+      - "!.changeset/**"
       - "!build-tools/**"
+      - "!RELEASE_NOTES/**"
       - "!server/**"
 
 defaults:

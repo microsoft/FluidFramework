@@ -39,6 +39,7 @@ import {
 	createAndAttachContainer,
 	ITestFluidObject,
 	type ITestObjectProvider,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 import {
 	ITree,
@@ -46,7 +47,7 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "@fluidframework/tree";
-import { SharedTree, type ISharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -323,7 +324,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				return this.downCast(tree);
 			},
 			downCast(channel): HandleStorage {
-				const view: TreeView<typeof Bar> = treeSetup(channel as ISharedTree);
+				const view: TreeView<typeof Bar> = treeSetup(channel as IFluidLoadable as ITree);
 
 				return {
 					id: channel.id,
@@ -376,14 +377,25 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						await queue.add(handle);
 					},
 					async readHandle(): Promise<unknown> {
-						const value = await new Promise((resolve, reject) => {
-							queue
-								.acquire(async (result: FluidObject) => {
-									resolve(result);
-									return ConsensusResult.Release;
-								})
-								.catch((error) => reject(error));
-						});
+						const value = await timeoutAwait(
+							new Promise((resolve, reject) => {
+								queue
+									.acquire(async (result: FluidObject) => {
+										resolve(result);
+										return ConsensusResult.Release;
+									})
+									.then((wasNonempty) => {
+										if (!wasNonempty) {
+											// This could happen if a test never calls `storeHandle` before attempting to read it.
+											// Other modes of failure are possible (e.g. correctness issues in ConsensusQueue causing it to have the wrong data).
+											// Resolving the promise with `undefined` here could be another reasonable option, but this gives slightly more information.
+											reject(new Error("No values found in consensus queue."));
+										}
+									})
+									.catch((error) => reject(error));
+							}),
+							{ errorMsg: "Timeout waiting for acquiring value from consensus queue." },
+						);
 						return value;
 					},
 					handle: queue.handle,

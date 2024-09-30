@@ -27,7 +27,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { blobManagerBasePath } from "../blobManager/index.js";
-import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
+import { TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
 import { IRefreshSummaryResult } from "../summary/index.js";
@@ -47,7 +47,6 @@ import {
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	UnreferencedState,
-	disableAutoRecoveryKey,
 	type IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
 import {
@@ -790,9 +789,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 				} else {
-					// Non null asserting here because we are checking if it is undefined above.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					gcDataSuperSet.gcNodes[sourceNodeId]!.push(...outboundRoutes);
+					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
 				}
 				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
 			},
@@ -883,13 +880,6 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case GarbageCollectionMessageType.TombstoneLoaded: {
-				if (
-					!this.configs.tombstoneAutorecoveryEnabled ||
-					this.mc.config.getBoolean(disableAutoRecoveryKey) === true
-				) {
-					break;
-				}
-
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
 				this.addedOutboundReference(
@@ -985,8 +975,6 @@ export class GarbageCollector implements IGarbageCollector {
 		// trackedId will be either DataStore or Blob ID (not sub-DataStore ID, since some of those are unrecognized by GC)
 		const trackedId = node.path;
 		const isTombstoned = this.tombstones.includes(trackedId);
-		const isInactive = this.unreferencedNodesState.get(trackedId)?.state === "Inactive";
-
 		const fullPath = request !== undefined ? urlToGCNodePath(request.url) : trackedId;
 
 		// This will log if appropriate
@@ -1037,22 +1025,6 @@ export class GarbageCollector implements IGarbageCollector {
 				errorRequest,
 			);
 		}
-
-		// If the object is inactive and inactive enforcement is configured, throw an error.
-		if (isInactive) {
-			const shouldThrowOnInactiveLoad =
-				!this.isSummarizerClient &&
-				this.configs.throwOnInactiveLoad === true &&
-				headerData?.allowInactive !== true;
-			if (shouldThrowOnInactiveLoad) {
-				throw responseToException(
-					createResponseError(404, `${nodeType} is inactive`, errorRequest, {
-						[InactiveResponseHeaderKey]: true,
-					}),
-					errorRequest,
-				);
-			}
-		}
 	}
 
 	/**
@@ -1065,10 +1037,9 @@ export class GarbageCollector implements IGarbageCollector {
 	 * before runnint GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
-		if (
-			!this.configs.tombstoneAutorecoveryEnabled ||
-			this.mc.config.getBoolean(disableAutoRecoveryKey) === true
-		) {
+		// If sweep isn't enabled, auto-recovery isn't needed since its purpose is to prevent this object from being
+		// deleted. It also would end up sending a GC op which can break clients running FF version 1.x.
+		if (!this.configs.sweepEnabled) {
 			return;
 		}
 

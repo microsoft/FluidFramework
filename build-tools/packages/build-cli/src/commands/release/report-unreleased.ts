@@ -5,9 +5,12 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
+import { isInternalTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
+
+import { semverFlag } from "../../flags.js";
 import { BaseCommand, type ReleaseReport, toReportKind } from "../../library/index.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
@@ -18,7 +21,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
 
 	static readonly flags = {
-		version: Flags.string({
+		version: semverFlag({
 			description:
 				"Version to generate a report for. Typically, this version is the version of a dev build.",
 			required: true,
@@ -51,7 +54,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		try {
 			await generateReleaseReport(
 				fullReleaseReport,
-				flags.version,
+				flags.version.version,
 				flags.outDir,
 				flags.branchName,
 				this.logger,
@@ -207,6 +210,11 @@ async function updateReportVersions(
 
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split("-");
+
+	if (isInternalTestVersion(version)) {
+		return Number.parseInt(versionParts[1], 10);
+	}
+
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }

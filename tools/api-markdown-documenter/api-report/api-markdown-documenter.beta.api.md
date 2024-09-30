@@ -225,6 +225,18 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 }
 
 // @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
+
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
+
+// @public
 export enum DocumentationNodeType {
     BlockQuote = "BlockQuote",
     CodeSpan = "CodeSpan",
@@ -299,6 +311,9 @@ export interface DocumentNodeProps {
     readonly children: SectionNode[];
     readonly documentPath: string;
 }
+
+// @public
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
 export interface DocumentWriter {
@@ -488,8 +503,35 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
     readonly type = DocumentationNodeType.Link;
 }
 
+// @beta
+export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
+
+// @beta
+export interface LintApiModelConfiguration extends ConfigurationBase {
+    apiModel: ApiModel;
+}
+
+// @beta
+export interface LinterErrors {
+    readonly referenceErrors: ReadonlySet<LinterReferenceError>;
+}
+
+// @beta
+export interface LinterReferenceError {
+    readonly linkText: string | undefined;
+    readonly packageName: string;
+    readonly referenceTarget: string;
+    readonly sourceItem: string;
+    readonly tagName: string;
+}
+
 // @public
-export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
+export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
+
+// @public
+export interface LoadModelOptions extends ConfigurationBase {
+    readonly modelDirectoryPath: string;
+}
 
 // @public
 export interface Logger {
@@ -686,6 +728,28 @@ export interface TextFormatting {
     readonly bold?: boolean;
     readonly italic?: boolean;
     readonly strikethrough?: boolean;
+}
+
+// @public
+export interface ToHtmlConfig extends ConfigurationBase {
+    readonly customTransformations?: ToHtmlTransformations;
+    readonly language?: string;
+    readonly startingHeadingLevel?: number;
+}
+
+// @public
+export interface ToHtmlContext {
+    readonly headingLevel: number;
+    readonly logger: Logger;
+    readonly transformations: ToHtmlTransformations;
+}
+
+// @public
+export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
+
+// @public
+export interface ToHtmlTransformations {
+    [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

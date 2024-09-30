@@ -1,6 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-base.esm.no-legacy.json",
+	"extends": "../../../common/build/build-common/api-extractor-model.esm.json",
 	"compiler": {
 		// api-extractor has trouble with Node16 moduleResolution, but Bundler looks okay.
 		"overrideTsconfig": {
@@ -11,4 +11,21 @@
 			}
 		}
 	}
+	// In some cases (like diagnosing ae-forgotten-export errors for internal APIs)
+	// It can be very useful to enable the below options so "_api-extractor-temp/tree.api.md"
+	// can be searched for the references to the type that is causing the erroring type to need exporting.
+	// "apiReport": {
+	// 	"enabled": true,
+	// 	"reportVariants": ["public", "beta", "alpha", "complete"]
+	// },
+	// "messages": {
+	// 	"extractorMessageReporting": {
+	// 		"ae-forgotten-export": {
+	// 			"logLevel": "warning"
+	// 		},
+	// 		"ae-unresolved-link": {
+	// 			"logLevel": "warning"
+	// 		}
+	// 	}
+	// }
 }

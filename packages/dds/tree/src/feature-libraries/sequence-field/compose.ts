@@ -189,10 +189,16 @@ function composeMarksIgnoreChild(
 	if (isRename(baseMark) && isRename(newMark)) {
 		return { ...baseMark, idOverride: newMark.idOverride };
 	} else if (isRename(baseMark)) {
-		assert(isAttach(newMark) || isAttachAndDetachEffect(newMark), "Unexpected mark type");
+		assert(
+			isAttach(newMark) || isAttachAndDetachEffect(newMark),
+			0x9f1 /* Unexpected mark type */,
+		);
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
-		assert(isDetach(baseMark) || isAttachAndDetachEffect(baseMark), "Unexpected mark type");
+		assert(
+			isDetach(baseMark) || isAttachAndDetachEffect(baseMark),
+			0x9f2 /* Unexpected mark type */,
+		);
 		return isDetach(baseMark)
 			? { ...baseMark, idOverride: newMark.idOverride }
 			: { ...baseMark, detach: { ...baseMark.detach, idOverride: newMark.idOverride } };
@@ -202,7 +208,7 @@ function composeMarksIgnoreChild(
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		assert(
 			newAttachAndDetach.cellId !== undefined,
-			"Impactful cell rename must target empty cell",
+			0x9f3 /* Impactful cell rename must target empty cell */,
 		);
 		const newDetachRevision = newAttachAndDetach.detach.revision;
 		if (markEmptiesCells(baseMark)) {
@@ -264,7 +270,10 @@ function composeMarksIgnoreChild(
 		}
 
 		if (isImpactfulCellRename(baseMark)) {
-			assert(baseMark.cellId !== undefined, "Impactful cell rename must target empty cell");
+			assert(
+				baseMark.cellId !== undefined,
+				0x9f4 /* Impactful cell rename must target empty cell */,
+			);
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach);
 
@@ -567,6 +576,9 @@ export class ComposeQueue {
 	private dequeueBase(length: number = Infinity): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
+		if (movedChanges !== undefined) {
+			this.moveEffects.onMoveIn(movedChanges);
+		}
 
 		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };

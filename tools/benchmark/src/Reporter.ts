@@ -39,24 +39,13 @@ import * as path from "node:path";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import {
-	isResultError,
-	type BenchmarkData,
-	type BenchmarkResult,
-	type CustomData,
-} from "./ResultTypes";
+import { isResultError, type BenchmarkData, type BenchmarkResult } from "./ResultTypes";
 import { pad, prettyNumber } from "./RunnerUtilities";
-import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
 
 interface BenchmarkResults {
 	table: Table;
 	benchmarksMap: Map<string, Readonly<BenchmarkResult>>;
 }
-
-const expectedKeys: ExpectedCell[] = [
-	stringCell("error", "error", (message) => chalk.red(message || "Error")),
-	numberCell("elapsedSeconds", "total time (s)", (elapsedSeconds) => elapsedSeconds.toFixed(2)),
-];
 
 /**
  * Collects and formats performance data for a sequence of suites of benchmarks.
@@ -108,11 +97,7 @@ export class BenchmarkReporter {
 	 * Appends a prettified version of the results of a benchmark instance provided to the provided
 	 * BenchmarkResults object.
 	 */
-	public recordTestResult(
-		suiteName: string,
-		testName: string,
-		result: Readonly<BenchmarkResult>,
-	): void {
+	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
 		let results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
 			results = {
@@ -124,18 +109,27 @@ export class BenchmarkReporter {
 
 		const { table, benchmarksMap } = results;
 
+		// Make sure to add properties that are not part of the `customData` object here.
 		benchmarksMap.set(testName, result);
 		if (isResultError(result)) {
 			table.cell("status", `${pad(4)}${chalk.red("×")}`);
 		} else {
 			table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 		}
+
 		table.cell("name", chalk.italic(testName));
 
-		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
-		// This is useful if this reporter is given unexpected data (such as from a memory test).
-		// It can also be used as a way to add extensible data formatting in the future.
-		addCells(table, (result as BenchmarkData).customData, expectedKeys);
+		if (isResultError(result)) {
+			table.cell("error", result.error);
+		} else {
+			table.cell("total time (s)", prettyNumber(result.elapsedSeconds, 2));
+
+			const customData = result.customData;
+			for (const [key, val] of Object.entries(customData)) {
+				const displayValue = val.formattedValue;
+				table.cell(key, displayValue, Table.padLeft);
+			}
+		}
 
 		table.newRow();
 	}
@@ -272,9 +266,7 @@ export class BenchmarkReporter {
 		for (const [key, bench] of benchmarks.entries()) {
 			if (!isResultError(bench)) {
 				const benchData = bench as BenchmarkData; // the if statement above guarantees the `bench` to be of type `BenchmarkData`.
-				benchmarkArray.push(
-					this.outputFriendlyObjectFromBenchmark(key, benchData.customData),
-				);
+				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(key, benchData));
 			}
 		}
 		const outputContentString: string = JSON.stringify(
@@ -297,15 +289,23 @@ export class BenchmarkReporter {
 	 */
 	private outputFriendlyObjectFromBenchmark(
 		benchmarkName: string,
-		benchmark: CustomData,
+		benchmark: BenchmarkData,
 	): Record<string, unknown> {
-		const keys = new Set(Object.getOwnPropertyNames(benchmark));
-		const obj = {
-			benchmarkName,
-		};
+		const keys = new Set(Object.getOwnPropertyNames(benchmark.customData));
+		const customData: Record<string, unknown> = {};
+
+		// As the name suggets, `customData` should only contain custom data that are specific to the benchmark test.
+		// If there are any other properties that are global to the benchmark test (e.g., `elapsedSeconds`), they should be added in the `benchMarkOutput` object.
 		for (const key of keys) {
-			obj[key] = benchmark[key].rawValue;
+			customData[key] = benchmark.customData[key].rawValue;
 		}
-		return obj;
+
+		const benchMarkOutput = {
+			benchmarkName,
+			elapsedSeconds: benchmark.elapsedSeconds,
+			customData,
+		};
+
+		return benchMarkOutput;
 	}
 }

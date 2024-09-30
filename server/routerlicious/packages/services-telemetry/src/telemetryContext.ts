@@ -12,6 +12,20 @@ export interface ITelemetryContextProperties {
 	[BaseTelemetryProperties.tenantId]: string;
 	[BaseTelemetryProperties.documentId]: string;
 	[BaseTelemetryProperties.correlationId]: string;
+	[BaseTelemetryProperties.requestSource]: string;
+}
+
+/**
+ * @internal
+ */
+export function isTelemetryContextProperties(props: unknown): props is ITelemetryContextProperties {
+	return (
+		typeof props === "object" &&
+		props !== null &&
+		typeof props[BaseTelemetryProperties.tenantId] === "string" &&
+		typeof props[BaseTelemetryProperties.documentId] === "string" &&
+		typeof props[BaseTelemetryProperties.correlationId] === "string"
+	);
 }
 
 /**

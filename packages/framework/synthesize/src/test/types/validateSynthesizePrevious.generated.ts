@@ -20,6 +20,69 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_DependencyContainer": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_DependencyContainer = requireAssignableTo<TypeOnly<old.DependencyContainer<any>>, TypeOnly<current.DependencyContainer<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DependencyContainer": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_DependencyContainer = requireAssignableTo<TypeOnly<current.DependencyContainer<any>>, TypeOnly<old.DependencyContainer<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DependencyContainer": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DependencyContainer = requireAssignableTo<TypeOnly<typeof current.DependencyContainer>, TypeOnly<typeof old.DependencyContainer>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidDependencySynthesizer": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<old.IFluidDependencySynthesizer>, TypeOnly<current.IFluidDependencySynthesizer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidDependencySynthesizer": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<current.IFluidDependencySynthesizer>, TypeOnly<old.IFluidDependencySynthesizer>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IProvideFluidDependencySynthesizer": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IProvideFluidDependencySynthesizer = requireAssignableTo<TypeOnly<old.IProvideFluidDependencySynthesizer>, TypeOnly<current.IProvideFluidDependencySynthesizer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IProvideFluidDependencySynthesizer": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IProvideFluidDependencySynthesizer = requireAssignableTo<TypeOnly<current.IProvideFluidDependencySynthesizer>, TypeOnly<old.IProvideFluidDependencySynthesizer>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_AsyncFluidObjectProvider": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_AsyncFluidObjectProvider = requireAssignableTo<TypeOnly<old.AsyncFluidObjectProvider<any>>, TypeOnly<current.AsyncFluidObjectProvider<any>>>
@@ -74,33 +137,6 @@ declare type current_as_old_for_TypeAlias_AsyncRequiredFluidObjectProvider = req
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_DependencyContainer": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_DependencyContainer = requireAssignableTo<TypeOnly<old.DependencyContainer<any>>, TypeOnly<current.DependencyContainer<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DependencyContainer": {"backCompat": false}
- */
-declare type current_as_old_for_Class_DependencyContainer = requireAssignableTo<TypeOnly<current.DependencyContainer<any>>, TypeOnly<old.DependencyContainer<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_DependencyContainer": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_DependencyContainer = requireAssignableTo<TypeOnly<typeof current.DependencyContainer>, TypeOnly<typeof old.DependencyContainer>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "TypeAlias_FluidObjectProvider": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_FluidObjectProvider = requireAssignableTo<TypeOnly<old.FluidObjectProvider<any>>, TypeOnly<current.FluidObjectProvider<any>>>
@@ -140,39 +176,3 @@ declare type current_as_old_for_TypeAlias_FluidObjectSymbolProvider = requireAss
  * "Variable_IFluidDependencySynthesizer": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<typeof current.IFluidDependencySynthesizer>, TypeOnly<typeof old.IFluidDependencySynthesizer>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFluidDependencySynthesizer": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<old.IFluidDependencySynthesizer>, TypeOnly<current.IFluidDependencySynthesizer>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFluidDependencySynthesizer": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IFluidDependencySynthesizer = requireAssignableTo<TypeOnly<current.IFluidDependencySynthesizer>, TypeOnly<old.IFluidDependencySynthesizer>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IProvideFluidDependencySynthesizer": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IProvideFluidDependencySynthesizer = requireAssignableTo<TypeOnly<old.IProvideFluidDependencySynthesizer>, TypeOnly<current.IProvideFluidDependencySynthesizer>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IProvideFluidDependencySynthesizer": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IProvideFluidDependencySynthesizer = requireAssignableTo<TypeOnly<current.IProvideFluidDependencySynthesizer>, TypeOnly<old.IProvideFluidDependencySynthesizer>>

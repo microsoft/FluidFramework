@@ -10,11 +10,11 @@ import { type Transformations } from "./Transformation.js";
 /**
  * Configuration for transforming {@link DocumentationNode}s to HTML.
  *
- * @alpha
+ * @public
  */
 export interface TransformationConfig extends ConfigurationBase {
 	/**
-	 * User-specified renderers.
+	 * User-specified transformations.
 	 *
 	 * @remarks May override default behaviors or add transformation capabilities for custom {@link DocumentationNode}s.
 	 */

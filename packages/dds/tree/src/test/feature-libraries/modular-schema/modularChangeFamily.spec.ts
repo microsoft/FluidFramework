@@ -71,7 +71,7 @@ import {
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
-import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
+import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import type {
 	ChangeAtomIdBTree,
 	CrossFieldKeyTable,
@@ -422,10 +422,10 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 const node1 = singleJsonCursor(1);
 const objectNode = singleJsonCursor({});
 const node1Chunk = treeChunkFromCursor(node1);
-const nodesChunk = chunkFieldSingle(
-	cursorForJsonableTreeField([{ type: jsonObject.name }, { type: jsonObject.name }]),
-	defaultChunkPolicy,
-);
+const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
+	policy: defaultChunkPolicy,
+	idCompressor: testIdCompressor,
+});
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -1410,13 +1410,16 @@ describe("ModularChangeFamily", () => {
 });
 
 function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
-	return chunkTree(cursor, defaultChunkPolicy);
+	return chunkTree(cursor, { policy: defaultChunkPolicy, idCompressor: testIdCompressor });
 }
 
 function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
 	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
 	const cursor = cursorForJsonableTreeField(jsonable);
-	const clone = chunkFieldSingle(cursor, defaultChunkPolicy);
+	const clone = chunkFieldSingle(cursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
 	return clone;
 }
 

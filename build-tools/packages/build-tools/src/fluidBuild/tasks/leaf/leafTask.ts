@@ -10,17 +10,10 @@ import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
 import registerDebug from "debug";
 
+import { existsSync } from "node:fs";
+import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { defaultLogger } from "../../../common/logging";
-import {
-	ExecAsyncResult,
-	execAsync,
-	existsSync,
-	getExecutableFromCommand,
-	readFileAsync,
-	statAsync,
-	unlinkAsync,
-	writeFileAsync,
-} from "../../../common/utils";
+import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
 import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
@@ -457,7 +450,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			const doneFileFullPath = this.doneFileFullPath;
 			try {
 				if (existsSync(doneFileFullPath)) {
-					await unlinkAsync(doneFileFullPath);
+					await unlink(doneFileFullPath);
 				}
 			} catch {
 				console.warn(
@@ -473,7 +466,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		try {
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
-				await writeFileAsync(doneFileFullPath, content);
+				await writeFile(doneFileFullPath, content);
 			} else {
 				this._isIncremental = false;
 				console.warn(
@@ -493,13 +486,16 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
 			if (doneFileExpectedContent !== undefined) {
-				const doneFileContent = await readFileAsync(doneFileFullPath, "utf8");
+				const doneFileContent = await readFile(doneFileFullPath, "utf8");
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
 				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
-				traceTaskTrigger(doneFileExpectedContent);
-				traceTaskTrigger(doneFileContent);
+				// These log statements can be useful for debugging, but they're extremely long and completely
+				// obscure other logs.
+				// In the future we can consider logging just the diff between the input and output.
+				// this.traceTrigger(doneFileExpectedContent);
+				// this.traceTrigger(doneFileContent);
 			} else {
 				this.traceTrigger(
 					"unable to generate done file expected content (getDoneFileContent returned undefined)",
@@ -555,11 +551,12 @@ export class UnknownLeafTask extends LeafTask {
 
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
-	 * @returns the list of files that this task depends on. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task depends on.
 	 */
 	protected abstract getInputFiles(): Promise<string[]>;
+
 	/**
-	 * @returns the list of files that this task generates. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task generates.
 	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
 
@@ -586,12 +583,12 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const srcTimesP = Promise.all(
 				srcFiles
 					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => statAsync(match)),
+					.map((match) => stat(match)),
 			);
 			const dstTimesP = Promise.all(
 				dstFiles
 					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => statAsync(match)),
+					.map((match) => stat(match)),
 			);
 			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
@@ -624,6 +621,11 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+
+			// sort by name for determinism
+			srcHashes.sort(sortByName);
+			dstHashes.sort(sortByName);
+
 			const output = JSON.stringify({
 				srcHashes,
 				dstHashes,
@@ -635,4 +637,14 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return undefined;
 		}
 	}
+}
+
+function sortByName(a: { name: string }, b: { name: string }): number {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
 }

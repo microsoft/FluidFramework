@@ -304,7 +304,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 						"Adding an interval that belongs to another interval collection is not permitted",
 					);
 				}
-				interval.addProperties(props);
+				interval.properties = addProperties(interval.properties, props);
 			}
 			interval.properties[reservedIntervalIdKey] ??= uuid();
 			this.add(interval);
@@ -597,9 +597,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	public next(): IteratorResult<TInterval> {
 		if (this.index < this.results.length) {
 			return {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				value: this.results[this.index++]!,
+				value: this.results[this.index++],
 				done: false,
 			};
 		}
@@ -1118,7 +1116,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					this.options.mergeTreeReferencesCanSlideToEndpoint,
 				);
 				if (properties) {
-					interval.addProperties(properties);
+					interval.properties = addProperties(interval.properties, properties);
 				}
 				this.localCollection.add(interval);
 			}

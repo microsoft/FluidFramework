@@ -36,6 +36,9 @@ export abstract class SequenceEvent<
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		/**
 		 * Arguments reflecting the type of change that caused this event.
@@ -67,15 +70,11 @@ export abstract class SequenceEvent<
 		});
 
 		this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
-			// TODO Non null asserting, why is this not null?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			() => this.sortedRanges.value.items[0]!,
+			() => this.sortedRanges.value.items[0],
 		);
 
 		this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
-			// TODO Non null asserting, why is this not null?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1]!,
+			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1],
 		);
 	}
 
@@ -131,6 +130,9 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 	 */
 	public readonly isLocal: boolean;
 
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -152,6 +154,9 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  * @alpha
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		/**
 		 * Defined iff `deltaArgs.operation` is {@link @fluidframework/merge-tree#MergeTreeMaintenanceType.ACKNOWLEDGED|MergeTreeMaintenanceType.ACKNOWLEDGED}.

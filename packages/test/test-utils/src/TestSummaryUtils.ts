@@ -187,7 +187,9 @@ export async function summarizeNow(
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);
 
-	const submitResult = await timeoutAwait(result.summarySubmitted);
+	const submitResult = await timeoutAwait(result.summarySubmitted, {
+		errorMsg: "Promise timed out: summarySubmitted",
+	});
 	if (!submitResult.success) {
 		throw submitResult.error;
 	}
@@ -197,12 +199,16 @@ export async function summarizeNow(
 	);
 	assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
-	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
+	const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted, {
+		errorMsg: "Promise timed out: summaryOpBroadcasted",
+	});
 	if (!broadcastResult.success) {
 		throw broadcastResult.error;
 	}
 
-	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
+	const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack, {
+		errorMsg: "Promise timed out: receivedSummaryAckOrNack",
+	});
 	if (!ackNackResult.success) {
 		throw ackNackResult.error;
 	}

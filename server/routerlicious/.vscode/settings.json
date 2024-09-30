@@ -1,4 +1,10 @@
 {
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"eslint.workingDirectories": [{ "mode": "auto" }],
+	"eslint.workingDirectories": [
+		{
+			"mode": "auto",
+		},
+	],
+	// server code still uses prettier for formatting
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
 }
