@@ -191,11 +191,11 @@ It can be useful to group edits because a transaction is equivalent to a single 
 ```typescript
 Tree.runTransaction(myNode, (node) => {
     // Make multiple changes to the tree.
-    // This can be changes to the referenced node but is not limited to that scope.
+    // These can be changes to the referenced node but are not limited to that scope.
 
-    if (
-        // Something is wrong here!
-    ) return "rollback";
+    if ( /* Something went wrong, abort! */ ) {
+		return Tree.runTransaction.rollback;
+	}
 })
 ```
 

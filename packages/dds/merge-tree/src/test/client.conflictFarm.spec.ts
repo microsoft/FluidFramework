@@ -24,12 +24,7 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 	clients: IConfigRange;
 }
 
-const allOperations: TestOperation[] = [
-	removeRange,
-	annotateRange,
-	insertAtRefPos,
-	obliterateRange,
-];
+const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 
 export const debugOptions: IConflictFarmConfig = {
 	minLength: { min: 1, max: 512 },
@@ -74,34 +69,45 @@ const clientNames = generateClientNames();
 
 function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): void {
 	doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
-		it(`ConflictFarm_${minLength}`, async () => {
-			const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
-			const testOpts = { ...opts };
-			if (extraSeed) {
-				testOpts.resultsFilePostfix ??= "";
-				testOpts.resultsFilePostfix += extraSeed;
-			}
+		for (const { name, config } of [
+			{
+				name: "applyOpsDuringGeneration",
+				config: { ...opts, applyOpDuringGeneration: true },
+			},
+			{
+				name: "with obliterate",
+				config: {
+					...opts,
+					operations: [...opts.operations, obliterateRange],
+				},
+			},
+		])
+			it(`${name}: ConflictFarm_${minLength}`, async () => {
+				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
 
-			const clients: TestClient[] = [new TestClient({ mergeTreeEnableObliterate: true })];
-			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
+				const clients: TestClient[] = [new TestClient({ mergeTreeEnableObliterate: true })];
+				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
-			let seq = 0;
-			while (clients.length < opts.clients.max) {
-				for (const c of clients) c.updateMinSeq(seq);
+				let seq = 0;
+				while (clients.length < config.clients.max) {
+					for (const c of clients) c.updateMinSeq(seq);
 
-				// Add double the number of clients each iteration
-				const targetClients = Math.max(opts.clients.min, opts.growthFunc(clients.length));
-				for (let cc = clients.length; cc < targetClients; cc++) {
-					const newClient = await TestClient.createFromClientSnapshot(
-						clients[0],
-						clientNames[cc],
+					// Add double the number of clients each iteration
+					const targetClients = Math.max(
+						config.clients.min,
+						config.growthFunc(clients.length),
 					);
-					clients.push(newClient);
-				}
+					for (let cc = clients.length; cc < targetClients; cc++) {
+						const newClient = await TestClient.createFromClientSnapshot(
+							clients[0],
+							clientNames[cc],
+						);
+						clients.push(newClient);
+					}
 
-				seq = runMergeTreeOperationRunner(random, seq, clients, minLength, opts);
-			}
-		}).timeout(30 * 10000);
+					seq = runMergeTreeOperationRunner(random, seq, clients, minLength, config);
+				}
+			}).timeout(30 * 10000);
 	});
 }
 

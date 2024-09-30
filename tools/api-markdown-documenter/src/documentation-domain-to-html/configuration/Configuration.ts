@@ -4,13 +4,14 @@
  */
 
 import type { ConfigurationBase } from "../../ConfigurationBase.js";
+import type { TextFormatting } from "../../documentation-domain/index.js";
 import { defaultConsoleLogger } from "../../Logging.js";
 import { type Transformations } from "./Transformation.js";
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to HTML.
  *
- * @alpha
+ * @public
  */
 export interface TransformationConfig extends ConfigurationBase {
 	/**
@@ -28,6 +29,11 @@ export interface TransformationConfig extends ConfigurationBase {
 	 * @defaultValue 1
 	 */
 	readonly startingHeadingLevel?: number;
+
+	/**
+	 * Optional formatting to apply to the root of the document.
+	 */
+	readonly rootFormatting?: TextFormatting;
 
 	/**
 	 * HTML language attribute.

@@ -306,9 +306,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Access to a specific client's map of values.
 	 */
-	clientValue<SpecificSessionClientId extends ClientSessionId>(
-		client: ISessionClient<SpecificSessionClientId>,
-	): LatestMapValueClientData<T, Keys, SpecificSessionClientId>;
+	clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
 }
 
 class LatestMapValueManagerImpl<
@@ -343,8 +341,15 @@ class LatestMapValueManagerImpl<
 
 	public readonly local: ValueMap<Keys, T>;
 
-	public clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>> {
-		throw new Error("Method not implemented.");
+	public *clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		for (const clientSessionId of Object.keys(allKnownStates.states)) {
+			if (clientSessionId !== allKnownStates.self) {
+				const client = this.datastore.lookupClient(clientSessionId);
+				const items = this.clientValue(client);
+				yield { client, items };
+			}
+		}
 	}
 
 	public clients(): ISessionClient[] {
@@ -354,11 +359,9 @@ class LatestMapValueManagerImpl<
 			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
 	}
 
-	public clientValue<SpecificSessionClientId extends ClientSessionId>(
-		client: SpecificSessionClient<SpecificSessionClientId>,
-	): LatestMapValueClientData<T, Keys, SpecificSessionClientId> {
+	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientSessionId: SpecificSessionClientId = client.sessionId;
+		const clientSessionId = client.sessionId;
 		if (!(clientSessionId in allKnownStates.states)) {
 			throw new Error("No entry for client");
 		}
@@ -373,7 +376,7 @@ class LatestMapValueManagerImpl<
 				});
 			}
 		}
-		return { client, items };
+		return items;
 	}
 
 	public update<SpecificSessionClientId extends ClientSessionId>(
@@ -441,8 +444,8 @@ class LatestMapValueManagerImpl<
  */
 export function LatestMap<
 	T extends object,
-	RegistrationKey extends string,
 	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
 >(
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
@@ -467,13 +470,16 @@ export function LatestMap<
 				allowableUpdateLatency: 60,
 				forcedRefreshInterval: 0,
 			};
-	return (
+	const factory = (
 		key: RegistrationKey,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
 			RegistrationKey,
 			InternalTypes.MapValueState<T>
 		>,
-	) => ({
+	): {
+		value: typeof value;
+		manager: InternalTypes.StateValue<LatestMapValueManager<T, Keys>>;
+	} => ({
 		value,
 		manager: brandIVM<
 			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
@@ -488,4 +494,5 @@ export function LatestMap<
 			),
 		),
 	});
+	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }

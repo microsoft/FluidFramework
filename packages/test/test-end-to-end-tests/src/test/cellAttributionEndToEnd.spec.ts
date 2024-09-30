@@ -130,8 +130,13 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 	 */
 	itSkipsFailureOnSpecificDrivers(
 		"Can attribute content from multiple collaborators",
-		["tinylicious", "t9s", "r11s"],
-		async () => {
+		["tinylicious", "t9s"],
+		async function () {
+			// Skip tests for r11s drivers due to timeout issues because of certain network calls
+			// taking longer time and this test has nothing to do with r11s driver.
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+				this.skip();
+			}
 			const container1 = await provider.makeTestContainer(getTestConfig(true));
 			const sharedCell1 = await sharedCellFromContainer(container1);
 			const container2 = await provider.loadTestContainer(getTestConfig(true));
@@ -169,43 +174,44 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 		},
 	);
 
-	itSkipsFailureOnSpecificDrivers(
-		"attributes content created in a detached state",
-		["r11s"],
-		async () => {
-			const loader = provider.makeTestLoader(getTestConfig(true));
-			const defaultCodeDetails: IFluidCodeDetails = {
-				package: "defaultTestPackage",
-				config: {},
-			};
-			const container1 = await loader.createDetachedContainer(defaultCodeDetails);
-			const sharedCell1 = await sharedCellFromContainer(container1);
+	it("attributes content created in a detached state", async function () {
+		// Skip tests for r11s drivers due to timeout issues because of certain network calls
+		// taking longer time and this test has nothing to do with r11s driver.
+		if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+			this.skip();
+		}
+		const loader = provider.makeTestLoader(getTestConfig(true));
+		const defaultCodeDetails: IFluidCodeDetails = {
+			package: "defaultTestPackage",
+			config: {},
+		};
+		const container1 = await loader.createDetachedContainer(defaultCodeDetails);
+		const sharedCell1 = await sharedCellFromContainer(container1);
 
-			sharedCell1.set(1);
-			const attributor1 = await getAttributorFromContainer(container1);
-			assertAttributionMatches(sharedCell1, attributor1, "detached");
+		sharedCell1.set(1);
+		const attributor1 = await getAttributorFromContainer(container1);
+		assertAttributionMatches(sharedCell1, attributor1, "detached");
 
-			await container1.attach(provider.driver.createCreateNewRequest("doc id"));
-			await provider.ensureSynchronized();
+		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
+		await provider.ensureSynchronized();
 
-			const url = await container1.getAbsoluteUrl("");
-			assert(url !== undefined);
-			const loader2 = provider.makeTestLoader(getTestConfig());
-			const container2 = await loader2.resolve({ url });
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined);
+		const loader2 = provider.makeTestLoader(getTestConfig());
+		const container2 = await loader2.resolve({ url });
 
-			const sharedCell2 = await sharedCellFromContainer(container2);
-			sharedCell2.set(2);
+		const sharedCell2 = await sharedCellFromContainer(container2);
+		sharedCell2.set(2);
 
-			await provider.ensureSynchronized();
+		await provider.ensureSynchronized();
 
-			assert(
-				container1.clientId !== undefined && container2.clientId !== undefined,
-				"Both containers should have client ids.",
-			);
+		assert(
+			container1.clientId !== undefined && container2.clientId !== undefined,
+			"Both containers should have client ids.",
+		);
 
-			assertAttributionMatches(sharedCell1, attributor1, {
-				user: container1.audience.getMember(container2.clientId)?.user,
-			});
-		},
-	);
+		assertAttributionMatches(sharedCell1, attributor1, {
+			user: container1.audience.getMember(container2.clientId)?.user,
+		});
+	});
 });

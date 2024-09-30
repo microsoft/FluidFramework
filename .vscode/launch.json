@@ -181,6 +181,23 @@
 			"args": ["test-only-filter", "--all"],
 		},
 		{
+			"name": "flub bump build-tools",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [
+				"bump",
+				"build-tools",
+				"-t",
+				"patch",
+				"--verbose",
+				"--no-commit",
+				"--no-install",
+			],
+		},
+		{
 			"name": "flub bump deps",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",

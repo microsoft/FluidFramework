@@ -53,13 +53,13 @@ jobs:
         - task: Docker@1
           displayName: Tag image as '$(containerTagSuffix)'
           inputs:
-            command: 'tag'
+            command: 'Tag image'
             arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
 
         - task: Docker@1
-          displayName: Tag 1mage as 'latest'
+          displayName: Tag image as 'latest'
           inputs:
-            command: 'tag'
+            command: 'Tag image'
             arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
 
         - task: 1ES.PushContainerImage@1

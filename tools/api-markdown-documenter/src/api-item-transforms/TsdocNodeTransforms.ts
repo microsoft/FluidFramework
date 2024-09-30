@@ -9,8 +9,6 @@ import {
 	type DocDeclarationReference,
 	type DocEscapedText,
 	type DocFencedCode,
-	type DocHtmlEndTag,
-	type DocHtmlStartTag,
 	type DocLinkTag,
 	type DocNode,
 	DocNodeKind,
@@ -111,11 +109,13 @@ export function _transformTsdocNode(
 		case DocNodeKind.FencedCode: {
 			return transformTsdocFencedCode(node as DocFencedCode, options);
 		}
-		case DocNodeKind.HtmlStartTag: {
-			return transformTsdocHtmlTag(node as DocHtmlStartTag, options);
-		}
+		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
-			return transformTsdocHtmlTag(node as DocHtmlEndTag, options);
+			// This matches intellisense's policy for HTML in TSDoc/JSDoc comments.
+			options.logger?.error(
+				`Encountered an HTML tag. This library does not support embedded HTML content. Inner contents will be mapped as normal, but the HTML tags will be ignored.`,
+			);
+			return undefined;
 		}
 		case DocNodeKind.InheritDocTag: {
 			options.logger?.error(
@@ -203,19 +203,6 @@ export function transformTsdocEscapedText(
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.encodedText, /* escaped: */ true);
-}
-
-/**
- * Converts a {@link @microsoft/tsdoc#DocHtmlStartTag} | {@link @microsoft/tsdoc#DocHtmlEndTag} to a {@link PlainTextNode}.
- */
-export function transformTsdocHtmlTag(
-	node: DocHtmlStartTag | DocHtmlEndTag,
-	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	// TODO: this really isn't right. Mapping this forward as plain text assumes that any output format can support embedded HTML.
-	// That is valid for HTML and Markdown, but not necessarily for other formats.
-	// Instead, we should map embedded HTML content forward in an encapsulated format, and let the renderer decide how to handle it.
-	return new PlainTextNode(node.emitAsHtml(), /* escaped: */ true);
 }
 
 /**
