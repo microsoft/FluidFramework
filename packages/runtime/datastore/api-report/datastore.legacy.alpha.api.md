@@ -72,7 +72,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     readonly options: Record<string | number, any>;
     // (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     processMessages(messagesWithMetadata: {
         message: ISequencedDocumentMessage;
         localOpMetadata: unknown;

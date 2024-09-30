@@ -875,7 +875,7 @@ describe("Runtime", () => {
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processMessages: (..._args) => {},
+					processChannelMessages: (..._args) => {},
 					setConnectionState: (..._args) => {},
 				} as ChannelCollection;
 			};
