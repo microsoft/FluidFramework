@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.16.1
-        version: 0.16.1
+        specifier: ^0.17.0
+        version: 0.17.0
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
         version: file:../tools/markdown-magic(markdown-magic@2.6.1)
@@ -149,15 +149,19 @@ packages:
       regenerator-runtime: 0.13.11
     dev: false
 
-  /@fluid-tools/api-markdown-documenter@0.16.1:
-    resolution: {integrity: sha512-xG36/9Ibu8TYVNZWa1GQmYuqheVqgFyu8rN5jj5s6IqR19TJtPSXf8rh6DV8rIJrNKSz7U0eOwzf3wuGToePUw==}
+  /@fluid-tools/api-markdown-documenter@0.17.0:
+    resolution: {integrity: sha512-D+ZITA52UmDrbY2WPBVPR/JIEpSPgxtdwsu+9YpSyywyC+9QEMCrOfN9q7ymCqzBjnKbxFMq86pqvaM0UlSiJg==}
     dependencies:
       '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/node-core-library': 3.66.1
       chalk: 4.1.2
+      hast-util-format: 1.1.0
+      hast-util-from-html: 2.0.3
       hast-util-raw: 9.0.2
+      hast-util-to-html: 9.0.3
       hastscript: 9.0.0
+      unist-util-remove-position: 5.0.0
     transitivePeerDependencies:
       - '@types/node'
     dev: false
@@ -1701,6 +1705,17 @@ packages:
       hast-util-whitespace: 3.0.0
       html-whitespace-sensitive-tag-names: 3.0.1
       unist-util-visit-parents: 6.0.1
+    dev: false
+
+  /hast-util-from-html@2.0.3:
+    resolution: {integrity: sha512-CUSRHXyKjzHov8yKsQjGOElXy/3EKpyX56ELnkHH34vDVw1N1XSQ1ZcAvTyAPtGqLTuKP/uxM+aLkSPqF/EtMw==}
+    dependencies:
+      '@types/hast': 3.0.4
+      devlop: 1.1.0
+      hast-util-from-parse5: 8.0.1
+      parse5: 7.1.2
+      vfile: 6.0.1
+      vfile-message: 4.0.2
     dev: false
 
   /hast-util-from-parse5@8.0.1:
@@ -3794,6 +3809,13 @@ packages:
     resolution: {integrity: sha512-fucsC7HjXvkB5R3kTCO7kUjRdrS0BJt3M/FPxmHMBOm8JQi2BsHAHFsy27E0EolP8rp0NzXsJ+jNPyDWvOJZPA==}
     dependencies:
       '@types/unist': 3.0.2
+    dev: false
+
+  /unist-util-remove-position@5.0.0:
+    resolution: {integrity: sha512-Hp5Kh3wLxv0PHj9m2yZhhLt58KzPtEYKQQ4yxfYFEO7EvHwzyDYnduhHnY1mDxoqr7VUwVuHXk9RXKIiYS1N8Q==}
+    dependencies:
+      '@types/unist': 3.0.2
+      unist-util-visit: 5.0.0
     dev: false
 
   /unist-util-stringify-position@2.0.3:

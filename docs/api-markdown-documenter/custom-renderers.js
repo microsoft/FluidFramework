@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { toHtml } from "hast-util-to-html";
-import { format as formatHtml } from "hast-util-format";
-
-import { documentationNodeToHtml, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
+import { documentationNodeToHtml, HtmlRenderer, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
 
 /**
  * Renders an {@link @fluid-tools/api-markdown-documenter#AlertNode} using Hugo syntax.
@@ -59,14 +56,15 @@ export function renderBlockQuoteNode(blockQuoteNode, writer, context) {
  */
 export function renderTableNode(tableNode, writer, context) {
 	// Generate HTML AST for the table node.
-	const htmlTree = documentationNodeToHtml(tableNode, { logger: context.logger });
+	const htmlTree = documentationNodeToHtml(tableNode, {
+		rootFormatting: context,
+		startingHeadingLevel: context.headingLevel,
+		logger: context.logger,
+	});
 	htmlTree.properties.class = "table table-striped table-hover";
 
-	// Pretty formatting (mutates the tree in place)
-	formatHtml(htmlTree);
-
 	// Convert the HTML AST to a string.
-	const htmlString = toHtml(htmlTree);
+	const htmlString = HtmlRenderer.renderHtml(htmlTree, { prettyFormatting: true });
 
-	writer.write(htmlString);
+	writer.writeLine(htmlString);
 }
