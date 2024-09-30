@@ -48,6 +48,11 @@ describe("Health Check Endpoints", () => {
 					const req = supertest.get("/ready");
 					await req.expect(503);
 				});
+				it("should return 503 for /ready when readiness throws an exception", async () => {
+					readinessCheck.setThrowException();
+					const req = supertest.get("/ready");
+					await req.expect(503);
+				});
 				it("should return 200 for /ready when readiness check is successful", async () => {
 					readinessCheck.setReady();
 					const req = supertest.get("/ready");

@@ -5,7 +5,23 @@
 
 import { Router } from "express";
 import { StartupChecker } from "./startupChecker";
-import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+/**
+ * Readiness status of a service or functionality.
+ * @internal
+ */
+export interface IReadinessStatus {
+	/**
+	 * Whether the service/functionality is ready for use.
+	 */
+	ready: boolean;
+
+	/**
+	 * Optional exception if an error occurs.
+	 */
+	exception?: any;
+}
 
 /**
  * Checks if a service or functionality is ready for use.
@@ -15,7 +31,7 @@ export interface IReadinessCheck {
 	/**
 	 * Whether the service/functionality is ready for use.
 	 */
-	isReady(): Promise<boolean>;
+	isReady(): Promise<IReadinessStatus>;
 }
 
 /**
@@ -39,14 +55,10 @@ export function createHealthCheckEndpoints(
 		"/startup",
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			const startupProbeMetric = Lumberjack.newLumberMetric(
-				LumberEventName.StartupProbe,
-				probeProps,
-			);
 			if (StartupChecker.getInstance().isStartupComplete()) {
 				response.sendStatus(200);
 			} else {
-				startupProbeMetric.error("Startup probe failed");
+				Lumberjack.error("Startup probe failed", probeProps);
 				response.sendStatus(500);
 			}
 		},
@@ -66,15 +78,16 @@ export function createHealthCheckEndpoints(
 		"/ready",
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			const readinessProbeMetric = Lumberjack.newLumberMetric(
-				LumberEventName.ReadinessProbe,
-				probeProps,
-			);
-			if ((await readinessCheck?.isReady()) === false) {
-				readinessProbeMetric.error("Readiness probe failed");
-				response.sendStatus(503);
-			} else {
+			const readinessStatus: IReadinessStatus = readinessCheck
+				? await readinessCheck.isReady().catch((error) => {
+						return { ready: false, exception: error };
+				  })
+				: { ready: true };
+			if (readinessStatus.ready) {
 				response.sendStatus(200);
+			} else {
+				Lumberjack.error("Readiness probe failed", probeProps, readinessStatus.exception);
+				response.sendStatus(503);
 			}
 		},
 	);
