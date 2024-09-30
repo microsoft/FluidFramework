@@ -158,8 +158,12 @@ module.exports = {
 		},
 	},
 
-	multiCommandExecutables: ["oclif"],
+	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
+		"jssm-viz": {
+			inputGlobs: ["src/**/*.fsl"],
+			outputGlobs: ["src/**/*.fsl.svg"],
+		},
 		"oclif manifest": {
 			inputGlobs: ["package.json", "src/**"],
 			outputGlobs: ["oclif.manifest.json"],
@@ -168,9 +172,53 @@ module.exports = {
 			inputGlobs: ["package.json", "src/**"],
 			outputGlobs: ["README.md", "docs/**"],
 		},
-		"jssm-viz": {
-			inputGlobs: ["src/**/*.fsl"],
-			outputGlobs: ["src/**/*.fsl.svg"],
+		"syncpack lint-semver-ranges": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
+		},
+		"syncpack list-mismatches": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
 		},
 	},
 

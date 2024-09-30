@@ -99,6 +99,18 @@ export interface DeclarativeTask {
 	 * **will** match files ignored by git, because build output is often gitignored.
 	 */
 	outputGlobs: string[];
+
+	/**
+	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to
+	 * the output, and including both values will apply the gitignore rules to both the input and output globs.
+	 *
+	 * The default value, `["input"]` applies gitignore rules to the input, but not the output. This is the right behavior
+	 * for many tasks since most tasks use source-controlled files as input but generate gitignored build output. However,
+	 * it can be adjusted on a per-task basis depending on the needs of the task.
+	 *
+	 * @defaultValue `["input"]`
+	 */
+	gitignore?: ("input" | "output")[];
 }
 
 /**

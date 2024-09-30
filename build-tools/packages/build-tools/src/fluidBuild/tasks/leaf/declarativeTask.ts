@@ -30,25 +30,30 @@ class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
 	}
 
 	protected async getInputFiles(): Promise<string[]> {
-		const { inputGlobs } = this.taskDefinition;
+		const { inputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
+
+		// Ignore gitignored files if the setting is undefined, since the default is ["input"]. Otherwise check that it
+		// includes "input".
+		const gitignore: boolean =
+			gitignoreSetting === undefined || gitignoreSetting.indexOf("input") !== -1;
 		const inputFiles = await globby(inputGlobs, {
 			cwd: this.node.pkg.directory,
 			// file paths returned from getInputFiles and getOutputFiles should always be absolute
 			absolute: true,
-			// Ignore gitignored files
-			gitignore: true,
+			gitignore,
 		});
 		return inputFiles;
 	}
 
 	protected async getOutputFiles(): Promise<string[]> {
-		const { outputGlobs } = this.taskDefinition;
+		const { outputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
+
+		const gitignore: boolean = gitignoreSetting?.indexOf("output") !== -1;
 		const outputFiles = await globby(outputGlobs, {
 			cwd: this.node.pkg.directory,
 			// file paths returned from getInputFiles and getOutputFiles should always be absolute
 			absolute: true,
-			// Output files are often gitignored, so we don't want to exclude them like we do for input files
-			gitignore: false,
+			gitignore,
 		});
 		return outputFiles;
 	}
