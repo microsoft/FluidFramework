@@ -109,6 +109,16 @@ The input `ApiModel` here will generally be the output of [API-Extractor][].
 
 See [Documentation Domain](#documentation-domain) below for more details on the output format.
 
+##### Limitations
+
+###### Embedded HTML
+
+Note: `TSDoc`'s parser has limited support for preserving `HTML` tags in `TSDoc` comments.
+This library does not preserve embedded `HTML` in doc comments.
+Instead, any `HTML` tags found will be discarded, and the contents within will be rendered normally.
+This matches VSCode Intellisense's behavior.
+We may reconsider this in the future.
+
 #### MarkdownRenderer
 
 The `MarkdownRenderer` namespace includes a few functions for generating Markdown contents.
@@ -158,7 +168,7 @@ graph LR
     A-->|transformApiModel|B
     B-->|MarkdownRenderer.renderDocument|C
     B-->|HtmlRenderer.renderDocument*|D
-    B-->|documentToHtml*|E
+    B-->|documentToHtml|E
 
     A-.->|MarkdownRenderer.renderApiModel|C
     A-.->|HtmlRenderer.renderApiModel*|D
@@ -216,9 +226,7 @@ Use at your own risk.
 
 ## ToHtml Transformation
 
-This library now includes preview APIs for transforming `Documentation Domain` trees to HTML syntax trees using [hast](https://github.com/syntax-tree/hast).
-
-To use, import the `documentToHtml` function from `@fluid-tools/api-markdown-documenter/beta`.
+This library now includes APIs for transforming `Documentation Domain` trees to HTML syntax trees using [hast](https://github.com/syntax-tree/hast).
 
 ### lintApiModel
 
@@ -259,8 +267,8 @@ Other validation may be added in the future as needed.
 
 -   Support placing documents _within_ their own hierarchy (support for the "index" model used by systems like DocFX)
 -   Pre-canned policies (flat, index, adjacency)
--   Add `documentToHtml` API that generates `mdast` output.
-    -   Update rendering APIs to leverage the `mdast` and `hast` domain outputs.
+-   Add `documentToMarkdown` API that generates `mdast` output.
+    -   Update both HTML and Markdown rendering APIs to leverage the `mdast` and `hast` domain outputs.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

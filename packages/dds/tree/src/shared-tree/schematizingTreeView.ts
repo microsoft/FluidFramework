@@ -20,7 +20,6 @@ import {
 } from "../events/index.js";
 import {
 	type NodeKeyManager,
-	ViewSchema,
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
@@ -37,6 +36,7 @@ import {
 	getTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
+	ViewSchema,
 	type InsertableContent,
 	type TreeViewConfiguration,
 	mapTreeFromNodeData,
@@ -157,7 +157,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.storedSchema,
+				schema: this.viewSchema.schema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -184,7 +184,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
 				{
-					schema: this.viewSchema.storedSchema,
+					schema: this.viewSchema.schema,
 					initialTree: undefined,
 				},
 			);

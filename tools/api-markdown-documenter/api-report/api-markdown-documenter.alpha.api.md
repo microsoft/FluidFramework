@@ -224,10 +224,16 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly type: string;
 }
 
-// @alpha
-export function documentationNodesToHtml(nodes: DocumentationNode[], context: ToHtmlContext): Nodes[];
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
 
-// @alpha
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+
+// @public
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
@@ -306,7 +312,7 @@ export interface DocumentNodeProps {
     readonly documentPath: string;
 }
 
-// @alpha
+// @public
 export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
@@ -758,23 +764,25 @@ export interface TextFormatting {
     readonly strikethrough?: boolean;
 }
 
-// @alpha
+// @public
 export interface ToHtmlConfig extends ConfigurationBase {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
+    readonly rootFormatting?: TextFormatting;
     readonly startingHeadingLevel?: number;
 }
 
-// @alpha
-export interface ToHtmlContext extends ConfigurationBase {
+// @public
+export interface ToHtmlContext extends TextFormatting {
     readonly headingLevel: number;
+    readonly logger: Logger;
     readonly transformations: ToHtmlTransformations;
 }
 
-// @alpha
+// @public
 export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
 
-// @alpha
+// @public
 export interface ToHtmlTransformations {
     [documentationNodeKind: string]: ToHtmlTransformation;
 }
