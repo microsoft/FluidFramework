@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { documentationNodeToHtml, HtmlRenderer, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
+import {
+	documentationNodeToHtml,
+	HtmlRenderer,
+	MarkdownRenderer,
+} from "@fluid-tools/api-markdown-documenter";
 
 /**
  * Renders an {@link @fluid-tools/api-markdown-documenter#AlertNode} using Hugo syntax.
