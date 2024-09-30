@@ -44,7 +44,6 @@ export function createHealthCheckEndpoints(
 				probeProps,
 			);
 			if (StartupChecker.getInstance().isStartupComplete()) {
-				startupProbeMetric.success("Startup probe successful");
 				response.sendStatus(200);
 			} else {
 				startupProbeMetric.error("Startup probe failed");
@@ -58,11 +57,6 @@ export function createHealthCheckEndpoints(
 			"/ping",
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (request, response) => {
-				const livenessProbeMetric = Lumberjack.newLumberMetric(
-					LumberEventName.LivenessProbe,
-					probeProps,
-				);
-				livenessProbeMetric.success("Liveness probe successful");
 				response.sendStatus(200);
 			},
 		);
@@ -80,7 +74,6 @@ export function createHealthCheckEndpoints(
 				readinessProbeMetric.error("Readiness probe failed");
 				response.sendStatus(503);
 			} else {
-				readinessProbeMetric.success("Readiness probe successful");
 				response.sendStatus(200);
 			}
 		},
