@@ -62,7 +62,7 @@ export function renderHtml(
 ): string {
 	if (prettyFormatting !== false) {
 		// Pretty formatting. Modifies the tree in place.
-		// Note: this API is specifically typed to only accept a `Root` node, but it's code only requires any `Nodes`.
+		// Note: this API is specifically typed to only accept a `Root` node, but its code only requires any `Nodes`.
 		// TODO: file an issue.
 		format(html as HastRoot);
 	}
