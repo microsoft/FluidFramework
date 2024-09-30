@@ -8,6 +8,7 @@ import {
 	normalizeFieldSchema,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
@@ -26,7 +27,7 @@ import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 /**
  * Converts a "view" schema to a "simple" schema representation.
  */
-export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
+export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
 	const normalizedSchema = normalizeFieldSchema(schema);
 
 	const allowedTypes = allowedTypesFromFieldSchema(normalizedSchema);
@@ -34,10 +35,18 @@ export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSche
 	const definitions = new Map<string, SimpleNodeSchema>();
 	populateSchemaDefinitionsForField(normalizedSchema, definitions);
 
-	return {
+	const output: Mutable<SimpleTreeSchema> = {
+		kind: normalizedSchema.kind,
 		allowedTypes,
 		definitions,
 	};
+
+	// Include the "description" property only if it's present on the input.
+	if (normalizedSchema.metadata?.description !== undefined) {
+		output.description = normalizedSchema.metadata.description;
+	}
+
+	return output;
 }
 
 /**

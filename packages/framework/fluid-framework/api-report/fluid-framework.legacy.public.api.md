@@ -807,14 +807,14 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<
     insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
-    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
+    moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
+    moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToStart(sourceStart: number, sourceEnd: number): void;
     moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveToEnd(sourceIndex: number): void;
     moveToEnd(sourceIndex: number, source: TMoveFrom): void;
-    moveToIndex(index: number, sourceIndex: number): void;
-    moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
+    moveToIndex(destinationGap: number, sourceIndex: number): void;
+    moveToIndex(destinationGap: number, sourceIndex: number, source: TMoveFrom): void;
     moveToStart(sourceIndex: number): void;
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
@@ -895,6 +895,7 @@ export interface TreeNodeSchemaClass<out Name extends string = string, out Kind 
 
 // @public @sealed
 export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown> {
+    readonly childTypes: ReadonlySet<TreeNodeSchema>;
     readonly identifier: Name;
     readonly implicitlyConstructable: ImplicitlyConstructable;
     readonly info: Info;
