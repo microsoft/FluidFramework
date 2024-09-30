@@ -1059,35 +1059,37 @@ describe("DDS Fuzz Harness", () => {
 		});
 
 		describe("generate different seeds given distinct stress modes", () => {
-			it("should generate all seeds for StressMode.Normal", () => {
-				const testCount = 100;
-				const seeds: number[] = generateTestSeeds(testCount, StressMode.Normal);
-				assert.deepEqual(
-					seeds,
-					Array.from({ length: testCount }, (_, i) => i),
-				);
+			const testCount = 100;
+
+			it("should generate seeds for short stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Short);
+				assert.strictEqual(seeds.length, Math.ceil(testCount / 2));
+				assert.strictEqual(new Set(seeds).size, Math.ceil(testCount / 2)); // Check for uniqueness
 			});
 
-			it("should generate half seeds for StressMode.Short", () => {
-				const testCount = 100;
-				const seeds: number[] = generateTestSeeds(testCount, StressMode.Short);
-				assert.equal(seeds.length, Math.ceil(testCount / 2));
-				// it should generate unique seeds for StressMode.Short
-				const uniqueSeeds = new Set(seeds);
-				assert.equal(seeds.length, uniqueSeeds.size);
+			it("should generate seeds for normal stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Normal);
+				assert.strictEqual(seeds.length, testCount);
+				assert.strictEqual(new Set(seeds).size, testCount); // Check for uniqueness
 			});
 
-			it("should generate double the seeds for StressMode.Long", () => {
-				const testCount = 100;
-				const seeds: number[] = generateTestSeeds(testCount, StressMode.Long);
-				assert.equal(seeds.length, testCount * 2);
-				const firstHalf = seeds.slice(0, testCount);
-				const secondHalf = seeds.slice(testCount);
-				// it should generate unique seeds for StressMode.Long in each half
-				const uniqueFirstHalf = new Set(firstHalf);
-				const uniqueSecondHalf = new Set(secondHalf);
-				assert.equal(firstHalf.length, uniqueFirstHalf.size);
-				assert.equal(secondHalf.length, uniqueSecondHalf.size);
+			it("should generate seeds for long stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Long);
+				assert.strictEqual(seeds.length, testCount * 2);
+				// No uniqueness check for long mode since seeds may repeat
+			});
+
+			it("should generate seeds within the range [0, testCount)", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Normal);
+				for (const seed of seeds) {
+					assert.ok(seed >= 0 && seed < testCount);
+				}
+			});
+
+			it("should generate different seeds for different initial runs", () => {
+				const seeds1 = generateTestSeeds(testCount, StressMode.Normal);
+				const seeds2 = generateTestSeeds(testCount, StressMode.Normal);
+				assert.notDeepStrictEqual(seeds1, seeds2);
 			});
 		});
 	});

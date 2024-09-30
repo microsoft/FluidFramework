@@ -1594,31 +1594,16 @@ export async function replayTest<
 
 export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
 	const random = makeRandom();
+	const modeMultiplier: Record<StressMode, number> = {
+		[StressMode.Short]: 0.5,
+		[StressMode.Normal]: 1,
+		[StressMode.Long]: 2,
+	};
 
-	const seeds = Array.from({ length: testCount }, (_, i) => i);
+	const modeTestCount = Math.floor(testCount * modeMultiplier[stressMode]);
+	const initialSeed = random.integer(0, Number.MAX_SAFE_INTEGER);
 
-	switch (stressMode) {
-		case StressMode.Short: {
-			const halfCount = Math.ceil(testCount / 2);
-			const initialSeed = random.pick(seeds);
-			const selectedSeeds: number[] = [];
-
-			for (let i = 0; i < halfCount; i++) {
-				const seed = (initialSeed + i) % testCount;
-				selectedSeeds.push(seed);
-			}
-
-			return selectedSeeds;
-		}
-		case StressMode.Long: {
-			// Currently the long mode just double the test seeds.
-			return [...seeds, ...seeds];
-		}
-
-		default: {
-			return seeds;
-		}
-	}
+	return Array.from({ length: modeTestCount }, (_, i) => (initialSeed + i) % testCount);
 }
 
 /**
