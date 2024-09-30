@@ -5,6 +5,7 @@
 
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientSessionId, IPresence, ISessionClient } from "./presence.js";
@@ -44,14 +45,17 @@ export const brandedObjectEntries = Object.entries as <K extends string, T>(
 export type IEphemeralRuntime = Pick<
 	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
 	"clientId" | "connected" | "getQuorum" | "off" | "on" | "submitSignal"
->;
+> &
+	Partial<Pick<IFluidDataStoreRuntime, "logger">>;
 
 /**
  * Collection of utilities provided by PresenceManager that are used by presence sub-components.
  *
  * @internal
  */
-export type PresenceManagerInternal = Pick<IPresence, "getAttendee">;
+export type PresenceManagerInternal = Pick<IPresence, "getAttendee"> & {
+	readonly mc: MonitoringContext | undefined;
+};
 
 /**
  * @internal
