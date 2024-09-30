@@ -12,7 +12,7 @@ import {
 	type Feed,
 	feeds,
 	packagePublishesToFeed,
-// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/repoPolicyCheck/npmPackages.js";
 
 /**
@@ -50,8 +50,9 @@ describe("feeds", async () => {
 	const branch = await gitRepo.getCurrentBranchName();
 
 	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
-	const config = context.flubConfig.policy?.packageNames!;
-	const packages = FeedsForPackages(context.packages, config);
+	const config = context.flubConfig.policy?.packageNames;
+	// eslint-disable-next-line new-cap, @typescript-eslint/no-non-null-assertion
+	const packages = FeedsForPackages(context.packages, config!);
 
 	it("dev and build feed are mutually exclusive", () => {
 		const dev = packages.get("internal-dev")?.map((p) => p.name);
@@ -61,6 +62,7 @@ describe("feeds", async () => {
 			return dev?.includes(name);
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(hasDupes).to.be.false;
 	});
 });

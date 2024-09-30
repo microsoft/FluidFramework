@@ -12,7 +12,7 @@ import {
 	generateBumpVersionBranchName,
 	generateReleaseBranchName,
 	getDefaultBumpTypeForBranch,
-// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/branches.js";
 
 describe("generateBumpVersionBranchName", () => {
