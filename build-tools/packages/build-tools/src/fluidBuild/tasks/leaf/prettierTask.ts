@@ -8,6 +8,7 @@ import { readFile, stat } from "node:fs/promises";
 import * as path from "node:path";
 import ignore from "ignore";
 
+import type { BuildContext } from "../../buildContext";
 import { BuildPackage } from "../../buildGraph";
 import { getInstalledPackageVersion, getRecursiveFiles, globFn } from "../taskUtils";
 import { LeafWithDoneFileTask } from "./leafTask";
@@ -16,8 +17,13 @@ export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;
 	private entries: string[] = [];
 	private ignorePath: string | undefined;
-	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
-		super(node, command, taskName);
+	constructor(
+		node: BuildPackage,
+		command: string,
+		context: BuildContext,
+		taskName: string | undefined,
+	) {
+		super(node, command, context, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");
@@ -98,7 +104,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 			}
 			files = ignoreObject.filter(files);
 			const hashesP = files.map(async (name) => {
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				const hash = await this.node.context.fileHashCache.getFileHash(
 					this.getPackageFileFullPath(name),
 				);
 				return { name, hash };

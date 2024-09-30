@@ -1,6 +1,6 @@
 [Packages](docs/) &gt; [test-suite-a](docs/test-suite-a)
 
-<b>Test package</b>
+Test package
 
 # Remarks {#test-suite-a-remarks}
 

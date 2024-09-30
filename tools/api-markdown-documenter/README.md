@@ -109,6 +109,16 @@ The input `ApiModel` here will generally be the output of [API-Extractor][].
 
 See [Documentation Domain](#documentation-domain) below for more details on the output format.
 
+##### Limitations
+
+###### Embedded HTML
+
+Note: `TSDoc`'s parser has limited support for preserving `HTML` tags in `TSDoc` comments.
+This library does not preserve embedded `HTML` in doc comments.
+Instead, any `HTML` tags found will be discarded, and the contents within will be rendered normally.
+This matches VSCode Intellisense's behavior.
+We may reconsider this in the future.
+
 #### MarkdownRenderer
 
 The `MarkdownRenderer` namespace includes a few functions for generating Markdown contents.

@@ -5,12 +5,13 @@
 
 import chalk from "chalk";
 
+import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { commonOptions } from "./commonOptions";
 import { FluidRepoBuild } from "./fluidRepoBuild";
-import { getResolvedFluidRoot } from "./fluidUtils";
+import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
@@ -23,8 +24,12 @@ async function main() {
 
 	log(`Build Root: ${resolvedRoot}`);
 
-	// Load the package
-	const repo = FluidRepoBuild.create(resolvedRoot);
+	// Load the packages
+	const repo = FluidRepoBuild.create({
+		repoRoot: resolvedRoot,
+		gitRepo: new GitRepo(resolvedRoot),
+		fluidBuildConfig: getFluidBuildConfig(resolvedRoot),
+	});
 	timer.time("Package scan completed");
 
 	// Set matched package based on options filter

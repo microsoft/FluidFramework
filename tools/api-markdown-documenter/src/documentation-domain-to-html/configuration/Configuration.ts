@@ -31,7 +31,7 @@ export interface TransformationConfig extends ConfigurationBase {
 	readonly startingHeadingLevel?: number;
 
 	/**
-	 * Optional formatting to apply to the entire document.
+	 * Optional formatting to apply to the root of the document.
 	 */
 	readonly rootFormatting?: TextFormatting;
 

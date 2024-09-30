@@ -102,6 +102,7 @@ export interface IIntegerRange {
  * they need for rebasing their ops on reconnection.
  * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
