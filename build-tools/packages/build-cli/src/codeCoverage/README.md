@@ -38,7 +38,7 @@ As mentioned earlier, the PR build also uploads coverage reports as artifacts th
 
 ### Comparing code coverage reports
 
-Once we have the coverage report for the baseline and pr build, we use the `compareCodeCoverage` utility that returns an array of coverage comparisons for the list of packages passed into it. The array returned contains objects of type `CodeCoverageComparison`.
+Once we have the coverage report for the baseline and PR build, we use the `compareCodeCoverage` utility function that returns an array of coverage comparisons for the list of packages passed into it. The array returned contains objects of type `CodeCoverageComparison`.
 
 ```typescript
 export type CodeCoverageComparison = {
