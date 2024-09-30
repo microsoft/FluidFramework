@@ -621,6 +621,11 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+
+			// sort by name for determinism
+			srcHashes.sort(sortByName);
+			dstHashes.sort(sortByName);
+
 			const output = JSON.stringify({
 				srcHashes,
 				dstHashes,
@@ -632,4 +637,14 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return undefined;
 		}
 	}
+}
+
+function sortByName(a: { name: string }, b: { name: string }): number {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
 }

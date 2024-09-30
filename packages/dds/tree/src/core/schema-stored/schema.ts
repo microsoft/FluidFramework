@@ -166,6 +166,11 @@ export abstract class TreeNodeStoredSchema {
 	 * and is runtime validated by the codec.
 	 */
 	public abstract encode(): ErasedTreeNodeSchemaDataFormat;
+
+	/**
+	 * Returns the schema for the provided field.
+	 */
+	public abstract getFieldSchema(field: FieldKey): TreeFieldStoredSchema;
 }
 
 /**
@@ -202,6 +207,10 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 			object: fieldsObject,
 		});
 	}
+
+	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
+		return this.objectNodeFields.get(field) ?? storedEmptyFieldSchema;
+	}
 }
 
 /**
@@ -224,6 +233,10 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		return toErasedTreeNodeSchemaDataFormat({
 			map: encodeFieldSchema(this.mapFields),
 		});
+	}
+
+	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
+		return this.mapFields;
 	}
 }
 
@@ -251,6 +264,10 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		return toErasedTreeNodeSchemaDataFormat({
 			leaf: encodeValueSchema(this.leafValue),
 		});
+	}
+
+	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
+		return storedEmptyFieldSchema;
 	}
 }
 

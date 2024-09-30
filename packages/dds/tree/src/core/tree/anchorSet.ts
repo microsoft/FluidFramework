@@ -128,7 +128,6 @@ export interface AnchorEvents {
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
 	childrenChangedAfterBatch(arg: {
-		anchor: AnchorNode;
 		changedFields: ReadonlySet<FieldKey>;
 	}): void;
 
@@ -179,7 +178,7 @@ export interface AnchorEvents {
 	 * subtree changed, compared to {@link AnchorEvents.subtreeChanged} or {@link AnchorEvents.subtreeChanging} which
 	 * fire when something _may_ have changed or _may_ be about to change.
 	 */
-	subtreeChangedAfterBatch(anchor: AnchorNode): void;
+	subtreeChangedAfterBatch(): void;
 }
 
 /**
@@ -775,9 +774,9 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 									e.changedField ??
 									fail("childrenChangedAfterBatch events should have a changedField"),
 							);
-						node.events.emit(event, { anchor: node, changedFields: new Set(fieldKeys) });
+						node.events.emit(event, { changedFields: new Set(fieldKeys) });
 					} else {
-						node.events.emit(event, node);
+						node.events.emit(event);
 					}
 				}
 			},

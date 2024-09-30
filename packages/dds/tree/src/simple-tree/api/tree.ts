@@ -16,21 +16,19 @@ import {
 	FieldKind,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import { toFlexSchema } from "../toFlexSchema.js";
+import { toStoredSchema } from "../toFlexSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
-import { walkFieldSchema } from "../walkSchema.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
 /**
- * Channel for a Fluid Tree DDS.
- * @remarks
- * Allows storing and collaboratively editing schema-aware hierarchial data.
- * @sealed @public
+ * A tree from which a {@link TreeView} can be created.
+ * @system @sealed @public
  */
-export interface ITree extends IFluidLoadable {
+export interface ViewableTree {
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
 	 * If the stored schema is compatible with the view schema specified by `config`,
@@ -67,6 +65,14 @@ export interface ITree extends IFluidLoadable {
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 }
+
+/**
+ * Channel for a Fluid Tree DDS.
+ * @remarks
+ * Allows storing and collaboratively editing schema-aware hierarchial data.
+ * @sealed @public
+ */
+export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
  * Options when constructing a tree view.
@@ -181,7 +187,7 @@ export interface ITreeViewConfiguration<
 }
 
 /**
- * Configuration for {@link ITree.viewWith}.
+ * Configuration for {@link ViewableTree.viewWith}.
  * @sealed @public
  */
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
@@ -236,7 +242,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
-		toFlexSchema(config.schema);
+		toStoredSchema(config.schema);
 	}
 }
 
