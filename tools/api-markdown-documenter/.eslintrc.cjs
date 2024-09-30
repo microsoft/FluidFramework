@@ -52,5 +52,18 @@ module.exports = {
 				"@typescript-eslint/no-unused-expressions": "off",
 			},
 		},
+		{
+			files: ["src/commands/**"],
+			rules: {
+				// OCLIF commands are named based on their associated file names.
+				// To make the CLI experience standard, name these files using `kebab-case`.
+				"unicorn/filename-case": [
+					"error",
+					{
+						case: "kebabCase",
+					},
+				],
+			},
+		},
 	],
 };
