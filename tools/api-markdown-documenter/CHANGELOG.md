@@ -1,5 +1,10 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.17.1
+
+-   Updates `TSDoc` node handling to emit a _warning_ in place of an _error_ when an embedded `HTML` tag is encountered.
+    Also updates the logged notice to include the tag that was encountered.
+
 ## 0.17.0
 
 -   Updates HTML rendering APIs to operate on `HAST` domain trees from `documentToHtml`, and leverage existing rendering libraries ([hast-util-to-html](https://www.npmjs.com/package/hast-util-to-html) and [hast-util-format](https://www.npmjs.com/package/hast-util-format)) rather than maintaining bespoke rendering code.
