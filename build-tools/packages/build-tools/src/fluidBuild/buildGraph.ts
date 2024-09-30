@@ -97,7 +97,6 @@ export class BuildPackage {
 	constructor(
 		public readonly context: BuildGraphContext,
 		public readonly pkg: Package,
-		// public readonly buildContext: BuildContext,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
 		this._taskDefinitions = getTaskDefinitions(

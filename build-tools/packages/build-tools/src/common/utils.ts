@@ -12,7 +12,7 @@ import isEqual from "lodash.isequal";
  *	An array of commands that are known to have subcommands and should be parsed as such. These will be combined with
  *	any additional commands provided in the Fluid build config.
  */
-const defaultMultiCommandExecutables = ["flub", "biome"];
+const defaultMultiCommandExecutables = ["flub", "biome"] as const;
 
 export function getExecutableFromCommand(command: string, multiCommandExecutables: string[]) {
 	let toReturn: string;
