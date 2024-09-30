@@ -43,6 +43,7 @@ describe("joinSessions Tests", () => {
 		tenantId: "tenantId",
 		snapshotStorageUrl: "https://fake/snapshotStorageUrl",
 		refreshSessionDurationSeconds: 100,
+		sensitivityLabelsInfo: "sensitivityLabel",
 	};
 	let odspDocumentServiceFactory: OdspDocumentServiceFactory;
 
