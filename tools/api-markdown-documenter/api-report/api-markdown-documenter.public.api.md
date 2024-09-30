@@ -712,11 +712,12 @@ export interface TextFormatting {
 export interface ToHtmlConfig extends ConfigurationBase {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
+    readonly rootFormatting?: TextFormatting;
     readonly startingHeadingLevel?: number;
 }
 
 // @public
-export interface ToHtmlContext {
+export interface ToHtmlContext extends TextFormatting {
     readonly headingLevel: number;
     readonly logger: Logger;
     readonly transformations: ToHtmlTransformations;
