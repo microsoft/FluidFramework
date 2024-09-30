@@ -18,7 +18,7 @@ The code coverage plugin uses cobertura coverage files for running code coverage
 
 ### Identifying the baseline build
 
-Before running coverage comparison, code coverage plugin identifies the baseline build for the PR. For example, if a pull request was targeting main, we would consider the baseline to be the main commit that the PR branch was based off of.
+Before running coverage comparison, a baseline build needs to be determined for the PR. This is typically based on the target branch for the PR. For example, if a pull request was targeting main, we would consider the baseline to be the main commit that the PR branch was based off of.
 
 ### Downloading artifacts from baseline build
 
