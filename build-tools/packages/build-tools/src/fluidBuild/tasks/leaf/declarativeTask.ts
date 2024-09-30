@@ -58,7 +58,7 @@ class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
  * Generates a task handler for a declarative task dynamically.
  *
  * @param taskDefinition - The declarative task definition.
- * @returns a function that
+ * @returns a function that can be used to instantiate a LeafTask to handle a task.
  */
 export function createDeclarativeTaskHandler(
 	taskDefinition: DeclarativeTask,
