@@ -1604,8 +1604,9 @@ export function generateTestSeeds(testCount: number, stressMode: StressMode): nu
 	const initialSeed = random.integer(0, Number.MAX_SAFE_INTEGER);
 
 	// Generate seeds and sort them
-    return Array.from({ length: modeTestCount }, (_, i) => (initialSeed + i) % testCount)
-        .sort((a, b) => a - b);
+	return Array.from({ length: modeTestCount }, (_, i) => (initialSeed + i) % testCount).sort(
+		(a, b) => a - b,
+	);
 }
 
 /**
