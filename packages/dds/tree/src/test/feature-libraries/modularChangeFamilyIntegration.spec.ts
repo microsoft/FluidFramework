@@ -424,11 +424,12 @@ describe("ModularChangeFamily integration", () => {
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
 
+			const rebasedTag = mintRevisionTag();
 			const rebasedDelta = normalizeDelta(
-				intoDelta(tagChangeInline(rebased, baseTag), family.fieldKinds),
+				intoDelta(tagChangeInline(rebased, rebasedTag), family.fieldKinds),
 			);
 			const expectedDelta = normalizeDelta(
-				intoDelta(tagChangeInline(expected, baseTag), family.fieldKinds),
+				intoDelta(tagChangeInline(expected, rebasedTag), family.fieldKinds),
 			);
 
 			assertDeltaEqual(rebasedDelta, expectedDelta);
@@ -553,12 +554,9 @@ describe("ModularChangeFamily integration", () => {
 
 			const tagForCompare = mintRevisionTag();
 
-			const moves = makeAnonChange(
-				family.compose([
-					tagChangeInline(moveA, tagForCompare),
-					tagChangeInline(moveB, tagForCompare),
-					tagChangeInline(moveC, tagForCompare),
-				]),
+			const moves = tagChangeInline(
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
+				tagForCompare,
 			);
 
 			const remove = tagChangeInline(removeD, tagForCompare);
@@ -624,11 +622,9 @@ describe("ModularChangeFamily integration", () => {
 				.insert(0, newNode);
 
 			const [move, insert] = getChanges();
+			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
 			const tagForCompare = mintRevisionTag();
-			const composed = family.compose([
-				tagChangeInline(move, tagForCompare),
-				tagChangeInline(insert, tagForCompare),
-			]);
+			const taggedComposed = tagChangeInline(composed, tagForCompare);
 			const expected: DeltaRoot = {
 				build: [{ id: { minor: 2, major: tagForCompare }, trees: [newNode] }],
 				fields: new Map([
@@ -661,7 +657,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			family.validateChangeset(composed);
-			const delta = intoDelta(makeAnonChange(composed), family.fieldKinds);
+			const delta = intoDelta(taggedComposed, family.fieldKinds);
 			assertDeltaEqual(delta, expected);
 		});
 
@@ -691,11 +687,7 @@ describe("ModularChangeFamily integration", () => {
 			const [move, insert] = getChanges();
 			const moveTagged = tagChangeInline(move, tag1);
 			const returnTagged = tagRollbackInverse(
-				family.changeRevision(
-					family.invert(moveTagged, true, mintRevisionTag()),
-					tag3,
-					moveTagged.revision,
-				),
+				family.invert(moveTagged, true, tag3),
 				tag3,
 				moveTagged.revision,
 			);
@@ -764,11 +756,8 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const [move1, move2, expected] = getChanges();
+			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 			const tagForCompare = mintRevisionTag();
-			const composed = family.compose([
-				tagChangeInline(move1, tagForCompare),
-				tagChangeInline(move2, tagForCompare),
-			]);
 			family.validateChangeset(composed);
 			const actualDelta = normalizeDelta(
 				intoDelta(tagChangeInline(composed, tagForCompare), family.fieldKinds),
@@ -806,13 +795,9 @@ describe("ModularChangeFamily integration", () => {
 			editor.exitTransaction();
 
 			const [remove, move] = getChanges();
-			const tagForCompare = mintRevisionTag();
-			const edit = family.compose([
-				tagChangeInline(remove, tagForCompare),
-				tagChangeInline(move, tagForCompare),
-			]);
+			const edit = family.compose([makeAnonChange(remove), makeAnonChange(move)]);
 
-			const inverse = removeAliases(family.invert(tagChangeInline(edit, tag1), false, tag1));
+			const inverse = removeAliases(family.invert(tagChangeInline(edit, tag1), false, tag2));
 
 			const fieldAExpected = [
 				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
@@ -837,7 +822,7 @@ describe("ModularChangeFamily integration", () => {
 						),
 					),
 				),
-				tag1,
+				tag2,
 			).change;
 
 			assertEqual(inverse, expected);
@@ -878,15 +863,14 @@ describe("ModularChangeFamily integration", () => {
 
 			editor.exitTransaction();
 			const [move1, move2, modify] = getChanges();
-			const tagForCompare = mintRevisionTag();
 
 			const moves = family.compose([
-				tagChangeInline(move1, tagForCompare),
-				tagChangeInline(move2, tagForCompare),
-				tagChangeInline(modify, tagForCompare),
+				makeAnonChange(move1),
+				makeAnonChange(move2),
+				makeAnonChange(modify),
 			]);
 
-			const inverse = removeAliases(family.invert(tagChangeInline(moves, tag1), false, tag1));
+			const inverse = removeAliases(family.invert(tagChangeInline(moves, tag1), false, tag2));
 
 			const fieldAExpected: SF.Changeset = [
 				MarkMaker.moveOut(1, brand(0)),
@@ -928,7 +912,7 @@ describe("ModularChangeFamily integration", () => {
 						),
 					),
 				),
-				tag1,
+				tag2,
 			).change;
 
 			assertEqual(inverse, expected);

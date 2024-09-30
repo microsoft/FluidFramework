@@ -84,7 +84,7 @@ export function testToDelta() {
 		});
 
 		it("revive => restore", () => {
-			const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) }, tag);
+			const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) }, tag2);
 			const actual = toDelta(changeset);
 			const expected: DeltaFieldChanges = {
 				local: [

@@ -230,29 +230,29 @@ export function testRebase() {
 
 		it("remove ↷ earlier remove", () => {
 			// Removes ---DE
-			const removeA = Change.remove(3, 2, tag1);
+			const removeA = Change.remove(3, 2, tag2);
 			// Removes AB--
-			const removeB = Change.remove(0, 2, tag2);
+			const removeB = Change.remove(0, 2, tag1);
 			const actual = rebase(removeA, removeB);
 			// Removes -DE
 			const expected = [
-				Mark.tomb(tag2, brand(0), 2),
+				Mark.tomb(tag1, brand(0), 2),
 				Mark.skip(1),
-				Mark.remove(2, brand(0), { revision: tag1 }),
+				Mark.remove(2, brand(0), { revision: tag2 }),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
 
 		it("remove ↷ later remove", () => {
 			// Removes AB--
-			const removeA = Change.remove(0, 2, tag1);
+			const removeA = Change.remove(0, 2, tag2);
 			// Removes ---DE
-			const removeB = Change.remove(3, 2, tag2);
+			const removeB = Change.remove(3, 2, tag1);
 			const actual = rebase(removeA, removeB);
 			const expected = [
-				Mark.remove(2, brand(0), { revision: tag1 }),
+				Mark.remove(2, brand(0), { revision: tag2 }),
 				Mark.skip(1),
-				Mark.tomb(tag2, brand(0), 2),
+				Mark.tomb(tag1, brand(0), 2),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
@@ -366,13 +366,13 @@ export function testRebase() {
 		});
 
 		it("redundant revive ↷ insert", () => {
-			const revive = Change.pin(0, 3, { revision: tag1, localId: brand(0) }, tag1);
-			const insert = Change.insert(1, 1, tag2);
+			const revive = Change.pin(0, 3, { revision: tag2, localId: brand(0) }, tag2);
+			const insert = Change.insert(1, 1, tag1);
 			const actual = rebase(revive, insert);
 			const expected = [
-				Mark.pin(1, brand(0), { revision: tag1 }),
+				Mark.pin(1, brand(0), { revision: tag2 }),
 				Mark.skip(1),
-				Mark.pin(2, brand(1), { revision: tag1 }),
+				Mark.pin(2, brand(1), { revision: tag2 }),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
@@ -877,13 +877,19 @@ export function testRebase() {
 		});
 
 		it("rebasing over transient adds tombstones", () => {
-			const insert = Change.insert(0, 1, tag1);
+			const insert = Change.insert(0, 1, tag2);
 			const transient = [
-				Mark.remove(2, brand(2), { cellId: { localId: brand(0), revision: tag2 } }),
+				Mark.remove(2, brand(2), { cellId: { localId: brand(0), revision: tag1 } }),
 			];
-			const rebased = rebase(insert, transient);
+			const rebased = rebase(insert, transient, tag1, {
+				metadata: rebaseRevisionMetadataFromInfo(
+					[{ revision: tag1 }, { revision: tag2 }],
+					tag2,
+					[tag1],
+				),
+			});
 			const expected = [
-				Mark.insert(1, { localId: brand(0), revision: tag1 }, { revision: tag1 }),
+				Mark.insert(1, { localId: brand(0), revision: tag2 }, { revision: tag2 }),
 				Mark.tomb(tag1, brand(2), 2),
 			];
 
@@ -897,14 +903,14 @@ export function testRebase() {
 				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
 			];
 
-			const del = Change.remove(0, 1, tag1);
+			const del = Change.remove(0, 1, tag2);
 			const rebased = rebase(del, moveAndRemove);
 			const expected = [
 				Mark.tomb(tag1, brand(0)),
 				{ count: 1 },
 				Mark.remove(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(1) },
-					revision: tag1,
+					revision: tag2,
 				}),
 			];
 
@@ -918,12 +924,12 @@ export function testRebase() {
 				Mark.moveOut(1, brand(0)),
 			];
 
-			const del = Change.remove(1, 1, tag1);
+			const del = Change.remove(1, 1, tag2);
 			const rebased = rebase(del, moveAndRemove);
 			const expected = [
 				Mark.remove(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(1) },
-					revision: tag1,
+					revision: tag2,
 				}),
 				{ count: 1 },
 				Mark.tomb(tag1, brand(0)),
@@ -933,22 +939,23 @@ export function testRebase() {
 		});
 
 		it("move ↷ move and remove", () => {
-			const [moveOut, moveIn] = Mark.move(1, { localId: brand(0), revision: tag1 });
+			const [moveOut1, moveIn1] = Mark.move(1, { localId: brand(0), revision: tag1 });
 			const moveAndRemove = [
 				{ count: 1 },
-				Mark.attachAndDetach(moveIn, Mark.remove(1, brand(2))),
+				Mark.attachAndDetach(moveIn1, Mark.remove(1, { revision: tag1, localId: brand(2) })),
 				{ count: 1 },
-				moveOut,
+				moveOut1,
 			];
 
-			const move = Change.move(2, 1, 0, tag1);
-			const rebased = rebase(move, moveAndRemove);
+			const [moveOut2, moveIn2] = Mark.move(1, { localId: brand(0), revision: tag2 });
+			const move2 = [moveIn2, { count: 2 }, moveOut2];
+			const rebased = rebase(move2, moveAndRemove);
 			const expected = [
-				moveIn,
+				moveIn2,
 				{ count: 1 },
 				Mark.moveOut(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(2) },
-					revision: tag1,
+					revision: tag2,
 				}),
 				{ count: 1 },
 				Mark.tomb(tag1, brand(0)),

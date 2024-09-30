@@ -51,7 +51,7 @@ const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncoding
 		["without child change", inlineRevision(Change.remove(2, 2, tag1), tag1), context],
 		[
 			"with a revive",
-			inlineRevision(Change.revive(0, 1, { revision: tag2, localId: brand(10) }, tag2), tag1),
+			inlineRevision(Change.revive(0, 1, { revision: tag2, localId: brand(10) }, tag1), tag1),
 			context,
 		],
 		...Object.entries(cases).map<TestCase>(([name, change]) => [
