@@ -1,6 +1,6 @@
 # @fluid-tools/api-markdown-documenter
 
-## 0.16.1
+## 0.17.0
 
 ### ⚠ BREAKING CHANGES
 
