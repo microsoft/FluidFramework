@@ -11,6 +11,18 @@ module.exports = function handler(fileData, logger): void {
 	}
 
 	for (const testData of fileData.benchmarks) {
+		const heapUsedAvg = testData.customData["Heap Used Avg"];
+		const heapUsedStdDev = testData.customData["Heap Used StdDev"];
+		if (Number.isNaN(Number.parseFloat(heapUsedAvg))) {
+			throw new TypeError(
+				`${testData.benchmarkName} with value ${heapUsedAvg} is not a number`,
+			);
+		}
+		if (Number.isNaN(Number.parseFloat(heapUsedStdDev))) {
+			throw new TypeError(
+				`${testData.benchmarkName} with value ${heapUsedStdDev} is not a number`,
+			);
+		}
 		logger.send({
 			namespace: "FFEngineering", // Transfer the telemetry associated with tests performance measurement to namespace "FFEngineering"
 			category: "performance",
@@ -18,8 +30,8 @@ module.exports = function handler(fileData, logger): void {
 			benchmarkType: "MemoryUsage",
 			suiteName: fileData.suiteName,
 			testName: testData.benchmarkName,
-			heapUsedAvg: testData.customData["Heap Used Avg"],
-			heapUsedStdDev: testData.customData["Heap Used StdDev"],
+			heapUsedAvg,
+			heapUsedStdDev,
 			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});
 	}

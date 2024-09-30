@@ -14,12 +14,17 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 	for (const testData of fileData.benchmarks) {
 		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.benchmarkName}_heapUsedAvg`;
 		try {
-			console.log(
-				`emitting metric ${heapUsedAvgMetricName} with value ${testData.customData["Heap Used Avg"]}`,
-			);
+			const value = testData.customData["Heap Used Avg"];
+			if (Number.isNaN(Number.parseFloat(value))) {
+				console.error(
+					`skipping metric '${heapUsedAvgMetricName}' with value '${value}' as it is not a number`,
+				);
+				continue;
+			}
+			console.log(`emitting metric '${heapUsedAvgMetricName}' with value '${value}'`);
 			telemetryClient.trackMetric({
 				name: heapUsedAvgMetricName,
-				value: testData.customData["Heap Used Avg"],
+				value,
 				namespace: "performance_benchmark_memoryUsage",
 				properties: {
 					buildId: process.env.BUILD_ID,
@@ -32,17 +37,22 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 				},
 			});
 		} catch (error) {
-			console.error(`failed to emit metric ${heapUsedAvgMetricName}`, error);
+			console.error(`failed to emit metric '${heapUsedAvgMetricName}'`, error);
 		}
 
 		const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.benchmarkName}_heapUsedStdDev`;
 		try {
-			console.log(
-				`emitting metric ${heapUsedStdDevMetricName} with value ${testData.customData["Heap Used StdDev"]}`,
-			);
+			const value = testData.customData["Heap Used StdDev"];
+			if (Number.isNaN(Number.parseFloat(value))) {
+				console.error(
+					`skipping metric '${heapUsedStdDevMetricName}' with value '${value}' as it is not a number`,
+				);
+				continue;
+			}
+			console.log(`emitting metric '${heapUsedStdDevMetricName}' with value '${value}'`);
 			telemetryClient.trackMetric({
 				name: heapUsedStdDevMetricName,
-				value: testData.customData["Heap Used StdDev"],
+				value,
 				namespace: "performance_benchmark_memoryUsage",
 				properties: {
 					buildId: process.env.BUILD_ID,
@@ -55,7 +65,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 				},
 			});
 		} catch (error) {
-			console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
+			console.error(`failed to emit metric '${heapUsedStdDevMetricName}'`, error);
 		}
 	}
 };

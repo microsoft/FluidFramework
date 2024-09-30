@@ -11,6 +11,21 @@ module.exports = function handler(fileData, logger): void {
 	}
 
 	for (const testData of fileData.benchmarks) {
+		const arithmeticMean = testData.customData["Period (ns/op)"];
+		const marginOfError = testData.customData["Margin of Error"];
+		if (Number.isNaN(Number.parseFloat(arithmeticMean))) {
+			throw new TypeError(
+				`'${testData.benchmarkName}' with value '${arithmeticMean}' is not a number`,
+			);
+		}
+
+		const parsedMarginOfError = Number.parseFloat(marginOfError.replace(/[%±]/g, ""));
+		if (Number.isNaN(parsedMarginOfError)) {
+			throw new TypeError(
+				`'${testData.benchmarkName}' with value '${marginOfError}' is not a number`,
+			);
+		}
+
 		logger.send({
 			namespace: "FFEngineering", // Transfer the telemetry associated with tests performance measurement to namespace "FFEngineering"
 			category: "performance",
@@ -18,8 +33,8 @@ module.exports = function handler(fileData, logger): void {
 			benchmarkType: "ExecutionTime",
 			suiteName: fileData.suiteName,
 			benchmarkName: testData.benchmarkName,
-			arithmeticMean: testData.customData["Period (ns/op)"],
-			marginOfError: testData.customData["Margin of Error"],
+			arithmeticMean,
+			marginOfError,
 			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});
 	}
