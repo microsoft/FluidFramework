@@ -2,7 +2,7 @@
 
 [Packages](./) &gt; [test-suite-a](./test-suite-a)
 
-<b>Test package</b>
+Test package
 
 ## Remarks {#test-suite-a-remarks}
 
