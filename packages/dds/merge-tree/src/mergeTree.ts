@@ -1246,7 +1246,10 @@ export class MergeTree {
 				});
 			});
 
-			if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+			if (
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
+			) {
 				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo!);
 			}
 
@@ -1254,7 +1257,8 @@ export class MergeTree {
 			// positions after slide are final
 			if (
 				opArgs.op.type === MergeTreeDeltaType.REMOVE ||
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
 			) {
 				this.slideAckedRemovedSegmentReferences(pendingSegmentGroup.segments);
 			}
@@ -1913,14 +1917,8 @@ export class MergeTree {
 			segmentGroup: undefined,
 		};
 
-		const { segment: startSeg } =
-			start.pos === -1
-				? { segment: start.side === Side.After ? this.startOfTree : this.endOfTree }
-				: this.getContainingSegment(start.pos, refSeq, clientId);
-		const { segment: endSeg } =
-			end.pos === -1
-				? { segment: end.side === Side.After ? this.startOfTree : this.endOfTree }
-				: this.getContainingSegment(end.pos, refSeq, clientId);
+		const { segment: startSeg } = this.getContainingSegment(start.pos, refSeq, clientId);
+		const { segment: endSeg } = this.getContainingSegment(end.pos, refSeq, clientId);
 		assert(
 			startSeg !== undefined && endSeg !== undefined,
 			0xa3f /* segments cannot be undefined */,
@@ -1954,7 +1952,10 @@ export class MergeTree {
 			refSeq: this.collabWindow.currentSeq,
 			obliterateInfo: obliterate,
 		};
-		this.pendingSegments.push(obliterate.segmentGroup);
+		if (this.collabWindow.collaborating && clientId === this.collabWindow.clientId) {
+			this.pendingSegments.push(obliterate.segmentGroup);
+		}
+		this.obliterates.addOrUpdate(obliterate);
 
 		const markMoved = (
 			segment: ISegment,
@@ -1973,9 +1974,6 @@ export class MergeTree {
 				return true;
 			}
 			const existingMoveInfo = toMoveInfo(segment);
-			// TODO: if segment was inserted inside of a later local obliteration range
-			// then it shouldn't be considered obliterated for other clients
-			// for refSeqs between the insertion's seq and the obliterate's seq.
 
 			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
 				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
@@ -2034,7 +2032,6 @@ export class MergeTree {
 						obliterate.segmentGroup,
 						localSeq,
 					);
-					obliterate.segmentGroup.obliterateInfo ??= obliterate;
 				} else {
 					if (MergeTree.options.zamboniSegments) {
 						this.addToLRUSet(segment, seq);
@@ -2069,8 +2066,6 @@ export class MergeTree {
 			undefined,
 			seq === UnassignedSequenceNumber ? undefined : seq,
 		);
-
-		this.obliterates.addOrUpdate(obliterate);
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code

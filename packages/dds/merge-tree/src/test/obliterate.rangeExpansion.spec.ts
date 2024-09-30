@@ -128,7 +128,8 @@ describe("obliterate", () => {
 		expectedText: "hello",
 	});
 	describe("zero length", () => {
-		itCorrectlyObliterates({
+		// TODO: #17785: Allow start and end to be used as obliteration range endpoints.
+		itCorrectlyObliterates.skip({
 			title: "zero length obliterate at the start of the string",
 			action: (helper) => {
 				helper.insertText("A", 0, "hello world");
@@ -158,6 +159,7 @@ describe("obliterate", () => {
 			},
 			expectedText: "hello world",
 		});
+		// TODO: #17785: Allow start and end to be used as obliteration range endpoints.
 		itCorrectlyObliterates.skip({
 			title: "zero length obliterate at the end of the string",
 			action: (helper) => {
