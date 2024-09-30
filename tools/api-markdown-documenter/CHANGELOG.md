@@ -2,7 +2,7 @@
 
 ## 0.17.1
 
--   Updates `TSDoc` node handling to emit a *warning* in place of an *error* when an embedded `HTML` tag is encountered.
+-   Updates `TSDoc` node handling to emit a _warning_ in place of an _error_ when an embedded `HTML` tag is encountered.
     Also updates the logged notice to include the tag that was encountered.
 
 ## 0.17.0
