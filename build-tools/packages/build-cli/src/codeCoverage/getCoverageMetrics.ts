@@ -79,7 +79,7 @@ export const getCoverageMetricsForBaseline = async (
 
 		for (const coverageReportFile of coverageReportsFiles) {
 			const jsZipObject = artifactZip.file(coverageReportFile);
-			if (!jsZipObject) {
+			if (jsZipObject === undefined) {
 				logger?.warning(
 					`could not find file ${coverageReportFile} in the code coverage artifact`,
 				);
@@ -88,15 +88,18 @@ export const getCoverageMetricsForBaseline = async (
 			// eslint-disable-next-line no-await-in-loop
 			const coverageReportXML = await jsZipObject?.async("nodebuffer");
 			if (coverageReportXML !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- missing type for XML output
-				xmlParser.parseString(coverageReportXML, (err: Error | null, result: any): void => {
-					if (err) {
-						console.warn(`Error processing file ${coverageReportFile}: ${err}`);
-						return;
-					}
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-					coverageMetricsForBaseline = extractCoverageMetrics(result);
-				});
+				xmlParser.parseString(
+					coverageReportXML,
+					(err: Error | null, result: unknown): void => {
+						if (err) {
+							console.warn(`Error processing file ${coverageReportFile}: ${err}`);
+							return;
+						}
+						coverageMetricsForBaseline = extractCoverageMetrics(
+							result as TXmlCoverageReportSchema,
+						);
+					},
+				);
 			}
 			if (coverageMetricsForBaseline.size > 0) {
 				break;

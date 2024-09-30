@@ -67,9 +67,9 @@ export const getCodeCoverageSummary = async (
 		logger,
 	);
 
-	if (pRBuildInfo === undefined || typeof pRBuildInfo === "string") {
+	if (prBuildInfo === undefined || typeof prBuildInfo === "string") {
 		return {
-			commentMessage: pRBuildInfo ?? "No PR build found",
+			commentMessage: prBuildInfo ?? "No PR build found",
 			failBuild: false,
 		};
 	}
@@ -77,7 +77,7 @@ export const getCodeCoverageSummary = async (
 	// Extract the coverage metrics for the baseline and PR builds.
 	const [coverageMetricsForBaseline, coverageMetricsForPr] = await Promise.all([
 		getCoverageMetricsForBaseline(baselineBuildInfo.artifactZip),
-		getCoverageMetricsForBaseline(pRBuildInfo.artifactZip),
+		getCoverageMetricsForBaseline(prBuildInfo.artifactZip),
 	]);
 
 	// Compare the code coverage metrics for the baseline and PR builds.

@@ -66,11 +66,11 @@ export async function getBaselineBuildMetrics(
 			build.id,
 			`${azureDevopsBuildCoverageConstants.artifactName}_${build.id}`,
 		).catch((error: Error) => {
-			logger?.verbose(
+			logger?.warning(
 				`Failed to fetch and/or unzip artifact '${azureDevopsBuildCoverageConstants.artifactName}' from CI build. Cannot generate analysis at this time`,
 			);
-			logger?.verbose(`Error: ${error.message}`);
-			logger?.verbose(`Error stack: ${error.stack}`);
+			logger?.warning(`Error: ${error.message}`);
+			logger?.warning(`Error stack: ${error.stack}`);
 			return undefined;
 		});
 
@@ -80,7 +80,7 @@ export async function getBaselineBuildMetrics(
 
 		// Successful baseline build does not have the needed build artifacts
 		if (baselineArtifactZip === undefined) {
-			logger?.verbose(
+			logger?.warning(
 				`Trying backup builds when successful baseline build does not have the needed build artifacts ${build.id}`,
 			);
 			continue;
@@ -93,20 +93,20 @@ export async function getBaselineBuildMetrics(
 	// Unable to find a usable baseline
 	if (baselineArtifactZip === undefined) {
 		const message = `Could not find a usable baseline build`;
-		logger?.verbose(message);
+		logger?.warning(message);
 		return message;
 	}
 
 	if (!baselineBuild) {
 		const message = `Could not find baseline build for CI`;
-		logger?.verbose(message);
+		logger?.warning(message);
 		return message;
 	}
 
 	// Baseline build does not have id
 	if (baselineBuild.id === undefined) {
 		const message = `Baseline build does not have a build id`;
-		logger?.verbose(message);
+		logger?.warning(message);
 		return message;
 	}
 
@@ -161,11 +161,11 @@ export async function getBuildArtifactForSpecificBuild(
 		build.id,
 		`${azureDevopsBuildCoverageConstants.artifactName}_${build.id}`,
 	).catch((error: Error) => {
-		logger?.verbose(
+		logger?.warning(
 			`Failed to fetch and/or unzip artifact '${azureDevopsBuildCoverageConstants.artifactName}' from CI build. Cannot generate analysis at this time`,
 		);
-		logger?.verbose(`Error: ${error.message}`);
-		logger?.verbose(`Error stack: ${error.stack}`);
+		logger?.warning(`Error: ${error.message}`);
+		logger?.warning(`Error stack: ${error.stack}`);
 		return undefined;
 	});
 
@@ -174,7 +174,7 @@ export async function getBuildArtifactForSpecificBuild(
 	logger?.verbose(`Artifact Zip === UNDEFINED: ${artifactZip === undefined}`);
 	if (artifactZip === undefined) {
 		const message = `Could not find a usable artifact`;
-		logger?.verbose(message);
+		logger?.warning(message);
 		return message;
 	}
 
