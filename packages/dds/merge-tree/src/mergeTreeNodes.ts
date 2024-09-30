@@ -48,11 +48,36 @@ export interface IMergeNodeCommon {
 	ordinal: string;
 	isLeaf(): this is ISegment;
 }
+
 /**
+ * This interface exposes internal things to dds that leverage merge tree,
+ * like sequence and matrix.
+ *
+ * We use tiered interface to control visibility of segment properties.
+ * This sits between ISegment and ISegmentLeaf. It should only expose
+ * things tagged internal.
+ *
+ * @internal
+ */
+export type ISegmentInternal = ISegment & {
+	localRefs?: LocalReferenceCollection;
+};
+
+/**
+ * We use tiered interface to control visibility of segment properties.
+ * This is the lowest interface and is not exported, it site below ISegment and ISegmentInternal.
+ * It should only expose unexported things.
+ *
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegment & { parent?: MergeBlock };
+export type ISegmentLeaf = ISegmentInternal & {
+	parent?: MergeBlock;
+	// eslint-disable-next-line import/no-deprecated
+	segmentGroups?: SegmentGroupCollection;
+	// eslint-disable-next-line import/no-deprecated
+	propertyManager?: PropertiesManager;
+};
 export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
@@ -395,6 +420,7 @@ export interface SegmentActions<TClientData> {
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @legacy
  * @alpha
+ * @privateRemarks After deprecation period this interface should be made internal
  */
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
@@ -704,7 +730,6 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		this.copyPropertiesTo(leafSegment);
 		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 		const thisAsMergeSegment: ISegmentLeaf = this;
 		leafSegment.parent = thisAsMergeSegment.parent;
@@ -728,32 +753,13 @@ export abstract class BaseSegment implements ISegment {
 		leafSegment.movedSeqs = this.movedSeqs?.slice();
 		leafSegment.localMovedSeq = this.localMovedSeq;
 		leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
-		this.segmentGroups.copyTo(leafSegment);
+
 		this.trackingCollection.copyTo(leafSegment);
-		if (this.localRefs) {
-			this.localRefs.split(pos, leafSegment);
-		}
 		if (this.attribution) {
 			leafSegment.attribution = this.attribution.splitAt(pos);
 		}
 
 		return leafSegment;
-	}
-
-	private copyPropertiesTo(other: ISegment): void {
-		if (this.properties !== undefined) {
-			if (this.propertyManager) {
-				// eslint-disable-next-line import/no-deprecated
-				other.propertyManager = new PropertiesManager();
-				other.properties = this.propertyManager.copyTo(
-					this.properties,
-					other.properties,
-					other.propertyManager,
-				);
-			} else {
-				other.properties = clone(this.properties);
-			}
-		}
 	}
 
 	public abstract clone(): ISegment;
