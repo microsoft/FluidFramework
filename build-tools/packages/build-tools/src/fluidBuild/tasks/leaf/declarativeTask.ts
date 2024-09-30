@@ -11,7 +11,7 @@ import type { DeclarativeTask } from "../../fluidBuildConfig";
 import type { TaskHandlerFunction } from "../taskHandlers";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
-export class InputOutputTask extends LeafWithFileStatDoneFileTask {
+class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
 	constructor(
 		node: BuildPackage,
 		command: string,
@@ -54,6 +54,12 @@ export class InputOutputTask extends LeafWithFileStatDoneFileTask {
 	}
 }
 
+/**
+ * Generates a task handler for a declarative task dynamically.
+ *
+ * @param taskDefinition - The declarative task definition.
+ * @returns a function that
+ */
 export function createDeclarativeTaskHandler(
 	taskDefinition: DeclarativeTask,
 ): TaskHandlerFunction {
@@ -63,7 +69,7 @@ export function createDeclarativeTaskHandler(
 		context: BuildContext,
 		taskName?: string,
 	): LeafTask => {
-		return new InputOutputTask(node, command, context, taskName, taskDefinition);
+		return new DeclarativeTaskHandler(node, command, context, taskName, taskDefinition);
 	};
 	return handler;
 }

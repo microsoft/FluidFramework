@@ -188,11 +188,13 @@ export class TaskFactory {
 			return new GroupTask(node, command, context, [subTask], taskName);
 		}
 
-		// Leaf tasks; first try to map the executable to a known task type
+		// Leaf tasks; map the executable to a known task type. If none is found, the UnknownLeafTask is used.
 		const executable = getExecutableFromCommand(
 			command,
 			context.fluidBuildConfig?.multiCommandExecutables ?? [],
 		).toLowerCase();
+
+		// Will return a task-specific handler or the UnknownLeafTask
 		const handler = getTaskForExecutable(executable, context);
 
 		// Invoke the function or constructor to create the task handler
