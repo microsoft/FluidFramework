@@ -11,7 +11,7 @@ import { BaseCommand, type IAzureDevopsBuildCoverageConstants } from "../../libr
 // and update it based on a new build.
 const commentIdentifier = `## Code coverage summary`;
 
-export default class RunCodeCoverageStats extends BaseCommand<typeof RunCodeCoverageStats> {
+export default class ReportCodeCoverageCommand extends BaseCommand<typeof ReportCodeCoverageCommand> {
 	static readonly description = "Run comparison of code coverage stats";
 
 	static readonly flags = {
