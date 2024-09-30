@@ -1,9 +1,8 @@
-`api-markdown-documenter LintApiModelCommand`
-=============================================
+# `api-markdown-documenter LintApiModelCommand`
 
 describe the command here
 
-* [`api-markdown-documenter LintApiModelCommand APIMODELDIRECTORY`](#api-markdown-documenter-lintapimodelcommand-apimodeldirectory)
+-   [`api-markdown-documenter LintApiModelCommand APIMODELDIRECTORY`](#api-markdown-documenter-lintapimodelcommand-apimodeldirectory)
 
 ## `api-markdown-documenter LintApiModelCommand APIMODELDIRECTORY`
 
