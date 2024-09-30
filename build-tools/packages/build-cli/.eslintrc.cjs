@@ -12,6 +12,9 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
 		"prettier",
 	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
 	rules: {
 		// This rule is often triggered when using custom Flags, so disabling.
 		"object-shorthand": "off",

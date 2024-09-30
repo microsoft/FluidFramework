@@ -6,13 +6,14 @@
 import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
 
-import { type PackageNamePolicyConfig } from "../../src/config.js";
-import { Context } from "../../src/library/index.js";
+import { type PackageNamePolicyConfig } from "../../config.js";
+import { Context } from "../../library/index.js";
 import {
 	type Feed,
 	feeds,
 	packagePublishesToFeed,
-} from "../../src/library/repoPolicyCheck/npmPackages.js";
+// eslint-disable-next-line import/no-internal-modules
+} from "../../library/repoPolicyCheck/npmPackages.js";
 
 /**
  * Calculates the packages that should be published to a feed and returns a map of Feed to the packages that should be
@@ -42,6 +43,7 @@ function FeedsForPackages(
 	return mapping;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 describe("feeds", async () => {
 	const resolvedRoot = await getResolvedFluidRoot();
 	const gitRepo = new GitRepo(resolvedRoot);

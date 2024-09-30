@@ -5,9 +5,8 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { PackageName } from "@rushstack/node-core-library";
-import chai, { assert, expect } from "chai";
+import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,
@@ -15,14 +14,14 @@ import {
 	PackageSelectionCriteria,
 	filterPackages,
 	selectAndFilterPackages,
-} from "../src/filter.js";
-import { Context } from "../src/library/index.js";
+} from "../filter.js";
+import { Context } from "../library/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 chai.use(assertArrays);
 
-async function getContext() {
+async function getContext(): Promise<Context> {
 	const resolvedRoot = await getResolvedFluidRoot();
 	const gitRepo = new GitRepo(resolvedRoot);
 	const branch = await gitRepo.getCurrentBranchName();
@@ -30,7 +29,7 @@ async function getContext() {
 	return context;
 }
 
-async function getBuildToolsPackages() {
+async function getBuildToolsPackages(): Promise<Package[]> {
 	const context = await getContext();
 	// Use the build-tools packages as test cases. It's brittle, but functional. Ideally, we would have mocks for
 	// context/package/release group/etc., but we don't.
@@ -38,13 +37,13 @@ async function getBuildToolsPackages() {
 	return packages;
 }
 
-async function getClientPackages() {
+async function getClientPackages(): Promise<Package[]> {
 	const context = await getContext();
 	const packages = context.packagesInReleaseGroup("client");
 	return packages;
 }
 
-describe("filterPackages", async () => {
+describe("filterPackages", () => {
 	it("no filters", async () => {
 		const packages = await getBuildToolsPackages();
 		const filters: PackageFilterOptions = {
@@ -137,7 +136,7 @@ describe("filterPackages", async () => {
 	});
 });
 
-describe("selectAndFilterPackages", async () => {
+describe("selectAndFilterPackages", () => {
 	it("all, no filters", async () => {
 		const context = await getContext();
 		const selectionOptions = AllPackagesSelectionCriteria;
@@ -260,8 +259,8 @@ describe("selectAndFilterPackages", async () => {
 
 		const pkg = filtered[0];
 
-		expect(pkg.name).to.equal("@fluid-tools/build-cli");
-		expect(context.repo.relativeToRepo(pkg.directory)).to.equal(
+		expect(pkg?.name).to.equal("@fluid-tools/build-cli");
+		expect(context.repo.relativeToRepo(pkg?.directory ?? "")).to.equal(
 			"build-tools/packages/build-cli",
 		);
 	});

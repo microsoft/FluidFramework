@@ -10,12 +10,13 @@ import {
 	previousVersion,
 	resetBrokenTests,
 	updateTypeTestDependency,
-} from "../../src/commands/typetests.js";
+} from "../../commands/typetests.js";
 import {
 	type ITypeValidationConfig,
 	type PackageWithTypeTestSettings,
 	defaultTypeValidationConfig,
-} from "../../src/typeValidator/typeValidatorConfig.js";
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../typeValidator/typeValidatorConfig.js";
 
 /**
  * A minimal test package.json. It defines only the required fields according to the type definition.
@@ -53,6 +54,7 @@ function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings 
 }
 
 describe("typetests tests", () => {
+	/* eslint-disable @typescript-eslint/no-unused-expressions */
 	describe("updateTypeTestDependency", () => {
 		it("does not remove unrelated dependencies", () => {
 			const pkg: PackageWithTypeTestSettings = {
@@ -126,6 +128,7 @@ describe("typetests tests", () => {
 			});
 		});
 	});
+	/* eslint-enable @typescript-eslint/no-unused-expressions */
 
 	describe("resetBrokenTests", () => {
 		it("empty", () => {
@@ -156,6 +159,7 @@ describe("typetests tests", () => {
 			const pkg = packageMinimal();
 			const expected = packageMinimal();
 
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			expect(pkg.typeValidation).to.not.exist;
 			resetBrokenTests(pkg);
 			expect(pkg).to.deep.equal(expected);

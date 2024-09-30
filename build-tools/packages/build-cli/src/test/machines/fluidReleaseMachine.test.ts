@@ -6,7 +6,8 @@
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
-import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine.js";
+// eslint-disable-next-line import/no-internal-modules
+import { FluidReleaseMachine as machine } from "../../machines/fluidReleaseMachine.js";
 
 chai.use(assertArrays);
 
@@ -124,16 +125,18 @@ describe("FluidReleaseMachine", () => {
 
 	describe("All states with a success action have a failure action", () => {
 		// Do* actions are not required to have a failure action except those in this array
-		const requiresBothActions = ["DoBumpReleasedDependencies"];
+		const requiresBothActions = new Set(["DoBumpReleasedDependencies"]);
 
 		const states = new Set<string>();
+		// eslint-disable-next-line unicorn/no-array-for-each
 		machine.list_states_having_action("success").forEach((v) => states.add(v));
+		// eslint-disable-next-line unicorn/no-array-for-each
 		machine.list_states_having_action("failure").forEach((v) => states.add(v));
 
 		for (const state of states) {
 			const exits = machine.list_exit_actions(state).sort();
 
-			if (!state.startsWith("Do") || requiresBothActions.includes(state)) {
+			if (!state.startsWith("Do") || requiresBothActions.has(state)) {
 				it(state, () => {
 					expect(exits).to.be.equalTo(["failure", "success"]);
 				});
@@ -158,6 +161,7 @@ function walkExits(state: string, collector: Set<string>, step = 0): void {
 
 	const transitions = machine.list_transitions(state);
 	for (const next of transitions.exits) {
+		// eslint-disable-next-line no-param-reassign
 		walkExits(next, collector, step++);
 	}
 }

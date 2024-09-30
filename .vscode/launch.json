@@ -41,7 +41,8 @@
 		{
 			"name": "fluid-build",
 			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
-			"cwd": "${workspaceFolder}/packages/common/container-definitions",
+			// "cwd": "${workspaceFolder}/packages/common/container-definitions",
+			"cwd": "${workspaceFolder}/build-tools",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
