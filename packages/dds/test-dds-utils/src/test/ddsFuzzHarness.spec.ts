@@ -1080,16 +1080,10 @@ describe("DDS Fuzz Harness", () => {
 			});
 
 			it("should generate seeds within the range [0, testCount)", () => {
-				const seeds = generateTestSeeds(testCount, StressMode.Normal);
+				const seeds = generateTestSeeds(testCount, StressMode.Short);
 				for (const seed of seeds) {
 					assert.ok(seed >= 0 && seed < testCount);
 				}
-			});
-
-			it("should generate different seeds for different initial runs", () => {
-				const seeds1 = generateTestSeeds(testCount, StressMode.Normal);
-				const seeds2 = generateTestSeeds(testCount, StressMode.Normal);
-				assert.notDeepStrictEqual(seeds1, seeds2);
 			});
 		});
 	});

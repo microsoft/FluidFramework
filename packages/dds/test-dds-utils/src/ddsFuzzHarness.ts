@@ -1603,7 +1603,9 @@ export function generateTestSeeds(testCount: number, stressMode: StressMode): nu
 	const modeTestCount = Math.floor(testCount * modeMultiplier[stressMode]);
 	const initialSeed = random.integer(0, Number.MAX_SAFE_INTEGER);
 
-	return Array.from({ length: modeTestCount }, (_, i) => (initialSeed + i) % testCount);
+	// Generate seeds and sort them
+    return Array.from({ length: modeTestCount }, (_, i) => (initialSeed + i) % testCount)
+        .sort((a, b) => a - b);
 }
 
 /**
