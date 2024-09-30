@@ -1,16 +1,17 @@
-# `api-markdown-documenter LintApiModelCommand`
+`api-markdown-documenter lint-api-model`
+========================================
 
 describe the command here
 
--   [`api-markdown-documenter LintApiModelCommand APIMODELDIRECTORY`](#api-markdown-documenter-lintapimodelcommand-apimodeldirectory)
+* [`api-markdown-documenter lint-api-model APIMODELDIRECTORY`](#api-markdown-documenter-lint-api-model-apimodeldirectory)
 
-## `api-markdown-documenter LintApiModelCommand APIMODELDIRECTORY`
+## `api-markdown-documenter lint-api-model APIMODELDIRECTORY`
 
 describe the command here
 
 ```
 USAGE
-  $ api-markdown-documenter LintApiModelCommand APIMODELDIRECTORY [-q | -v] [-w <value>]
+  $ api-markdown-documenter lint-api-model APIMODELDIRECTORY [-q | -v] [-w <value>]
 
 ARGUMENTS
   APIMODELDIRECTORY  Path to the directory containing the series of `.api.json` files that comprise the API Model.
@@ -25,7 +26,7 @@ DESCRIPTION
   describe the command here
 
 EXAMPLES
-  $ api-markdown-documenter LintApiModelCommand
+  $ api-markdown-documenter lint-api-model
 ```
 
-_See code: [src/commands/LintApiModelCommand.ts](https://github.com/microsoft/FluidFramework/blob/v0.0.0/src/commands/LintApiModelCommand.ts)_
+_See code: [src/commands/lint-api-model.ts](https://github.com/microsoft/FluidFramework/blob/v0.0.0/src/commands/lint-api-model.ts)_

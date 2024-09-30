@@ -24,7 +24,7 @@ import { DocumentWriter } from "../renderers/index.js";
  * @see {@link lintApiModel}
  */
 // eslint-disable-next-line import/no-default-export
-export default class LintApiModel extends Command {
+export default class LintApiModelCommand extends Command {
 	public static override args = {
 		apiModelDirectory: Args.string({
 			description:
@@ -61,7 +61,7 @@ export default class LintApiModel extends Command {
 	};
 
 	public async run(): Promise<void> {
-		const { args, flags } = await this.parse(LintApiModel);
+		const { args, flags } = await this.parse(LintApiModelCommand);
 		const { apiModelDirectory } = args;
 		const { verbose, workingDirectory, quiet } = flags;
 
