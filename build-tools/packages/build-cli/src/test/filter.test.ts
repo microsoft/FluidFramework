@@ -240,7 +240,7 @@ describe("selectAndFilterPackages", () => {
 			independentPackages: false,
 			releaseGroups: [],
 			releaseGroupRoots: [],
-			directory: path.resolve(__dirname, ".."),
+			directory: path.resolve(__dirname, "../.."),
 			changedSinceBranch: undefined,
 		};
 		const filters: PackageFilterOptions = {

@@ -18,7 +18,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const changesetsPath = path.resolve(__dirname, "../data");
+const changesetsPath = path.resolve(__dirname, "../../../src/test/data");
 assert.isTrue(existsSync(changesetsPath));
 
 describe("changesets", () => {

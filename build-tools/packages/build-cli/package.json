@@ -55,7 +55,7 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
+		"test:mocha": "mocha \"lib/test/**/*.test.*js\"",
 		"tsc": "tsc"
 	},
 	"c8": {
