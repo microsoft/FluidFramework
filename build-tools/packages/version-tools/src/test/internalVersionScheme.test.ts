@@ -431,6 +431,27 @@ describe("internalScheme", () => {
 			const range = getVersionRange(input, "legacyCompat");
 			assert.strictEqual(range, expected);
 		});
+
+		it("legacy compat: 2.10.0", () => {
+			const input = `2.10.0`;
+			const expected = `>=2.10.0 <2.20.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.20.0", () => {
+			const input = `2.20.0`;
+			const expected = `>=2.20.0 <2.30.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.30.0", () => {
+			const input = `2.30.0`;
+			const expected = `>=2.30.0 <2.40.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
 	});
 
 	describe("checking test version scheme", () => {
