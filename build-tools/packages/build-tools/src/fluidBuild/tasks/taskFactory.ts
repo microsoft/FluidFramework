@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { findGitRootSync } from "../../common/gitRepo";
 import { getExecutableFromCommand } from "../../common/utils";
 import type { BuildContext } from "../buildContext";
 import { BuildPackage } from "../buildGraph";
-import { getFluidBuildConfig } from "../fluidUtils";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
@@ -74,21 +72,31 @@ const executableToLeafTask: {
 	// pipeline then this mapping will have to be updated.
 	"renamer": RenameTypesTask,
 	"flub rename-types": RenameTypesTask,
-};
+} as const;
 
-function getTaskForExecutable(executable: string): TaskHandler | undefined {
-	const found = executableToLeafTask[executable];
+/**
+ * Given a command executable, attempts to find a matching TaskHandler that will handle the task. If one is found, it is
+ * returned; otherwise, it returns `UnknownLeafTask` as the default handler.
+ *
+ * The built-in executableToLeafTask constant is checked first, followed by any DeclarativeTasks that are defined in the
+ * fluid-build config.
+ *
+ * @param executable The command executable to find a matching task handler for.
+ * @returns A TaskHandler for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
+ */
+function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
+	const found: TaskHandler | undefined = executableToLeafTask[executable];
 	if (found === undefined) {
-		const gitRoot = findGitRootSync();
-		const config = getFluidBuildConfig(gitRoot);
-		const declarativeTasks = config.declarativeTasks;
+		const config = context.fluidBuildConfig;
+		const declarativeTasks = config?.declarativeTasks;
 		const taskMatch = declarativeTasks?.[executable];
 		if (taskMatch !== undefined) {
 			return createDeclarativeTaskHandler(taskMatch);
 		}
 	}
 
-	return found;
+	// If no handler is found, return the UnknownLeafTask as the default handler.
+	return found ?? UnknownLeafTask;
 }
 
 /**
@@ -185,17 +193,13 @@ export class TaskFactory {
 			command,
 			context.fluidBuildConfig?.multiCommandExecutables ?? [],
 		).toLowerCase();
-		const func = getTaskForExecutable(executable);
-		if (func === undefined) {
-			// No mapping found, so treat this as an unknown task
-			return new UnknownLeafTask(node, command, context, taskName);
-		}
+		const handler = getTaskForExecutable(executable, context);
 
 		// Invoke the function or constructor to create the task handler
-		if (isConstructorFunction(func)) {
-			return new func(node, command, context, taskName);
+		if (isConstructorFunction(handler)) {
+			return new handler(node, command, context, taskName);
 		} else {
-			return func(node, command, context, taskName);
+			return handler(node, command, context, taskName);
 		}
 	}
 

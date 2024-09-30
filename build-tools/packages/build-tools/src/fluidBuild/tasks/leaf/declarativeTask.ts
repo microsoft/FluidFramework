@@ -55,10 +55,7 @@ export class InputOutputTask extends LeafWithFileStatDoneFileTask {
 }
 
 export function createDeclarativeTaskHandler(
-	// node: BuildPackage,
-	// command: string,
 	taskDefinition: DeclarativeTask,
-	// taskName?: string,
 ): TaskHandlerFunction {
 	const handler: TaskHandlerFunction = (
 		node: BuildPackage,

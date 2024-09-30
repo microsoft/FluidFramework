@@ -17,6 +17,9 @@ export type TaskHandlerFunction = (
 	taskName?: string,
 ) => LeafTask;
 
+/**
+ * The definition of a constructor function that returns a LeafTask subclass.
+ */
 export type TaskHandlerConstructor = new (
 	node: BuildPackage,
 	command: string,

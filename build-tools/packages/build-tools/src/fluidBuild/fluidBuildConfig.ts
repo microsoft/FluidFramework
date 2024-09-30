@@ -81,11 +81,31 @@ export interface IFluidBuildDirs {
 	[name: string]: IFluidBuildDirEntry;
 }
 
-export interface DeclarativeTasks {
-	[executable: string]: DeclarativeTask;
+/**
+ * Declarative tasks allow fluid-build to support incremental builds for tasks it doesn't natively identify. A
+ * DeclarativeTask defines a set of input and output globs, and files matching those globs will be included in the
+ * donefiles for the task. Note that gitignored files are treated differently for input globs vs. output globs. See the
+ * property documentation for details.
+ */
+export interface DeclarativeTask {
+	/**
+	 * An array of globs that will be used to identify input files for the task. Globs are interpreted relative to the
+	 * package. **Files ignored by git are never included.**
+	 */
+	inputGlobs: string[];
+
+	/**
+	 * An array of globs that will be used to identify input files for the task. Unlike the inputGlobs, outputGlobs
+	 * **will** match files ignored by git, because build output is often gitignored.
+	 */
+	outputGlobs: string[];
 }
 
-export interface DeclarativeTask {
-	inputGlobs: string[];
-	outputGlobs: string[];
+/**
+ * This mapping of executable/command name to DeclarativeTask is used to connect the task to the correct executable(s).
+ * Note that multi-command executables must also be included in the multiCommandExecutables setting. If they are not,
+ * the commands will not be parsed correctly and may not match the task as expected.
+ */
+export interface DeclarativeTasks {
+	[executable: string]: DeclarativeTask;
 }
