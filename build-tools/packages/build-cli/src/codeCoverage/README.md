@@ -1,4 +1,4 @@
-# Code-Coverage-Analysis-Tool
+# Code coverage
 
 ## Overview
 
