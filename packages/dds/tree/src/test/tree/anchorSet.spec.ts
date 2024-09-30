@@ -506,7 +506,7 @@ describe("AnchorSet", () => {
 
 		const expectedChangedFields = new Set<FieldKey>([fieldOne, fieldTwo, fieldThree]);
 		let listenerFired = false;
-		node0.on("childrenChangedAfterBatch", ({ anchor, changedFields }) => {
+		node0.on("childrenChangedAfterBatch", ({ changedFields }) => {
 			// This is the main validation of this test
 			assert.deepEqual(changedFields, expectedChangedFields);
 			listenerFired = true;

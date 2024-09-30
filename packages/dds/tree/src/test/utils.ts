@@ -114,7 +114,6 @@ import {
 	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
 	type TreeCheckout,
-	type TreeContent,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITransaction,
@@ -748,7 +747,7 @@ export function flexTreeViewWithContent(
 	);
 }
 
-export function forestWithContent(content: TreeStoredContent | TreeContent): IEditableForest {
+export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.

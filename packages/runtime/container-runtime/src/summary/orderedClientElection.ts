@@ -270,8 +270,6 @@ export interface IOrderedClientElection extends IEventProvider<IOrderedClientEle
 	readonly electedParent: ITrackedClient | undefined;
 	/** Sequence number of most recent election. */
 	readonly electionSequenceNumber: number;
-	/** Marks the currently elected client as invalid, and elects the next eligible client. */
-	incrementElectedClient(sequenceNumber: number): void;
 	/** Resets the currently elected client back to the oldest eligible client. */
 	resetElectedClient(sequenceNumber: number): void;
 	/** Peeks at what the next elected client would be if incrementElectedClient were called. */
@@ -579,23 +577,6 @@ export class OrderedClientElection
 
 	public getAllEligibleClients(): ITrackedClient[] {
 		return this.orderedClientCollection.getAllClients().filter(this.isEligibleFn);
-	}
-
-	/**
-	 * Advance election to the next-oldest client. This is called if the current parent is leaving the quorum,
-	 * or if the current summarizer is not responsive and we want to stop it and spawn a new one.
-	 */
-	public incrementElectedClient(sequenceNumber: number): void {
-		const nextClient =
-			this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
-			this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
-		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
-			this.tryElectingClient(nextClient, sequenceNumber, "IncrementElectedClient");
-		} else {
-			// The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
-			// Changing the _electedParent will stop the summarizer.
-			this.tryElectingParent(nextClient, sequenceNumber, "IncrementElectedClient");
-		}
 	}
 
 	/**

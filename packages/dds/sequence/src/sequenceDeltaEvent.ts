@@ -36,6 +36,9 @@ export abstract class SequenceEvent<
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		/**
 		 * Arguments reflecting the type of change that caused this event.
@@ -127,6 +130,9 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 	 */
 	public readonly isLocal: boolean;
 
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -148,6 +154,9 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  * @alpha
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		/**
 		 * Defined iff `deltaArgs.operation` is {@link @fluidframework/merge-tree#MergeTreeMaintenanceType.ACKNOWLEDGED|MergeTreeMaintenanceType.ACKNOWLEDGED}.

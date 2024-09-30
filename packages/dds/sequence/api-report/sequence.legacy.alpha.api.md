@@ -298,6 +298,7 @@ export function revertSharedStringRevertibles(sharedString: ISharedString, rever
 
 // @alpha
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+    // @deprecated
     constructor(opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client);
     readonly isLocal: boolean;
     // (undocumented)
@@ -306,6 +307,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 
 // @alpha
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    // @deprecated
     constructor(
     deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
     get clientId(): string | undefined;
@@ -319,6 +321,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 
 // @alpha
 export class SequenceInterval implements ISerializableInterval {
+    // @deprecated
     constructor(client: Client,
     start: LocalReferencePosition,
     end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, startSide?: Side, endSide?: Side);
@@ -357,6 +360,7 @@ export class SequenceInterval implements ISerializableInterval {
 
 // @alpha
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+    // @deprecated
     constructor(
     opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
@@ -364,7 +368,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 
 export { SequencePlace }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedSegmentSequence<T> {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     // (undocumented)
@@ -441,7 +445,7 @@ export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind<I
 // @alpha
 export type SharedString = ISharedString;
 
-// @alpha
+// @alpha @deprecated
 export class SharedStringClass extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet): void;
