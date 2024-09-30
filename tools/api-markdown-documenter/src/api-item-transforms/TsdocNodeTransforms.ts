@@ -16,6 +16,8 @@ import {
 	type DocPlainText,
 	type DocSection,
 	type DocInlineTag,
+	type DocHtmlEndTag,
+	type DocHtmlStartTag,
 } from "@microsoft/tsdoc";
 
 import { type Link } from "../Link.js";
@@ -111,11 +113,7 @@ export function _transformTsdocNode(
 		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
-			// This matches intellisense's policy for HTML in TSDoc/JSDoc comments.
-			options.logger?.error(
-				`Encountered an HTML tag. This library does not support embedded HTML content. Inner contents will be mapped as normal, but the HTML tags will be ignored.`,
-			);
-			return undefined;
+			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
 		}
 		case DocNodeKind.InheritDocTag: {
 			options.logger?.error(
@@ -156,6 +154,31 @@ export function transformTsdocCodeSpan(
 	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
 	return CodeSpanNode.createFromPlainText(node.code.trim());
+}
+
+/**
+ * Handler for TSDoc HTML tag nodes.
+ *
+ * @remarks
+ *
+ * This library has made the policy choice to not support embedded HTML content.
+ * Instead, we will emit a warning and ignore the HTML tags (return `undefined`).
+ * "Contained" content (represented as adjacent nodes in the list, appearing between the start and end tag nodes) will
+ * be transformed as normal.
+ *
+ * This matches intellisense's policy for HTML in TSDoc/JSDoc comments.
+ *
+ * We may revisit this in the future.
+ */
+export function transformTsdocHtmlTag(
+	node: DocHtmlStartTag | DocHtmlEndTag,
+	options: TsdocNodeTransformOptions,
+): undefined {
+	const tag = node.emitAsHtml();
+	options.logger?.warning(
+		`Encountered an HTML tag: "${tag}". This library does not support embedded HTML content. Inner contents will be mapped as normal, but the HTML tags will be ignored.`,
+	);
+	return undefined;
 }
 
 /**
