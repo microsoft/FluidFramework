@@ -374,9 +374,9 @@ export function bumpInternalVersion(
  */
 export function getVersionRange(
 	version: semver.SemVer | string,
-	maxAutomaticBump: "minor" | "patch" | "~" | "^",
+	maxAutomaticBump: "minor" | "patch" | "~" | "^" | "legacyCompat",
 ): string {
-	validateVersionScheme(version, true, undefined);
+	// validateVersionScheme(version, true, undefined);
 
 	const lowVersion = version;
 	let highVersion: semver.SemVer;
@@ -393,6 +393,11 @@ export function getVersionRange(
 			break;
 		}
 
+		case "legacyCompat": {
+			highVersion = bumpLegacyCompatVersion(version);
+			break;
+		}
+
 		default: {
 			throw new Error("Can't generate a version range.");
 		}
@@ -403,6 +408,22 @@ export function getVersionRange(
 		throw new Error(`The generated range string was invalid: "${rangeString}"`);
 	}
 	return range;
+}
+
+function bumpLegacyCompatVersion(version: semver.SemVer | string): semver.SemVer {
+	const semVersion = semver.parse(version);
+	if (!semVersion) {
+		throw new Error("Invalid version string");
+	}
+	const minor = Math.floor(semVersion.minor / 10) * 10 + 10;
+	const newSemVerString = `${semVersion.major}.${minor}.0`;
+	const higherVersion = semver.parse(newSemVerString);
+	if (higherVersion === null) {
+		throw new Error(
+			`Couldn't convert ${version} to the legacy version scheme. Tried parsing: '${newSemVerString}'`,
+		);
+	}
+	return higherVersion;
 }
 
 /**

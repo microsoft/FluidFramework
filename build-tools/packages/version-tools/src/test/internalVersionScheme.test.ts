@@ -389,6 +389,50 @@ describe("internalScheme", () => {
 		});
 	});
 
+	describe("legacy compat ranges", () => {
+		it("legacy compat: 2.0.9", () => {
+			const input = `2.0.9`;
+			const expected = `>=2.0.9 <2.10.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.1.9", () => {
+			const input = `2.1.9`;
+			const expected = `>=2.1.9 <2.10.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.11.1", () => {
+			const input = `2.11.1`;
+			const expected = `>=2.11.1 <2.20.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.15.1", () => {
+			const input = `2.15.1`;
+			const expected = `>=2.15.1 <2.20.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.21.9", () => {
+			const input = `2.21.9`;
+			const expected = `>=2.21.9 <2.30.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.29.9", () => {
+			const input = `2.29.9`;
+			const expected = `>=2.29.9 <2.30.0`;
+			const range = getVersionRange(input, "legacyCompat");
+			assert.strictEqual(range, expected);
+		});
+	});
+
 	describe("checking test version scheme", () => {
 		it("0.0.0-285010-test is a valid test version", () => {
 			const input = `0.0.0-285010-test`;

@@ -538,6 +538,15 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					flags.baseFileName,
 					this.logger,
 				),
+				writeReport(
+					context,
+					report,
+					"legacy-compat",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
 			];
 
 			await Promise.all(promises);

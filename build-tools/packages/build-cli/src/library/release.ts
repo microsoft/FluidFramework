@@ -70,6 +70,8 @@ export interface ReleaseRanges {
 	 * A tilde version range. Equivalent to patch.
 	 */
 	tilde: string;
+
+	legacyCompat: string;
 }
 
 /**
@@ -88,12 +90,14 @@ export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): Rele
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
+				legacyCompat: getVersionRange(version, "legacyCompat"),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
+				legacyCompat: getVersionRange(version, "legacyCompat"),
 			};
 };
 
@@ -102,6 +106,10 @@ interface PackageCaretRange {
 }
 
 interface PackageTildeRange {
+	[packageName: string]: string;
+}
+
+interface PackageLegacyRange {
 	[packageName: string]: string;
 }
 
@@ -119,7 +127,7 @@ interface PackageTildeRange {
  * "tilde" corresponds to the {@link PackageTildeRange} interface. It contains a map of package names to
  * tilde-equivalent version range strings.
  */
-export type ReportKind = "full" | "caret" | "tilde" | "simple";
+export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
 
 /**
  * Converts a {@link ReleaseReport} into different formats based on the kind.
@@ -127,8 +135,17 @@ export type ReportKind = "full" | "caret" | "tilde" | "simple";
 export function toReportKind(
 	report: ReleaseReport,
 	kind: ReportKind,
-): ReleaseReport | PackageVersionList | PackageTildeRange | PackageCaretRange {
-	const toReturn: PackageVersionList | PackageTildeRange | PackageCaretRange = {};
+):
+	| ReleaseReport
+	| PackageVersionList
+	| PackageTildeRange
+	| PackageCaretRange
+	| PackageLegacyRange {
+	const toReturn:
+		| PackageVersionList
+		| PackageTildeRange
+		| PackageCaretRange
+		| PackageLegacyRange = {};
 
 	switch (kind) {
 		case "full": {
@@ -156,6 +173,13 @@ export function toReportKind(
 				toReturn[pkg] = details.ranges.tilde;
 			}
 
+			break;
+		}
+
+		case "legacy-compat": {
+			for (const [pkg, details] of Object.entries(report)) {
+				toReturn[pkg] = details.ranges.legacyCompat;
+			}
 			break;
 		}
 
