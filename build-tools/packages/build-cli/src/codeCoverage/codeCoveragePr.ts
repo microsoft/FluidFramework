@@ -61,7 +61,7 @@ export const getCodeCoverageSummary = async (
 
 	const adoConnectionForPR = getAzureDevopsApi(adoToken, codeCoverageConstantsPR.orgUrl);
 
-	const pRBuildInfo = await getBuildArtifactForSpecificBuild(
+	const prBuildInfo = await getBuildArtifactForSpecificBuild(
 		codeCoverageConstantsPR,
 		adoConnectionForPR,
 		logger,
