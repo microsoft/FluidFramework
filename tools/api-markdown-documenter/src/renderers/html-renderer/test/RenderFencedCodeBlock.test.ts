@@ -5,7 +5,11 @@
 
 import { expect } from "chai";
 
-import { FencedCodeBlockNode, PlainTextNode } from "../../../documentation-domain/index.js";
+import {
+	FencedCodeBlockNode,
+	LineBreakNode,
+	PlainTextNode,
+} from "../../../documentation-domain/index.js";
 import { testRender } from "./Utilities.js";
 
 describe("FencedCodeBlock HTML rendering tests", () => {
@@ -17,6 +21,33 @@ describe("FencedCodeBlock HTML rendering tests", () => {
 		const result = testRender(input);
 
 		const expected = ["<code>", "  console.log('hello world');", "</code>", ""].join("\n");
+
+		expect(result).to.equal(expected);
+	});
+
+	it("Multi-line FencedCodeBlock", () => {
+		const input = new FencedCodeBlockNode(
+			[
+				new PlainTextNode('const foo = "Hello world!"'),
+				LineBreakNode.Singleton,
+				new PlainTextNode("console.log(foo);"),
+				LineBreakNode.Singleton,
+				new PlainTextNode("return foo;"),
+			],
+			"typescript",
+		);
+		const result = testRender(input);
+
+		const expected = [
+			"<code>",
+			"  const foo = &quot;Hello world!&quot;",
+			"  <br>",
+			"  console.log(foo);",
+			"  <br>",
+			"  return foo;",
+			"</code>",
+			"",
+		].join("\n");
 
 		expect(result).to.equal(expected);
 	});

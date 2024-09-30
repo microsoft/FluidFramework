@@ -1,5 +1,19 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.17.0
+
+-   Fixed a bug where text formatting was not applied correctly in some cases in the `toHtml` transformation.
+
+### ⚠ BREAKING CHANGES
+
+-   Support for embedded HTML contents in TSDoc comments has been removed.
+    The TSDoc parser has some half-baked support for preserving HTML tags in its output, despite the TSDoc spec making no claims about supporting embedded HTML.
+    But it does so in a structure that is difficult to handle correctly, assuming that the output language can support arbitrary HTML contents, and that it is safe to output the contents raw and unsanitized.
+    As a result, this library's support for such contents was similarly half-baked, and difficult to maintain.
+    VSCode Intellisense, as a comparison, chooses to completely ignore HTML tags, and simply render the inner contents ignoring any HTML decorators.
+    This library has adopted the same policy.
+    If you depended on HTML content preservation, this change will break you.
+
 ## 0.16.1
 
 -   Promote `toHtml` transformation functions to `@public`.

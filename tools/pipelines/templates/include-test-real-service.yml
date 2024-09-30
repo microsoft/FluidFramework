@@ -389,7 +389,6 @@ stages:
             displayName: Filter skipped test from report
             condition: succeededOrFailed()
             inputs:
-              workingDir: ${{ variables.testPackageDir }}/nyc
               targetType: 'inline'
               script: |
                 if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then

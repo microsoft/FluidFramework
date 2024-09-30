@@ -150,7 +150,15 @@ export class DetachedFieldIndex {
 					});
 				}
 				this.latestRelevantRevisionToFields.delete(current);
-				this.latestRelevantRevisionToFields.set(updated, inner);
+
+				const updatedInner = this.latestRelevantRevisionToFields.get(updated);
+				if (updatedInner !== undefined) {
+					for (const [root, nodeId] of inner) {
+						updatedInner.set(root, nodeId);
+					}
+				} else {
+					this.latestRelevantRevisionToFields.set(updated, inner);
+				}
 			}
 		}
 
