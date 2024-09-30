@@ -256,6 +256,9 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
+			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
