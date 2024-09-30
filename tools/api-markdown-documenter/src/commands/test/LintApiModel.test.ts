@@ -30,6 +30,6 @@ describe("lint-api-model Command", () => {
 		);
 		expect(error).to.not.be.undefined;
 		console.log(error?.message);
-		expect(error?.message).to.equal("command lint-api-model:test/test-data");
+		expect(error?.message).to.equal("command lint-api-model:test/test-data/simple-suite-test");
 	});
 });
