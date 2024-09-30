@@ -376,7 +376,7 @@ export function getVersionRange(
 	version: semver.SemVer | string,
 	maxAutomaticBump: "minor" | "patch" | "~" | "^" | "legacyCompat",
 ): string {
-	// validateVersionScheme(version, true, undefined);
+	validateVersionScheme(version, true, undefined);
 
 	const lowVersion = version;
 	let highVersion: semver.SemVer;
