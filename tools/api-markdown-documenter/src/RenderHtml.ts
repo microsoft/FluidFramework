@@ -13,7 +13,7 @@ import {
 } from "./api-item-transforms/index.js";
 import { type DocumentNode } from "./documentation-domain/index.js";
 import { type Logger } from "./Logging.js";
-import { type HtmlRenderConfiguration, renderDocumentAsHtml } from "./renderers/index.js";
+import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./renderers/index.js";
 import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
 
 /**
@@ -39,7 +39,7 @@ import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
  */
 export async function renderApiModelAsHtml(
 	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
-	renderConfig: Omit<HtmlRenderConfiguration, "logger">,
+	renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">,
 	fileSystemConfig: FileSystemConfiguration,
 	logger?: Logger,
 ): Promise<void> {
@@ -64,7 +64,7 @@ export async function renderApiModelAsHtml(
  */
 export async function renderDocumentsAsHtml(
 	documents: DocumentNode[],
-	renderConfig: Omit<HtmlRenderConfiguration, "logger">,
+	renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">,
 	fileSystemConfig: FileSystemConfiguration,
 	logger?: Logger,
 ): Promise<void> {

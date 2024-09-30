@@ -11,11 +11,13 @@ import type {
 } from "@fluid-experimental/presence/internal/core-interfaces";
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 
-describe("LatestValueManager", () => {
-	/**
-	 * See {@link checkCompiles} below
-	 */
-	it("API use compiles", () => {});
+describe("Presence", () => {
+	describe("PresenceStates", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
 });
 
 declare function createValueManager<T, Key extends string>(
