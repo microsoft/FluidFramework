@@ -11362,6 +11362,9 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -11378,9 +11381,18 @@ importers:
       '@fluidframework/build-tools':
         specifier: link:../../../build-tools/packages/build-tools
         version: link:../../../build-tools/packages/build-tools
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/test-runtime-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.1)
@@ -11390,6 +11402,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.1
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -11420,6 +11435,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^17.0.1
+        version: 17.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5

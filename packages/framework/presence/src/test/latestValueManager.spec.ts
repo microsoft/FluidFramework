@@ -7,11 +7,13 @@ import type { LatestValueClientData } from "../index.js";
 import { Latest } from "../index.js";
 import type { IPresence } from "../presence.js";
 
-describe("LatestValueManager", () => {
-	/**
-	 * See {@link checkCompiles} below
-	 */
-	it("API use compiles", () => {});
+describe("Presence", () => {
+	describe("LatestValueManager", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
 });
 
 // ---- test (example) code ----
