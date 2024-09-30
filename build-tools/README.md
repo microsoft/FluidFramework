@@ -28,7 +28,7 @@ It is very useful to test changes in build-tools against the client release grou
 build-tools is limited, and manually testing locally with the client will expose obvious things like broken incremental
 builds, etc.
 
-The easiest way to test build-tools in client is to use pnpm overrides. You can use the following command to update the
+The easiest way to test build-tools in client is to use pnpm overrides. You can use the following command from the root of the repo to update the
 root package.json and lockfile to link to the local version of build-tools:
 
 ```
