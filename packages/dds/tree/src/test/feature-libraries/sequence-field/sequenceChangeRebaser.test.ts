@@ -942,6 +942,7 @@ export function testSandwichComposing() {
 			const sandwichParts1to6 = compose([inverseReviveA, makeAnonChange(sandwichParts2to6)]);
 			assertChangesetsEqual(sandwichParts1to6, []);
 		});
+
 		it("[move, move, modify, move] ↷ [del]", () => {
 			const nodeId: NodeId = { localId: brand(4) };
 			const [mo1, mi1] = Mark.move(1, brand(1));
