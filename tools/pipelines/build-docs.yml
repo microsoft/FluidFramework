@@ -111,7 +111,8 @@ stages:
           parameters:
             buildDirectory: $(Build.SourcesDirectory)
         - task: Bash@3
-          displayName: 'Check Version Deployment Condition'
+          name: SetVersion
+          displayName: 'Set Build Version'
           env:
             VERSION_BUILDNUMBER: $(Build.BuildNumber)
           inputs:
@@ -120,9 +121,15 @@ stages:
             script: |
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
               flub generate buildVersion
-              echo "generated buildVersion: $(version)"
+        - task: Bash@3
+          displayName: 'Check Version Deployment Condition'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              echo "generated buildVersion: $(SetVersion.version)"
               # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
-              flub check latestVersions $(version) client
+              flub check latestVersions $(SetVersion.version) client
 
 - stage: build
   displayName: 'Build website'
