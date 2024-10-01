@@ -25,7 +25,7 @@ const docVersions = previousVersions.concat(currentVersion);
 
 // remove local version from list when running in non-local mode
 const localMode = process.argv[2];
-if(!localMode) {
+if (!localMode) {
 	docVersions.splice(docVersions.indexOf("local"), 1);
 }
 
