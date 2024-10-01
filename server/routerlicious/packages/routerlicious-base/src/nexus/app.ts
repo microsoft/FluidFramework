@@ -12,11 +12,9 @@ import {
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
-import {
-	createHealthCheckEndpoints,
-	IReadinessCheck,
-} from "@fluidframework/server-services-shared";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import type { Provider } from "nconf";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(config: Provider, readinessCheck?: IReadinessCheck) {
 	// Express app configuration

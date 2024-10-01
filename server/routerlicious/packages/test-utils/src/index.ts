@@ -22,4 +22,4 @@ export { TestThrottleAndUsageStorageManager } from "./testThrottleAndUsageStorag
 export { TestThrottler } from "./testThrottler";
 export { TestThrottlerHelper } from "./testThrottlerHelper";
 export { TestRedisClientConnectionManager } from "./testRedisClientConnectionManager";
-export { TestReadinessCheck } from "./testReadinessCheck";
+export { TestReadinessCheck, TestCheck } from "./testReadinessCheck";

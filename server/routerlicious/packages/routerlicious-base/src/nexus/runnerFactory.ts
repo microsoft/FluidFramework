@@ -27,7 +27,7 @@ import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
 import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
-import type { IReadinessCheck } from "@fluidframework/server-services-shared";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;

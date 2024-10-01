@@ -16,10 +16,8 @@ import {
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
 import { ITenantRepository } from "./mongoTenantRepository";
-import {
-	createHealthCheckEndpoints,
-	IReadinessCheck,
-} from "@fluidframework/server-services-shared";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	tenantRepository: ITenantRepository,

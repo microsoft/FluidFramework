@@ -25,10 +25,8 @@ import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
-import {
-	createHealthCheckEndpoints,
-	IReadinessCheck,
-} from "@fluidframework/server-services-shared";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	config: Provider,

@@ -21,6 +21,7 @@ import {
 	IWebSocketTracker,
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -31,7 +32,7 @@ import {
 	ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import * as app from "./app";
-import { runnerHttpServerStop, type IReadinessCheck } from "@fluidframework/server-services-shared";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 
 export class NexusRunner implements IRunner {
 	private server: IWebServer;

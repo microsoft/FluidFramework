@@ -6,33 +6,7 @@
 import { Router } from "express";
 import { StartupChecker } from "./startupChecker";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-
-/**
- * Readiness status of a service or functionality.
- * @internal
- */
-export interface IReadinessStatus {
-	/**
-	 * Whether the service/functionality is ready for use.
-	 */
-	ready: boolean;
-
-	/**
-	 * Optional exception if an error occurs.
-	 */
-	exception?: any;
-}
-
-/**
- * Checks if a service or functionality is ready for use.
- * @internal
- */
-export interface IReadinessCheck {
-	/**
-	 * Whether the service/functionality is ready for use.
-	 */
-	isReady(): Promise<IReadinessStatus>;
-}
+import { IReadinessCheck, IReadinessStatus } from "@fluidframework/server-services-core";
 
 /**
  * Creates the health check endpoints for the service.
@@ -55,7 +29,7 @@ export function createHealthCheckEndpoints(
 		"/startup",
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			if (StartupChecker.getInstance().isStartupComplete()) {
+			if (StartupChecker.instance.isStartupComplete()) {
 				response.sendStatus(200);
 			} else {
 				Lumberjack.error("Startup probe failed", probeProps);

@@ -7,18 +7,23 @@ import request from "supertest";
 import express from "express";
 import { createHealthCheckEndpoints } from "../healthCheckEndpoints";
 import { StartupChecker } from "../startupChecker";
-import { TestReadinessCheck } from "@fluidframework/server-test-utils";
+import { TestReadinessCheck, TestCheck } from "@fluidframework/server-test-utils";
 
 describe("Health Check Endpoints", () => {
 	let app: express.Express;
 	let supertest: request.SuperTest<request.Test>;
 	let readinessCheck: TestReadinessCheck;
+	let testCheck: TestCheck;
+	let testCheckWithException: TestCheck;
 
 	const setupApp = (useReadinessCheck = false) => {
 		app = express();
-		readinessCheck = useReadinessCheck ? new TestReadinessCheck() : undefined;
+		testCheck = new TestCheck();
+		testCheckWithException = new TestCheck();
+		const checks = [testCheck, testCheckWithException];
+		readinessCheck = useReadinessCheck ? new TestReadinessCheck(checks) : undefined;
 		const healthCheckEndpoints = createHealthCheckEndpoints("testService", readinessCheck);
-		StartupChecker.getInstance()["isReady"] = false;
+		StartupChecker.instance["isReady"] = false;
 		app.use(healthCheckEndpoints);
 		supertest = request(app);
 	};
@@ -31,7 +36,7 @@ describe("Health Check Endpoints", () => {
 				setupApp(useReadinessCheck);
 			});
 			it("should return 200 for /startup when startup is complete", async () => {
-				StartupChecker.getInstance().setReady();
+				StartupChecker.instance.setReady();
 				const req = supertest.get("/startup");
 				await req.expect(200);
 			});
@@ -48,13 +53,14 @@ describe("Health Check Endpoints", () => {
 					const req = supertest.get("/ready");
 					await req.expect(503);
 				});
-				it("should return 503 for /ready when readiness throws an exception", async () => {
-					readinessCheck.setThrowException();
+				it("should return 503 for /ready when a check throws an exception", async () => {
+					testCheckWithException.setThrowException();
 					const req = supertest.get("/ready");
 					await req.expect(503);
 				});
-				it("should return 200 for /ready when readiness check is successful", async () => {
-					readinessCheck.setReady();
+				it("should return 200 for /ready when all checks are successful", async () => {
+					testCheck.setReady();
+					testCheckWithException.setReady();
 					const req = supertest.get("/ready");
 					await req.expect(200);
 				});

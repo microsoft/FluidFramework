@@ -36,5 +36,4 @@ export {
 } from "./webServer";
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
-export { StartupChecker } from "./startupChecker";
-export { createHealthCheckEndpoints, IReadinessCheck } from "./healthCheckEndpoints";
+export { createHealthCheckEndpoints } from "./healthCheckEndpoints";

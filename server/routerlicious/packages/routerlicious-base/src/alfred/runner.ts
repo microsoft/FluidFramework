@@ -25,7 +25,8 @@ import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { runnerHttpServerStop, IReadinessCheck } from "@fluidframework/server-services-shared";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 

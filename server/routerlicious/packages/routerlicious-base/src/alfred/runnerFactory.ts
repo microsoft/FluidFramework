@@ -20,7 +20,7 @@ import {
 	DocumentDeleteService,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
-import { IReadinessCheck } from "@fluidframework/server-services-shared";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 /**
  * @internal

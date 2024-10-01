@@ -3,38 +3,41 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Adding a duplicate of the IReadinessCheck interface from server-services-shared
- * to prevent a cyclic dependency between server-services-shared and test-utils
- */
-export interface IReadinessStatus {
-	ready: boolean;
-	exception?: any;
-}
+import { IReadinessCheck, IReadinessStatus, ICheck } from "@fluidframework/server-services-core";
 
-export interface IReadinessCheck {
-	isReady(): Promise<IReadinessStatus>;
-}
-
-export class TestReadinessCheck implements IReadinessCheck {
-	private ready = false;
+export class TestCheck implements ICheck {
 	private throwException = false;
-
-	public setReady() {
-		this.ready = true;
-	}
+	private isReady = false;
 
 	public setThrowException() {
 		this.throwException = true;
 	}
 
-	public async isReady(): Promise<IReadinessStatus> {
-		let readinessStatus: IReadinessStatus;
-		if (this.throwException) {
-			readinessStatus = { ready: false, exception: new Error("Test exception") };
-			return Promise.reject(readinessStatus);
+	public setReady() {
+		this.isReady = true;
+	}
+
+	public async doCheck(): Promise<void> {
+		if (this.throwException || !this.isReady) {
+			throw new Error("Test exception");
 		}
-		readinessStatus = { ready: this.ready };
-		return Promise.resolve(readinessStatus);
+	}
+}
+
+export class TestReadinessCheck implements IReadinessCheck {
+	private readonly checks: ICheck[];
+
+	constructor(checks: ICheck[]) {
+		this.checks = checks;
+	}
+
+	public async isReady(): Promise<IReadinessStatus> {
+		const checkTasks: Promise<void>[] = [];
+		this.checks.forEach((check) => {
+			checkTasks.push(check.doCheck());
+		});
+		await Promise.all(checkTasks);
+		const readinessStatus: IReadinessStatus = { ready: true };
+		return readinessStatus;
 	}
 }

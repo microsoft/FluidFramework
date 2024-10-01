@@ -10,16 +10,16 @@
  * @internal
  */
 export class StartupChecker {
-	private static instance: StartupChecker;
+	private static _instance: StartupChecker | undefined;
 	private isReady: boolean = false;
 
 	private constructor() {}
 
-	public static getInstance(): StartupChecker {
-		if (!StartupChecker.instance) {
-			StartupChecker.instance = new StartupChecker();
+	public static get instance(): StartupChecker {
+		if (!StartupChecker._instance) {
+			StartupChecker._instance = new StartupChecker();
 		}
-		return StartupChecker.instance;
+		return StartupChecker._instance;
 	}
 
 	public setReady(): void {

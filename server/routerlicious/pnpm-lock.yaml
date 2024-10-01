@@ -1520,9 +1520,6 @@ importers:
       '@fluidframework/server-services-utils':
         specifier: workspace:~
         version: link:../services-utils
-      '@fluidframework/server-test-utils':
-        specifier: workspace:~
-        version: link:../test-utils
       '@socket.io/redis-adapter':
         specifier: ^8.3.0
         version: 8.3.0(socket.io-adapter@2.5.4)
@@ -1590,6 +1587,9 @@ importers:
       '@fluidframework/server-services-shared-previous':
         specifier: npm:@fluidframework/server-services-shared@5.0.0
         version: /@fluidframework/server-services-shared@5.0.0
+      '@fluidframework/server-test-utils':
+        specifier: workspace:~
+        version: link:../test-utils
       '@types/body-parser':
         specifier: ^1.19.2
         version: 1.19.2

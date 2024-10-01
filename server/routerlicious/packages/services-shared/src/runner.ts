@@ -84,7 +84,7 @@ export async function run<T extends IResources>(
 		});
 	});
 
-	StartupChecker.getInstance().setReady();
+	StartupChecker.instance.setReady();
 
 	try {
 		// Wait for the runner to complete
