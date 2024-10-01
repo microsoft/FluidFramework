@@ -100,6 +100,25 @@ trigger:
 pr: none
 
 stages:
+- stage: check_branch_version
+  displayName: 'Check Version Deployment Condition'
+  pool: Small
+  jobs:
+    - job: check_branch_version
+      displayName: 'Check Version Deployment Condition'
+      steps:
+        - task: Bash@3
+          displayName: 'Check Version Deployment Condition'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+
+              # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
+              flub generate buildVersion
+              # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
+              flub check latestVersions $(version) client
+
 - stage: build
   displayName: 'Build website'
   dependsOn: [] # run in parallel
