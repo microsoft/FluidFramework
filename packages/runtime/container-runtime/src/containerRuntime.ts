@@ -171,6 +171,7 @@ import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
+	BatchStartInfo,
 	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
@@ -180,7 +181,6 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	type InboundBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -2666,18 +2666,24 @@ export class ContainerRuntime
 		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
-			const inboundBatch = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (inboundBatch === undefined) {
+			const inboundResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
+			if (inboundResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
 				return;
 			}
 
 			// Reach out to PendingStateManager to zip localOpMetadata into the message list if it's a local batch
-			const messagesWithPendingState = this.pendingStateManager.processInboundBatch(
-				inboundBatch,
+			const messagesWithPendingState = this.pendingStateManager.processInboundMessages(
+				inboundResult,
 				local,
 			);
+			if (inboundResult.type !== "fullBatch") {
+				assert(
+					messagesWithPendingState.length === 1,
+					"Partial batch should have exactly one message",
+				);
+			}
 			if (messagesWithPendingState.length > 0) {
 				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
 					const msg: MessageWithContext = {
@@ -2690,7 +2696,13 @@ export class ContainerRuntime
 					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
 				});
 			} else {
-				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
+				assert(
+					inboundResult.type === "fullBatch",
+					"Empty batch is always considered a full batch",
+				);
+				this.ensureNoDataModelChanges(() =>
+					this.processEmptyBatch(inboundResult.batchStart, local),
+				);
 			}
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
@@ -2781,19 +2793,27 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Process an empty batch, which will execute expected actions while processing even if there are no messages.
-	 * This is a separate function because the processCore function expects at least one message to process.
-	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
+	 * Process an empty batch, which will execute expected actions while processing even if there are no inner runtime messages.
+	 *
+	 * @remarks - Empty batches are produced by the outbox on resubmit when the resubmit flow resulted in no runtime messages.
+	 * This can happen if changes from a remote client "cancel out" the pending changes being resubmited by this client.
+	 * We submit an empty batch if "offline load" (aka rehydrating from stashed state) is enabled,
+	 * to ensure we account for this batch when comparing batchIds, checking for a forked container.
+	 * Otherwise, we would not realize this container has forked in the case where it did fork, and a batch became empty but wasn't submitted as such.
 	 */
-	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
-		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
-		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
-		this.emit("batchBegin", { sequenceNumber });
+	private processEmptyBatch(emptyBatch: BatchStartInfo, local: boolean) {
+		const { keyMessage, batchStartCsn } = emptyBatch;
+		this.scheduleManager.beforeOpProcessing(keyMessage);
+
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
-		this.emit("batchEnd", undefined, { sequenceNumber });
+
+		// We emit this event but say isRuntimeMessage is false, because there are no actual runtime messages here being processed.
+		// But someone listening to this event expecting to be notified whenever a message arrives would want to know about this.
+		this.emit("op", keyMessage, false /* isRuntimeMessage */);
+		this.scheduleManager.afterOpProcessing(undefined /* error */, keyMessage);
 		if (local) {
 			this.resetReconnectCount();
 		}
