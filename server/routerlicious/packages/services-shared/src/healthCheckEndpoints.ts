@@ -74,23 +74,29 @@ export function createHealthCheckEndpoints(
 		);
 	}
 
-	router.get(
-		"/ready",
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (request, response) => {
-			const readinessStatus: IReadinessStatus = readinessCheck
-				? await readinessCheck.isReady().catch((error) => {
+	if (readinessCheck) {
+		router.get(
+			"/ready",
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			async (request, response) => {
+				const readinessStatus: IReadinessStatus = await readinessCheck
+					.isReady()
+					.catch((error) => {
 						return { ready: false, exception: error };
-				  })
-				: { ready: true };
-			if (readinessStatus.ready) {
-				response.sendStatus(200);
-			} else {
-				Lumberjack.error("Readiness probe failed", probeProps, readinessStatus.exception);
-				response.sendStatus(503);
-			}
-		},
-	);
+					});
+				if (readinessStatus.ready) {
+					response.sendStatus(200);
+				} else {
+					Lumberjack.error(
+						"Readiness probe failed",
+						probeProps,
+						readinessStatus.exception,
+					);
+					response.sendStatus(503);
+				}
+			},
+		);
+	}
 
 	return router;
 }

@@ -59,9 +59,9 @@ describe("Health Check Endpoints", () => {
 					await req.expect(200);
 				});
 			} else {
-				it("should return 200 for /ready", async () => {
+				it("should return 404 for /ready when readiness check is not used", async () => {
 					const req = supertest.get("/ready");
-					await req.expect(200);
+					await req.expect(404);
 				});
 			}
 		});
