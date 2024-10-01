@@ -89,8 +89,8 @@ const OptionalChange = {
 		return optionalFieldEditor.set(wasEmpty, ids);
 	},
 
-	clear(wasEmpty: boolean, id: ChangeAtomId) {
-		return optionalFieldEditor.clear(wasEmpty, id);
+	clear(wasEmpty: boolean, detachId: ChangeAtomId) {
+		return optionalFieldEditor.clear(wasEmpty, detachId);
 	},
 
 	buildChildChange(childChange: NodeId) {
@@ -427,7 +427,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 						state.mostRecentEdit.changeset.change.fieldChange,
 						state.mostRecentEdit.changeset.revision,
 					),
-					tag1,
+					tagFromIntention(undoIntention),
 					false,
 				),
 				nodes: invertedNodeChanges,

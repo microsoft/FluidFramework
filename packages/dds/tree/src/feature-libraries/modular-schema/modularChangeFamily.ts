@@ -694,7 +694,9 @@ export class ModularChangeFamily
 			0x89a /* Unexpected destroys in change to invert */,
 		);
 
-		const revInfos: RevisionInfo[] = [{ revision: revisionForInvert }];
+		const revInfos: RevisionInfo[] = isRollback
+			? [{ revision: revisionForInvert, rollbackOf: change.revision }]
+			: [{ revision: revisionForInvert }];
 
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset(

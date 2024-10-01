@@ -787,11 +787,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const revisionForInvert = this.mintRevisionTag();
 
 		let change = tagChange(
-			this.changeFamily.rebaser.invert(
-				tagChange(commitToRevert.change, revision),
-				false,
-				revisionForInvert,
-			),
+			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
 			revisionForInvert,
 		);
 

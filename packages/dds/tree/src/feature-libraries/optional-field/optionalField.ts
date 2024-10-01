@@ -584,7 +584,10 @@ export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
-	 * Creates a change which would replace "detach" field with "fill" field.
+	 * Creates a change which will replace the content already in the field (if any at the time the change applies)
+	 * with new content.
+	 * The content in the field will be moved to the `ids.detach` register.
+	 * The content in the `ids.detach` register will be moved to into the field.
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 * @param ids - the "fill" and "detach" ids associated with the change.
 	 */
@@ -599,9 +602,9 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which clears the field's contents (if any).
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param id - the ID associated with the change.
+	 * @param detachId - the ID of the register that existing field content (if any) will be moved to.
 	 */
-	clear(wasEmpty: boolean, id: ChangeAtomId): OptionalChangeset;
+	clear(wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
