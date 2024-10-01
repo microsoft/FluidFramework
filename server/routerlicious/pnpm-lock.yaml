@@ -1535,6 +1535,9 @@ importers:
       events:
         specifier: ^3.1.0
         version: 3.3.0
+      express:
+        specifier: ^4.21.0
+        version: 4.21.0
       fast-redact:
         specifier: ^3.3.0
         version: 3.3.0
@@ -1584,6 +1587,9 @@ importers:
       '@fluidframework/server-services-shared-previous':
         specifier: npm:@fluidframework/server-services-shared@5.0.0
         version: /@fluidframework/server-services-shared@5.0.0
+      '@fluidframework/server-test-utils':
+        specifier: workspace:~
+        version: link:../test-utils
       '@types/body-parser':
         specifier: ^1.19.2
         version: 1.19.2
@@ -1620,9 +1626,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      express:
-        specifier: ^4.21.0
-        version: 4.21.0
       mocha:
         specifier: ^10.2.0
         version: 10.2.0

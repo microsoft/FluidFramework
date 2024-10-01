@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISecretManager, ICache } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
@@ -11,27 +10,13 @@ import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
-	ITenantKeyGenerator,
 } from "@fluidframework/server-services-utils";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
-import * as api from "./api";
-import { ITenantRepository } from "./mongoTenantRepository";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import type { Provider } from "nconf";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 
-export function create(
-	tenantRepository: ITenantRepository,
-	loggerFormat: string,
-	baseOrdererUrl: string,
-	defaultHistorianUrl: string,
-	defaultInternalHistorianUrl: string,
-	secretManager: ISecretManager,
-	fetchTenantKeyMetricInterval: number,
-	riddlerStorageRequestMetricInterval: number,
-	tenantKeyGenerator: ITenantKeyGenerator,
-	cache?: ICache,
-	readinessCheck?: IReadinessCheck,
-) {
+export function create(config: Provider, readinessCheck?: IReadinessCheck) {
 	// Express app configuration
 	const app: express.Express = express();
 
@@ -39,9 +24,10 @@ export function create(
 	app.set("trust proxy", 1);
 
 	app.use(bindTelemetryContext());
+	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
-			jsonMorganLoggerMiddleware("riddler", (tokens, req, res) => {
+			jsonMorganLoggerMiddleware("nexus", (tokens, req, res) => {
 				return {
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 				};
@@ -53,22 +39,7 @@ export function create(
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
 
-	app.use(
-		"/api",
-		api.create(
-			tenantRepository,
-			baseOrdererUrl,
-			defaultHistorianUrl,
-			defaultInternalHistorianUrl,
-			secretManager,
-			fetchTenantKeyMetricInterval,
-			riddlerStorageRequestMetricInterval,
-			tenantKeyGenerator,
-			cache,
-		),
-	);
-
-	const healthEndpoints = createHealthCheckEndpoints("riddler", readinessCheck);
+	const healthEndpoints = createHealthCheckEndpoints("nexus", readinessCheck);
 
 	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler
