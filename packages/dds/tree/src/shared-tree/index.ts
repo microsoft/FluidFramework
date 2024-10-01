@@ -27,14 +27,7 @@ export {
 	type TreeBranchFork,
 } from "./treeCheckout.js";
 
-export {
-	type SchematizeConfiguration,
-	type TreeContent,
-	type TreeStoredContent,
-	type InitializeAndSchematizeConfiguration,
-	type SchemaConfiguration,
-	buildTreeConfiguration,
-} from "./schematizeTree.js";
+export { type TreeStoredContent } from "./schematizeTree.js";
 
 export { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 

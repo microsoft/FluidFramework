@@ -11,7 +11,6 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
-	type CommitMetadata,
 	type GraphCommit,
 	type RevisionTag,
 	type TaggedChange,
@@ -46,6 +45,7 @@ import { fail } from "../util/index.js";
 export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "append";
+			kind: CommitKind;
 			change: TaggedChange<TChange>;
 			newCommits: readonly GraphCommit<TChange>[];
 	  }
@@ -115,11 +115,6 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * @param change - the change to this branch's state and commits
 	 */
 	afterChange(change: SharedTreeBranchChange<TChange>): void;
-
-	/**
-	 * {@inheritdoc TreeViewEvents.commitApplied}
-	 */
-	commitApplied(data: CommitMetadata): void;
 
 	/**
 	 * Fired when this branch forks
@@ -250,13 +245,13 @@ export class SharedTreeBranch<
 	 * Apply a change to this branch.
 	 * @param change - the change to apply
 	 * @param revision - the revision of the new head commit of the branch that contains `change`
-	 * @param changeKind - the kind of change to apply
+	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
 	public apply(
 		change: TChange,
 		revision: RevisionTag,
-		changeKind: CommitKind = CommitKind.Default,
+		kind: CommitKind = CommitKind.Default,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
@@ -270,18 +265,13 @@ export class SharedTreeBranch<
 
 		const changeEvent = {
 			type: "append",
+			kind,
 			change: tagChange(changeWithRevision, revision),
 			newCommits: [newHead],
 		} as const;
 
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
-
-		// If this is not part of a transaction, emit a commitApplied event
-		if (!this.isTransacting()) {
-			this.emit("commitApplied", { isLocal: true, kind: changeKind });
-		}
-
 		this.emit("afterChange", changeEvent);
 		return [changeWithRevision, newHead];
 	}
@@ -351,12 +341,6 @@ export class SharedTreeBranch<
 
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
-
-		// If this transaction is not nested, emit a commitApplied event
-		if (!this.isTransacting()) {
-			this.emit("commitApplied", { isLocal: true, kind: CommitKind.Default });
-		}
-
 		this.emit("afterChange", changeEvent);
 		return [commits, newHead];
 	}
@@ -442,14 +426,14 @@ export class SharedTreeBranch<
 
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
-	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
-	 *
-	 * @remarks Forks created during a transaction will be disposed when the transaction ends.
+	 * @param commit - The commit to base the new branch off of. Defaults to the head of this branch.
+	 * @remarks Changes made to the new branch will not be applied to this branch until the new branch is {@link SharedTreeBranch.merge | merged} back in.
+	 * Forks created during a transaction will be disposed when the transaction ends.
 	 */
-	public fork(): SharedTreeBranch<TEditor, TChange> {
+	public fork(commit: GraphCommit<TChange> = this.head): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
-			this.head,
+			commit,
 			this.changeFamily,
 			this.mintRevisionTag,
 			this.branchTrimmer,
@@ -501,9 +485,9 @@ export class SharedTreeBranch<
 			removedCommits: deletedSourceCommits,
 			newCommits,
 		} as const;
+
 		this.emit("beforeChange", changeEvent);
 		this.head = newSourceHead;
-
 		this.emit("afterChange", changeEvent);
 		return rebaseResult;
 	}
@@ -525,6 +509,10 @@ export class SharedTreeBranch<
 			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
 
+		if (branch === this) {
+			return undefined;
+		}
+
 		// Rebase the given branch onto this branch
 		const rebaseResult = this.rebaseBranch(branch, this);
 		if (rebaseResult === undefined) {
@@ -537,6 +525,7 @@ export class SharedTreeBranch<
 		const taggedChange = makeAnonChange(change);
 		const changeEvent = {
 			type: "append",
+			kind: CommitKind.Default,
 			get change(): TaggedChange<TChange> {
 				return taggedChange;
 			},

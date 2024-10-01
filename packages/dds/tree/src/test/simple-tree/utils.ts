@@ -8,13 +8,17 @@ import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.j
 import {
 	buildForest,
 	cursorForMapTreeNode,
+	defaultSchemaPolicy,
 	getSchemaAndPolicy,
 	MockNodeKeyManager,
 } from "../../feature-libraries/index.js";
 import {
+	HydratedContext,
 	isTreeNode,
 	isTreeNodeSchemaClass,
 	mapTreeFromNodeData,
+	normalizeFieldSchema,
+	SimpleContextSlot,
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableTreeFieldFromImplicitField,
@@ -28,7 +32,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -119,8 +123,12 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 	});
 	const manager = new MockNodeKeyManager();
-	const field = new CheckoutFlexTreeView(branch, toFlexSchema(schema), manager).flexTree;
-
+	const checkout = new CheckoutFlexTreeView(branch, defaultSchemaPolicy, manager);
+	const field = checkout.flexTree;
+	branch.forest.anchors.slots.set(
+		SimpleContextSlot,
+		new HydratedContext(normalizeFieldSchema(schema).allowedTypeSet, checkout.context),
+	);
 	assert(field.context.isHydrated(), "Expected LazyField");
 	const mapTree = mapTreeFromNodeData(
 		initialTree as InsertableContent,
