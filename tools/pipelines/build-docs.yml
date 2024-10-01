@@ -308,17 +308,28 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
+        - template: /tools/pipelines/templates/include-install-build-tools.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
+        - task: Bash@3
+          name: SetVersion
+          displayName: 'Set Build Version'
+          env:
+            VERSION_BUILDNUMBER: $(Build.BuildNumber)
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
+              flub generate buildVersion
         - task: Bash@3
           displayName: 'Check Version Deployment Condition'
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
+            workingDirectory: $(Build.SourcesDirectory)
             script: |
-
-              # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
-              flub generate buildVersion
               # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
-              flub check latestVersions $(version) client
+              flub check latestVersions $(SetVersion.version) client
 
 - stage: deploy
   displayName: 'Deploy website'
