@@ -578,13 +578,6 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const scheme = detectVersionScheme(latestVer);
 			const ranges = getRanges(latestVer);
 
-			for (const pkg of context.packagesInReleaseGroup(pkgName)) {
-				if (pkg.monoRepo?.releaseGroup !== "client") {
-					const simpleNew = ranges.caret;
-					ranges.legacyCompat = simpleNew;
-				}
-			}
-
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {

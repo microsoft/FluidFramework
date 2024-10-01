@@ -452,6 +452,62 @@ describe("internalScheme", () => {
 			const range = getVersionRange(input, "legacyCompat");
 			assert.strictEqual(range, expected);
 		});
+
+		it("legacy compat: 2.0.10 and default range 20", () => {
+			const input = `2.0.10`;
+			const expected = `>=2.0.10 <2.20.0`;
+			const range = getVersionRange(input, "legacyCompat", 20);
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.10.0 and default range 20", () => {
+			const input = `2.10.0`;
+			const expected = `>=2.10.0 <2.30.0`;
+			const range = getVersionRange(input, "legacyCompat", 20);
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.0.10 and default range 30", () => {
+			const input = `2.0.10`;
+			const expected = `>=2.0.10 <2.30.0`;
+			const range = getVersionRange(input, "legacyCompat", 30);
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.10.0 and default range 30", () => {
+			const input = `2.10.0`;
+			const expected = `>=2.10.0 <2.40.0`;
+			const range = getVersionRange(input, "legacyCompat", 30);
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.0.10 and default range 50", () => {
+			const input = `2.0.10`;
+			const expected = `>=2.0.10 <2.50.0`;
+			const range = getVersionRange(input, "legacyCompat", 50);
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.10.0 and default range 50", () => {
+			const input = `2.10.0`;
+			const expected = `>=2.10.0 <2.60.0`;
+			const range = getVersionRange(input, "legacyCompat", 50);
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.0.10 and default range 200", () => {
+			const input = `2.0.10`;
+			const expected = `>=2.0.10 <2.200.0`;
+			const range = getVersionRange(input, "legacyCompat", 200);
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.10.0 and default range 200", () => {
+			const input = `2.10.0`;
+			const expected = `>=2.10.0 <2.210.0`;
+			const range = getVersionRange(input, "legacyCompat", 200);
+			assert.strictEqual(range, expected);
+		});
 	});
 
 	describe("checking test version scheme", () => {

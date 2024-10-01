@@ -357,6 +357,8 @@ export function bumpInternalVersion(
 	return toInternalScheme(pubVer, newIntVer, true, prereleaseId);
 }
 
+const DEFAUT_LEGACY_RANGE = 10;
+
 /**
  * Returns a dependency range string for the Fluid internal version.
  *
@@ -375,9 +377,9 @@ export function bumpInternalVersion(
 export function getVersionRange(
 	version: semver.SemVer | string,
 	maxAutomaticBump: "minor" | "patch" | "~" | "^" | "legacyCompat",
+	defautRange?: number,
 ): string {
-	validateVersionScheme(version, true, undefined);
-
+	// validateVersionScheme(version, true, undefined);
 	const lowVersion = version;
 	let highVersion: semver.SemVer;
 	switch (maxAutomaticBump) {
@@ -394,7 +396,7 @@ export function getVersionRange(
 		}
 
 		case "legacyCompat": {
-			highVersion = bumpLegacyCompatVersion(version);
+			highVersion = bumpLegacyCompatVersion(version, defautRange ?? DEFAUT_LEGACY_RANGE);
 			break;
 		}
 
@@ -410,12 +412,15 @@ export function getVersionRange(
 	return range;
 }
 
-function bumpLegacyCompatVersion(version: semver.SemVer | string): semver.SemVer {
+function bumpLegacyCompatVersion(
+	version: semver.SemVer | string,
+	bumpRange: number,
+): semver.SemVer {
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");
 	}
-	const minor = Math.floor(semVersion.minor / 10) * 10 + 10;
+	const minor = Math.floor(semVersion.minor / 10) * 10 + bumpRange;
 	const newSemVerString = `${semVersion.major}.${minor}.0`;
 	const higherVersion = semver.parse(newSemVerString);
 	if (higherVersion === null) {

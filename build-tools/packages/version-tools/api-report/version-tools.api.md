@@ -52,7 +52,7 @@ export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | 
 export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, simplePatchVersioning: boolean): string;
 
 // @public
-export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^" | "legacyCompat"): string;
+export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^" | "legacyCompat", defautRange?: number): string;
 
 // @public
 export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperatorWithVersion | semver.SemVer;
