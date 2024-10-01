@@ -2,19 +2,19 @@
 
 ## Overview
 
-This module contains all the utilities required to run code coverage analysis on PRs. The tool uses the coverage reports generated in the PR build to run comparison against a baseline CI build for packages that have been updated on the PR. If the tool finds that the line or branch coverage for a package has been impacted in the PR, it posts a comment on the PR showing the diff of the line coverage between baseline and PR.
+This module contains all the utilities required to collect and analyze code coverage data from PRs. The coverage reports generated in the PR build are compared against a baseline CI build for packages that have been updated in the PR. If the line or branch coverage for a package has been impacted in the PR, a comment is posted to the PR showing the diff of the code coverage between baseline and PR.
 
 ## Generating coverage reports
 
-The code coverage plugin only generates coverage reports when tests run. You can generate these reports for your package locally by running `npm run test:coverage` for the individual package or by running `npm run ci:test:mocha:coverage` from the root.
+Code coverage reports are only generated when tests run. You can generate these reports for a package locally by running `npm run test:coverage` for the individual package or by running `npm run ci:test:mocha:coverage` from the root.
 
 ## Pieces of the code coverage analysis plugin
 
-There are a couple different things that we need to support to make the code coverage plugin work as expected. This section defines those pieces and how the code coverage plugin works overall.
+Code coverage has several steps involving different commands. This section defines those pieces and how they fit together to enable overall code coverage tracking and reporting.
 
 ### Cobertura coverage files
 
-The code coverage plugin uses cobertura coverage files for running code coverage comparisons. These files are currently published as artifacts from both our PR and CI build pipeline to ensure we can run comparisons on PRs against a baseline build.
+Code coverage data is included in the cobertura-format coverage files we collect during CI builds. These files are currently published as artifacts from both our PR and internal build pipelines to ensure we can run comparisons on PRs against a baseline build.
 
 ### Identifying the baseline build
 

@@ -117,7 +117,7 @@ export async function isPrApprovedByUsers(
  * @param github - Details about the GitHub repo and auth to use.
  * @param prNumber - Pull request number.
  * @param body - review comment body to be posted.
- * @param comment_identifier - unique identifier for the comment to be updated.
+ * @param commentIdentifier - unique identifier for the comment to be updated.
  *
  * @returns id of the comment that was updated.
  */
@@ -125,7 +125,7 @@ export async function createOrUpdateCommentOnPr(
 	{ owner, repo, token }: GitHubProps,
 	prNumber: number,
 	body: string,
-	comment_identifier: string,
+	commentIdentifier: string,
 ): Promise<number> {
 	const octokit = new Octokit({ auth: token });
 
@@ -139,7 +139,7 @@ export async function createOrUpdateCommentOnPr(
 	let comment_id: number | undefined;
 	// Log the comments to find the comment_id
 	for (const comment of comments) {
-		if (comment.body.startsWith(comment_identifier)) {
+		if (comment.body.startsWith(commentIdentifier)) {
 			comment_id = comment.id;
 			break;
 		}

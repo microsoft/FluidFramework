@@ -49,20 +49,20 @@ export async function getBuilds(
 	return buildApi.getBuilds(
 		options.project,
 		options.definitions,
-		undefined,
+		undefined /* queues */,
 		build_id,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
+		undefined /* minTime */,
+		undefined /* maxTime */,
+		undefined /* requestedFor */,
+		undefined /* reasonFilter */,
+		undefined /* BuildStatus */,
+		undefined /* BuildResult */,
 		options.tagFilters,
-		undefined,
-		undefined,
-		undefined,
+		undefined /* properties */,
+		undefined /* top */,
+		undefined /* continuationToken */,
 		options.maxBuildsPerDefinition,
-		undefined,
+		undefined /* deletedFilter */,
 		BuildQueryOrder.QueueTimeDescending,
 		options.branch,
 	);
@@ -74,9 +74,9 @@ export async function getBuilds(
 export async function getBuild(
 	adoConnection: WebApi,
 	options: GetBuildOptions,
-	build_id: number,
+	buildId: number,
 ): Promise<Build> {
 	const buildApi = await adoConnection.getBuildApi();
 
-	return buildApi.getBuild(options.project, build_id);
+	return buildApi.getBuild(options.project, buildId);
 }
