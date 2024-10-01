@@ -9,7 +9,6 @@ import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
-	ViewSchema,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../feature-libraries/schema-index/index.js";
@@ -17,6 +16,7 @@ import type { JsonCompatible } from "../../util/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toFlexSchema.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
+import { ViewSchema } from "./view.js";
 
 /**
  * Dumps the "persisted" schema subset of `schema` into a deterministic JSON compatible semi-human readable but unspecified format.
@@ -49,7 +49,7 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
 /**
  * Compares two schema extracted using {@link extractPersistedSchema}.
  * Reports the same compatibility that {@link TreeView.compatibility} would report if
- * opening a document that used the `persisted` schema and provided `view` to {@link ITree.viewWith}.
+ * opening a document that used the `persisted` schema and provided `view` to {@link ViewableTree.viewWith}.
  *
  * @remarks
  * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.

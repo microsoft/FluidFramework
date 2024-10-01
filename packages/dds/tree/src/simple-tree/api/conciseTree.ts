@@ -8,8 +8,8 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ITreeCursor } from "../../core/index.js";
 import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "../core/index.js";
-import { walkFieldSchema } from "../walkSchema.js";
 import { customFromCursorInner, type EncodeOptions } from "./customTree.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
 
 /**
  * Concise encoding of a {@link TreeNode} or {@link TreeLeafValue}.
