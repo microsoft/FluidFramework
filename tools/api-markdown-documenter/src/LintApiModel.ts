@@ -8,6 +8,7 @@ import {
 	ApiDocumentedItem,
 	type ApiItem,
 	ApiItemContainerMixin,
+	ApiItemKind,
 	type ApiModel,
 } from "@microsoft/api-extractor-model";
 import {
@@ -58,8 +59,11 @@ export interface LinterReferenceError {
 
 	/**
 	 * Name of the item that included a reference to an invalid target.
+	 *
+	 * @remarks Will be `undefined` if and only if the documentation is associated with the package root
+	 * (i.e., `@packageDocumentation`).
 	 */
-	readonly sourceItem: string;
+	readonly sourceItem: string | undefined;
 
 	/**
 	 * The name of the package that the {@link LinterReferenceError.sourceItem} belongs to.
@@ -320,7 +324,10 @@ function checkLinkTag(
 	} catch {
 		return {
 			tagName: "@link",
-			sourceItem: apiItem.getScopedNameWithinPackage(),
+			sourceItem:
+				apiItem.kind === ApiItemKind.Package
+					? undefined
+					: apiItem.getScopedNameWithinPackage(),
 			packageName: apiItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
 			referenceTarget: linkTag.codeDestination.emitAsTsdoc(),
 			linkText: linkTag.linkText,

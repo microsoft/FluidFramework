@@ -7,15 +7,11 @@ import Path from "node:path";
 
 import type { ApiModel } from "@microsoft/api-extractor-model";
 import { Args, Command, Flags } from "@oclif/core";
+import Chalk from "chalk";
 
 import { lintApiModel, type LinterErrors, type LinterReferenceError } from "../LintApiModel.js";
 import { loadModel } from "../LoadModel.js";
-import {
-	defaultConsoleLogger,
-	silentLogger,
-	verboseConsoleLogger,
-	type Logger,
-} from "../Logging.js";
+import { silentLogger, type Logger } from "../Logging.js";
 import { DocumentWriter } from "../renderers/index.js";
 
 /**
@@ -65,12 +61,35 @@ export default class LintApiModelCommand extends Command {
 		const { apiModelDirectory } = args;
 		const { verbose, workingDirectory, quiet } = flags;
 
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		function getMessage(messageOrError: string | Error): string | undefined {
+			if (messageOrError instanceof Error) {
+				return messageOrError.message;
+			}
+			return messageOrError;
+		}
+
 		// TODO: what is the right way to plumb logs through oclif?
-		let logger: Logger = defaultConsoleLogger;
-		if (quiet) {
-			logger = silentLogger;
-		} else if (verbose) {
-			logger = verboseConsoleLogger;
+		let logger: Logger = {
+			...silentLogger,
+		};
+		if (!quiet) {
+			logger = {
+				...logger,
+				info: (message, ...parameters) =>
+					this.log(Chalk.blue(getMessage(message)), ...parameters),
+				error: (message) => this.error(message),
+				warning: (message) => this.warn(message),
+				success: (message, ...parameters) =>
+					this.log(Chalk.green(getMessage(message)), ...parameters),
+			};
+		}
+		if (verbose) {
+			logger = {
+				...logger,
+				verbose: (message, ...parameters) =>
+					this.log(Chalk.gray(getMessage(message)), ...parameters),
+			};
 		}
 
 		const resolvedApiModelDirectoryPath = Path.resolve(workingDirectory, apiModelDirectory);
@@ -141,7 +160,9 @@ function writeReferenceErrors(
 
 	// Write errors by package
 	documentWriter.ensureNewLine();
-	documentWriter.writeLine("The following reference tags could not be resolved:");
+	documentWriter.writeLine(
+		"The following reference tags could not be resolved (listed by containing package):",
+	);
 	documentWriter.increaseIndent();
 	for (const [packageName, errors] of referenceErrorsByPackage) {
 		documentWriter.writeLine(`${packageName}:`);
@@ -153,7 +174,9 @@ function writeReferenceErrors(
 				error.linkText,
 			);
 			documentWriter.writeLine(
-				`${referenceTag} on "${error.sourceItem}" could not be resolved.`,
+				`${referenceTag} on "${
+					error.sourceItem ?? "(@packageDocumentation)"
+				}" could not be resolved.`,
 			);
 		}
 		documentWriter.decreaseIndent();
