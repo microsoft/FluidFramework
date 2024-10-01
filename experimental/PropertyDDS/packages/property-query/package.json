@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query",
-	"version": "2.1.2",
+	"version": "2.1.3",
 	"description": "QueryService implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
