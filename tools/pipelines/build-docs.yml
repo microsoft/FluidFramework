@@ -122,6 +122,7 @@ stages:
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
               flub generate buildVersion
         - task: Bash@3
+          name: SetShouldDeploy
           displayName: 'Check Version Deployment Condition'
           inputs:
             targetType: 'inline'
@@ -130,6 +131,14 @@ stages:
               echo "generated buildVersion: $(SetVersion.version)"
               # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
               flub check latestVersions $(SetVersion.version) client
+
+- stage: Deploy
+  dependsOn: check_branch_version
+  condition: eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true') # Only run if shouldDeploy is true
+  jobs:
+  - job: DeployJob
+    steps:
+    - script: echo "Deploying application because shouldDeploy is true."
 
 - stage: build
   displayName: 'Build website'
