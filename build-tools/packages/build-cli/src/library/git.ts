@@ -18,6 +18,7 @@ import { ReleaseGroup } from "../releaseGroups.js";
 // eslint-disable-next-line import/no-deprecated
 import { Context, type VersionDetails, isMonoRepoKind } from "./context.js";
 
+const newlineCrossPlatform = /\r?\n/;
 /**
  * Parses the version from a git tag.
  *
@@ -236,7 +237,7 @@ export class Repository implements GitContext {
 	public async revList(baseCommit: string, headCommit: string = "HEAD"): Promise<string[]> {
 		const result = await this.git.raw("rev-list", `${baseCommit}..${headCommit}`, "--reverse");
 		return result
-			.split(/\r?\n/)
+			.split(newlineCrossPlatform)
 			.filter((value) => value !== null && value !== undefined && value !== "");
 	}
 
@@ -297,6 +298,9 @@ export class Repository implements GitContext {
 		return [...allFiles];
 	}
 
+	/**
+	 * Map of release group/package name to all the git tags for the group/package.
+	 */
 	private readonly _tags: Map<string, string[]> = new Map();
 
 	/**
@@ -315,8 +319,9 @@ export class Repository implements GitContext {
 			return cacheEntry;
 		}
 
-		const tagList = await this.gitClient.tags({ list: `${prefix}_v*` });
-		return tagList.all;
+		const tags = await this.gitClient.tags(["--list", `${prefix}_v*`]);
+		this._tags.set(prefix, tags.all);
+		return tags.all;
 	}
 
 	private readonly _versions: Map<string, VersionDetails[]> = new Map();
@@ -343,8 +348,15 @@ export class Repository implements GitContext {
 			const ver = getVersionFromTag(tag);
 			if (ver !== undefined && ver !== "" && ver !== null) {
 				// eslint-disable-next-line no-await-in-loop
-				const rawDate = await this.gitClient.show(`show -s --format=%cI "${tag}"`);
-				const date = parseISO(rawDate);
+				const rawDate = await this.gitClient.show([
+					// Suppress the diff output
+					"-s",
+					// ISO 8601 format
+					"--format=%cI",
+					// the git ref - a tag in this case
+					tag,
+				]);
+				const date = parseISO(rawDate.trim());
 				versions.set(ver, date);
 			}
 		}
@@ -373,16 +385,16 @@ export class Repository implements GitContext {
 	}
 
 	public async getCurrentSha(): Promise<string> {
-		const result = await this.gitClient.raw(`rev-parse HEAD`);
-		return result.split(/\r?\n/)[0];
+		const result = await this.gitClient.revparse(["HEAD"]);
+		return result;
 	}
 
 	/**
 	 * Get the current git branch name
 	 */
 	public async getCurrentBranchName(): Promise<string> {
-		const revParseOut = await this.gitClient.raw("rev-parse --abbrev-ref HEAD");
-		return revParseOut.split(/\r?\n/)[0];
+		const result = await this.gitClient.revparse(["--abbrev-ref", "HEAD"]);
+		return result;
 	}
 
 	public async isBranchUpToDate(branch: string, remote: string): Promise<boolean> {
