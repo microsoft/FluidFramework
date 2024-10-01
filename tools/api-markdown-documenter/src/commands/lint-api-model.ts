@@ -131,7 +131,7 @@ function createErrorReport(errors: LinterErrors): string {
 
 	// TODO: handle other error types when they are added.
 	const errorCount = errors.referenceErrors.size;
-	documentWriter.writeLine(`Found ${errorCount} errors in the API model:`);
+	documentWriter.writeLine(`Found ${errorCount} docs errors:`);
 
 	documentWriter.increaseIndent();
 	writeReferenceErrors(errors.referenceErrors, documentWriter);

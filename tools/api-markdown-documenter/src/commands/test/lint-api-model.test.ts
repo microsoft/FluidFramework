@@ -30,7 +30,7 @@ describe("lint-api-model Command", () => {
 		);
 		expect(error).to.not.be.undefined;
 		console.log(error?.message);
-		expect(error?.message).to.equal(`Found 3 errors in the API model:
+		expect(error?.message).to.equal(`Found 3 docs errors:
   test-suite-a:
     (@packageDocumentation):
       - Reference tag "{@link InvalidItem}" could not be resolved: The member reference "InvalidItem" was not found.
