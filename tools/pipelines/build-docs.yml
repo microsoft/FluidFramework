@@ -115,8 +115,9 @@ stages:
           inputs:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)
+            env:
+              VERSION_BUILDNUMBER: $(Build.BuildNumber)
             script: |
-
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
               flub generate buildVersion
               echo "generated buildVersion: $(version)"
