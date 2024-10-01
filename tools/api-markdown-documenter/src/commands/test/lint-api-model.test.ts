@@ -11,13 +11,13 @@ import { expect } from "chai";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
 
-describe("lint-api-model Command", () => {
-	// Mimic the behavior of running the command from the package root.
-	const workingDirectory = Path.resolve(dirname, "..", "..", "..");
+// Mimic the behavior of running the command from the package root.
+const workingDirectory = Path.resolve(dirname, "..", "..", "..");
 
+describe("lint-api-model Command", () => {
 	it("Errors on empty API model", async () => {
 		const { error } = await runCommand(
-			`lint-api-model test/test-data/empty-model -w ${workingDirectory}`,
+			`lint-api-model src/test/test-data/empty-model -w ${workingDirectory}`,
 		);
 		expect(error).to.not.be.undefined;
 		console.log(error?.message);
@@ -26,7 +26,7 @@ describe("lint-api-model Command", () => {
 
 	it("Errors on API Model containing invalid reference tags", async () => {
 		const { error } = await runCommand(
-			`lint-api-model test/test-data/simple-suite-test -w ${workingDirectory}`,
+			`lint-api-model src/test/test-data/simple-suite-test -w ${workingDirectory}`,
 		);
 		expect(error).to.not.be.undefined;
 		console.log(error?.message);
