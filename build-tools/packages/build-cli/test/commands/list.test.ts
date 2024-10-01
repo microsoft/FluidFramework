@@ -45,9 +45,8 @@ function FeedsForPackages(
 describe("feeds", async () => {
 	const resolvedRoot = await getResolvedFluidRoot();
 	const gitRepo = new GitRepo(resolvedRoot);
-	const branch = await gitRepo.getCurrentBranchName();
 
-	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+	const context = new Context(resolvedRoot);
 	const config = context.flubConfig.policy?.packageNames!;
 	const packages = FeedsForPackages(context.packages, config);
 

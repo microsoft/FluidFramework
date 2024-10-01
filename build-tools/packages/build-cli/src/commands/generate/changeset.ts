@@ -17,7 +17,6 @@ import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
 	type FluidCustomChangesetMetadata,
-	Repository,
 	getDefaultBumpTypeForBranch,
 } from "../../library/index.js";
 
@@ -139,14 +138,20 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			};
 		}
 
-		const repo = new Repository({ baseDir: context.root });
+		// if (context.gitContext === undefined) {
+		// 	this.error(`Command can only be run in a git repository.`, { exit: 1 });
+		// }
+
+		const repo = await context.getGitRepository();
 		// context.originRemotePartialUrl is 'microsoft/FluidFramework'; see BaseCommand.getContext().
-		const remote = await repo.getRemote(context.originRemotePartialUrl);
+		const remote = await repo.getRemote(repo.upstreamRemotePartialUrl);
 
 		if (remote === undefined) {
-			this.error(`Can't find a remote with ${context.originRemotePartialUrl}`, { exit: 1 });
+			this.error(`Can't find a remote with ${repo.upstreamRemotePartialUrl}`, {
+				exit: 1,
+			});
 		}
-		this.log(`Remote for ${context.originRemotePartialUrl} is: ${chalk.bold(remote)}`);
+		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
 		let {

@@ -110,13 +110,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
-		const [owner, repo] = context.originRemotePartialUrl.split("/");
+		const [owner, repo] = gitRepo.upstreamRemotePartialUrl.split("/");
 		this.verbose(`owner: ${owner} and repo: ${repo}`);
 
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await gitRepo.gitClient.status()).current ?? "main";
 
-		this.remote = flags.remote ?? (await gitRepo.getRemote(context.originRemotePartialUrl));
+		this.remote = flags.remote ?? (await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl));
 		if (this.remote === undefined) {
 			this.error("Remote for upstream repo not found", { exit: 1 });
 		}

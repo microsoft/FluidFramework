@@ -38,13 +38,14 @@ export const promptToCommitChanges: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter } = data;
+	const gitRepo = await context.getGitRepository();
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO COMMIT LOCAL CHANGES",
 		sections: [
 			{
 				title: "FIRST",
-				message: `Commit the local changes and create a PR targeting the ${context.originalBranchName} branch.`,
+				message: `Commit the local changes and create a PR targeting the ${gitRepo.originalBranchName} branch.`,
 			},
 			{
 				title: "NEXT",
@@ -131,17 +132,18 @@ export const promptToIntegrateNext: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context, promptWriter } = data;
+	const gitRepo = await context.getGitRepository();
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO INTEGRATE MAIN AND NEXT BRANCHES",
 		sections: [
 			{
 				title: "DETAILS",
-				message: `The 'next' branch has not been integrated into the '${context.originalBranchName}' branch.`,
+				message: `The 'next' branch has not been integrated into the '${gitRepo.originalBranchName}' branch.`,
 			},
 			{
 				title: "NEXT",
-				message: `Merge 'next' into the '${context.originalBranchName}' branch, then run the release command again:`,
+				message: `Merge 'next' into the '${gitRepo.originalBranchName}' branch, then run the release command again:`,
 			},
 		],
 	};
@@ -177,7 +179,7 @@ export const promptToPRBump: StateHandlerFunction = async (
 		sections: [
 			{
 				title: "FIRST",
-				message: `Push and create a PR for branch ${bumpBranch} targeting the ${context.originalBranchName} branch.`,
+				message: `Push and create a PR for branch ${bumpBranch} targeting the ${gitRepo.originalBranchName} branch.`,
 			},
 		],
 	};
@@ -226,7 +228,7 @@ export const promptToPRDeps: StateHandlerFunction = async (
 			{
 				title: "FIRST",
 				message: `Push and create a PR for branch ${await gitRepo.getCurrentBranchName()} targeting the ${
-					context.originalBranchName
+					gitRepo.originalBranchName
 				} branch.`,
 			},
 			{
@@ -259,6 +261,7 @@ export const promptToRelease: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, releaseGroup, releaseVersion, promptWriter } = data;
+	const gitRepo = await context.getGitRepository();
 
 	const flag = isReleaseGroup(releaseGroup) ? "-g" : "-p";
 
@@ -270,7 +273,7 @@ export const promptToRelease: StateHandlerFunction = async (
 				message: `Queue a ${chalk.green(
 					chalk.bold("release"),
 				)} build for the following release group in ADO for branch ${chalk.blue(
-					chalk.bold(context.originalBranchName),
+					chalk.bold(gitRepo.originalBranchName),
 				)}:\n\n    ${chalk.green(chalk.bold(releaseGroup))}: ${mapADOLinks(releaseGroup)}`,
 			},
 			{
@@ -371,6 +374,7 @@ export const promptToRunMinorReleaseCommand: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter, releaseGroup } = data;
+	const gitRepo = await context.getGitRepository();
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO DO A MINOR RELEASE",
@@ -398,14 +402,14 @@ export const promptToRunMinorReleaseCommand: StateHandlerFunction = async (
 	prompt.sections.push(
 		{
 			title: "FIRST: do a minor release",
-			message: `A minor release needs to be run in order to continue with the major release. To continue with the release, run the following command on the ${context.originalBranchName} branch:`,
+			message: `A minor release needs to be run in order to continue with the major release. To continue with the release, run the following command on the ${gitRepo.originalBranchName} branch:`,
 			cmd: `${command?.config.bin} ${command?.id} -g ${releaseGroup} -t minor ${chalk.gray(
 				uniqueArgs.join(" "),
 			)}`,
 		},
 		{
 			title: "NEXT: run the major release again",
-			message: `Once the minor release is fully complete, run the following command on the ${context.originalBranchName} branch to continue the major release.`,
+			message: `Once the minor release is fully complete, run the following command on the ${gitRepo.originalBranchName} branch to continue the major release.`,
 			cmd: `${command?.config.bin} ${command?.id} -g ${releaseGroup} -t major ${chalk.gray(
 				uniqueArgs.join(" "),
 			)}`,

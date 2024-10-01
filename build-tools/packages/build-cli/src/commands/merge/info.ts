@@ -80,10 +80,10 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 
 		const context = await this.getContext();
 		const repo = await context.getGitRepository();
-		const remote = await repo.getRemote(context.originRemotePartialUrl);
+		const remote = await repo.getRemote(repo.upstreamRemotePartialUrl);
 
 		if (remote === undefined) {
-			this.error(`Can't find a remote with ${context.originRemotePartialUrl}`);
+			this.error(`Can't find a remote with ${repo.upstreamRemotePartialUrl}`);
 		}
 		this.verbose(`Remote is: ${remote}`);
 

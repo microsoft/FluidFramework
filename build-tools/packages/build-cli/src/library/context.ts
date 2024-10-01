@@ -66,14 +66,9 @@ export class Context {
 	public readonly fullPackageMap: Map<string, Package>;
 	public readonly fluidBuildConfig: IFluidBuildConfig;
 	public readonly flubConfig: FlubConfig;
-	private readonly newBranches: string[] = [];
+	private checkedIsGitRepo = false;
 
-	constructor(
-		// public readonly gitRepo: GitRepo,
-		public readonly root: string,
-		public readonly originRemotePartialUrl: string,
-		public readonly originalBranchName: string | undefined,
-	) {
+	constructor(public readonly root: string) {
 		// Load the packages
 		this.fluidBuildConfig = getFluidBuildConfig(root);
 		this.flubConfig = getFlubConfig(root);
@@ -151,8 +146,15 @@ export class Context {
 	private _gitRepository: Repository | undefined;
 
 	public async getGitRepository(): Promise<Repository> {
+		if (this._gitRepository === undefined && !this.checkedIsGitRepo) {
+			const repo = new Repository({ baseDir: this.root }, "microsoft/FluidFramework");
+			const isRepo = await repo.gitClient.checkIsRepo();
+			this.checkedIsGitRepo = true;
+			this._gitRepository = isRepo ? repo : undefined;
+		}
+
 		if (this._gitRepository === undefined) {
-			this._gitRepository = new Repository({ baseDir: this.root });
+			throw new Error(`Not in a git repository: ${this.root}`);
 		}
 
 		return this._gitRepository;

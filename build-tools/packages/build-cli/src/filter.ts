@@ -180,9 +180,9 @@ const selectPackagesFromContext = async (
 
 	if (selection.changedSinceBranch !== undefined) {
 		const git = await context.getGitRepository();
-		const remote = await git.getRemote(context.originRemotePartialUrl);
+		const remote = await git.getRemote(git.upstreamRemotePartialUrl);
 		if (remote === undefined) {
-			throw new Error(`Can't find a remote with ${context.originRemotePartialUrl}`);
+			throw new Error(`Can't find a remote with ${git.upstreamRemotePartialUrl}`);
 		}
 		const { packages } = await git.getChangedSinceRef(
 			selection.changedSinceBranch,

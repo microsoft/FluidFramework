@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
+import { PackageName } from "@rushstack/node-core-library";
 import readPkgUp from "read-pkg-up";
 import * as semver from "semver";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
-import { PackageName } from "@rushstack/node-core-library";
 import { parseISO } from "date-fns";
 import { CommandLogger } from "../logging.js";
 import { ReleaseGroup } from "../releaseGroups.js";
@@ -41,6 +42,12 @@ function getVersionFromTag(tag: string): string | undefined {
 	return ver.version;
 }
 
+export interface GitContext {
+	upstreamRemotePartialUrl: Readonly<string>;
+	originalBranchName: Readonly<string>;
+	newBranches: string[];
+}
+
 /**
  * Default options passed to the git client.
  */
@@ -60,9 +67,10 @@ const defaultGitOptions: Partial<SimpleGitOptions> = {
  *
  * @internal
  */
-export class Repository {
+export class Repository implements GitContext {
+	// public readonly gitContext: GitContext;
 	private readonly git: SimpleGit;
-	private readonly baseDir: string;
+	// private readonly baseDir: string;
 
 	/**
 	 * A git client for the repository that can be used to call git directly.
@@ -71,8 +79,12 @@ export class Repository {
 		return this.git;
 	}
 
+	public readonly originalBranchName: string;
+	public readonly newBranches: string[] = [];
+
 	constructor(
 		gitOptions: SetRequired<Partial<SimpleGitOptions>, "baseDir">,
+		public readonly upstreamRemotePartialUrl: string,
 		protected readonly log?: CommandLogger,
 	) {
 		const options: SetRequired<Partial<SimpleGitOptions>, "baseDir"> = {
@@ -81,8 +93,12 @@ export class Repository {
 		};
 		log?.verbose("gitOptions:");
 		log?.verbose(JSON.stringify(options));
-		this.baseDir = options.baseDir;
+		// this.baseDir = options.baseDir;
 		this.git = simpleGit(options);
+
+		// Use synchronous git functions since we're in a constructor
+		const currentBranch = getCurrentBranchNameSync(gitOptions.baseDir);
+		this.originalBranchName = currentBranch;
 	}
 
 	/**
@@ -381,5 +397,30 @@ export class Repository {
 	 */
 	public async fetchBranch(remote: string, branchName: string): Promise<void> {
 		await this.gitClient.fetch(remote, [branchName]);
+	}
+}
+
+/**
+ * Finds the current branch of a Git repository synchronously.
+ *
+ * This function uses `git rev-parse --abbrev-ref HEAD` command to find the current branch name. It executes the command
+ * synchronously using `child_process.execFileSync`. If the current directory is not part of a Git repository, it throws
+ * an error.
+ *
+ * @param cwd - The directory of a Git repository.
+ * @returns The name of the current branch.
+ * @throws Error If `cwd` is not part of a Git repository.
+ */
+export function getCurrentBranchNameSync(cwd: string = process.cwd()): string {
+	try {
+		const revParseOut = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+			cwd,
+			encoding: "utf8",
+		}).trim();
+		return revParseOut.split(/\r?\n/)[0];
+	} catch (error) {
+		throw new Error(
+			`Failed to find Git branch name. Make sure you are inside a Git repository. Error: ${error}`,
+		);
 	}
 }

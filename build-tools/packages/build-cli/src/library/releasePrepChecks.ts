@@ -7,7 +7,6 @@ import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import type { Context } from "./context.js";
-import { Repository } from "./git.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
@@ -121,7 +120,7 @@ export const CheckHasRemoteBranchUpToDate: CheckFunction = async (
 	context: Context,
 ): Promise<CheckResult> => {
 	const gitRepo = await context.getGitRepository();
-	const remote = await gitRepo.getRemote(context.originRemotePartialUrl);
+	const remote = await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl);
 
 	if (remote === undefined) {
 		return {
@@ -131,7 +130,7 @@ export const CheckHasRemoteBranchUpToDate: CheckFunction = async (
 
 	let succeeded = false;
 	try {
-		succeeded = await gitRepo.isBranchUpToDate(context.originalBranchName ?? "", remote);
+		succeeded = await gitRepo.isBranchUpToDate(gitRepo.originalBranchName ?? "", remote);
 	} catch (error) {
 		return {
 			message: `Error when checking remote branch. Does the remote branch exist? Full error message:\n${
@@ -222,8 +221,7 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 	const gitRepo = await context.getGitRepository();
 	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
 	if (!afterPolicyCheckStatus.isClean()) {
-		const repo = new Repository({ baseDir: context.repo.resolvedRoot });
-		await repo.gitClient.reset(ResetMode.HARD);
+		await gitRepo.gitClient.reset(ResetMode.HARD);
 		return {
 			message: "Found some untagged asserts. These should be tagged before release.",
 			fixCommand: "pnpm run policy-check:asserts",

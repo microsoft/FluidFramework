@@ -48,14 +48,14 @@ export const checkBranchName: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context, bumpType, shouldCheckBranch } = data;
-
+	const gitRepo = await context.getGitRepository();
 	if (shouldCheckBranch === true) {
 		switch (bumpType) {
 			case "patch": {
-				log.verbose(`Checking if ${context.originalBranchName} starts with release/`);
-				if (context.originalBranchName?.startsWith("release/") !== true) {
+				log.verbose(`Checking if ${gitRepo.originalBranchName} starts with release/`);
+				if (gitRepo.originalBranchName?.startsWith("release/") !== true) {
 					log.warning(
-						`Patch release should only be done on 'release/*' branches, but current branch is '${context.originalBranchName}'.\nYou can skip this check with --no-branchCheck.'`,
+						`Patch release should only be done on 'release/*' branches, but current branch is '${gitRepo.originalBranchName}'.\nYou can skip this check with --no-branchCheck.'`,
 					);
 					BaseStateHandler.signalFailure(machine, state);
 				}
@@ -65,10 +65,10 @@ export const checkBranchName: StateHandlerFunction = async (
 
 			case "major":
 			case "minor": {
-				log.verbose(`Checking if ${context.originalBranchName} is 'main', 'next', or 'lts'.`);
-				if (!["main", "next", "lts"].includes(context.originalBranchName ?? "")) {
+				log.verbose(`Checking if ${gitRepo.originalBranchName} is 'main', 'next', or 'lts'.`);
+				if (!["main", "next", "lts"].includes(gitRepo.originalBranchName ?? "")) {
 					log.warning(
-						`Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${context.originalBranchName}'.`,
+						`Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${gitRepo.originalBranchName}'.`,
 					);
 					BaseStateHandler.signalFailure(machine, state);
 					return true;
@@ -81,7 +81,7 @@ export const checkBranchName: StateHandlerFunction = async (
 		}
 	} else {
 		log.warning(
-			`Not checking if current branch is a release branch: ${context.originalBranchName}`,
+			`Not checking if current branch is a release branch: ${gitRepo.originalBranchName}`,
 		);
 	}
 
@@ -111,9 +111,9 @@ export const checkBranchUpToDate: StateHandlerFunction = async (
 	const { context, shouldCheckBranchUpdate } = data;
 
 	const gitRepo = await context.getGitRepository();
-	const remote = await gitRepo.getRemote(context.originRemotePartialUrl);
+	const remote = await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl);
 	const isBranchUpToDate = await gitRepo.isBranchUpToDate(
-		context.originalBranchName ?? "",
+		gitRepo.originalBranchName,
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		remote!,
 	);
@@ -121,7 +121,7 @@ export const checkBranchUpToDate: StateHandlerFunction = async (
 		if (!isBranchUpToDate) {
 			BaseStateHandler.signalFailure(machine, state);
 			log.errorLog(
-				`Local '${context.originalBranchName}' branch not up to date with remote. Please pull from '${remote}'.`,
+				`Local '${gitRepo.originalBranchName}' branch not up to date with remote. Please pull from '${remote}'.`,
 			);
 		}
 
@@ -206,10 +206,10 @@ export const checkHasRemote: StateHandlerFunction = async (
 	const { context } = data;
 
 	const gitRepo = await context.getGitRepository();
-	const remote = await gitRepo.getRemote(context.originRemotePartialUrl);
+	const remote = await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl);
 	if (remote === undefined) {
 		BaseStateHandler.signalFailure(machine, state);
-		log.errorLog(`Unable to find remote for '${context.originRemotePartialUrl}'`);
+		log.errorLog(`Unable to find remote for '${gitRepo.upstreamRemotePartialUrl}'`);
 	}
 
 	BaseStateHandler.signalSuccess(machine, state);
@@ -395,11 +395,12 @@ export const checkPolicy: StateHandlerFunction = async (
 
 	const { context, releaseGroup, shouldCheckPolicy } = data;
 
+	const gitRepo = await context.getGitRepository();
 	log.info(`Checking policy`);
 	if (shouldCheckPolicy === true) {
-		if (!getRunPolicyCheckDefault(releaseGroup, context.originalBranchName)) {
+		if (!getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName)) {
 			log.warning(
-				`Policy check fixes for ${releaseGroup} are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
+				`Policy check fixes for ${releaseGroup} are not expected on the ${gitRepo.originalBranchName} branch! Make sure you know what you are doing.`,
 			);
 		}
 
@@ -412,7 +413,6 @@ export const checkPolicy: StateHandlerFunction = async (
 		log.verbose(result.stdout);
 
 		// check for policy check violation
-		const gitRepo = await context.getGitRepository();
 		const afterPolicyCheckStatus = await gitRepo.gitClient.status();
 		const isClean = afterPolicyCheckStatus.isClean();
 		if (!isClean) {
@@ -423,9 +423,9 @@ export const checkPolicy: StateHandlerFunction = async (
 			BaseStateHandler.signalFailure(machine, state);
 			return false;
 		}
-	} else if (getRunPolicyCheckDefault(releaseGroup, context.originalBranchName) === false) {
+	} else if (getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName) === false) {
 		log.verbose(
-			`Skipping policy check for ${releaseGroup} because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
+			`Skipping policy check for ${releaseGroup} because it does not run on the ${gitRepo.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
 		);
 	} else {
 		log.warning("Skipping policy check.");
@@ -455,11 +455,12 @@ export const checkAssertTagging: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context, releaseGroup, shouldCheckPolicy } = data;
+	const gitRepo = await context.getGitRepository();
 
 	if (shouldCheckPolicy === true) {
-		if (!getRunPolicyCheckDefault(releaseGroup, context.originalBranchName)) {
+		if (!getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName)) {
 			log.warning(
-				`Assert tagging for ${releaseGroup} is not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
+				`Assert tagging for ${releaseGroup} is not expected on the ${gitRepo.originalBranchName} branch! Make sure you know what you are doing.`,
 			);
 		}
 
@@ -472,7 +473,6 @@ export const checkAssertTagging: StateHandlerFunction = async (
 		log.verbose(result.stdout);
 
 		// check for policy check violation
-		const gitRepo = await context.getGitRepository();
 		const afterPolicyCheckStatus = await gitRepo.gitClient.status();
 		const isClean = afterPolicyCheckStatus.isClean();
 		if (!isClean) {
@@ -483,9 +483,9 @@ export const checkAssertTagging: StateHandlerFunction = async (
 			BaseStateHandler.signalFailure(machine, state);
 			return false;
 		}
-	} else if (getRunPolicyCheckDefault(releaseGroup, context.originalBranchName) === false) {
+	} else if (getRunPolicyCheckDefault(releaseGroup, gitRepo.originalBranchName) === false) {
 		log.verbose(
-			`Skipping assert tagging for ${releaseGroup} because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
+			`Skipping assert tagging for ${releaseGroup} because it does not run on the ${gitRepo.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
 		);
 	} else {
 		log.warning("Skipping assert tagging.");
@@ -720,11 +720,12 @@ export const checkTypeTestGenerate: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context } = data;
+	const gitRepo = await context.getGitRepository();
 
 	const genQuestion: inquirer.ConfirmQuestion = {
 		type: "confirm",
 		name: "typetestsGen",
-		message: `Have you run typetests:gen on the ${context.originalBranchName} branch?`,
+		message: `Have you run typetests:gen on the ${gitRepo.originalBranchName} branch?`,
 	};
 
 	const answer = await inquirer.prompt(genQuestion);
@@ -757,11 +758,12 @@ export const checkTypeTestPrepare: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context } = data;
+	const gitRepo = await context.getGitRepository();
 
 	const prepQuestion: inquirer.ConfirmQuestion = {
 		type: "confirm",
 		name: "typetestsPrep",
-		message: `Have you run typetests:prepare on the ${context.originalBranchName} branch?`,
+		message: `Have you run typetests:prepare on the ${gitRepo.originalBranchName} branch?`,
 	};
 
 	const answer = await inquirer.prompt(prepQuestion);
