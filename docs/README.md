@@ -80,9 +80,7 @@ npm run build:local
 
 Note that this calls the `local-api-rollup` script which simulates the `download` process in the regular build.
 However, instead of downloading the api content, the `_doc-models` directory is populated by copying the models from `_api-extractor-temp`.
-Currently, the local api content from `_api-extractor-temp` is copied to `_doc-models/v2` instead of `_doc-models/local` due to
-limitations with the way Hugo renders different api versions. When viewing the website after running `build:local` note that the
-local api content will be displayed as the `v2` section.
+The local api content from `_api-extractor-temp` is copied to `_doc-models/local`.
 
 
 ### Drafts
