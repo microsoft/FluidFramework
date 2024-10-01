@@ -14,6 +14,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import { parseISO } from "date-fns";
 import { CommandLogger } from "../logging.js";
 import { ReleaseGroup } from "../releaseGroups.js";
+// eslint-disable-next-line import/no-deprecated
 import { Context, type VersionDetails, isMonoRepoKind } from "./context.js";
 
 /**
