@@ -38,13 +38,13 @@ import {
 } from "../intervalCollection.js";
 
 import {
-	IIntervalHelpers,
 	ISerializableInterval,
 	ISerializedInterval,
 	IntervalStickiness,
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
+	type IIntervalHelpers,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
@@ -101,10 +101,23 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
  * of the interval that are exclusive will have the ability to slide to these
  * special endpoint segments.
- * @legacy
  * @alpha
+ * @legacy
  */
-export class SequenceInterval implements ISerializableInterval {
+export interface SequenceInterval extends ISerializableInterval {
+	readonly start: LocalReferencePosition;
+	/**
+	 * End endpoint of this interval.
+	 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
+	 */
+	readonly end: LocalReferencePosition;
+	readonly intervalType: IntervalType;
+	readonly startSide: Side;
+	readonly endSide: Side;
+	readonly stickiness: IntervalStickiness;
+}
+
+export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
@@ -216,7 +229,7 @@ export class SequenceInterval implements ISerializableInterval {
 	 * {@inheritDoc IInterval.clone}
 	 */
 	public clone() {
-		return new SequenceInterval(
+		return new SequenceIntervalClass(
 			this.client,
 			this.start,
 			this.end,
@@ -320,7 +333,7 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide = this.end === newEnd ? this.endSide : b.endSide;
 		}
 
-		return new SequenceInterval(
+		return new SequenceIntervalClass(
 			this.client,
 			newStart,
 			newEnd,
@@ -414,7 +427,7 @@ export class SequenceInterval implements ISerializableInterval {
 			}
 		}
 
-		const newInterval = new SequenceInterval(
+		const newInterval = new SequenceIntervalClass(
 			this.client,
 			startRef,
 			endRef,
@@ -604,7 +617,7 @@ export function createSequenceInterval(
 	startLref.addProperties(rangeProp);
 	endLref.addProperties(rangeProp);
 
-	const ival = new SequenceInterval(
+	const ival = new SequenceIntervalClass(
 		client,
 		startLref,
 		endLref,
