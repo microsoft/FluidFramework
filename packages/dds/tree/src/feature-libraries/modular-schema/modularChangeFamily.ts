@@ -1474,7 +1474,7 @@ export class ModularChangeFamily
 		rollbackOf?: RevisionTag,
 	): ModularChangeset {
 		const oldRevisions = new Set(
-			change.revisions === undefined
+			change.revisions === undefined || change.revisions.length === 0
 				? [undefined]
 				: change.revisions.map((revInfo) => revInfo.revision),
 		);
@@ -2637,8 +2637,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public buildChanges(changes: EditDescription[]): ModularChangeset {
-		const changeMaps = changes.map((change) =>
-			makeAnonChange(
+		const revisions: Set<RevisionTag> = new Set();
+		const changeMaps = changes.map((change) => {
+			revisions.add(change.revision);
+			return makeAnonChange(
 				change.type === "global"
 					? makeModularChangeset(
 							undefined /* fieldChanges */,
@@ -2667,10 +2669,13 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							undefined /* childId */,
 							change.revision,
 						),
-			),
-		);
-		const composedChange: Mutable<ModularChangeset> =
-			this.changeFamily.rebaser.compose(changeMaps);
+			);
+		});
+		const revInfo = Array.from(revisions).map((revision) => ({ revision }));
+		const composedChange: Mutable<ModularChangeset> = {
+			...this.changeFamily.rebaser.compose(changeMaps),
+			revisions: revInfo,
+		};
 
 		const maxId: ChangesetLocalId = brand(this.idAllocator.getMaxId());
 		if (maxId >= 0) {
@@ -2831,22 +2836,12 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 	maxId: ChangesetLocalId;
 } {
 	let maxId = -1;
-	const revInfoList: RevisionInfo[] = [];
+	const revInfos: RevisionInfo[] = [];
 	for (const taggedChange of changes) {
 		const change = taggedChange.change;
 		maxId = Math.max(change.maxId ?? -1, maxId);
-		revInfoList.push(...revisionInfoFromTaggedChange(taggedChange));
+		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
 	}
-
-	// Remove duplicate revision infos. Each change can have a revision info and it may be the same as
-	// other changes in the list.
-	const revInfos = revInfoList.filter(
-		(value, index, self) =>
-			index ===
-			self.findIndex(
-				(r) => r.revision === value.revision && r.rollbackOf === value.rollbackOf,
-			),
-	);
 
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
