@@ -102,7 +102,7 @@ export default class LintApiModelCommand extends Command {
 				logger,
 			});
 		} catch (error: unknown) {
-			this.error(`Error loading API model: ${(error as Error).message}`);
+			this.error(`Error loading API model: ${(error as Error).message}`, { exit: 1 });
 		}
 
 		// Lint the API model
@@ -110,7 +110,7 @@ export default class LintApiModelCommand extends Command {
 		try {
 			errors = await lintApiModel({ apiModel, logger });
 		} catch (error: unknown) {
-			this.error(`Error linting API model: ${(error as Error).message}`);
+			this.error(`Error linting API model: ${(error as Error).message}`, { exit: 1 });
 		}
 
 		// If any linter errors were found, report a user-friendly log message
@@ -118,8 +118,11 @@ export default class LintApiModelCommand extends Command {
 			this.log("No errors found in the API model!");
 		} else {
 			const errorReport = createErrorReport(errors);
-			this.error(errorReport);
+			this.error(errorReport, { exit: 1 });
 		}
+
+		// No errors!!
+		this.log(Chalk.green("No errors found in the API model!"));
 	}
 }
 
