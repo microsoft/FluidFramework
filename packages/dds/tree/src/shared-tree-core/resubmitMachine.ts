@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { GraphCommit, RevisionTag } from "../core/index.js";
+import type { GraphCommit } from "../core/index.js";
 
 /**
  * Encapsulates a state machine that can be used by a {@link SharedTreeCore} manage resubmit phases,
@@ -13,12 +13,11 @@ export interface ResubmitMachine<TChange> {
 	/**
 	 * Must be called before calling `enrichCommit` as part of a resubmit phase.
 	 * @param toResubmit - the commits that will be resubmitted (from oldest to newest).
-	 * @param revision - the revision tag to be used to resubmit the change.
 	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
 	 * as opposed to the version which was last submitted.
 	 * `toResubmit` can be safely mutated by the caller after this call returns.
 	 */
-	prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[], revision: RevisionTag): void;
+	prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void;
 
 	/**
 	 * @returns the next commit that should be resubmitted.

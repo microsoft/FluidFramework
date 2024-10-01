@@ -264,8 +264,8 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
-				(changes: TaggedChange<SharedTreeChange>, isRollback: boolean) =>
-					changeFamily.rebaser.invert(changes, isRollback, this.mintRevisionTag()),
+				(change: TaggedChange<SharedTreeChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			),
 			changeEnricher,

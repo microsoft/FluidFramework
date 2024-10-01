@@ -272,8 +272,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine =
 			resubmitMachine ??
 			new DefaultResubmitMachine(
-				(changes: TaggedChange<TChange>, isRollback: boolean) =>
-					changeFamily.rebaser.invert(changes, isRollback, this.mintRevisionTag()),
+				(change: TaggedChange<TChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			);
 		this.commitEnricher = new BranchCommitEnricher(changeFamily.rebaser, changeEnricher);
@@ -425,7 +425,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				commit === toResubmit[0],
 				0x95d /* Resubmit phase should start with the oldest local commit */,
 			);
-			this.resubmitMachine.prepareForResubmit(toResubmit, this.mintRevisionTag());
+			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
-import { mintRevisionTag, testIdCompressor } from "../utils.js";
+import { testIdCompressor } from "../utils.js";
 import {
 	type ChangeEnricherMutableCheckout,
 	DefaultResubmitMachine,
@@ -81,11 +81,10 @@ export class MockChangeEnricher
 	}
 }
 
-export function inverter(
-	{ revision, change }: TaggedChange<MockEnrichableChange>,
-	isRollback: boolean,
-): MockEnrichableChange {
-	assert.equal(isRollback, true);
+export function inverter({
+	revision,
+	change,
+}: TaggedChange<MockEnrichableChange>): MockEnrichableChange {
 	assert.equal(revision, change.outputContext);
 	return {
 		inputContext: change.outputContext,
@@ -141,7 +140,7 @@ describe("DefaultResubmitMachine", () => {
 
 			MockChangeEnricher.resetCounters();
 			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([commit2], mintRevisionTag());
+			machine.prepareForResubmit([commit2]);
 			assert.equal(machine.isInResubmitPhase, true);
 			machine.onCommitSubmitted(commit2);
 			assert.equal(machine.isInResubmitPhase, false);
@@ -170,7 +169,7 @@ describe("DefaultResubmitMachine", () => {
 
 			MockChangeEnricher.resetCounters();
 			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([rebased2], mintRevisionTag());
+			machine.prepareForResubmit([rebased2]);
 			assert.equal(machine.isInResubmitPhase, true);
 			const enriched2Resubmit = machine.peekNextCommit();
 			machine.onCommitSubmitted(enriched2Resubmit);
@@ -198,7 +197,7 @@ describe("DefaultResubmitMachine", () => {
 
 			MockChangeEnricher.resetCounters();
 			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([], mintRevisionTag());
+			machine.prepareForResubmit([]);
 			assert.equal(machine.isInResubmitPhase, false);
 			// No new enrichment should be necessary
 			assert.equal(MockChangeEnricher.checkoutsCreated, 0);
@@ -219,7 +218,7 @@ describe("DefaultResubmitMachine", () => {
 
 			MockChangeEnricher.resetCounters();
 			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([commit1, commit2], mintRevisionTag());
+			machine.prepareForResubmit([commit1, commit2]);
 			assert.equal(machine.isInResubmitPhase, true);
 			const enriched1Resubmit = machine.onCommitSubmitted(commit1);
 			assert.equal(machine.isInResubmitPhase, true);
@@ -233,7 +232,7 @@ describe("DefaultResubmitMachine", () => {
 			assert.equal(MockChangeEnricher.commitsApplied, 0);
 
 			// Verify that the enricher can resubmit those commits again
-			machine.prepareForResubmit([commit1, commit2], mintRevisionTag());
+			machine.prepareForResubmit([commit1, commit2]);
 			assert.equal(machine.isInResubmitPhase, true);
 			assert.equal(machine.onCommitSubmitted(commit1), enriched1Resubmit);
 			assert.equal(machine.isInResubmitPhase, true);
@@ -272,7 +271,7 @@ describe("DefaultResubmitMachine", () => {
 				};
 				MockChangeEnricher.resetCounters();
 				assert.equal(machine.isInResubmitPhase, false);
-				machine.prepareForResubmit([rebased1, rebased2], mintRevisionTag());
+				machine.prepareForResubmit([rebased1, rebased2]);
 				assert.equal(machine.isInResubmitPhase, true);
 				const enriched1Resubmit = machine.peekNextCommit();
 				machine.onCommitSubmitted(enriched1Resubmit);
@@ -305,7 +304,7 @@ describe("DefaultResubmitMachine", () => {
 				assert.equal(MockChangeEnricher.commitsApplied, 3);
 
 				// Verify that the enricher can resubmit those commits again
-				machine.prepareForResubmit([rebased1, rebased2], mintRevisionTag());
+				machine.prepareForResubmit([rebased1, rebased2]);
 				assert.equal(machine.isInResubmitPhase, true);
 				assert.equal(machine.peekNextCommit(), enriched1Resubmit);
 				machine.onCommitSubmitted(enriched1Resubmit);
@@ -344,7 +343,7 @@ describe("DefaultResubmitMachine", () => {
 
 			MockChangeEnricher.resetCounters();
 			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([rebased1, rebased2, commit3], mintRevisionTag());
+			machine.prepareForResubmit([rebased1, rebased2, commit3]);
 			assert.equal(machine.isInResubmitPhase, true);
 			const enriched1Resubmit = machine.peekNextCommit();
 			machine.onCommitSubmitted(enriched1Resubmit);
@@ -383,7 +382,7 @@ describe("DefaultResubmitMachine", () => {
 			assert.equal(MockChangeEnricher.commitsApplied, 4);
 
 			// Verify that the enricher can resubmit those commits again
-			machine.prepareForResubmit([rebased1, rebased2, commit3], mintRevisionTag());
+			machine.prepareForResubmit([rebased1, rebased2, commit3]);
 			assert.equal(machine.isInResubmitPhase, true);
 			assert.equal(machine.peekNextCommit(), enriched1Resubmit);
 			machine.onCommitSubmitted(enriched1Resubmit);
