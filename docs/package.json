@@ -43,7 +43,7 @@
 		"start": "hugo server"
 	},
 	"dependencies": {
-		"@fluid-tools/api-markdown-documenter": "^0.16.0",
+		"@fluid-tools/api-markdown-documenter": "^0.17.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@rushstack/node-core-library": "^4.0.2",
@@ -54,6 +54,8 @@
 		"download": "8.0.0",
 		"fs-extra": "^11.2.0",
 		"glob": "^10.3.12",
+		"hast-util-format": "^1.1.0",
+		"hast-util-to-html": "^9.0.3",
 		"http-server": "^14.1.1",
 		"hugo-extended": "^0.113.0",
 		"js-yaml": "^4.1.0",
