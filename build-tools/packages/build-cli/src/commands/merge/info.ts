@@ -6,7 +6,7 @@
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
-import { BaseCommand, Repository } from "../../library/index.js";
+import { BaseCommand } from "../../library/index.js";
 
 /**
  * An object containing merge status between two branches.
@@ -79,7 +79,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 		}
 
 		const context = await this.getContext();
-		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
+		const repo = await context.getGitRepository();
 		const remote = await repo.getRemote(context.originRemotePartialUrl);
 
 		if (remote === undefined) {

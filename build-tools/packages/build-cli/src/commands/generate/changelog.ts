@@ -115,7 +115,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	public async run(): Promise<void> {
 		const context = await this.getContext();
 
-		const gitRoot = context.gitRepo.resolvedRoot;
+		const gitRoot = context.root;
 
 		const { install, releaseGroup } = this.flags;
 

@@ -7,7 +7,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
-import { BaseCommand, Repository } from "../../library/index.js";
+import { BaseCommand } from "../../library/index.js";
 
 export default class CheckChangesetCommand extends BaseCommand<typeof CheckChangesetCommand> {
 	static readonly summary =
@@ -41,7 +41,7 @@ export default class CheckChangesetCommand extends BaseCommand<typeof CheckChang
 		changesetPath?: string;
 	}> {
 		const context = await this.getContext();
-		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
+		const repo = await context.getGitRepository();
 		const remote = await repo.getRemote(context.originRemotePartialUrl);
 		const { branch } = this.flags;
 

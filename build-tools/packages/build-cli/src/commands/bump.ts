@@ -275,8 +275,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				scheme,
 			);
 			this.log(`Creating branch ${bumpBranch}`);
-			await context.createBranch(bumpBranch);
-			await context.gitRepo.commit(commitMessage, "Error committing");
+			const gitRepo = await context.getGitRepository();
+			await gitRepo.createBranch(bumpBranch);
+			await gitRepo.gitClient.commit(commitMessage);
 			this.finalMessages.push(
 				`You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
 			);

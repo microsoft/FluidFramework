@@ -6,12 +6,40 @@
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import readPkgUp from "read-pkg-up";
+import * as semver from "semver";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
+import { PackageName } from "@rushstack/node-core-library";
+import { parseISO } from "date-fns";
 import { CommandLogger } from "../logging.js";
 import { ReleaseGroup } from "../releaseGroups.js";
-import { Context } from "./context.js";
+import { Context, type VersionDetails, isMonoRepoKind } from "./context.js";
+
+/**
+ * Parses the version from a git tag.
+ *
+ * @param tag - The tag.
+ * @returns The version string, or undefined if one could not be found.
+ *
+ * TODO: Need up reconcile slightly different version in version-tools/src/schemes.ts
+ */
+function getVersionFromTag(tag: string): string | undefined {
+	// This is sufficient, but there is a possibility that this will fail if we add a tag that includes "_v" in its
+	// name.
+	const tagSplit = tag.split("_v");
+	if (tagSplit.length !== 2) {
+		return undefined;
+	}
+
+	const ver = semver.parse(tagSplit[1]);
+	if (ver === null) {
+		return undefined;
+	}
+
+	return ver.version;
+}
+
 /**
  * Default options passed to the git client.
  */
@@ -250,5 +278,107 @@ export class Repository {
 
 		// Files are already repo root-relative
 		return [...allFiles];
+	}
+
+	private readonly _tags: Map<string, string[]> = new Map();
+
+	/**
+	 * Returns an array of all the git tags associated with a release group.
+	 *
+	 * @param releaseGroupOrPackage - The release group or independent package to get tags for.
+	 * @returns An array of all all the tags for the release group or package.
+	 */
+	public async getTagsForReleaseGroup(releaseGroupOrPackage: string): Promise<string[]> {
+		// eslint-disable-next-line import/no-deprecated
+		const prefix = isMonoRepoKind(releaseGroupOrPackage)
+			? releaseGroupOrPackage.toLowerCase()
+			: PackageName.getUnscopedName(releaseGroupOrPackage);
+		const cacheEntry = this._tags.get(prefix);
+		if (cacheEntry !== undefined) {
+			return cacheEntry;
+		}
+
+		const tagList = await this.gitClient.tags({ list: `${prefix}_v*` });
+		return tagList.all;
+	}
+
+	private readonly _versions: Map<string, VersionDetails[]> = new Map();
+
+	/**
+	 * Gets all the versions for a release group or independent package. This function only considers the tags in the
+	 * repo to determine releases and dates.
+	 *
+	 * @param releaseGroupOrPackage - The release group or independent package to get versions for.
+	 * @returns An array of {@link ReleaseDetails} containing the version and date for each version.
+	 */
+	public async getAllVersions(
+		releaseGroupOrPackage: string,
+	): Promise<VersionDetails[] | undefined> {
+		const cacheEntry = this._versions.get(releaseGroupOrPackage);
+		if (cacheEntry !== undefined) {
+			return cacheEntry;
+		}
+
+		const versions = new Map<string, Date>();
+		const tags = await this.getTagsForReleaseGroup(releaseGroupOrPackage);
+
+		for (const tag of tags) {
+			const ver = getVersionFromTag(tag);
+			if (ver !== undefined && ver !== "" && ver !== null) {
+				// eslint-disable-next-line no-await-in-loop
+				const rawDate = await this.gitClient.show(`show -s --format=%cI "${tag}"`);
+				const date = parseISO(rawDate);
+				versions.set(ver, date);
+			}
+		}
+
+		if (versions.size === 0) {
+			return undefined;
+		}
+
+		const toReturn: VersionDetails[] = [];
+		for (const [version, date] of versions) {
+			toReturn.push({ version, date });
+		}
+
+		this._versions.set(releaseGroupOrPackage, toReturn);
+		return toReturn;
+	}
+
+	/**
+	 * Create a branch with name. throw an error if the branch already exists.
+	 */
+	public async createBranch(branchName: string): Promise<void> {
+		if (await this.getShaForBranch(branchName)) {
+			throw new Error(`${branchName} already exists. Failed to create.`);
+		}
+		await this.createBranch(branchName);
+	}
+
+	public async getCurrentSha(): Promise<string> {
+		const result = await this.gitClient.raw(`rev-parse HEAD`);
+		return result.split(/\r?\n/)[0];
+	}
+
+	/**
+	 * Get the current git branch name
+	 */
+	public async getCurrentBranchName(): Promise<string> {
+		const revParseOut = await this.gitClient.raw("rev-parse --abbrev-ref HEAD");
+		return revParseOut.split(/\r?\n/)[0];
+	}
+
+	public async isBranchUpToDate(branch: string, remote: string): Promise<boolean> {
+		await this.fetchBranch(remote, branch);
+		const currentSha = await this.getShaForBranch(branch);
+		const remoteSha = await this.getShaForBranch(branch, remote);
+		return remoteSha === currentSha;
+	}
+
+	/**
+	 * Fetch branch
+	 */
+	public async fetchBranch(remote: string, branchName: string): Promise<void> {
+		await this.gitClient.fetch(remote, [branchName]);
 	}
 }

@@ -150,7 +150,7 @@ export abstract class BaseCommand<T extends typeof Command>
 			const gitRepo = new GitRepo(resolvedRoot);
 			const branch = await gitRepo.getCurrentBranchName();
 
-			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+			this._context = new Context(resolvedRoot, "microsoft/FluidFramework", branch);
 		}
 
 		return this._context;

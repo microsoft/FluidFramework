@@ -170,8 +170,8 @@ export const promptToPRBump: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter, releaseGroup, releaseVersion } = data;
-
-	const bumpBranch = await context.gitRepo.getCurrentBranchName();
+	const gitRepo = await context.getGitRepository();
+	const bumpBranch = await gitRepo.getCurrentBranchName();
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO BUMP TO THE NEXT VERSION",
 		sections: [
@@ -184,9 +184,7 @@ export const promptToPRBump: StateHandlerFunction = async (
 
 	if (isReleaseGroup(releaseGroup)) {
 		const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
-
-		const releaseBranchExists =
-			(await context.gitRepo.getShaForBranch(releaseBranch)) !== undefined;
+		const releaseBranchExists = (await gitRepo.getShaForBranch(releaseBranch)) !== undefined;
 
 		if (!releaseBranchExists) {
 			prompt.sections.push({
@@ -221,13 +219,13 @@ export const promptToPRDeps: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter, releaseGroup } = data;
-
+	const gitRepo = await context.getGitRepository();
 	await promptWriter?.writePrompt({
 		title: "NEED TO UPDATE DEPENDENCIES",
 		sections: [
 			{
 				title: "FIRST",
-				message: `Push and create a PR for branch ${await context.gitRepo.getCurrentBranchName()} targeting the ${
+				message: `Push and create a PR for branch ${await gitRepo.getCurrentBranchName()} targeting the ${
 					context.originalBranchName
 				} branch.`,
 			},
