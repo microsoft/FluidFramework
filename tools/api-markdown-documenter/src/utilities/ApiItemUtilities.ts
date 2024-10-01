@@ -555,7 +555,7 @@ export function getSingleLineExcerptText(excerpt: Excerpt): string {
  * @param codeDestination - The link reference target.
  * @param apiModel - The API model to which the API item and destination belong.
  *
- * @throws If the reference cannot be resolved.
+ * @throws {@link SymbolicReferenceError} if the reference cannot be resolved.
  */
 export function resolveSymbolicReference(
 	contextApiItem: ApiItem,
@@ -567,14 +567,35 @@ export function resolveSymbolicReference(
 
 	const resolvedApiItem = resolvedReference.resolvedApiItem;
 	if (resolvedApiItem === undefined) {
-		throw new Error(
-			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
-				contextApiItem,
-			)}": ${resolvedReference.errorMessage}`,
+		throw new SymbolicReferenceError(
+			contextApiItem,
+			codeDestination,
+			// Per API-Extractor's documentation, the `errorMessage` property will always be populated if `resolvedApiItem` is `undefined`.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			resolvedReference.errorMessage!,
 		);
 	}
 
 	return resolvedApiItem;
+}
+
+/**
+ * Error thrown by {@link resolveSymbolicReference} when a reference cannot be resolved.
+ */
+export class SymbolicReferenceError extends Error {
+	public constructor(
+		public readonly sourceItem: ApiItem,
+		public readonly target: DocDeclarationReference,
+		public readonly innerErrorMessage: string,
+	) {
+		super(
+			`Unable to resolve reference "${target.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
+				sourceItem,
+			)}": ${innerErrorMessage}`,
+		);
+
+		this.name = "SymbolicReferenceError";
+	}
 }
 
 /**

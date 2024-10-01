@@ -31,12 +31,12 @@ describe("lint-api-model Command", () => {
 		expect(error).to.not.be.undefined;
 		console.log(error?.message);
 		expect(error?.message).to.equal(`Found 3 errors in the API model:
-  Reference errors:
-    The following reference tags could not be resolved (listed by containing package):
-      test-suite-a:
-      - {@link InvalidItem} on "(@packageDocumentation)" could not be resolved.
-      - {@link InvalidItem | even though I link to an invalid item, I would still like this text to be rendered} on "(@packageDocumentation)" could not be resolved.
-      - {@inheritDoc BadInheritDocTarget} on "TestInterface.propertyWithBadInheritDocTarget" could not be resolved.
+  test-suite-a:
+    (@packageDocumentation):
+      - Reference tag "{@link InvalidItem}" could not be resolved: The member reference "InvalidItem" was not found.
+      - Reference tag "{@link InvalidItem | ...}" could not be resolved: The member reference "InvalidItem" was not found.
+    TestInterface.propertyWithBadInheritDocTarget:
+      - Reference tag "{@inheritDoc BadInheritDocTarget}" could not be resolved: The member reference "BadInheritDocTarget" was not found.
 `);
 	});
 });

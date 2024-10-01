@@ -505,18 +505,19 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 // @beta
 export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
 
-// @beta
+// @beta @sealed
 export interface LintApiModelConfiguration extends ConfigurationBase {
     apiModel: ApiModel;
 }
 
-// @beta
+// @beta @sealed
 export interface LinterErrors {
     readonly referenceErrors: ReadonlySet<LinterReferenceError>;
 }
 
-// @beta
+// @beta @sealed
 export interface LinterReferenceError {
+    readonly innerErrorMessage: string;
     readonly linkText: string | undefined;
     readonly packageName: string;
     readonly referenceTarget: string;

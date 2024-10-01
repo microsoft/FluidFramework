@@ -36,6 +36,7 @@ describe("lintApiModel", () => {
 					packageName: "test-suite-a",
 					referenceTarget: "InvalidItem",
 					linkText: undefined,
+					innerErrorMessage: 'The member reference "InvalidItem" was not found',
 				},
 				{
 					tagName: "@link",
@@ -44,6 +45,7 @@ describe("lintApiModel", () => {
 					referenceTarget: "InvalidItem",
 					linkText:
 						"even though I link to an invalid item, I would still like this text to be rendered",
+					innerErrorMessage: 'The member reference "InvalidItem" was not found',
 				},
 				{
 					tagName: "@inheritDoc",
@@ -51,6 +53,7 @@ describe("lintApiModel", () => {
 					packageName: "test-suite-a",
 					referenceTarget: "BadInheritDocTarget",
 					linkText: undefined,
+					innerErrorMessage: 'The member reference "BadInheritDocTarget" was not found',
 				},
 			]),
 		};

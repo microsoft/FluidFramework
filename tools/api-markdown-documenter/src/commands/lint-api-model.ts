@@ -132,9 +132,7 @@ function createErrorReport(errors: LinterErrors): string {
 	// TODO: handle other error types when they are added.
 	const errorCount = errors.referenceErrors.size;
 	documentWriter.writeLine(`Found ${errorCount} errors in the API model:`);
-	documentWriter.increaseIndent();
 
-	documentWriter.writeLine("Reference errors:");
 	documentWriter.increaseIndent();
 	writeReferenceErrors(errors.referenceErrors, documentWriter);
 	documentWriter.decreaseIndent();
@@ -152,41 +150,63 @@ function writeReferenceErrors(
 	referenceErrors: ReadonlySet<LinterReferenceError>,
 	documentWriter: DocumentWriter,
 ): void {
-	// Bucket by package name
-	const referenceErrorsByPackage = new Map<string, LinterReferenceError[]>();
-	for (const error of referenceErrors) {
-		const packageName = error.packageName;
-		const errors = referenceErrorsByPackage.get(packageName) ?? [];
-		errors.push(error);
-		referenceErrorsByPackage.set(packageName, errors);
-	}
+	const sortedErrors = sortReferenceErrors(referenceErrors);
 
 	// Write errors by package
 	documentWriter.ensureNewLine();
-	documentWriter.writeLine(
-		"The following reference tags could not be resolved (listed by containing package):",
-	);
-	documentWriter.increaseIndent();
-	for (const [packageName, errors] of referenceErrorsByPackage) {
+	for (const [packageName, packageErrors] of sortedErrors) {
 		documentWriter.writeLine(`${packageName}:`);
-		documentWriter.increaseIndent("- ");
-		for (const error of errors) {
-			const referenceTag = createReferenceTagString(
-				error.tagName,
-				error.referenceTarget,
-				error.linkText,
-			);
-			documentWriter.writeLine(
-				`${referenceTag} on "${
-					error.sourceItem ?? "(@packageDocumentation)"
-				}" could not be resolved.`,
-			);
+		documentWriter.increaseIndent();
+		for (const [sourceItem, sourceItemErrors] of packageErrors) {
+			const sourceItemLabel = sourceItem === "" ? "(@packageDocumentation)" : sourceItem;
+			documentWriter.writeLine(`${sourceItemLabel}:`);
+			documentWriter.increaseIndent("  - ");
+			for (const error of sourceItemErrors) {
+				const tagString = createReferenceTagString(
+					error.tagName,
+					error.referenceTarget,
+					error.linkText,
+				);
+				documentWriter.writeLine(
+					`Reference tag "${tagString}" could not be resolved: ${error.innerErrorMessage}.`,
+				);
+			}
+			documentWriter.decreaseIndent();
 		}
 		documentWriter.decreaseIndent();
 	}
-	documentWriter.decreaseIndent();
+}
+
+/**
+ * Buckets the input reference errors by package name, then by source item.
+ */
+function sortReferenceErrors(
+	referenceErrors: ReadonlySet<LinterReferenceError>,
+): ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<LinterReferenceError>>> {
+	const result = new Map<string, Map<string, Set<LinterReferenceError>>>();
+
+	// Bucket by package name
+	for (const error of referenceErrors) {
+		const packageName = error.packageName;
+
+		let packageErrors = result.get(packageName);
+		if (packageErrors === undefined) {
+			packageErrors = new Map<string, Set<LinterReferenceError>>();
+			result.set(packageName, packageErrors);
+		}
+
+		let sourceItemErrors = packageErrors.get(error.sourceItem ?? "");
+		if (sourceItemErrors === undefined) {
+			sourceItemErrors = new Set<LinterReferenceError>();
+			packageErrors.set(error.sourceItem ?? "", sourceItemErrors);
+		}
+
+		sourceItemErrors.add(error);
+	}
+
+	return result;
 }
 
 function createReferenceTagString(tag: string, target: string, text: string | undefined): string {
-	return `{${tag} ${target}${text === undefined ? "" : ` | ${text}`}}`;
+	return `{${tag} ${target}${text === undefined ? "" : ` | ...`}}`;
 }

@@ -22,12 +22,13 @@ import {
 	DocNodeKind,
 } from "@microsoft/tsdoc";
 import { defaultConsoleLogger } from "./Logging.js";
-import { resolveSymbolicReference } from "./utilities/index.js";
+import { resolveSymbolicReference, type SymbolicReferenceError } from "./utilities/index.js";
 import type { ConfigurationBase } from "./ConfigurationBase.js";
 
 /**
  * {@link lintApiModel} configuration.
  *
+ * @sealed
  * @beta
  */
 export interface LintApiModelConfiguration extends ConfigurationBase {
@@ -49,6 +50,7 @@ const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration,
 /**
  * An error resulting from a reference tag (e.g., `link` or `inheritDoc` tags) with an invalid target.
  *
+ * @sealed
  * @beta
  */
 export interface LinterReferenceError {
@@ -79,6 +81,11 @@ export interface LinterReferenceError {
 	 * Link alias text, if any.
 	 */
 	readonly linkText: string | undefined;
+
+	/**
+	 * The inner error that was thrown by API-Extractor while processing the API model.
+	 */
+	readonly innerErrorMessage: string;
 }
 
 /**
@@ -92,6 +99,7 @@ interface MutableLinterErrors {
 /**
  * Errors found during linting.
  *
+ * @sealed
  * @beta
  */
 export interface LinterErrors {
@@ -321,7 +329,8 @@ function checkLinkTag(
 	// If the link is a symbolic reference, validate it.
 	try {
 		resolveSymbolicReference(apiItem, linkTag.codeDestination, apiModel);
-	} catch {
+	} catch (error: unknown) {
+		const referenceError = error as SymbolicReferenceError;
 		return {
 			tagName: "@link",
 			sourceItem:
@@ -331,6 +340,7 @@ function checkLinkTag(
 			packageName: apiItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
 			referenceTarget: linkTag.codeDestination.emitAsTsdoc(),
 			linkText: linkTag.linkText,
+			innerErrorMessage: referenceError.innerErrorMessage,
 		};
 	}
 
@@ -353,7 +363,8 @@ function checkInheritDocTag(
 
 	try {
 		resolveSymbolicReference(associatedItem, inheritDocTag.declarationReference, apiModel);
-	} catch {
+	} catch (error: unknown) {
+		const referenceError = error as SymbolicReferenceError;
 		return {
 			tagName: "@inheritDoc",
 			sourceItem: associatedItem.getScopedNameWithinPackage(),
@@ -361,6 +372,7 @@ function checkInheritDocTag(
 				associatedItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
 			referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
 			linkText: undefined,
+			innerErrorMessage: referenceError.innerErrorMessage,
 		};
 	}
 
