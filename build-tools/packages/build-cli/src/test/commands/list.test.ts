@@ -12,7 +12,6 @@ import {
 	type Feed,
 	feeds,
 	packagePublishesToFeed,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/repoPolicyCheck/npmPackages.js";
 
 /**
@@ -43,18 +42,17 @@ function FeedsForPackages(
 	return mapping;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-describe("feeds", async () => {
-	const resolvedRoot = await getResolvedFluidRoot();
-	const gitRepo = new GitRepo(resolvedRoot);
-	const branch = await gitRepo.getCurrentBranchName();
+describe("feeds", () => {
+	it("dev and build feed are mutually exclusive", async () => {
+		const resolvedRoot = await getResolvedFluidRoot();
+		const gitRepo = new GitRepo(resolvedRoot);
+		const branch = await gitRepo.getCurrentBranchName();
 
-	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
-	const config = context.flubConfig.policy?.packageNames;
-	// eslint-disable-next-line new-cap, @typescript-eslint/no-non-null-assertion
-	const packages = FeedsForPackages(context.packages, config!);
+		const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+		const config = context.flubConfig.policy?.packageNames;
+		// eslint-disable-next-line new-cap, @typescript-eslint/no-non-null-assertion
+		const packages = FeedsForPackages(context.packages, config!);
 
-	it("dev and build feed are mutually exclusive", () => {
 		const dev = packages.get("internal-dev")?.map((p) => p.name);
 		const build = packages.get("internal-build")?.map((p) => p.name);
 

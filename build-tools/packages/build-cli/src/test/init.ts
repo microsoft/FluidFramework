@@ -12,7 +12,7 @@ import { test as oclifTest } from "@oclif/test";
  * @param moduleUrl - The URL to the test module. In most cases you should pass the `import.meta.url` value for the test
  * module when calling this function.
  *
- * @returns A test function that can be used to tst oclif commands.
+ * @returns A test function that can be used to test oclif commands.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 export function initializeCommandTestFunction(moduleUrl: string) {

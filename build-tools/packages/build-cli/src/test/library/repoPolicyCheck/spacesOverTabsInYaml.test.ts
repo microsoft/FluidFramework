@@ -7,7 +7,6 @@ import { expect } from "chai";
 import {
 	errorMessage,
 	lookForTabs,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../../library/repoPolicyCheck/spacesOverTabsInYaml.js";
 
 describe("indent-with-spaces-in-yaml", () => {

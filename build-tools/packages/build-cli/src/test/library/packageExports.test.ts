@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-nested-callbacks */
+
 import { assert } from "chai";
 
-// eslint-disable-next-line import/no-internal-modules
 import type { ExportData, Node10CompatExportData } from "../../library/packageExports.js";
-// eslint-disable-next-line import/no-internal-modules
 import { queryTypesResolutionPathsFromPackageExports } from "../../library/packageExports.js";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
@@ -269,7 +269,6 @@ describe("library/packageExports", () => {
 		].forEach(([desc, path, condition]) =>
 			describe(`using ${desc}`, () => {
 				const logger = new MockLogger();
-				// eslint-disable-next-line max-nested-callbacks
 				beforeEach(() => {
 					logger.calls = [];
 				});
@@ -282,7 +281,6 @@ describe("library/packageExports", () => {
 					doubleReferenceExportResults,
 				} = genTestData(path, condition);
 
-				// eslint-disable-next-line max-nested-callbacks
 				it("finds path in common package export pattern", () => {
 					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						commonExportsPackage,
@@ -296,7 +294,6 @@ describe("library/packageExports", () => {
 					assertEquivalentMaps(mapKeyToOutput, commonExportResults);
 				});
 
-				// eslint-disable-next-line max-nested-callbacks
 				it("finds type only export paths", () => {
 					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						typeOnlyExportPackage,
@@ -310,7 +307,6 @@ describe("library/packageExports", () => {
 					assertEquivalentMaps(mapKeyToOutput, typeOnlyExportResults);
 				});
 
-				// eslint-disable-next-line max-nested-callbacks
 				it("warns on double referenced export paths", () => {
 					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						doubleReferencingExportsPackage,
@@ -330,7 +326,6 @@ describe("library/packageExports", () => {
 					assertEquivalentMaps(mapKeyToOutput, doubleReferenceExportResults);
 				});
 
-				// eslint-disable-next-line max-nested-callbacks
 				it("finds beta and internal in common package export pattern for node10 compat", () => {
 					const { mapNode10CompatExportPathToData } =
 						queryTypesResolutionPathsFromPackageExports(

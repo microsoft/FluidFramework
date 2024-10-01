@@ -14,7 +14,6 @@ import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
 	sortVersions,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/package.js";
 
 describe("VersionDetails sorting", () => {

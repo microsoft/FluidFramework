@@ -13,7 +13,6 @@ import {
 	groupByMainPackage,
 	groupByPackage,
 	loadChangesets,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/changesets.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

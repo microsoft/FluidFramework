@@ -6,7 +6,6 @@
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
-// eslint-disable-next-line import/no-internal-modules
 import { FluidReleaseMachine as machine } from "../../machines/fluidReleaseMachine.js";
 
 chai.use(assertArrays);

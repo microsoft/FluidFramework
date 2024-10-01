@@ -42,7 +42,6 @@ describe("flub release fromTag", () => {
 		.it(`--json`, (ctx) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
-			// const { title, tag, version } = output;
 			expect(output).to.deep.equal(expected);
 		});
 });

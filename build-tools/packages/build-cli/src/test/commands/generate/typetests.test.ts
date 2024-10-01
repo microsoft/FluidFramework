@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	loadTypesSourceFile,
 	typeDataFromFile,
 } from "../../../commands/generate/typetests.js";
-// eslint-disable-next-line import/no-internal-modules
 import type { TypeData } from "../../../typeValidator/typeData.js";
 
 describe("generate:typetests", () => {

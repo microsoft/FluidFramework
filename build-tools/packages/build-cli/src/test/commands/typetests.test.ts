@@ -15,7 +15,6 @@ import {
 	type ITypeValidationConfig,
 	type PackageWithTypeTestSettings,
 	defaultTypeValidationConfig,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";
 
 /**
@@ -54,7 +53,6 @@ function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings 
 }
 
 describe("typetests tests", () => {
-	/* eslint-disable @typescript-eslint/no-unused-expressions */
 	describe("updateTypeTestDependency", () => {
 		it("does not remove unrelated dependencies", () => {
 			const pkg: PackageWithTypeTestSettings = {
@@ -70,6 +68,7 @@ describe("typetests tests", () => {
 			});
 		});
 
+		/* eslint-disable @typescript-eslint/no-unused-expressions */
 		describe("VersionOptions.Clear", () => {
 			it("removes previous test package dependency", () => {
 				const pkg = packageWithTypeValidation();
