@@ -77,7 +77,7 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 		it("Multi-line FencedCodeBlock", () => {
 			const input = new FencedCodeBlockNode(
 				[
-					new PlainTextNode('const foo = "Hello world!"'),
+					new PlainTextNode('const foo = "Hello world!";'),
 					LineBreakNode.Singleton,
 					new PlainTextNode("console.log(foo);"),
 					LineBreakNode.Singleton,
@@ -89,7 +89,7 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 
 			const expected = [
 				"<code>",
-				"const foo = &quot;Hello world!&quot;",
+				'const foo = "Hello world!";',
 				"<br>",
 				"console.log(foo);",
 				"<br>",
