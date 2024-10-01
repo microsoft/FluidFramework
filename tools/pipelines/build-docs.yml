@@ -112,11 +112,11 @@ stages:
             buildDirectory: $(Build.SourcesDirectory)
         - task: Bash@3
           displayName: 'Check Version Deployment Condition'
+          env:
+            VERSION_BUILDNUMBER: $(Build.BuildNumber)
           inputs:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)
-            env:
-              VERSION_BUILDNUMBER: $(Build.BuildNumber)
             script: |
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
               flub generate buildVersion
