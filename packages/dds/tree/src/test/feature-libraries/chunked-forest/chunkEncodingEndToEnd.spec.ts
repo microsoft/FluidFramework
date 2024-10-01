@@ -164,7 +164,9 @@ describe("End to end chunked encoding", () => {
 			mintRevisionTag,
 			changeReceiver,
 		);
-		const checkout = new MockTreeCheckout(forest, dummyEditor as unknown as ISharedTreeEditor);
+		const checkout = new MockTreeCheckout(forest, {
+			editor: dummyEditor as unknown as ISharedTreeEditor,
+		});
 		checkout.editor
 			.sequenceField({ field: rootFieldKey, parent: undefined })
 			.insert(0, chunk.cursor());
