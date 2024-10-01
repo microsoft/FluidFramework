@@ -2,7 +2,7 @@
 	"params": {
 		"currentVersion": "v2",
 		"ltsVersion": "v1",
-		"previousVersions": ["v1"],
+		"previousVersions": ["v1", "local"],
 		"downloadVersions": ["v1"]
 	},
 	"apiDocsDirectory": "/docs/api/",

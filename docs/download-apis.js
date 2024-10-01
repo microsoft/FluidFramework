@@ -22,6 +22,9 @@ const {
 } = await fs.readJSON(path.resolve(dirname, "data", "versions.json"));
 const docVersions = previousVersions.concat(currentVersion);
 
+// remove local version from list to download, since there are no remote artifacts for it
+docVersions.splice(docVersions.indexOf("local"), 1);
+
 try {
 	await Promise.all(
 		docVersions.map(async (version) => {
