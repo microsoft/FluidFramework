@@ -44,7 +44,9 @@ stages:
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
-        script: ${{ parameters.dependencyInstallCommand }}
+        script: |
+          set -eux -o pipefail
+          ${{ parameters.dependencyInstallCommand }}
 
     - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
       - ${{ each check in parameters.checks }}:
@@ -61,6 +63,7 @@ stages:
         inputs:
           targetType: 'inline'
           script: |
+            set -eux -o pipefail
             git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
             if [ `cat git_status.log | wc -l` != "0" ]; then
               cat git_status.log

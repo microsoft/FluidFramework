@@ -171,6 +171,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                set -eux -o pipefail
 
                 # Extract public part from cert
                 openssl x509 -in $(downloadCertTask.secureFilePath) -out cert.crt
@@ -186,6 +187,8 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eux -o pipefail
+
               # Show all task group conditions
 
               echo "
@@ -235,6 +238,8 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eux -o pipefail
+
               mkdir ${{ parameters.testWorkspace }}
 
         - task: Bash@3
@@ -245,6 +250,8 @@ stages:
             workingDirectory: ${{ parameters.testWorkspace }}
             # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
             script: |
+              set -eux -o pipefail
+
               echo Initialize package
               npm init --yes
 
@@ -328,6 +335,8 @@ stages:
               workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
               targetType: 'inline'
               script: |
+                set -eux -o pipefail
+
                 TAR_PATH=$(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar
                 echo "Unpacking test files for ${{ parameters.testPackage }} from file '$TAR_PATH' in '$(pwd)'"
                 # Note: we could skip the last argument and have it unpack everything at once, but if we later change
@@ -345,6 +354,8 @@ stages:
               workingDirectory: ${{ parameters.testWorkspace }}
               targetType: 'inline'
               script: |
+                set -eux -o pipefail
+
                 testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
                 pkgJsonPath=${{ parameters.testWorkspace }}/package.json
                 node -e "
@@ -391,6 +402,8 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                set -eux -o pipefail
+
                 if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then
                   echo "directory '${{ variables.testPackageDir }}/nyc' exists."
                   cd ${{ variables.testPackageDir }}/nyc
