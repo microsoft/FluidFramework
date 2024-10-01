@@ -186,7 +186,7 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
-	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
+	public getLocalState(snapshotSequenceNumber?: number, stopBlobAttachingSignal?: AbortSignal | undefined): IPendingLocalState {
 		assert(
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
@@ -201,6 +201,11 @@ export class PendingStateManager implements IDisposable {
 			);
 			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
+		// if (stopBlobAttachingSignal?.aborted) {
+		// 	newSavedOps.filter((message) => {
+		// 		return message.localOpMetadata !==
+		// 	})
+		// }
 		this.pendingMessages.toArray().forEach((message) => {
 			if (
 				snapshotSequenceNumber !== undefined &&
