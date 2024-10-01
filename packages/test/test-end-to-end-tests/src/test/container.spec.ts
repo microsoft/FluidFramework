@@ -756,7 +756,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		it("Closing container", async () => {
 			const container = await createConnectedContainer();
 			container.deltaManager.on("disconnect", () => {
-				// Assert 0x314 would appear in "after each" unexpected errors (see DeltaManager ctor)
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
 				container.close();
 			});
 			container.close();
@@ -765,7 +765,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		it("Disposing container", async () => {
 			const container = await createConnectedContainer();
 			container.deltaManager.on("disconnect", () => {
-				// Assert 0x314 would appear in "after each" unexpected errors (see DeltaManager ctor)
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
 				container.dispose();
 			});
 			container.dispose();
@@ -774,7 +774,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		it("Mix and match", async () => {
 			const container = await createConnectedContainer();
 			container.on("disconnected", () => {
-				// Assert 0x314 would appear in "after each" unexpected errors (see Container ctor)
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in Container ctor)
 				container.close();
 			});
 			container.dispose();

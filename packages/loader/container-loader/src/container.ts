@@ -1045,7 +1045,7 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError): void {
-		this.trackCloseDisposeReentry(() => this._deltaManager.dispose(error));
+		this.verifyClosedAfter(() => this._deltaManager.dispose(error));
 	}
 
 	public close(error?: ICriticalContainerError): void {
@@ -1053,20 +1053,20 @@ export class Container
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		this.trackCloseDisposeReentry(() => this._deltaManager.close(error));
+		this.verifyClosedAfter(() => this._deltaManager.close(error));
 	}
 
-	private trackCloseDisposeReentryCalls = 0;
-	private trackCloseDisposeReentry(callback: () => void): void {
-		this.trackCloseDisposeReentryCalls++;
+	private verifyClosedAfterCalls = 0;
+	private verifyClosedAfter(callback: () => void): void {
+		this.verifyClosedAfterCalls++;
 		try {
 			callback();
 		} finally {
-			this.trackCloseDisposeReentryCalls--;
+			this.verifyClosedAfterCalls--;
 		}
 
 		// We only want to verify connectionState and lifecycleState after close/dispose has fully finished
-		if (this.trackCloseDisposeReentryCalls === 0) {
+		if (this.verifyClosedAfterCalls === 0) {
 			assert(
 				this.connectionState === ConnectionState.Disconnected,
 				0x0cf /* "disconnect event was not raised!" */,
