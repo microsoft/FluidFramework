@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Required in order to register the `raw` type with the `hast` ecosystem.
-// eslint-disable-next-line import/no-unassigned-import
-import "hast-util-raw";
-
-import type { Root as HastRoot, Nodes as HastNodes } from "hast";
+import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
 import type { TransformationConfig } from "./configuration/index.js";
@@ -28,7 +24,16 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 	const transformationContext = createTransformationContext(config);
 
 	const transformedChildren = documentationNodesToHtml(document.children, transformationContext);
-	const rootBodyContents: HastNodes[] = [];
+	return treeFromBody(transformedChildren, config);
+}
+
+/**
+ * Creates a complete HTML AST from the provided body contents.
+ *
+ * @privateRemarks Exported for testing purposes. Not intended for external use.
+ */
+export function treeFromBody(body: HastTree[], config: TransformationConfig): HastRoot {
+	const rootBodyContents: HastTree[] = [];
 	rootBodyContents.push({
 		type: "doctype",
 	});
@@ -39,7 +44,7 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 				lang: config.language ?? "en",
 			},
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case
-			[h("head", [h("meta", { charset: "utf-8" })]), h("body", transformedChildren)],
+			[h("head", [h("meta", { charset: "utf-8" })]), h("body", body)],
 		),
 	);
 
@@ -57,7 +62,7 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 export function documentationNodeToHtml(
 	node: DocumentationNode,
 	config: TransformationConfig,
-): HastNodes;
+): HastTree;
 /**
  * Generates an HTML AST from the provided {@link DocumentationNode}.
  *
@@ -69,14 +74,14 @@ export function documentationNodeToHtml(
 export function documentationNodeToHtml(
 	node: DocumentationNode,
 	context: TransformationContext,
-): HastNodes;
+): HastTree;
 /**
  * `documentationNodeToHtml` implementation.
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
 	configOrContext: TransformationConfig | TransformationContext,
-): HastNodes {
+): HastTree {
 	const context = getContext(configOrContext);
 
 	if (context.transformations[node.type] === undefined) {
@@ -96,7 +101,7 @@ export function documentationNodeToHtml(
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
 	config: TransformationConfig,
-): HastNodes[];
+): HastTree[];
 /**
  * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
  *
@@ -105,14 +110,14 @@ export function documentationNodesToHtml(
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
 	transformationContext: TransformationContext,
-): HastNodes[];
+): HastTree[];
 /**
  * `documentationNodesToHtml` implementation.
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
 	configOrContext: TransformationConfig | TransformationContext,
-): HastNodes[] {
+): HastTree[] {
 	const context = getContext(configOrContext);
 	return nodes.map((node) => documentationNodeToHtml(node, context));
 }
