@@ -520,7 +520,7 @@ export interface LinterReferenceError {
     readonly linkText: string | undefined;
     readonly packageName: string;
     readonly referenceTarget: string;
-    readonly sourceItem: string;
+    readonly sourceItem: string | undefined;
     readonly tagName: string;
 }
 

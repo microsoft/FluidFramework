@@ -32,14 +32,14 @@ describe("lintApiModel", () => {
 			referenceErrors: new Set([
 				{
 					tagName: "@link",
-					sourceItem: "", // link appears in package documentation
+					sourceItem: undefined,
 					packageName: "test-suite-a",
 					referenceTarget: "InvalidItem",
 					linkText: undefined,
 				},
 				{
 					tagName: "@link",
-					sourceItem: "", // link appears in package documentation
+					sourceItem: undefined,
 					packageName: "test-suite-a",
 					referenceTarget: "InvalidItem",
 					linkText:
