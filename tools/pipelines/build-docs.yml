@@ -107,6 +107,9 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
+        - template: include-install-build-tools.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
         - task: Bash@3
           displayName: 'Check Version Deployment Condition'
           inputs:
