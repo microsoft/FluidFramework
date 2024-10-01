@@ -1144,16 +1144,16 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
     type: string;
 }
 
+// @public @sealed
+export interface ViewableTree {
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+}
+
 // @alpha (undocumented)
 export interface ViewContent {
     readonly idCompressor: IIdCompressor;
     readonly schema: JsonCompatible;
     readonly tree: JsonCompatible<IFluidHandle>;
-}
-
-// @public @sealed
-export interface ViewableTree {
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @public @sealed
