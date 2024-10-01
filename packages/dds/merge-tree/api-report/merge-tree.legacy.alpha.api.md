@@ -437,7 +437,6 @@ export interface IMoveInfo {
     movedSeq: number;
     movedSeqs: number[];
     moveDst?: ReferencePosition;
-    prevObliterateByInserter?: ObliterateInfo;
     wasMovedOnInsert: boolean;
 }
 
