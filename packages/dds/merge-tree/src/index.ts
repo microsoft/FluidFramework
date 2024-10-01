@@ -100,6 +100,7 @@ export {
 	MergeTreeDeltaType,
 	ReferenceType,
 	IMergeTreeObliterateMsg,
+	IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 export {
 	addProperties,

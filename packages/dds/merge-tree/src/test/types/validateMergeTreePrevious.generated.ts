@@ -967,6 +967,7 @@ declare type old_as_current_for_Interface_IMergeTreeDeltaOpArgs = requireAssigna
  * typeValidation.broken:
  * "Interface_IMergeTreeDeltaOpArgs": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeDeltaOpArgs = requireAssignableTo<TypeOnly<current.IMergeTreeDeltaOpArgs>, TypeOnly<old.IMergeTreeDeltaOpArgs>>
 
 /*
@@ -985,6 +986,7 @@ declare type old_as_current_for_Interface_IMergeTreeGroupMsg = requireAssignable
  * typeValidation.broken:
  * "Interface_IMergeTreeGroupMsg": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeGroupMsg = requireAssignableTo<TypeOnly<current.IMergeTreeGroupMsg>, TypeOnly<old.IMergeTreeGroupMsg>>
 
 /*
@@ -1570,6 +1572,7 @@ declare type old_as_current_for_TypeAlias_IMergeTreeDeltaOp = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_IMergeTreeDeltaOp": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IMergeTreeDeltaOp = requireAssignableTo<TypeOnly<current.IMergeTreeDeltaOp>, TypeOnly<old.IMergeTreeDeltaOp>>
 
 /*
@@ -1588,6 +1591,7 @@ declare type old_as_current_for_TypeAlias_IMergeTreeOp = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_IMergeTreeOp": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IMergeTreeOp = requireAssignableTo<TypeOnly<current.IMergeTreeOp>, TypeOnly<old.IMergeTreeOp>>
 
 /*

@@ -117,6 +117,7 @@ export {
 	type FieldSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
+	type TreeNodeSchemaNonClass,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -159,6 +160,7 @@ export {
 	type Covariant,
 	BrandedType,
 	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	type MakeNominal,
 } from "./util/index.js";
 

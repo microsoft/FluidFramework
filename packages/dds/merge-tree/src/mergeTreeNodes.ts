@@ -668,7 +668,8 @@ export abstract class BaseSegment implements ISegment {
 				return false;
 			}
 
-			case MergeTreeDeltaType.OBLITERATE: {
+			case MergeTreeDeltaType.OBLITERATE:
+			case MergeTreeDeltaType.OBLITERATE_SIDED: {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
 				const obliterateInfo = segmentGroup.obliterateInfo;

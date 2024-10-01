@@ -391,6 +391,9 @@ importers:
 
   packages/build-tools:
     dependencies:
+      '@fluid-tools/version-tools':
+        specifier: workspace:~
+        version: link:../version-tools
       '@manypkg/get-packages':
         specifier: ^2.2.0
         version: 2.2.0
