@@ -30,6 +30,13 @@ describe("lint-api-model Command", () => {
 		);
 		expect(error).to.not.be.undefined;
 		console.log(error?.message);
-		expect(error?.message).to.equal("command lint-api-model:test/test-data/simple-suite-test");
+		expect(error?.message).to.equal(`Found 3 errors in the API model:
+  Reference errors:
+    The following reference tags could not be resolved:
+      test-suite-a:
+      - {@link InvalidItem} on "" could not be resolved.
+      - {@link InvalidItem | even though I link to an invalid item, I would still like this text to be rendered} on "" could not be resolved.
+      - {@inheritDoc BadInheritDocTarget} on "TestInterface.propertyWithBadInheritDocTarget" could not be resolved.
+`);
 	});
 });
