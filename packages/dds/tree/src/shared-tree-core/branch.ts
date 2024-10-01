@@ -18,7 +18,6 @@ import {
 	makeAnonChange,
 	mintCommit,
 	rebaseBranch,
-	tagChange,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
@@ -224,8 +223,8 @@ export class SharedTreeBranch<
 		>,
 	) {
 		super();
-		this.editor = this.changeFamily.buildEditor((change) =>
-			this.apply(change, mintRevisionTag()),
+		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
+			this.apply(change),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.emit("ancestryTrimmed", commit);
@@ -243,37 +242,35 @@ export class SharedTreeBranch<
 
 	/**
 	 * Apply a change to this branch.
-	 * @param change - the change to apply
-	 * @param revision - the revision of the new head commit of the branch that contains `change`
+	 * @param taggedChange - the change to apply
 	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
 	public apply(
-		change: TChange,
-		revision: RevisionTag,
+		taggedChange: TaggedChange<TChange>,
 		kind: CommitKind = CommitKind.Default,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
-		// TODO: This should not be necessary when receiving changes from other clients.
-		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
+		const revisionTag = taggedChange.revision;
+		assert(revisionTag !== undefined, "Revision tag must be provided");
 
 		const newHead = mintCommit(this.head, {
-			revision,
-			change: changeWithRevision,
+			revision: revisionTag,
+			change: taggedChange.change,
 		});
 
 		const changeEvent = {
 			type: "append",
 			kind,
-			change: tagChange(changeWithRevision, revision),
+			change: taggedChange,
 			newCommits: [newHead],
 		} as const;
 
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
 		this.emit("afterChange", changeEvent);
-		return [changeWithRevision, newHead];
+		return [taggedChange.change, newHead];
 	}
 
 	/**
@@ -371,7 +368,7 @@ export class SharedTreeBranch<
 			const commit =
 				commits[i] ?? fail("This wont run because we are iterating through commits");
 			const inverse = this.changeFamily.rebaser.changeRevision(
-				this.changeFamily.rebaser.invert(commit, true),
+				this.changeFamily.rebaser.invert(commit, true, revision),
 				revision,
 				commit.revision,
 			);
