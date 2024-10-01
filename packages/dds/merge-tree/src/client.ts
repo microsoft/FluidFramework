@@ -56,6 +56,7 @@ import {
 	createGroupOp,
 	createInsertSegmentOp,
 	createObliterateRangeOp,
+	createObliterateRangeOpSided,
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
@@ -72,9 +73,11 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -99,6 +102,7 @@ export interface IIntegerRange {
  * they need for rebasing their ops on reconnection.
  * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -252,15 +256,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Obliterates the range. This is similar to removing the range, but also
 	 * includes any concurrently inserted content.
 	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
+	 * @param start - The start of the range to obliterate. Inclusive is side is Before (default).
+	 * @param end - The end of the range to obliterate. Exclusive is side is After
+	 * (default is to be after the last included character, but number index is exclusive).
 	 */
 	public obliterateRangeLocal(
-		start: number,
-		end: number,
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
 		// eslint-disable-next-line import/no-deprecated
-	): IMergeTreeObliterateMsg {
-		const obliterateOp = createObliterateRangeOp(start, end);
+	): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg {
+		// eslint-disable-next-line import/no-deprecated
+		let obliterateOp: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
+		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
+			obliterateOp = createObliterateRangeOpSided(start, end);
+		} else {
+			assert(
+				typeof start === "number" && typeof end === "number",
+				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+			);
+			obliterateOp = createObliterateRangeOp(start, end);
+		}
 		this.applyObliterateRangeOp({ op: obliterateOp });
 		return obliterateOp;
 	}
@@ -472,22 +487,39 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
-			opArgs.op.type === MergeTreeDeltaType.OBLITERATE,
+			opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED,
 			0x866 /* Unexpected op type on range obliterate! */,
 		);
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
-		const range = this.getValidOpRange(op, clientArgs);
-
-		this._mergeTree.obliterateRange(
-			range.start,
-			range.end,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
-			false,
-			opArgs,
-		);
+		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
+			const { start, end } = this.getValidSidedRange(op, clientArgs);
+			this._mergeTree.obliterateRange(
+				start,
+				end,
+				clientArgs.referenceSequenceNumber,
+				clientArgs.clientId,
+				clientArgs.sequenceNumber,
+				false,
+				opArgs,
+			);
+		} else {
+			assert(
+				op.type === MergeTreeDeltaType.OBLITERATE,
+				"Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled",
+			);
+			const range = this.getValidOpRange(op, clientArgs);
+			this._mergeTree.obliterateRange(
+				range.start,
+				range.end,
+				clientArgs.referenceSequenceNumber,
+				clientArgs.clientId,
+				clientArgs.sequenceNumber,
+				false,
+				opArgs,
+			);
+		}
 	}
 
 	/**
@@ -566,6 +598,82 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
+	 * Returns a valid range for the op, or throws if the range is invalid
+	 * @param op - The op to generate the range for
+	 * @param clientArgs - The client args for the op
+	 * @throws LoggingError if the range is invalid
+	 */
+	private getValidSidedRange(
+		// eslint-disable-next-line import/no-deprecated
+		op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg,
+		clientArgs: IMergeTreeClientSequenceArgs,
+	): {
+		start: InteriorSequencePlace;
+		end: InteriorSequencePlace;
+	} {
+		const invalidPositions: string[] = [];
+		let start: InteriorSequencePlace | undefined;
+		let end: InteriorSequencePlace | undefined;
+		if (op.pos1 === undefined) {
+			invalidPositions.push("start");
+		} else {
+			start =
+				typeof op.pos1 === "object"
+					? { pos: op.pos1.pos, side: op.pos1.before ? Side.Before : Side.After }
+					: { pos: op.pos1, side: Side.Before };
+		}
+		if (op.pos2 === undefined) {
+			invalidPositions.push("end");
+		} else {
+			end =
+				typeof op.pos2 === "object"
+					? { pos: op.pos2.pos, side: op.pos2.before ? Side.Before : Side.After }
+					: { pos: op.pos2 - 1, side: Side.After };
+		}
+
+		// Validate if local op
+		if (clientArgs.clientId === this.getClientId()) {
+			const length = this._mergeTree.getLength(
+				this.getCollabWindow().currentSeq,
+				this.getClientId(),
+			);
+			if (start !== undefined && (start.pos >= length || start.pos < 0)) {
+				// start out of bounds
+				invalidPositions.push("start");
+			}
+			if (end !== undefined && (end.pos >= length || end.pos < 0)) {
+				invalidPositions.push("end");
+			}
+			if (
+				start !== undefined &&
+				end !== undefined &&
+				(start.pos > end.pos ||
+					(start.pos === end.pos && start.side !== end.side && start.side === Side.After))
+			) {
+				// end is before start
+				invalidPositions.push("inverted");
+			}
+			if (invalidPositions.length > 0) {
+				throw new LoggingError("InvalidRange", {
+					usageError: true,
+					invalidPositions: invalidPositions.toString(),
+					length,
+					opType: op.type,
+					opPos1Relative: op.relativePos1 !== undefined,
+					opPos2Relative: op.relativePos2 !== undefined,
+					opPos1: JSON.stringify(op.pos1),
+					opPos2: JSON.stringify(op.pos2),
+					start: JSON.stringify(start),
+					end: JSON.stringify(end),
+				});
+			}
+		}
+
+		assert(start !== undefined && end !== undefined, "Missing start or end of range");
+		return { start, end };
+	}
+
+	/**
 	 * Returns a valid range for the op, or undefined
 	 * @param op - The op to generate the range for
 	 * @param clientArgs - The client args for the op
@@ -614,7 +722,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				invalidPositions.push("start");
 			}
 			// Validate end if not insert, or insert has end
-			//
 			if (
 				(op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
 				(end === undefined || end <= start!)
@@ -892,7 +999,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				const first = opList[0];
 
-				if (!!first && first.pos2 !== undefined) {
+				if (
+					!!first &&
+					first.pos2 !== undefined &&
+					first.type !== MergeTreeDeltaType.OBLITERATE_SIDED &&
+					newOp.type !== MergeTreeDeltaType.OBLITERATE_SIDED
+				) {
 					first.pos2 += newOp.pos2! - newOp.pos1!;
 				} else {
 					opList.push(newOp);
@@ -939,7 +1051,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				this.applyAnnotateRangeOp(opArgs);
 				break;
 			}
-			case MergeTreeDeltaType.OBLITERATE: {
+			case MergeTreeDeltaType.OBLITERATE:
+			case MergeTreeDeltaType.OBLITERATE_SIDED: {
 				this.applyObliterateRangeOp(opArgs);
 				break;
 			}
@@ -973,6 +1086,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				this.applyAnnotateRangeOp({ op });
 				break;
 			}
+			case MergeTreeDeltaType.OBLITERATE_SIDED:
 			case MergeTreeDeltaType.OBLITERATE: {
 				this.applyObliterateRangeOp({ op });
 				break;
@@ -1205,6 +1319,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					this.applyRemoveRangeOp(opArgs);
 					break;
 				}
+				case MergeTreeDeltaType.OBLITERATE_SIDED:
 				case MergeTreeDeltaType.OBLITERATE: {
 					this.applyObliterateRangeOp(opArgs);
 					break;

@@ -7,9 +7,9 @@ import {
 	type AnchorNode,
 	type ExclusiveMapTree,
 	type FieldKey,
+	type FieldKindIdentifier,
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
-	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	anchorSlot,
@@ -21,7 +21,6 @@ import type {
 	OptionalFieldEditBuilder,
 } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import type { FlexTreeNodeSchema } from "../typed-schema/index.js";
 
 import type { FlexTreeContext } from "./context.js";
 
@@ -127,11 +126,7 @@ export enum TreeStatus {
  * the same {@link FlexTreeNode} instance will be used in the new location.
  * Similarly, edits applied to a node's sub-tree concurrently with the move of the node will still be applied to its subtree in its new location.
  *
- *
  * @remarks
- * Down-casting (via {@link FlexTreeNode#is}) is required to access Schema-Aware APIs, including editing.
- * All content in the tree is accessible without down-casting, but if the schema is known,
- * the schema aware API may be more ergonomic.
  * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
  */
 export interface FlexTreeNode extends FlexTreeEntity {
@@ -163,11 +158,6 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	 */
 	readonly parentField: { readonly parent: FlexTreeField; readonly index: number };
 
-	/**
-	 * Type guard for narrowing / down-casting to a specific schema.
-	 */
-	is(schema: FlexTreeNodeSchema): boolean;
-
 	boxedIterator(): IterableIterator<FlexTreeField>;
 
 	/**
@@ -195,12 +185,6 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	 * If well-formed, it must follow this schema.
 	 */
 	readonly schema: TreeNodeSchemaIdentifier;
-
-	/**
-	 * Schema for this entity.
-	 * If well-formed, it must follow this schema.
-	 */
-	readonly flexSchema: FlexTreeNodeSchema;
 
 	/**
 	 * Get a cursor for the underlying data.
@@ -277,7 +261,7 @@ export interface FlexTreeField extends FlexTreeEntity {
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
 	 */
-	readonly schema: TreeFieldStoredSchema;
+	readonly schema: FieldKindIdentifier;
 }
 
 // #region Field Kinds

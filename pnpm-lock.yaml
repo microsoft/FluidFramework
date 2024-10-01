@@ -11418,6 +11418,9 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -11434,9 +11437,18 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.46.0
         version: 0.46.0
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/test-runtime-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.1)
@@ -11446,6 +11458,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.1
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -11476,6 +11491,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^17.0.1
+        version: 17.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -13549,10 +13567,7 @@ importers:
         version: 5.1.4(webpack-bundle-analyzer@4.10.1)(webpack@5.94.0)
 
   packages/test/local-server-tests:
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
+    dependencies:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
@@ -13664,6 +13679,10 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -14318,6 +14337,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/protocol-definitions':
+        specifier: ^3.2.0
+        version: 3.2.0
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1

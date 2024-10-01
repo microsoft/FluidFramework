@@ -99,7 +99,7 @@ export type SimpleNodeSchema =
  */
 export interface SimpleFieldSchema {
 	/**
-	 * The kind of object field.
+	 * The kind of tree field.
 	 */
 	readonly kind: FieldKind;
 
@@ -120,24 +120,29 @@ export interface SimpleFieldSchema {
 /**
  * A simplified representation of a schema for a tree.
  *
- * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references
- * by schema identifier.
+ * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references,
+ * which are represented inline with identifiers.
  *
  * @sealed
  */
-export interface SimpleTreeSchema {
+export interface SimpleTreeSchema extends SimpleFieldSchema {
+	/**
+	 * The kind of tree field representing the root of the tree.
+	 */
+	readonly kind: FieldKind;
+
+	/**
+	 * The types allowed under the tree root.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * Can be resolved via {@link SimpleTreeSchema.definitions}.
+	 */
+	readonly allowedTypes: ReadonlySet<string>;
+
 	/**
 	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypes}.
 	 *
 	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
-
-	/**
-	 * The types allowed under the root of the tree.
-	 *
-	 * @remarks Refers to the types by identifier.
-	 * {@link SimpleTreeSchema.definitions} can be used to resolve these identifiers to their associated schema definition.
-	 */
-	readonly allowedTypes: ReadonlySet<string>;
 }

@@ -176,7 +176,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IMergeTreeDeltaOpArgs": {
+				"backCompat": false
+			},
+			"TypeAlias_IMergeTreeDeltaOp": {
+				"backCompat": false
+			},
+			"Interface_IMergeTreeGroupMsg": {
+				"backCompat": false
+			},
+			"TypeAlias_IMergeTreeOp": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }

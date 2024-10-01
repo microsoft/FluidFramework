@@ -4,7 +4,7 @@
  */
 
 import type { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
-import type { RestrictiveReadonlyRecord, _InlineTrick } from "../util/index.js";
+import type { RestrictiveStringRecord, _InlineTrick } from "../util/index.js";
 
 import type {
 	AllowedTypes,
@@ -44,7 +44,7 @@ import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
  * @system @public
  */
 export type ObjectFromSchemaRecordUnsafe<
-	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 > = {
 	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
@@ -56,7 +56,7 @@ export type ObjectFromSchemaRecordUnsafe<
  * @system @public
  */
 export type TreeObjectNodeUnsafe<
-	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 	TypeName extends string = string,
 > = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object>;
 
@@ -230,7 +230,7 @@ export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
  * @system @public
  */
 export type InsertableObjectFromSchemaRecordUnsafe<
-	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 > = {
 	// Field might not have a default, so make it required:
 	readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false

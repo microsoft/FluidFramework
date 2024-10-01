@@ -38,7 +38,6 @@ import {
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	buildForest,
-	createNodeKeyManager,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
@@ -53,6 +52,7 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
+	TreeView,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
@@ -61,7 +61,12 @@ import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js"
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import {
+	type CheckoutEvents,
+	type TreeCheckout,
+	type TreeBranch,
+	createTreeCheckout,
+} from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -294,6 +299,7 @@ export class SharedTree
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
 				logger: this.logger,
+				breaker: this.breaker,
 			},
 		);
 	}
@@ -316,12 +322,7 @@ export class SharedTree
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): SchematizingSimpleTreeView<TRoot> {
-		return new SchematizingSimpleTreeView(
-			this.checkout,
-			config,
-			createNodeKeyManager(this.runtime.idCompressor),
-			this.breaker,
-		);
+		return this.checkout.viewWith(config);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -329,6 +330,33 @@ export class SharedTree
 		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
 		this._events.emit("afterBatch");
 	}
+}
+
+/**
+ * Get a {@link TreeBranch} from a {@link ITree}.
+ * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
+ * @privateRemarks This function will be removed if/when the branching API becomes public,
+ * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
+ * @alpha
+ */
+export function getBranch(tree: ITree): TreeBranch;
+/**
+ * Get a {@link TreeBranch} from a {@link TreeView}.
+ * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
+ * Branches are currently an unstable "alpha" API and are subject to change in the future.
+ * @privateRemarks This function will be removed if/when the branching API becomes public,
+ * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
+ * @alpha
+ */
+export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
+export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): TreeBranch {
+	assert(
+		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
+		"Unsupported implementation",
+	);
+	const checkout: TreeCheckout = treeOrView.checkout;
+	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
+	return checkout as unknown as TreeBranch;
 }
 
 /**
