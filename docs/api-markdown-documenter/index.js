@@ -23,6 +23,12 @@ const {
 
 const docVersions = previousVersions.concat(currentVersion);
 
+// remove local version from list when running in non-local mode
+const localMode = process.argv[2];
+if(!localMode) {
+	docVersions.splice(docVersions.indexOf("local"), 1);
+}
+
 try {
 	await Promise.all(
 		docVersions.map(async (version) => {
