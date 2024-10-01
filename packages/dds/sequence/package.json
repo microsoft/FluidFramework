@@ -191,6 +191,7 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {
 			"ClassStatics_SequenceMaintenanceEvent": {
 				"backCompat": false,

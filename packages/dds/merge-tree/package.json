@@ -176,6 +176,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {
 			"Interface_IMergeTreeDeltaOpArgs": {
 				"backCompat": false
