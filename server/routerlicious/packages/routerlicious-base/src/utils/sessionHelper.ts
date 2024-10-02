@@ -12,9 +12,10 @@ import {
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
-	LumberEventName,
 	Lumberjack,
+	type Lumber,
 } from "@fluidframework/server-services-telemetry";
+import { StageTrace } from "./trace";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 
@@ -286,28 +287,19 @@ export async function getSession(
 	messageBrokerId?: string,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	ephemeralDocumentTTLSec?: number,
+	lumberMetric?: Lumber<any>,
 ): Promise<ISession> {
+	const connectionTrace = new StageTrace<string>("GetSession");
+
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const docExistenceMetric = Lumberjack.newLumberMetric(
-		LumberEventName.GetSessionCheckDocExistence,
-		baseLumberjackProperties,
-	);
-
-	let document: IDocument;
-	try {
-		document = await documentRepository.readOne({ tenantId, documentId });
-	} catch (error) {
-		docExistenceMetric.error("Error while checking for document existence", error);
-		throw error;
-	}
-
+	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document.scheduledDeletionTime !== undefined) {
-		const deletedError = "Document is deleted and cannot be accessed.";
-		docExistenceMetric.error(deletedError);
-		throw new NetworkError(404, deletedError);
+		connectionTrace.stampStage("DocumentDoesNotExist");
+		lumberMetric?.setProperty("connectTrace", connectionTrace);
+		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
-	docExistenceMetric.success("Successfully checked for document existence");
+	connectionTrace.stampStage("DocumentExistenceChecked");
 
 	const lumberjackProperties = {
 		...baseLumberjackProperties,
@@ -332,9 +324,13 @@ export async function getSession(
 				},
 				error,
 			);
+			connectionTrace.stampStage("EphemeralDocumentExpired");
+			lumberMetric?.setProperty("connectTrace", connectionTrace);
 			throw error;
 		}
 	}
+	connectionTrace.stampStage("EphemeralExipiryChecked");
+
 	// Session can be undefined for documents that existed before the concept of service sessions.
 	const existingSession: ISession | undefined = document.session;
 	Lumberjack.info(
@@ -343,37 +339,35 @@ export async function getSession(
 	);
 
 	if (!existingSession) {
-		const createNewSessionMetric = Lumberjack.newLumberMetric(
-			LumberEventName.GetSessionCreateNew,
+		// Create a new session for the document and persist to DB.
+		const newSession: ISession = await createNewSession(
+			ordererUrl,
+			historianUrl,
+			deltaStreamUrl,
+			tenantId,
+			documentId,
+			documentRepository,
 			lumberjackProperties,
+			messageBrokerId,
 		);
 
-		// Create a new session for the document and persist to DB.
-		let newSession: ISession;
-		try {
-			newSession = await createNewSession(
-				ordererUrl,
-				historianUrl,
-				deltaStreamUrl,
-				tenantId,
-				documentId,
-				documentRepository,
-				lumberjackProperties,
-				messageBrokerId,
-			);
-			createNewSessionMetric.success("Successfully created new session");
-		} catch (error) {
-			createNewSessionMetric.error("Error while creating new session", error);
-			throw error;
-		}
-
-		return convertSessionToFreshSession(newSession, lumberjackProperties);
+		const freshSession: ISession = convertSessionToFreshSession(
+			newSession,
+			lumberjackProperties,
+		);
+		connectionTrace.stampStage("NewSessionCreated");
+		lumberMetric?.setProperty("connectTrace", connectionTrace);
+		return freshSession;
 	}
+	connectionTrace.stampStage("SessionExistenceChecked");
 
 	if (existingSession.isSessionAlive || existingSession.isSessionActive) {
 		// Existing session is considered alive/discovered or active, so return to consumer as-is.
+		connectionTrace.stampStage("SessionIsAlive");
+		lumberMetric?.setProperty("connectTrace", connectionTrace);
 		return existingSession;
 	}
+	connectionTrace.stampStage("SessionLivenessChecked");
 
 	// Reject get session request on existing, inactive sessions if cluster is in draining process.
 	if (clusterDrainingChecker) {
@@ -381,6 +375,8 @@ export async function getSession(
 			const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
 			if (isClusterDraining) {
 				Lumberjack.info("Cluster is in draining process. Reject get session request.");
+				connectionTrace.stampStage("ClusterIsDraining");
+				lumberMetric?.setProperty("connectTrace", connectionTrace);
 				throw new NetworkError(
 					503,
 					"Server is unavailable. Please retry session discovery later.",
@@ -390,14 +386,10 @@ export async function getSession(
 			Lumberjack.error("Failed to get cluster draining status", lumberjackProperties, error);
 		}
 	}
+	connectionTrace.stampStage("ClusterDrainingChecked");
 
 	// Session is not alive/discovered, so update and persist changes to DB.
 	const ignoreSessionStickiness = existingSession.ignoreSessionStickiness ?? false;
-
-	const updateSessionMetric = Lumberjack.newLumberMetric(
-		LumberEventName.GetSessionUpdateExisting,
-		lumberjackProperties,
-	);
 
 	try {
 		const updatedSession: ISession = await updateExistingSession(
@@ -414,10 +406,12 @@ export async function getSession(
 			messageBrokerId,
 			ignoreSessionStickiness,
 		);
-		updateSessionMetric.success("Successfully updated existing session");
+		connectionTrace.stampStage("UpdatedExistingSession");
+		lumberMetric?.setProperty("connectTrace", connectionTrace);
 		return convertSessionToFreshSession(updatedSession, lumberjackProperties);
 	} catch (error) {
-		updateSessionMetric.error("Error while updating existing session", error);
+		connectionTrace.stampStage("FailedToUpdateExistingSession");
+		lumberMetric?.setProperty("connectTrace", connectionTrace);
 		throw error;
 	}
 }

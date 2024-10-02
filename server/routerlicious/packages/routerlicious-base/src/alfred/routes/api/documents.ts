@@ -44,6 +44,7 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	type Lumber,
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
@@ -293,7 +294,7 @@ export function create(
 			const tenantId = getParam(request.params, "tenantId");
 
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
-			const getSessionMetric = Lumberjack.newLumberMetric(
+			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
 				LumberEventName.GetSession,
 				lumberjackProperties,
 			);
