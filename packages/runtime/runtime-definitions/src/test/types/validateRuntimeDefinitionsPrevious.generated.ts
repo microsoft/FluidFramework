@@ -56,24 +56,6 @@ declare type current_as_old_for_Enum_FlushMode = requireAssignableTo<TypeOnly<cu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_FlushModeExperimental": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_FlushModeExperimental = requireAssignableTo<TypeOnly<old.FlushModeExperimental>, TypeOnly<current.FlushModeExperimental>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_FlushModeExperimental": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_FlushModeExperimental = requireAssignableTo<TypeOnly<current.FlushModeExperimental>, TypeOnly<old.FlushModeExperimental>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_AttributionInfo": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<old.AttributionInfo>, TypeOnly<current.AttributionInfo>>
@@ -560,24 +542,6 @@ declare type current_as_old_for_Interface_ITelemetryContext = requireAssignableT
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryContextExt": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ITelemetryContextExt = requireAssignableTo<TypeOnly<old.ITelemetryContextExt>, TypeOnly<current.ITelemetryContextExt>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ITelemetryContextExt": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ITelemetryContextExt = requireAssignableTo<TypeOnly<current.ITelemetryContextExt>, TypeOnly<old.ITelemetryContextExt>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_LocalAttributionKey": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_LocalAttributionKey = requireAssignableTo<TypeOnly<old.LocalAttributionKey>, TypeOnly<current.LocalAttributionKey>>
@@ -794,69 +758,6 @@ declare type current_as_old_for_TypeAlias_VisibilityState = requireAssignableTo<
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Variable_blobCountPropertyName": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_blobCountPropertyName = requireAssignableTo<TypeOnly<typeof current.blobCountPropertyName>, TypeOnly<typeof old.blobCountPropertyName>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_channelsTreeName": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_channelsTreeName = requireAssignableTo<TypeOnly<typeof current.channelsTreeName>, TypeOnly<typeof old.channelsTreeName>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_gcBlobPrefix": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_gcBlobPrefix = requireAssignableTo<TypeOnly<typeof current.gcBlobPrefix>, TypeOnly<typeof old.gcBlobPrefix>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_gcDataBlobKey": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_gcDataBlobKey = requireAssignableTo<TypeOnly<typeof current.gcDataBlobKey>, TypeOnly<typeof old.gcDataBlobKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_gcDeletedBlobKey": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_gcDeletedBlobKey = requireAssignableTo<TypeOnly<typeof current.gcDeletedBlobKey>, TypeOnly<typeof old.gcDeletedBlobKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_gcTombstoneBlobKey": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_gcTombstoneBlobKey = requireAssignableTo<TypeOnly<typeof current.gcTombstoneBlobKey>, TypeOnly<typeof old.gcTombstoneBlobKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_gcTreeKey": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_gcTreeKey = requireAssignableTo<TypeOnly<typeof current.gcTreeKey>, TypeOnly<typeof old.gcTreeKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Variable_IFluidDataStoreFactory": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_IFluidDataStoreFactory = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreFactory>, TypeOnly<typeof old.IFluidDataStoreFactory>>
@@ -869,15 +770,6 @@ declare type current_as_old_for_Variable_IFluidDataStoreFactory = requireAssigna
  * "Variable_IFluidDataStoreRegistry": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_IFluidDataStoreRegistry = requireAssignableTo<TypeOnly<typeof current.IFluidDataStoreRegistry>, TypeOnly<typeof old.IFluidDataStoreRegistry>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_totalBlobSizePropertyName": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_totalBlobSizePropertyName = requireAssignableTo<TypeOnly<typeof current.totalBlobSizePropertyName>, TypeOnly<typeof old.totalBlobSizePropertyName>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
