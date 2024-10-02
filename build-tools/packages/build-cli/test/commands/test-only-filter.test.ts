@@ -7,6 +7,7 @@ import { Package } from "@fluidframework/build-tools";
 import { runCommand } from "@oclif/test";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
+import { describe, it } from "mocha";
 
 chai.use(assertArrays);
 

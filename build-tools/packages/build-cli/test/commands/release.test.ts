@@ -4,6 +4,7 @@
  */
 
 import { runCommand } from "@oclif/test";
+import { describe, it } from "mocha";
 
 import { FluidReleaseMachine } from "../../src/machines/index.js";
 

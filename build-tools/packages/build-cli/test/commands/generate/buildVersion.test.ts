@@ -6,8 +6,7 @@
 import { EOL } from "node:os";
 import { runCommand } from "@oclif/test";
 import chai, { expect } from "chai";
-import assertArrays from "chai-arrays";
-
+import { describe, it } from "mocha";
 /**
  * This list of git tags is deliberately unordered since often the list provided to commands is unordered.
  */

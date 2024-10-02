@@ -5,6 +5,7 @@
 
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { runCommand } from "@oclif/test";
+import { describe, it } from "mocha";
 
 import { ReleaseGroup, ReleasePackage } from "../../../src/releaseGroups.js";
 
