@@ -1,14 +1,225 @@
 // Base API-Extractor config for build-tools
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../common/build/build-common/api-extractor-base.json",
 
-	"messages": {
-		"extractorMessageReporting": {
-			// TODO: Consider enabling this in the future.
-			"ae-missing-release-tag": {
-				"logLevel": "none",
-			},
-		},
+	"compiler": {
+		"tsconfigFilePath": "<projectFolder>/tsconfig.json"
 	},
+
+	/**
+	 * Specifies the .d.ts file to be used as the starting point for analysis. API Extractor analyzes the symbols exported by this module.
+	 * Can be overridden as necessary for packages with different build structures.
+	 *
+	 * See: <https://api-extractor.com/pages/configs/api-extractor_json/#mainentrypointfilepath>
+	 */
+	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+
+	/**
+	 * Configures how the API report file (*.api.md) will be generated.
+	 */
+	"apiReport": {
+		"enabled": true,
+		"reportFileName": "<unscopedPackageName>",
+		"reportFolder": "<projectFolder>/api-report/",
+		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
+		// `build-tools` packages do not currently generate separate entry-points based on release levels.
+		// If that changes, these should specify the appropriate variants.
+		"reportVariants": ["complete"]
+	},
+
+	/**
+	 * Configures how the doc model file (*.api.json) will be generated.
+	 */
+	"docModel": {
+		"enabled": true,
+		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
+	},
+
+	/**
+	 * Configures how the .d.ts rollup file will be generated.
+	 */
+	"dtsRollup": {
+		"enabled": false
+	},
+
+	/**
+	 * Configures how the tsdoc-metadata.json file will be generated.
+	 */
+	"tsdocMetadata": {
+		"enabled": true
+	},
+
+	/**
+	 * Configures how API Extractor reports error and warning messages produced during analysis.
+	 *
+	 * There are three sources of messages:  compiler messages, API Extractor messages, and TSDoc messages.
+	 */
+	"messages": {
+		/**
+		 * Configures handling of diagnostic messages reported by the TypeScript compiler engine while analyzing
+		 * the input .d.ts files.
+		 *
+		 * TypeScript message identifiers start with "TS" followed by an integer.  For example: "TS2551"
+		 *
+		 * DEFAULT VALUE:  A single "default" entry with logLevel=warning.
+		 */
+		"compilerMessageReporting": {
+			/**
+			 * Configures the default routing for messages that don't match an explicit rule in this table.
+			 */
+			"default": {
+				/**
+				 * Specifies whether the message should be written to the the tool's output log.  Note that
+				 * the "addToApiReviewFile" property may supersede this option.
+				 *
+				 * Possible values: "error", "warning", "none"
+				 *
+				 * Errors cause the build to fail and return a nonzero exit code.  Warnings cause a production build fail
+				 * and return a nonzero exit code.  For a non-production build (e.g. when "api-extractor run" includes
+				 * the "--local" option), the warning is displayed but the build will not fail.
+				 */
+				"logLevel": "error",
+
+				/**
+				 * When addToApiReportFile is true:  If API Extractor is configured to write an API report file (.api.md),
+				 * then the message will be written inside that file; otherwise, the message is instead logged according to
+				 * the "logLevel" option.
+				 */
+				"addToApiReportFile": false // Ensure build failure on errors
+			}
+		},
+
+		/**
+		 * Configures handling of messages reported by API Extractor during its analysis.
+		 *
+		 * API Extractor message identifiers start with "ae-".  For example: "ae-extra-release-tag"
+		 *
+		 * DEFAULT VALUE: See api-extractor-defaults.json for the complete table of extractorMessageReporting mappings
+		 */
+		"extractorMessageReporting": {
+			"default": {
+				/**
+				 * Specifies whether the message should be written to the the tool's output log.  Note that
+				 * the "addToApiReviewFile" property may supersede this option.
+				 *
+				 * Possible values: "error", "warning", "none"
+				 *
+				 * Errors cause the build to fail and return a nonzero exit code.  Warnings cause a production build fail
+				 * and return a nonzero exit code.  For a non-production build (e.g. when "api-extractor run" includes
+				 * the "--local" option), the warning is displayed but the build will not fail.
+				 */
+				"logLevel": "error",
+
+				/**
+				 * When addToApiReportFile is true:  If API Extractor is configured to write an API report file (.api.md),
+				 * then the message will be written inside that file; otherwise, the message is instead logged according to
+				 * the "logLevel" option.
+				 */
+				"addToApiReportFile": false // Ensure build failure on errors
+			},
+
+			// #region Enabled Rules
+
+			// Prevent cyclic `@inheritDoc` comments
+			"ae-cyclic-inherit-doc": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			// A documentation comment should contain at most one release tag.
+			"ae-extra-release-tag": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			// Reported when an exported API refers to another declaration that is not exported.
+			"ae-forgotten-export": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			// A type signature should not reference another types whose release tag is less visible.
+			"ae-incompatible-release-tags": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			// Multiple function overloads should not have @internal tags with other tags.
+			"ae-internal-mixed-release-tag": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			// Require packages to include `@packageDocumentation` comment
+			"ae-misplaced-package-tag": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			// Require explicit release tags for all API members.
+			"ae-missing-release-tag": {
+				// TODO: Consider enabling this in the future.
+				"logLevel": "none",
+				"addToApiReportFile": false
+			},
+
+			// Require documentation on all package-exported API items.
+			"ae-undocumented": {
+				// TODO: Consider enabling this in the future.
+				"logLevel": "none"
+			},
+
+			// The @inheritDoc tag needs a TSDoc declaration reference.
+			"ae-unresolved-inheritdoc-base": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			"ae-unresolved-inheritdoc-reference": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+
+			// The @link tag needs a TSDoc declaration reference.
+			"ae-unresolved-link": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+
+			// #endregion
+
+			// #region Disabled Rules
+
+			// Disabled. We don't require that internal members be prefixed with an underscore.
+			"ae-internal-missing-underscore": {
+				"logLevel": "none",
+				"addToApiReportFile": false
+			}
+
+			// #endregion
+		},
+
+		/**
+		 * Configures handling of messages reported by the TSDoc parser when analyzing code comments.
+		 *
+		 * TSDoc message identifiers start with "tsdoc-".  For example: "tsdoc-link-tag-unescaped-text"
+		 *
+		 * DEFAULT VALUE:  A single "default" entry with logLevel=warning.
+		 */
+		"tsdocMessageReporting": {
+			"default": {
+				/**
+				 * Specifies whether the message should be written to the the tool's output log.  Note that
+				 * the "addToApiReviewFile" property may supersede this option.
+				 *
+				 * Possible values: "error", "warning", "none"
+				 *
+				 * Errors cause the build to fail and return a nonzero exit code.  Warnings cause a production build fail
+				 * and return a nonzero exit code.  For a non-production build (e.g. when "api-extractor run" includes
+				 * the "--local" option), the warning is displayed but the build will not fail.
+				 */
+				"logLevel": "error",
+
+				/**
+				 * When addToApiReportFile is true:  If API Extractor is configured to write an API report file (.api.md),
+				 * then the message will be written inside that file; otherwise, the message is instead logged according to
+				 * the "logLevel" option.
+				 */
+				"addToApiReportFile": false // Ensure build failure on errors
+			}
+		}
+	}
 }

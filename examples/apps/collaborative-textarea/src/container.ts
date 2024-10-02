@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import {
+	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
@@ -29,7 +32,7 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const collaborativeText = await runtime.createDataStore(
 			CollaborativeText.getFactory().type,
 		);
@@ -39,7 +42,10 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<CollaborativeTextAppModel> {
 		return new CollaborativeTextAppModel(
 			await getDataStoreEntryPoint<CollaborativeText>(runtime, collaborativeTextId),
 		);

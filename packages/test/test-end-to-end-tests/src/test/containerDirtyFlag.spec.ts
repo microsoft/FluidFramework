@@ -10,6 +10,7 @@ import { IContainer, IHostLoader } from "@fluidframework/container-definitions/i
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -50,7 +51,8 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 
 	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
 	const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
-		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
+		const container: IContainerExperimental =
+			await args.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -61,7 +63,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 
 		await args.ensureSynchronized();
 		await args.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		await cb(container, dataStore, map);
 

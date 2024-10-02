@@ -9,100 +9,53 @@
  */
 
 import type * as old from "@fluidframework/azure-service-utils-previous/internal";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
-type TypeOnly<T> = T extends number
-	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IUser": {"forwardCompat": false}
+ * "Enum_ScopeType": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IUser():
-    TypeOnly<old.IUser>;
-declare function use_current_InterfaceDeclaration_IUser(
-    use: TypeOnly<current.IUser>): void;
-use_current_InterfaceDeclaration_IUser(
-    get_old_InterfaceDeclaration_IUser());
+declare type old_as_current_for_Enum_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IUser": {"backCompat": false}
+ * "Enum_ScopeType": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IUser():
-    TypeOnly<current.IUser>;
-declare function use_old_InterfaceDeclaration_IUser(
-    use: TypeOnly<old.IUser>): void;
-use_old_InterfaceDeclaration_IUser(
-    get_current_InterfaceDeclaration_IUser());
+declare type current_as_old_for_Enum_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_generateToken": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_generateToken = requireAssignableTo<TypeOnly<typeof current.generateToken>, TypeOnly<typeof old.generateToken>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_ScopeType": {"forwardCompat": false}
+ * "Interface_IUser": {"forwardCompat": false}
  */
-declare function get_old_EnumDeclaration_ScopeType():
-    TypeOnly<old.ScopeType>;
-declare function use_current_EnumDeclaration_ScopeType(
-    use: TypeOnly<current.ScopeType>): void;
-use_current_EnumDeclaration_ScopeType(
-    get_old_EnumDeclaration_ScopeType());
+declare type old_as_current_for_Interface_IUser = requireAssignableTo<TypeOnly<old.IUser>, TypeOnly<current.IUser>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_ScopeType": {"backCompat": false}
+ * "Interface_IUser": {"backCompat": false}
  */
-declare function get_current_EnumDeclaration_ScopeType():
-    TypeOnly<current.ScopeType>;
-declare function use_old_EnumDeclaration_ScopeType(
-    use: TypeOnly<old.ScopeType>): void;
-use_old_EnumDeclaration_ScopeType(
-    get_current_EnumDeclaration_ScopeType());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_generateToken": {"forwardCompat": false}
- */
-declare function get_old_FunctionDeclaration_generateToken():
-    TypeOnly<typeof old.generateToken>;
-declare function use_current_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof current.generateToken>): void;
-use_current_FunctionDeclaration_generateToken(
-    get_old_FunctionDeclaration_generateToken());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_generateToken": {"backCompat": false}
- */
-declare function get_current_FunctionDeclaration_generateToken():
-    TypeOnly<typeof current.generateToken>;
-declare function use_old_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof old.generateToken>): void;
-use_old_FunctionDeclaration_generateToken(
-    get_current_FunctionDeclaration_generateToken());
+declare type current_as_old_for_Interface_IUser = requireAssignableTo<TypeOnly<current.IUser>, TypeOnly<old.IUser>>

@@ -4,6 +4,7 @@
  */
 
 import child_process from "node:child_process";
+
 import * as semver from "semver";
 
 import {
@@ -24,10 +25,12 @@ export function getSimpleVersion(
 	argBuildNum: string,
 	argRelease: boolean,
 	simplePatchVersioning: boolean,
-) {
+): string {
 	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
 	// Get the Build number and ignore the attempt number.
-	const buildId = simplePatchVersioning ? parseInt(argBuildNum.split(".")[0], 10) : undefined;
+	const buildId = simplePatchVersioning
+		? Number.parseInt(argBuildNum.split(".")[0], 10)
+		: undefined;
 	let version = fileVersion;
 	if (isInternalVersionScheme(version, /* allowPrereleases */ true)) {
 		if (simplePatchVersioning) {
@@ -37,7 +40,7 @@ export function getSimpleVersion(
 		}
 
 		if (!argRelease) {
-			const [, , prereleaseId] = fromInternalScheme(version);
+			const prereleaseId = fromInternalScheme(version)[2];
 			version = changePreReleaseIdentifier(
 				version,
 				// The "internal" prerelease identifier was historically transformed to "dev", so that behavior is preserved
@@ -54,13 +57,14 @@ export function getSimpleVersion(
 }
 
 /**
+ * Determines if the specified `current_version` is the latest version (higher than the tagged releases _and NOT_ a
+ * pre-release version).
  * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
  * @param current_version - The version to test; that is, the version to check for being the latest build.
  * @param input_tags - If provided, only these tags will be considered. Mostly useful for testing.
  * @param includeInternalVersions - Whether to include Fluid internal builds, which are always
  * @param log - if true, logs to console.
- * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
- * pre-release version).
+ * @returns true if the current version is to be considered the latest.
  */
 export function getIsLatest(
 	prefix: TagPrefix,
@@ -112,7 +116,7 @@ function generateSimpleVersion(
 	release_version: string,
 	prerelease_version: string,
 	build_suffix: string,
-) {
+): string {
 	// Generate the full version string
 	if (prerelease_version) {
 		if (build_suffix) {
@@ -128,7 +132,13 @@ function generateSimpleVersion(
 	return release_version;
 }
 
-function parseFileVersion(fileVersion: string, buildId?: number) {
+function parseFileVersion(
+	fileVersion: string,
+	buildId?: number,
+): {
+	releaseVersion: string;
+	prereleaseVersion: string;
+} {
 	const split = fileVersion.split("-");
 	let releaseVersion = split[0];
 	split.shift();
@@ -142,9 +152,10 @@ function parseFileVersion(fileVersion: string, buildId?: number) {
 		const r = releaseVersion.split(".");
 		if (r.length !== 3) {
 			console.error(`ERROR: Invalid format for release version ${releaseVersion}`);
+			// eslint-disable-next-line unicorn/no-process-exit
 			process.exit(9);
 		}
-		r[2] = (parseInt(r[2], 10) + buildId).toString();
+		r[2] = (Number.parseInt(r[2], 10) + buildId).toString();
 		releaseVersion = r.join(".");
 	}
 
@@ -158,7 +169,7 @@ function parseFileVersion(fileVersion: string, buildId?: number) {
  * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
  * @returns An array of versions extracted from the output of `git tag -l`.
  */
-function getVersions(prefix: TagPrefix) {
+function getVersions(prefix: TagPrefix): string[] {
 	const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
 	const tags = raw_tags.split(/\s+/g).map((t) => t.trim());
 	return getVersionsFromStrings(prefix, tags);
@@ -171,10 +182,10 @@ function getVersions(prefix: TagPrefix) {
  * @param tags - An array of tags as strings.
  * @returns An array of versions extracted from the provided tags.
  */
-function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
+function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[] {
 	const versions = tags
 		.filter((v) => v.startsWith(`${prefix}_v`))
-		.map((tag) => tag.substring(`${prefix}_v`.length));
+		.map((tag) => tag.slice(`${prefix}_v`.length));
 	semver.sort(versions);
 	return versions;
 }

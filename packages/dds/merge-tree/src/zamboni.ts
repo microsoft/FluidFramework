@@ -21,14 +21,14 @@ import {
 import { matchProperties } from "./properties.js";
 
 export const zamboniSegmentsMax = 2;
-function underflow(node: MergeBlock) {
+function underflow(node: MergeBlock): boolean {
 	return node.childCount < MaxNodesInBlock / 2;
 }
 
 export function zamboniSegments(
 	mergeTree: MergeTree,
 	zamboniSegmentsMaxCount = zamboniSegmentsMax,
-) {
+): void {
 	if (!mergeTree.collabWindow.collaborating) {
 		return;
 	}
@@ -40,7 +40,10 @@ export function zamboniSegments(
 		}
 		segmentToScour = mergeTree.segmentsToScour.get()!;
 		// Only skip scouring if needs scour is explicitly false, not true or undefined
-		if (segmentToScour?.segment?.parent && segmentToScour.segment.parent.needsScour !== false) {
+		if (
+			segmentToScour?.segment?.parent &&
+			segmentToScour.segment.parent.needsScour !== false
+		) {
 			const block = segmentToScour.segment.parent;
 			const childrenCopy: IMergeNode[] = [];
 			scourNode(block, childrenCopy, mergeTree);
@@ -69,7 +72,7 @@ export function zamboniSegments(
 }
 
 // Interior node with all node children
-export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
+export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 	const children = parent.children;
 	let childIndex: number;
 	let childBlock: MergeBlock;
@@ -93,7 +96,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
 		}
 		const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
 		let remainderCount = totalNodeCount % childCount;
-		const packedBlocks = new Array<MergeBlock>(MaxNodesInBlock);
+		const packedBlocks: IMergeNode[] = Array.from({ length: MaxNodesInBlock });
 		let childrenPackedCount = 0;
 		for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
 			let nodeCount = baseNodesInBlockCount;
@@ -127,7 +130,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
 	}
 }
 
-function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree) {
+function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
 	let prevSegment: ISegment | undefined;
@@ -188,7 +191,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 					);
 
 					segment.parent = undefined;
-					segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
+					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
 				} else {
 					holdNodes.push(segment);
 					prevSegment = segmentHasPositiveLength ? segment : undefined;

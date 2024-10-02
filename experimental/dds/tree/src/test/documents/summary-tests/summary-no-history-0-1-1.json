@@ -8,26 +8,15 @@
 						"changes": [
 							{
 								"destination": 0,
-								"source": [
-									[
-										4,
-										14,
-										[
-											5,
-											[
-												[7, 10, [99]],
-												[1, [2, [[3, 13, ["payload"]]]]]
-											],
-											6,
-											[[8, 15]]
-										]
-									]
-								],
+								"source": [[4, 14, [5, [[7, 10, [99]], [1, [2, [[3, 13, ["payload"]]]]]], 6, [[8, 15]]]]],
 								"type": 5
 							},
 							{
 								"source": 0,
-								"destination": { "side": 1, "referenceTrait": { "label": "root", "parent": 0 } },
+								"destination": {
+									"side": 1,
+									"referenceTrait": { "label": "root", "parent": 0 }
+								},
 								"type": 0
 							}
 						]

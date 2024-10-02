@@ -72,11 +72,7 @@
             "off"
         ],
         "@typescript-eslint/brace-style": [
-            "error",
-            "1tbs",
-            {
-                "allowSingleLine": true
-            }
+            "off"
         ],
         "@typescript-eslint/class-literal-property-style": [
             "error"
@@ -116,7 +112,7 @@
         "@typescript-eslint/explicit-function-return-type": [
             "error",
             {
-                "allowExpressions": false,
+                "allowExpressions": true,
                 "allowTypedFunctionExpressions": true,
                 "allowHigherOrderFunctions": true,
                 "allowDirectConstAssertionInArrowFunctions": true,
@@ -199,7 +195,10 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "error"
+            "error",
+            {
+                "ignoreRestArgs": true
+            }
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
@@ -604,7 +603,13 @@
                 "allow": [
                     "@fluid*/*/test*",
                     "@fluid*/*/internal/test*",
+                    "@fluid-example/*/internal",
+                    "@fluid-experimental/*/internal",
+                    "@fluid-internal/*/internal",
+                    "@fluid-private/*/internal",
+                    "@fluid-tools/*/internal",
                     "@fluidframework/*/internal",
+                    "@fluid-experimental/**",
                     "*/index.js"
                 ]
             }
@@ -1400,7 +1405,7 @@
             "error"
         ],
         "unicorn/no-useless-spread": [
-            "error"
+            "off"
         ],
         "unicorn/no-useless-switch-case": [
             "error"
@@ -1412,7 +1417,7 @@
             "error"
         ],
         "unicorn/number-literal-case": [
-            "error"
+            "off"
         ],
         "unicorn/numeric-separators-style": [
             "error",
@@ -1493,7 +1498,7 @@
             "error"
         ],
         "unicorn/prefer-module": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-native-coercion-functions": [
             "error"

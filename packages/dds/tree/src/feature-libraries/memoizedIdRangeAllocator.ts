@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, RevisionTag } from "../core/index.js";
+import type { ChangesetLocalId, RevisionTag } from "../core/index.js";
 import {
-	Mutable,
-	RangeMap,
+	type Mutable,
+	type RangeMap,
 	brand,
 	getFirstEntryFromRangeMap,
 	getOrAddEmptyToMap,
@@ -15,8 +15,6 @@ import {
 
 /**
  * A unique ID allocator that returns the output ID for the same input ID.
- *
- * @internal
  */
 export interface MemoizedIdRangeAllocator {
 	/**
@@ -42,7 +40,6 @@ export interface MemoizedIdRangeAllocator {
 }
 
 /**
- * @internal
  */
 export interface IdRange {
 	readonly first: ChangesetLocalId;
@@ -50,18 +47,13 @@ export interface IdRange {
 }
 
 /**
- * @internal
  */
 export const MemoizedIdRangeAllocator = {
 	fromNextId(nextId: number = 0): MemoizedIdRangeAllocator {
 		const rangeMap: Map<RevisionTag | undefined, RangeMap<number>> = new Map();
 		let _nextId = nextId;
 		return {
-			allocate(
-				key: string | number | undefined,
-				startId: number,
-				length?: number,
-			): IdRange[] {
+			allocate(key: string | number | undefined, startId: number, length?: number): IdRange[] {
 				let count = length ?? 1;
 				const out: IdRange[] = [];
 				const ranges = getOrAddEmptyToMap(rangeMap, key);

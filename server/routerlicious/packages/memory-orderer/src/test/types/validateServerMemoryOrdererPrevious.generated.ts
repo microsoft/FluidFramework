@@ -345,6 +345,7 @@ declare function get_old_ClassDeclaration_LocalKafka():
 declare function use_current_ClassDeclaration_LocalKafka(
     use: TypeOnly<current.LocalKafka>): void;
 use_current_ClassDeclaration_LocalKafka(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalKafka());
 
 /*
@@ -465,6 +466,7 @@ declare function get_old_ClassDeclaration_LocalOrderer():
 declare function use_current_ClassDeclaration_LocalOrderer(
     use: TypeOnly<current.LocalOrderer>): void;
 use_current_ClassDeclaration_LocalOrderer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalOrderer());
 
 /*

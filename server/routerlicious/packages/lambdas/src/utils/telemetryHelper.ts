@@ -18,6 +18,8 @@ import {
 	SessionState,
 } from "@fluidframework/server-services-telemetry";
 
+// TODO: documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -42,6 +44,8 @@ export const createSessionMetric = <T extends string = LumberEventName>(
 	return sessionMetric;
 };
 
+// TODO: documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -52,7 +56,7 @@ export const logCommonSessionEndMetrics = (
 	sequenceNumber: number,
 	lastSummarySequenceNumber: number,
 	activeNackMessageTypes: NackMessagesType[] | undefined,
-) => {
+): void => {
 	if (!sessionMetric) {
 		return;
 	}

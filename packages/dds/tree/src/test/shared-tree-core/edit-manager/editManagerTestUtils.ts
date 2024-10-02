@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	DeltaRoot,
-	RevisionTag,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type DeltaRoot,
+	type RevisionTag,
 	emptyDelta,
 } from "../../../core/index.js";
-import { Commit, EditManager } from "../../../shared-tree-core/index.js";
-import { RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
+import { type Commit, EditManager } from "../../../shared-tree-core/index.js";
+import { type RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
 import {
 	TestChange,
-	TestChangeFamily,
+	type TestChangeFamily,
 	asDelta,
 	testChangeFamilyFactory,
 } from "../../testChange.js";
@@ -41,7 +41,7 @@ export function testChangeEditManagerFactory(options: {
 }
 
 export function editManagerFactory<TChange = TestChange>(
-	family: ChangeFamily<any, TChange>,
+	family: ChangeFamily<ChangeFamilyEditor, TChange>,
 	options: {
 		sessionId?: SessionId;
 	} = {},
@@ -123,7 +123,8 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	// Subscribe to the local branch to emulate the behavior of SharedTree
 	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
-		manager.localBranch.apply(mintChange(undefined), mintRevisionTag());
+		const revision = mintRevisionTag();
+		manager.localBranch.apply({ change: mintChange(undefined), revision });
 	}
 	const trunkEdits = makeArray(trunkEditCount, () => {
 		const revision = mintRevisionTag();

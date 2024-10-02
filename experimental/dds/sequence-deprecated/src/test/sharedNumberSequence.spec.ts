@@ -8,14 +8,14 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedNumberSequenceFactory } from "../sequenceFactory.js";
-import { SharedNumberSequence } from "../sharedNumberSequence.js";
+import { SharedNumberSequenceClass } from "../sharedNumberSequence.js";
 
 describe("SharedNumberSequence", () => {
 	const documentId = "fakeId";
-	let sharedNumberSequence: SharedNumberSequence;
+	let sharedNumberSequence: SharedNumberSequenceClass;
 	beforeEach(() => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		sharedNumberSequence = new SharedNumberSequence(
+		sharedNumberSequence = new SharedNumberSequenceClass(
 			dataStoreRuntime,
 			documentId,
 			SharedNumberSequenceFactory.Attributes,

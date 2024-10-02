@@ -8,7 +8,7 @@
  */
 
 import { expect } from "chai";
-import * as _ from "lodash";
+import _ from "lodash";
 
 import { Collection } from "../../index";
 

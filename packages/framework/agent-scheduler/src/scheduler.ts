@@ -12,7 +12,10 @@ import {
 	FluidObjectHandle,
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
@@ -464,6 +467,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {

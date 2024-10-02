@@ -1,148 +1,148 @@
 {
-    "id": "bBwAAAAAHAAAA",
-    "latestSequenceNumber": 0,
-    "trees": [
-      {
-        "id": "bBwAAAAAHAAAA",
-        "sequenceNumber": 0,
-        "entries": [
-          {
-            "path": ".protocol",
-            "type": "tree"
-          },
-          {
-            "id": "bARCTBK4PQiMLVK2gR5hPRkId",
-            "path": ".protocol/attributes",
-            "type": "blob"
-          },
-          {
-            "id": "bARBkx1nses1pHL1vKnmFUfIC",
-            "path": ".protocol/quorumMembers",
-            "type": "blob"
-          },
-          {
-            "id": "bARBkx1nses1pHL1vKnmFUfIC",
-            "path": ".protocol/quorumProposals",
-            "type": "blob"
-          },
-          {
-            "id": "bARCU1kfWLffR8FAWoVTIvAgY",
-            "path": ".protocol/quorumValues",
-            "type": "blob"
-          },
-          {
-            "path": ".app",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/modelDataStore",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/modelDataStore/.channels",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/modelDataStore/.channels/root",
-            "type": "tree"
-          },
-          {
-            "id": "bARAjMKoe0s36EFazR3KCn1Ep",
-            "path": ".app/.channels/modelDataStore/.channels/root/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARAormqx_8n851hhTFoXzLZP",
-            "path": ".app/.channels/modelDataStore/.channels/root/.attributes",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/modelDataStore/.channels/b7d3935d-87a2-43a0-84b2-cabea115c185",
-            "type": "tree"
-          },
-          {
-            "id": "bARD4evKRJfHnvq9fmCF_zOzL",
-            "path": ".app/.channels/modelDataStore/.channels/b7d3935d-87a2-43a0-84b2-cabea115c185/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARDgA72KM8LbAQBIhsNGf41k",
-            "path": ".app/.channels/modelDataStore/.channels/b7d3935d-87a2-43a0-84b2-cabea115c185/.attributes",
-            "type": "blob"
-          },
-          {
-            "id": "bARCG4tPyl3Xs4fxLunOVXO_3",
-            "path": ".app/.channels/modelDataStore/.component",
-            "type": "blob"
-          },
-          {
-            "id": "bARAy7bzv6YtG6x_4QPmTDINy",
-            "path": ".app/.metadata",
-            "type": "blob"
-          },
-          {
-            "id": "bARAtiTVBfW1Kdghc+3muF4h4",
-            "path": ".app/.electedSummarizer",
-            "type": "blob"
-          }
-        ]
-      }
-    ],
-    "blobs": [
-      {
-        "id": "bARBkx1nses1pHL1vKnmFUfIC",
-        "content": "[]",
-        "size": 2
-      },
-      {
-        "id": "bARAtiTVBfW1Kdghc+3muF4h4",
-        "content": "{\"electionSequenceNumber\":0}",
-        "size": 28
-      },
-      {
-        "id": "bARD4evKRJfHnvq9fmCF_zOzL",
-        "content": "{\"strokes\":[],\"strokeIndex\":{}}",
-        "size": 31
-      },
-      {
-        "id": "bARCTBK4PQiMLVK2gR5hPRkId",
-        "content": "{\"minimumSequenceNumber\":0,\"sequenceNumber\":0,\"term\":1}",
-        "size": 55
-      },
-      {
-        "id": "bARCG4tPyl3Xs4fxLunOVXO_3",
-        "content": "{\"pkg\":\"[\\\"Canvas\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
-        "size": 70
-      },
-      {
-        "id": "bARDgA72KM8LbAQBIhsNGf41k",
-        "content": "{\"type\":\"https://graph.microsoft.com/types/ink\",\"snapshotFormatVersion\":\"0.2\",\"packageVersion\":\"2.0.0\"}",
-        "size": 103
-      },
-      {
-        "id": "bARAormqx_8n851hhTFoXzLZP",
-        "content": "{\"type\":\"https://graph.microsoft.com/types/directory\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"2.0.0\"}",
-        "size": 109
-      },
-      {
-        "id": "bARAjMKoe0s36EFazR3KCn1Ep",
-        "content": "{\"blobs\":[],\"content\":{\"storage\":{\"ink\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/modelDataStore/b7d3935d-87a2-43a0-84b2-cabea115c185\"}}}}}",
-        "size": 156
-      },
-      {
-        "id": "bARAy7bzv6YtG6x_4QPmTDINy",
-        "content": "{\"createContainerRuntimeVersion\":\"2.0.0\",\"createContainerTimestamp\":1655233741235,\"summaryCount\":1,\"summaryNumber\":1,\"summaryFormatVersion\":1,\"gcFeature\":1,\"sweepEnabled\":false}",
-        "size": 177
-      },
-      {
-        "id": "bARCU1kfWLffR8FAWoVTIvAgY",
-        "content": "[[\"code\",{\"key\":\"code\",\"value\":{\"package\":{\"name\":\"@fluid-example/canvas\",\"version\":\"2.0.0\",\"private\":true,\"description\":\"Fluid ink canvas\",\"homepage\":\"https://fluidframework.com\",\"repository\":{\"type\":\"git\",\"url\":\"https://github.com/microsoft/FluidFramework.git\",\"directory\":\"examples/data-objects/canvas\"},\"license\":\"MIT\",\"author\":\"Microsoft and contributors\",\"main\":\"dist/index.js\",\"module\":\"lib/index.js\",\"types\":\"dist/index.d.ts\",\"scripts\":{\"build\":\"concurrently npm:build:compile npm:lint\",\"build:compile\":\"concurrently npm:tsc npm:build:esnext\",\"build:esnext\":\"tsc --project ./tsconfig.esnext.json\",\"build:full\":\"concurrently npm:build npm:webpack\",\"build:full:compile\":\"concurrently npm:build:compile npm:webpack\",\"clean\":\"rimraf dist lib *.tsbuildinfo *.build.log\",\"eslint\":\"eslint --format stylish src\",\"eslint:fix\":\"eslint --format stylish src --fix --fix-type problem,suggestion,layout\",\"lint\":\"npm run eslint\",\"lint:fix\":\"npm run eslint:fix\",\"prepack\":\"npm run webpack\",\"start\":\"webpack serve --config webpack.config.js\",\"start:docker\":\"webpack serve --config webpack.config.js --env mode=docker\",\"start:r11s\":\"webpack serve --config webpack.config.js --env mode=r11s\",\"start:spo\":\"webpack serve --config webpack.config.js --env mode=spo\",\"start:spo-df\":\"webpack serve --config webpack.config.js --env mode=spo-df\",\"start:tinylicious\":\"webpack serve --config webpack.config.js --env mode=tinylicious\",\"test\":\"npm run test:jest\",\"test:jest\":\"jest\",\"test:jest:verbose\":\"cross-env FLUID_TEST_VERBOSE=1 jest\",\"tsc\":\"tsc\",\"webpack\":\"webpack --env production\",\"webpack:dev\":\"webpack --env development\"},\"dependencies\":{\"@fluid-example/example-utils\":\"^2.0.0\",\"@fluidframework/aqueduct\":\"^2.0.0\",\"@fluidframework/common-definitions\":\"^0.20.1\",\"@fluidframework/core-interfaces\":\"^2.0.0\",\"@fluid-experimental/ink\":\"^2.0.0\",\"react\":\"^16.10.2\"},\"devDependencies\":{\"@fluid-example/webpack-fluid-loader\":\"^2.0.0\",\"@fluidframework/build-common\":\"^0.23.0\",\"@fluidframework/eslint-config-fluid\":\"^0.28.2000\",\"@fluidframework/test-tools\":\"^0.2.3074\",\"@rushstack/eslint-config\":\"^2.5.1\",\"@types/expect-puppeteer\":\"2.2.1\",\"@types/jest\":\"22.2.3\",\"@types/jest-environment-puppeteer\":\"2.2.0\",\"@types/node\":\"^14.18.0\",\"@types/puppeteer\":\"1.3.0\",\"@types/react\":\"^16.9.15\",\"concurrently\":\"^6.2.0\",\"cross-env\":\"^7.0.2\",\"css-loader\":\"^1.0.0\",\"eslint\":\"~8.6.0\",\"jest\":\"^26.6.3\",\"jest-junit\":\"^10.0.0\",\"jest-puppeteer\":\"^4.3.0\",\"less\":\"~3.9.0\",\"less-loader\":\"^4.1.0\",\"puppeteer\":\"^1.20.0\",\"rimraf\":\"^2.6.2\",\"style-loader\":\"^1.0.0\",\"ts-loader\":\"^9.3.0\",\"typescript\":\"~4.5.5\",\"typescript-formatter\":\"7.1.0\",\"url-loader\":\"^2.1.0\",\"webpack\":\"^5.72.0\",\"webpack-cli\":\"^4.9.2\",\"webpack-dev-server\":\"~4.6.0\",\"webpack-merge\":\"^5.8.0\"},\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"dist/main.bundle.js\"],\"library\":\"main\"}}},\"jest-junit\":{\"outputDirectory\":\"nyc\",\"outputName\":\"jest-junit-report.xml\"}},\"config\":{}},\"approvalSequenceNumber\":0,\"commitSequenceNumber\":0,\"sequenceNumber\":0}]]",
-        "size": 3000
-      }
-    ],
-    "ops": []
-  }
+	"id": "bBwAAAAAHAAAA",
+	"latestSequenceNumber": 0,
+	"trees": [
+		{
+			"id": "bBwAAAAAHAAAA",
+			"sequenceNumber": 0,
+			"entries": [
+				{
+					"path": ".protocol",
+					"type": "tree"
+				},
+				{
+					"id": "bARCTBK4PQiMLVK2gR5hPRkId",
+					"path": ".protocol/attributes",
+					"type": "blob"
+				},
+				{
+					"id": "bARBkx1nses1pHL1vKnmFUfIC",
+					"path": ".protocol/quorumMembers",
+					"type": "blob"
+				},
+				{
+					"id": "bARBkx1nses1pHL1vKnmFUfIC",
+					"path": ".protocol/quorumProposals",
+					"type": "blob"
+				},
+				{
+					"id": "bARCU1kfWLffR8FAWoVTIvAgY",
+					"path": ".protocol/quorumValues",
+					"type": "blob"
+				},
+				{
+					"path": ".app",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/modelDataStore",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/modelDataStore/.channels",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/modelDataStore/.channels/root",
+					"type": "tree"
+				},
+				{
+					"id": "bARAjMKoe0s36EFazR3KCn1Ep",
+					"path": ".app/.channels/modelDataStore/.channels/root/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARAormqx_8n851hhTFoXzLZP",
+					"path": ".app/.channels/modelDataStore/.channels/root/.attributes",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/modelDataStore/.channels/b7d3935d-87a2-43a0-84b2-cabea115c185",
+					"type": "tree"
+				},
+				{
+					"id": "bARD4evKRJfHnvq9fmCF_zOzL",
+					"path": ".app/.channels/modelDataStore/.channels/b7d3935d-87a2-43a0-84b2-cabea115c185/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARDgA72KM8LbAQBIhsNGf41k",
+					"path": ".app/.channels/modelDataStore/.channels/b7d3935d-87a2-43a0-84b2-cabea115c185/.attributes",
+					"type": "blob"
+				},
+				{
+					"id": "bARCG4tPyl3Xs4fxLunOVXO_3",
+					"path": ".app/.channels/modelDataStore/.component",
+					"type": "blob"
+				},
+				{
+					"id": "bARAy7bzv6YtG6x_4QPmTDINy",
+					"path": ".app/.metadata",
+					"type": "blob"
+				},
+				{
+					"id": "bARAtiTVBfW1Kdghc+3muF4h4",
+					"path": ".app/.electedSummarizer",
+					"type": "blob"
+				}
+			]
+		}
+	],
+	"blobs": [
+		{
+			"id": "bARBkx1nses1pHL1vKnmFUfIC",
+			"content": "[]",
+			"size": 2
+		},
+		{
+			"id": "bARAtiTVBfW1Kdghc+3muF4h4",
+			"content": "{\"electionSequenceNumber\":0}",
+			"size": 28
+		},
+		{
+			"id": "bARD4evKRJfHnvq9fmCF_zOzL",
+			"content": "{\"strokes\":[],\"strokeIndex\":{}}",
+			"size": 31
+		},
+		{
+			"id": "bARCTBK4PQiMLVK2gR5hPRkId",
+			"content": "{\"minimumSequenceNumber\":0,\"sequenceNumber\":0,\"term\":1}",
+			"size": 55
+		},
+		{
+			"id": "bARCG4tPyl3Xs4fxLunOVXO_3",
+			"content": "{\"pkg\":\"[\\\"Canvas\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
+			"size": 70
+		},
+		{
+			"id": "bARDgA72KM8LbAQBIhsNGf41k",
+			"content": "{\"type\":\"https://graph.microsoft.com/types/ink\",\"snapshotFormatVersion\":\"0.2\",\"packageVersion\":\"2.0.0\"}",
+			"size": 103
+		},
+		{
+			"id": "bARAormqx_8n851hhTFoXzLZP",
+			"content": "{\"type\":\"https://graph.microsoft.com/types/directory\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"2.0.0\"}",
+			"size": 109
+		},
+		{
+			"id": "bARAjMKoe0s36EFazR3KCn1Ep",
+			"content": "{\"blobs\":[],\"content\":{\"storage\":{\"ink\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/modelDataStore/b7d3935d-87a2-43a0-84b2-cabea115c185\"}}}}}",
+			"size": 156
+		},
+		{
+			"id": "bARAy7bzv6YtG6x_4QPmTDINy",
+			"content": "{\"createContainerRuntimeVersion\":\"2.0.0\",\"createContainerTimestamp\":1655233741235,\"summaryCount\":1,\"summaryNumber\":1,\"summaryFormatVersion\":1,\"gcFeature\":1,\"sweepEnabled\":false}",
+			"size": 177
+		},
+		{
+			"id": "bARCU1kfWLffR8FAWoVTIvAgY",
+			"content": "[[\"code\",{\"key\":\"code\",\"value\":{\"package\":{\"name\":\"@fluid-example/canvas\",\"version\":\"2.0.0\",\"private\":true,\"description\":\"Fluid ink canvas\",\"homepage\":\"https://fluidframework.com\",\"repository\":{\"type\":\"git\",\"url\":\"https://github.com/microsoft/FluidFramework.git\",\"directory\":\"examples/data-objects/canvas\"},\"license\":\"MIT\",\"author\":\"Microsoft and contributors\",\"main\":\"dist/index.js\",\"module\":\"lib/index.js\",\"types\":\"dist/index.d.ts\",\"scripts\":{\"build\":\"concurrently npm:build:compile npm:lint\",\"build:compile\":\"concurrently npm:tsc npm:build:esnext\",\"build:esnext\":\"tsc --project ./tsconfig.esnext.json\",\"build:full\":\"concurrently npm:build npm:webpack\",\"build:full:compile\":\"concurrently npm:build:compile npm:webpack\",\"clean\":\"rimraf dist lib *.tsbuildinfo *.build.log\",\"eslint\":\"eslint --format stylish src\",\"eslint:fix\":\"eslint --format stylish src --fix --fix-type problem,suggestion,layout\",\"lint\":\"npm run eslint\",\"lint:fix\":\"npm run eslint:fix\",\"prepack\":\"npm run webpack\",\"start\":\"webpack serve --config webpack.config.js\",\"start:docker\":\"webpack serve --config webpack.config.js --env mode=docker\",\"start:r11s\":\"webpack serve --config webpack.config.js --env mode=r11s\",\"start:spo\":\"webpack serve --config webpack.config.js --env mode=spo\",\"start:spo-df\":\"webpack serve --config webpack.config.js --env mode=spo-df\",\"start:tinylicious\":\"webpack serve --config webpack.config.js --env mode=tinylicious\",\"test\":\"npm run test:jest\",\"test:jest\":\"jest\",\"test:jest:verbose\":\"cross-env FLUID_TEST_VERBOSE=1 jest\",\"tsc\":\"tsc\",\"webpack\":\"webpack --env production\",\"webpack:dev\":\"webpack --env development\"},\"dependencies\":{\"@fluid-example/example-utils\":\"^2.0.0\",\"@fluidframework/aqueduct\":\"^2.0.0\",\"@fluidframework/common-definitions\":\"^0.20.1\",\"@fluidframework/core-interfaces\":\"^2.0.0\",\"@fluid-experimental/ink\":\"^2.0.0\",\"react\":\"^16.10.2\"},\"devDependencies\":{\"@fluid-example/webpack-fluid-loader\":\"^2.0.0\",\"@fluidframework/build-common\":\"^0.23.0\",\"@fluidframework/eslint-config-fluid\":\"^0.28.2000\",\"@fluidframework/test-tools\":\"^0.2.3074\",\"@rushstack/eslint-config\":\"^2.5.1\",\"@types/expect-puppeteer\":\"2.2.1\",\"@types/jest\":\"22.2.3\",\"@types/jest-environment-puppeteer\":\"2.2.0\",\"@types/node\":\"^14.18.0\",\"@types/puppeteer\":\"1.3.0\",\"@types/react\":\"^16.9.15\",\"concurrently\":\"^6.2.0\",\"cross-env\":\"^7.0.2\",\"css-loader\":\"^1.0.0\",\"eslint\":\"~8.6.0\",\"jest\":\"^26.6.3\",\"jest-junit\":\"^10.0.0\",\"jest-puppeteer\":\"^4.3.0\",\"less\":\"~3.9.0\",\"less-loader\":\"^4.1.0\",\"puppeteer\":\"^1.20.0\",\"rimraf\":\"^2.6.2\",\"style-loader\":\"^1.0.0\",\"ts-loader\":\"^9.3.0\",\"typescript\":\"~4.5.5\",\"typescript-formatter\":\"7.1.0\",\"url-loader\":\"^2.1.0\",\"webpack\":\"^5.72.0\",\"webpack-cli\":\"^4.9.2\",\"webpack-dev-server\":\"~4.6.0\",\"webpack-merge\":\"^5.8.0\"},\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"dist/main.bundle.js\"],\"library\":\"main\"}}},\"jest-junit\":{\"outputDirectory\":\"nyc\",\"outputName\":\"jest-junit-report.xml\"}},\"config\":{}},\"approvalSequenceNumber\":0,\"commitSequenceNumber\":0,\"sequenceNumber\":0}]]",
+			"size": 3000
+		}
+	],
+	"ops": []
+}

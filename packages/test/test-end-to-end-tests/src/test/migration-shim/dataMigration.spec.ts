@@ -20,20 +20,14 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -43,13 +37,7 @@ class InventorySchema extends builder.object("abcInventory", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<typeof InventorySchema> {
-	return tree.schematize(
-		new TreeConfiguration(InventorySchema, () => ({
-			quantity: 0,
-		})),
-	);
-}
+const treeConfig = new TreeViewConfiguration({ schema: InventorySchema });
 
 describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -152,13 +140,9 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 			const nodeId = rootNode.traits.get(legacyNodeId)![0];
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
 			const quantity = legacyNode.payload.quantity as number;
-			newTree
-				.schematize(
-					new TreeConfiguration(InventorySchema, () => ({
-						quantity,
-					})),
-				)
-				[disposeSymbol]();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ quantity });
+			view.dispose();
 		},
 	);
 
@@ -254,8 +238,8 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		const tree1 = shim1.currentTree as ITree;
 		const tree2 = shim2.currentTree as ITree;
 
-		const view1 = getNewTreeView(tree1);
-		const view2 = getNewTreeView(tree2);
+		const view1 = tree1.viewWith(treeConfig);
+		const view2 = tree2.viewWith(treeConfig);
 		const treeNode1 = view1.root;
 		const treeNode2 = view2.root;
 
@@ -312,11 +296,11 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Get the migrated values from the new tree
 		const tree1 = shim1.currentTree as ITree;
-		const view1 = getNewTreeView(tree1);
+		const view1 = tree1.viewWith(treeConfig);
 		const treeNode1 = view1.root;
 
 		const tree2 = shim2.currentTree;
-		const view2 = getNewTreeView(tree2);
+		const view2 = tree2.viewWith(treeConfig);
 		const treeNode2 = view2.root;
 		const migratedValue2 = treeNode2.quantity;
 		assert(

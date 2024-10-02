@@ -46,7 +46,6 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 
 	pollIntervalMs: number;
 	maxMessageSize: number;
-	eventHubConnString?: string;
 }
 
 /**
@@ -108,7 +107,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	/**
 	 * Creates a connection to Kafka. Will reconnect on failure.
 	 */
-	protected connect() {
+	protected async connect() {
 		// Exit out if we are already connected, are in the process of connecting, or closed
 		if (this.connectedProducer || this.connectingProducer || this.closed) {
 			return;
@@ -158,7 +157,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 					restart: false,
 					errorLabel: "rdkafkaProducer:connection.failure",
 				});
-				this.connect();
+				await this.connect();
 			} catch (err) {
 				Lumberjack.error(
 					"Error encountered when handling producer connection.failure",
@@ -190,6 +189,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			Lumberjack.info(`RdKafka producer: ${event.message}`);
 		});
 
+		await this.setOauthBearerTokenIfNeeded(producer);
 		producer.connect();
 
 		producer.setPollInterval(this.producerOptions.pollIntervalMs);
@@ -462,7 +462,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		await this.close(true);
 
-		this.connect();
+		await this.connect();
 	}
 
 	/**

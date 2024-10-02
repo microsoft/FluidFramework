@@ -47,7 +47,6 @@ export type {
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
-	ISignalEnvelope,
 } from "./protocol.js";
 export type {
 	CreateChildSummarizerNodeParam,
@@ -61,6 +60,7 @@ export type {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	ITelemetryContextExt,
 	SummarizeInternalFn,
 } from "./summary.js";
 export {

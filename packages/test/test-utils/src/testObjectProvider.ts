@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
@@ -22,6 +21,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -46,6 +46,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOpProcessingController {
@@ -325,7 +326,7 @@ export class EventAndErrorTrackingLogger
 			downgrade: true,
 		},
 		// This log's category changes depending on the op latency. test results shouldn't be affected but if we see lots we'd like an alert from the logs.
-		{ eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
+		{ eventName: "fluid:telemetry:OpRoundtripTime" },
 	];
 
 	constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
@@ -531,7 +532,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -895,7 +899,10 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -1087,6 +1094,20 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	}
 }
 
+/** Summarize the event with just the primary properties, for succinct output in case of test failure */
+const primaryEventProps = ({
+	category,
+	eventName,
+	error,
+	errorType,
+}: ITelemetryBaseEvent) => ({
+	category,
+	eventName,
+	error,
+	errorType,
+	["..."]: "*** Additional properties not shown, see full log for details ***",
+});
+
 /**
  * @internal
  */
@@ -1101,7 +1122,7 @@ export function getUnexpectedLogErrorException(
 	if (results.unexpectedErrors.length > 0) {
 		return new Error(
 			`${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(
-				results.unexpectedErrors,
+				results.unexpectedErrors.map(primaryEventProps),
 				undefined,
 				2,
 			)}`,

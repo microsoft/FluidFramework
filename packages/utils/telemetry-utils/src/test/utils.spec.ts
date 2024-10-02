@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
@@ -13,8 +13,8 @@ import {
 
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
-import { IEventSampler, createSampledLogger } from "../utils.js";
+import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import { type IEventSampler, createSampledLogger } from "../utils.js";
 
 describe("tagData", () => {
 	it("tagData with data", () => {
@@ -85,7 +85,6 @@ describe("Sampling", () => {
 	/**
 	 * Creates an event sampler that uses a systematic approach to sampling (Sampling every nth event)
 	 */
-	// eslint-disable-next-line unicorn/consistent-function-scoping
 	function createSystematicEventSampler(options: { samplingRate: number }): IEventSampler {
 		let eventCount = -1;
 		return {
@@ -172,6 +171,40 @@ describe("Sampling", () => {
 		);
 	});
 
+	it("Events are not logged if DisableSampling telemetry flag is set to true but skipLoggingWhenSamplingIsDisabled is provided as true", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		const loggerWithoutSampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 1 }),
+			true, // skipLoggingWhenSamplingIsDisabled
+		);
+		const loggerWithEvery5Sampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 5 }),
+			true, // skipLoggingWhenSamplingIsDisabled
+		);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			0,
+			"skipLoggingWhenSamplingIsDisabled flag was not honored by loggerWithoutSampling",
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryFive").length,
+			0,
+			"skipLoggingWhenSamplingIsDisabled flag was not honored by loggerWithEvery5Sampling",
+		);
+	});
+
 	it("Systematic Sampling works as expected", () => {
 		const injectedSettings = {
 			"Fluid.Telemetry.DisableSampling": false,
@@ -231,7 +264,6 @@ describe("Sampling", () => {
 		let exampleAppDataBoolean1 = true;
 		let exampleAppDataModeString = "ready";
 
-		/* eslint-disable unicorn/consistent-function-scoping */
 		const shouldSampleEvent = (
 			appNumber1: number,
 			appNumber2: number,
@@ -243,7 +275,6 @@ describe("Sampling", () => {
 
 			return shouldSample;
 		};
-		/* eslint-enable */
 
 		const customEventSampler: IEventSampler = {
 			sample: () =>

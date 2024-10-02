@@ -6,15 +6,9 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
-	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,
-	ISummarizeInternalResult,
-	ISummarizeResult,
 	ISummarizerNodeConfigWithGC,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
@@ -74,17 +68,20 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
 
+	// Tracks the work-in-progress used routes of child nodes during summary.
+	private wipChildNodesUsedRoutes: Map<string, string[]> | undefined;
+
 	// This is the last known used routes of this node as seen by the server as part of a summary.
 	private referenceUsedRoutes: string[] | undefined;
 
 	// The base GC details of this node used to initialize the GC state.
-	private readonly baseGCDetailsP: LazyPromise<IGarbageCollectionDetailsBase>;
+	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	// Keeps track of whether we have loaded the base details to ensure that we only do it once.
 	private baseGCDetailsLoaded: boolean = false;
 
 	// The base GC details for the child nodes. This is passed to child nodes when creating them.
-	private readonly childNodesBaseGCDetailsP: LazyPromise<
+	private readonly childNodesBaseGCDetailsP: Promise<
 		Map<string, IGarbageCollectionDetailsBase>
 	>;
 
@@ -104,12 +101,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 */
 	public constructor(
 		logger: ITelemetryBaseLogger,
-		private readonly summarizeFn: (
-			fullTree: boolean,
-			trackState: boolean,
-			telemetryContext?: ITelemetryContext,
-			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-		) => Promise<ISummarizeInternalResult>,
+		summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfigWithGC,
 		changeSequenceNumber: number,
 		/** Undefined means created without summary */
@@ -122,18 +114,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	) {
 		super(
 			logger,
-			async (
-				fullTree: boolean,
-				_trackState: boolean,
-				telemetryContext?: ITelemetryContext,
-				incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-			) =>
-				summarizeFn(
-					fullTree,
-					true /* trackState */,
-					telemetryContext,
-					incrementalSummaryContext,
-				),
+			summarizeInternalFn,
 			config,
 			changeSequenceNumber,
 			latestSummary,
@@ -184,27 +165,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		}
 	}
 
-	public async summarize(
-		fullTree: boolean,
-		trackState: boolean = true,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummarizeResult> {
-		// If GC is not disabled and a summary is in progress, GC should have run and updated the used routes for this
-		// summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
-		if (!this.gcDisabled && this.isSummaryInProgress()) {
-			assert(
-				this.wipSerializedUsedRoutes !== undefined,
-				0x1b1 /* "wip used routes should be set if tracking a summary" */,
-			);
-		}
-
-		// If trackState is true, get summary from base summarizer node which tracks summary state.
-		// If trackState is false, get summary from summarizeInternal.
-		return trackState
-			? super.summarize(fullTree, true /* trackState */, telemetryContext)
-			: this.summarizeFn(fullTree, trackState, telemetryContext);
-	}
-
 	/**
 	 * Returns the GC data of this node. If nothing has changed since last summary, it tries to reuse the data from
 	 * the previous summary. Else, it gets new GC data from the underlying Fluid object.
@@ -228,7 +188,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// GC data may not be available if loaded from a snapshot with either GC disabled or before GC was added.
 		// Note - canReuseHandle is checked to be consistent with summarize - generate GC data for nodes for which
 		// summary must be generated.
-		if (this.canReuseHandle && !fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
+		if (
+			this.canReuseHandle &&
+			!fullGC &&
+			!this.hasDataChanged() &&
+			this.gcData !== undefined
+		) {
 			return cloneGCData(this.gcData);
 		}
 
@@ -324,10 +289,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		if (!this.gcDisabled) {
 			const summaryNode = this.pendingSummaries.get(proposalHandle);
 			if (summaryNode !== undefined) {
-				const summaryNodeWithGC = new SummaryNodeWithGC(
-					wipSerializedUsedRoutes,
-					summaryNode,
-				);
+				const summaryNodeWithGC = new SummaryNodeWithGC(wipSerializedUsedRoutes, summaryNode);
 				this.pendingSummaries.set(proposalHandle, summaryNodeWithGC);
 			}
 		}
@@ -338,6 +300,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 */
 	public clearSummary() {
 		this.wipSerializedUsedRoutes = undefined;
+		this.wipChildNodesUsedRoutes = undefined;
 		super.clearSummary();
 	}
 
@@ -444,6 +407,20 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string) {
 		super.maybeUpdateChildState(child, id);
 
+		// If GC has run on this node and summarization isn't complete, this.wipSerializedUsedRoutes will be defined.
+		// In that case, update the used routes of the child node. This can happen in scenarios where a data store
+		// doesn't have any ops but its reference state changed. So, it gets realized during summarize after GC ran
+		// so GC would not have run on this node which is fine.
+		if (this.wipSerializedUsedRoutes !== undefined) {
+			// If the child route used routes are not defined, initialize it now and it can be used for all child nodes
+			// created until this summarization process is completed. This is an optimization to unpack the used routes
+			// only when needed.
+			if (this.wipChildNodesUsedRoutes === undefined) {
+				this.wipChildNodesUsedRoutes = unpackChildNodesUsedRoutes(this.usedRoutes);
+			}
+			child.updateUsedRoutes(this.wipChildNodesUsedRoutes.get(id) ?? [""]);
+		}
+
 		// In case we have pending summaries on the parent, let's initialize it on the child.
 		if (child.latestSummary !== undefined) {
 			for (const [key, value] of this.pendingSummaries.entries()) {
@@ -517,7 +494,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * was previously used and became unused (or vice versa), its used state has changed.
 	 */
 	private hasUsedStateChanged(): boolean {
-		// If GC is disabled, we are not tracking used state, return false.
+		// If GC is disabled, it should not affect summary state, return false.
 		if (this.gcDisabled) {
 			return false;
 		}

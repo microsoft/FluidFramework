@@ -65,7 +65,7 @@ export function visitBipartiteIterableTree<A extends Iterable<B>, B extends Iter
 	root: A,
 	visitorA: (item: A) => Skip | undefined,
 	visitorB: (item: B) => Skip | undefined,
-) {
+): void {
 	const queueA = [root];
 	let nextA: A | undefined;
 	while ((nextA = queueA.pop())) {
@@ -102,7 +102,7 @@ export function visitBipartiteIterableTreeWithState<A, B, StateA, StateB>(
 	iterateB: (b: B) => Iterable<A>,
 	visitorA: (item: A, fromAbove: StateA) => Skip | StateB,
 	visitorB: (item: B, fromAbove: StateB) => Skip | StateA,
-) {
+): void {
 	const queueA: [A, StateA][] = [[root, fromAbove]];
 	let next: [A, StateA] | undefined;
 	while ((next = queueA.pop())) {

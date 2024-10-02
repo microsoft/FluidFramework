@@ -6,13 +6,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreContext,
@@ -33,8 +38,7 @@ import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager
 function insertMarkers(
 	text: SharedString,
 	treeRangeLabel: string,
-	beginMarkerPos: number,
-	endMarkerPos: number,
+	position: number,
 	nodeType: string,
 ) {
 	const endMarkerProps = {};
@@ -45,8 +49,8 @@ function insertMarkers(
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
 
-	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
-	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position + 1, ReferenceType.Simple, endMarkerProps);
 }
 
 /**
@@ -55,7 +59,10 @@ function insertMarkers(
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  * @internal
  */
-export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
+export class ProseMirror
+	extends EventEmitter
+	implements IFluidLoadable, IProvideRichTextEditor
+{
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
 		const collection = new ProseMirror(runtime);
 		await collection.initialize(existing);
@@ -97,7 +104,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
-			insertMarkers(text, "prosemirror", 0, 1, "paragraph");
+			insertMarkers(text, "prosemirror", 0, "paragraph");
 			text.insertText(1, "Hello, world!");
 
 			this.root.set("text", text.handle);

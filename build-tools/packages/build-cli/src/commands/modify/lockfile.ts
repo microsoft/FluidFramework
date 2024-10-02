@@ -7,8 +7,8 @@ import { updatePackageJsonFile } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
+import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand } from "../../library/index.js";
 
 /**
  * Updates the version of a dependency in the lockfile.
@@ -38,7 +38,8 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 			required: true,
 		}),
 		version: Flags.string({
-			description: "Semver range specifier to use when updating the dependency.",
+			description:
+				"A semver version or range specifier (e.g. ^1.2.3) to use when updating the dependency.",
 			required: true,
 			// Future improvement: use 'parse:' to validate that this is a valid semver range.
 		}),

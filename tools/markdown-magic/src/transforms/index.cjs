@@ -3,19 +3,50 @@
  * Licensed under the MIT License.
  */
 
+const { apiDocsTransform, generateApiDocsSection } = require("./apiDocsLinkSectionTransform.cjs");
+
 const {
-	apiDocsLinkSectionTransform,
-	generateApiDocsLinkSection,
-} = require("./apiDocsLinkSectionTransform.cjs");
+	generateExampleGettingStartedSection,
+	exampleGettingStartedTransform,
+} = require("./exampleGettingStartedTransform.cjs");
+
+const { generateSectionFromTemplate } = require("./generateSectionFromTemplate.cjs");
+
+const { includeTransform } = require("./includeTransform.cjs");
+
+const {
+	generateInstallationInstructionsSection,
+	installationInstructionsTransform,
+} = require("./installationInstructionsTransform.cjs");
+
+const {
+	generateImportInstructionsSection,
+	importInstructionsTransform,
+} = require("./packageImportInstructionsTransform.cjs");
+
+const {
+	generatePackageScopeNotice,
+	packageScopeNoticeTransform,
+} = require("./packageScopeNoticeTransform.cjs");
 
 const {
 	generatePackageScriptsSection,
-	packageScriptsSectionTransform,
+	packageScriptsTransform,
 } = require("./packageScriptsTransform.cjs");
 
 module.exports = {
-	apiDocsLinkSectionTransform,
-	generateApiDocsLinkSection,
+	apiDocsTransform,
+	exampleGettingStartedTransform,
+	generateApiDocsSection,
+	generateExampleGettingStartedSection,
+	generateInstallationInstructionsSection,
+	generateImportInstructionsSection,
+	generatePackageScopeNotice,
 	generatePackageScriptsSection,
-	packageScriptsSectionTransform,
+	generateSectionFromTemplate,
+	includeTransform,
+	installationInstructionsTransform,
+	importInstructionsTransform,
+	packageScopeNoticeTransform,
+	packageScriptsTransform,
 };

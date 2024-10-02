@@ -14,6 +14,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+
 import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
@@ -51,9 +52,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 							resolve();
 						}
 					};
-					container.audience.on("addMember", (newClientId: string) =>
-						listener(newClientId),
-					);
+					container.audience.on("addMember", (newClientId: string) => listener(newClientId));
 				},
 				// Wait for 2 seconds to get the client in audience. This wait is needed for a client to get added to its
 				// own audience and 2 seconds should be enough time. It it takes longer than this, we might need to
@@ -65,7 +64,11 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 	}
 
 	/** Function to wait for a client with the given clientId to be remove from the audience of the given container. */
-	async function waitForClientRemove(container: IContainer, clientId: string, errorMsg: string) {
+	async function waitForClientRemove(
+		container: IContainer,
+		clientId: string,
+		errorMsg: string,
+	) {
 		if (container.audience.getMember(clientId) !== undefined) {
 			return timeoutPromise(
 				(resolve) => {

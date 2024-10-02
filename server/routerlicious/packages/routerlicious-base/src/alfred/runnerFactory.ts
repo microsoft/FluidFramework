@@ -20,6 +20,7 @@ import {
 	DocumentDeleteService,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 /**
  * @internal
@@ -48,6 +49,7 @@ export class AlfredResources implements core.IResources {
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
+		public readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -99,6 +101,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			"kafka:lib:producerGlobalAdditionalConfig",
 		);
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -113,6 +116,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaSslCACertFilePath,
 			eventHubConnString,
 			kafkaProducerGlobalAdditionalConfig,
+			oauthBearerConfig,
 		);
 
 		const redisConfig = config.get("redis");
@@ -315,6 +319,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+			| number
+			| undefined;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
@@ -326,6 +333,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableWholeSummaryUpload,
 			opsCollection,
 			storageNameAllocator,
+			ephemeralDocumentTTLSec,
 		);
 
 		const enableClientIPLogging = config.get("alfred:enableClientIPLogging") ?? false;
@@ -385,6 +393,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -413,6 +422,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			null,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
+			resources.readinessCheck,
 		);
 	}
 }

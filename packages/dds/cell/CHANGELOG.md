@@ -1,5 +1,33 @@
 # @fluidframework/cell
 
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+Dependency updates only.
+
+## 2.1.0
+
+Dependency updates only.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   cell: SharedCell now uses ISharedObjectKind and does not export class [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Most users of SharedCell just need to replace usages of the `SharedCell` type with `ISharedCell`.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

@@ -23,7 +23,7 @@
 		"ci:build": "npm run build",
 		"ci:linkcheck": "start-server-and-test ci:start 1313 linkcheck:full",
 		"ci:start": "http-server ./public --port 1313 --silent",
-		"clean": "rimraf --glob public content/docs/api _api-extractor-temp",
+		"clean": "rimraf --glob public content/docs/api _api-extractor-temp _doc-models",
 		"download:api": "node ./download-apis.js",
 		"format": "npm run prettier:fix",
 		"hugo": "hugo",
@@ -33,13 +33,13 @@
 		"lint": "npm run markdownlint && npm run prettier",
 		"lint:fix": "npm run markdownlint:fix && npm run prettier:fix",
 		"markdownlint": "markdownlint-cli2",
-		"markdownlint:fix": "markdownlint-cli2-fix",
+		"markdownlint:fix": "markdownlint-cli2 --fix",
 		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
 		"start": "hugo server"
 	},
 	"dependencies": {
-		"@fluid-tools/api-markdown-documenter": "^0.13.0",
+		"@fluid-tools/api-markdown-documenter": "^0.17.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@rushstack/node-core-library": "^4.0.2",
@@ -50,11 +50,12 @@
 		"download": "8.0.0",
 		"fs-extra": "^11.2.0",
 		"glob": "^10.3.12",
+		"hast-util-format": "^1.1.0",
+		"hast-util-to-html": "^9.0.3",
 		"http-server": "^14.1.1",
 		"hugo-extended": "^0.113.0",
 		"js-yaml": "^4.1.0",
 		"linkcheck-bin": "3.0.0-1",
-		"markdown-magic": "npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1",
 		"markdown-magic-package-json": "^2.0.2",
 		"markdown-magic-package-scripts": "^1.2.2",
 		"markdown-magic-template": "^1.0.1",
@@ -68,6 +69,7 @@
 		"rimraf": "^5.0.5",
 		"start-server-and-test": "^2.0.3"
 	},
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"pnpm": {
 		"peerDependencyRules": {
 			"ignoreMissing": [

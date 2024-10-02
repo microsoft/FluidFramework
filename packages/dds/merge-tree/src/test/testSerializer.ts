@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Test serializer implementation for merge tree tests
@@ -13,25 +13,24 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 export class TestSerializer implements IFluidSerializer {
 	public constructor() {}
 
-	public get IFluidSerializer() {
+	public get IFluidSerializer(): TestSerializer {
 		return this;
 	}
 
-	public encode(input: any, bind: IFluidHandle) {
+	public encode(input: unknown, bind: IFluidHandle): unknown {
 		throw new Error("Method not implemented.");
 	}
 
-	public decode(input: any): any {
+	public decode(input: unknown): unknown {
 		throw new Error("Method not implemented.");
 	}
 
-	public stringify(value: any, bind: IFluidHandle) {
+	public stringify(value: unknown, bind: IFluidHandle): string {
 		assert(bind === undefined, "Test serializer should not be called with bind handles");
 		return JSON.stringify(value);
 	}
 
-	public parse(value: string) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	public parse(value: string): unknown {
 		return JSON.parse(value);
 	}
 }

@@ -17,6 +17,7 @@ import {
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { ConfigDumper } from "./configDumper";
+import { StartupChecker } from "./startupChecker";
 
 /**
  * Uses the provided factories to create and execute a runner.
@@ -29,7 +30,10 @@ export async function run<T extends IResources>(
 	logger: ILogger | undefined,
 ) {
 	const customizations = await (resourceFactory.customize
-		? resourceFactory.customize(config)
+		? resourceFactory.customize(config).catch((error) => {
+				prefixErrorLabel(error, "resourceFactory:customize");
+				throw error;
+		  })
 		: undefined);
 	const resources = await resourceFactory.create(config, customizations).catch((error) => {
 		prefixErrorLabel(error, "resourceFactory:create");
@@ -79,6 +83,8 @@ export async function run<T extends IResources>(
 			);
 		});
 	});
+
+	StartupChecker.instance.setReady();
 
 	try {
 		// Wait for the runner to complete

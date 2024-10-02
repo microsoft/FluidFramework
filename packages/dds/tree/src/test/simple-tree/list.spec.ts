@@ -12,7 +12,7 @@ import { hydrate, pretty } from "./utils.js";
 const schemaFactory = new SchemaFactory("test");
 
 describe("List", () => {
-	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
+	/** Formats 'args' array, inserting commas and eliding trailing `undefine`s.  */
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
 			// If all remaining arguments are 'undefined' elide them.
@@ -239,9 +239,7 @@ describe("List", () => {
 					assert.deepEqual(actual, expected);
 				}
 
-				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(
-					expected,
-				)}`, () => {
+				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(expected)}`, () => {
 					const subject = init(createStringList(array));
 					innerTest(subject, subject);
 				});
@@ -262,9 +260,11 @@ describe("List", () => {
 					target: readonly string[],
 					value: boolean,
 				): readonly string[] => {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(target as any)[Symbol.isConcatSpreadable] = value;
 
 					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(target as any)[Symbol.isConcatSpreadable],
 						value,
 						"[Symbol.isConcatSpreadable] must be settable",
@@ -366,10 +366,7 @@ describe("List", () => {
 
 				const tests = [[], ["a"], ["a", "b"], ["c", "b"], ["a", "c"]];
 
-				type IterativeFn = (
-					callback: (...args: any[]) => unknown,
-					...args: unknown[]
-				) => unknown;
+				type IterativeFn = (callback: (...args: any[]) => unknown, ...args: any[]) => unknown;
 
 				// Ensure that invoking 'fnName' on an array-like subject returns the same result
 				// as invoking the same function on a true JS array.  This test helper also logs
@@ -388,7 +385,7 @@ describe("List", () => {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
 					const logCalls = (expectedArrayParam: readonly string[], log: unknown[][]) => {
-						return function (...args: unknown[]) {
+						return function (...args: any[]) {
 							const result = callback(...args);
 
 							// Other than the 'array' parameter, the arguments should be identical.  To make
@@ -417,13 +414,10 @@ describe("List", () => {
 						]);
 
 						// Check the actual result and compare the actual arguments to the callback.
-						function innerTest(
-							subject: readonly string[],
-							fnSource: readonly string[],
-						) {
+						function innerTest(subject: readonly string[], fnSource: readonly string[]) {
 							const actualFn = Reflect.get(fnSource, fnName) as (
 								callback: (...args: any[]) => unknown,
-								...args: unknown[]
+								...args: any[]
 							) => unknown;
 							const actualArgs: unknown[][] = [];
 							const actualResult = actualFn.apply(subject, [
@@ -437,17 +431,16 @@ describe("List", () => {
 							assert.deepEqual(actualArgs, expectedArgs);
 						}
 
-						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(
-							otherArgs,
-						)}) -> ${pretty(expectedResult)}:${pretty(expectedArgs)}`, () => {
+						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(otherArgs)}) -> ${pretty(
+							expectedResult,
+						)}:${pretty(expectedArgs)}`, () => {
 							const subject = createStringList(array);
 							innerTest(subject, subject);
 						});
 
-						it(`Array.prototype.${fnName}.call(${prettyArgs(
-							array,
-							...otherArgs,
-						)}) -> ${pretty(expected)}`, () => {
+						it(`Array.prototype.${fnName}.call(${prettyArgs(array, ...otherArgs)}) -> ${pretty(
+							expected,
+						)}`, () => {
 							innerTest(createStringList(array), Array.prototype);
 						});
 					};
@@ -645,16 +638,6 @@ describe("List", () => {
 				[[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]].forEach(check);
 			});
 
-			describe("values()", () => {
-				const check = (array: readonly string[]) => {
-					test2("values", array, noInit);
-				};
-
-				check([]);
-				check(["a"]);
-				check(["a", "b"]);
-			});
-
 			describe("toLocaleString()", () => {
 				// TODO: Consider generalizing 'test2' to support this test.
 				const check = (array: readonly number[]) => {
@@ -696,12 +679,14 @@ describe("List", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any)[0] = "a";
 			});
 
 			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any)[0] = "a";
 			});
 		});
@@ -710,12 +695,14 @@ describe("List", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any).length = 0;
 			});
 
 			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any).length = 0;
 			});
 		});

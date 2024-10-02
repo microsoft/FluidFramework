@@ -65,7 +65,7 @@ module.exports = (env) => {
 				// https://github.com/browserify/node-util/issues/57#issuecomment-764436352
 				// Note that using DefinePlugin with `process.env.NODE_DEBUG': undefined` would also handle this case.
 				new webpack.ProvidePlugin({
-					process: "process/browser",
+					process: "process/browser.js",
 				}),
 				new HtmlWebpackPlugin({
 					template: "./public/index.html",

@@ -335,7 +335,7 @@ export class StringProperty extends ValueArrayProperty {
 					in_dirtyOnly,
 					in_includeRootTypeid,
 					in_dirtinessType,
-			  )
+				)
 			: this._dataArrayRef;
 	}
 
@@ -497,14 +497,7 @@ export class StringProperty extends ValueArrayProperty {
 	 */
 	_prettyPrint(indent, externalId, printFct) {
 		printFct(
-			indent +
-				externalId +
-				this.getId() +
-				" (" +
-				this.getTypeid() +
-				'): "' +
-				this.value +
-				'"',
+			indent + externalId + this.getId() + " (" + this.getTypeid() + '): "' + this.value + '"',
 		);
 	}
 

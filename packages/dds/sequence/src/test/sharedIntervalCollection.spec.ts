@@ -16,7 +16,10 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { IIntervalCollection } from "../intervalCollection.js";
-import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import {
+	IOverlappingIntervalsIndex,
+	OverlappingIntervalsIndex,
+} from "../intervalIndex/index.js";
 import { Interval, intervalHelpers } from "../intervals/index.js";
 import {
 	SharedIntervalCollection,
@@ -95,14 +98,8 @@ describe("SharedIntervalCollection", () => {
 
 		beforeEach(() => {
 			runtimeFactory = new MockContainerRuntimeFactory();
-			intervals1 = createConnectedIntervalCollection(
-				"collection 1",
-				runtimeFactory,
-			).intervals;
-			intervals2 = createConnectedIntervalCollection(
-				"collection 2",
-				runtimeFactory,
-			).intervals;
+			intervals1 = createConnectedIntervalCollection("collection 1", runtimeFactory).intervals;
+			intervals2 = createConnectedIntervalCollection("collection 2", runtimeFactory).intervals;
 			collection1 = intervals1.getIntervalCollection("test");
 			collection2 = intervals2.getIntervalCollection("test");
 			overlappingIntervalsIndex1 = new OverlappingIntervalsIndex(
@@ -228,10 +225,7 @@ describe("SharedIntervalCollection", () => {
 			const client1 = createConnectedIntervalCollection("collection 1", runtimeFactory);
 			runtime1 = client1.containerRuntime;
 			intervals1 = client1.intervals;
-			intervals2 = createConnectedIntervalCollection(
-				"collection 2",
-				runtimeFactory,
-			).intervals;
+			intervals2 = createConnectedIntervalCollection("collection 2", runtimeFactory).intervals;
 			collection1 = intervals1.getIntervalCollection("test");
 			collection2 = intervals2.getIntervalCollection("test");
 

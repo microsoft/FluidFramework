@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import Table from "easy-table";
 import chalk from "chalk";
+import Table from "easy-table";
 
 /**
  * Library for converting a `Record<string, unknown>` into formatted table cells.
@@ -72,23 +72,4 @@ export function objectCell(key: string, title: string, f: (a: object) => string)
 
 export function skipCell(key: string): ExpectedCell {
 	return { key, cell: (): void => {} };
-}
-
-export function addCells(
-	table: Table,
-	data: Record<string, unknown>,
-	expected: readonly ExpectedCell[],
-): void {
-	const keys = new Set(Object.getOwnPropertyNames(data));
-	// Add expected cells, with their custom formatting and canonical order
-	for (const cell of expected) {
-		if (keys.delete(cell.key)) {
-			cell.cell(table, data);
-		}
-	}
-
-	// Add extra cells
-	for (const key of keys) {
-		table.cell(key, data[key]);
-	}
 }

@@ -138,7 +138,10 @@ export class InsecureUrlResolver implements IUrlResolver {
 		return response;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		const parsedUrl = new URL(resolvedUrl.url);
 		const [, , documentId] = parsedUrl.pathname?.split("/") ?? [];
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

@@ -4,21 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IIdCompressor,
-	SessionSpaceCompressedId,
-	StableId,
-	assertIsStableId,
-	isStableId,
-} from "@fluidframework/id-compressor/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { assertIsStableId, isStableId } from "@fluidframework/id-compressor/internal";
 
-import { brand, extractFromOpaque, fail } from "../../util/index.js";
+import { brand, extractFromOpaque } from "../../util/index.js";
 
-import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
+import type { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
 
 /**
  * An object which handles the generation of node keys as well as conversion between their two types ({@link StableNodeKey} and {@link LocalNodeKey}).
- * @internal
  */
 export interface NodeKeyManager {
 	/**
@@ -49,7 +43,9 @@ export interface NodeKeyManager {
  * @param idCompressor - the compressor to use for key generation, compression, and decompression.
  * If undefined, then attempts to generate or convert keys will throw an error.
  */
-export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): NodeKeyManager {
+export function createNodeKeyManager(
+	idCompressor?: IIdCompressor | undefined,
+): NodeKeyManager {
 	return {
 		generateLocalNodeKey: () => {
 			assert(
@@ -94,51 +90,4 @@ export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): 
 
 export function isStableNodeKey(key: string): key is StableNodeKey {
 	return isStableId(key);
-}
-
-/**
- * Create a {@link NodeKeyManager} that generates deterministic {@link StableNodeKey}s and {@link LocalNodeKey}s.
- * @remarks This is useful for test environments because it will always yield the same keys in the same order.
- * It should not be used for production environments for the same reason; the {@link StableNodeKey}s are not universally unique.
- */
-export function createMockNodeKeyManager(): NodeKeyManager {
-	return new MockNodeKeyManager();
-}
-
-class MockNodeKeyManager implements NodeKeyManager {
-	private count = 0;
-
-	public generateStableNodeKey(): StableNodeKey {
-		return brand(this.createMockStableId(this.count++));
-	}
-
-	public generateLocalNodeKey(): LocalNodeKey {
-		return this.localizeNodeKey(this.generateStableNodeKey());
-	}
-
-	public localizeNodeKey(key: StableNodeKey): LocalNodeKey {
-		return this.tryLocalizeNodeKey(key) ?? fail("Key is not compressible");
-	}
-
-	public stabilizeNodeKey(key: LocalNodeKey): StableNodeKey {
-		return brand(this.createMockStableId(extractFromOpaque(key)));
-	}
-
-	public tryLocalizeNodeKey(key: string): LocalNodeKey | undefined {
-		if (!isStableNodeKey(key) || !key.startsWith("a110ca7e-add1-4000-8000-")) {
-			return undefined;
-		}
-		const localNodeKey = Number.parseInt(key.substring(24), 16);
-		return localNodeKey < this.count
-			? brand(localNodeKey as SessionSpaceCompressedId)
-			: undefined;
-	}
-
-	private createMockStableId(offset: number): StableId {
-		assert(offset >= 0, 0x6e7 /* UUID offset may not be negative */);
-		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
-		return assertIsStableId(
-			`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,
-		);
-	}
 }

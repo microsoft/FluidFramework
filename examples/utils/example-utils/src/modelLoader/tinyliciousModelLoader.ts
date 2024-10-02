@@ -34,14 +34,16 @@ class TinyliciousService {
  */
 export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType> {
 	private readonly tinyliciousService = new TinyliciousService();
-	private readonly modelLoader = new ModelLoader<ModelType>({
-		urlResolver: this.tinyliciousService.urlResolver,
-		documentServiceFactory: this.tinyliciousService.documentServiceFactory,
-		codeLoader: this.codeLoader,
-		generateCreateNewRequest: createTinyliciousCreateNewRequest,
-	});
+	private readonly modelLoader: ModelLoader<ModelType>;
 
-	public constructor(private readonly codeLoader: ICodeDetailsLoader) {}
+	public constructor(codeLoader: ICodeDetailsLoader) {
+		this.modelLoader = new ModelLoader<ModelType>({
+			urlResolver: this.tinyliciousService.urlResolver,
+			documentServiceFactory: this.tinyliciousService.documentServiceFactory,
+			codeLoader,
+			generateCreateNewRequest: createTinyliciousCreateNewRequest,
+		});
+	}
 
 	public async supportsVersion(version: string): Promise<boolean> {
 		return this.modelLoader.supportsVersion(version);

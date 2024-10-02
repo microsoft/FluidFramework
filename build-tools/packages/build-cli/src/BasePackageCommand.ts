@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 import { Package } from "@fluidframework/build-tools";
 import { Command, Flags, ux } from "@oclif/core";
 import async from "async";
-import { BaseCommand } from "./base";
 import {
 	PackageFilterOptions,
 	PackageKind,
@@ -16,8 +15,9 @@ import {
 	parsePackageFilterFlags,
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
-} from "./filter";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
+} from "./filter.js";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
+import { BaseCommand } from "./library/index.js";
 
 /**
  * Commands that run operations per project.
@@ -83,7 +83,7 @@ export abstract class PackageCommand<
 		}
 
 		const ctx = await this.getContext();
-		const { selected, filtered } = selectAndFilterPackages(
+		const { selected, filtered } = await selectAndFilterPackages(
 			ctx,
 			this.selectionOptions,
 			this.filterOptions,

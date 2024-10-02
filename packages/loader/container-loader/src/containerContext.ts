@@ -7,27 +7,27 @@ import {
 	AttachState,
 	IAudience,
 	ICriticalContainerError,
-	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
 	IContainerContext,
 	ILoader,
 	ILoaderOptions,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IClientDetails,
+	IDocumentStorageService,
+	ISnapshot,
 	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -74,15 +74,17 @@ export class ContainerContext implements IContainerContext {
 		public readonly loader: ILoader,
 		public readonly submitFn: (
 			type: MessageType,
-			contents: any,
+			contents: unknown,
 			batch: boolean,
-			appData: any,
+			appData: unknown,
 		) => number,
 		public readonly submitSummaryFn: (
 			summaryOp: ISummaryContent,
 			referenceSequenceNumber?: number,
 		) => number,
-		/** @returns clientSequenceNumber of last message in a batch */
+		/**
+		 * @returns clientSequenceNumber of last message in a batch
+		 */
 		public readonly submitBatchFn: (
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,

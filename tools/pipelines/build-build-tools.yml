@@ -50,6 +50,7 @@ trigger:
     - biome.json
     - biome.jsonc
     - build-tools
+    - common/build/build-common
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -74,6 +75,7 @@ pr:
     include:
     - .prettierignore
     - build-tools
+    - common/build/build-common
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml

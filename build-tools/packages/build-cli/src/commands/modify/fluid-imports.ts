@@ -5,13 +5,19 @@
 
 /* eslint-disable unicorn/no-array-callback-reference */
 
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
-import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
-import { BaseCommand } from "../../base";
-import { ApiLevel, getApiExports, isKnownApiLevel, knownApiLevels } from "../../library";
-import type { CommandLogger } from "../../logging";
+import {
+	ApiLevel,
+	BaseCommand,
+	getApiExports,
+	isKnownApiLevel,
+	knownApiLevels,
+} from "../../library/index.js";
+import type { CommandLogger } from "../../logging.js";
 
 const maxConcurrency = 4;
 
@@ -622,23 +628,26 @@ class ApiLevelReader {
 		const memberData = new Map<string, ApiLevel>();
 		addUniqueNamedExportsToMap(exports.public, memberData, ApiLevel.public);
 		if (this.onlyInternal) {
+			addUniqueNamedExportsToMap(exports.legacy, memberData, ApiLevel.internal);
 			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.internal);
 			addUniqueNamedExportsToMap(exports.alpha, memberData, ApiLevel.internal);
 		} else {
+			addUniqueNamedExportsToMap(exports.legacy, memberData, ApiLevel.legacy);
 			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.beta);
 			if (exports.alpha.length > 0) {
-				// @alpha APIs have been mapped to both /alpha and /legacy
-				// paths. Check for a /legacy export to map @alpha as legacy.
-				const legacyExport =
+				// @alpha APIs have been mapped to both /alpha and /legacy paths.
+				// Later @legacy tag was added explicitly.
+				// Check for a /alpha export to map @alpha as alpha.
+				const alphaExport =
 					this.tempSource
 						.addImportDeclaration({
-							moduleSpecifier: `${packageName}/legacy`,
+							moduleSpecifier: `${packageName}/alpha`,
 						})
 						.getModuleSpecifierSourceFile() !== undefined;
 				addUniqueNamedExportsToMap(
 					exports.alpha,
 					memberData,
-					legacyExport ? ApiLevel.legacy : ApiLevel.alpha,
+					alphaExport ? ApiLevel.alpha : ApiLevel.legacy,
 				);
 			}
 		}
@@ -679,7 +688,8 @@ async function loadData(dataFile: string, onlyInternal: boolean): Promise<MapDat
 			addUniqueNamedExportsToMap(
 				[member],
 				entry,
-				onlyInternal && (level === ApiLevel.beta || level === ApiLevel.alpha)
+				onlyInternal &&
+					(level === ApiLevel.beta || level === ApiLevel.alpha || level === ApiLevel.legacy)
 					? ApiLevel.internal
 					: level,
 			);

@@ -76,6 +76,7 @@ steps:
 # Auth to internal ADO feeds
 - task: npmAuthenticate@0
   displayName: 'npm authenticate (internal ADO feeds)'
+  retryCountOnTaskFailure: 1
   inputs:
     workingFile: ${{ parameters.pathToTelemetryGenerator }}/.npmrc
 
@@ -91,6 +92,7 @@ steps:
 
 - task: Bash@3
   displayName: 'Prepare telemetry-generator'
+  retryCountOnTaskFailure: 1
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.pathToTelemetryGenerator }}

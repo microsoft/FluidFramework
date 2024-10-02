@@ -8,9 +8,11 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	IOdspResolvedUrl,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
@@ -143,7 +145,7 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				assert(
-					getDownloadSnapshotStub.args[0][3]?.mds === undefined,
+					getDownloadSnapshotStub.args[0][4]?.mds === undefined,
 					"mds should be undefined",
 				);
 				success = true;
@@ -172,6 +174,47 @@ describe("Tests1 for snapshot fetch", () => {
 			// Drop error
 		}
 		assert(success, "mds limit should not be set!!");
+	});
+
+	it("Check error in empty response", async () => {
+		async function mockDownloadSnapshot<T>(
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
+			callback: () => Promise<T>,
+		): Promise<T> {
+			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			getDownloadSnapshotStub.returns(_response);
+			try {
+				return await callback();
+			} finally {
+				getDownloadSnapshotStub.restore();
+			}
+		}
+		const odspResponse: IOdspResponse<Response> = {
+			content: (await createResponse({}, new Uint8Array().buffer, 200)) as unknown as Response,
+			duration: 10,
+			headers: new Map([
+				["x-fluid-epoch", "epoch1"],
+				["content-type", "application/ms-fluid"],
+			]),
+			propsToLog: {},
+		};
+		const response: ISnapshotRequestAndResponseOptions = {
+			odspResponse,
+			requestHeaders: {},
+			requestUrl: siteUrl,
+		};
+		try {
+			await mockDownloadSnapshot(Promise.resolve(response), async () =>
+				service.getVersions(null, 1),
+			);
+			assert.fail("should throw incorrectServerResponse error");
+		} catch (error: unknown) {
+			assert.strictEqual(
+				(error as Partial<IFluidErrorBase>).errorType,
+				OdspErrorTypes.incorrectServerResponse,
+				"incorrectServerResponse should be received",
+			);
+		}
 	});
 
 	it("Check error in snapshot content type", async () => {
@@ -234,7 +277,7 @@ describe("Tests1 for snapshot fetch", () => {
 			} finally {
 				getDownloadSnapshotStub.restore();
 				assert(
-					getDownloadSnapshotStub.args[0][2]?.length === 0,
+					getDownloadSnapshotStub.args[0][3]?.length === 0,
 					"should ask for ungroupedData",
 				);
 				ungroupedData = true;
@@ -274,7 +317,13 @@ describe("Tests1 for snapshot fetch", () => {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(ungroupedData, "should have asked for ungroupedData");
-		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
+		const cachedValue = (await epochTracker.get(
+			createCacheSnapshotKey(resolved, false),
+		)) as ISnapshot;
+		const cachedValueWithLoadingGroupId = (await epochTracker.get(
+			createCacheSnapshotKey(resolved, true),
+		)) as ISnapshot;
+		assert(cachedValueWithLoadingGroupId === undefined, "snapshot should not exist");
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
 		assert(service["commitCache"].size > 0, "no trees should be cached");
@@ -293,10 +342,7 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				getDownloadSnapshotStub.restore();
-				assert(
-					getDownloadSnapshotStub.args[0][2]?.[0] === "g1",
-					"should ask for g1 groupId",
-				);
+				assert(getDownloadSnapshotStub.args[0][3]?.[0] === "g1", "should ask for g1 groupId");
 				success = true;
 			}
 		}
@@ -396,7 +442,9 @@ describe("Tests1 for snapshot fetch", () => {
 		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
-		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
+		const cachedValue = (await epochTracker.get(
+			createCacheSnapshotKey(resolved, false),
+		)) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");

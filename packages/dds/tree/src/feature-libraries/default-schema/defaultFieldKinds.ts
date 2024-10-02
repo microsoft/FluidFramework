@@ -4,27 +4,27 @@
  */
 
 import {
-	ChangesetLocalId,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	FieldKindIdentifier,
+	type ChangeAtomId,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
-	FieldChangeHandler,
-	FieldEditor,
-	FieldKindConfiguration,
-	FieldKindConfigurationEntry,
+	type FieldChangeHandler,
+	type FieldEditor,
+	type FieldKindConfiguration,
+	type FieldKindConfigurationEntry,
 	FieldKindWithEditor,
-	FlexFieldKind,
-	ToDelta,
+	type FlexFieldKind,
+	type ToDelta,
 	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
@@ -46,17 +46,17 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
+	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
+	getCrossFieldKeys: () => [],
 };
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
-	 * @param newContent - the new content for the field
-	 * @param changeId - the ID associated with the replacement of the current content.
-	 * @param buildId - the ID associated with the creation of the `newContent`.
+	 * @param ids - The ids for the fill and detach fields.
 	 */
-	set(ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset;
+	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -75,8 +75,10 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset =>
-		optionalFieldEditor.set(false, ids),
+	set: (ids: {
+		fill: ChangeAtomId;
+		detach: ChangeAtomId;
+	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
@@ -112,7 +114,8 @@ export const sequence = new FieldKindWithEditor(
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind === sequenceIdentifier && allowsTreeSchemaIdentifierSuperset(types, other.types),
+		other.kind === sequenceIdentifier &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
 );
@@ -213,6 +216,28 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),
 	],
+	[
+		3,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
+		4,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
 ]);
 
 /**
@@ -232,41 +257,30 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 /**
- * @internal
  */
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
 /**
- * @internal
  */
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
 /**
- * @internal
  */
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
 /**
- * @internal
- */
-export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.Single> {}
-/**
- * @internal
  */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 /**
- * @internal
  */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
- * @internal
  */
 export const FieldKinds: {
 	// TODO: inheritDoc for these somehow
 	readonly required: Required;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
-	readonly nodeKey: NodeKeyFieldKind;
 	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, identifier, forbidden };
+} = { required, optional, sequence, identifier, forbidden };

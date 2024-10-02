@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import type { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -16,8 +16,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ISharedMap, IValueChanged, MapFactory, SharedMap } from "../../index.js";
-import {
+import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
+import type {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
@@ -27,13 +27,18 @@ import {
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
-import { IMapOperation } from "../../mapKernel.js";
+import type { IMapOperation } from "../../mapKernel.js";
 
+/**
+ * Creates and connects a new {@link ISharedMap}.
+ */
 export function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedMap {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		registry: [SharedMap.getFactory()],
+	});
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -45,7 +50,9 @@ export function createConnectedMap(
 }
 
 function createLocalMap(id: string): SharedMapInternal {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		registry: [SharedMap.getFactory()],
+	});
 	const map = SharedMap.create(dataStoreRuntime, id);
 	return map as SharedMapInternal;
 }
@@ -105,21 +112,13 @@ describe("Map", () => {
 						true,
 						"local should be true for local action for valueChanged event",
 					);
-					assert.equal(
-						target,
-						dummyMap,
-						"target should be the map for valueChanged event",
-					);
+					assert.equal(target, dummyMap, "target should be the map for valueChanged event");
 				});
 				dummyMap.on("clear", (local, target) => {
 					assert.equal(clearExpected, true, "clear event not expected");
 					clearExpected = false;
 
-					assert.equal(
-						local,
-						true,
-						"local should be true for local action  for clear event",
-					);
+					assert.equal(local, true, "local should be true for local action  for clear event");
 					assert.equal(target, dummyMap, "target should be the map for clear event");
 				});
 				dummyMap.on("error", (error) => {
@@ -414,11 +413,7 @@ describe("Map", () => {
 				const serializable: ISerializableValue = { type: "Plain", value: "value" };
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
-				const map1 = new TestSharedMap(
-					"testMap1",
-					dataStoreRuntime1,
-					MapFactory.Attributes,
-				);
+				const map1 = new TestSharedMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				map1.connect({
@@ -477,11 +472,7 @@ describe("Map", () => {
 					assert.equal(map1.get("test"), value, "could not retrieve key");
 
 					// Verify the remote SharedMap
-					assert.equal(
-						map2.get("test"),
-						value,
-						"could not retrieve key from the remote map",
-					);
+					assert.equal(map2.get("test"), value, "could not retrieve key from the remote map");
 				});
 			});
 
@@ -503,11 +494,7 @@ describe("Map", () => {
 					assert.equal(map1.has("inSet"), true, "could not find the key");
 
 					// Verify the remote SharedMap
-					assert.equal(
-						map2.has("inSet"),
-						true,
-						"could not find the key in the remote map",
-					);
+					assert.equal(map2.has("inSet"), true, "could not find the key in the remote map");
 				});
 			});
 
@@ -523,16 +510,8 @@ describe("Map", () => {
 					assert.equal(map1.get("test"), value, "could not get the set key");
 
 					// Verify the remote SharedMap
-					assert.equal(
-						map2.has("test"),
-						true,
-						"could not find the set key in remote map",
-					);
-					assert.equal(
-						map2.get("test"),
-						value,
-						"could not get the set key from remote map",
-					);
+					assert.equal(map2.has("test"), true, "could not find the set key in remote map");
+					assert.equal(map2.get("test"), value, "could not get the set key from remote map");
 				});
 
 				it("Should be able to set a shared object handle as a key", () => {
@@ -648,11 +627,7 @@ describe("Map", () => {
 					assert.equal(map1.get("test"), value1, "could not get the set key");
 
 					// Verify the SharedMap with 2 pending messages
-					assert.equal(
-						map2.has("test"),
-						true,
-						"could not find the set key in pending map",
-					);
+					assert.equal(map2.has("test"), true, "could not find the set key in pending map");
 					assert.equal(
 						map2.get("test"),
 						pending2,
@@ -666,11 +641,7 @@ describe("Map", () => {
 					assert.equal(map1.get("test"), pending1, "could not get the set key");
 
 					// Verify the SharedMap with 1 pending message
-					assert.equal(
-						map2.has("test"),
-						true,
-						"could not find the set key in pending map",
-					);
+					assert.equal(map2.has("test"), true, "could not find the set key in pending map");
 					assert.equal(
 						map2.get("test"),
 						pending2,
@@ -813,15 +784,8 @@ describe("Map", () => {
 
 					// Verify the remote SharedMap
 					for (const [key, value] of map2.entries()) {
-						assert.ok(
-							set.has(key),
-							"the key in remote map should be present in the set",
-						);
-						assert.equal(
-							key,
-							value,
-							"the value should match the set value in the remote map",
-						);
+						assert.ok(set.has(key), "the key in remote map should be present in the set");
+						assert.equal(key, value, "the value should match the set value in the remote map");
 						assert.equal(map2.get(key), value, "could not get key in the remote map");
 						set.delete(key);
 					}

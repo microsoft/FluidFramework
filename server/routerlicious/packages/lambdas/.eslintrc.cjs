@@ -4,15 +4,24 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	rules: {
-		"@typescript-eslint/restrict-template-expressions": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off",
+		"@rushstack/no-new-null": "off",
 		"import/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
+		"unicorn/no-null": "off",
+
+		// TODO: fix violations and remove these overrides
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-return": "off",
+		"@typescript-eslint/restrict-template-expressions": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
+		"unicorn/prefer-node-protocol": "off",
+		"unicorn/text-encoding-identifier-case": "off",
 
 		// TODO: enable strict null checks in tsconfig and remove this override
 		"@typescript-eslint/prefer-nullish-coalescing": "off",

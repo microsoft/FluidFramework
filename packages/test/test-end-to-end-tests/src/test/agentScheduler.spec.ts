@@ -38,7 +38,14 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 			IRuntimeFactory: new TestContainerRuntimeFactory(
 				agentSchedulerFactory.type,
 				new agentSchedulerFactory(),
-				{},
+				// Ideally we should use here filterRuntimeOptionsForVersion() same way we use it in
+				// getVersionedTestObjectProviderFromApis() / getCompatVersionedTestObjectProviderFromApis(),
+				// but it's too cumbersome, so just disable all options that can screw up compat matrix
+				{
+					compressionOptions: undefined,
+					enableGroupedBatching: false,
+					enableRuntimeIdCompressor: undefined,
+				},
 			),
 		};
 	};

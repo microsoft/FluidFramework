@@ -5,15 +5,18 @@
 
 import { strict } from "assert";
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 
 import {
-	ChangesetLocalId,
-	DeltaFieldChanges,
-	RevisionInfo,
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
+	type ChangeAtomId,
+	type ChangeAtomIdMap,
+	type ChangesetLocalId,
+	type DeltaFieldChanges,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
@@ -21,49 +24,58 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	addCrossFieldQuery,
+	type CrossFieldManager,
+	type CrossFieldQuerySet,
+	CrossFieldTarget,
+	type NodeId,
+	type RebaseRevisionMetadata,
+	setInCrossFieldMap,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
-	CellOrderingMethod,
-	SequenceConfig,
-	sequenceConfig,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/config.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
-	CellId,
-	Changeset,
-	HasMarkFields,
+	type CellId,
+	type Changeset,
+	type HasMarkFields,
 	MarkListFactory,
+	type MoveId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
 	cloneMark,
+	extractMarkEffect,
 	getInputLength,
 	isActiveReattach,
-	isAttachAndDetachEffect,
 	isDetach,
 	isNewAttach,
 	isTombstone,
 	markEmptiesCells,
+	omitMarkEffect,
 	splitMark,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
+	type RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
+	getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
+	setInNestedMap,
+	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
 	assertFieldChangesEqual,
+	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
@@ -71,86 +83,154 @@ import {
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import {
+	type MarkEffect,
+	NoopMarkType,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 
-export function assertWrappedChangesetsEqual(actual: WrappedChange, expected: WrappedChange): void {
-	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);
+export function assertWrappedChangesetsEqual(
+	actual: WrappedChange,
+	expected: WrappedChange,
+	ignoreMoveIds: boolean = false,
+): void {
+	ChangesetWrapper.assertEqual(actual, expected, (lhs, rhs) =>
+		assertChangesetsEqual(lhs, rhs, ignoreMoveIds),
+	);
 }
 
-export function assertChangesetsEqual(actual: SF.Changeset, expected: SF.Changeset): void {
-	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
-	strict.deepEqual(actual, updatedExpected);
-}
-
-export function purgeUnusedCellOrderingInfo(change: SF.Changeset): SF.Changeset {
-	switch (sequenceConfig.cellOrdering) {
-		case CellOrderingMethod.Tombstone:
-			return withoutLineage(change);
-		case CellOrderingMethod.Lineage:
-			return withoutTombstones(change);
-		default:
-			unreachableCase(sequenceConfig.cellOrdering);
-	}
-}
-
-export function skipOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
-	if (config.cellOrdering === CellOrderingMethod.Lineage) {
-		it.skip(title, fn);
+export function assertChangesetsEqual(
+	actual: SF.Changeset,
+	expected: SF.Changeset,
+	ignoreMoveIds: boolean = false,
+): void {
+	if (ignoreMoveIds) {
+		const normalizedActual = normalizeMoveIds(actual);
+		const normalizedExpected = normalizeMoveIds(expected);
+		strict.deepEqual(normalizedActual, normalizedExpected);
 	} else {
-		it(title, fn);
+		strict.deepEqual(actual, expected);
 	}
 }
 
-export function onlyOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
-	if (config.cellOrdering === CellOrderingMethod.Lineage) {
-		it(title, fn);
-	} else {
-		it.skip(title, fn);
-	}
-}
+function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
+	const idAllocator = idAllocatorFromMaxId();
+	const revisionAllocator = createAlwaysFinalizedIdCompressor(
+		assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+	);
+	const normalRevision = revisionAllocator.generateCompressedId();
 
-export function skipOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
-	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
-		it.skip(title, fn);
-	} else {
-		it(title, fn);
-	}
-}
+	// We have to keep the normalization of sources and destinations separate because we want to be able to normalize
+	// [{ MoveOut self: foo }, { MoveOut self: foo }]
+	// in a way that is equivalent to normalizing
+	// [{ MoveOut self: foo, finalEndpoint: bar }, { MoveOut self: bar, finalEndpoint: foo }]
+	// Doing so requires that we differentiate when a move ID is referring to a source endpoint,
+	// from when it is referring to a destination endpoint.
+	const normalSrcAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
+	const normalDstAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
 
-export function onlyOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
-	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
-		it(title, fn);
-	} else {
-		it.skip(title, fn);
-	}
-}
-
-export function describeForBothConfigs(title: string, fn: (config: SequenceConfig) => void): void {
-	describe(title, () => {
-		for (const method of [CellOrderingMethod.Tombstone, CellOrderingMethod.Lineage]) {
-			describe(`${method}-based cell ordering`, () => {
-				withOrderingMethod(method, fn);
-			});
+	function normalizeAtom(atom: ChangeAtomId, target: CrossFieldTarget): ChangeAtomId {
+		const normalAtoms = target === CrossFieldTarget.Source ? normalSrcAtoms : normalDstAtoms;
+		const normal = tryGetFromNestedMap(normalAtoms, atom.revision, atom.localId);
+		if (normal === undefined) {
+			const newId: ChangesetLocalId = brand(idAllocator.allocate());
+			const newAtom: ChangeAtomId = { revision: normalRevision, localId: newId };
+			setInNestedMap(normalAtoms, atom.revision, atom.localId, newAtom);
+			return newAtom;
 		}
-	});
-}
-
-export function withOrderingMethod(
-	method: CellOrderingMethod,
-	fn: (config: SequenceConfig) => void,
-) {
-	const priorMethod = sequenceConfig.cellOrdering;
-	const mutableConfig = sequenceConfig as Mutable<SequenceConfig>;
-	mutableConfig.cellOrdering = method;
-	try {
-		// It's important that return a new object here rather `sequenceConfig` because `fn` may keep a reference to it
-		// (e.g., a lambda's closure) while it may be mutated between the time that reference it taken and the time the
-		// config is read.
-		// Most notably, this is the case when using `describeForBothConfigs` which mutates `sequenceConfig` but does
-		// not run the tests within it immediately.
-		fn({ ...sequenceConfig });
-	} finally {
-		mutableConfig.cellOrdering = priorMethod;
+		return normal;
 	}
+
+	function normalizeMark(mark: SF.Mark): SF.Mark {
+		const effect = extractMarkEffect(mark);
+		const nonEffect = omitMarkEffect(mark);
+		return {
+			...nonEffect,
+			...normalizeEffect(effect),
+		};
+	}
+
+	function normalizeEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
+		switch (effect.type) {
+			case "Rename":
+			case NoopMarkType:
+				return effect;
+			case "AttachAndDetach": {
+				return {
+					...effect,
+					attach: normalizeEffect(effect.attach),
+					detach: normalizeEffect(effect.detach),
+				};
+			}
+			case "Insert": {
+				const atom = normalizeAtom(
+					{ revision: effect.revision, localId: effect.id },
+					CrossFieldTarget.Source,
+				);
+				return {
+					...effect,
+					id: atom.localId,
+					revision: atom.revision,
+				};
+			}
+			case "MoveIn": {
+				const effectId = { revision: effect.revision, localId: effect.id };
+				const atom = normalizeAtom(effectId, CrossFieldTarget.Source);
+				const normalized: Mutable<SF.MoveIn> = { ...effect };
+				normalized.finalEndpoint =
+					normalized.finalEndpoint !== undefined
+						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination)
+						: normalizeAtom(effectId, CrossFieldTarget.Destination);
+				normalized.id = atom.localId;
+				normalized.revision = atom.revision;
+				return normalized as TEffect;
+			}
+			case "MoveOut": {
+				const effectId = { revision: effect.revision, localId: effect.id };
+				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
+				const normalized: Mutable<SF.MoveOut> = { ...effect };
+				if (normalized.idOverride === undefined) {
+					// Use the idOverride so we don't normalize the output cell ID
+					normalized.idOverride = effectId;
+				}
+				normalized.finalEndpoint =
+					normalized.finalEndpoint !== undefined
+						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source)
+						: normalizeAtom(effectId, CrossFieldTarget.Source);
+				normalized.id = atom.localId;
+				normalized.revision = atom.revision;
+				return normalized as TEffect;
+			}
+			case "Remove": {
+				const effectId = { revision: effect.revision, localId: effect.id };
+				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
+				const normalized: Mutable<SF.Remove> = { ...effect };
+				if (normalized.idOverride === undefined) {
+					// Use the idOverride so we don't normalize the output cell ID
+					normalized.idOverride = effectId;
+				}
+				normalized.id = atom.localId;
+				normalized.revision = atom.revision;
+				return normalized as TEffect;
+			}
+			default:
+				fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
+		}
+	}
+	const output = new MarkListFactory();
+
+	for (const mark of change) {
+		let nextMark: SF.Mark | undefined = mark;
+		while (nextMark !== undefined) {
+			let currMark: SF.Mark = nextMark;
+			nextMark = undefined;
+			if (currMark.count > 1) {
+				[currMark, nextMark] = splitMark(currMark, 1);
+			}
+			output.push(normalizeMark(currMark));
+		}
+	}
+	return output.list;
 }
 
 export function composeDeep(
@@ -159,21 +239,15 @@ export function composeDeep(
 ): WrappedChange {
 	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
 
-	return changes.reduce(
-		(change1, change2) =>
-			makeAnonChange(
-				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-					composePair(
-						c1.change,
-						c2.change,
-						composeChild,
-						metadata,
-						idAllocatorFromMaxId(),
+	return changes.length === 0
+		? ChangesetWrapper.create([])
+		: changes.reduce((change1, change2) =>
+				makeAnonChange(
+					ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
+						composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
 					),
 				),
-			),
-		makeAnonChange(ChangesetWrapper.create([])),
-	).change;
+			).change;
 }
 
 export function composeNoVerify(
@@ -206,7 +280,10 @@ export function prune(
 	change: SF.Changeset,
 	childPruner?: (child: NodeId) => NodeId | undefined,
 ): SF.Changeset {
-	return SF.sequenceFieldChangeRebaser.prune(change, childPruner ?? ((child: NodeId) => child));
+	return SF.sequenceFieldChangeRebaser.prune(
+		change,
+		childPruner ?? ((child: NodeId) => child),
+	);
 }
 
 export function shallowCompose(
@@ -227,21 +304,21 @@ export function shallowCompose(
 }
 
 function composeI(
-	changes: TaggedChange<SF.Changeset>[],
+	taggedChanges: TaggedChange<SF.Changeset>[],
 	composer: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset {
-	const updatedChanges = changes.map(({ change }) => purgeUnusedCellOrderingInfo(change));
-	const idAllocator = continuingAllocator(updatedChanges);
+	const changes = taggedChanges.map(({ change }) => change);
+	const idAllocator = continuingAllocator(changes);
 	const metadata =
 		revInfos !== undefined
 			? Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
 				: revInfos
-			: defaultRevisionMetadataFromChanges(changes);
+			: defaultRevisionMetadataFromChanges(taggedChanges);
 
 	let composed: SF.Changeset = [];
-	for (const change of updatedChanges) {
+	for (const change of changes) {
 		composed = composePair(composed, change, composer, metadata, idAllocator);
 	}
 
@@ -255,7 +332,7 @@ function composePair(
 	metadata: RevisionMetadataSource,
 	idAllocator: IdAllocator,
 ): SF.Changeset {
-	const moveEffects = SF.newCrossFieldTable();
+	const moveEffects = newCrossFieldTable();
 	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
@@ -278,10 +355,8 @@ export function rebase(
 	base: TaggedChange<SF.Changeset>,
 	config: RebaseConfig = {},
 ): SF.Changeset {
-	const cleanChange = purgeUnusedCellOrderingInfo(change.change);
-	const cleanBase = purgeUnusedCellOrderingInfo(base.change);
-	deepFreeze(cleanChange);
-	deepFreeze(cleanBase);
+	deepFreeze(change);
+	deepFreeze(base);
 
 	const metadata =
 		config.metadata ??
@@ -293,11 +368,11 @@ export function rebase(
 
 	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
-	const moveEffects = SF.newCrossFieldTable();
-	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase));
+	const moveEffects = newCrossFieldTable();
+	const idAllocator = idAllocatorFromMaxId(getMaxId(change.change, base.change));
 	let rebasedChange = SF.rebase(
-		cleanChange,
-		cleanBase,
+		change.change,
+		base.change,
 		childRebaser,
 		idAllocator,
 		moveEffects,
@@ -306,8 +381,8 @@ export function rebase(
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
 		rebasedChange = SF.rebase(
-			cleanChange,
-			cleanBase,
+			change.change,
+			base.change,
 			childRebaser,
 			idAllocator,
 			moveEffects,
@@ -368,28 +443,33 @@ export function rebaseDeepTagged(
 	);
 }
 
-function resetCrossFieldTable(table: SF.CrossFieldTable) {
+function resetCrossFieldTable(table: CrossFieldTable) {
 	table.isInvalidated = false;
 	table.srcQueries.clear();
 	table.dstQueries.clear();
 }
 
-export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
-	return ChangesetWrapper.invert(change, (c) => invert(c));
+export function invertDeep(
+	change: TaggedChange<WrappedChange>,
+	revision: RevisionTag | undefined,
+): WrappedChange {
+	return ChangesetWrapper.invert(change, (c) => invert(c, revision), revision);
 }
 
-export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
-	const cleanChange = purgeUnusedCellOrderingInfo(change.change);
-	deepFreeze(cleanChange);
-	const table = SF.newCrossFieldTable();
-	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
+export function invert(
+	change: TaggedChange<SF.Changeset>,
+	revision: RevisionTag | undefined,
+	isRollback = true,
+): SF.Changeset {
+	deepFreeze(change.change);
+	const table = newCrossFieldTable();
 	let inverted = SF.invert(
-		cleanChange,
-		true,
+		change.change,
+		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
+		revision,
 		table,
-		revisionMetadata,
 	);
 
 	if (table.isInvalidated) {
@@ -397,12 +477,12 @@ export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
 		table.srcQueries.clear();
 		table.dstQueries.clear();
 		inverted = SF.invert(
-			cleanChange,
-			true,
+			change.change,
+			isRollback,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
+			revision,
 			table,
-			revisionMetadata,
 		);
 	}
 
@@ -416,6 +496,12 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 export function toDelta(change: SF.Changeset): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
+}
+
+export function toDeltaWrapped(change: WrappedChange) {
+	return ChangesetWrapper.toDelta(change, (c, deltaFromChild) =>
+		SF.sequenceFieldToDelta(c, deltaFromChild),
+	);
 }
 
 export function getMaxId(...changes: SF.Changeset[]): ChangesetLocalId | undefined {
@@ -441,31 +527,6 @@ export function continuingAllocator(changes: SF.Changeset[]): IdAllocator {
 	return idAllocatorFromMaxId(getMaxId(...changes));
 }
 
-export function withoutLineageDeep(changeset: WrappedChange): WrappedChange {
-	return { ...changeset, fieldChange: withoutLineage(changeset.fieldChange) };
-}
-
-export function withoutLineage(changeset: SF.Changeset): SF.Changeset {
-	const factory = new SF.MarkListFactory();
-	for (const mark of changeset) {
-		const cloned = SF.cloneMark(mark);
-		if (cloned.cellId !== undefined) {
-			delete cloned.cellId.lineage;
-			delete cloned.cellId.adjacentCells;
-		}
-		if (isDetach(cloned) || isAttachAndDetachEffect(cloned)) {
-			const detach = isAttachAndDetachEffect(cloned) ? cloned.detach : cloned;
-			if (detach.idOverride !== undefined) {
-				delete detach.idOverride.id.lineage;
-				delete detach.idOverride.id.adjacentCells;
-			}
-		}
-		factory.push(cloned);
-	}
-
-	return factory.list;
-}
-
 export function withoutTombstonesDeep(changeset: WrappedChange): WrappedChange {
 	return { ...changeset, fieldChange: withoutTombstones(changeset.fieldChange) };
 }
@@ -479,58 +540,6 @@ export function withoutTombstones(changeset: SF.Changeset): SF.Changeset {
 	}
 
 	return factory.list;
-}
-
-export function withNormalizedLineageDeep(changeset: WrappedChange): WrappedChange {
-	return { ...changeset, fieldChange: withNormalizedLineage(changeset.fieldChange) };
-}
-
-export function withNormalizedLineage(changeset: SF.Changeset): SF.Changeset {
-	const factory = new SF.MarkListFactory();
-	for (const mark of changeset) {
-		if (mark.cellId?.lineage === undefined) {
-			factory.push(mark);
-		} else {
-			const cloned = SF.cloneMark(mark);
-			assert(cloned.cellId?.lineage !== undefined, "Cloned should have lineage");
-			cloned.cellId.lineage = normalizedLineage(cloned.cellId.lineage);
-			factory.push(cloned);
-		}
-	}
-
-	return factory.list;
-}
-
-function normalizedLineage(lineage: SF.LineageEvent[]): SF.LineageEvent[] {
-	const normalized = lineage.flatMap((event) => {
-		const events: SF.LineageEvent[] = [];
-		for (let i = 0; i < event.count; i++) {
-			const id: ChangesetLocalId = brand(event.id + i);
-			const offset = i <= event.offset ? 0 : 1;
-			events.push({ revision: event.revision, count: 1, id, offset });
-		}
-
-		return events;
-	});
-
-	normalized.sort((a, b) => {
-		const cmpRevision = cmp(a.revision, b.revision);
-		if (cmpRevision !== 0) {
-			return cmpRevision;
-		}
-
-		return cmp(a.id, b.id);
-	});
-
-	return normalized;
-}
-
-function cmp(a: any, b: any): number {
-	if (a === b) {
-		return 0;
-	}
-
-	return a > b ? 1 : -1;
 }
 
 /**
@@ -807,5 +816,79 @@ export function tagChangeInline(
 }
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
-	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(
+		change,
+		new Set([undefined]),
+		revision,
+	);
+}
+
+interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
+	srcQueries: CrossFieldQuerySet;
+	dstQueries: CrossFieldQuerySet;
+	isInvalidated: boolean;
+	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
+	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
+	reset: () => void;
+}
+
+function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
+	const srcQueries: CrossFieldQuerySet = new Map();
+	const dstQueries: CrossFieldQuerySet = new Map();
+	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+
+	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
+		target === CrossFieldTarget.Source ? mapSrc : mapDst;
+
+	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
+		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
+
+	const table = {
+		srcQueries,
+		dstQueries,
+		isInvalidated: false,
+		mapSrc,
+		mapDst,
+
+		get: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: MoveId,
+			count: number,
+			addDependency: boolean,
+		) => {
+			if (addDependency) {
+				addCrossFieldQuery(getQueries(target), revision, id, count);
+			}
+			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
+		},
+		set: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: MoveId,
+			count: number,
+			value: T,
+			invalidateDependents: boolean,
+		) => {
+			if (
+				invalidateDependents &&
+				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
+			) {
+				table.isInvalidated = true;
+			}
+			setInCrossFieldMap(getMap(target), revision, id, count, value);
+		},
+
+		onMoveIn: () => {},
+		moveKey: () => {},
+
+		reset: () => {
+			table.isInvalidated = false;
+			table.srcQueries.clear();
+			table.dstQueries.clear();
+		},
+	};
+
+	return table;
 }

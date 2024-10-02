@@ -107,7 +107,8 @@ export interface IPartitionLambda {
 	readonly activityTimeout?: number;
 
 	/**
-	 * Processes an incoming message
+	 * Processes an incoming message.
+	 * @returns a Promise if there is async work required, otherwise `undefined`.
 	 */
 	handler(message: IQueuedMessage): Promise<void> | undefined;
 
@@ -129,7 +130,7 @@ export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitt
 	create(
 		config: TConfig,
 		context: IContext,
-		updateActivityTime?: () => void,
+		updateActivityTime?: (activityTime?: number) => void,
 	): Promise<IPartitionLambda>;
 
 	/**

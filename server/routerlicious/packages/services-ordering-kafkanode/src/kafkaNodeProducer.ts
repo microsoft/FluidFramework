@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 import * as util from "util";
 import {
 	BoxcarType,
@@ -102,6 +103,14 @@ export class KafkaNodeProducer implements IProducer {
 		listener: (...args: any[]) => void,
 	): this {
 		this.events.once(event, listener);
+		return this;
+	}
+
+	public off(
+		event: "connected" | "produced" | "error",
+		listener: (...args: any[]) => void,
+	): this {
+		this.events.off(event, listener);
 		return this;
 	}
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { test } from "@oclif/test";
+import { FluidReleaseMachine } from "../../src/machines/index.js";
+import { initializeCommandTestFunction } from "../init.js";
 
-import { FluidReleaseMachine } from "../../src/machines";
-
+const test = initializeCommandTestFunction(import.meta.url);
 const knownUnhandledStates: string[] = [
 	// Known unhandled states can be added here temporarily during development.
 ];

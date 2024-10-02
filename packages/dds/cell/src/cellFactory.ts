@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IChannelAttributes,
-	type IChannelFactory,
-	type IChannelServices,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { SharedCell as SharedCellClass } from "./cell.js";
-import { type ISharedCell } from "./interfaces.js";
+import type { ISharedCell } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -83,4 +82,4 @@ export class CellFactory implements IChannelFactory<ISharedCell> {
  * it is up to the user of this to ensure the cell's content types align.
  * @internal
  */
-export const SharedCell: ISharedObjectKind<ISharedCell> = createSharedObjectKind(CellFactory);
+export const SharedCell = createSharedObjectKind<ISharedCell>(CellFactory);

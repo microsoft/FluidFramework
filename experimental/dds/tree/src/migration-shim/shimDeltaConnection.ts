@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandle } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	type IDeltaConnection,
 	type IDeltaHandler,
-} from '@fluidframework/datastore-definitions';
+} from '@fluidframework/datastore-definitions/internal';
 
 import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
 
@@ -61,18 +60,6 @@ export class PreMigrationDeltaConnection implements IDeltaConnection {
 	public dirty(): void {
 		this.deltaConnection.dirty();
 	}
-
-	/**
-	 * Passes through to the underlying delta connection.
-	 *
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * @privateRemarks This needs to be more thoroughly thought through. What happens when the source handle is changed?
-	 */
-	public addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {
-		this.deltaConnection.addedGCOutboundReference?.(srcHandle, outboundHandle);
-	}
 }
 
 /**
@@ -118,17 +105,5 @@ export class StampDeltaConnection implements IDeltaConnection {
 
 	public dirty(): void {
 		this.deltaConnection.dirty();
-	}
-
-	/**
-	 * Passes through to the underlying delta connection.
-	 *
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * @privateRemarks This needs to be more thoroughly thought through. What happens when the source handle is changed?
-	 */
-	public addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {
-		this.deltaConnection.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}
 }

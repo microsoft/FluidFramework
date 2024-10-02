@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	IGitCommitDetails,
+	IGitBlob,
+	IGitCreateBlobResponse,
+	IGitCreateTreeParams,
+	IGitTree,
+} from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
-import type * as git from "@fluidframework/gitresources";
 import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
@@ -24,21 +30,21 @@ export class RetriableGitManager implements IGitManager {
 	public async getCommits(
 		sha: string,
 		count: number,
-	): Promise<IR11sResponse<git.ICommitDetails[]>> {
+	): Promise<IR11sResponse<IGitCommitDetails[]>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getCommits(sha, count),
 			"gitManager_getCommits",
 		);
 	}
 
-	public async getTree(root: string, recursive: boolean): Promise<IR11sResponse<git.ITree>> {
+	public async getTree(root: string, recursive: boolean): Promise<IR11sResponse<IGitTree>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getTree(root, recursive),
 			"gitManager_getTree",
 		);
 	}
 
-	public async getBlob(sha: string): Promise<IR11sResponse<git.IBlob>> {
+	public async getBlob(sha: string): Promise<IR11sResponse<IGitBlob>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getBlob(sha),
 			"gitManager_getBlob",
@@ -48,14 +54,14 @@ export class RetriableGitManager implements IGitManager {
 	public async createBlob(
 		content: string,
 		encoding: string,
-	): Promise<IR11sResponse<git.ICreateBlobResponse>> {
+	): Promise<IR11sResponse<IGitCreateBlobResponse>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.createBlob(content, encoding),
 			"gitManager_createBlob",
 		);
 	}
 
-	public async createGitTree(params: git.ICreateTreeParams): Promise<IR11sResponse<git.ITree>> {
+	public async createGitTree(params: IGitCreateTreeParams): Promise<IR11sResponse<IGitTree>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.createGitTree(params),
 			"gitManager_createGitTree",

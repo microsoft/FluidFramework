@@ -9,14 +9,25 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import sinon from "sinon";
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
-import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
+
+/**
+ * @remarks Initialized in advance to extract its keys for type checking.
+ * Arbitrary properties that can be logged with the telemetry event.
+ */
+interface TestTelemetryProperties {
+	propertyOne: number;
+	propertyTwo: number;
+	propertyThree: number;
+}
 
 /**
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper
@@ -25,24 +36,24 @@ import {
 class TestLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryPerformanceEventExt[] = [];
 
-	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
+	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
 		this.events.push(event);
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
+	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	supportsTags?: true | undefined;
+	public supportsTags?: true | undefined;
 }
 
 const standardEventProperties = ["eventName", "duration", "count"];
-const aggregateProperties = ["totalDuration", "minDuration", "maxDuration"];
+const aggregateProperties = ["totalDuration", "minDuration", "maxDuration", "averageDuration"];
 
 describe("SampledTelemetryHelper", () => {
 	let logger: TestLogger;
@@ -54,6 +65,7 @@ describe("SampledTelemetryHelper", () => {
 	it("only writes event after correct number of samples", () => {
 		const sampling = 10;
 		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, sampling);
+
 		for (let i = 0; i < sampling - 1; i++) {
 			helper.measure(() => {});
 		}
@@ -142,10 +154,10 @@ describe("SampledTelemetryHelper", () => {
 		);
 
 		for (let i = 0; i < 9; i++) {
-			helper.measure(() => {}, bucket1);
+			helper.measure(() => ({ customData: {} }), bucket1);
 		}
 		for (let i = 0; i < 7; i++) {
-			helper.measure(() => {}, bucket2);
+			helper.measure(() => ({ customData: {} }), bucket2);
 		}
 
 		assert.strictEqual(logger.events.filter((x) => x.prop1 === "value1").length, 3);
@@ -175,11 +187,11 @@ describe("SampledTelemetryHelper", () => {
 			false,
 			bucketProperties,
 		);
-		helper.measure(() => {}, bucket1);
+		helper.measure(() => ({ customData: {} }), bucket1);
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
 		assert.strictEqual(event.count, 1);
-		assert(event.duration !== bucketProperties.get("bucket1")!.duration);
+		assert(event.duration !== bucketProperties.get("bucket1")?.duration);
 	});
 
 	it("generates telemetry event from buffered data when disposed", () => {
@@ -232,6 +244,241 @@ describe("SampledTelemetryHelper", () => {
 		// After disposing, there should still be just one event
 		helper.dispose();
 		assert.strictEqual(logger.events.length, 1);
+	});
+
+	it("Correctly returns computed duration for custom data", () => {
+		const sampling = 10;
+		const helper = new SampledTelemetryHelper(
+			{ eventName: "testEvent" },
+			logger,
+			sampling,
+			true /* includeAggregateMetrics */,
+		);
+
+		const clock = sinon.useFakeTimers();
+		const startingPoint = 50; // Arbitrary starting point.
+		let totalDuration = 0;
+		let maxDuration = Number.MIN_VALUE;
+		let minDuration = Number.MAX_VALUE;
+
+		for (let i = 0; i < sampling; i++) {
+			helper.measure(() => {
+				const currentIterationDuration = startingPoint + i;
+
+				clock.tick(currentIterationDuration);
+				totalDuration += currentIterationDuration;
+				maxDuration = Math.max(maxDuration, currentIterationDuration);
+				minDuration = Math.min(minDuration, currentIterationDuration);
+			});
+		}
+
+		clock.restore();
+
+		assert.strictEqual(logger.events.length, 1);
+		assert.strictEqual(logger.events[0].totalDuration, totalDuration);
+		assert.strictEqual(logger.events[0].averageDuration, totalDuration / sampling);
+		assert.strictEqual(logger.events[0].maxDuration, maxDuration);
+		assert.strictEqual(logger.events[0].minDuration, minDuration);
+	});
+
+	it("Correctly returns computed averages and maxes for custom data", () => {
+		const sampling = 10;
+
+		const helper = new SampledTelemetryHelper<void, TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			sampling,
+		);
+
+		for (let i = 0; i < sampling; i++) {
+			helper.measure(() => {
+				return {
+					customData: {
+						propertyOne: i + 1,
+						propertyTwo: i + 2,
+						propertyThree: i + 3,
+					},
+				};
+			});
+		}
+
+		assert.strictEqual(logger.events.length, 1);
+		assert.strictEqual(logger.events[0].avg_propertyOne, 5.5);
+		assert.strictEqual(logger.events[0].avg_propertyTwo, 6.5);
+		assert.strictEqual(logger.events[0].avg_propertyThree, 7.5);
+		assert.strictEqual(logger.events[0].max_propertyOne, 10);
+		assert.strictEqual(logger.events[0].max_propertyTwo, 11);
+		assert.strictEqual(logger.events[0].max_propertyThree, 12);
+	});
+
+	it("explicit return type and custom data type", () => {
+		const helperTypeNumber = new SampledTelemetryHelper<number, TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			10,
+		);
+
+		// Measure should be able to return a value of the type specified during helper creation and custom data.
+		helperTypeNumber.measure(() => ({
+			returnValue: 64,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+
+		helperTypeNumber.measure(() => ({
+			returnValue: 128,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+
+		const helperTypeBoolean = new SampledTelemetryHelper<boolean, TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			10,
+		);
+
+		helperTypeBoolean.measure(() => ({
+			returnValue: true,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+
+		helperTypeBoolean.measure(() => ({
+			returnValue: false,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+	});
+
+	// This is deliberatly skipped because it contains compile-time tests. We don't want to actually run this code.
+	describe.skip("compile-time tests", () => {
+		it("no return type and no custom data type", () => {
+			const helper = new SampledTelemetryHelper<void, void>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to not return anything.
+			helper.measure(() => {});
+
+			// As far as I know we can't really do much to prevent functions that return _something_ from being passed.
+			// If there's a way to make these compile-time errors, it'd be nice.
+			helper.measure(() => true);
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("no return type and no custom data type", () => {
+			const helper = new SampledTelemetryHelper<void, void>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to not return anything.
+			helper.measure(() => {});
+
+			// As far as I know we can't really do much to prevent functions that return _something_ from being passed.
+			// If there's a way to make these compile-time errors, it'd be nice.
+			helper.measure(() => true);
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("explicit return type and no custom data type", () => {
+			const helper = new SampledTelemetryHelper<boolean>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to return a plain value of the type specified during helper creation.
+			helper.measure(() => true);
+
+			// Measure should not be able to return a plain value of a type that is not the one specified during helper creation.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => "");
+
+			// Measure should not be able to not return anything, because a return type was specified during helper creation.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => {});
+
+			// Measure should not be able to return custom data (even if the return value is of the correct type) because no
+			// custom data type was specified during helper creation.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("no return type and explicit custom data type", () => {
+			const helper = new SampledTelemetryHelper<void, TestTelemetryProperties>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to return custom data and no returnValue, or set it to undefined
+			helper.measure(() => ({
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+			helper.measure(() => ({
+				returnValue: undefined,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+
+			// Measure should not be able to not return anything; custom data is required.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => {});
+
+			// Measure should not be able to return a plain value; custom data is required.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => "");
+
+			// Measure should not be able to return a plain value even if custom data is required; return value must be
+			// undefined because the helper was told to expect no return value.
+			helper.measure(() => ({
+				// @ts-expect-error -- We want this to be a compile-time error
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("explicit return type and custom data type", () => {
+			const helper = new SampledTelemetryHelper<boolean, TestTelemetryProperties>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to return a value of the type specified during helper creation and custom data.
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+
+			// Measure should not be able to return something of incorrect type, even if the returned custom data is correct.
+			helper.measure(() => ({
+				// @ts-expect-error -- Can't return a value of the incorrect type
+				returnValue: "",
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+			// @ts-expect-error -- Can't try not to include a return value
+			helper.measure(() => ({
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+
+			// Measure should not be able to return without custom data, because a custom data type was specified during
+			// helper creation.
+			// @ts-expect-error -- Can't return a value of the correct type without custom data
+			helper.measure(() => true);
+			// @ts-expect-error -- Can't return a value of the incorrect type without custom data
+			helper.measure(() => "");
+			// @ts-expect-error -- Can't try to not return anything without custom data
+			helper.measure(() => {});
+		});
 	});
 });
 

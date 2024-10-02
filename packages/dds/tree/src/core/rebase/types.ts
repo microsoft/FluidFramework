@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
@@ -11,12 +11,14 @@ import {
 import { Type } from "@sinclair/typebox";
 
 import {
-	Brand,
-	NestedMap,
-	RangeMap,
+	type Brand,
+	type NestedMap,
+	type RangeMap,
+	brand,
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
+import type { TaggedChange } from "./changeRebaser.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -29,7 +31,6 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  *
  * The constant 'root' is reserved for the trunk base: minting a SessionSpaceCompressedId is not
  * possible on readonly clients. These clients generally don't need ids, but  must be done at tree initialization time.
- * @internal
  */
 export type RevisionTag = SessionSpaceCompressedId | "root";
 export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | "root";
@@ -42,14 +43,12 @@ export const RevisionTagSchema = Type.Union([
  * An ID which is unique within a revision of a `ModularChangeset`.
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
  * but they are unique when qualified by the revision of the change they are used in.
- * @internal
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
  * A globally unique ID for an atom of change, or a node associated with the atom of change.
- * @internal
- *
+ * *
  * @privateRemarks
  * TODO: Rename this to be more general.
  */
@@ -68,12 +67,10 @@ export interface ChangeAtomId {
 export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
 
 /**
- * @internal
  */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
 
 /**
- * @internal
  */
 export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 
@@ -84,10 +81,24 @@ export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean
 	return a.localId === b.localId && a.revision === b.revision;
 }
 
+export function areEqualChangeAtomIdOpts(
+	a: ChangeAtomId | undefined,
+	b: ChangeAtomId | undefined,
+): boolean {
+	if (a === undefined || b === undefined) {
+		return a === b;
+	}
+
+	return areEqualChangeAtomIds(a, b);
+}
+
 /**
  * @returns a ChangeAtomId with the given revision and local ID.
  */
-export function makeChangeAtomId(localId: ChangesetLocalId, revision?: RevisionTag): ChangeAtomId {
+export function makeChangeAtomId(
+	localId: ChangesetLocalId,
+	revision?: RevisionTag,
+): ChangeAtomId {
 	return revision === undefined ? { localId } : { localId, revision };
 }
 
@@ -95,7 +106,10 @@ export function asChangeAtomId(id: ChangesetLocalId | ChangeAtomId): ChangeAtomI
 	return typeof id === "object" ? id : { localId: id };
 }
 
-export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+export function taggedAtomId(
+	id: ChangeAtomId,
+	revision: RevisionTag | undefined,
+): ChangeAtomId {
 	return makeChangeAtomId(id.localId, id.revision ?? revision);
 }
 
@@ -107,6 +121,10 @@ export function taggedOptAtomId(
 		return undefined;
 	}
 	return taggedAtomId(id, revision);
+}
+
+export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+	return { ...id, localId: brand(id.localId + offset) };
 }
 
 export function replaceAtomRevisions(
@@ -136,8 +154,8 @@ export interface GraphCommit<TChange> {
 	readonly change: TChange;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
-	/** The inverse of this commit */
-	inverse?: TChange;
+	/** The rollback of this commit */
+	rollback?: TaggedChange<TChange, RevisionTag>;
 }
 
 /**
@@ -157,7 +175,7 @@ export enum CommitKind {
 /**
  * Information about a commit that has been applied.
  *
- * @public
+ * @sealed @public
  */
 export interface CommitMetadata {
 	/**
@@ -188,4 +206,13 @@ export function mintCommit<TChange>(
 		change,
 		parent,
 	};
+}
+
+export function replaceChange<TChange>(
+	commit: GraphCommit<TChange>,
+	change: TChange,
+): GraphCommit<TChange> {
+	const output = { ...commit, change };
+	delete output.rollback;
+	return output;
 }

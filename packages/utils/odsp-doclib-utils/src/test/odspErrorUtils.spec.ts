@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IGenericNetworkError,
 	IThrottlingWarning,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 import { GenericNetworkError, createWriteError } from "@fluidframework/driver-utils/internal";
 import {

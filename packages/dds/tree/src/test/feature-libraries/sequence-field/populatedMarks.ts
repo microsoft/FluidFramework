@@ -3,21 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { ChangeAtomId } from "../../../core/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import type { ChangeAtomId } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field/index.js";
-import {
+import type { CellMark } from "../../../feature-libraries/sequence-field/index.js";
+import type {
 	Attach,
 	Detach,
-	DetachIdOverride,
 	MarkEffect,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { Populated, brand } from "../../../util/index.js";
+import { type Populated, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 
 export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
@@ -30,29 +28,8 @@ export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
  */
 export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMark[] {
 	const tag = idCompressor.generateCompressedId();
-	const lineageEvent: Populated<SF.LineageEvent> = {
-		count: 2,
-		id: brand(0),
-		offset: 1,
-		revision: tag,
-	};
-	const adjacentCell: Populated<SF.IdRange> = { count: 2, id: brand(0) };
 	const atomId: Populated<ChangeAtomId> = { localId: brand(0), revision: tag };
-	const cellId: Populated<SF.CellId> = {
-		localId: brand(0),
-		revision: tag,
-		lineage: [lineageEvent],
-		adjacentCells: [adjacentCell],
-	};
 	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
-	const unattachIdOverride: Populated<DetachIdOverride> = {
-		type: DetachIdOverrideType.Unattach,
-		id: cellId,
-	};
-	const redetachIdOverride: Populated<DetachIdOverride> = {
-		type: DetachIdOverrideType.Redetach,
-		id: cellId,
-	};
 	const attach: Populated<Attach> = {
 		type: "MoveIn",
 		id: brand(0),
@@ -60,19 +37,18 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		finalEndpoint: atomId,
 	};
 	const detach: Populated<Detach> = {
-		type: "MoveOut",
+		type: "Remove",
 		id: brand(0),
 		revision: tag,
-		finalEndpoint: atomId,
-		idOverride: unattachIdOverride,
+		idOverride: atomId,
 	};
 	const populatedMarks: PopulatedMark[] = [
-		{ count: 1, cellId, changes },
-		{ type: "Insert", count: 1, cellId, changes, id: brand(0), revision: tag },
+		{ count: 1, cellId: atomId, changes },
+		{ type: "Insert", count: 1, cellId: atomId, changes, id: brand(0), revision: tag },
 		{
 			type: "MoveIn",
 			count: 1,
-			cellId,
+			cellId: atomId,
 			changes,
 			id: brand(0),
 			revision: tag,
@@ -81,30 +57,31 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		{
 			type: "MoveOut",
 			count: 1,
-			cellId,
+			cellId: atomId,
 			changes,
 			id: brand(0),
 			revision: tag,
 			finalEndpoint: atomId,
-			idOverride: unattachIdOverride,
+			idOverride: atomId,
 		},
 		{
 			type: "Remove",
 			count: 1,
-			cellId,
+			cellId: atomId,
 			changes,
 			id: brand(0),
 			revision: tag,
-			idOverride: redetachIdOverride,
+			idOverride: atomId,
 		},
 		{
 			type: "AttachAndDetach",
 			count: 1,
-			cellId,
+			cellId: atomId,
 			changes,
 			attach,
 			detach,
 		},
+		{ type: "Rename", count: 1, cellId: atomId, changes, idOverride: atomId },
 	];
 	return populatedMarks;
 }

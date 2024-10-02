@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
@@ -11,7 +11,7 @@ import {
 import { Lazy } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
-import { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Explicitly typed interface for reading configurations.
@@ -193,7 +193,7 @@ export class CachedConfigProvider implements IConfigProvider {
 	private readonly configCache = new Map<string, StronglyTypedValue>();
 	private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
 
-	constructor(
+	public constructor(
 		private readonly logger?: ITelemetryBaseLogger,
 		...orderedBaseProviders: (IConfigProviderBase | undefined)[]
 	) {
@@ -201,6 +201,7 @@ export class CachedConfigProvider implements IConfigProvider {
 		const knownProviders = new Set<IConfigProviderBase>();
 		const candidateProviders = [...orderedBaseProviders];
 		while (candidateProviders.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const baseProvider = candidateProviders.shift()!;
 			if (
 				baseProvider !== undefined &&
@@ -216,26 +217,26 @@ export class CachedConfigProvider implements IConfigProvider {
 			}
 		}
 	}
-	getBoolean(name: string): boolean | undefined {
+	public getBoolean(name: string): boolean | undefined {
 		return this.getCacheEntry(name)?.boolean;
 	}
-	getNumber(name: string): number | undefined {
+	public getNumber(name: string): number | undefined {
 		return this.getCacheEntry(name)?.number;
 	}
-	getString(name: string): string | undefined {
+	public getString(name: string): string | undefined {
 		return this.getCacheEntry(name)?.string;
 	}
-	getBooleanArray(name: string): boolean[] | undefined {
+	public getBooleanArray(name: string): boolean[] | undefined {
 		return this.getCacheEntry(name)?.["boolean[]"];
 	}
-	getNumberArray(name: string): number[] | undefined {
+	public getNumberArray(name: string): number[] | undefined {
 		return this.getCacheEntry(name)?.["number[]"];
 	}
-	getStringArray(name: string): string[] | undefined {
+	public getStringArray(name: string): string[] | undefined {
 		return this.getCacheEntry(name)?.["string[]"];
 	}
 
-	getRawConfig(name: string): ConfigTypes {
+	public getRawConfig(name: string): ConfigTypes {
 		return this.getCacheEntry(name)?.raw;
 	}
 
@@ -279,9 +280,9 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
  *
  * @internal
  */
-export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
-	obj: L,
-): obj is L & MonitoringContext<L> {
+export function loggerIsMonitoringContext<
+	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
+>(obj: L): obj is L & MonitoringContext<L> {
 	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
@@ -291,9 +292,9 @@ export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITele
  *
  * @internal
  */
-export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
-	logger: L,
-): MonitoringContext<L> {
+export function loggerToMonitoringContext<
+	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
+>(logger: L): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
 		return logger;
 	}
@@ -347,4 +348,60 @@ export function createChildMonitoringContext(
 	props: Parameters<typeof createChildLogger>[0],
 ): MonitoringContext {
 	return loggerToMonitoringContext(createChildLogger(props));
+}
+
+/**
+ * @internal
+ * */
+export type OptionConfigReaders<T extends object> = {
+	[K in keyof T]?: K extends string
+		? (config: IConfigProvider, name: `Fluid.${string}.${K}`) => T[K] | undefined
+		: undefined;
+};
+
+/**
+ * Creates a proxy object that allows for reading configuration values from a IConfigProviderBase,
+ * and default to the provided options if the configuration value is not present.
+ *
+ * @param config - the configuration provider to read values from.
+ * @param namespace - the namespace to use when reading configuration values.
+ * @param configReaders - a mapping of option keys to configuration value readers.
+ * @param defaultOptions - the default options to use if the configuration value is not present.
+ *
+ * @internal
+ * */
+export function createConfigBasedOptionsProxy<T extends object>(
+	config: IConfigProviderBase,
+	namespace: `Fluid.${string}`,
+	configReaders: OptionConfigReaders<T>,
+	defaultOptions?: Partial<T>,
+): Readonly<Partial<T>> {
+	const realConfig =
+		config instanceof CachedConfigProvider
+			? config
+			: new CachedConfigProvider(undefined, config);
+
+	const keys = new Set<string>([
+		...Object.keys(defaultOptions ?? {}),
+		...Object.keys(configReaders),
+	]);
+
+	return new Proxy<Partial<T>>(Object.freeze({}), {
+		get: (_, prop: string & keyof T): unknown => {
+			const reader = configReaders[prop];
+			const value = reader?.(realConfig, `${namespace}.${prop}`);
+			if (value !== undefined) {
+				return value;
+			}
+			return defaultOptions?.[prop];
+		},
+		has: (_, prop: string): boolean => keys.has(prop),
+		// we don't want the keys of this object to be enumerable
+		// as accessing them will trigger a config read, which
+		// should only happen when the value is accessed via
+		// a previously known key.
+		ownKeys: (): (string | symbol)[] => {
+			throw new TypeError("OptionsProxy keys are not enumerable");
+		},
+	});
 }

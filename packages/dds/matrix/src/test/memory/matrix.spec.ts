@@ -3,13 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import {
+	type IMemoryTestObject,
+	benchmarkMemory,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedMatrix } from "../../index.js";
+import { SharedMatrix, type ISharedMatrix } from "../../index.js";
 import { matrixFactory } from "../utils.js";
 
-function createLocalMatrix(id: string) {
+function createLocalMatrix(id: string): ISharedMatrix & IChannel {
 	return matrixFactory.create(new MockFluidDataStoreRuntime(), id);
 }
 
@@ -40,28 +45,31 @@ describe("Matrix memory usage", () => {
 
 				private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
-				async run() {
+				async run(): Promise<void> {
 					this.localMatrix = createLocalMatrix("testLocalMatrix");
 				}
 			})(),
 		);
 
-		const numbersOfEntriesForTests = [100, 1000, 5000];
+		const numbersOfEntriesForTests = isInPerformanceTestingMode
+			? [100, 1000, 5000]
+			: // When not measuring perf, use a single smaller data size so the tests run faster.
+				[10];
 
-		numbersOfEntriesForTests.forEach((x) => {
+		for (const x of numbersOfEntriesForTests) {
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
 					readonly title = `Insert and remove a column ${x} times`;
 					private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
-					async run() {
+					async run(): Promise<void> {
 						for (let i = 0; i < x; i++) {
 							this.localMatrix.insertCols(0, 1);
 							this.localMatrix.removeCols(0, 1);
 						}
 					}
 
-					beforeIteration() {
+					beforeIteration(): void {
 						this.localMatrix = createLocalMatrix("testLocalMatrix");
 					}
 				})(),
@@ -72,14 +80,14 @@ describe("Matrix memory usage", () => {
 					readonly title = `Insert and remove one row ${x} times`;
 					private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
-					async run() {
+					async run(): Promise<void> {
 						for (let i = 0; i < x; i++) {
 							this.localMatrix.insertRows(0, 1);
 							this.localMatrix.removeRows(0, 1);
 						}
 					}
 
-					beforeIteration() {
+					beforeIteration(): void {
 						this.localMatrix = createLocalMatrix("testLocalMatrix");
 					}
 				})(),
@@ -90,7 +98,7 @@ describe("Matrix memory usage", () => {
 					readonly title = `Insert and remove a row and column ${x} times`;
 					private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
-					async run() {
+					async run(): Promise<void> {
 						for (let i = 0; i < x; i++) {
 							this.localMatrix.insertCols(0, 1);
 							this.localMatrix.insertRows(0, 1);
@@ -99,7 +107,7 @@ describe("Matrix memory usage", () => {
 						}
 					}
 
-					beforeIteration() {
+					beforeIteration(): void {
 						this.localMatrix = createLocalMatrix("testLocalMatrix");
 					}
 				})(),
@@ -110,13 +118,13 @@ describe("Matrix memory usage", () => {
 					readonly title = `Set a 3-character string in ${x} cells`;
 					private localMatrix = createLocalMatrix("testLocalMatrix");
 
-					async run() {
+					async run(): Promise<void> {
 						for (let i = 0; i < x; i++) {
 							this.localMatrix.setCell(0, i, "abc");
 						}
 					}
 
-					beforeIteration() {
+					beforeIteration(): void {
 						this.localMatrix = createLocalMatrix("testLocalMatrix");
 						this.localMatrix.insertRows(0, 1);
 						this.localMatrix.insertCols(0, x);
@@ -129,19 +137,19 @@ describe("Matrix memory usage", () => {
 					readonly title = `Set a number in ${x} cells`;
 					private localMatrix = createLocalMatrix("testLocalMatrix");
 
-					async run() {
+					async run(): Promise<void> {
 						for (let i = 0; i < x; i++) {
 							this.localMatrix.setCell(0, i, 1);
 						}
 					}
 
-					beforeIteration() {
+					beforeIteration(): void {
 						this.localMatrix = createLocalMatrix("testLocalMatrix");
 						this.localMatrix.insertRows(0, 1);
 						this.localMatrix.insertCols(0, x);
 					}
 				})(),
 			);
-		});
+		}
 	});
 });

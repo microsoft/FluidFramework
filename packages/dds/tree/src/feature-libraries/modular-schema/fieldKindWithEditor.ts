@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
+import type {
 	FieldKindIdentifier,
 	TreeFieldStoredSchema,
 	TreeStoredSchema,
@@ -13,9 +13,12 @@ import {
 	Multiplicity,
 } from "../../core/index.js";
 
-import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
-import { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+import type { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
+import { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField } from "./isNeverTree.js";
+
+// TODO: stronger typing
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -29,7 +32,6 @@ import { isNeverField } from "./isNeverTree.js";
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
  */
-
 export class FieldKindWithEditor<
 	TEditor extends FieldEditor<any> = FieldEditor<any>,
 	TMultiplicity extends Multiplicity = Multiplicity,
@@ -89,7 +91,7 @@ export class FieldKindWithEditor<
 }
 
 /**
- * Downcasts to FieldKindWithEditor.
+ * Downcasts to {@link FieldKindWithEditor}.
  */
 export function withEditor<
 	TName extends string = string,
@@ -100,3 +102,5 @@ export function withEditor<
 	assert(kind instanceof FieldKindWithEditor, 0x7b5 /* kind must be FieldKindWithEditor */);
 	return kind as FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName>;
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any */

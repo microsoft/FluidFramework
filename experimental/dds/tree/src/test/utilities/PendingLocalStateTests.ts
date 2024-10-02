@@ -115,10 +115,11 @@ export function runPendingLocalStateTests(
 			await testObjectProvider.ensureSynchronized(); // Synchronize twice in case stashed ops caused an upgrade round-trip
 
 			function tryGetInsertedLeafId(view: TreeView): NodeId | undefined {
-				const rootNode = view.getViewNode(
-					view.getTrait({ parent: view.root, label: SimpleTestTree.traitLabel })[0]
-				);
-				const leftTrait = view.getTrait({ parent: rootNode.identifier, label: SimpleTestTree.leftTraitLabel });
+				const rootNode = view.getViewNode(view.getTrait({ parent: view.root, label: SimpleTestTree.traitLabel })[0]);
+				const leftTrait = view.getTrait({
+					parent: rootNode.identifier,
+					label: SimpleTestTree.leftTraitLabel,
+				});
 				if (leftTrait.length !== 2) {
 					return undefined;
 				}
@@ -126,7 +127,10 @@ export function runPendingLocalStateTests(
 				if (insertedParent === undefined) {
 					return undefined;
 				}
-				return view.getTrait({ parent: insertedParent.identifier, label: insertedLeafLabel })[0];
+				return view.getTrait({
+					parent: insertedParent.identifier,
+					label: insertedLeafLabel,
+				})[0];
 			}
 
 			expect(tryGetInsertedLeafId(observerAfterStash)).to.equal(

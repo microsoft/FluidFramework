@@ -1,2 +1,0 @@
-# Ensure screenshot assets are tracked using git LFS
-**/__screenshots__/**/*.png filter=lfs diff=lfs merge=lfs -text

@@ -6,59 +6,66 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	FieldKey,
-	ForestEvents,
-	IForestSubscription,
-	TreeFieldStoredSchema,
+	type ForestEvents,
+	type SchemaPolicy,
+	type TreeStoredSchema,
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import { ISubscribable } from "../../events/index.js";
-import { IDisposable, disposeSymbol } from "../../util/index.js";
-import { IDefaultEditBuilder } from "../default-schema/index.js";
-import { FieldGenerator } from "../fieldGenerator.js";
-import { NodeKeyManager } from "../node-key/index.js";
-import { FlexTreeSchema } from "../typed-schema/index.js";
+import type { Listenable } from "../../events/index.js";
+import { type IDisposable, disposeSymbol } from "../../util/index.js";
+import type { NodeKeyManager } from "../node-key/index.js";
 
-import { FlexTreeField } from "./flexTreeTypes.js";
-import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import type { FlexTreeField } from "./flexTreeTypes.js";
+import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
+
+/**
+ * Context for FlexTrees.
+ */
+export interface FlexTreeContext {
+	/**
+	 * Schema used within this context.
+	 * All data must conform to these schema.
+	 */
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * SchemaPolicy used within this context.
+	 */
+	readonly schemaPolicy: SchemaPolicy;
+
+	/**
+	 * If true, this context is the canonical context instance for a given view,
+	 * and its schema include all schema from the document.
+	 *
+	 * If false, this context was created for use in a unhydrated tree, and the full document schema is unknown.
+	 */
+	isHydrated(): this is FlexTreeHydratedContext;
+}
 
 /**
  * A common context of a "forest" of FlexTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * @internal
  */
-export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+export interface FlexTreeHydratedContext extends FlexTreeContext, Listenable<ForestEvents> {
 	/**
 	 * Gets the root field of the tree.
 	 */
 	get root(): FlexTreeField;
 
-	/**
-	 * Schema used within this context.
-	 * All data must conform to these schema.
-	 */
-	readonly schema: FlexTreeSchema;
-
-	// TODO: Add more members:
-	// - transaction APIs
-	// - branching APIs
-
 	readonly nodeKeyManager: NodeKeyManager;
 
 	/**
-	 * The forest containing the tree data associated with this context
+	 * The checkout object associated with this context.
 	 */
-	readonly forest: IForestSubscription;
+	readonly checkout: ITreeCheckout;
 }
 
 /**
  * Creating multiple flex tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
  * This slot is used to detect if one already exists and error if creating a second.
- *
- * TODO:
- * 1. API docs need to reflect this limitation or the limitation has to be removed.
  */
 export const ContextSlot = anchorSlot<Context>();
 
@@ -67,7 +74,7 @@ export const ContextSlot = anchorSlot<Context>();
  *
  * @remarks An editor is required to edit the FlexTree.
  */
-export class Context implements FlexTreeContext, IDisposable {
+export class Context implements FlexTreeHydratedContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
 	public readonly withAnchors: Set<LazyEntity> = new Set();
 
@@ -75,30 +82,34 @@ export class Context implements FlexTreeContext, IDisposable {
 	private disposed = false;
 
 	/**
-	 * @param forest - the Forest
-	 * @param editor - an editor that makes changes to the forest.
-	 * @param nodeKeyManager - an object which handles node key generation and conversion
-	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
-	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
+	 * @param flexSchema - Schema to use when working with the  tree.
+	 * @param checkout - The checkout.
+	 * @param nodeKeyManager - An object which handles node key generation and conversion
 	 */
 	public constructor(
-		public readonly schema: FlexTreeSchema,
-		public readonly forest: IForestSubscription,
-		public readonly editor: IDefaultEditBuilder,
+		public readonly schemaPolicy: SchemaPolicy,
+		public readonly checkout: ITreeCheckout,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 	) {
 		this.eventUnregister = [
-			this.forest.on("beforeChange", () => {
+			this.checkout.forest.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
 
 		assert(
-			!this.forest.anchors.slots.has(ContextSlot),
+			!this.checkout.forest.anchors.slots.has(ContextSlot),
 			0x92b /* Cannot create second flex-tree from checkout */,
 		);
-		this.forest.anchors.slots.set(ContextSlot, this);
+		this.checkout.forest.anchors.slots.set(ContextSlot, this);
+	}
+
+	public isHydrated(): this is FlexTreeHydratedContext {
+		return true;
+	}
+
+	public get schema(): TreeStoredSchema {
+		return this.checkout.storedSchema;
 	}
 
 	/**
@@ -122,7 +133,7 @@ export class Context implements FlexTreeContext, IDisposable {
 		}
 		this.eventUnregister.length = 0;
 
-		const deleted = this.forest.anchors.slots.delete(ContextSlot);
+		const deleted = this.checkout.forest.anchors.slots.delete(ContextSlot);
 		assert(deleted, 0x8c4 /* unexpected dispose */);
 	}
 
@@ -142,22 +153,19 @@ export class Context implements FlexTreeContext, IDisposable {
 
 	public get root(): FlexTreeField {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
-		const cursor = this.forest.allocateCursor();
-		moveToDetachedField(this.forest, cursor);
-		const field = makeField(this, this.schema.rootFieldSchema, cursor);
+		const cursor = this.checkout.forest.allocateCursor("root");
+		moveToDetachedField(this.checkout.forest, cursor);
+		const field = makeField(this, this.schema.rootFieldSchema.kind, cursor);
 		cursor.free();
 		return field;
 	}
 
-	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
-		return this.forest.on(eventName, listener);
+	public on<K extends keyof ForestEvents>(
+		eventName: K,
+		listener: ForestEvents[K],
+	): () => void {
+		return this.checkout.forest.on(eventName, listener);
 	}
-
-	/**
-	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
-	 */
-	// TODO: Use this to automatically provide node keys where required.
-	public fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
@@ -166,17 +174,13 @@ export class Context implements FlexTreeContext, IDisposable {
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
  * @param nodeKeyManager - an object which handles node key generation and conversion.
- * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
- * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
  * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(
-	schema: FlexTreeSchema,
-	forest: IForestSubscription,
-	editor: IDefaultEditBuilder,
+	schema: SchemaPolicy,
+	checkout: ITreeCheckout,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey: FieldKey,
 ): Context {
-	return new Context(schema, forest, editor, nodeKeyManager, nodeKeyFieldKey);
+	return new Context(schema, checkout, nodeKeyManager);
 }

@@ -3,40 +3,52 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type {
+	IFluidHandle,
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	IFluidHandle,
-	IFluidHandleContext,
 	ITelemetryBaseLogger,
+	ErasedType,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IQuorumClients } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
-	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
+	(event: "disconnected", listener: () => void);
+	(event: "dispose", listener: () => void);
+	(event: "attaching", listener: () => void);
+	(event: "attached", listener: () => void);
 	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);
 }
 
 /**
+ * Manages the transmission of ops between the runtime and storage.
+ * @legacy
+ * @alpha
+ */
+export type IDeltaManagerErased =
+	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
+
+/**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
- * @public
+ * @sealed
+ * @legacy
+ * @alpha
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
@@ -52,7 +64,7 @@ export interface IFluidDataStoreRuntime
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly deltaManager: IDeltaManagerErased;
 
 	readonly clientId: string | undefined;
 
@@ -65,7 +77,7 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
-	readonly idCompressor?: IIdCompressor;
+	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
 	 * Returns the channel with the given id
@@ -105,7 +117,10 @@ export interface IFluidDataStoreRuntime
 	 * Api to upload a blob of data.
 	 * @param blob - blob to be uploaded.
 	 */
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Submits the signal to be sent to other clients.

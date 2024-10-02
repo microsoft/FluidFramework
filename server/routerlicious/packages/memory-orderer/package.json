@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-memory-orderer",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid server in memory orderer",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,7 +66,7 @@
 		"@types/debug": "^4.1.5",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/lodash": "^4.14.118",
-		"@types/node": "^18.17.1",
+		"@types/node": "^18.19.39",
 		"@types/ws": "^6.0.1",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
@@ -81,8 +81,8 @@
 		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.38.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@5.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
@@ -92,9 +92,16 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocalKafka": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalOrderer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

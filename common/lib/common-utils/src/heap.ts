@@ -127,7 +127,7 @@ export class Heap<T> {
 		// Move the node we want to remove to the end of the array
 		const position = node.position;
 		this.swap(node.position, this.L.length - 1);
-		this.L.splice(this.L.length - 1);
+		this.L.splice(-1);
 
 		// Update the swapped node assuming we didn't remove the end of the list
 		if (position !== this.L.length) {

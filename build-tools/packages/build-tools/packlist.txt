@@ -182,10 +182,6 @@ dist/index.d.ts
 dist/index.d.ts.map
 dist/index.js
 dist/index.js.map
-dist/type-test-generator/compatibility.d.ts
-dist/type-test-generator/compatibility.d.ts.map
-dist/type-test-generator/compatibility.js
-dist/type-test-generator/compatibility.js.map
 dist/type-test-generator/main.d.ts
 dist/type-test-generator/main.d.ts.map
 dist/type-test-generator/main.js
@@ -194,6 +190,10 @@ dist/typeValidator/changeToNamedExports.d.ts
 dist/typeValidator/changeToNamedExports.d.ts.map
 dist/typeValidator/changeToNamedExports.js
 dist/typeValidator/changeToNamedExports.js.map
+dist/typeValidator/compatibility.d.ts
+dist/typeValidator/compatibility.d.ts.map
+dist/typeValidator/compatibility.js
+dist/typeValidator/compatibility.js.map
 dist/typeValidator/testGeneration.d.ts
 dist/typeValidator/testGeneration.d.ts.map
 dist/typeValidator/testGeneration.js

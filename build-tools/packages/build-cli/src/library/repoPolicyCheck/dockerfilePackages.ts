@@ -4,7 +4,7 @@
  */
 
 import fs from "node:fs";
-import { Handler, readFile, writeFile } from "./common";
+import { Handler, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
 const serverDockerfilePath = `${serverPath}Dockerfile`;

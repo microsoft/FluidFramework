@@ -1,0 +1,54 @@
+[
+  {
+    "count": 1,
+    "effect": {
+      "attachAndDetach": {
+        "attach": {
+          "moveIn": {
+            "id": -1
+          }
+        },
+        "detach": {
+          "moveOut": {
+            "idOverride": {
+              "type": 0,
+              "id": {
+                "atom": [
+                  0,
+                  0
+                ]
+              }
+            },
+            "id": -1
+          }
+        }
+      }
+    },
+    "cellId": {
+      "atom": [
+        0,
+        0
+      ]
+    },
+    "changes": {
+      "fieldChanges": [
+        {
+          "fieldKey": "",
+          "fieldKind": "",
+          "change": {
+            "localId": 2,
+            "testChange": {
+              "inputContext": [],
+              "intentions": [
+                1
+              ],
+              "outputContext": [
+                1
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+]

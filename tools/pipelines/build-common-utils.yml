@@ -37,7 +37,12 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common
     - common/lib/common-utils
+    # Common-utils references files from the patches folder at the root of the repo.
+    # Using the whole folder as dependency because when patch files are updated they might get new names.
+    - patches/*
+    - scripts/*
     - tools/pipelines/build-common-utils.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -50,7 +55,6 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
 
 pr:
   branches:
@@ -62,7 +66,12 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common
     - common/lib/common-utils
+    # Common-utils references files from the patches folder at the root of the repo.
+    # Using the whole folder as dependency because when patch files are updated they might get new names.
+    - patches/*
+    - scripts/*
     - tools/pipelines/build-common-utils.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -71,7 +80,6 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self

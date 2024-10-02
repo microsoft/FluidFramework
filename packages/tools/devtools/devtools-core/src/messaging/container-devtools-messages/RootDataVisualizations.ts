@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type HasContainerKey } from "../../CommonInterfaces.js";
-import { type RootHandleNode } from "../../data-visualization/index.js";
-import { type IDevtoolsMessage } from "../Messages.js";
+import type { HasContainerKey } from "../../CommonInterfaces.js";
+import type { RootHandleNode } from "../../data-visualization/index.js";
+import type { IDevtoolsMessage } from "../Messages.js";
 
 /**
  * Encapsulates types and logic related to {@link RootDataVisualizations.Message}.

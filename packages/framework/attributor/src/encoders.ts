@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IUser } from "@fluidframework/protocol-definitions";
+import { type IUser } from "@fluidframework/driver-definitions";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 
 import { type IAttributor } from "./attributor.js";
@@ -23,10 +23,11 @@ export const deltaEncoder: TimestampEncoder = {
 	encode: (timestamps: number[]) => {
 		const deltaTimestamps: number[] = Array.from({ length: timestamps.length });
 		let prev = 0;
-		for (let i = 0; i < timestamps.length; i++) {
-			deltaTimestamps[i] = timestamps[i] - prev;
-			prev = timestamps[i];
+		for (const [i, timestamp] of timestamps.entries()) {
+			deltaTimestamps[i] = timestamp - prev;
+			prev = timestamp;
 		}
+
 		return deltaTimestamps;
 	},
 	decode: (encoded: unknown) => {
@@ -98,8 +99,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 			0x4b1 /* serialized attribution columns should have the same length */,
 		);
 		const entries: [number, AttributionInfo][] = Array.from({ length: seqs.length });
-		for (let i = 0; i < seqs.length; i++) {
-			const key = seqs[i];
+		for (const [i, key] of seqs.entries()) {
 			const timestamp = timestamps[i];
 			const ref = attributionRefs[i];
 			const user = JSON.parse(interner.getString(ref)) as IUser;
@@ -112,7 +112,10 @@ export class AttributorSerializer implements IAttributorSerializer {
 /**
  * Creates an encoder which composes `a` and `b`.
  */
-export const chain = <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>): Encoder<T1, T3> => ({
+export const chain = <T1, T2, T3>(
+	a: Encoder<T1, T2>,
+	b: Encoder<T2, T3>,
+): Encoder<T1, T3> => ({
 	encode: (content) => b.encode(a.encode(content)),
 	decode: (content) => a.decode(b.decode(content)),
 });

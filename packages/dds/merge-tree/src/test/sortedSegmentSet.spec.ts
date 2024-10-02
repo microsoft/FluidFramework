@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { LocalReferencePosition } from "../localReference.js";
 import { ISegment } from "../mergeTreeNodes.js";
@@ -18,7 +18,7 @@ function validateSorted<T extends SortedSegmentSetItem>(
 	set: SortedSegmentSet<T>,
 	getOrdinal: (item: T) => string | undefined,
 	prefix: string,
-) {
+): void {
 	for (let i = 0; i < set.size - 1; i++) {
 		const a = getOrdinal(set.items[i]);
 		const b = getOrdinal(set.items[i + 1]);
@@ -32,7 +32,7 @@ function validateSet<T extends SortedSegmentSetItem>(
 	client: TestClient,
 	set: SortedSegmentSet<T>,
 	getOrdinal: (item: T) => string | undefined,
-) {
+): void {
 	validateSorted(set, getOrdinal, "initial");
 
 	// add content to shift ordinals in tree
@@ -115,6 +115,9 @@ describe("SortedSegmentSet", () => {
 		assert.equal(set.size, client.getLength() * 2);
 		validateSet<LocalReferencePosition>(
 			client,
+			// Cast to any because we are validating a set of local references, but the instantiated type of trackedSet
+			// on TrackingGroup is SortedSegmentSet<Trackable>.
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(set as any).trackedSet,
 			(i) => i.getSegment()?.ordinal,
 		);

@@ -5,9 +5,13 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import {
+	IAnyDriverError,
+	IConnect,
+	IConnected,
+	ScopeType,
+} from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
-import { IConnect, IConnected, ScopeType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
 
 import { IOdspSocketError } from "../../contracts.js";
@@ -82,8 +86,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 		details?: { context: { type?: string; code?: number } },
 	): void {
 		const error =
-			reason ??
-			createGenericNetworkError("TestError", { canRetry: false }, { driverVersion });
+			reason ?? createGenericNetworkError("TestError", { canRetry: false }, { driverVersion });
 		this.emit("disconnect", error, details);
 	}
 
@@ -110,11 +113,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 					case "connect_error": {
 						const errorToThrow =
 							this.mockSocketConnectResponse.connect_document.errorToThrow ??
-							createGenericNetworkError(
-								"TestError",
-								{ canRetry: false },
-								{ driverVersion },
-							);
+							createGenericNetworkError("TestError", { canRetry: false }, { driverVersion });
 						this.emit(
 							this.mockSocketConnectResponse.connect_document.eventToEmit,
 							errorToThrow,
@@ -122,8 +121,8 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 						break;
 					}
 					case "connect_document_success": {
-						const iConnected: IConnected = this.mockSocketConnectResponse
-							.connect_document.connectMessage ?? {
+						const iConnected: IConnected = this.mockSocketConnectResponse.connect_document
+							.connectMessage ?? {
 							clientId: uuid(),
 							existing: true,
 							initialClients: [],
@@ -135,11 +134,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 							serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
 							claims: {
 								documentId: connectMessage.id,
-								scopes: [
-									ScopeType.DocWrite,
-									ScopeType.DocRead,
-									ScopeType.SummaryWrite,
-								],
+								scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
 								tenantId: connectMessage.tenantId,
 								ver: "1.0.0",
 								iat: 10,

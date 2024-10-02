@@ -8,7 +8,10 @@ import * as fs from "fs";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
@@ -19,11 +22,13 @@ import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "
 /* eslint-enable import/no-internal-modules */
 
 /**
+ * @legacy
  * @alpha
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IExportFileResponseSuccess {
@@ -31,6 +36,7 @@ export interface IExportFileResponseSuccess {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IExportFileResponseFailure {

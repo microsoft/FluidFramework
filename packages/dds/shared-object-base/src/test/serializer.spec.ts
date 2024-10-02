@@ -5,10 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-
 import { RemoteFluidObjectHandle } from "../remoteObjectHandle.js";
 import { FluidSerializer } from "../serializer.js";
+import { makeHandlesSerializable, parseHandles } from "../utils.js";
 
 import { MockHandleContext, makeJson } from "./utils.js";
 
@@ -39,7 +38,7 @@ describe("FluidSerializer", () => {
 
 	describe("vanilla JSON", () => {
 		const context = new MockHandleContext();
-		const serializer = new FluidSerializer(context, (parsedHandle: IFluidHandle) => {});
+		const serializer = new FluidSerializer(context);
 		const handle = new RemoteFluidObjectHandle("/root", context);
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
@@ -160,48 +159,54 @@ describe("FluidSerializer", () => {
 
 	describe("JSON w/embedded handles", () => {
 		const context = new MockHandleContext();
-		const serializer = new FluidSerializer(context, (parsedHandle: IFluidHandle) => {});
+		const serializer = new FluidSerializer(context);
 		const handle = new RemoteFluidObjectHandle("/root", context);
 		const serializedHandle = {
 			type: "__fluid_handle__",
 			url: "/root",
 		};
 
-		function check(input, expected) {
-			it(`${printHandle(input)} -> ${JSON.stringify(expected)}`, () => {
-				const replaced = serializer.encode(input, handle);
+		function check(decodedForm, encodedForm) {
+			it(`${printHandle(decodedForm)} -> ${JSON.stringify(encodedForm)}`, () => {
+				const replaced = serializer.encode(decodedForm, handle);
 				assert.notStrictEqual(
 					replaced,
-					input,
+					decodedForm,
 					"encode() must shallow-clone rather than mutate original object.",
 				);
-				assert.deepStrictEqual(replaced, expected, "encode() must return expected output.");
+				assert.deepStrictEqual(replaced, encodedForm, "encode() must return expected output.");
 
-				const decoded = serializer.decode(replaced);
+				const replacedTwice = serializer.encode(replaced, handle);
+				assert.deepStrictEqual(replacedTwice, replaced, "encode should be idempotent");
+
+				const decodedRoundTrip = serializer.decode(replaced);
 				assert.notStrictEqual(
-					decoded,
-					input,
+					decodedRoundTrip,
+					decodedForm,
 					"decode() must shallow-clone rather than mutate original object.",
 				);
 				assert.deepStrictEqual(
-					decoded,
-					input,
+					decodedRoundTrip,
+					decodedForm,
 					"input must round-trip through encode()/decode().",
 				);
 
-				const stringified = serializer.stringify(input, handle);
+				const decodedTwice = serializer.decode(decodedRoundTrip);
+				assert.deepStrictEqual(decodedTwice, decodedRoundTrip, "decode should be idempotent");
+
+				const stringified = serializer.stringify(decodedForm, handle);
 
 				// Note that we're using JSON.parse() in this test, so the handles remained serialized.
 				assert.deepStrictEqual(
 					JSON.parse(stringified),
-					expected,
+					encodedForm,
 					"Round-trip through stringify()/JSON.parse() must produce the same output as encode()",
 				);
 
 				const parsed = serializer.parse(stringified);
 				assert.deepStrictEqual(
 					parsed,
-					input,
+					decodedForm,
 					"input must round-trip through stringify()/parse().",
 				);
 			});
@@ -265,7 +270,7 @@ describe("FluidSerializer", () => {
 		const rootContext = new MockHandleContext("");
 		const dsContext = new MockHandleContext("/default", rootContext);
 		// Create serialized with a handle context whose parent is a root handle context.
-		const serializer = new FluidSerializer(dsContext, (parsedHandle: IFluidHandle) => {});
+		const serializer = new FluidSerializer(dsContext);
 
 		it("can parse handles with absolute path", () => {
 			const serializedHandle = JSON.stringify({
@@ -305,6 +310,42 @@ describe("FluidSerializer", () => {
 				parsedHandle.routeContext.absolutePath,
 				"",
 				"Parsed handle's route context should be the root context",
+			);
+		});
+	});
+
+	describe("Utils", () => {
+		const serializer = new FluidSerializer(new MockHandleContext());
+		it("makeSerializable is idempotent", () => {
+			const bind = new RemoteFluidObjectHandle("/", new MockHandleContext());
+			const handle = new RemoteFluidObjectHandle("/okay", new MockHandleContext());
+			const input = { x: handle, y: 123 };
+			const serializedOnce = makeHandlesSerializable(input, serializer, bind);
+			assert(
+				serializedOnce.x.type === "__fluid_handle__",
+				"Serialized handle should be a handle",
+			);
+			const serializedTwice = makeHandlesSerializable(serializedOnce, serializer, bind);
+			assert(
+				serializedTwice.x.type === "__fluid_handle__",
+				"Twice-Serialized handle should be a handle",
+			);
+		});
+		it("parseHandles is idempotent", () => {
+			const serializedHandle = {
+				type: "__fluid_handle__",
+				url: "/root",
+			};
+			const input = { x: serializedHandle, y: 123 };
+			const parsedOnce = parseHandles(input, serializer);
+			assert(
+				parsedOnce.x instanceof RemoteFluidObjectHandle,
+				"Parsed handle should be an instance of RemoteFluidObjectHandle",
+			);
+			const parsedTwice = parseHandles(parsedOnce, serializer);
+			assert(
+				parsedTwice.x instanceof RemoteFluidObjectHandle,
+				"Twice-Parsed handle should be an instance of RemoteFluidObjectHandle",
 			);
 		});
 	});

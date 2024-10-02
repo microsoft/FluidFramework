@@ -4,23 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { SharedString, Side } from "@fluidframework/sequence/internal";
 import {
 	TestFluidObjectFactory,
+	createTestConfigProvider,
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 
+const configProvider = createTestConfigProvider();
+// configProvider.set("Fluid.ContainerRuntime.DeltaManagerOpsProxy", false);
 describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+	configProvider.set("Fluid.Sequence.intervalStickinessEnabled", true);
 	const loaderProps: Partial<ILoaderProps> = {
-		options: {
-			intervalStickinessEnabled: true,
-		},
-	} as unknown as ILoaderProps;
+		configProvider,
+	};
 
 	const sharedType = "sharedString";
 	let provider: ITestObjectProvider;
@@ -46,6 +49,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("e2e zamboni avoids modifying segments with pending interval changes", async () => {
+		// These tests rely on sequencing of the service, that is only controllable locally
+		if (provider.driver.type !== "local") {
+			return;
+		}
 		const container1 = await provider.createContainer(runtimeFactory, loaderProps);
 		const container2 = await provider.loadContainer(runtimeFactory, loaderProps);
 		const container3 = await provider.loadContainer(runtimeFactory, loaderProps);
@@ -65,10 +72,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		// HIJ-FG-E-D-CAB
 		// ^-----------^
 		sharedString3.insertText(0, "AB");
-		// This needs to be created on container1 before container1 knows about container3's changes
 		sharedString1.insertText(0, "C");
-		// This is an attempt at sequencing container3's changes before container1's
-		await provider.ensureSynchronized(container3);
 		await provider.ensureSynchronized();
 		assertConsistent(sharedString1, sharedString2, sharedString3);
 		container2.disconnect();
@@ -89,10 +93,15 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("e2e zamboni avoids modifying segments with pending interval changes through multiple reconnects", async () => {
+		// These tests rely on sequencing of the service, that is only controllable locally
+		if (provider.driver.type !== "local") {
+			return;
+		}
 		const containerA = await provider.createDetachedContainer(runtimeFactory, loaderProps);
 		const dataObjectA = (await containerA.getEntryPoint()) as ITestFluidObject;
 		const sharedStringA = await dataObjectA.getSharedObject<SharedString>(sharedType);
 
+		// These changes are sent when attaching
 		sharedStringA.insertText(0, "Rr");
 		await provider.attachDetachedContainer(containerA);
 
@@ -101,13 +110,21 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		const sharedStringB = await dataObjectB.getSharedObject<SharedString>(sharedType);
 		sharedStringB.removeRange(0, 1);
 
+		// We don't want to sequence any of A's changes yet
 		const collection = sharedStringA.getIntervalCollection("comments");
-		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
+		collection.add({
+			start: { pos: 1, side: Side.After },
+			end: { pos: 0, side: Side.Before },
+		});
 		containerA.disconnect();
 		await provider.ensureSynchronized(containerB);
+		// No matter how I arrange a connect or disconnect here, it seems to change the internal state such
+		// that the test does not test what it needs to test here.
 		sharedStringB.insertText(0, "8");
 		containerA.connect();
+		await provider.ensureSynchronized(containerA);
 		containerA.disconnect();
+		// Sequence changes on B before A sees them
 		sharedStringB.insertText(0, "J");
 		await provider.ensureSynchronized(containerB);
 		containerA.connect();

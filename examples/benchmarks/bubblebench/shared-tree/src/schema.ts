@@ -4,7 +4,7 @@
  */
 
 import type { IBubble, IClient } from "@fluid-example/bubblebench-common";
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree/internal";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 
 const sf = new SchemaFactory("bubble-bench-simple-tree");
 
@@ -31,6 +31,4 @@ export class App extends sf.object("App", {
 	clients: sf.array("Clients", Client),
 }) {}
 
-export const appTreeConfiguration = new TreeConfiguration(App, () => ({
-	clients: [],
-}));
+export const appTreeConfiguration = new TreeViewConfiguration({ schema: App });

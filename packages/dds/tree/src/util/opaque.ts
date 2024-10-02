@@ -22,8 +22,8 @@ import type { isAny } from "./typeCheck.js";
  * ```typescript
  * export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
  * ```
- * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Opaque<T extends Brand<any, unknown>> = T extends BrandedType<
 	infer ValueType,
 	infer Name
@@ -33,8 +33,8 @@ export type Opaque<T extends Brand<any, unknown>> = T extends BrandedType<
 
 /**
  * See {@link extractFromOpaque}.
- * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, unknown>> =
 	TOpaque extends BrandedType<infer ValueType, infer Name>
 		? isAny<ValueType> extends true
@@ -47,8 +47,8 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, unknown>> =
  *
  * It is assumed that only code that produces these "opaque" handles does this conversion,
  * allowing these handles to be considered opaque.
- * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extractFromOpaque<TOpaque extends BrandedType<any, unknown>>(
 	value: TOpaque,
 ): ExtractFromOpaque<TOpaque> {
@@ -59,8 +59,8 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, unknown>>(
  * Adds a type {@link Brand} to a value, returning it as a {@link Opaque} handle.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
- * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function brandOpaque<T extends BrandedType<any, unknown>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
 ): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {

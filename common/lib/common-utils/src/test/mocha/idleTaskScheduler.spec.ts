@@ -4,14 +4,19 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SinonFakeTimers, useFakeTimers, fake, match } from "sinon";
+
 import * as idleTask from "../../idleTaskScheduler";
 
 describe("Idle task scheduler", () => {
 	let clock: SinonFakeTimers;
 
-	beforeEach("setClock", () => {
+	before(() => {
 		clock = useFakeTimers();
+	});
+
+	beforeEach("setClock", () => {
 		(globalThis as any).requestIdleCallback = undefined;
 	});
 
@@ -51,8 +56,8 @@ describe("Idle task scheduler", () => {
 						someTask(5);
 					}, 1000);
 				});
-			} catch (e) {
-				reject(e);
+			} catch (error) {
+				reject(error);
 			}
 		}).then(() => {
 			success = true;

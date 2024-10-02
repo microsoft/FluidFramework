@@ -8,7 +8,11 @@ import { DoublyLinkedList, walkList } from "./collections/index.js";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
 
 /**
+ * @deprecated - This class should not be used externally and will be removed in a subsequent release.
+ * @legacy
  * @alpha
+ *
+ * @privateRemarks After the deprecation period this class should be remove from this package's exports, and only be used internally
  */
 export class SegmentGroupCollection {
 	// eslint-disable-next-line import/no-deprecated
@@ -19,16 +23,16 @@ export class SegmentGroupCollection {
 		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
-	public get size() {
+	public get size(): number {
 		return this.segmentGroups.length;
 	}
 
-	public get empty() {
+	public get empty(): boolean {
 		return this.segmentGroups.empty;
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	public enqueue(segmentGroup: SegmentGroup) {
+	public enqueue(segmentGroup: SegmentGroup): void {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
@@ -53,14 +57,14 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
-	public copyTo(segment: ISegment) {
+	public copyTo(segment: ISegment): void {
 		walkList(this.segmentGroups, (sg) =>
 			segment.segmentGroups.enqueueOnCopy(sg.data, this.segment),
 		);
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment) {
+	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
 			// duplicate the previousProps for this segment

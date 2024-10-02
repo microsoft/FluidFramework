@@ -9,17 +9,17 @@ import { TelemetryClient } from "applicationinsights";
  * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
+module.exports = function handler(fileData, telemetryClient: TelemetryClient): void {
 	console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
-	fileData.benchmarks.forEach(async (testData) => {
+	for (const testData of fileData.benchmarks) {
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
 		try {
 			console.log(
-				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.arithmeticMean}`,
+				`emitting metric ${arithmeticMeanMetricName} with value ${testData.customData["Period (ns/op)"]}`,
 			);
 			telemetryClient.trackMetric({
 				name: arithmeticMeanMetricName,
-				value: testData.stats.arithmeticMean,
+				value: testData.customData["Period (ns/op)"],
 				namespace: "performance_benchmark_executionTime",
 				properties: {
 					buildId: process.env.BUILD_ID,
@@ -39,11 +39,11 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
 		const marginOfErrorMetricName = `${fileData.suiteName}_${testData.benchmarkName}_marginOfError`;
 		try {
 			console.log(
-				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.marginOfError}`,
+				`emitting metric ${arithmeticMeanMetricName} with value ${testData.customData["Margin of Error"]}`,
 			);
 			telemetryClient.trackMetric({
 				name: marginOfErrorMetricName,
-				value: testData.stats.marginOfError,
+				value: testData.customData["Margin of Error"],
 				namespace: "performance_benchmark_executionTime",
 				properties: {
 					buildId: process.env.BUILD_ID,
@@ -58,5 +58,5 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
 		} catch (error) {
 			console.error(`failed to emit metric ${marginOfErrorMetricName}`, error);
 		}
-	});
+	}
 };

@@ -4,4 +4,4 @@
  */
 
 export type { IPactMap, IPactMapEvents, IAcceptedPact } from "./interfaces.js";
-export { PactMap } from "./pactMap.js";
+export { PactMap } from "./pactMapFactory.js";

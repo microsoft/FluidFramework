@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -15,10 +15,12 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 
-import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
-import type { ConsensusQueue } from "../consensusQueue.js";
+import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
+import {
+	ConsensusQueueFactory,
+	type ConsensusQueue,
+} from "../consensusOrderedCollectionFactory.js";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
 
@@ -113,10 +115,7 @@ describe("ConsensusOrderedCollection", () => {
 				const acquiredValue = await removeItem();
 				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
 				const dataStore = (await handle.get()) as ConsensusQueue;
-				assert.strictEqual(
-					dataStore.handle.absolutePath,
-					testCollection.handle.absolutePath,
-				);
+				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
 
 				assert.strictEqual(await removeItem(), undefined);
 			});
@@ -178,11 +177,7 @@ describe("ConsensusOrderedCollection", () => {
 				testCollection.on("add", addListener);
 
 				const acquireListener = (value) => {
-					assert.strictEqual(
-						value,
-						output[removeCount],
-						"Remove event value not matched",
-					);
+					assert.strictEqual(value, output[removeCount], "Remove event value not matched");
 					removeCount += 1;
 				};
 				testCollection.on("acquire", acquireListener);
@@ -302,11 +297,7 @@ describe("ConsensusOrderedCollection", () => {
 			await waitP;
 
 			// Verify that the remote collection received the added value.
-			assert.equal(
-				addedValue,
-				testValue,
-				"The remote client did not receive the added value",
-			);
+			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
 			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
 
 			/**
@@ -382,11 +373,7 @@ describe("ConsensusOrderedCollection", () => {
 			await waitP;
 
 			// Verify that the remote collection received the added value.
-			assert.equal(
-				addedValue,
-				testValue,
-				"The remote client did not receive the added value",
-			);
+			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
 			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
 		});
 	});

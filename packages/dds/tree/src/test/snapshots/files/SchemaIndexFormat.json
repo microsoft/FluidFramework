@@ -33,7 +33,8 @@
                     }
                   },
                   "required": [
-                    "kind"
+                    "kind",
+                    "types"
                   ]
                 }
               }
@@ -53,30 +54,31 @@
                 }
               },
               "required": [
-                "kind"
+                "kind",
+                "types"
               ]
             },
             "leaf": {
               "anyOf": [
                 {
-                  "type": "number",
-                  "const": 0
+                  "const": 0,
+                  "type": "number"
                 },
                 {
-                  "type": "number",
-                  "const": 1
+                  "const": 1,
+                  "type": "number"
                 },
                 {
-                  "type": "number",
-                  "const": 2
+                  "const": 2,
+                  "type": "number"
                 },
                 {
-                  "type": "number",
-                  "const": 3
+                  "const": 3,
+                  "type": "number"
                 },
                 {
-                  "type": "number",
-                  "const": 4
+                  "const": 4,
+                  "type": "number"
                 }
               ]
             }
@@ -99,7 +101,8 @@
         }
       },
       "required": [
-        "kind"
+        "kind",
+        "types"
       ]
     }
   },

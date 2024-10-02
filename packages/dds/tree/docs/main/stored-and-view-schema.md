@@ -265,7 +265,7 @@ What work we need to do for each milestone in the [roadmap](../roadmap.md).
 
 ## M2
 
-Review and polish [Schema Migration Design Pattern](#schema-migration-design-pattern) including actual APIs, documentation, and examples so apps can start planning forward compatibility for documents.
+Review and polish [Schema Migration Design Pattern](#schema-evolution-design-pattern) including actual APIs, documentation, and examples so apps can start planning forward compatibility for documents.
 
 Pick concrete answers for the flexible areas in the design that need to be nailed down for document compatibility.
 This includes how values/primitives work and what our initial set of primitive types will be.

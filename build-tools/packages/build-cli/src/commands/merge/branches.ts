@@ -8,13 +8,13 @@ import { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
-import { BaseCommand } from "../../base";
 import {
+	BaseCommand,
 	Repository,
 	createPullRequest,
 	getCommitInfo,
 	pullRequestExists,
-} from "../../library";
+} from "../../library/index.js";
 
 interface CleanupBranch {
 	branch: string;

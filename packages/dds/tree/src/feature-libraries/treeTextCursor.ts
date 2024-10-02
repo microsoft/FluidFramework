@@ -7,11 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	DetachedField,
-	IForestSubscription,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	JsonableTree,
+	type DetachedField,
+	type IForestSubscription,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type JsonableTree,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	genericTreeKeys,
@@ -22,7 +22,11 @@ import {
 	setGenericTreeField,
 } from "../core/index.js";
 
-import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils.js";
+import {
+	type CursorAdapter,
+	stackTreeFieldCursor,
+	stackTreeNodeCursor,
+} from "./treeCursorUtils.js";
 
 /**
  * This module provides support for reading and writing a human readable (and
@@ -56,7 +60,6 @@ import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./tree
  * Do not confuse this with {@link JsonableTree} with the JSON domain:
  * this takes in data in a specific format that is json compatible (except for FluidHandle values).
  * That is distinct from treating arbitrary JSON data as a tree in the JSON domain.
- * @internal
  */
 export function cursorForJsonableTreeNode(root: JsonableTree): ITreeCursorSynchronous {
 	return stackTreeNodeCursor(adapter, root);
@@ -81,22 +84,26 @@ export const adapter: CursorAdapter<JsonableTree> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: genericTreeKeys,
-	getFieldFromNode: (node, key): readonly JsonableTree[] => getGenericTreeField(node, key, false),
+	getFieldFromNode: (node, key): readonly JsonableTree[] =>
+		getGenericTreeField(node, key, false),
 };
 
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
- * @internal
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
-	const node: JsonableTree = {
-		type: cursor.type,
-	};
+	const node: JsonableTree =
+		cursor.value !== undefined
+			? {
+					type: cursor.type,
+					value: cursor.value,
+				}
+			: {
+					type: cursor.type,
+				};
+
 	// Normalize object by only including fields that are required.
-	if (cursor.value !== undefined) {
-		node.value = cursor.value;
-	}
 	for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {
 		const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
 		setGenericTreeField(node, cursor.getFieldKey(), field);

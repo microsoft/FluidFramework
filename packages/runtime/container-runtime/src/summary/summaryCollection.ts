@@ -4,21 +4,22 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISummaryAck,
 	ISummaryContent,
 	ISummaryNack,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.
+ * @legacy
  * @alpha
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
@@ -28,6 +29,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary ack messages with typed contents.
+ * @legacy
  * @alpha
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
@@ -37,6 +39,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary nack messages with typed contents.
+ * @legacy
  * @alpha
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
@@ -47,6 +50,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 /**
  * A single summary which can be tracked as it goes through its life cycle.
  * The life cycle is: Local to Broadcast to Acked/Nacked.
+ * @legacy
  * @alpha
  */
 export interface ISummary {
@@ -58,6 +62,7 @@ export interface ISummary {
 
 /**
  * A single summary which has already been acked by the server.
+ * @legacy
  * @alpha
  */
 export interface IAckedSummary {
@@ -145,6 +150,7 @@ class Summary implements ISummary {
 
 /**
  * Watches summaries created by a specific client.
+ * @legacy
  * @alpha
  */
 export interface IClientSummaryWatcher extends IDisposable {
@@ -214,6 +220,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	}
 }
 /**
+ * @legacy
  * @alpha
  */
 export type OpActionEventName =
@@ -223,11 +230,13 @@ export type OpActionEventName =
 	| "default";
 
 /**
+ * @legacy
  * @alpha
  */
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -238,6 +247,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
+ * @legacy
  * @alpha
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
@@ -298,7 +308,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.summaryWatchers.delete(clientId);
 	}
 
-	public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
+	public setPendingAckTimerTimeoutCallback(
+		maxAckWaitTime: number,
+		timeoutCallback: () => void,
+	) {
 		this.maxAckWaitTime = maxAckWaitTime;
 		this.pendingAckTimerTimeoutCallback = timeoutCallback;
 	}
@@ -340,12 +353,11 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	}
 
 	private parseContent(op: ISequencedDocumentMessage) {
-		// back-compat: ADO #1385: Make this unconditional in the future,
-		// when Container.processRemoteMessage stops parsing contents. That said, we should move to
-		// listen for "op" events from ContainerRuntime, and parsing may not be required at all if
-		// ContainerRuntime.process() would parse it for all types of ops.
-		// Can make either of those changes only when LTS moves to a version that has no content
-		// parsing in loader layer!
+		// This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
+		// Note: Until that change is made in the loader, this case will never be hit.
+		// Then there will be a long time of needing both cases, until LTS catches up to the change.
+		// That said, we may instead move to listen for "op" events from ContainerRuntime,
+		// and parsing may not be required at all if ContainerRuntime.process() would parse it for all types of ops.
 		if (typeof op.contents === "string") {
 			op.contents = JSON.parse(op.contents);
 		}
@@ -365,9 +377,8 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 			case MessageType.SummaryAck:
 			case MessageType.SummaryNack:
 				// Old files (prior to PR #10077) may not contain this info
-				// back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
-				if ((op as any).data !== undefined) {
-					op.contents = JSON.parse((op as any).data);
+				if (op.data !== undefined) {
+					op.contents = JSON.parse(op.data);
 				} else {
 					this.parseContent(op);
 				}

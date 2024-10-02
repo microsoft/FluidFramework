@@ -1,12 +1,11 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.4.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": ""
+		"url": "https://github.com/microsoft/FluidFramework.git"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -29,9 +28,10 @@
 		"build:gendocs:server:routerlicious": "copyfiles \"server/routerlicious/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
 		"build:readme": "markdown-magic --files \"**/*.md\" !docs",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
-		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.js",
+		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.cjs",
 		"changeset": "flub changeset add --releaseGroup client",
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
+		"check:format:repo": "biome check .",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",
@@ -58,9 +58,10 @@
 		"format": "fluid-build --task format",
 		"format:biome": "fluid-build --task format:biome",
 		"format:changed": "npm run format:changed:main",
-		"format:changed:main": "pretty-quick --branch main",
-		"format:changed:next": "pretty-quick --branch next",
-		"format:repo": "npm run prettier:repo:fix",
+		"format:changed:main": "biome check --write --changed --since=main",
+		"format:changed:next": "biome check --write --changed --since=next",
+		"format:prettier": "fluid-build --task format:prettier",
+		"format:repo": "biome check . --write",
 		"generate:packageList": "fluid-build --task generate:packageList",
 		"generate:packageList:internal-build": "flub list client --no-private --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list client --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
@@ -72,7 +73,7 @@
 		"lint:fix": "fluid-build --task lint:fix",
 		"policy-check": "flub check policy",
 		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Excludes assert-short-code. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
-		"policy-check:asserts": "flub check policy --handler assert-short-codes --fix && pretty-quick",
+		"policy-check:asserts": "flub generate assertTags --all && npm run format",
 		"policy-check:fix": "flub check policy --excludeHandler assert-short-codes --fix",
 		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "fluid-build --task prettier",
@@ -152,17 +153,17 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
-		"@changesets/cli": "^2.26.1",
-		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "^0.38.0",
-		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
+		"@biomejs/biome": "~1.8.3",
+		"@changesets/cli": "^2.27.8",
+		"@fluid-private/changelog-generator-wrapper": "workspace:~",
+		"@fluid-tools/build-cli": "^0.46.0",
+		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/build-tools": "^0.46.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "7.47.8",
 		"@octokit/core": "^4.0.5",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
@@ -180,12 +181,12 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",
 		"ts2esm": "^1.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"engines": {
 		"node": ">=18.17.1",
-		"pnpm": "7"
+		"pnpm": "8"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -249,30 +250,32 @@
 			"build:readme": {
 				"dependsOn": []
 			},
+			"check:format": {
+				"dependsOn": [
+					"check:format:repo"
+				],
+				"script": false
+			},
 			"checks": {
 				"dependsOn": [
-					"^checks",
 					"check:format",
 					"generate:packageList",
 					"policy-check",
 					"layer-check",
 					"syncpack:deps",
 					"syncpack:versions",
-					"check:versions",
-					"prettier"
+					"check:versions"
 				],
 				"script": false
 			},
 			"checks:fix": {
 				"dependsOn": [
-					"^checks:fix",
 					"format",
 					"generate:packageList",
 					"policy-check:fix",
 					"syncpack:deps:fix",
 					"syncpack:versions:fix",
-					"check:versions:fix",
-					"prettier:fix"
+					"check:versions:fix"
 				],
 				"script": false
 			},
@@ -286,7 +289,8 @@
 			"ci:build:docs": {
 				"dependsOn": [
 					"^ci:build:docs",
-					"build:gendocs:client"
+					"build:gendocs:client",
+					"build:readme"
 				],
 				"script": false
 			},
@@ -311,10 +315,7 @@
 			},
 			"format": {
 				"dependsOn": [
-					"prettier:root:fix",
-					"^prettier:fix",
-					"^format:prettier",
-					"^format:biome"
+					"format:repo"
 				],
 				"script": false
 			},
@@ -359,10 +360,10 @@
 		"comments": [
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
-			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node",
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
-			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67"
+			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67",
+			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
@@ -372,9 +373,10 @@
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
-			"@oclif/core": "~2.4.0",
 			"sharp": "^0.33.2",
-			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4"
+			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
+			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
@@ -386,7 +388,7 @@
 			"allowedVersions": {
 				"react": "17.0.2",
 				"react-dom": "17.0.2",
-				"webpack": "^5.82.0"
+				"webpack": "^5.94.0"
 			},
 			"ignoreMissing": [
 				"@types/node",
@@ -396,7 +398,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.42.3": "patches/@microsoft__api-extractor@7.42.3.patch"
+			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
 		}
 	}
 }

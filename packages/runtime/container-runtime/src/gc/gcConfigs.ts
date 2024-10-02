@@ -20,19 +20,12 @@ import {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
-	disableDatastoreSweepKey,
-	disableTombstoneKey,
-	gcDisableDataStoreSweepOptionName,
-	gcDisableThrowOnTombstoneLoadOptionName,
 	gcGenerationOptionName,
 	gcTestModeKey,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
-	runGCKey,
 	runSessionExpiryKey,
-	runSweepKey,
-	throwOnTombstoneLoadOverrideKey,
-	throwOnTombstoneUsageKey,
+	disableThrowOnTombstoneLoadKey,
 } from "./gcDefinitions.js";
 import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 
@@ -54,7 +47,7 @@ export function generateGCConfigs(
 		isSummarizerClient: boolean;
 	},
 ): IGarbageCollectorConfigs {
-	let gcEnabled: boolean;
+	let gcAllowed: boolean = true;
 	let sessionExpiryTimeoutMs: number | undefined;
 	let tombstoneTimeoutMs: number | undefined;
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
@@ -70,9 +63,9 @@ export function generateGCConfigs(
 	if (createParams.existing) {
 		const metadata = createParams.metadata;
 		gcVersionInBaseSnapshot = getGCVersion(metadata);
-		// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
-		// other existing documents, GC is enabled.
-		gcEnabled = gcVersionInBaseSnapshot > 0;
+		// Existing documents which did not have metadata blob or had GC disabled have GC version as 0. GC will be
+		// disabled for these documents.
+		gcAllowed = gcVersionInBaseSnapshot !== 0;
 		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
 		tombstoneTimeoutMs =
@@ -86,12 +79,8 @@ export function generateGCConfigs(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
 		);
 
-		// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
-		// flag in GC options to false.
-		gcEnabled = createParams.gcOptions.gcAllowed !== false;
-
-		// Set the Session Expiry if GC is enabled and session expiry flag isn't explicitly set to false.
-		if (gcEnabled && mc.config.getBoolean(runSessionExpiryKey) !== false) {
+		// Set the Session Expiry if session expiry flag isn't explicitly set to false.
+		if (mc.config.getBoolean(runSessionExpiryKey) !== false) {
 			sessionExpiryTimeoutMs =
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
@@ -112,50 +101,19 @@ export function generateGCConfigs(
 		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
 	);
 
-	const gcVersionInEffect = getGCVersionInEffect(mc.config);
-
-	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
-	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC
-	// should not run as it may produce incorrect / unreliable state.
-	const isGCVersionUpToDate =
-		gcVersionInBaseSnapshot === undefined || gcVersionInEffect >= gcVersionInBaseSnapshot;
-
 	/**
-	 * Whether GC should run or not. The following conditions have to be met to run sweep:
-	 * 1. GC should be enabled for this container.
-	 * 2. GC should not be disabled via disableGC GC option.
-	 * 3. The current GC version should be greater or equal to the GC version in the base snapshot.
-	 *
-	 * These conditions can be overridden via the RunGC feature flag.
-	 */
-	const shouldRunGC =
-		mc.config.getBoolean(runGCKey) ??
-		(gcEnabled && !createParams.gcOptions.disableGC && isGCVersionUpToDate);
-
-	/**
-	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
+	 * Whether sweep is enabled for this session or not. If sweep is enabled, Tombstones should fail on load and
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and tombstoneTimeout is provided, the following conditions have to be met to run sweep:
+	 * Assuming overall GC is allowed and tombstoneTimeout is provided, the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be allowed in this container.
-	 * 2. Sweep should be enabled for this session, optionally restricted to attachment blobs only.
-	 *
-	 * These conditions can be overridden via the RunSweep feature flag.
+	 * 2. Sweep should be enabled for this session.
 	 */
 	const sweepEnabled: boolean =
-		!shouldRunGC || tombstoneTimeoutMs === undefined
+		!gcAllowed || tombstoneTimeoutMs === undefined
 			? false
-			: mc.config.getBoolean(runSweepKey) ??
-			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
-	const disableDatastoreSweep =
-		mc.config.getBoolean(disableDatastoreSweepKey) === true ||
-		createParams.gcOptions[gcDisableDataStoreSweepOptionName] === true;
-	const shouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"] = sweepEnabled
-		? disableDatastoreSweep
-			? "ONLY_BLOBS"
-			: "YES"
-		: "NO";
+			: sweepAllowed && createParams.gcOptions.enableGCSweep === true;
 
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
@@ -171,9 +129,6 @@ export function generateGCConfigs(
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
-	// Whether we are running in tombstone mode. If disabled, tombstone data will not be written to or read from snapshots,
-	// and objects will not be marked as tombstoned even if they pass to the "TombstoneReady" state during the session.
-	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
 	const sweepGracePeriodMs =
@@ -182,36 +137,25 @@ export function generateGCConfigs(
 		sweepGracePeriodMs,
 	});
 
-	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
-
-	const throwOnTombstoneLoadConfig =
-		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
-		createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName] !== true;
 	const throwOnTombstoneLoad =
-		throwOnTombstoneLoadConfig && sweepAllowed && !createParams.isSummarizerClient;
-	const throwOnTombstoneUsage =
-		mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-		sweepAllowed &&
+		mc.config.getBoolean(disableThrowOnTombstoneLoadKey) !== true &&
+		sweepEnabled &&
 		!createParams.isSummarizerClient;
 
 	return {
-		gcEnabled, // For this document
-		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
-		shouldRunGC, // For this session
-		shouldRunSweep, // For this session
+		gcAllowed, // For this document
+		sweepAllowed, // For this document
+		sweepEnabled, // For this session
 		runFullGC,
 		testMode,
-		tombstoneMode,
 		sessionExpiryTimeoutMs,
 		tombstoneTimeoutMs,
 		sweepGracePeriodMs,
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
-		gcVersionInEffect,
-		throwOnInactiveLoad,
+		gcVersionInEffect: getGCVersionInEffect(mc.config),
 		throwOnTombstoneLoad,
-		throwOnTombstoneUsage,
 	};
 }
 
@@ -225,7 +169,11 @@ export function generateGCConfigs(
  *
  * If there is no Session Expiry timeout, GC can never guarantee an object won't be revived, so return undefined.
  */
-function computeTombstoneTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
+function computeTombstoneTimeout(
+	sessionExpiryTimeoutMs: number | undefined,
+): number | undefined {
 	const bufferMs = oneDayMs;
-	return sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
+	return (
+		sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
+	);
 }

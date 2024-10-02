@@ -10,19 +10,20 @@ import type {
 	IEvent,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
-import type { IAnyDriverError } from "@fluidframework/driver-definitions";
+import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
+	IAnyDriverError,
 	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
+	ITokenClaims,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IConnectionDetails {
 	/**
@@ -51,7 +52,8 @@ export interface IConnectionDetails {
 /**
  * Contract supporting delivery of outbound messages to the server
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaSender {
 	/**
@@ -63,7 +65,8 @@ export interface IDeltaSender {
 /**
  * Events emitted by {@link IDeltaManager}.
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaManagerEvents extends IEvent {
 	/**
@@ -92,7 +95,10 @@ export interface IDeltaManagerEvents extends IEvent {
 	 *
 	 * - `processingTime`: The amount of time it took to process the inbound operation (op), expressed in milliseconds.
 	 */
-	(event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
+	(
+		event: "op",
+		listener: (message: ISequencedDocumentMessage, processingTime: number) => void,
+	);
 
 	/**
 	 * Emitted periodically with latest information on network roundtrip latency
@@ -144,9 +150,12 @@ export interface IDeltaManagerEvents extends IEvent {
 /**
  * Manages the transmission of ops between the runtime and storage.
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
-export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
+export interface IDeltaManager<T, U>
+	extends IEventProvider<IDeltaManagerEvents>,
+		IDeltaSender {
 	/**
 	 * The queue of inbound delta messages
 	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime
@@ -235,7 +244,8 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 /**
  * Events emitted by {@link IDeltaQueue}.
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
 	/**
@@ -279,7 +289,8 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
 /**
  * Queue of ops to be sent to or processed from storage
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
 	/**
@@ -328,7 +339,8 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 }
 
 /**
- * @public
+ * @legacy
+ * @alpha
  */
 export type ReadOnlyInfo =
 	| {

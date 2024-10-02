@@ -10,24 +10,35 @@
  * @param fileData - A JSON object obtained by calling JSON.parse() on the contents of a file.
  * @param logger - An ITelemetryBufferedLogger. Call its send() method to write the output telemetry events.
  */
-module.exports = function handler(fileData, logger) {
-	if (fileData.resultSummary == null) {
+module.exports = function handler(fileData, logger): void {
+	// eslint-disable-next-line @rushstack/no-new-null -- External API can return an actual null
+	if (fileData.resultSummary === null || fileData.resultSummary === undefined) {
 		console.log(`Could not locate test result info.`);
 		return;
 	}
-	if (process.env.BUILD_ID !== undefined) {
-		console.log("BUILD_ID", process.env.BUILD_ID);
-	} else {
-		console.log("BUILD_ID not defined.");
+
+	if (process.env.BUILD_ID === undefined) {
+		throw new Error("BUILD_ID environment variable is not set.");
 	}
+	if (process.env.PIPELINE === undefined) {
+		throw new Error("PIPELINE environment variable is not set.");
+	}
+	if (process.env.STAGE_ID === undefined) {
+		throw new Error("STAGE_ID environment variable is not set.");
+	}
+
+	console.log("BUILD_ID:", process.env.BUILD_ID);
+	console.log("PIPELINE:", process.env.PIPELINE);
+	console.log("STAGE_ID:", process.env.STAGE_ID);
+
 	const resultSummary = fileData.resultSummary.resultSummaryByRunState.Completed;
 	console.log(resultSummary);
 
 	const passedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Passed?.count ?? 0;
 	const failedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Failed?.count ?? 0;
 	const totalTests = passedTests + failedTests;
-	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
-	console.log(passRate);
+	const passRate = totalTests === 0 ? 0 : passedTests / totalTests;
+	console.log("Pass rate:", passRate);
 
 	logger.send({
 		namespace: "FFEngineering", // Transfer the telemetry associated with test passing rate to namespace "FFEngineering"

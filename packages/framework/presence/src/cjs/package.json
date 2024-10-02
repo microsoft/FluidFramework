@@ -1,0 +1,16 @@
+{
+	"name": "@fluid-experimental/presence",
+	"type": "commonjs",
+	"exports": {
+		".": {
+			"types": "./index.d.ts",
+			"default": "./index.js"
+		},
+		"./internal": "./index.js",
+		"./internal/container-definitions/internal": "./container-definitions/index.js",
+		"./internal/core-interfaces": "./core-interfaces/index.js",
+		"./internal/events": "./events/events.js",
+		"./internal/exposedInternalTypes": "./exposedInternalTypes.js",
+		"./internal/exposedUtilityTypes": "./exposedUtilityTypes.js"
+	}
+}

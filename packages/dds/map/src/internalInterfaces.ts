@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILocalValue } from "./localValues.js";
+import type { ILocalValue } from "./localValues.js";
 
 /**
  * Operation indicating a value should be set for a key.
@@ -22,7 +22,6 @@ export interface IMapSetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	value: ISerializableValue;
 }
 
@@ -137,7 +136,8 @@ export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadat
  * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
  * channel ID.
  *
- * @deprecated This type is legacy and deprecated.
+ * @deprecated This type is legacy and deprecated(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface ISerializableValue {
@@ -155,6 +155,7 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
+ * @legacy
  * @alpha
  */
 export interface ISerializedValue {

@@ -18,7 +18,11 @@ export type {
 	IDeltaConnection,
 	IDeltaHandler,
 } from "./channel.js";
-export type { IFluidDataStoreRuntime, IFluidDataStoreRuntimeEvents } from "./dataStoreRuntime.js";
+export type {
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
+	IDeltaManagerErased,
+} from "./dataStoreRuntime.js";
 export type {
 	Jsonable,
 	JsonableTypeWith,

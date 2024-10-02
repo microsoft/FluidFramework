@@ -1,5 +1,61 @@
 # @fluidframework/container-loader
 
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+### Minor Changes
+
+-   container-loader: summarizeProtocolTree and its corresponding duplicate ILoaderOptions definition is deprecated ([#21999](https://github.com/microsoft/FluidFramework/pull/21999)) [11ccda1597](https://github.com/microsoft/FluidFramework/commit/11ccda15970a10de00facfebfc060bece4a459ba)
+
+    The `summarizeProtocolTree` property in ILoaderOptions was added to test single-commit summaries during the initial
+    implementation phase. The flag is no longer required and should no longer be used, and is now marked deprecated. If a
+    driver needs to enable or disable single-commit summaries, it can do so via `IDocumentServicePolicies`.
+
+## 2.1.0
+
+Dependency updates only.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   container-loader: IDetachedBlobStorage is deprecated and replaced with a default in memory store for detached blobs ([#21144](https://github.com/microsoft/FluidFramework/pull/21144)) [2eebaa1775](https://github.com/microsoft/FluidFramework/commit/2eebaa1775dba0a677a005ba36f6f946c6324c21)
+
+    IDetachedBlobStorage will be removed in a future release without a replacement.
+
+    When applications load a container without specifying ILoaderServices.detachedBlobStorage, an implementation which stores the blobs in memory will be injected by Fluid.
+
+    IDetachedBlobStorage as well as application-defined implementations of it are deprecated and support will be removed for them in a future update.
+    Applications are recommended to stop providing this property on ILoaderServices.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
+## 2.0.0-rc.4.0.0
+
+### Major Changes
+
+-   Audience & connection sequencing improvements [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Here are breaking changes in Audience behavior:
+
+    1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replace with on() & off() respectively.
+    2. IAudience interface implements getSelf() method and "selfChanged" event.
+    3. IContainerContext.audience is no longer optional
+    4. "connected" events are now raised (various API surfaces - IContainer, IContainerRuntime, IFluidDataStoreRuntime, etc.) a bit later in reconnection sequence for "read" connections - only after client receives its own "join" signal and caught up on ops, which makes it symmetrical with "write" connections.
+
+    -   If this change in behavior breaks some scenario, please let us know immediately, but you can revert that behavior using the following feature gates:
+        -   "Fluid.Container.DisableCatchUpBeforeDeclaringConnected"
+        -   "Fluid.Container.DisableJoinSignalWait"
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

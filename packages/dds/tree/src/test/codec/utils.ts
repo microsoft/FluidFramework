@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TSchema } from "@sinclair/typebox";
+import type { Static, TSchema } from "@sinclair/typebox";
 
-import { IJsonCodec, JsonValidator, withSchemaValidation } from "../../codec/index.js";
-import { JsonCompatibleReadOnly } from "../../util/index.js";
+import {
+	type IJsonCodec,
+	type JsonValidator,
+	withSchemaValidation,
+} from "../../codec/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
  * Creates a json codec for objects which are just a json compatible value

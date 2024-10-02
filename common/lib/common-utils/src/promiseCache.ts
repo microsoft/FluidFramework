@@ -28,9 +28,13 @@ export type PromiseCacheExpiry =
  * @internal
  */
 export interface PromiseCacheOptions {
-	/** Common expiration policy for all items added to this cache */
+	/**
+	 * Common expiration policy for all items added to this cache
+	 */
 	expiry?: PromiseCacheExpiry;
-	/** If the stored Promise is rejected with a particular error, should the given key be removed? */
+	/**
+	 * If the stored Promise is rejected with a particular error, should the given key be removed?
+	 */
 	removeOnError?: (e: any) => boolean;
 }
 

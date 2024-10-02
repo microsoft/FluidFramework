@@ -1,5 +1,42 @@
 # @fluidframework/azure-client
 
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+Dependency updates only.
+
+## 2.1.0
+
+Dependency updates only.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   azure-client, tinylicious-client: compatibilityMode parameter added to createContainer and getContainer on AzureClient and TinyliciousClient ([#20997](https://github.com/microsoft/FluidFramework/pull/20997)) [2730787209](https://github.com/microsoft/FluidFramework/commit/2730787209a60155752d51da3c78cf97e1b5f3f9)
+
+    To support migration from 1.x to 2.0, a compatibility mode parameter has been added to these methods on AzureClient and TinyliciousClient. When set to "1", this allows interop between the 2.0 clients and 1.x clients. When set to "2", interop with 1.x clients is disallowed but new 2.0 features may be used.
+
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
+    2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
+
+-   copyContainer API replaced by the viewContainerVersion API [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    The copyContainer API has been removed in favor of the viewContainerVersion API. viewContainerVersion does not automatically produce a new container, but instead retrieves the existing container version for reading only. To produce a new container with the data, use the normal createContainer API surface and write the data prior to attaching it.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

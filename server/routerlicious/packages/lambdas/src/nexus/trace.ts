@@ -74,7 +74,7 @@ export class StageTrace<T extends { toString(): string }> {
 	public get trace(): IStageTrace[] {
 		return this.traces;
 	}
-	public stampStage(stage: T) {
+	public stampStage(stage: T): void {
 		const now = performance.now();
 		this.traces.push({ stage: stage.toString(), ts: now - this.lastStampedTraceTime });
 		this.lastStampedTraceTime = now;

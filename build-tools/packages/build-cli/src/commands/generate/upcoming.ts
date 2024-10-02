@@ -9,9 +9,8 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import { format as prettier } from "prettier";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
-import { DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library";
+import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
 
 const DEFAULT_FILE = "UPCOMING.md";
 
@@ -86,7 +85,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 		let body: string = "";
 		for (const change of changes) {
 			if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
-				body += `## ${change.summary}\n\n${change.content}\n\n`;
+				body += `## ${change.summary}\n\n${change.body}\n\n`;
 			} else {
 				this.info(
 					`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${

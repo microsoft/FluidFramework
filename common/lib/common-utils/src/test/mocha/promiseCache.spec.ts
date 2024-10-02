@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { PromiseCache } from "../..";
 
 describe("PromiseCache", () => {
@@ -35,6 +37,7 @@ describe("PromiseCache", () => {
 			assert.equal(get_WhenPresent, "one");
 
 			const addOrGet_WhenPresent = await pc.addOrGet(1, async () => {
+				// eslint-disable-next-line unicorn/error-message
 				throw new Error();
 			});
 			assert.equal(addOrGet_WhenPresent, "one");
@@ -63,6 +66,7 @@ describe("PromiseCache", () => {
 			assert.equal(add_WhenAbsent, true);
 
 			const add_WhenPresent = pc.add(1, async () => {
+				// eslint-disable-next-line unicorn/error-message
 				throw new Error();
 			});
 			assert.equal(add_WhenPresent, false);

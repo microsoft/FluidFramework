@@ -23,20 +23,15 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -65,10 +60,7 @@ const builder = new SchemaFactory("test");
 class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
-
-function getNewTreeView(tree: ITree) {
-	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
-}
+const treeConfig = new TreeViewConfiguration({ schema: QuantityType });
 
 describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -172,13 +164,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree
-				.schematize(
-					new TreeConfiguration(QuantityType, () => ({
-						quantity,
-					})),
-				)
-				[disposeSymbol]();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ quantity });
+			view.dispose();
 		},
 	);
 
@@ -247,11 +235,11 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(getQuantity(legacyTree1) === 123, "expected quantity updates to have been dropped");
 
 		const newTree1 = shim1.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		const node1 = view1.root;
 
 		const newTree2 = shim2.currentTree as ITree;
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node2 = view2.root;
 
 		container1.disconnect();
@@ -276,7 +264,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<SharedTreeShim>();
 		const newTree3 = shim3.currentTree;
-		const view3 = getNewTreeView(newTree3);
+		const view3 = newTree3.viewWith(treeConfig);
 		const node3 = view3.root;
 		node3.quantity = 431;
 		await provider.ensureSynchronized();
@@ -338,7 +326,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		shim1.submitMigrateOp();
 		await provider.ensureSynchronized();
 		const newTree1 = shim1.currentTree as ITree;
-		const node1 = getNewTreeView(newTree1).root;
+		const node1 = newTree1.viewWith(treeConfig).root;
 
 		// generate stashed ops
 		await provider.opProcessingController.pauseProcessing(container1);
@@ -357,7 +345,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const newTree2 = shim2.currentTree as ITree;
-		const node2 = getNewTreeView(newTree2).root;
+		const node2 = newTree2.viewWith(treeConfig).root;
 		assert(node2.quantity === 5, "expected quantity updates to have been applied");
 	});
 
@@ -376,7 +364,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		shim1.submitMigrateOp();
 		await provider.ensureSynchronized();
 		const newTree1 = shim1.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		const node1 = view1.root;
 
 		// summarize migration
@@ -399,7 +387,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const newTree2 = shim2.currentTree;
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node2 = view2.root;
 
 		// generate stashed ops
@@ -419,7 +407,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<SharedTreeShim>();
 		const newTree3 = shim3.currentTree;
-		const node3 = getNewTreeView(newTree3).root;
+		const node3 = newTree3.viewWith(treeConfig).root;
 		assert(node3.quantity === 5, "expected quantity updates to have been applied");
 		assert(node1.quantity === 5, "expected quantity updates to have been synced");
 	});
@@ -470,7 +458,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const testObj4 = (await container4.getEntryPoint()) as TestDataObject;
 		const shim4 = testObj4.getTree<SharedTreeShim>();
 		const newTree4 = shim4.currentTree;
-		const view4 = getNewTreeView(newTree4);
+		const view4 = newTree4.viewWith(treeConfig);
 		const node4 = view4.root;
 
 		// Load a new container and apply stashed ops
@@ -482,7 +470,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<MigrationShim>();
 		const tree3 = shim3.currentTree as ITree;
-		const view3 = getNewTreeView(tree3);
+		const view3 = tree3.viewWith(treeConfig);
 		const node3 = view3.root;
 		assert(node3.quantity === 123, "expected quantity updates to have been dropped");
 		assert(
@@ -536,7 +524,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 			"Should not have migrated to new tree",
 		);
 		const tree3 = shim3.currentTree as ITree;
-		const node3 = getNewTreeView(tree3).root;
+		const node3 = tree3.viewWith(treeConfig).root;
 		assert(node3.quantity === 5, "expected migration to have been applied");
 	});
 });

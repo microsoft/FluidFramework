@@ -38,37 +38,70 @@ describe("canvas", () => {
 		await page.mouse.down();
 		await page.mouse.move(126, 19);
 		await page.mouse.up();
-		await page.waitForFunction(() => window["FluidLoader"].isSynchronized());
 
 		// compare canvases
-		const result = await page.evaluate(() => {
+		const result = await page.evaluate(async () => {
 			const canvases = Array.from(document.querySelectorAll("canvas"));
 
 			// use min dimensions to avoid problems from canvases of slightly mismatched sizes
 			const width = Math.min(...canvases.map((c) => c.width));
 			const height = Math.min(...canvases.map((c) => c.height));
 
-			const imgs = canvases.map((c) => {
-				const context = c.getContext("2d");
-				if (context === null) {
-					throw new Error("Failed to get 2d context");
+			// Compares the two canvases and returns an array of each different pixel
+			const imageDiff = () => {
+				const imgs = canvases.map((c) => {
+					const context = c.getContext("2d");
+					if (context === null) {
+						throw new Error("Failed to get 2d context");
+					}
+					return context.getImageData(0, 0, width, height).data;
+				});
+				if (imgs[0].length == 0) {
+					return "Canvas 1 doesn't have any pixels";
 				}
-				return context.getImageData(0, 0, width, height).data;
-			});
-			if (imgs[0].length == 0) {
-				return "Canvas 1 doesn't have any pixels";
-			}
-			if (imgs[1].length == 0) {
-				return "Canvas 2 doesn't have any pixels";
-			}
+				if (imgs[1].length == 0) {
+					return "Canvas 2 doesn't have any pixels";
+				}
 
-			const diff: { index: number; value1: number; value2: number }[] = [];
-			imgs[0].forEach((value, index) => {
-				if (imgs[1][index] !== value) {
-					diff.push({ index, value1: value, value2: imgs[1][index] });
-				}
+				const diff: { index: number; value1: number; value2: number }[] = [];
+				imgs[0].forEach((value, index) => {
+					if (imgs[1][index] !== value) {
+						diff.push({ index, value1: value, value2: imgs[1][index] });
+					}
+				});
+				return diff;
+			};
+
+			let timedOut = false;
+
+			// It may take some time for changes to propagate from the drawing canvas to the receiving canvas.
+			// This promise will resolve after the receiving canvas matches (or never, if there is a bug and they
+			// don't converge).
+			const imagesMatchP = new Promise<void>((resolve) => {
+				const checkAndMaybeQueue = () => {
+					const diffResult = imageDiff();
+					if (diffResult.length === 0) {
+						resolve();
+					} else if (!timedOut) {
+						// Only queue for another check if we aren't already failed due to timeout.
+						requestAnimationFrame(checkAndMaybeQueue);
+					}
+				};
+				checkAndMaybeQueue();
 			});
-			return diff;
+
+			// We expect imagesMatchP to resolve in a reasonable amount of time.
+			const timeoutP = new Promise<void>((resolve) =>
+				setTimeout(() => {
+					resolve();
+					timedOut = true;
+				}, 1000),
+			);
+
+			await Promise.race([imagesMatchP, timeoutP]);
+
+			// Regardless of whether we got a match or timed out, return the diff.
+			return imageDiff();
 		});
 
 		expect(result).toEqual([]);

@@ -489,6 +489,7 @@ declare function get_old_ClassDeclaration_TestProducer():
 declare function use_current_ClassDeclaration_TestProducer(
     use: TypeOnly<current.TestProducer>): void;
 use_current_ClassDeclaration_TestProducer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestProducer());
 
 /*
@@ -526,6 +527,30 @@ declare function use_old_ClassDeclaration_TestPublisher(
     use: TypeOnly<old.TestPublisher>): void;
 use_old_ClassDeclaration_TestPublisher(
     get_current_ClassDeclaration_TestPublisher());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TestRedisClientConnectionManager": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_TestRedisClientConnectionManager():
+    TypeOnly<old.TestRedisClientConnectionManager>;
+declare function use_current_ClassDeclaration_TestRedisClientConnectionManager(
+    use: TypeOnly<current.TestRedisClientConnectionManager>): void;
+use_current_ClassDeclaration_TestRedisClientConnectionManager(
+    get_old_ClassDeclaration_TestRedisClientConnectionManager());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TestRedisClientConnectionManager": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_TestRedisClientConnectionManager():
+    TypeOnly<current.TestRedisClientConnectionManager>;
+declare function use_old_ClassDeclaration_TestRedisClientConnectionManager(
+    use: TypeOnly<old.TestRedisClientConnectionManager>): void;
+use_old_ClassDeclaration_TestRedisClientConnectionManager(
+    get_current_ClassDeclaration_TestRedisClientConnectionManager());
 
 /*
 * Validate forward compat by using old type in place of current type

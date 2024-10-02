@@ -1,5 +1,51 @@
 # @fluidframework/matrix
 
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+Dependency updates only.
+
+## 2.1.0
+
+Dependency updates only.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
+    Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
+
+    External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
+    Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
+    Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
+
+-   matrix: SharedMatrix class hidden [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    The `SharedMatrix` class has been hidden from the alpha API.
+    In its place:
+
+    -   The constant `SharedMatrix` is exposed as the entrypoint for `SharedMatrix` creation. See documentation on `ISharedObjectKind`.
+    -   The type `SharedMatrix` is aliased to `ISharedMatrix`, which contains matrix's public API. This API has no semantic changes from previous versions.
+
+    Additionally, `SharedMatrixFactory` has been deprecated. Rather than construct the factory directly, use `SharedMatrix.getFactory()` (e.g. for usage in `DataObject` registries).
+
+    This change is part of a larger effort to clean up the API surface of various DDSes we have to leak less implementation details. See e.g. #20030.
+    Most code which uses `SharedMatrix` should continue to function without changes.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

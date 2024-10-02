@@ -4,8 +4,11 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -145,9 +148,7 @@ export class DeltaScheduler {
 				numberOfTurns: this.schedulingLog.numberOfTurns,
 				processingTime: formatTick(this.schedulingLog.totalProcessingTime),
 				opsProcessed:
-					this.schedulingLog.lastSequenceNumber -
-					this.schedulingLog.firstSequenceNumber +
-					1,
+					this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber + 1,
 				batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
 				duration: formatTick(currentTime - this.schedulingLog.startTime),
 				schedulingCount: this.schedulingCount,

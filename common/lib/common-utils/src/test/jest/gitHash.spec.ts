@@ -7,7 +7,9 @@ import fs from "fs";
 import http from "http";
 import { AddressInfo } from "net";
 import path from "path";
+
 import rewire from "rewire";
+
 import * as HashNode from "../../hashFileNode";
 
 // Use rewire to access private functions
@@ -54,7 +56,7 @@ async function evaluateBrowserHash(
 			const fileUint8 = Uint8Array.from(fileCharCodes);
 
 			// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-			const hashFn = Function(`"use strict"; return ( ${fn} );`);
+			const hashFn = new Function(`"use strict"; return ( ${fn} );`);
 			const pageHashArray = await (hashFn()(fileUint8, alg) as Promise<Uint8Array>);
 
 			// Similarly, return the hash array as a string instead of a Uint8Array
@@ -131,7 +133,9 @@ describe("Common-Utils", () => {
 
 	afterAll(async () => {
 		await new Promise((resolve) => {
-			server?.close(resolve);
+			server.close(resolve);
+			// Puppeteer may have lingering connections which prevents the server from closing otherwise.
+			server.closeAllConnections();
 		});
 	});
 

@@ -7,12 +7,15 @@ import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { Flags } from "@oclif/core";
-import { readJson } from "fs-extra";
+import { readJson } from "fs-extra/esm";
 
-import { loadFluidBuildConfig } from "@fluidframework/build-tools";
-
-import { BaseCommand } from "../../base";
-import { Context, Handler, Repository, policyHandlers } from "../../library";
+import {
+	BaseCommand,
+	Context,
+	Handler,
+	Repository,
+	policyHandlers,
+} from "../../library/index.js";
 
 type policyAction = "handle" | "resolve" | "final";
 
@@ -161,17 +164,17 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.info("Resolving errors if possible.");
 		}
 
-		const manifest = loadFluidBuildConfig(this.flags.root ?? process.cwd());
+		const context = await this.getContext();
+		const { policy } = context.flubConfig;
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const rawExclusions: string[] =
 			this.flags.exclusions === undefined
-				? manifest.policy?.exclusions
+				? policy?.exclusions
 				: await readJson(this.flags.exclusions);
 
 		const exclusions: RegExp[] = rawExclusions.map((e) => new RegExp(e, "i"));
-
-		const rawHandlerExclusions = manifest?.policy?.handlerExclusions;
+		const rawHandlerExclusions = policy?.handlerExclusions;
 
 		const handlerExclusions: HandlerExclusions = {};
 		if (rawHandlerExclusions) {
@@ -181,7 +184,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		const filePathsToCheck: string[] = [];
-		const context = await this.getContext();
 		const gitRoot = context.repo.resolvedRoot;
 
 		if (this.flags.stdin) {
@@ -192,14 +194,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			}
 		} else {
 			const repo = new Repository({ baseDir: gitRoot });
-			const gitFiles = await repo.gitClient.raw(
-				"ls-files",
-				"-co",
-				"--exclude-standard",
-				"--full-name",
-			);
-
-			filePathsToCheck.push(...gitFiles.split("\n"));
+			const gitFiles = await repo.getFiles(".");
+			filePathsToCheck.push(...gitFiles);
 		}
 
 		const commandContext: CheckPolicyCommandContext = {
@@ -246,48 +242,58 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		// Use the repo-relative path so that regexes that specify string start (^) will match repo paths.
 		const relPath = context.repo.relativeToRepo(file);
 
-		await Promise.all(
+		const handlerResults = await Promise.all(
 			handlers
 				.filter((handler) => handler.match.test(relPath))
-				.map(async (handler): Promise<void> => {
+				.filter((handler) => {
 					// doing exclusion per handler
 					const exclusions = handlerExclusions[handler.name];
 					if (exclusions !== undefined && !exclusions.every((regex) => !regex.test(relPath))) {
 						this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
-						return;
+						return false;
 					}
-
+					return true;
+				})
+				.map(async (handler): Promise<{ handler: Handler; result: string | undefined }> => {
 					const result = await runWithPerf(handler.name, "handle", async () =>
 						handler.handler(relPath, gitRoot),
 					);
-					if (result !== undefined && result !== "") {
-						let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
-						const { resolver } = handler;
-						if (this.flags.fix && resolver) {
-							output += `${newline}attempting to resolve: ${relPath}`;
-							const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-								resolver(relPath, gitRoot),
-							);
-
-							if (resolveResult?.message !== undefined) {
-								output += newline + resolveResult.message;
-							}
-
-							if (!resolveResult.resolved) {
-								process.exitCode = 1;
-							}
-						} else {
-							process.exitCode = 1;
-						}
-
-						if (process.exitCode === 1) {
-							this.warning(output);
-						} else {
-							this.info(output);
-						}
-					}
+					return { handler, result };
 				}),
 		);
+
+		// Now that all handlers have completed, we can react to results which might include running resolvers
+		// that should only be applied one at a time. (Yes, there is an await in the loop intentionally.)
+		for (const { handler, result } of handlerResults) {
+			if (result !== undefined && result !== "") {
+				let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
+				const { resolver } = handler;
+				if (this.flags.fix && resolver) {
+					output += `${newline}attempting to resolve: ${relPath}`;
+					// Resolvers are expected to be run serially to avoid any conflicts.
+					// eslint-disable-next-line no-await-in-loop
+					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
+						resolver(relPath, gitRoot),
+					);
+
+					if (resolveResult?.message !== undefined) {
+						output += newline + resolveResult.message;
+					}
+
+					if (!resolveResult.resolved) {
+						process.exitCode = 1;
+					}
+				} else {
+					process.exitCode = 1;
+				}
+
+				if (process.exitCode === 1) {
+					this.warning(output);
+				} else {
+					this.info(output);
+				}
+			}
+		}
 	}
 
 	private logStats(): void {

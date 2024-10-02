@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	FiveDaysMs,
@@ -13,9 +14,12 @@ import {
 	ISnapshotFetchOptions,
 	ISummaryContext,
 	LoaderCachingPolicy,
+	ISnapshotTree,
+	ICreateBlobResponse,
+	IVersion,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {
@@ -139,20 +143,23 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			maximumCacheDurationMs: maximumCacheDurationMsInEffect,
 		};
 	}
-	protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
+	protected readonly commitCache: Map<string, ISnapshotTree> = new Map();
 
-	private _ops: api.ISequencedDocumentMessage[] | undefined;
+	private _ops: ISequencedDocumentMessage[] | undefined;
 
 	private _snapshotSequenceNumber: number | undefined;
 
 	protected readonly blobCache = new BlobCache();
 
-	public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
-		assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
+	public set ops(ops: ISequencedDocumentMessage[] | undefined) {
+		assert(
+			this._ops === undefined,
+			0x0a5 /* "Trying to set ops when they are already set!" */,
+		);
 		this._ops = ops;
 	}
 
-	public get ops(): api.ISequencedDocumentMessage[] | undefined {
+	public get ops(): ISequencedDocumentMessage[] | undefined {
 		return this._ops;
 	}
 
@@ -160,24 +167,27 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this._snapshotSequenceNumber;
 	}
 
-	public abstract createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+	public abstract createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
 	private async readBlobCore(blobId: string): Promise<ArrayBuffer> {
 		const { blobContent, evicted } = this.blobCache.getBlob(blobId);
 		return blobContent ?? this.fetchBlobFromStorage(blobId, evicted);
 	}
 
-	protected abstract fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer>;
+	protected abstract fetchBlobFromStorage(
+		blobId: string,
+		evicted: boolean,
+	): Promise<ArrayBuffer>;
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		return this.readBlobCore(blobId);
 	}
 
 	public async getSnapshotTree(
-		version?: api.IVersion,
+		version?: IVersion,
 		scenarioName?: string,
 		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<api.ISnapshotTree | null> {
+	): Promise<ISnapshotTree | null> {
 		let id: string;
 		if (version?.id) {
 			id = version.id;
@@ -200,7 +210,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this.combineProtocolAndAppSnapshotTree(snapshotTree);
 	}
 
-	public abstract getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+	public abstract getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot>;
 
 	public abstract getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
@@ -208,18 +220,18 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		count: number,
 		scenarioName?: string,
 		fetchSource?: FetchSource,
-	): Promise<api.IVersion[]>;
+	): Promise<IVersion[]>;
 
 	public abstract uploadSummaryWithContext(
-		summary: api.ISummaryTree,
+		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string>;
 
-	public async downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
+	public async downloadSummary(commit: ISummaryHandle): Promise<ISummaryTree> {
 		throw new Error("Not implemented yet");
 	}
 
-	protected setRootTree(id: string, tree: api.ISnapshotTree): void {
+	protected setRootTree(id: string, tree: ISnapshotTree): void {
 		this.commitCache.set(id, tree);
 	}
 
@@ -227,7 +239,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		this.blobCache.addBlobs(blobs);
 	}
 
-	private async readTree(id: string, scenarioName?: string): Promise<api.ISnapshotTree | null> {
+	private async readTree(id: string, scenarioName?: string): Promise<ISnapshotTree | null> {
 		let tree = this.commitCache.get(id);
 		if (!tree) {
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
@@ -240,22 +252,21 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	protected abstract fetchTreeFromSnapshot(
 		id: string,
 		scenarioName?: string,
-	): Promise<api.ISnapshotTree | undefined>;
+	): Promise<ISnapshotTree | undefined>;
 
-	protected combineProtocolAndAppSnapshotTree(
-		snapshotTree: api.ISnapshotTree,
-	): api.ISnapshotTree {
+	protected combineProtocolAndAppSnapshotTree(snapshotTree: ISnapshotTree): ISnapshotTree {
 		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
 		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
 		const hierarchicalAppTree = snapshotTree.trees[".app"];
 		const hierarchicalProtocolTree = snapshotTree.trees[".protocol"];
-		const summarySnapshotTree: api.ISnapshotTree = {
+		const summarySnapshotTree: ISnapshotTree = {
 			blobs: {
 				...hierarchicalAppTree.blobs,
 			},
 			trees: {
 				...hierarchicalAppTree.trees,
 			},
+			id: snapshotTree.id,
 		};
 
 		// The app tree could have a .protocol in that case we want to server protocol to override it.

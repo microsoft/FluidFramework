@@ -1,5 +1,56 @@
 # @fluidframework/driver-definitions
 
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+Dependency updates only.
+
+## 2.1.0
+
+Dependency updates only.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   fluid-framework: Remove some types from `@public` that are not needed ([#21326](https://github.com/microsoft/FluidFramework/pull/21326)) [b629cb80b0](https://github.com/microsoft/FluidFramework/commit/b629cb80b0e5ecdc750270807f77a0e30fab4559)
+
+    Mark the following APIs `@alpha` instead of `@public`:
+
+    -   IBranchOrigin
+    -   ISequencedDocumentMessage
+    -   ISignalMessage
+    -   ISignalMessageBase
+    -   ITrace
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Make several driver types no longer public [b7ad7d0b55](https://github.com/microsoft/FluidFramework/commit/b7ad7d0b55884dd8954abf7c398e518838b9bda0)
+
+    Move the following types from `@public` to `@alpha`:
+
+    -   ITokenClaims
+    -   IDocumentMessage
+    -   IClientConfiguration
+    -   IAnyDriverError
+    -   IDriverErrorBase
+    -   DriverErrorTypes
+
+    `DriverErrorTypes` is no longer exported from the `fluid-framework` package.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

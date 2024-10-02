@@ -37,12 +37,8 @@ describe("property-common.Chronometer", function () {
 			setTimeout(function () {
 				chrono.stop();
 				expect(chrono.elapsedSec()).to.be.at.most((expectedResultMilliSec + 500) / 1000);
-				expect(chrono.elapsedMicroSec()).to.be.at.least(
-					(expectedResultMilliSec - 25) * 1000,
-				);
-				expect(chrono.elapsedMicroSec()).to.be.at.most(
-					(expectedResultMilliSec + 500) * 1000,
-				);
+				expect(chrono.elapsedMicroSec()).to.be.at.least((expectedResultMilliSec - 25) * 1000);
+				expect(chrono.elapsedMicroSec()).to.be.at.most((expectedResultMilliSec + 500) * 1000);
 				done();
 			}, expectedResultMilliSec);
 		});

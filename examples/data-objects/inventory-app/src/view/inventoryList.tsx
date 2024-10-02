@@ -7,6 +7,7 @@ import { useTree } from "@fluid-experimental/tree-react-api";
 import * as React from "react";
 
 import { Inventory } from "../schema.js";
+
 import { Counter } from "./counter.js";
 
 export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => {
@@ -20,8 +21,8 @@ export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => 
 				key={part.name}
 				title={part.name}
 				count={part.quantity}
-				onDecrement={() => part.quantity--}
-				onIncrement={() => part.quantity++}
+				onDecrement={(): number => part.quantity--}
+				onIncrement={(): number => part.quantity++}
 			></Counter>,
 		);
 	}

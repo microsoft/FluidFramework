@@ -1,0 +1,399 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 2
+                                            },
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "delete": {
+                                                  "id": 0
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 4,
+                      "sequenceNumber": 4,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 2
+                                            },
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "delete": {
+                                                  "id": 0
+                                                }
+                                              },
+                                              "cellId": {
+                                                "atom": [
+                                                  0,
+                                                  4
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 516,
+                      "sequenceNumber": 6,
+                      "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 2
+                                            },
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "delete": {
+                                                  "id": 0
+                                                }
+                                              },
+                                              "cellId": {
+                                                "atom": [
+                                                  0,
+                                                  516
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 1029,
+                      "sequenceNumber": 8,
+                      "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
+                    }
+                  ],
+                  "branches": [
+                    [
+                      "a0693eac-892a-4396-86f7-ad20dc1cade2",
+                      {
+                        "base": "root",
+                        "commits": [
+                          {
+                            "change": [
+                              {
+                                "data": {
+                                  "maxId": 1,
+                                  "changes": [
+                                    {
+                                      "fieldKey": "rootFieldKey",
+                                      "fieldKind": "ModularEditBuilder.Generic",
+                                      "change": [
+                                        [
+                                          0,
+                                          {
+                                            "fieldChanges": [
+                                              {
+                                                "fieldKey": "",
+                                                "fieldKind": "Sequence",
+                                                "change": [
+                                                  {
+                                                    "count": 2
+                                                  },
+                                                  {
+                                                    "count": 1,
+                                                    "effect": {
+                                                      "delete": {
+                                                        "id": 0
+                                                      }
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "revision": 516,
+                            "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                          }
+                        ]
+                      }
+                    ],
+                    [
+                      "5a126183-91e7-488a-b7e9-3342a05c25ae",
+                      {
+                        "base": "root",
+                        "commits": [
+                          {
+                            "change": [
+                              {
+                                "data": {
+                                  "maxId": 1,
+                                  "changes": [
+                                    {
+                                      "fieldKey": "rootFieldKey",
+                                      "fieldKind": "ModularEditBuilder.Generic",
+                                      "change": [
+                                        [
+                                          0,
+                                          {
+                                            "fieldChanges": [
+                                              {
+                                                "fieldKey": "",
+                                                "fieldKind": "Sequence",
+                                                "change": [
+                                                  {
+                                                    "count": 2
+                                                  },
+                                                  {
+                                                    "count": 1,
+                                                    "effect": {
+                                                      "delete": {
+                                                        "id": 0
+                                                      }
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "revision": 1029,
+                            "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
+                          }
+                        ]
+                      }
+                    ]
+                  ],
+                  "version": 2
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
+                    },
+                    "competing-removes.Array<[\"com.fluidframework.leaf.number\"]>": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "com.fluidframework.leaf.number"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Value",
+                    "types": [
+                      "competing-removes.Array<[\"com.fluidframework.leaf.number\"]>"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey",
+                    "repair-3"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "type": "com.fluidframework.leaf.number",
+                          "value": true
+                        }
+                      },
+                      {
+                        "c": {
+                          "type": "competing-removes.Array<[\"com.fluidframework.leaf.number\"]>",
+                          "value": false,
+                          "fields": [
+                            [
+                              "",
+                              2
+                            ]
+                          ]
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          0,
+                          1,
+                          3
+                        ]
+                      ],
+                      [
+                        0,
+                        2
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      1029,
+                      0,
+                      3
+                    ]
+                  ],
+                  "maxId": 3
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

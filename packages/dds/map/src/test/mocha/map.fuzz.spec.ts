@@ -7,20 +7,24 @@ import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
 import {
-	AsyncGenerator,
-	Generator,
+	type AsyncGenerator,
+	type Generator,
 	combineReducers,
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isObject } from "@fluidframework/core-utils/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { isObject } from "@fluidframework/core-utils/internal";
-import { ISharedMap, MapFactory } from "../../index.js";
+import { type ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
 
@@ -59,9 +63,9 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 			assert.equal(
 				aHandle,
 				bHandle,
-				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(
-					aHandle,
-				)} vs ${JSON.stringify(bHandle)}`,
+				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(aHandle)} vs ${JSON.stringify(
+					bHandle,
+				)}`,
 			);
 		} else {
 			assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
@@ -93,7 +97,9 @@ const defaultOptions: GeneratorOptions = {
 	keyPoolSize: 20,
 };
 
-function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator<Operation, State> {
+function makeGenerator(
+	optionsParam?: Partial<GeneratorOptions>,
+): AsyncGenerator<Operation, State> {
 	const { setWeight, deleteWeight, clearWeight, keyPoolSize } = {
 		...defaultOptions,
 		...optionsParam,

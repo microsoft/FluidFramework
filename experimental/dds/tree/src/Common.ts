@@ -519,7 +519,9 @@ export interface ClosedMap<K, V> extends Omit<Map<K, V>, 'delete' | 'clear'> {
 /**
  * Change the given property Prop of type T to have a type of TPropNew
  */
-export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> & { [_ in Prop]: TPropNew };
+export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> & {
+	[_ in Prop]: TPropNew;
+};
 
 // eslint-disable-next-line @rushstack/no-new-null
 type Primitive = string | number | bigint | boolean | null | symbol | undefined;
@@ -530,10 +532,10 @@ type Primitive = string | number | bigint | boolean | null | symbol | undefined;
 export type ReplaceRecursive<T, TReplace, TWith> = T extends TReplace
 	? TWith
 	: T extends Primitive
-	? T
-	: {
-			[P in keyof T]: ReplaceRecursive<T[P], TReplace, TWith>;
-	  };
+		? T
+		: {
+				[P in keyof T]: ReplaceRecursive<T[P], TReplace, TWith>;
+			};
 
 /** A union type of the first `N` positive integers */
 export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A['length']

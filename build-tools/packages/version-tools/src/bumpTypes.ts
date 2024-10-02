@@ -34,8 +34,8 @@ export type RangeOperator = (typeof RangeOperators)[number];
 /**
  * A typeguard to check if a variable is a {@link RangeOperator}.
  */
-export function isRangeOperator(r: any): r is RangeOperator {
-	return RangeOperators.includes(r);
+export function isRangeOperator(r: unknown): r is RangeOperator {
+	return RangeOperators.includes(r as RangeOperator);
 }
 
 /**
@@ -64,12 +64,12 @@ export type WorkspaceRange = (typeof WorkspaceRanges)[number];
 /**
  * A typeguard to check if a variable is a {@link WorkspaceRange}.
  */
-export function isWorkspaceRange(r: any): r is WorkspaceRange {
-	return WorkspaceRanges.includes(r);
+export function isWorkspaceRange(r: unknown): r is WorkspaceRange {
+	return WorkspaceRanges.includes(r as WorkspaceRange);
 }
 
 /**
- * A type represeting the strings we consider valid for interdependencies - dependencies between packages within the
+ * A type representing the strings we consider valid for interdependencies - dependencies between packages within the
  * same release group.
  */
 export type InterdependencyRange =
@@ -86,21 +86,21 @@ export type InterdependencyRange =
  * excluding non-conforming strings than it does at finding valid ones. This appears to be sufficient for our needs,
  * which is good because I don't know how to fix it.
  */
-export function isInterdependencyRange(r: any): r is InterdependencyRange {
-	if (semver.valid(r) !== null) {
+export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
+	if ((typeof r === "string" || r instanceof semver.SemVer) && semver.valid(r) !== null) {
 		return true;
 	}
 
-	if (RangeOperators.includes(r) || WorkspaceRanges.includes(r)) {
+	if (isRangeOperator(r) || isWorkspaceRange(r)) {
 		return true;
 	}
 
-	if (semver.validRange(r) === null) {
+	if ((typeof r === "string" || r instanceof semver.Range) && semver.validRange(r) === null) {
 		return false;
 	}
 
 	if (typeof r === "string") {
-		return RangeOperators.includes(r[0] as any);
+		return isRangeOperator(r[0]);
 	}
 
 	return false;

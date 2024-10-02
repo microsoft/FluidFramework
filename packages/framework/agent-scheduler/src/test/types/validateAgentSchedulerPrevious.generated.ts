@@ -9,216 +9,143 @@
  */
 
 import type * as old from "@fluidframework/agent-scheduler-previous/internal";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
-type TypeOnly<T> = T extends number
-	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_AgentSchedulerFactory": {"forwardCompat": false}
+ * "Class_AgentSchedulerFactory": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_AgentSchedulerFactory():
-    TypeOnly<old.AgentSchedulerFactory>;
-declare function use_current_ClassDeclaration_AgentSchedulerFactory(
-    use: TypeOnly<current.AgentSchedulerFactory>): void;
-use_current_ClassDeclaration_AgentSchedulerFactory(
-    get_old_ClassDeclaration_AgentSchedulerFactory());
+declare type old_as_current_for_Class_AgentSchedulerFactory = requireAssignableTo<TypeOnly<old.AgentSchedulerFactory>, TypeOnly<current.AgentSchedulerFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_AgentSchedulerFactory": {"backCompat": false}
+ * "Class_AgentSchedulerFactory": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_AgentSchedulerFactory():
-    TypeOnly<current.AgentSchedulerFactory>;
-declare function use_old_ClassDeclaration_AgentSchedulerFactory(
-    use: TypeOnly<old.AgentSchedulerFactory>): void;
-use_old_ClassDeclaration_AgentSchedulerFactory(
-    get_current_ClassDeclaration_AgentSchedulerFactory());
+declare type current_as_old_for_Class_AgentSchedulerFactory = requireAssignableTo<TypeOnly<current.AgentSchedulerFactory>, TypeOnly<old.AgentSchedulerFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_IAgentScheduler": {"forwardCompat": false}
+ * "Class_TaskSubscription": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_IAgentScheduler():
-    TypeOnly<typeof old.IAgentScheduler>;
-declare function use_current_VariableDeclaration_IAgentScheduler(
-    use: TypeOnly<typeof current.IAgentScheduler>): void;
-use_current_VariableDeclaration_IAgentScheduler(
-    get_old_VariableDeclaration_IAgentScheduler());
+declare type old_as_current_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<old.TaskSubscription>, TypeOnly<current.TaskSubscription>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_IAgentScheduler": {"backCompat": false}
+ * "Class_TaskSubscription": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_IAgentScheduler():
-    TypeOnly<typeof current.IAgentScheduler>;
-declare function use_old_VariableDeclaration_IAgentScheduler(
-    use: TypeOnly<typeof old.IAgentScheduler>): void;
-use_old_VariableDeclaration_IAgentScheduler(
-    get_current_VariableDeclaration_IAgentScheduler());
+declare type current_as_old_for_Class_TaskSubscription = requireAssignableTo<TypeOnly<current.TaskSubscription>, TypeOnly<old.TaskSubscription>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_AgentSchedulerFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_AgentSchedulerFactory = requireAssignableTo<TypeOnly<typeof current.AgentSchedulerFactory>, TypeOnly<typeof old.AgentSchedulerFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TaskSubscription": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TaskSubscription = requireAssignableTo<TypeOnly<typeof current.TaskSubscription>, TypeOnly<typeof old.TaskSubscription>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IAgentScheduler": {"forwardCompat": false}
+ * "Interface_IAgentScheduler": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IAgentScheduler():
-    TypeOnly<old.IAgentScheduler>;
-declare function use_current_InterfaceDeclaration_IAgentScheduler(
-    use: TypeOnly<current.IAgentScheduler>): void;
-use_current_InterfaceDeclaration_IAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_InterfaceDeclaration_IAgentScheduler());
+declare type old_as_current_for_Interface_IAgentScheduler = requireAssignableTo<TypeOnly<old.IAgentScheduler>, TypeOnly<current.IAgentScheduler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IAgentScheduler": {"backCompat": false}
+ * "Interface_IAgentScheduler": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IAgentScheduler():
-    TypeOnly<current.IAgentScheduler>;
-declare function use_old_InterfaceDeclaration_IAgentScheduler(
-    use: TypeOnly<old.IAgentScheduler>): void;
-use_old_InterfaceDeclaration_IAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_IAgentScheduler());
+declare type current_as_old_for_Interface_IAgentScheduler = requireAssignableTo<TypeOnly<current.IAgentScheduler>, TypeOnly<old.IAgentScheduler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IAgentSchedulerEvents": {"forwardCompat": false}
+ * "Interface_IAgentSchedulerEvents": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IAgentSchedulerEvents():
-    TypeOnly<old.IAgentSchedulerEvents>;
-declare function use_current_InterfaceDeclaration_IAgentSchedulerEvents(
-    use: TypeOnly<current.IAgentSchedulerEvents>): void;
-use_current_InterfaceDeclaration_IAgentSchedulerEvents(
-    get_old_InterfaceDeclaration_IAgentSchedulerEvents());
+declare type old_as_current_for_Interface_IAgentSchedulerEvents = requireAssignableTo<TypeOnly<old.IAgentSchedulerEvents>, TypeOnly<current.IAgentSchedulerEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IAgentSchedulerEvents": {"backCompat": false}
+ * "Interface_IAgentSchedulerEvents": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IAgentSchedulerEvents():
-    TypeOnly<current.IAgentSchedulerEvents>;
-declare function use_old_InterfaceDeclaration_IAgentSchedulerEvents(
-    use: TypeOnly<old.IAgentSchedulerEvents>): void;
-use_old_InterfaceDeclaration_IAgentSchedulerEvents(
-    get_current_InterfaceDeclaration_IAgentSchedulerEvents());
+declare type current_as_old_for_Interface_IAgentSchedulerEvents = requireAssignableTo<TypeOnly<current.IAgentSchedulerEvents>, TypeOnly<old.IAgentSchedulerEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IProvideAgentScheduler": {"forwardCompat": false}
+ * "Interface_IProvideAgentScheduler": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IProvideAgentScheduler():
-    TypeOnly<old.IProvideAgentScheduler>;
-declare function use_current_InterfaceDeclaration_IProvideAgentScheduler(
-    use: TypeOnly<current.IProvideAgentScheduler>): void;
-use_current_InterfaceDeclaration_IProvideAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_InterfaceDeclaration_IProvideAgentScheduler());
+declare type old_as_current_for_Interface_IProvideAgentScheduler = requireAssignableTo<TypeOnly<old.IProvideAgentScheduler>, TypeOnly<current.IProvideAgentScheduler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IProvideAgentScheduler": {"backCompat": false}
+ * "Interface_IProvideAgentScheduler": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IProvideAgentScheduler():
-    TypeOnly<current.IProvideAgentScheduler>;
-declare function use_old_InterfaceDeclaration_IProvideAgentScheduler(
-    use: TypeOnly<old.IProvideAgentScheduler>): void;
-use_old_InterfaceDeclaration_IProvideAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_IProvideAgentScheduler());
+declare type current_as_old_for_Interface_IProvideAgentScheduler = requireAssignableTo<TypeOnly<current.IProvideAgentScheduler>, TypeOnly<old.IProvideAgentScheduler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaskSubscriptionEvents": {"forwardCompat": false}
+ * "Interface_ITaskSubscriptionEvents": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ITaskSubscriptionEvents():
-    TypeOnly<old.ITaskSubscriptionEvents>;
-declare function use_current_InterfaceDeclaration_ITaskSubscriptionEvents(
-    use: TypeOnly<current.ITaskSubscriptionEvents>): void;
-use_current_InterfaceDeclaration_ITaskSubscriptionEvents(
-    get_old_InterfaceDeclaration_ITaskSubscriptionEvents());
+declare type old_as_current_for_Interface_ITaskSubscriptionEvents = requireAssignableTo<TypeOnly<old.ITaskSubscriptionEvents>, TypeOnly<current.ITaskSubscriptionEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaskSubscriptionEvents": {"backCompat": false}
+ * "Interface_ITaskSubscriptionEvents": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITaskSubscriptionEvents():
-    TypeOnly<current.ITaskSubscriptionEvents>;
-declare function use_old_InterfaceDeclaration_ITaskSubscriptionEvents(
-    use: TypeOnly<old.ITaskSubscriptionEvents>): void;
-use_old_InterfaceDeclaration_ITaskSubscriptionEvents(
-    get_current_InterfaceDeclaration_ITaskSubscriptionEvents());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_TaskSubscription": {"forwardCompat": false}
- */
-declare function get_old_ClassDeclaration_TaskSubscription():
-    TypeOnly<old.TaskSubscription>;
-declare function use_current_ClassDeclaration_TaskSubscription(
-    use: TypeOnly<current.TaskSubscription>): void;
-use_current_ClassDeclaration_TaskSubscription(
-    get_old_ClassDeclaration_TaskSubscription());
+declare type current_as_old_for_Interface_ITaskSubscriptionEvents = requireAssignableTo<TypeOnly<current.ITaskSubscriptionEvents>, TypeOnly<old.ITaskSubscriptionEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TaskSubscription": {"backCompat": false}
+ * "Variable_IAgentScheduler": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_TaskSubscription():
-    TypeOnly<current.TaskSubscription>;
-declare function use_old_ClassDeclaration_TaskSubscription(
-    use: TypeOnly<old.TaskSubscription>): void;
-use_old_ClassDeclaration_TaskSubscription(
-    get_current_ClassDeclaration_TaskSubscription());
+declare type current_as_old_for_Variable_IAgentScheduler = requireAssignableTo<TypeOnly<typeof current.IAgentScheduler>, TypeOnly<typeof old.IAgentScheduler>>

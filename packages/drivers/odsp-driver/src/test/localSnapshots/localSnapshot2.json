@@ -1,570 +1,570 @@
 {
-    "id": "bB7IAAAAHAAAA",
-    "latestSequenceNumber": 191,
-    "trees": [
-      {
-        "id": "bB7IAAAAHAAAA",
-        "sequenceNumber": 178,
-        "entries": [
-          {
-            "path": ".protocol",
-            "type": "tree"
-          },
-          {
-            "id": "bARB2NcasyNPsCCGu6fiKsFWK",
-            "path": ".protocol/quorumMembers",
-            "type": "blob"
-          },
-          {
-            "id": "bARBkx1nses1pHL1vKnmFUfIC",
-            "path": ".protocol/quorumProposals",
-            "type": "blob"
-          },
-          {
-            "id": "bARAsTnsA__IR+VJck4igOpjw",
-            "path": ".protocol/quorumValues",
-            "type": "blob"
-          },
-          {
-            "id": "bARDw+6q5LKJT2FEGlgClYDkK",
-            "path": ".protocol/attributes",
-            "type": "blob"
-          },
-          {
-            "path": ".serviceProtocol",
-            "type": "tree"
-          },
-          {
-            "id": "bARAqle0q2MPGA_OB4aLpA1aL",
-            "path": ".serviceProtocol/deli",
-            "type": "blob"
-          },
-          {
-            "id": "bARDAs2aoF6VbJF9lCuIr5OAB",
-            "path": ".serviceProtocol/scribe",
-            "type": "blob"
-          },
-          {
-            "path": ".app",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/_scheduler",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/_scheduler/.channels",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/_scheduler/.channels/root",
-            "type": "tree"
-          },
-          {
-            "id": "bARDmHTem3GvjY5whJQfAaTLh",
-            "path": ".app/.channels/_scheduler/.channels/root/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARDYJi5bHS55jcuiZ+Ut62Wq",
-            "path": ".app/.channels/_scheduler/.channels/root/.attributes",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed",
-            "type": "tree"
-          },
-          {
-            "id": "bARDLWFjrgEVIamhjGvS9cPv7",
-            "path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARDUxXcdiIC4V3HSCmwScEFi",
-            "path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed/.attributes",
-            "type": "blob"
-          },
-          {
-            "id": "bARAWgNwwMAtEWFX6f8eXjarD",
-            "path": ".app/.channels/_scheduler/.component",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/defaultComponent",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/defaultComponent/.channels",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/defaultComponent/.channels/root",
-            "type": "tree"
-          },
-          {
-            "id": "bARDSVGmtxpZG8lYwTBKu0pLI",
-            "path": ".app/.channels/defaultComponent/.channels/root/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
-            "path": ".app/.channels/defaultComponent/.channels/root/.attributes",
-            "type": "blob"
-          },
-          {
-            "id": "bARCBnzMy4FNE7kexVfsvTEs0",
-            "path": ".app/.channels/defaultComponent/.component",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root",
-            "type": "tree"
-          },
-          {
-            "id": "bARCGEy9LbA6eQYgcd_qs_lHj",
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root/.attributes",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7",
-            "type": "tree"
-          },
-          {
-            "id": "bARAon2h2Qt9fTwWh4e8vvq4X",
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARCUYcDsMiTBpD4TZDswXFhG",
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7/.attributes",
-            "type": "blob"
-          },
-          {
-            "id": "bARBYcCCUS7Lb_xtKa+7jXKzn",
-            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.component",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root",
-            "type": "tree"
-          },
-          {
-            "id": "bARAAHLFtsr47SFHnEf5mbi0Q",
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root/.attributes",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d",
-            "type": "tree"
-          },
-          {
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/content",
-            "type": "tree"
-          },
-          {
-            "id": "bARA97DMnRSr+Wi3BIbdsPJ2g",
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/content/header",
-            "type": "blob"
-          },
-          {
-            "id": "bARBlKh6S7ReMYdSzHtwA2nM2",
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/.attributes",
-            "type": "blob"
-          },
-          {
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/_search",
-            "type": "tree"
-          },
-          {
-            "id": "bARBTUxaaNz8vGJQ+Ch8MkUcw",
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/_search/01",
-            "type": "blob"
-          },
-          {
-            "id": "bARCIoud0OQOX1fRpt1aSLf7c",
-            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.component",
-            "type": "blob"
-          },
-          {
-            "id": "bARCTxEnAnBUW5sxV6y42FbfD",
-            "path": ".app/.metadata",
-            "type": "blob"
-          },
-          {
-            "id": "bARB2VYRArrcGLKspgYPTTktw",
-            "path": ".app/.electedSummarizer",
-            "type": "blob"
-          },
-          {
-            "path": ".app/gc",
-            "type": "tree"
-          },
-          {
-            "id": "bARAR6Il++n+1P_E0pRUtIwh9",
-            "path": ".app/gc/__gc_root",
-            "type": "blob"
-          }
-        ]
-      }
-    ],
-    "blobs": [
-      {
-        "id": "bARBkx1nses1pHL1vKnmFUfIC",
-        "content": "[]",
-        "size": 2
-      },
-      {
-        "id": "bARBTUxaaNz8vGJQ+Ch8MkUcw",
-        "content": "Sample 1 Showing some sample text here  And some more text down here \n",
-        "size": 70
-      },
-      {
-        "id": "bARAWgNwwMAtEWFX6f8eXjarD",
-        "content": "{\"pkg\":\"[\\\"_scheduler\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
-        "size": 74
-      },
-      {
-        "id": "bARCIoud0OQOX1fRpt1aSLf7c",
-        "content": "{\"pkg\":\"[\\\"@ms/scriptor\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":false}",
-        "size": 77
-      },
-      {
-        "id": "bARCBnzMy4FNE7kexVfsvTEs0",
-        "content": "{\"pkg\":\"[\\\"OfficeRootComponent\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
-        "size": 83
-      },
-      {
-        "id": "bARDw+6q5LKJT2FEGlgClYDkK",
-        "content": "{\"branch\":\"a285c23a-5bd9-446f-bc1c-6406209baa02\",\"minimumSequenceNumber\":176,\"sequenceNumber\":178,\"term\":1}",
-        "size": 107
-      },
-      {
-        "id": "bARDYJi5bHS55jcuiZ+Ut62Wq",
-        "content": "{\"type\":\"https://graph.microsoft.com/types/map\",\"snapshotFormatVersion\":\"0.2\",\"packageVersion\":\"0.58.2002\"}",
-        "size": 107
-      },
-      {
-        "id": "bARBYcCCUS7Lb_xtKa+7jXKzn",
-        "content": "{\"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":false}",
-        "size": 108
-      },
-      {
-        "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
-        "content": "{\"type\":\"https://graph.microsoft.com/types/directory\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
-        "size": 113
-      },
-      {
-        "id": "bARBlKh6S7ReMYdSzHtwA2nM2",
-        "content": "{\"type\":\"https://graph.microsoft.com/types/mergeTree\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
-        "size": 113
-      },
-      {
-        "id": "bARCUYcDsMiTBpD4TZDswXFhG",
-        "content": "{\"type\":\"https://graph.microsoft.com/types/shared-summary-block\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
-        "size": 124
-      },
-      {
-        "id": "bARDUxXcdiIC4V3HSCmwScEFi",
-        "content": "{\"type\":\"https://graph.microsoft.com/types/consensus-register-collection\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
-        "size": 133
-      },
-      {
-        "id": "bARB2VYRArrcGLKspgYPTTktw",
-        "content": "{\"electedClientId\":\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",\"electedParentId\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",\"electionSequenceNumber\":116}",
-        "size": 144
-      },
-      {
-        "id": "bARDmHTem3GvjY5whJQfAaTLh",
-        "content": "{\"blobs\":[],\"content\":{\"scheduler\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\"}}}}",
-        "size": 146
-      },
-      {
-        "id": "bARAon2h2Qt9fTwWh4e8vvq4X",
-        "content": "{\"lastEditDetailsKey\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"timestamp\":1660751655737}}",
-        "size": 198
-      },
-      {
-        "id": "bARDLWFjrgEVIamhjGvS9cPv7",
-        "content": "{\"leader\":{\"atomic\":{\"sequenceNumber\":79,\"value\":{\"type\":\"Plain\",\"value\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\"}},\"versions\":[{\"sequenceNumber\":79,\"value\":{\"type\":\"Plain\",\"value\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\"}}]}}",
-        "size": 222
-      },
-      {
-        "id": "bARAAHLFtsr47SFHnEf5mbi0Q",
-        "content": "{\"blobs\":[],\"content\":{\"storage\":{\"text\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\"}},\"text:nodeType\":{\"type\":\"Plain\",\"value\":\"StoryNode\"},\"defaultContentLocale\":{\"type\":\"Plain\",\"value\":\"en-us\"},\"defaultContentDirection\":{\"type\":\"Plain\",\"value\":\"ltr\"}}}}",
-        "size": 345
-      },
-      {
-        "id": "bARCTxEnAnBUW5sxV6y42FbfD",
-        "content": "{\"createContainerRuntimeVersion\":\"0.58.2002\",\"createContainerTimestamp\":1652216614928,\"summaryCount\":2,\"summaryNumber\":2,\"summaryFormatVersion\":1,\"gcFeature\":1,\"sweepEnabled\":false,\"message\":{\"clientId\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",\"clientSequenceNumber\":95,\"minimumSequenceNumber\":176,\"referenceSequenceNumber\":177,\"sequenceNumber\":178,\"timestamp\":1660751675492,\"type\":\"noop\"}}",
-        "size": 388
-      },
-      {
-        "id": "bARDSVGmtxpZG8lYwTBKu0pLI",
-        "content": "{\"blobs\":[],\"content\":{\"storage\":{\"rootComponentConfig\":{\"type\":\"Plain\",\"value\":{\"canvasComponentType\":\"@ms/scriptor\",\"canvasComponentConfig\":{\"configurationType\":\"blueprint.Paragraph\"}}},\"lastEditedId\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\"}},\"defaultViewId\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\"}}}}}",
-        "size": 419
-      },
-      {
-        "id": "bARCGEy9LbA6eQYgcd_qs_lHj",
-        "content": "{\"blobs\":[],\"content\":{\"storage\":{\"lastEditedSharedSummaryBlockKey\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\"}},\"lastEditCreatorKey\":{\"type\":\"Plain\",\"value\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"timestamp\":1652216616975}}}}}",
-        "size": 428
-      },
-      {
-        "id": "bARAsTnsA__IR+VJck4igOpjw",
-        "content": "[[\"code\",{\"approvalSequenceNumber\":6,\"commitSequenceNumber\":-1,\"key\":\"code\",\"sequenceNumber\":4,\"value\":{\"package\":{\"name\":\"@ms/office-fluid-container\",\"version\":\"20220505014\",\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/runtime.5bea0728ffd241800282-2.js\",\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/officeContainer.9653d667963dcbbce59a-2.js\"],\"library\":\"officeContainer\"}}}},\"config\":{\"blueprintId\":\"paragraph\"}}}]]",
-        "size": 488
-      },
-      {
-        "id": "bARB2NcasyNPsCCGu6fiKsFWK",
-        "content": "[[\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true},\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751655631,\"mode\":\"write\"},\"sequenceNumber\":76}],[\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":false},\"type\":\"summarizer\",\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751660740,\"mode\":\"write\"},\"sequenceNumber\":89}]]",
-        "size": 836
-      },
-      {
-        "id": "bARAqle0q2MPGA_OB4aLpA1aL",
-        "content": "{\"clients\":[{\"canEvict\":true,\"clientId\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",\"clientSequenceNumber\":95,\"lastUpdate\":1660751675492,\"nack\":false,\"referenceSequenceNumber\":177,\"scopes\":[\"doc:read\",\"doc:write\"],\"serverMetadata\":{\"editor\":\"i:0#.f|membership|email@microsoft.com\",\"supportsGetOpsApi\":true,\"createSignal\":true}},{\"canEvict\":true,\"clientId\":\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",\"clientSequenceNumber\":7,\"lastUpdate\":1660751689048,\"nack\":false,\"referenceSequenceNumber\":178,\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"serverMetadata\":{\"editor\":\"i:0#.f|membership|email@microsoft.com\",\"lastInitialSequenceNumber\":88,\"supportsGetOpsApi\":true,\"createSignal\":true}}],\"durableSequenceNumber\":110,\"epoch\":1,\"expHash1\":\"00000000\",\"logOffset\":13825287,\"sequenceNumber\":179,\"signalClientConnectionNumber\":5,\"term\":1,\"lastSentMSN\":176,\"nackMessages\":[],\"successfullyStartedLambdas\":[]}",
-        "size": 907
-      },
-      {
-        "id": "bARDAs2aoF6VbJF9lCuIr5OAB",
-        "content": "{\"lastSummarySequenceNumber\":110,\"lastClientSummaryHead\":\"bB2UAAAAHAAAA\",\"logOffset\":6996544,\"minimumSequenceNumber\":177,\"protocolState\":{\"sequenceNumber\":178,\"minimumSequenceNumber\":176,\"members\":[[\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true},\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751655631,\"mode\":\"write\"},\"sequenceNumber\":76}],[\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":false},\"type\":\"summarizer\",\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751660740,\"mode\":\"write\"},\"sequenceNumber\":89}]],\"proposals\":[],\"values\":[[\"code\",{\"approvalSequenceNumber\":6,\"commitSequenceNumber\":-1,\"key\":\"code\",\"sequenceNumber\":4,\"value\":{\"package\":{\"name\":\"@ms/office-fluid-container\",\"version\":\"20220505014\",\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/runtime.5bea0728ffd241800282-2.js\",\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/officeContainer.9653d667963dcbbce59a-2.js\"],\"library\":\"officeContainer\"}}}},\"config\":{\"blueprintId\":\"paragraph\"}}}]]},\"sequenceNumber\":179}",
-        "size": 1569
-      },
-      {
-        "id": "bARAR6Il++n+1P_E0pRUtIwh9",
-        "content": "{\"gcNodes\":{\"/\":{\"outboundRoutes\":[\"/_scheduler\",\"/defaultComponent\"]},\"/_scheduler\":{\"outboundRoutes\":[\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\",\"/_scheduler/root\"]},\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\":{\"outboundRoutes\":[\"/_scheduler\"]},\"/_scheduler/root\":{\"outboundRoutes\":[\"/_scheduler\",\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\"]},\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/root\"]},\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\"]},\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/root\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\"]},\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\":{\"outboundRoutes\":[\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\",\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/root\"]},\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\":{\"outboundRoutes\":[\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\"]},\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/root\":{\"outboundRoutes\":[\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\",\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\"]},\"/defaultComponent\":{\"outboundRoutes\":[\"/defaultComponent/root\"]},\"/defaultComponent/root\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\",\"/defaultComponent\"]}}}",
-        "size": 1588
-      },
-      {
-        "id": "bARA97DMnRSr+Wi3BIbdsPJ2g",
-        "content": "{\"chunkStartSegmentIndex\":0,\"chunkSegmentCount\":7,\"chunkLengthChars\":69,\"totalLengthChars\":69,\"totalSegmentCount\":7,\"chunkSequenceNumber\":176,\"segmentTexts\":[{\"text\":\"Sample 1\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},{\"marker\":{\"refType\":1},\"props\":{\"nodeType\":\"Paragraph\",\"markerId\":\"299bbc33-3f0c-4a99-902a-85508e500ec3\",\"paragraph!writingMode\":false,\"paragraph!textAlignment\":\"left\",\"style!reference\":\"Heading 1\",\"placeholder!attributeText\":\"placeholder!addTitle\"}},{\"text\":\"Showing some sample text here\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},{\"marker\":{\"refType\":1},\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000},\"nodeType\":\"Paragraph\",\"markerId\":\"7edb6135-6d2b-45de-ab39-d139f5618843\"}},{\"marker\":{\"refType\":1},\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000},\"nodeType\":\"Paragraph\",\"markerId\":\"fa3d9a94-3905-4c7f-a02b-38e6a05cbf2d\"}},{\"text\":\"And some more text down here\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},{\"marker\":{\"refType\":1},\"props\":{\"markerId\":\"cc15d675-a511-4777-a557-afbeb825f0a8\",\"nodeType\":\"Paragraph\"}}],\"headerMetadata\":{\"orderedChunkMetadata\":[{\"id\":\"header\"}],\"sequenceNumber\":176,\"totalLength\":69,\"totalSegmentCount\":7}}",
-        "size": 1666
-      }
-    ],
-    "ops": [
-      {
-        "sequenceNumber": 179,
-        "op": {
-          "clientId": "51e45fde-a92e-4f37-9cbd-604acf87ac14",
-          "clientSequenceNumber": 7,
-          "contents": "{\"handle\":\"bOwEAAACyAAAABgAAAA==\",\"head\":\"bB2UAAAAHAAAA\",\"message\":\"Summary @178:176\",\"parents\":[\"bB2UAAAAHAAAA\"],\"details\":{\"includesProtocolTree\":false}}",
-          "minimumSequenceNumber": 177,
-          "referenceSequenceNumber": 178,
-          "sequenceNumber": 179,
-          "term": 1,
-          "timestamp": 1660751689048,
-          "type": "summarize"
-        }
-      },
-      {
-        "sequenceNumber": 180,
-        "op": {
-          "clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
-          "clientSequenceNumber": 96,
-          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":68,\"seg\":{\"text\":\"s\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},\"type\":0}},\"type\":\"op\"}}}",
-          "metadata": {},
-          "minimumSequenceNumber": 178,
-          "referenceSequenceNumber": 179,
-          "sequenceNumber": 180,
-          "term": 1,
-          "timestamp": 1660751689264,
-          "type": "op"
-        }
-      },
-      {
-        "sequenceNumber": 181,
-        "op": {
-          "clientId": null,
-          "clientSequenceNumber": -1,
-          "contents": {
-            "handle": "bB7IAAAAHAAAA",
-            "summaryProposal": {
-              "summarySequenceNumber": 179
-            }
-          },
-          "minimumSequenceNumber": 178,
-          "referenceSequenceNumber": -1,
-          "sequenceNumber": 181,
-          "term": 1,
-          "timestamp": 1660751689630,
-          "type": "summaryAck",
-          "data": "{\"handle\":\"bB7IAAAAHAAAA\",\"summaryProposal\":{\"summarySequenceNumber\":179}}"
-        }
-      },
-      {
-        "sequenceNumber": 182,
-        "op": {
-          "clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
-          "clientSequenceNumber": 97,
-          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":69,\"seg\":{\"text\":\"s\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},\"type\":0}},\"type\":\"op\"}}}",
-          "metadata": {},
-          "minimumSequenceNumber": 178,
-          "referenceSequenceNumber": 180,
-          "sequenceNumber": 182,
-          "term": 1,
-          "timestamp": 1660751689640,
-          "type": "op"
-        }
-      },
-      {
-        "sequenceNumber": 183,
-        "op": {
-          "clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
-          "clientSequenceNumber": 98,
-          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":64,\"pos2\":70,\"props\":{\"proofing!spellingError\":[\"heiress\",\"hers\",\"hares\"]},\"type\":2}},\"type\":\"op\"}}}",
-          "metadata": {},
-          "minimumSequenceNumber": 178,
-          "referenceSequenceNumber": 182,
-          "sequenceNumber": 183,
-          "term": 1,
-          "timestamp": 1660751689853,
-          "type": "op"
-        }
-      },
-      {
-        "sequenceNumber": 184,
-        "op": {
-          "clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
-          "clientSequenceNumber": 99,
-          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":69,\"pos2\":70,\"type\":1}},\"type\":\"op\"}}}",
-          "metadata": {},
-          "minimumSequenceNumber": 178,
-          "referenceSequenceNumber": 183,
-          "sequenceNumber": 184,
-          "term": 1,
-          "timestamp": 1660751690459,
-          "type": "op"
-        }
-      },
-      {
-        "sequenceNumber": 185,
-        "op": {
-          "clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
-          "clientSequenceNumber": 100,
-          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":64,\"pos2\":69,\"props\":{\"proofing!spellingError\":null},\"type\":2}},\"type\":\"op\"}}}",
-          "metadata": {},
-          "minimumSequenceNumber": 178,
-          "referenceSequenceNumber": 183,
-          "sequenceNumber": 185,
-          "term": 1,
-          "timestamp": 1660751690461,
-          "type": "op"
-        }
-      },
-      {
-        "sequenceNumber": 186,
-        "op": {
-          "clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
-          "clientSequenceNumber": 101,
-          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":68,\"pos2\":69,\"type\":1}},\"type\":\"op\"}}}",
-          "metadata": {},
-          "minimumSequenceNumber": 178,
-          "referenceSequenceNumber": 185,
-          "sequenceNumber": 186,
-          "term": 1,
-          "timestamp": 1660751690590,
-          "type": "op"
-        }
-      },
-      {
-        "sequenceNumber": 187,
-        "op": {
-          "clientId": "51e45fde-a92e-4f37-9cbd-604acf87ac14",
-          "clientSequenceNumber": 8,
-          "contents": "null",
-          "minimumSequenceNumber": 185,
-          "referenceSequenceNumber": 186,
-          "sequenceNumber": 187,
-          "term": 1,
-          "timestamp": 1660751691149,
-          "type": "noop"
-        }
-      },
-      {
-        "sequenceNumber": 188,
-        "op": {
-          "clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
-          "clientSequenceNumber": 102,
-          "contents": "null",
-          "minimumSequenceNumber": 186,
-          "referenceSequenceNumber": 187,
-          "sequenceNumber": 188,
-          "term": 1,
-          "timestamp": 1660751692684,
-          "type": "noop"
-        }
-      },
-      {
-        "sequenceNumber": 189,
-        "op": {
-          "clientId": null,
-          "clientSequenceNumber": -1,
-          "contents": null,
-          "minimumSequenceNumber": 186,
-          "referenceSequenceNumber": -1,
-          "sequenceNumber": 189,
-          "term": 1,
-          "timestamp": 1660751699338,
-          "type": "leave",
-          "data": "\"61dc1a57-114b-4511-b3db-ce4b78e08de4\""
-        }
-      },
-      {
-        "sequenceNumber": 190,
-        "op": {
-          "clientId": null,
-          "clientSequenceNumber": -1,
-          "contents": null,
-          "minimumSequenceNumber": 190,
-          "referenceSequenceNumber": -1,
-          "sequenceNumber": 190,
-          "term": 1,
-          "timestamp": 1660751699338,
-          "type": "leave",
-          "data": "\"51e45fde-a92e-4f37-9cbd-604acf87ac14\""
-        }
-      },
-      {
-        "sequenceNumber": 191,
-        "op": {
-          "clientId": null,
-          "clientSequenceNumber": -1,
-          "contents": null,
-          "minimumSequenceNumber": 191,
-          "referenceSequenceNumber": 191,
-          "sequenceNumber": 191,
-          "term": 1,
-          "timestamp": 1660751699376,
-          "type": "noClient"
-        }
-      }
-    ]
-  }
+	"id": "bB7IAAAAHAAAA",
+	"latestSequenceNumber": 191,
+	"trees": [
+		{
+			"id": "bB7IAAAAHAAAA",
+			"sequenceNumber": 178,
+			"entries": [
+				{
+					"path": ".protocol",
+					"type": "tree"
+				},
+				{
+					"id": "bARB2NcasyNPsCCGu6fiKsFWK",
+					"path": ".protocol/quorumMembers",
+					"type": "blob"
+				},
+				{
+					"id": "bARBkx1nses1pHL1vKnmFUfIC",
+					"path": ".protocol/quorumProposals",
+					"type": "blob"
+				},
+				{
+					"id": "bARAsTnsA__IR+VJck4igOpjw",
+					"path": ".protocol/quorumValues",
+					"type": "blob"
+				},
+				{
+					"id": "bARDw+6q5LKJT2FEGlgClYDkK",
+					"path": ".protocol/attributes",
+					"type": "blob"
+				},
+				{
+					"path": ".serviceProtocol",
+					"type": "tree"
+				},
+				{
+					"id": "bARAqle0q2MPGA_OB4aLpA1aL",
+					"path": ".serviceProtocol/deli",
+					"type": "blob"
+				},
+				{
+					"id": "bARDAs2aoF6VbJF9lCuIr5OAB",
+					"path": ".serviceProtocol/scribe",
+					"type": "blob"
+				},
+				{
+					"path": ".app",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/_scheduler",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/_scheduler/.channels",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/_scheduler/.channels/root",
+					"type": "tree"
+				},
+				{
+					"id": "bARDmHTem3GvjY5whJQfAaTLh",
+					"path": ".app/.channels/_scheduler/.channels/root/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARDYJi5bHS55jcuiZ+Ut62Wq",
+					"path": ".app/.channels/_scheduler/.channels/root/.attributes",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed",
+					"type": "tree"
+				},
+				{
+					"id": "bARDLWFjrgEVIamhjGvS9cPv7",
+					"path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARDUxXcdiIC4V3HSCmwScEFi",
+					"path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed/.attributes",
+					"type": "blob"
+				},
+				{
+					"id": "bARAWgNwwMAtEWFX6f8eXjarD",
+					"path": ".app/.channels/_scheduler/.component",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/defaultComponent",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/defaultComponent/.channels",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/defaultComponent/.channels/root",
+					"type": "tree"
+				},
+				{
+					"id": "bARDSVGmtxpZG8lYwTBKu0pLI",
+					"path": ".app/.channels/defaultComponent/.channels/root/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+					"path": ".app/.channels/defaultComponent/.channels/root/.attributes",
+					"type": "blob"
+				},
+				{
+					"id": "bARCBnzMy4FNE7kexVfsvTEs0",
+					"path": ".app/.channels/defaultComponent/.component",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root",
+					"type": "tree"
+				},
+				{
+					"id": "bARCGEy9LbA6eQYgcd_qs_lHj",
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root/.attributes",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7",
+					"type": "tree"
+				},
+				{
+					"id": "bARAon2h2Qt9fTwWh4e8vvq4X",
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARCUYcDsMiTBpD4TZDswXFhG",
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7/.attributes",
+					"type": "blob"
+				},
+				{
+					"id": "bARBYcCCUS7Lb_xtKa+7jXKzn",
+					"path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.component",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root",
+					"type": "tree"
+				},
+				{
+					"id": "bARAAHLFtsr47SFHnEf5mbi0Q",
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root/.attributes",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d",
+					"type": "tree"
+				},
+				{
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/content",
+					"type": "tree"
+				},
+				{
+					"id": "bARA97DMnRSr+Wi3BIbdsPJ2g",
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/content/header",
+					"type": "blob"
+				},
+				{
+					"id": "bARBlKh6S7ReMYdSzHtwA2nM2",
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/.attributes",
+					"type": "blob"
+				},
+				{
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/_search",
+					"type": "tree"
+				},
+				{
+					"id": "bARBTUxaaNz8vGJQ+Ch8MkUcw",
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/_search/01",
+					"type": "blob"
+				},
+				{
+					"id": "bARCIoud0OQOX1fRpt1aSLf7c",
+					"path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.component",
+					"type": "blob"
+				},
+				{
+					"id": "bARCTxEnAnBUW5sxV6y42FbfD",
+					"path": ".app/.metadata",
+					"type": "blob"
+				},
+				{
+					"id": "bARB2VYRArrcGLKspgYPTTktw",
+					"path": ".app/.electedSummarizer",
+					"type": "blob"
+				},
+				{
+					"path": ".app/gc",
+					"type": "tree"
+				},
+				{
+					"id": "bARAR6Il++n+1P_E0pRUtIwh9",
+					"path": ".app/gc/__gc_root",
+					"type": "blob"
+				}
+			]
+		}
+	],
+	"blobs": [
+		{
+			"id": "bARBkx1nses1pHL1vKnmFUfIC",
+			"content": "[]",
+			"size": 2
+		},
+		{
+			"id": "bARBTUxaaNz8vGJQ+Ch8MkUcw",
+			"content": "Sample 1 Showing some sample text here  And some more text down here \n",
+			"size": 70
+		},
+		{
+			"id": "bARAWgNwwMAtEWFX6f8eXjarD",
+			"content": "{\"pkg\":\"[\\\"_scheduler\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
+			"size": 74
+		},
+		{
+			"id": "bARCIoud0OQOX1fRpt1aSLf7c",
+			"content": "{\"pkg\":\"[\\\"@ms/scriptor\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":false}",
+			"size": 77
+		},
+		{
+			"id": "bARCBnzMy4FNE7kexVfsvTEs0",
+			"content": "{\"pkg\":\"[\\\"OfficeRootComponent\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
+			"size": 83
+		},
+		{
+			"id": "bARDw+6q5LKJT2FEGlgClYDkK",
+			"content": "{\"branch\":\"a285c23a-5bd9-446f-bc1c-6406209baa02\",\"minimumSequenceNumber\":176,\"sequenceNumber\":178,\"term\":1}",
+			"size": 107
+		},
+		{
+			"id": "bARDYJi5bHS55jcuiZ+Ut62Wq",
+			"content": "{\"type\":\"https://graph.microsoft.com/types/map\",\"snapshotFormatVersion\":\"0.2\",\"packageVersion\":\"0.58.2002\"}",
+			"size": 107
+		},
+		{
+			"id": "bARBYcCCUS7Lb_xtKa+7jXKzn",
+			"content": "{\"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":false}",
+			"size": 108
+		},
+		{
+			"id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+			"content": "{\"type\":\"https://graph.microsoft.com/types/directory\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+			"size": 113
+		},
+		{
+			"id": "bARBlKh6S7ReMYdSzHtwA2nM2",
+			"content": "{\"type\":\"https://graph.microsoft.com/types/mergeTree\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+			"size": 113
+		},
+		{
+			"id": "bARCUYcDsMiTBpD4TZDswXFhG",
+			"content": "{\"type\":\"https://graph.microsoft.com/types/shared-summary-block\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+			"size": 124
+		},
+		{
+			"id": "bARDUxXcdiIC4V3HSCmwScEFi",
+			"content": "{\"type\":\"https://graph.microsoft.com/types/consensus-register-collection\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+			"size": 133
+		},
+		{
+			"id": "bARB2VYRArrcGLKspgYPTTktw",
+			"content": "{\"electedClientId\":\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",\"electedParentId\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",\"electionSequenceNumber\":116}",
+			"size": 144
+		},
+		{
+			"id": "bARDmHTem3GvjY5whJQfAaTLh",
+			"content": "{\"blobs\":[],\"content\":{\"scheduler\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\"}}}}",
+			"size": 146
+		},
+		{
+			"id": "bARAon2h2Qt9fTwWh4e8vvq4X",
+			"content": "{\"lastEditDetailsKey\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"timestamp\":1660751655737}}",
+			"size": 198
+		},
+		{
+			"id": "bARDLWFjrgEVIamhjGvS9cPv7",
+			"content": "{\"leader\":{\"atomic\":{\"sequenceNumber\":79,\"value\":{\"type\":\"Plain\",\"value\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\"}},\"versions\":[{\"sequenceNumber\":79,\"value\":{\"type\":\"Plain\",\"value\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\"}}]}}",
+			"size": 222
+		},
+		{
+			"id": "bARAAHLFtsr47SFHnEf5mbi0Q",
+			"content": "{\"blobs\":[],\"content\":{\"storage\":{\"text\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\"}},\"text:nodeType\":{\"type\":\"Plain\",\"value\":\"StoryNode\"},\"defaultContentLocale\":{\"type\":\"Plain\",\"value\":\"en-us\"},\"defaultContentDirection\":{\"type\":\"Plain\",\"value\":\"ltr\"}}}}",
+			"size": 345
+		},
+		{
+			"id": "bARCTxEnAnBUW5sxV6y42FbfD",
+			"content": "{\"createContainerRuntimeVersion\":\"0.58.2002\",\"createContainerTimestamp\":1652216614928,\"summaryCount\":2,\"summaryNumber\":2,\"summaryFormatVersion\":1,\"gcFeature\":1,\"sweepEnabled\":false,\"message\":{\"clientId\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",\"clientSequenceNumber\":95,\"minimumSequenceNumber\":176,\"referenceSequenceNumber\":177,\"sequenceNumber\":178,\"timestamp\":1660751675492,\"type\":\"noop\"}}",
+			"size": 388
+		},
+		{
+			"id": "bARDSVGmtxpZG8lYwTBKu0pLI",
+			"content": "{\"blobs\":[],\"content\":{\"storage\":{\"rootComponentConfig\":{\"type\":\"Plain\",\"value\":{\"canvasComponentType\":\"@ms/scriptor\",\"canvasComponentConfig\":{\"configurationType\":\"blueprint.Paragraph\"}}},\"lastEditedId\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\"}},\"defaultViewId\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\"}}}}}",
+			"size": 419
+		},
+		{
+			"id": "bARCGEy9LbA6eQYgcd_qs_lHj",
+			"content": "{\"blobs\":[],\"content\":{\"storage\":{\"lastEditedSharedSummaryBlockKey\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\"}},\"lastEditCreatorKey\":{\"type\":\"Plain\",\"value\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"timestamp\":1652216616975}}}}}",
+			"size": 428
+		},
+		{
+			"id": "bARAsTnsA__IR+VJck4igOpjw",
+			"content": "[[\"code\",{\"approvalSequenceNumber\":6,\"commitSequenceNumber\":-1,\"key\":\"code\",\"sequenceNumber\":4,\"value\":{\"package\":{\"name\":\"@ms/office-fluid-container\",\"version\":\"20220505014\",\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/runtime.5bea0728ffd241800282-2.js\",\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/officeContainer.9653d667963dcbbce59a-2.js\"],\"library\":\"officeContainer\"}}}},\"config\":{\"blueprintId\":\"paragraph\"}}}]]",
+			"size": 488
+		},
+		{
+			"id": "bARB2NcasyNPsCCGu6fiKsFWK",
+			"content": "[[\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true},\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751655631,\"mode\":\"write\"},\"sequenceNumber\":76}],[\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":false},\"type\":\"summarizer\",\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751660740,\"mode\":\"write\"},\"sequenceNumber\":89}]]",
+			"size": 836
+		},
+		{
+			"id": "bARAqle0q2MPGA_OB4aLpA1aL",
+			"content": "{\"clients\":[{\"canEvict\":true,\"clientId\":\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",\"clientSequenceNumber\":95,\"lastUpdate\":1660751675492,\"nack\":false,\"referenceSequenceNumber\":177,\"scopes\":[\"doc:read\",\"doc:write\"],\"serverMetadata\":{\"editor\":\"i:0#.f|membership|email@microsoft.com\",\"supportsGetOpsApi\":true,\"createSignal\":true}},{\"canEvict\":true,\"clientId\":\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",\"clientSequenceNumber\":7,\"lastUpdate\":1660751689048,\"nack\":false,\"referenceSequenceNumber\":178,\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"serverMetadata\":{\"editor\":\"i:0#.f|membership|email@microsoft.com\",\"lastInitialSequenceNumber\":88,\"supportsGetOpsApi\":true,\"createSignal\":true}}],\"durableSequenceNumber\":110,\"epoch\":1,\"expHash1\":\"00000000\",\"logOffset\":13825287,\"sequenceNumber\":179,\"signalClientConnectionNumber\":5,\"term\":1,\"lastSentMSN\":176,\"nackMessages\":[],\"successfullyStartedLambdas\":[]}",
+			"size": 907
+		},
+		{
+			"id": "bARDAs2aoF6VbJF9lCuIr5OAB",
+			"content": "{\"lastSummarySequenceNumber\":110,\"lastClientSummaryHead\":\"bB2UAAAAHAAAA\",\"logOffset\":6996544,\"minimumSequenceNumber\":177,\"protocolState\":{\"sequenceNumber\":178,\"minimumSequenceNumber\":176,\"members\":[[\"61dc1a57-114b-4511-b3db-ce4b78e08de4\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true},\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751655631,\"mode\":\"write\"},\"sequenceNumber\":76}],[\"51e45fde-a92e-4f37-9cbd-604acf87ac14\",{\"client\":{\"user\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":false},\"type\":\"summarizer\",\"environment\":\"; loaderVersion:1.2.2\"},\"timestamp\":1660751660740,\"mode\":\"write\"},\"sequenceNumber\":89}]],\"proposals\":[],\"values\":[[\"code\",{\"approvalSequenceNumber\":6,\"commitSequenceNumber\":-1,\"key\":\"code\",\"sequenceNumber\":4,\"value\":{\"package\":{\"name\":\"@ms/office-fluid-container\",\"version\":\"20220505014\",\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/runtime.5bea0728ffd241800282-2.js\",\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/officeContainer.9653d667963dcbbce59a-2.js\"],\"library\":\"officeContainer\"}}}},\"config\":{\"blueprintId\":\"paragraph\"}}}]]},\"sequenceNumber\":179}",
+			"size": 1569
+		},
+		{
+			"id": "bARAR6Il++n+1P_E0pRUtIwh9",
+			"content": "{\"gcNodes\":{\"/\":{\"outboundRoutes\":[\"/_scheduler\",\"/defaultComponent\"]},\"/_scheduler\":{\"outboundRoutes\":[\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\",\"/_scheduler/root\"]},\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\":{\"outboundRoutes\":[\"/_scheduler\"]},\"/_scheduler/root\":{\"outboundRoutes\":[\"/_scheduler\",\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\"]},\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/root\"]},\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\"]},\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/root\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\"]},\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\":{\"outboundRoutes\":[\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\",\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/root\"]},\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\":{\"outboundRoutes\":[\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\"]},\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/root\":{\"outboundRoutes\":[\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\",\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\"]},\"/defaultComponent\":{\"outboundRoutes\":[\"/defaultComponent/root\"]},\"/defaultComponent/root\":{\"outboundRoutes\":[\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\",\"/defaultComponent\"]}}}",
+			"size": 1588
+		},
+		{
+			"id": "bARA97DMnRSr+Wi3BIbdsPJ2g",
+			"content": "{\"chunkStartSegmentIndex\":0,\"chunkSegmentCount\":7,\"chunkLengthChars\":69,\"totalLengthChars\":69,\"totalSegmentCount\":7,\"chunkSequenceNumber\":176,\"segmentTexts\":[{\"text\":\"Sample 1\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},{\"marker\":{\"refType\":1},\"props\":{\"nodeType\":\"Paragraph\",\"markerId\":\"299bbc33-3f0c-4a99-902a-85508e500ec3\",\"paragraph!writingMode\":false,\"paragraph!textAlignment\":\"left\",\"style!reference\":\"Heading 1\",\"placeholder!attributeText\":\"placeholder!addTitle\"}},{\"text\":\"Showing some sample text here\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},{\"marker\":{\"refType\":1},\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000},\"nodeType\":\"Paragraph\",\"markerId\":\"7edb6135-6d2b-45de-ab39-d139f5618843\"}},{\"marker\":{\"refType\":1},\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000},\"nodeType\":\"Paragraph\",\"markerId\":\"fa3d9a94-3905-4c7f-a02b-38e6a05cbf2d\"}},{\"text\":\"And some more text down here\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},{\"marker\":{\"refType\":1},\"props\":{\"markerId\":\"cc15d675-a511-4777-a557-afbeb825f0a8\",\"nodeType\":\"Paragraph\"}}],\"headerMetadata\":{\"orderedChunkMetadata\":[{\"id\":\"header\"}],\"sequenceNumber\":176,\"totalLength\":69,\"totalSegmentCount\":7}}",
+			"size": 1666
+		}
+	],
+	"ops": [
+		{
+			"sequenceNumber": 179,
+			"op": {
+				"clientId": "51e45fde-a92e-4f37-9cbd-604acf87ac14",
+				"clientSequenceNumber": 7,
+				"contents": "{\"handle\":\"bOwEAAACyAAAABgAAAA==\",\"head\":\"bB2UAAAAHAAAA\",\"message\":\"Summary @178:176\",\"parents\":[\"bB2UAAAAHAAAA\"],\"details\":{\"includesProtocolTree\":false}}",
+				"minimumSequenceNumber": 177,
+				"referenceSequenceNumber": 178,
+				"sequenceNumber": 179,
+				"term": 1,
+				"timestamp": 1660751689048,
+				"type": "summarize"
+			}
+		},
+		{
+			"sequenceNumber": 180,
+			"op": {
+				"clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
+				"clientSequenceNumber": 96,
+				"contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":68,\"seg\":{\"text\":\"s\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},\"type\":0}},\"type\":\"op\"}}}",
+				"metadata": {},
+				"minimumSequenceNumber": 178,
+				"referenceSequenceNumber": 179,
+				"sequenceNumber": 180,
+				"term": 1,
+				"timestamp": 1660751689264,
+				"type": "op"
+			}
+		},
+		{
+			"sequenceNumber": 181,
+			"op": {
+				"clientId": null,
+				"clientSequenceNumber": -1,
+				"contents": {
+					"handle": "bB7IAAAAHAAAA",
+					"summaryProposal": {
+						"summarySequenceNumber": 179
+					}
+				},
+				"minimumSequenceNumber": 178,
+				"referenceSequenceNumber": -1,
+				"sequenceNumber": 181,
+				"term": 1,
+				"timestamp": 1660751689630,
+				"type": "summaryAck",
+				"data": "{\"handle\":\"bB7IAAAAHAAAA\",\"summaryProposal\":{\"summarySequenceNumber\":179}}"
+			}
+		},
+		{
+			"sequenceNumber": 182,
+			"op": {
+				"clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
+				"clientSequenceNumber": 97,
+				"contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":69,\"seg\":{\"text\":\"s\",\"props\":{\"attribution\":{\"id\":\"email@microsoft.com\",\"name\":\"John Doe\",\"email\":\"email@microsoft.com\",\"timestamp\":1660751400000}}},\"type\":0}},\"type\":\"op\"}}}",
+				"metadata": {},
+				"minimumSequenceNumber": 178,
+				"referenceSequenceNumber": 180,
+				"sequenceNumber": 182,
+				"term": 1,
+				"timestamp": 1660751689640,
+				"type": "op"
+			}
+		},
+		{
+			"sequenceNumber": 183,
+			"op": {
+				"clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
+				"clientSequenceNumber": 98,
+				"contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":64,\"pos2\":70,\"props\":{\"proofing!spellingError\":[\"heiress\",\"hers\",\"hares\"]},\"type\":2}},\"type\":\"op\"}}}",
+				"metadata": {},
+				"minimumSequenceNumber": 178,
+				"referenceSequenceNumber": 182,
+				"sequenceNumber": 183,
+				"term": 1,
+				"timestamp": 1660751689853,
+				"type": "op"
+			}
+		},
+		{
+			"sequenceNumber": 184,
+			"op": {
+				"clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
+				"clientSequenceNumber": 99,
+				"contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":69,\"pos2\":70,\"type\":1}},\"type\":\"op\"}}}",
+				"metadata": {},
+				"minimumSequenceNumber": 178,
+				"referenceSequenceNumber": 183,
+				"sequenceNumber": 184,
+				"term": 1,
+				"timestamp": 1660751690459,
+				"type": "op"
+			}
+		},
+		{
+			"sequenceNumber": 185,
+			"op": {
+				"clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
+				"clientSequenceNumber": 100,
+				"contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":64,\"pos2\":69,\"props\":{\"proofing!spellingError\":null},\"type\":2}},\"type\":\"op\"}}}",
+				"metadata": {},
+				"minimumSequenceNumber": 178,
+				"referenceSequenceNumber": 183,
+				"sequenceNumber": 185,
+				"term": 1,
+				"timestamp": 1660751690461,
+				"type": "op"
+			}
+		},
+		{
+			"sequenceNumber": 186,
+			"op": {
+				"clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
+				"clientSequenceNumber": 101,
+				"contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":68,\"pos2\":69,\"type\":1}},\"type\":\"op\"}}}",
+				"metadata": {},
+				"minimumSequenceNumber": 178,
+				"referenceSequenceNumber": 185,
+				"sequenceNumber": 186,
+				"term": 1,
+				"timestamp": 1660751690590,
+				"type": "op"
+			}
+		},
+		{
+			"sequenceNumber": 187,
+			"op": {
+				"clientId": "51e45fde-a92e-4f37-9cbd-604acf87ac14",
+				"clientSequenceNumber": 8,
+				"contents": "null",
+				"minimumSequenceNumber": 185,
+				"referenceSequenceNumber": 186,
+				"sequenceNumber": 187,
+				"term": 1,
+				"timestamp": 1660751691149,
+				"type": "noop"
+			}
+		},
+		{
+			"sequenceNumber": 188,
+			"op": {
+				"clientId": "61dc1a57-114b-4511-b3db-ce4b78e08de4",
+				"clientSequenceNumber": 102,
+				"contents": "null",
+				"minimumSequenceNumber": 186,
+				"referenceSequenceNumber": 187,
+				"sequenceNumber": 188,
+				"term": 1,
+				"timestamp": 1660751692684,
+				"type": "noop"
+			}
+		},
+		{
+			"sequenceNumber": 189,
+			"op": {
+				"clientId": null,
+				"clientSequenceNumber": -1,
+				"contents": null,
+				"minimumSequenceNumber": 186,
+				"referenceSequenceNumber": -1,
+				"sequenceNumber": 189,
+				"term": 1,
+				"timestamp": 1660751699338,
+				"type": "leave",
+				"data": "\"61dc1a57-114b-4511-b3db-ce4b78e08de4\""
+			}
+		},
+		{
+			"sequenceNumber": 190,
+			"op": {
+				"clientId": null,
+				"clientSequenceNumber": -1,
+				"contents": null,
+				"minimumSequenceNumber": 190,
+				"referenceSequenceNumber": -1,
+				"sequenceNumber": 190,
+				"term": 1,
+				"timestamp": 1660751699338,
+				"type": "leave",
+				"data": "\"51e45fde-a92e-4f37-9cbd-604acf87ac14\""
+			}
+		},
+		{
+			"sequenceNumber": 191,
+			"op": {
+				"clientId": null,
+				"clientSequenceNumber": -1,
+				"contents": null,
+				"minimumSequenceNumber": 191,
+				"referenceSequenceNumber": 191,
+				"sequenceNumber": 191,
+				"term": 1,
+				"timestamp": 1660751699376,
+				"type": "noClient"
+			}
+		}
+	]
+}

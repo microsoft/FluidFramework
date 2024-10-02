@@ -3,50 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export {
-	FlexTreeNodeSchema,
-	FlexFieldSchema,
-	Any,
-	allowedTypesToTypeSet,
-	FlexAllowedTypes,
-	LazyTreeNodeSchema,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexFieldNodeSchema,
-	FlexTreeSchema,
-	Unenforced,
-	AllowedTypeSet,
-	FlexMapFieldSchema,
-	SchemaCollection,
-	TreeNodeSchemaBase,
-	FlexObjectNodeFields,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
-	NormalizeObjectNodeFields,
-	NormalizeField,
-	intoStoredSchema,
-	allowedTypesSchemaSet,
-	intoStoredSchemaCollection,
-} from "./typedTreeSchema.js";
-
-export { ViewSchema } from "./view.js";
+export { type Unenforced } from "./typedTreeSchema.js";
 
 export {
-	SchemaLibraryData,
-	SchemaLintConfiguration,
-	aggregateSchemaLibraries,
-	schemaLintDefault,
-} from "./schemaCollection.js";
-
-export {
-	FlexList,
+	type FlexList,
 	markEager,
-	FlexListToUnion,
-	LazyItem,
+	type LazyItem,
 	isLazy,
-	ExtractItemType,
-	NormalizeLazyItem,
+	type FlexListToUnion,
+	type ExtractItemType,
+	normalizeFlexListEager,
 } from "./flexList.js";
