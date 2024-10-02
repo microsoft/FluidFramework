@@ -16,6 +16,21 @@ const codeCoverageComparisonIgnoreList: string[] = [
 	"packages.common.driver-definitions",
 	"packages.common.container-definitions",
 	"packages.common.client-utils",
+	"packages.drivers.debugger",
+	"packages.drivers.file-driver",
+	"packages.drivers.odsp-driver-definitions",
+	"packages.drivers.replay-driver",
+	"packages.loader.test-loader-utils",
+	"packages.runtime.container-runtime-definitions",
+	"packages.runtime.datastore-definitions",
+	"packages.runtime.runtime-definitions",
+	"packages.runtime.test-runtime-utils",
+	"packages.test",
+	"packages.tools.changelog-generator-wrapper",
+	"packages.tools.devtools",
+	"packages.tools.fetch-tool",
+	"packages.tools.fluid-runner",
+	"packages.tools.replay-tool",
 ];
 
 /**
