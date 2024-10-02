@@ -67,10 +67,8 @@ import {
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
-	type ContainerRuntimeGCMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
-	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
 import {
@@ -1121,106 +1119,6 @@ describe("Runtime", () => {
 					]);
 				},
 			);
-		});
-
-		describe("[DEPRECATED] Future op type compatibility", () => {
-			let containerRuntime: ContainerRuntime;
-			beforeEach(async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					requestHandler: undefined,
-					runtimeOptions: {
-						enableGroupedBatching: false,
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-			});
-
-			it("can submit op compat behavior (temporarily still available for GC op)", async () => {
-				// Create a container runtime type where the submit method is public. This makes it easier to test
-				// submission and processing of ops. The other option is to send data store or alias ops whose
-				// processing requires creation of data store context and runtime as well.
-				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
-					submit(
-						containerRuntimeMessage: OutboundContainerRuntimeMessage,
-						localOpMetadata: unknown,
-						metadata: Record<string, unknown> | undefined,
-					): void;
-				};
-				const containerRuntimeWithSubmit =
-					containerRuntime as unknown as ContainerRuntimeWithSubmit;
-
-				const gcMessageWithDeprecatedCompatDetails: ContainerRuntimeGCMessage = {
-					type: ContainerMessageType.GC,
-					contents: { type: "Sweep", deletedNodeIds: [] },
-					compatDetails: { behavior: "Ignore" },
-				};
-
-				assert.doesNotThrow(
-					() =>
-						containerRuntimeWithSubmit.submit(
-							gcMessageWithDeprecatedCompatDetails,
-							undefined,
-							undefined,
-						),
-					"Cannot submit container runtime message with compatDetails",
-				);
-			});
-
-			/** Overwrites channelCollection property and exposes private submit function with modified typing */
-			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
-				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-			} {
-				const patched = containerRuntime as unknown as Omit<
-					ContainerRuntime,
-					"submit" | "channelCollection"
-				> & {
-					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-					channelCollection: Partial<ChannelCollection>;
-				};
-
-				patched.channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} satisfies Partial<ChannelCollection>;
-
-				return patched;
-			}
-			it("Op with unrecognized type and no compat behavior causes resubmit to throw", async () => {
-				const patchedContainerRuntime = patchContainerRuntime();
-
-				changeConnectionState(patchedContainerRuntime, false, mockClientId);
-
-				patchedContainerRuntime.submit({
-					type: "FUTURE_TYPE" as any,
-					contents: "3",
-					// No compatDetails so it will throw on resubmit.
-				});
-
-				assert.strictEqual(
-					submittedOps.length,
-					0,
-					"no messages should be sent while disconnected",
-				);
-
-				// Note: hitting this error case in practice would require a new op type to be deployed,
-				// one such op to be stashed, then a new session loads on older code that is unaware
-				// of the new op type.
-				assert.throws(() => {
-					// Connect, which will trigger resubmit
-					changeConnectionState(patchedContainerRuntime, true, mockClientId);
-				}, "Expected resubmit to throw");
-			});
 		});
 
 		describe("Supports mixin classes", () => {
