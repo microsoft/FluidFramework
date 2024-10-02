@@ -209,6 +209,9 @@ export interface ISummarizerNode {
 	 * that it might have. For example: if datastore "a" contains dds "b", but the
 	 * path is "/a/.channels/b", then the additional path part is ".channels".
 	 * @param snapshot - the base summary to parse
+	 *
+	 * @deprecated The code now always assumes that all summary nodes have .channels
+	 * in their handle so there is no need to maintain any additional path information.
 	 */
 	updateBaseSummaryState(snapshot: ISnapshotTree): void;
 	/**
