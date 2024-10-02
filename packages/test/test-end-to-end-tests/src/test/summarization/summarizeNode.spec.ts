@@ -23,7 +23,7 @@ import {
  * this will be problematic because when uploading a summary with such handles, the server will try to look for a path with %5b but will not find it, as the path to the tree will still be '['
  * since we removed encoding logic from the driver layer with this PR: https://github.com/microsoft/FluidFramework/pull/21680
  *
- * TODO: fix the bug before enabling UseShortIds.
+ * ADO:18003
  */
 describeCompat.skip(
 	"Summary handles work as expected",
@@ -45,14 +45,13 @@ describeCompat.skip(
 						state: "disabled",
 					},
 				},
-			}
+			},
 		});
 
 		let provider: ITestObjectProvider;
 
 		beforeEach("getTestObjectProvider", async function () {
-			provider = getTestObjectProvider({syncSummarizer: true});
-			// Only need to test against one server
+			provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "odsp") {
 				this.skip();
 			}
@@ -84,7 +83,6 @@ describeCompat.skip(
 			const dsSpecial = await dsWithSpecialHandle.get();
 			dsSpecial.root.set(`key13`, `value13`);
 
-
 			// Create first summary
 			const { summarizer } = await createSummarizerFromFactory(
 				provider,
@@ -94,8 +92,9 @@ describeCompat.skip(
 
 			await provider.ensureSynchronized();
 
-			const res1 = await summarizeNow(summarizer);
-			console.log(res1);
+			// Following summarize fails with error that looks something like: "Cannot locate node with path '.app/.channels/%5B' under 'wAw'." when containerRuntime tries to upload the summary.
+			// ADO:18003
+			await summarizeNow(summarizer);
 
 			// Create another summary but with no change in the data object, to emulate the scenario
 			// where there has been no change in the data store, and thus summary must create and send a summary handle for it.
@@ -111,7 +110,10 @@ describeCompat.skip(
 
 			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const dsWithSpecialHandle2 = dataObject2.root.get<IFluidHandle<ITestFluidObject>>("[");
-			assert(dsWithSpecialHandle2 !== undefined, "data store handle not found in the loaded container");
+			assert(
+				dsWithSpecialHandle2 !== undefined,
+				"data store handle not found in the loaded container",
+			);
 			const dsSpecial2 = await dsWithSpecialHandle2?.get();
 			assert(dsSpecial2 !== undefined, "unable to get the data store in the loaded container");
 		});
