@@ -125,7 +125,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"cross-fetch": "^3.1.5",
 		"json-stringify-safe": "5.0.1",
-		"socket.io-client": "^4.7.3",
+		"socket.io-client": "~4.7.5",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -136,7 +136,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.3.0",
+		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@~2.3.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
