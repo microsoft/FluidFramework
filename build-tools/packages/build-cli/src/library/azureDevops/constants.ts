@@ -32,6 +32,11 @@ export interface IAzureDevopsBuildCoverageConstants {
 	buildsToSearch?: number;
 
 	/**
+	 * The branch for which the build is searched.
+	 */
+	branch?: string;
+
+	/**
 	 * Current Build ID of the PR for which code coverage analysis will be done.
 	 */
 	buildId?: number;

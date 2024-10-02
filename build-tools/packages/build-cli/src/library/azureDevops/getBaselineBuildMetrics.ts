@@ -22,7 +22,7 @@ export interface IBuildMetrics {
 }
 
 /**
- * Method that returns the build artifact for a specific build.
+ * Method that returns the build artifact for a baseline build.
  * @param azureDevopsBuildCoverageConstants - Code coverage constants for the project.
  * @param adoConnection - The connection to the Azure DevOps API
  * @param logger - The logger to log messages.
@@ -35,6 +35,10 @@ export async function getBaselineBuildMetrics(
 	const recentBuilds = await getBuilds(adoConnection, {
 		project: azureDevopsBuildCoverageConstants.projectName,
 		definitions: [azureDevopsBuildCoverageConstants.ciBuildDefinitionId],
+		branch:
+			azureDevopsBuildCoverageConstants.branch === undefined
+				? undefined
+				: `refs/heads/${azureDevopsBuildCoverageConstants.branch}`,
 		maxBuildsPerDefinition: azureDevopsBuildCoverageConstants.buildsToSearch ?? 50,
 	});
 

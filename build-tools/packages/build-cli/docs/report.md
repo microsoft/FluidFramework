@@ -14,7 +14,8 @@ USAGE
   $ flub report codeCoverage --ADO_BUILD_ID <value> --ADO_API_TOKEN <value> --GITHUB_API_TOKEN <value>
     --ADO_CI_BUILD_DEFINITION_ID_BASELINE <value> --ADO_CI_BUILD_DEFINITION_ID_PR <value>
     --CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE <value> --CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR <value>
-    --GITHUB_PR_NUMBER <value> --GITHUB_REPOSITORY_NAME <value> --GITHUB_REPOSITORY_OWNER <value> [-v | --quiet]
+    --GITHUB_PR_NUMBER <value> --GITHUB_REPOSITORY_NAME <value> --GITHUB_REPOSITORY_OWNER <value> --TARGET_BRANCH_NAME
+    <value> [-v | --quiet]
 
 FLAGS
   --ADO_API_TOKEN=<value>                                  (required) Token to get auth for accessing ADO builds.
@@ -30,6 +31,7 @@ FLAGS
   --GITHUB_PR_NUMBER=<value>                               (required) Github PR number.
   --GITHUB_REPOSITORY_NAME=<value>                         (required) Github repository name.
   --GITHUB_REPOSITORY_OWNER=<value>                        (required) Github repository owner.
+  --TARGET_BRANCH_NAME=<value>                             (required) Target branch name.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

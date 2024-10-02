@@ -48,12 +48,13 @@ export function getCommentForCodeCoverageDiff(
 		);
 	}
 	return [
+		"## Code Coverage Summary",
 		coverageSummaryForImpactedPackages,
 		coverageSummaryForNewPackages,
 		getSummaryFooter(baselineBuildInfo),
 		success
-			? "###Code coverage comparison check passed"
-			: "###Code coverage comparison check failed",
+			? "### Code coverage comparison check passed!!"
+			: "### Code coverage comparison check failed!!",
 	].join("\n\n");
 }
 

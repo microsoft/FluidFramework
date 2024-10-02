@@ -74,6 +74,11 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			env: "GITHUB_REPOSITORY_OWNER",
 			required: true,
 		}),
+		TARGET_BRANCH_NAME: Flags.string({
+			description: "Target branch name.",
+			env: "TARGET_BRANCH_NAME",
+			required: true,
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -85,6 +90,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			projectName: "public",
 			ciBuildDefinitionId: flags.ADO_CI_BUILD_DEFINITION_ID_BASELINE,
 			artifactName: flags.CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE,
+			branch: flags.TARGET_BRANCH_NAME,
 			buildsToSearch: 50,
 		};
 
@@ -93,7 +99,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			projectName: "public",
 			ciBuildDefinitionId: flags.ADO_CI_BUILD_DEFINITION_ID_PR,
 			artifactName: flags.CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR,
-			buildsToSearch: 50,
+			buildsToSearch: 20,
 			buildId: flags.ADO_BUILD_ID,
 		};
 
@@ -116,8 +122,9 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			codeCoverageConstantsForPR,
 			changedFiles,
 			this.logger,
-		).catch((error) => {
-			commentMessage = `Error getting code coverage report: ${error}`;
+		).catch((error: Error) => {
+			commentMessage = "## Code Coverage Summary\n\nError getting code coverage report";
+			this.logger.errorLog(`Error getting code coverage report: ${error}`);
 			return undefined;
 		});
 
