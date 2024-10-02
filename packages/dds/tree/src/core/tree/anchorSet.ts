@@ -234,6 +234,12 @@ export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents>
 	child(key: FieldKey, index: number): UpPath<AnchorNode>;
 
 	/**
+	 * Gets a child if it exists.
+	 * Does NOT add a ref.
+	 */
+	tryGetChild(key: FieldKey, index: number): AnchorNode | undefined;
+
+	/**
 	 * Gets a child AnchorNode (creating it if needed), and an Anchor owning a ref to it.
 	 * Caller is responsible for freeing the returned Anchor, and must not use the AnchorNode after that.
 	 */
@@ -413,8 +419,10 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 
 	/**
 	 * Finds a path node if it already exists.
+	 *
+	 * Does not add a ref!
 	 */
-	private find(path: UpPath): PathNode | undefined {
+	public find(path: UpPath): PathNode | undefined {
 		if (path instanceof PathNode) {
 			if (path.anchorSet === this) {
 				return path;
@@ -1271,8 +1279,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 			field = [];
 			this.children.set(key, field);
 		}
-		// TODO: should do more optimized search (ex: binary search).
-		let child = field.find((c) => c.parentIndex === index);
+		let child = binaryFind(field, index);
 		if (child === undefined) {
 			child = new PathNode(this.anchorSet, key, index, this);
 			field.push(child);
@@ -1292,8 +1299,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		assert(this.status === Status.Alive, 0x40d /* PathNode must be alive */);
 		const field = this.children.get(key);
 
-		// TODO: should do more optimized search (ex: binary search or better) using index.
-		return field?.find((c) => c.parentIndex === index);
+		return field === undefined ? undefined : binaryFind(field, index);
 	}
 
 	/**
@@ -1342,4 +1348,37 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 			this.status = Status.Disposed;
 		}
 	}
+}
+
+/**
+ * Find a child PathNode by index using a binary search.
+ * @param sorted - array of PathNode's sorted by parentIndex.
+ * @param index - index being looked for.
+ * @returns child with the requested parentIndex, or undefined.
+ */
+function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
+	// Try guessing the list is not sparse as a starter:
+	const guess = sorted[index];
+	if (guess !== undefined && guess.parentIndex === index) {
+		return guess;
+	}
+
+	// inclusive
+	let min = 0;
+	// exclusive
+	let max = sorted.length;
+
+	while (min !== max) {
+		const mid = Math.floor((min + max) / 2);
+		const item = sorted[mid]!;
+		const found = item.parentIndex;
+		if (found === index) {
+			return item; // Found the target, return it.
+		} else if (found > index) {
+			max = mid; // Continue search on lower half.
+		} else {
+			min = mid + 1; // Continue search on left half.
+		}
+	}
+	return undefined; // If we reach here, target is not in array (or array was not sorted)
 }
