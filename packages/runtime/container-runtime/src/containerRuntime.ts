@@ -43,6 +43,7 @@ import {
 	LazyPromise,
 	PromiseCache,
 	delay,
+	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import {
 	IClientDetails,
@@ -165,9 +166,8 @@ import {
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
-	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
+import { ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
@@ -234,22 +234,6 @@ import {
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
-
-/**
- * Utility to implement compat behaviors given an unknown message type
- * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
- *
- * @param _unknownContainerRuntimeMessageType - Typed as something unexpected, to ensure all known types have been
- * handled before calling this function (e.g. in a switch statement).
- * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
- */
-function compatBehaviorAllowsMessageType(
-	_unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
-	compatBehavior: "Ignore" | "FailToProcess" | undefined,
-): boolean {
-	// undefined defaults to same behavior as "FailToProcess"
-	return compatBehavior === "Ignore";
-}
 
 /**
  * @legacy
@@ -2523,29 +2507,11 @@ export class ContainerRuntime
 			case ContainerMessageType.GC:
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
-			default: {
-				// This should be extremely rare for stashed ops.
-				// It would require a newer runtime stashing ops and then an older one applying them,
-				// e.g. if an app rolled back its container version
-				const compatBehavior = opContents.compatDetails?.behavior;
-				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
-					const error = DataProcessingError.create(
-						"Stashed runtime message of unexpected type",
-						"applyStashedOp",
-						undefined /* sequencedMessage */,
-						{
-							messageDetails: JSON.stringify({
-								type: opContents.type,
-								compatBehavior,
-							}),
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
-				// Note: Even if its compat behavior allows it, we don't know how to apply this stashed op.
-				// All we can do is ignore it (similar to on process).
-			}
+			default:
+				unreachableCase(
+					opContents.type as never,
+					`Unknown ContainerMessageType: ${opContents.type}`,
+				);
 		}
 	}
 
@@ -2974,29 +2940,11 @@ export class ContainerRuntime
 					message.sequenceNumber,
 				);
 				break;
-			default: {
-				const compatBehavior = message.compatDetails?.behavior;
-				if (!compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
-					const error = DataProcessingError.create(
-						// Former assert 0x3ce
-						"Runtime message of unknown type",
-						"OpProcessing",
-						message,
-						{
-							local,
-							messageDetails: JSON.stringify({
-								type: message.type,
-								contentType: typeof message.contents,
-								compatBehavior,
-								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
-								compression: message.compression,
-							}),
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
-			}
+			default:
+				unreachableCase(
+					message.type as never,
+					`Unknown ContainerMessageType [type: ${message.type}]`,
+				);
 		}
 
 		this.emit("op", message, true /* runtimeMessage */);
@@ -4441,32 +4389,11 @@ export class ContainerRuntime
 				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
 				// send any ops, as some other client already changed schema.
 				break;
-			default: {
-				// This case should be very rare - it would imply an op was stashed from a
-				// future version of runtime code and now is being applied on an older version.
-				const compatBehavior = message.compatDetails?.behavior;
-				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
-					// We do not ultimately resubmit it, to be consistent with this version of the code.
-					this.logger.sendTelemetryEvent({
-						eventName: "resubmitUnrecognizedMessageTypeAllowed",
-						messageDetails: { type: message.type, compatBehavior },
-					});
-				} else {
-					const error = DataProcessingError.create(
-						"Resubmitting runtime message of unexpected type",
-						"reSubmitCore",
-						undefined /* sequencedMessage */,
-						{
-							messageDetails: JSON.stringify({
-								type: message.type,
-								compatBehavior,
-							}),
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
-			}
+			default:
+				unreachableCase(
+					message.type as never,
+					`Unknown ContainerMessageType [type: ${message.type}]`,
+				);
 		}
 	}
 
