@@ -104,7 +104,6 @@ describe("FluidReleaseMachine", () => {
 		const startingState = `DoPatchRelease`;
 
 		walkExits(startingState, states);
-		console.log(JSON.stringify([...states]));
 		expect([...states]).to.be.equalTo(expectedPatchPath);
 	});
 
@@ -113,7 +112,6 @@ describe("FluidReleaseMachine", () => {
 		const startingState = `DoMinorRelease`;
 
 		walkExits(startingState, states);
-		console.log(JSON.stringify([...states]));
 		expect([...states]).to.be.equalTo(expectedMinorPath);
 	});
 
@@ -121,7 +119,6 @@ describe("FluidReleaseMachine", () => {
 		const states = new Set<string>();
 		const startingState = `DoMajorRelease`;
 		walkExits(startingState, states);
-		console.log(JSON.stringify([...states]));
 		expect([...states]).to.be.equalTo(expectedMajorPath);
 	});
 

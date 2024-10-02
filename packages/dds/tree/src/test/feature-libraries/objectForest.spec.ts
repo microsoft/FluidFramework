@@ -7,15 +7,20 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FieldKey, initializeForest, moveToDetachedField, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import {
+	type FieldKey,
+	initializeForest,
+	moveToDetachedField,
+	rootFieldKey,
+} from "../../core/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
-import { JsonCompatible, brand } from "../../util/index.js";
+import { type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
-import { testRevisionTagCodec } from "../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 describe("object-forest", () => {
 	testForest({
@@ -31,7 +36,12 @@ describe("object-forest", () => {
 	describe("Throws an error for invalid edits", () => {
 		it("attaching content into the detached field it is being transferred from", () => {
 			const forest = buildForest();
-			initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+			initializeForest(
+				forest,
+				[singleJsonCursor(content)],
+				testRevisionTagCodec,
+				testIdCompressor,
+			);
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -48,7 +58,12 @@ describe("object-forest", () => {
 
 		it("detaching content from the detached field it is being transferred to", () => {
 			const forest = buildForest();
-			initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+			initializeForest(
+				forest,
+				[singleJsonCursor(content)],
+				testRevisionTagCodec,
+				testIdCompressor,
+			);
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -65,7 +80,12 @@ describe("object-forest", () => {
 
 		it("replacing content by transferring to and from the same detached field", () => {
 			const forest = buildForest();
-			initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+			initializeForest(
+				forest,
+				[singleJsonCursor(content)],
+				testRevisionTagCodec,
+				testIdCompressor,
+			);
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -83,7 +103,12 @@ describe("object-forest", () => {
 
 	it("moveCursorToPath with an undefined path points to dummy node above detachedFields.", () => {
 		const forest = buildForest();
-		initializeForest(forest, [singleJsonCursor([1, 2])], testRevisionTagCodec);
+		initializeForest(
+			forest,
+			[singleJsonCursor([1, 2])],
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
 		assert.deepEqual(cursor.getFieldKey(), cursorForMapTreeNode(forest.roots).getFieldKey());
@@ -91,7 +116,12 @@ describe("object-forest", () => {
 
 	it("uses cursor sources in errors", () => {
 		const forest = buildForest();
-		initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+		initializeForest(
+			forest,
+			[singleJsonCursor(content)],
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 		const named = forest.allocateCursor("named");
 		moveToDetachedField(forest, named);
 		const forkOfNamed = named.fork();

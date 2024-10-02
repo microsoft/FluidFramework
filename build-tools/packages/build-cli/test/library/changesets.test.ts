@@ -10,6 +10,7 @@ import { assert, expect } from "chai";
 
 import {
 	flattenChangesets,
+	groupByMainPackage,
 	groupByPackage,
 	loadChangesets,
 } from "../../src/library/changesets.js";
@@ -33,8 +34,13 @@ describe("changesets", async () => {
 
 	it("groupByPackage", async () => {
 		const changesets = await loadChangesets(changesetsPath);
-		const flattened = flattenChangesets(changesets);
-		const grouped = groupByPackage(flattened);
+		const grouped = groupByPackage(changesets);
 		expect(grouped.size).to.equal(4);
+	});
+
+	it("groupByMainPackage", async () => {
+		const changesets = await loadChangesets(changesetsPath);
+		const grouped = groupByMainPackage(changesets);
+		expect(grouped.size).to.equal(2);
 	});
 });

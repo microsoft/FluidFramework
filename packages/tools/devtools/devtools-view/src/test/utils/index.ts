@@ -4,3 +4,4 @@
  */
 
 export { MockMessageRelay } from "./MockMessageRelay.js";
+export { assertNoAccessibilityViolations } from "./axeUtils.js";

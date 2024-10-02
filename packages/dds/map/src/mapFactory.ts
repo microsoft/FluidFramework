@@ -19,6 +19,7 @@ import { pkgVersion } from "./packageVersion.js";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
  *
  * @sealed
+ * @legacy
  * @alpha
  */
 export class MapFactory implements IChannelFactory<ISharedMap> {
@@ -78,12 +79,14 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
+ * @legacy
  * @alpha
  */
 export const SharedMap = createSharedObjectKind<ISharedMap>(MapFactory);
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
+ * @legacy
  * @alpha
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMap class was exported as public.

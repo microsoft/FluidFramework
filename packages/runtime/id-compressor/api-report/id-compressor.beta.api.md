@@ -4,9 +4,6 @@
 
 ```ts
 
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-
 // @public
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;

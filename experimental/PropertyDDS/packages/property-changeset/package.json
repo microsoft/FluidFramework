@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.4.0",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,8 +23,8 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"files": [
 		"dist/**/*",
 		"lib/**/*",
@@ -39,12 +39,15 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"coverage": "npx nyc --silent --cwd --nycrc-path `pwd`/.nycrc npm run test",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -81,17 +84,16 @@
 		"ajv": "^8.12.0",
 		"ajv-keywords": "^5.1.0",
 		"async": "^3.2.2",
-		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
 		"semver": "^7.5.3",
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.46.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -114,6 +116,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

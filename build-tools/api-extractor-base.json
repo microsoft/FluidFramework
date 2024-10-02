@@ -3,7 +3,7 @@
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 
 	"compiler": {
-		"tsconfigFilePath": "<projectFolder>/tsconfig.json",
+		"tsconfigFilePath": "<projectFolder>/tsconfig.json"
 	},
 
 	/**
@@ -24,7 +24,7 @@
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
 		// `build-tools` packages do not currently generate separate entry-points based on release levels.
 		// If that changes, these should specify the appropriate variants.
-		"reportVariants": ["complete"],
+		"reportVariants": ["complete"]
 	},
 
 	/**
@@ -32,21 +32,21 @@
 	 */
 	"docModel": {
 		"enabled": true,
-		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/<unscopedPackageName>.api.json",
+		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
 	},
 
 	/**
 	 * Configures how the .d.ts rollup file will be generated.
 	 */
 	"dtsRollup": {
-		"enabled": false,
+		"enabled": false
 	},
 
 	/**
 	 * Configures how the tsdoc-metadata.json file will be generated.
 	 */
 	"tsdocMetadata": {
-		"enabled": true,
+		"enabled": true
 	},
 
 	/**
@@ -85,8 +85,8 @@
 				 * then the message will be written inside that file; otherwise, the message is instead logged according to
 				 * the "logLevel" option.
 				 */
-				"addToApiReportFile": false, // Ensure build failure on errors
-			},
+				"addToApiReportFile": false // Ensure build failure on errors
+			}
 		},
 
 		/**
@@ -115,7 +115,7 @@
 				 * then the message will be written inside that file; otherwise, the message is instead logged according to
 				 * the "logLevel" option.
 				 */
-				"addToApiReportFile": false, // Ensure build failure on errors
+				"addToApiReportFile": false // Ensure build failure on errors
 			},
 
 			// #region Enabled Rules
@@ -123,60 +123,60 @@
 			// Prevent cyclic `@inheritDoc` comments
 			"ae-cyclic-inherit-doc": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 			// A documentation comment should contain at most one release tag.
 			"ae-extra-release-tag": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 			// Reported when an exported API refers to another declaration that is not exported.
 			"ae-forgotten-export": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 			// A type signature should not reference another types whose release tag is less visible.
 			"ae-incompatible-release-tags": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 			// Multiple function overloads should not have @internal tags with other tags.
 			"ae-internal-mixed-release-tag": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 			// Require packages to include `@packageDocumentation` comment
 			"ae-misplaced-package-tag": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 			// Require explicit release tags for all API members.
 			"ae-missing-release-tag": {
 				// TODO: Consider enabling this in the future.
 				"logLevel": "none",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 
 			// Require documentation on all package-exported API items.
 			"ae-undocumented": {
 				// TODO: Consider enabling this in the future.
-				"logLevel": "none",
+				"logLevel": "none"
 			},
 
 			// The @inheritDoc tag needs a TSDoc declaration reference.
 			"ae-unresolved-inheritdoc-base": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 			"ae-unresolved-inheritdoc-reference": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 
 			// The @link tag needs a TSDoc declaration reference.
 			"ae-unresolved-link": {
 				"logLevel": "error",
-				"addToApiReportFile": false,
+				"addToApiReportFile": false
 			},
 
 			// #endregion
@@ -186,8 +186,8 @@
 			// Disabled. We don't require that internal members be prefixed with an underscore.
 			"ae-internal-missing-underscore": {
 				"logLevel": "none",
-				"addToApiReportFile": false,
-			},
+				"addToApiReportFile": false
+			}
 
 			// #endregion
 		},
@@ -218,8 +218,8 @@
 				 * then the message will be written inside that file; otherwise, the message is instead logged according to
 				 * the "logLevel" option.
 				 */
-				"addToApiReportFile": false, // Ensure build failure on errors
-			},
-		},
-	},
+				"addToApiReportFile": false // Ensure build failure on errors
+			}
+		}
+	}
 }

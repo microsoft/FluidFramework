@@ -33,7 +33,10 @@ export class Counter<T> {
 
 // A chi-squared test is a reasonable assessment of whether the observed distribution matches the expected one.
 // https://en.wikipedia.org/wiki/Chi-squared_test
-export function computeChiSquared<T>(weights: [T, number][], sampleCounts: Counter<T>): number {
+export function computeChiSquared<T>(
+	weights: [T, number][],
+	sampleCounts: Counter<T>,
+): number {
 	const values = Array.from(sampleCounts.values());
 
 	assert.deepEqual(
@@ -57,7 +60,10 @@ export function computeChiSquared<T>(weights: [T, number][], sampleCounts: Count
 	const numberOfSamples = Array.from(sampleCounts.counts()).reduce(
 		(partialSum, value) => partialSum + value,
 	);
-	const totalWeight = weights.reduce<number>((partialSum, [, weight]) => partialSum + weight, 0);
+	const totalWeight = weights.reduce<number>(
+		(partialSum, [, weight]) => partialSum + weight,
+		0,
+	);
 
 	let chiSquared = 0;
 	for (const [value, weight] of weights) {
@@ -147,9 +153,11 @@ export const chiSquaredCriticalValues = [
 	/* 60: */ 88.379, /* 61: */ 89.591, /* 62: */ 90.802, /* 63: */ 92.01, /* 64: */ 93.217,
 	/* 65: */ 94.422, /* 66: */ 95.626, /* 67: */ 96.828, /* 68: */ 98.028, /* 69: */ 99.228,
 	/* 70: */ 100.425, /* 71: */ 101.621, /* 72: */ 102.816, /* 73: */ 104.01, /* 74: */ 105.202,
-	/* 75: */ 106.393, /* 76: */ 107.583, /* 77: */ 108.771, /* 78: */ 109.958, /* 79: */ 111.144,
-	/* 80: */ 112.329, /* 81: */ 113.512, /* 82: */ 114.695, /* 83: */ 115.876, /* 84: */ 117.057,
-	/* 85: */ 118.236, /* 86: */ 119.414, /* 87: */ 120.591, /* 88: */ 121.767, /* 89: */ 122.942,
-	/* 90: */ 124.116, /* 91: */ 125.289, /* 92: */ 126.462, /* 93: */ 127.633, /* 94: */ 128.803,
-	/* 95: */ 129.973, /* 96: */ 131.141, /* 97: */ 132.309, /* 98: */ 133.476, /* 99: */ 134.642,
+	/* 75: */ 106.393, /* 76: */ 107.583, /* 77: */ 108.771, /* 78: */ 109.958,
+	/* 79: */ 111.144, /* 80: */ 112.329, /* 81: */ 113.512, /* 82: */ 114.695,
+	/* 83: */ 115.876, /* 84: */ 117.057, /* 85: */ 118.236, /* 86: */ 119.414,
+	/* 87: */ 120.591, /* 88: */ 121.767, /* 89: */ 122.942, /* 90: */ 124.116,
+	/* 91: */ 125.289, /* 92: */ 126.462, /* 93: */ 127.633, /* 94: */ 128.803,
+	/* 95: */ 129.973, /* 96: */ 131.141, /* 97: */ 132.309, /* 98: */ 133.476,
+	/* 99: */ 134.642,
 ];

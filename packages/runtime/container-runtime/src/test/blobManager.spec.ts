@@ -31,10 +31,17 @@ import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
+import {
+	BlobManager,
+	IBlobManagerLoadInfo,
+	IBlobManagerRuntime,
+	blobManagerBasePath,
+	redirectTableBlobName,
+} from "../blobManager/index.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -82,6 +89,7 @@ export class MockRuntime
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.ops = stashed[0];
+		this.baseLogger = mc.logger;
 		this.blobManager = new BlobManager({
 			routeContext: undefined as any,
 			snapshot,
@@ -114,9 +122,7 @@ export class MockRuntime
 				const P = this.processBlobsP.promise.then(async () => {
 					if (!this.connected && this.attachState === AttachState.Attached) {
 						this.unprocessedBlobs.delete(blob);
-						throw new Error(
-							"fake error due to having no connection to storage service",
-						);
+						throw new Error("fake error due to having no connection to storage service");
 					} else {
 						this.unprocessedBlobs.delete(blob);
 						return this.storage.createBlob(blob);
@@ -161,7 +167,7 @@ export class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public baseLogger = this.mc.logger;
+	public baseLogger: ITelemetryLoggerExt;
 
 	private ops: any[] = [];
 	private processBlobsP = new Deferred<void>();
@@ -284,7 +290,7 @@ export const validateSummary = (runtime: MockRuntime) => {
 		if (attachment.type === SummaryType.Attachment) {
 			ids.push(attachment.id);
 		} else {
-			assert.strictEqual(key, (BlobManager as any).redirectTableBlobName);
+			assert.strictEqual(key, redirectTableBlobName);
 			assert(attachment.type === SummaryType.Blob);
 			assert(typeof attachment.content === "string");
 			redirectTable = new Map(JSON.parse(attachment.content));
@@ -870,7 +876,7 @@ describe("BlobManager", () => {
 			const getBlobIdFromGCNodeId = (gcNodeId: string) => {
 				const pathParts = gcNodeId.split("/");
 				assert(
-					pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+					pathParts.length === 3 && pathParts[1] === blobManagerBasePath,
 					"Invalid blob node path",
 				);
 				return pathParts[2];
@@ -878,7 +884,7 @@ describe("BlobManager", () => {
 
 			// For a given blob's id, returns the GC node id.
 			const getGCNodeIdFromBlobId = (blobId: string) => {
-				return `/${BlobManager.basePath}/${blobId}`;
+				return `/${blobManagerBasePath}/${blobId}`;
 			};
 
 			const blobContents = IsoBuffer.from(content, "utf8");
@@ -950,8 +956,7 @@ describe("BlobManager", () => {
 			"Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 		[true, undefined].forEach((disableAttachmentBlobsSweep) =>
 			it(`deletes unused blobs regardless of DisableAttachmentBlobsSweep setting [DisableAttachmentBlobsSweep=${disableAttachmentBlobsSweep}]`, async () => {
-				injectedSettings[legacyKey_disableAttachmentBlobSweep] =
-					disableAttachmentBlobsSweep;
+				injectedSettings[legacyKey_disableAttachmentBlobSweep] = disableAttachmentBlobsSweep;
 
 				await runtime.attach();
 				await runtime.connect();

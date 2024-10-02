@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Mutable } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { Mutable } from "../../util/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { ITreeCursorSynchronous } from "./cursor.js";
-import { DetachedNodeId, FieldChanges, Mark, Root } from "./delta.js";
+import type { ITreeCursorSynchronous } from "./cursor.js";
+import type { DetachedNodeId, FieldChanges, Mark, Root } from "./delta.js";
 import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root<never> = {};

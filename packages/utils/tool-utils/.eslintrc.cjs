@@ -4,25 +4,12 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off",
+		// This package is intended to be used in node.js environments
 		"import/no-nodejs-modules": "off",
-		"unicorn/filename-case": [
-			"error",
-			{
-				cases: {
-					camelCase: true,
-					pascalCase: true,
-				},
-				ignore: [/.*fluidToolRC\.ts$/],
-			},
-		],
 	},
 };

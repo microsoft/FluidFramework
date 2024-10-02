@@ -13,7 +13,7 @@ import {
 	ISnapshotTreeEx,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHierarchy } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -223,7 +223,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 					// Clear the cache as the getSnapshotTree call will fill the cache.
 					this.blobsShaCache.clear();
 					return this.getSnapshotTree(versions[0]);
-			  })
+				})
 			: undefined;
 	}
 

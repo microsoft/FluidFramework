@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
+import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 
 import type { IFluidTelemetry, ITelemetryConsumer } from "../common/index.js";
 

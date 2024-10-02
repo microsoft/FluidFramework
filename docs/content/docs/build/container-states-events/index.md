@@ -96,7 +96,7 @@ But the new container has a different ID from the deleted one and subsequent cli
 
 #### Handling publication status
 
-Your code can test for the publication status with the [container.AttachState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#attachstate-property) property which has an [AttachState]({{< packageref "container-definitions" "v2" >}}#attachstate-enum) value.
+Your code can test for the publication status with the [container.AttachState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#attachstate-propertysignature) property which has an [AttachState]({{< apiref "container-definitions" "AttachState" "enum" "v2" >}}) value.
 This can be useful if your application will publish the container in some code paths on the creating client, but not others.
 For example, on the creating computer, you don't want to call `container.attach` if it has already been called. In simple cases, you can know at coding time if that has happened, but when the creating client in complex code flows and calls of `container.attach` appear in more than one branch, you may need to test for this possibility. The following is a simple example.
 
@@ -111,7 +111,7 @@ How you handle the **publishing** (`AttachState.Attaching`) state depends on the
 
 ```typescript
 // Code that runs only on a creating client.
-if ((container.attachState !== AttachState.Attached) 
+if ((container.attachState !== AttachState.Attached)
     &&
     (container.attachState !== AttachState.Attaching)) {
     await container.attach();
@@ -122,8 +122,8 @@ On the other hand, in scenarios where you want to block users from editing share
 
 ```typescript
 // Code that runs only on a creating client.
-if ((container.attachState === AttachState.Detached) 
-    || 
+if ((container.attachState === AttachState.Detached)
+    ||
     (container.attachState === AttachState.Attaching)) {
     // Disable editing.
 }
@@ -334,7 +334,7 @@ function disposeWhenSafe {
 After it is disposed, some properties of the `container` object can be read, but the data objects in the container can no longer be changed either locally of from data relayed by the Fluid service.
 But it would be possible for your code to create a new local container object for the same container by calling `client.getContainer` passing the same container ID. This new object would be in the **ready** state.
 
-<!-- 
+<!--
      HOW TO MODIFY THE DIAGRAMS IN THIS ARTICLE
 
      These instructions help you produce diagrams that are the right size at a good resolution.

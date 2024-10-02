@@ -4,21 +4,50 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/driver-definitions';
+export { CompatibilityMode }
 
-export { ITelemetryBaseEvent }
+// @public @sealed
+export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
-export { ITelemetryBaseLogger }
+// @public @sealed
+export class TinyliciousClient {
+    constructor(properties?: TinyliciousClientProps);
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+}
 
-export { TinyliciousClient }
-export default TinyliciousClient;
+// @public @sealed
+export interface TinyliciousClientProps {
+    readonly connection?: TinyliciousConnectionConfig;
+    readonly logger?: ITelemetryBaseLogger;
+}
+
+// @public @sealed
+export interface TinyliciousConnectionConfig {
+    readonly domain?: string;
+    readonly port?: number;
+    readonly tokenProvider?: ITokenProvider;
+}
+
+// @public @sealed
+export interface TinyliciousContainerServices {
+    readonly audience: ITinyliciousAudience;
+}
+
+// @public @sealed
+export interface TinyliciousMember extends IMember {
+    readonly name: string;
+}
+
+// @public @sealed
+export interface TinyliciousUser extends IUser {
+    readonly name: string;
+}
 
 ```

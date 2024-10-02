@@ -3,53 +3,77 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, Compatibility } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
-	FlexFieldSchema,
-	NodeKeyManager,
-	ViewSchema,
+	AllowedUpdateType,
+	anchorSlot,
+	Compatibility,
+	type SchemaPolicy,
+} from "../core/index.js";
+import {
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
+import {
+	type NodeKeyManager,
 	defaultSchemaPolicy,
 	ContextSlot,
+	cursorForMapTreeNode,
+	type FullSchemaPolicy,
 } from "../feature-libraries/index.js";
 import {
-	FieldSchema,
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	SchemaIncompatible,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-	TreeViewEvents,
-	getProxyForField,
-	toFlexConfig,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	type SchemaCompatibilityStatus,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	type TreeView,
+	type TreeViewEvents,
+	getTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	InsertableContent,
+	ViewSchema,
+	type InsertableContent,
+	type TreeViewConfiguration,
+	mapTreeFromNodeData,
+	prepareContentForHydration,
+	toStoredSchema,
 } from "../simple-tree/index.js";
-import { disposeSymbol } from "../util/index.js";
+import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
-import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
-import { TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./treeView.js";
+import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
+import { HydratedContext, SimpleContextSlot } from "../simple-tree/index.js";
+/**
+ * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
+ * exists and error if creating a second.
+ */
+export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
  */
+@breakingClass
 export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
-	implements TreeView<TRootSchema>
+	implements TreeView<TRootSchema>, WithBreakable
 {
 	/**
-	 * In one of three states:
-	 * 1. Valid: A checkout is present, not disposed, and it's stored schema and view schema are compatible.
-	 * 2. SchematizeError: stored schema and view schema are not compatible.
-	 * 3. disposed: `view` is undefined, and using this object will error. Some methods also transiently leave view undefined.
+	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
+	 *
+	 * The view schema may be incompatible with the stored schema. Use `compatibility` to check.
 	 */
-	private view: CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError | undefined;
-	private readonly flexConfig: TreeContent;
+	private view: CheckoutFlexTreeView | undefined;
+
+	/**
+	 * Undefined iff uninitialized or disposed.
+	 */
+	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	private readonly schemaPolicy: SchemaPolicy;
 	public readonly events: Listenable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
 		HasListeners<TreeViewEvents> = createEmitter();
@@ -57,25 +81,45 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private readonly viewSchema: ViewSchema;
 
 	private readonly unregisterCallbacks = new Set<() => void>();
+
 	public disposed = false;
+	/**
+	 * This is set to true while an edit impacting the document schema is in progress.
+	 * This allows suppressing extra rootChanged / schemaChanged events until the edit concludes.
+	 * This is useful especially for some initialization edits, since document initialization can involve transient schemas
+	 * which are implementation details and should not be exposed to the user.
+	 */
+	private midUpgrade = false;
 
 	private readonly rootFieldSchema: FieldSchema;
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		public readonly config: TreeConfiguration<TRootSchema>,
+		public readonly config: TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
+		private readonly onDispose?: () => void,
 	) {
+		if (checkout.forest.anchors.slots.has(ViewSlot)) {
+			throw new UsageError("Cannot create a second tree view from the same checkout");
+		}
+		checkout.forest.anchors.slots.set(ViewSlot, this);
+
 		const policy = {
 			...defaultSchemaPolicy,
-			validateSchema: config.options.enableSchemaValidation,
+			validateSchema: config.enableSchemaValidation,
 		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
-			schema: checkout.storedSchema,
-			policy,
-		});
-		this.viewSchema = new ViewSchema(policy, {}, this.flexConfig.schema);
+		this.schemaPolicy = defaultSchemaPolicy;
+
+		this.viewSchema = new ViewSchema(policy, {}, toStoredSchema(this.rootFieldSchema));
+		// This must be initialized before `update` can be called.
+		this.currentCompatibility = {
+			canView: false,
+			canUpgrade: true,
+			isEquivalent: false,
+			canInitialize: true,
+		};
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -85,186 +129,260 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		);
 	}
 
-	public upgradeSchema(): void {
-		// Errors if disposed.
-		const error = this.error;
+	public get schema(): TRootSchema {
+		return this.config.schema;
+	}
 
-		// No-op non error state.
-		if (error === undefined) {
+	public initialize(content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {
+		this.ensureUndisposed();
+
+		const compatibility = this.compatibility;
+		if (!compatibility.canInitialize) {
+			throw new UsageError("Tree cannot be initialized more than once.");
+		}
+
+		this.runSchemaEdit(() => {
+			const mapTree = mapTreeFromNodeData(
+				content as InsertableContent,
+				this.rootFieldSchema,
+				this.nodeKeyManager,
+				{
+					schema: this.checkout.storedSchema,
+					policy: {
+						...defaultSchemaPolicy,
+						validateSchema: this.config.enableSchemaValidation,
+					},
+				},
+			);
+
+			prepareContentForHydration(mapTree, this.checkout.forest);
+			initialize(this.checkout, {
+				schema: this.viewSchema.schema,
+				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
+			});
+		});
+	}
+
+	public upgradeSchema(): void {
+		this.ensureUndisposed();
+
+		const compatibility = this.compatibility;
+		if (compatibility.isEquivalent) {
+			// No-op
 			return;
 		}
 
-		if (this.error?.canUpgrade !== true) {
+		if (!compatibility.canUpgrade) {
 			throw new UsageError(
-				"Existing stored schema can not be upgraded (see TreeView.canUpgrade).",
+				"Existing stored schema can not be upgraded (see TreeView.compatibility.canUpgrade).",
 			);
 		}
 
-		const result = ensureSchema(
-			this.viewSchema,
-			// eslint-disable-next-line no-bitwise
-			AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
-			this.checkout,
-			this.flexConfig,
-		);
-		assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
+		this.runSchemaEdit(() => {
+			const result = ensureSchema(
+				this.viewSchema,
+				AllowedUpdateType.SchemaCompatible,
+				this.checkout,
+				{
+					schema: this.viewSchema.schema,
+					initialTree: undefined,
+				},
+			);
+			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
+		});
 	}
 
 	/**
-	 * Gets the view is the stored schema is compatible with the view schema,
-	 * otherwise returns an error detailing the schema incompatibility.
+	 * Gets the view. Throws when disposed.
 	 */
-	public getViewOrError(): CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError {
-		if (this.disposed) {
-			throw new UsageError("Accessed a disposed TreeView.");
-		}
+	public getView(): CheckoutFlexTreeView {
+		this.ensureUndisposed();
 		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
 	}
 
+	private ensureUndisposed(): void {
+		if (this.disposed) {
+			this.failDisposed();
+		}
+	}
+
+	private failDisposed(): never {
+		throw new UsageError("Accessed a disposed TreeView.");
+	}
+
 	/**
-	 * Updates `this.view`.
+	 * Updates `this.view` and the current compatibility status.
 	 * Invoked during initialization and when `this.view` needs to be replaced due to stored schema changes.
-	 * Handled re-registering for events to call update in the future.
+	 * Handles re-registering for events to call update in the future.
 	 * @remarks
 	 * This does not check if the view needs to be replaced, it replaces it unconditionally:
-	 * callers should do any checking to detect if its really needed before calling `update`.
+	 * callers should do any checking to detect if it's really needed before calling `update`.
+	 * @privateRemarks
+	 * This implementation avoids making any edits, which prevents it from being invoked reentrantly.
+	 * If implicit initialization (or some other edit) is desired, it should be done outside of this method.
 	 */
 	private update(): void {
-		// This implementation avoids making any edits, which prevents it from being invoked reentrantly.
-		// If implicit initialization (or some other edit) is desired, it should be done outside of this method.
-
-		const compatibility = evaluateUpdate(
-			this.viewSchema,
-			// eslint-disable-next-line no-bitwise
-			AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
-			this.checkout,
-		);
 		this.disposeView();
-		switch (compatibility) {
-			case UpdateType.None: {
-				// Remove event from checkout when view is disposed
-				this.view = requireSchema(
-					this.checkout,
-					this.viewSchema,
-					() => {
-						assert(cleanupCheckOutEvents !== undefined, 0x8c1 /* missing cleanup */);
-						cleanupCheckOutEvents();
-						this.view = undefined;
-						if (!this.disposed) {
-							this.update();
-						}
-					},
-					this.nodeKeyManager,
-				);
 
-				// Trigger "rootChanged" if the root changes in the future.
-				// Currently there is no good way to do this as FlexTreeField has no events for changes.
-				// this.view.flexTree.on(????)
-				// As a workaround for the above, trigger "rootChanged" in "afterBatch"
-				// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
-				// TODO: provide a better event: this.view.flexTree.on(????)
-				let lastRoot = this.root;
-				const cleanupCheckOutEvents = this.checkout.events.on("afterBatch", () => {
-					if (lastRoot !== this.root) {
-						lastRoot = this.root;
-						this.events.emit("rootChanged");
-					}
-					this.events.emit("afterBatch");
-				});
-				break;
-			}
-			case UpdateType.Incompatible:
-			case UpdateType.Initialize:
-			case UpdateType.SchemaCompatible: {
-				this.view = new SchematizeError(compatibility);
-				const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
-					unregister();
-					this.unregisterCallbacks.delete(unregister);
+		const result = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
+
+		// TODO: AB#8121: Weaken this check to support viewing under additional circumstances.
+		// In the near term, this should support viewing documents with additional optional fields in their schema on object types.
+		// Longer-term (as demand arises), we could also add APIs to constructing view schema to allow for more flexibility
+		// (e.g. out-of-schema content handlers could allow support for viewing docs which have extra allowed types in a particular field)
+		const canView =
+			result.write === Compatibility.Compatible && result.read === Compatibility.Compatible;
+		const canUpgrade = result.read === Compatibility.Compatible;
+		const isEquivalent = canView && canUpgrade;
+		const compatibility: SchemaCompatibilityStatus = {
+			canView,
+			canUpgrade,
+			isEquivalent,
+			canInitialize: canInitialize(this.checkout),
+		};
+		let lastRoot =
+			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
+		this.currentCompatibility = compatibility;
+
+		if (compatibility.canView) {
+			// Trigger "rootChanged" if the root changes in the future.
+			// Currently there is no good way to do this as FlexTreeField has no events for changes.
+			// this.view.flexTree.on(????)
+			// As a workaround for the above, trigger "rootChanged" in "afterBatch"
+			// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
+			// TODO: provide a better event: this.view.flexTree.on(????)
+			const cleanupCheckOutEvents = this.checkout.events.on("afterBatch", () => {
+				// In the initialization flow, this event is raised before the correct compatibility w.r.t the new schema is calculated.
+				// Accessing `this.root` in that case can throw. It's OK to ignore this because:
+				// - The rootChanged event will already be raised at the end of the current upgrade
+				// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
+				//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
+				if (!this.midUpgrade && lastRoot !== this.root) {
+					lastRoot = this.root;
+					this.events.emit("rootChanged");
+				}
+			});
+
+			const onViewDispose = (): void => {
+				cleanupCheckOutEvents();
+				this.view = undefined;
+				if (!this.disposed) {
 					this.update();
-				});
-				this.unregisterCallbacks.add(unregister);
-				break;
-			}
-			default: {
-				unreachableCase(compatibility);
-			}
+				}
+			};
+
+			const view = requireSchema(
+				this.checkout,
+				this.viewSchema,
+				onViewDispose,
+				this.nodeKeyManager,
+				this.schemaPolicy,
+			);
+			this.view = view;
+			assert(
+				!this.checkout.forest.anchors.slots.has(SimpleContextSlot),
+				"extra simple tree context",
+			);
+			this.checkout.forest.anchors.slots.set(
+				SimpleContextSlot,
+				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
+			);
+
+			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				this.unregisterCallbacks.delete(unregister);
+				view[disposeSymbol]();
+			});
+			this.unregisterCallbacks.add(unregister);
+		} else {
+			this.view = undefined;
+			this.checkout.forest.anchors.slots.delete(SimpleContextSlot);
+
+			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				this.unregisterCallbacks.delete(unregister);
+				this.update();
+			});
+			this.unregisterCallbacks.add(unregister);
 		}
+
+		if (!this.midUpgrade) {
+			this.events.emit("schemaChanged");
+			this.events.emit("rootChanged");
+		}
+	}
+
+	private runSchemaEdit(edit: () => void): void {
+		this.midUpgrade = true;
+		try {
+			edit();
+		} finally {
+			this.midUpgrade = false;
+		}
+		this.events.emit("schemaChanged");
 		this.events.emit("rootChanged");
 	}
 
 	private disposeView(): void {
-		if (this.view !== undefined && !(this.view instanceof SchematizeError)) {
+		if (this.view !== undefined) {
 			this.view[disposeSymbol]();
 			this.view = undefined;
+			this.checkout.forest.anchors.slots.delete(SimpleContextSlot);
 			this.unregisterCallbacks.forEach((unregister) => unregister());
 		}
+		this.checkout.forest.anchors.slots.delete(SimpleContextSlot);
 	}
 
-	public get error(): SchematizeError | undefined {
-		const view = this.getViewOrError();
-		return view instanceof SchematizeError ? view : undefined;
+	public get compatibility(): SchemaCompatibilityStatus {
+		if (!this.currentCompatibility) {
+			this.failDisposed();
+		}
+		return this.currentCompatibility;
 	}
 
 	public dispose(): void {
-		this.getViewOrError();
 		this.disposed = true;
 		this.disposeView();
+		this.checkout.forest.anchors.slots.delete(ViewSlot);
+		this.currentCompatibility = undefined;
+		this.onDispose?.();
 	}
 
 	public get root(): TreeFieldFromImplicitField<TRootSchema> {
-		const view = this.getViewOrError();
-		if (view instanceof SchematizeError) {
+		this.breaker.use();
+		if (!this.compatibility.canView) {
 			throw new UsageError(
-				"Document is out of schema. Check TreeView.error before accessing TreeView.root.",
+				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
 			);
 		}
-		return getProxyForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
+		const view = this.getView();
+		return getTreeNodeForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
-		const view = this.getViewOrError();
-		if (view instanceof SchematizeError) {
+		this.breaker.use();
+		if (!this.compatibility.canView) {
 			throw new UsageError(
-				"Document is out of schema. Check TreeView.error before accessing TreeView.root.",
+				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
 			);
 		}
-
-		setField(
-			view.context.root,
-			this.rootFieldSchema,
-			newRoot as InsertableContent,
-			view.context.nodeKeyManager,
-		);
-	}
-}
-
-export class SchematizeError implements SchemaIncompatible {
-	public constructor(public readonly updateType: UpdateType) {}
-
-	public get canUpgrade(): boolean {
-		return (
-			this.updateType === UpdateType.Initialize ||
-			this.updateType === UpdateType.SchemaCompatible
-		);
-	}
-
-	public get canInitialize(): boolean {
-		return this.updateType === UpdateType.Initialize;
+		const view = this.getView();
+		setField(view.context.root, this.rootFieldSchema, newRoot as InsertableContent);
 	}
 }
 
 /**
- * Flex-Tree schematizing layer.
- * Creates a view that self-disposes when stored schema becomes incompatible.
+ * Creates a view that self-disposes whenenever the stored schema changes.
  * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
-export function requireSchema<TRoot extends FlexFieldSchema>(
-	checkout: TreeCheckout,
-	viewSchema: ViewSchema<TRoot>,
+export function requireSchema(
+	checkout: ITreeCheckout,
+	viewSchema: ViewSchema,
 	onDispose: () => void,
 	nodeKeyManager: NodeKeyManager,
-): CheckoutFlexTreeView<TRoot> {
+	schemaPolicy: FullSchemaPolicy,
+): CheckoutFlexTreeView {
 	const slots = checkout.forest.anchors.slots;
 	assert(!slots.has(ContextSlot), 0x8c2 /* Cannot create second view from checkout */);
 
@@ -277,19 +395,8 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(checkout, viewSchema.schema, nodeKeyManager, onDispose);
+	const view = new CheckoutFlexTreeView(checkout, schemaPolicy, nodeKeyManager, onDispose);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
-
-	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
-		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-		if (
-			compatibility.write !== Compatibility.Compatible ||
-			compatibility.read !== Compatibility.Compatible
-		) {
-			unregister();
-			view[disposeSymbol]();
-		}
-	});
 
 	return view;
 }

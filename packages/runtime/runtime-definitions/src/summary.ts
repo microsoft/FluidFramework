@@ -20,6 +20,7 @@ import type {
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
+ * @legacy
  * @alpha
  */
 export interface ISummaryStats {
@@ -36,6 +37,7 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
+ * @legacy
  * @alpha
  */
 export interface ISummaryTreeWithStats {
@@ -52,6 +54,7 @@ export interface ISummaryTreeWithStats {
 
 /**
  * Represents a summary at a current sequence number.
+ * @legacy
  * @alpha
  */
 export interface ISummarizeResult {
@@ -73,6 +76,7 @@ export interface ISummarizeResult {
  *   ...
  *     "path1":
  * ```
+ * @legacy
  * @alpha
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
@@ -86,17 +90,18 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 /**
  * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
+ * @legacy
  * @alpha
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
 	 * The sequence number of the summary generated that will be sent to the server.
 	 */
-	summarySequenceNumber: number;
+	readonly summarySequenceNumber: number;
 	/**
 	 * The sequence number of the most recent summary that was acknowledged by the server.
 	 */
-	latestSummarySequenceNumber: number;
+	readonly latestSummarySequenceNumber: number;
 	/**
 	 * The path to the runtime/datastore/dds that is used to generate summary handles
 	 * Note: Summary handles are nodes of the summary tree that point to previous parts of the last successful summary
@@ -108,10 +113,11 @@ export interface IExperimentalIncrementalSummaryContext {
 	 * more dependencies.
 	 */
 	// TODO: remove summaryPath
-	summaryPath: string;
+	readonly summaryPath: string;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type SummarizeInternalFn = (
@@ -122,6 +128,7 @@ export type SummarizeInternalFn = (
 ) => Promise<ISummarizeInternalResult>;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNodeConfig {
@@ -133,6 +140,7 @@ export interface ISummarizerNodeConfig {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
@@ -144,6 +152,7 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export enum CreateSummarizerNodeSource {
@@ -152,6 +161,7 @@ export enum CreateSummarizerNodeSource {
 	Local,
 }
 /**
+ * @legacy
  * @alpha
  */
 export type CreateChildSummarizerNodeParam =
@@ -168,6 +178,7 @@ export type CreateChildSummarizerNodeParam =
 	  };
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNode {
@@ -198,6 +209,9 @@ export interface ISummarizerNode {
 	 * that it might have. For example: if datastore "a" contains dds "b", but the
 	 * path is "/a/.channels/b", then the additional path part is ".channels".
 	 * @param snapshot - the base summary to parse
+	 *
+	 * @deprecated The code now always assumes that all summary nodes have .channels
+	 * in their handle so there is no need to maintain any additional path information.
 	 */
 	updateBaseSummaryState(snapshot: ISnapshotTree): void;
 	/**
@@ -257,6 +271,7 @@ export interface ISummarizerNode {
  * `isReferenced`: This tells whether this node is referenced in the document or not.
  *
  * `updateUsedRoutes`: Used to notify this node of routes that are currently in use in it.
+ * @legacy
  * @alpha
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
@@ -351,6 +366,7 @@ export interface ITelemetryContextExt {
 /**
  * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
+ * @legacy
  * @alpha
  */
 export interface ITelemetryContext {

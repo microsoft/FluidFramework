@@ -16,14 +16,14 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Program",
 			"runtimeArgs": ["-r", "ts-node/register"],
-			"args": ["${workspaceFolder}/src/index.ts"]
-		}
-	]
+			"args": ["${workspaceFolder}/src/index.ts"],
+		},
+	],
 }

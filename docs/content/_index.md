@@ -137,7 +137,7 @@ summary: "An open-source client technology stack that enables real-time collabor
         <div class="col-md-8" style="text-left; height:650px; overflow-x: auto; padding-left: 50px;">
             <code>
                 {{< highlight typescript >}}
-                import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
+                import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
                 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
                 const client = new TinyliciousClient();
@@ -155,19 +155,20 @@ summary: "An open-source client technology stack that enables real-time collabor
                     value: sf.number,
                 }) {}
 
-                // Here we define the tree schema, which has a single Dice object starting at 1.
-                // We'll call schematize() on the SharedTree using this schema, which will give us a tree view to work with.
-                const treeConfiguration = new TreeConfiguration(
-                    Dice,
-                    () =>
-                        new Dice({
-                            value: 1,
-                        }),
-                );
+                // Here we define the tree schema, which has a single Dice object.
+                // We'll call viewWith() on the SharedTree using this schema, which will give us a tree view to work with.
+                const treeConfiguration = new TreeViewConfiguration({ schema: Dice });
 
                 const createNewDice = async () => {
                     const { container } = await client.createContainer(containerSchema);
-                    const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+                    const view = container.initialObjects.diceTree.viewWith(treeConfiguration);
+                    // Because we're creating a new document, the tree must be initialized with some data.
+                    // Doing this step before attaching is also a good idea as it ensures other clients will never see the
+                    // tree in an uninitialized state.
+                    view.initialize(new Dice({ value: 1 }));
+                    // Get the root node of the view, which contains the tree's data
+                    const dice = view.root;
+                    // Attaching the container gives it a backing file and makes it visible to other clients.
                     const id = await container.attach();
                     renderDiceRoller(dice, root);
                     return id;
@@ -175,7 +176,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 
                 const loadExistingDice = async (id) => {
                     const { container } = await client.getContainer(id, containerSchema);
-                    const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+                    const dice = container.initialObjects.diceTree.viewWith(treeConfiguration).root;
                     renderDiceRoller(dice, root);
                 };
 
@@ -240,7 +241,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 </div>
 <div class="row">
     <div class="col-md-12 text-center">
-        <p><br/><a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important; text-decoration: none;" href="/docs/start/examples/"><small>Try the other samples</small></a><br/><br/></p>
+        <p><br/><a class="cta link-button btn-info get-started" style="background-color: #107b8c !important; text-decoration: none;" href="/docs/start/examples/"><small>Try the other samples</small></a><br/><br/></p>
     </div>
 </div>
 </div>
@@ -273,7 +274,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                                         <p>Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.</p>
                                     </div>
                                     <div>
-                                        <a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important; text-decoration: none;" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"><small>Learn more about Azure Fluid Relay</small></a>
+                                        <a class="cta link-button btn-info get-started" style="background-color: #107b8c !important; text-decoration: none;" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"><small>Learn more about Azure Fluid Relay</small></a>
                                     </div>
                             </div>
                             <div class="col-md-6">
@@ -285,7 +286,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                                         <p>Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
                                     </div>
                                     <div>
-                                        <a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important; text-decoration: none;" href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"><small>Learn more about SharePoint Embedded</small></a>
+                                        <a class="cta link-button btn-info get-started" style="background-color: #107b8c !important; text-decoration: none;" href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"><small>Learn more about SharePoint Embedded</small></a>
                                     </div>
                                 </div>
                         </div>

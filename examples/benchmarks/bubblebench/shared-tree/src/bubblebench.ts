@@ -23,14 +23,15 @@ export class Bubblebench extends DataObject {
 	protected async initializingFirstTime() {
 		const tree = SharedTree.create(this.runtime);
 
-		this.initializeTree(tree);
+		this.view = tree.viewWith(appTreeConfiguration);
+		this.view.initialize({ clients: [] });
 		this.root.set(treeKey, tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const tree = await this.root.get<IFluidHandle<ITree>>(treeKey)!.get();
-		this.initializeTree(tree);
+		this.view = tree.viewWith(appTreeConfiguration);
 	}
 
 	protected async hasInitialized() {
@@ -58,14 +59,6 @@ export class Bubblebench extends DataObject {
 		} else {
 			this.runtime.once("connected", onConnected);
 		}
-	}
-
-	/**
-	 * Initialize the schema of the shared tree to that of the Bubblebench AppState.
-	 * @param tree - ISharedTree
-	 */
-	initializeTree(tree: ITree) {
-		this.view = tree.schematize(appTreeConfiguration);
 	}
 
 	/**

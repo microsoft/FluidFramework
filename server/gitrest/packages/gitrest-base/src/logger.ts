@@ -26,7 +26,7 @@ const defaultLumberjackConfig: ILumberjackConfig = {
 	engineList: [new WinstonLumberjackEngine()],
 	schemaValidator: undefined,
 	options: {
-		enableGlobalTelemetryContext: false,
+		enableGlobalTelemetryContext: true,
 		enableSanitization: false,
 	},
 };

@@ -4,26 +4,41 @@
  */
 
 const fluidRoute = require("@fluid-example/webpack-fluid-loader");
-const { merge } = require("webpack-merge");
+const path = require("path");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 
 module.exports = (env) => {
-	const baseConfig = fluidRoute.defaultWebpackConfig(__dirname, env);
-
-	// This example currently has missing sourcemap issues.
-	// Disabling source mapping allows it to be runnable with these issues.
-	const baseRules = baseConfig.module.rules;
-
-	// Check the source-mapping rule is still at the expected index in the base config
-	if (baseRules[1].use[0] !== require.resolve("source-map-loader")) {
-		throw new Error("Disabling source mapping failed");
-	}
-	// Remove source mapping rule
-	baseRules.splice(1);
-
-	return merge(baseConfig, {
+	return {
+		...fluidRoute.devServerConfig(__dirname, env),
+		entry: {
+			main: "./src/index.ts",
+		},
+		resolve: {
+			extensionAlias: {
+				".js": [".ts", ".tsx", ".js"],
+				".cjs": [".cts", ".cjs"],
+				".mjs": [".mts", ".mjs"],
+			},
+		},
+		resolveLoader: {
+			alias: {
+				"blob-url-loader": require.resolve("./loaders/blobUrl"),
+				"compile-loader": require.resolve("./loaders/compile"),
+			},
+		},
 		module: {
 			rules: [
+				{
+					test: /\.tsx?$/,
+					loader: "ts-loader",
+				},
+				// This example currently has missing sourcemap issues.
+				// Disabling source mapping allows it to be runnable with these issues.
+				// {
+				// 	test: /\.[cm]?js$/,
+				// 	use: [require.resolve("source-map-loader")],
+				// 	enforce: "pre",
+				// },
 				{
 					test: /\.css$/,
 					use: [
@@ -52,17 +67,19 @@ module.exports = (env) => {
 				},
 			],
 		},
-		resolveLoader: {
-			alias: {
-				"blob-url-loader": require.resolve("./loaders/blobUrl"),
-				"compile-loader": require.resolve("./loaders/compile"),
-			},
-		},
 		output: {
+			filename: "[name].bundle.js",
+			path: path.resolve(__dirname, "dist"),
+			library: { name: "[name]", type: "umd" },
 			chunkFilename: "[name].async.js",
 			publicPath: "/dist/",
 			globalObject: "self",
 		},
 		plugins: [new MonacoWebpackPlugin()],
-	});
+		watchOptions: {
+			ignored: "**/node_modules/**",
+		},
+		mode: env?.production ? "production" : "development",
+		devtool: env?.production ? "source-map" : "inline-source-map",
+	};
 };

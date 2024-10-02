@@ -38,7 +38,10 @@ export function getTestContent(subPath?: string): TestContent {
 	};
 }
 
-export function skipOrFailIfTestContentMissing(test: Mocha.Context, content: TestContent): void {
+export function skipOrFailIfTestContentMissing(
+	test: Mocha.Context,
+	content: TestContent,
+): void {
 	if (!content.exists) {
 		// environment variable details here: https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml
 		if (process.env.TF_BUILD === "true") {

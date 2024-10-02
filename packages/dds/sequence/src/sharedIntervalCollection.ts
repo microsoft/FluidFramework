@@ -76,6 +76,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {

@@ -8,5 +8,7 @@
 		"noImplicitAny": true,
 		"noUnusedLocals": false,
 		"target": "ES2022",
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 }

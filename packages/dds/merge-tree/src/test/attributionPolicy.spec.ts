@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
@@ -26,7 +26,7 @@ describe("Attribution Policy", () => {
 		seq = 0;
 	});
 
-	function runInsertVerificationTests() {
+	function runInsertVerificationTests(): void {
 		it("attributes segments inserted locally", () => {
 			const mergeTreeOp = client.insertTextLocal(0, "123");
 			assert.deepEqual(client.getAllAttributionSeqs(), [local, local, local]);
@@ -46,7 +46,7 @@ describe("Attribution Policy", () => {
 		});
 	}
 
-	function runAnnotateVerificationTests() {
+	function runAnnotateVerificationTests(): void {
 		it("attributes local property changes", () => {
 			client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq));
 			const annotateOp = client.annotateRangeLocal(1, 2, { foo: 1 });
@@ -165,17 +165,9 @@ describe("Attribution Policy", () => {
 
 		it("ignores segments inserted locally", () => {
 			const mergeTreeOp = client.insertTextLocal(0, "123");
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 			client.applyMsg(client.makeOpMessage(mergeTreeOp, ++seq));
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 		});
 
 		it("ignores segments inserted remotely", () => {
@@ -193,6 +185,8 @@ describe("Attribution Policy", () => {
 				remoteUserLongId,
 			);
 			client.insertTextRemote(1, "2", { bar: 1 }, ++seq, seq - 1, remoteUserLongId);
+			// Null is used to represent deleting a property, since undefined will not be sent over the wire.
+			// eslint-disable-next-line unicorn/no-null
 			client.annotateRangeRemote(0, 1, { foo: null }, ++seq, seq - 1, remoteUserLongId);
 			client.updateMinSeq(seq);
 			let segmentCount = 0;
@@ -210,8 +204,7 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory:
-						createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+					policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);

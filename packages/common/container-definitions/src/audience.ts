@@ -7,6 +7,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 /**
  * Manages the state and the members for {@link IAudience}
+ * @legacy
  * @alpha
  */
 export interface IAudienceOwner extends IAudience {
@@ -48,7 +49,10 @@ export interface IAudienceEvents extends IEvent {
 	 * @param newValue - represents newly established connection. While {@link IAudience.getSelf} is experimental, it's not guaranteed that
 	 * newValue.client is present. Same is true if you are consuming audience from container runtime layer and running against old version of loader.
 	 */
-	(event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
+	(
+		event: "selfChanged",
+		listener: (oldValue: ISelf | undefined, newValue: ISelf) => void,
+	): void;
 }
 
 /**
@@ -128,7 +132,7 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * 3. "connect" phase - the following happens synchronously:
 	 * - getSelf() information changes to reflect new connection
 	 * - "selfChanged" event on this object fires
-	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at ContainerRuntime layer if container is read-only.
+	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at IContainerRuntime layer if container is read-only.
 	 *
 	 * That said, at the moment this is an experimental API. It depends on some experimental settings that might change in the future.
 	 * Events described in phase #3 may not happen at the same time if kill-bit feature gates are engaged due to a bug discovered in new logic

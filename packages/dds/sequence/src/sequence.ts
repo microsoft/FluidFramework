@@ -46,24 +46,40 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
+	type InteriorSequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
 	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
-import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	createChildLogger,
+	createConfigBasedOptionsProxy,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
+import {
+	IIntervalCollection,
+	SequenceIntervalCollectionValueType,
+} from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
+import {
+	IMapMessageLocalMetadata,
+	IValueChanged,
+	type SequenceOptions,
+} from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
@@ -103,6 +119,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @legacy
  * @alpha
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
@@ -121,6 +138,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISharedSegmentSequence<T extends ISegment>
@@ -147,7 +165,9 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	/**
 	 * Removes a `LocalReferencePosition` from this SharedString.
 	 */
-	removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+	removeLocalReferencePosition(
+		lref: LocalReferencePosition,
+	): LocalReferencePosition | undefined;
 
 	/**
 	 * Returns the length of the current sequence for the client
@@ -234,12 +254,30 @@ export interface ISharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Obliterate is similar to remove, but differs in that segments concurrently
-	 * inserted into an obliterated range will also be removed
+	 * inserted into an obliterated range will also be removed.
+	 * Inserts are considered concurrent to an obliterate iff the insert op's seq is after the obliterate op's refSeq
+	 * and the insert's refSeq is before the obliterates seq.
+	 * Inserts made by the client which most recently obliterated a range containing the insert position
+	 * are not considered concurrent to any obliteration (the last client to obliterate gets the right to insert).
 	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
+	 * The endpoints can either be inclusive or exclusive.
+	 * Exclusive endpoints allow the obliterated range to "grow" to include adjacent concurrently inserted segments on that side.
+	 *
+	 * @param start - The start of the range to obliterate.
+	 * Inclusive if side is Before or a number is provided.
+	 * @param end - The end of the range to obliterate. Inclusive if side is After.
+	 * If a number is provided it is treated as exclusive,
+	 * but the endpoint does not expand in order to preserve existing behavior.
+	 *
+	 * @example Given the initial state `"|ABC>"`,
+	 * `obliterateRange({ pos: 0, side: Side.After }, { pos: 4, side: Side.Before })` obliterates `"ABC"`, leaving only `"|>"`.
+	 * `insertFromSpec(1, { text: "AAA"})` would insert `"AAA"` before |, resulting in `"|AAA>"`.
+	 * If another client does the same thing but inserts `"BBB"` and gets sequenced later, all clients will eventually see `|BBB>`.
 	 */
-	obliterateRange(start: number, end: number): void;
+	obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void;
 
 	/**
 	 * @returns The most recent sequence number which has been acked by the server and processed by this
@@ -324,7 +362,9 @@ export interface ISharedSegmentSequence<T extends ISegment>
 }
 
 /**
+ * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
@@ -371,11 +411,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						lastAnnotate.pos2 += r.segment.cachedLength;
 					} else {
 						ops.push(
-							createAnnotateRangeOp(
-								r.position,
-								r.position + r.segment.cachedLength,
-								props,
-							),
+							createAnnotateRangeOp(r.position, r.position + r.segment.cachedLength, props),
 						);
 					}
 					break;
@@ -388,15 +424,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				case MergeTreeDeltaType.REMOVE: {
 					const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(
-							lastRem.pos2 !== undefined,
-							0x3ff /* pos2 should not be undefined here */,
-						);
+						assert(lastRem.pos2 !== undefined, 0x3ff /* pos2 should not be undefined here */);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(
-							createRemoveRangeOp(r.position, r.position + r.segment.cachedLength),
-						);
+						ops.push(createRemoveRangeOp(r.position, r.position + r.segment.cachedLength));
 					}
 					break;
 				}
@@ -405,18 +436,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					// eslint-disable-next-line import/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(
-							lastRem.pos2 !== undefined,
-							0x874 /* pos2 should not be undefined here */,
-						);
+						assert(lastRem.pos2 !== undefined, 0x874 /* pos2 should not be undefined here */);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(
-							createObliterateRangeOp(
-								r.position,
-								r.position + r.segment.cachedLength,
-							),
-						);
+						ops.push(createObliterateRangeOp(r.position, r.position + r.segment.cachedLength));
 					}
 					break;
 				}
@@ -485,7 +508,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								new LoggingError(reentrancyErrorMessage),
 							);
 						}
-				  });
+					});
+
+		const options = createConfigBasedOptionsProxy<SequenceOptions>(
+			loggerToMonitoringContext(this.logger).config,
+			"Fluid.Sequence",
+			{
+				mergeTreeEnableObliterate: (c, n) => c.getBoolean(n),
+				mergeTreeEnableSidedObliterate: (c, n) => c.getBoolean(n),
+				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
+				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
+			},
+			dataStoreRuntime.options,
+		);
 
 		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
@@ -494,7 +529,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				logger: this.logger,
 				namespace: "SharedSegmentSequence.MergeTreeClient",
 			}),
-			dataStoreRuntime.options,
+			options,
 			getMinInFlightRefSeq,
 		);
 
@@ -522,7 +557,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.submitLocalMessage(op, localOpMetadata);
 			},
 			new SequenceIntervalCollectionValueType(),
-			dataStoreRuntime.options,
+			options,
 		);
 	}
 
@@ -530,7 +565,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
-	public obliterateRange(start: number, end: number): void {
+	public obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void {
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 

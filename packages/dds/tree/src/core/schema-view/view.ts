@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier, TreeStoredSchema } from "../schema-stored/index.js";
+import type { TreeNodeSchemaIdentifier, TreeStoredSchema } from "../schema-stored/index.js";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -24,7 +24,6 @@ export enum Compatibility {
  * What kinds of updates to stored schema to permit.
  *
  * Bit flags enum.
- * @internal
  */
 export enum AllowedUpdateType {
 	/**
@@ -53,7 +52,6 @@ export enum AllowedUpdateType {
 }
 
 /**
- * @internal
  */
 export interface TreeAdapter {
 	readonly output: TreeNodeSchemaIdentifier;
@@ -68,7 +66,6 @@ export interface TreeAdapter {
  *
  * TODO: Support more kinds of adapters
  * TODO: support efficient lookup of adapters
- * @internal
  */
 export interface Adapters {
 	readonly tree?: readonly TreeAdapter[];

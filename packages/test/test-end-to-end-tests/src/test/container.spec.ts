@@ -26,7 +26,7 @@ import {
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -106,8 +106,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory:
-				props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
@@ -685,7 +684,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			container.on("closed", () => containerClosed++);
 			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
 			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-			(dataObject._context.containerRuntime as ContainerRuntime).on(
+			(dataObject._context.containerRuntime as IContainerRuntime).on(
 				"dispose",
 				() => runtimeDispose++,
 			);
@@ -714,7 +713,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(
 				runtimeDispose,
 				1,
-				"ContainerRuntime should send dispose event on container dispose",
+				"IContainerRuntime should send dispose event on container dispose",
 			);
 		},
 	);
@@ -738,7 +737,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			container.on("closed", () => containerClosed++);
 			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
 			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-			(dataObject._context.containerRuntime as ContainerRuntime).on(
+			(dataObject._context.containerRuntime as IContainerRuntime).on(
 				"dispose",
 				() => runtimeDispose++,
 			);
@@ -749,7 +748,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(containerClosed, 1, "Container should send closed event");
 			assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
 			assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
-			assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
+			assert.strictEqual(runtimeDispose, 1, "IContainerRuntime should send dispose event");
 		},
 	);
 

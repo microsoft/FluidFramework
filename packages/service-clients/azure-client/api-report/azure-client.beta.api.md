@@ -4,21 +4,6 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/driver-definitions';
-import { ScopeType } from '@fluidframework/driver-definitions/internal';
-
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
@@ -88,6 +73,8 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     type: "remote";
 }
 
+export { CompatibilityMode }
+
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
@@ -95,14 +82,10 @@ export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-export { ITokenClaims }
-
 export { ITokenProvider }
 
 export { ITokenResponse }
 
 export { IUser }
-
-export { ScopeType }
 
 ```

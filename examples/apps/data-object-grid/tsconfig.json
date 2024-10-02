@@ -11,6 +11,7 @@
 			"react",
 			"react-dom",
 		],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

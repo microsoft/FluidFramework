@@ -8,7 +8,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
 import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
-import { getGitMode, getGitType } from "@fluidframework/protocol-base";
+import { getGitMode, getGitType } from "@fluidframework/driver-utils/internal";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
 
 import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";

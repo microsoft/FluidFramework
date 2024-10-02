@@ -59,22 +59,25 @@ export class OdspUrlResolver implements IUrlResolver {
 		return `/r11s/${encoded}`;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
 	}
 
 	public async createCreateNewRequest(fileName: string): Promise<IRequest> {
 		const filePath = "/r11s/";
-		const driveItem = await getDriveItemByRootFileName(
+		const { driveId } = await getDriveItemByRootFileName(
 			this.server,
 			"",
-			filePath,
+			"/",
 			this.authRequestInfo,
 			false,
 		);
 		return createOdspCreateContainerRequest(
 			`https://${this.server}`,
-			driveItem.driveId,
+			driveId,
 			filePath,
 			`${fileName}.fluid`,
 		);

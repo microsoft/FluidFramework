@@ -34,59 +34,24 @@
                 "content": {
                   "version": 1,
                   "nodes": {
-                    "com.fluidframework.json.array": {
+                    "attachment-tree.Array<[\"com.fluidframework.leaf.string\"]>": {
                       "object": {
                         "": {
                           "kind": "Sequence",
                           "types": [
-                            "com.fluidframework.json.object",
-                            "com.fluidframework.json.array",
-                            "com.fluidframework.leaf.number",
-                            "com.fluidframework.leaf.boolean",
-                            "com.fluidframework.leaf.string",
-                            "com.fluidframework.leaf.null"
+                            "com.fluidframework.leaf.string"
                           ]
                         }
                       }
-                    },
-                    "com.fluidframework.json.object": {
-                      "map": {
-                        "kind": "Optional",
-                        "types": [
-                          "com.fluidframework.json.object",
-                          "com.fluidframework.json.array",
-                          "com.fluidframework.leaf.number",
-                          "com.fluidframework.leaf.boolean",
-                          "com.fluidframework.leaf.string",
-                          "com.fluidframework.leaf.null"
-                        ]
-                      }
-                    },
-                    "com.fluidframework.leaf.boolean": {
-                      "leaf": 2
-                    },
-                    "com.fluidframework.leaf.handle": {
-                      "leaf": 3
-                    },
-                    "com.fluidframework.leaf.null": {
-                      "leaf": 4
-                    },
-                    "com.fluidframework.leaf.number": {
-                      "leaf": 0
                     },
                     "com.fluidframework.leaf.string": {
                       "leaf": 1
                     }
                   },
                   "root": {
-                    "kind": "Sequence",
+                    "kind": "Value",
                     "types": [
-                      "com.fluidframework.json.object",
-                      "com.fluidframework.json.array",
-                      "com.fluidframework.leaf.number",
-                      "com.fluidframework.leaf.boolean",
-                      "com.fluidframework.leaf.string",
-                      "com.fluidframework.leaf.null"
+                      "attachment-tree.Array<[\"com.fluidframework.leaf.string\"]>"
                     ]
                   }
                 },
@@ -124,10 +89,21 @@
                       [
                         1,
                         [
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "y",
-                          []
+                          "attachment-tree.Array<[\"com.fluidframework.leaf.string\"]>",
+                          false,
+                          [
+                            "",
+                            [
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "a",
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "b",
+                              []
+                            ]
+                          ]
                         ]
                       ]
                     ]
@@ -150,7 +126,7 @@
                 "content": {
                   "version": 1,
                   "data": [],
-                  "maxId": 0
+                  "maxId": 2
                 },
                 "encoding": "utf-8"
               }

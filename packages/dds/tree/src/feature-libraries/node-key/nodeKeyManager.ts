@@ -9,11 +9,10 @@ import { assertIsStableId, isStableId } from "@fluidframework/id-compressor/inte
 
 import { brand, extractFromOpaque } from "../../util/index.js";
 
-import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
+import type { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
 
 /**
  * An object which handles the generation of node keys as well as conversion between their two types ({@link StableNodeKey} and {@link LocalNodeKey}).
- * @internal
  */
 export interface NodeKeyManager {
 	/**
@@ -44,7 +43,9 @@ export interface NodeKeyManager {
  * @param idCompressor - the compressor to use for key generation, compression, and decompression.
  * If undefined, then attempts to generate or convert keys will throw an error.
  */
-export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): NodeKeyManager {
+export function createNodeKeyManager(
+	idCompressor?: IIdCompressor | undefined,
+): NodeKeyManager {
 	return {
 		generateLocalNodeKey: () => {
 			assert(

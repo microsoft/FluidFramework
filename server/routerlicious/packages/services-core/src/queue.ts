@@ -126,6 +126,10 @@ export interface IProducer<T = ITicketedMessage> {
 		event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
 		listener: (...args: any[]) => void,
 	): this;
+	off(
+		event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
+		listener: (...args: any[]) => void,
+	): this;
 }
 
 /**

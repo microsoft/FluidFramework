@@ -6,6 +6,7 @@
 		"outDir": "./lib",
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

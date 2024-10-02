@@ -26,9 +26,9 @@ interface IDataObjectGridToolbarAddItemPickerProps {
 	toolbarOptions: IToolbarOption[];
 }
 
-const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItemPickerProps> = (
-	props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>,
-) => {
+const DataObjectGridToolbarAddItemPicker: React.FC<
+	IDataObjectGridToolbarAddItemPickerProps
+> = (props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>) => {
 	const { toolbarOptions } = props;
 	const [open, setOpen] = React.useState<boolean>(false);
 

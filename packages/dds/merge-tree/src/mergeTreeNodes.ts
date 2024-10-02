@@ -9,21 +9,31 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
-import { LocalReferenceCollection } from "./localReference.js";
+import {
+	LocalClientId,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
+import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
-import { ReferencePosition, refGetTileLabels, refTypeIncludesFlag } from "./referencePositions.js";
+import {
+	ReferencePosition,
+	refGetTileLabels,
+	refTypeIncludesFlag,
+} from "./referencePositions.js";
+// eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
 
 /**
  * Common properties for a node in a merge tree.
+ * @legacy
  * @alpha
  */
 export interface IMergeNodeCommon {
@@ -47,6 +57,7 @@ export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
  * Contains removal information associated to an {@link ISegment}.
+ * @legacy
  * @alpha
  */
 export interface IRemovalInfo {
@@ -68,9 +79,13 @@ export interface IRemovalInfo {
 }
 
 /**
+ * Returns the removal information for a segment.
+ *
  * @internal
  */
-export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
+export function toRemovalInfo(
+	maybe: Partial<IRemovalInfo> | undefined,
+): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
 		return maybe as IRemovalInfo;
 	}
@@ -86,6 +101,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
+ * @legacy
  * @alpha
  */
 export interface IMoveInfo {
@@ -144,6 +160,13 @@ export interface IMoveInfo {
 	 * calculations
 	 */
 	wasMovedOnInsert: boolean;
+
+	/**
+	 * If a segment is inserted into an obliterated range,
+	 * but the newest obliteration of that range was by the inserting client,
+	 * then the segment is not obliterated because it is aware of the latest obliteration.
+	 */
+	prevObliterateByInserter?: ObliterateInfo;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
@@ -162,10 +185,15 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
+ * @legacy
  * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
+	/**
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
 	/**
@@ -202,7 +230,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 
 	/**
 	 * Manages pending local state for properties on this segment.
+	 *
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	propertyManager?: PropertiesManager;
 	/**
 	 * Local seq at which this segment was inserted.
@@ -242,6 +273,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	/**
 	 * Add properties to this segment via annotation.
 	 *
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 *
 	 * @remarks This function should not be called directly. Properties should
 	 * be added through the `annotateRange` functions.
 	 */
@@ -249,14 +282,18 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 		newProps: PropertySet,
 		seq?: number,
 		collaborating?: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		rollback?: PropertiesRollback,
 	): PropertySet;
 	clone(): ISegment;
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;
 	splitAt(pos: number): ISegment | undefined;
+	// Changing this to something other than any would break consumers.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	toJSONObject(): any;
 	/**
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
 	 * Acks the current segment against the segment group, op, and merge tree.
 	 *
 	 * @param segmentGroup - Pending segment group associated with this op.
@@ -280,6 +317,7 @@ export interface IMarkerModifiedAction {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISegmentAction<TClientData> {
@@ -355,6 +393,22 @@ export interface SegmentActions<TClientData> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
+ * @alpha
+ */
+export interface ObliterateInfo {
+	start: LocalReferencePosition;
+	end: LocalReferencePosition;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	localSeq: number | undefined;
+	segmentGroup: SegmentGroup | undefined;
+}
+
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export interface SegmentGroup {
@@ -362,9 +416,11 @@ export interface SegmentGroup {
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
+	obliterateInfo?: ObliterateInfo;
 }
 
 /**
+ * @legacy
  * @alpha
  * @deprecated - unused and will be removed
  */
@@ -425,14 +481,16 @@ export class MergeBlock implements IMergeNodeCommon {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
+		// Suppression needed due to the way the merge tree children are initalized - we
+		// allocate 8 children blocks, but any unused blocks are not counted in the childCount.
+		// Using Array.from leads to unused children being undefined, which are counted in childCount.
+		// eslint-disable-next-line unicorn/no-new-array
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
-		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<Marker>();
-		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<Marker>();
 	}
 
-	public setOrdinal(child: IMergeNode, index: number) {
+	public setOrdinal(child: IMergeNode, index: number): void {
 		const childCount = this.childCount;
 		assert(
 			childCount >= 1 && childCount <= MaxNodesInBlock,
@@ -446,7 +504,7 @@ export class MergeBlock implements IMergeNodeCommon {
 		);
 	}
 
-	public assignChild(child: IMergeNode, index: number, updateOrdinal = true) {
+	public assignChild(child: IMergeNode, index: number, updateOrdinal = true): void {
 		child.parent = this;
 		child.index = index;
 		if (updateOrdinal) {
@@ -456,11 +514,12 @@ export class MergeBlock implements IMergeNodeCommon {
 	}
 }
 
-export function seqLTE(seq: number, minOrRefSeq: number) {
+export function seqLTE(seq: number, minOrRefSeq: number): boolean {
 	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export abstract class BaseSegment implements ISegment {
@@ -476,10 +535,22 @@ export abstract class BaseSegment implements ISegment {
 	public ordinal: string = "";
 	public cachedLength: number = 0;
 
+	/**
+	 * {@inheritdoc ISegment.segmentGroups}
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
-	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
+	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(
+		this,
+	);
 	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
+	/**
+	 * {@inheritdoc ISegment.propertyManager}
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public propertyManager?: PropertiesManager;
 	public properties?: PropertySet;
 	public localRefs?: LocalReferenceCollection;
@@ -488,14 +559,27 @@ export abstract class BaseSegment implements ISegment {
 	public localRemovedSeq?: number;
 	public localMovedSeq?: number;
 
+	public constructor(properties?: PropertySet) {
+		if (properties !== undefined) {
+			this.properties = clone(properties);
+		}
+	}
+
+	/**
+	 * {@inheritdoc ISegment.addProperties}
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 */
 	public addProperties(
 		newProps: PropertySet,
 		seq?: number,
 		collaborating?: boolean,
-		rollback: PropertiesRollback = PropertiesRollback.None,
-	) {
-		this.propertyManager ??= new PropertiesManager();
 		// eslint-disable-next-line import/no-deprecated
+		rollback: PropertiesRollback = PropertiesRollback.None,
+	): PropertySet {
+		// eslint-disable-next-line import/no-deprecated
+		this.propertyManager ??= new PropertiesManager();
+		// A property set must be able to hold properties of any type, so the any is needed.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -514,10 +598,9 @@ export abstract class BaseSegment implements ISegment {
 		return true;
 	}
 
-	protected cloneInto(b: ISegment) {
+	protected cloneInto(b: ISegment): void {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
-		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
@@ -534,15 +617,20 @@ export abstract class BaseSegment implements ISegment {
 		return false;
 	}
 
-	protected addSerializedProps(jseg: IJSONSegment) {
+	protected addSerializedProps(jseg: IJSONSegment): void {
 		if (this.properties) {
 			jseg.props = { ...this.properties };
 		}
 	}
-
+	// This has to return any type because the return type is different for different segment types.
+	// TODO: If possible, change the return type to match what should be returned for each segment type.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public abstract toJSONObject(): any;
 
-	/***/
+	/**
+	 * {@inheritdoc ISegment.ack}
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 */
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
 		assert(
@@ -550,15 +638,16 @@ export abstract class BaseSegment implements ISegment {
 			0x043 /* "On ack, unexpected segmentGroup!" */,
 		);
 		switch (opArgs.op.type) {
-			case MergeTreeDeltaType.ANNOTATE:
+			case MergeTreeDeltaType.ANNOTATE: {
 				assert(
 					!!this.propertyManager,
 					0x044 /* "On annotate ack, missing segment property manager!" */,
 				);
 				this.propertyManager.ackPendingProperties(opArgs.op);
 				return true;
+			}
 
-			case MergeTreeDeltaType.INSERT:
+			case MergeTreeDeltaType.INSERT: {
 				assert(
 					this.seq === UnassignedSequenceNumber,
 					0x045 /* "On insert, seq number already assigned!" */,
@@ -566,27 +655,30 @@ export abstract class BaseSegment implements ISegment {
 				this.seq = opArgs.sequencedMessage!.sequenceNumber;
 				this.localSeq = undefined;
 				return true;
+			}
 
-			case MergeTreeDeltaType.REMOVE:
+			case MergeTreeDeltaType.REMOVE: {
 				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
-				assert(
-					removalInfo !== undefined,
-					0x046 /* "On remove ack, missing removal info!" */,
-				);
+				assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
 				this.localRemovedSeq = undefined;
 				if (removalInfo.removedSeq === UnassignedSequenceNumber) {
 					removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
 					return true;
 				}
 				return false;
+			}
 
 			case MergeTreeDeltaType.OBLITERATE:
+			case MergeTreeDeltaType.OBLITERATE_SIDED: {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
-				this.localMovedSeq = undefined;
+				const obliterateInfo = segmentGroup.obliterateInfo;
+				assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
+				this.localMovedSeq = obliterateInfo.localSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
+				moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
+					opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
 					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
@@ -594,9 +686,11 @@ export abstract class BaseSegment implements ISegment {
 				}
 
 				return false;
+			}
 
-			default:
+			default: {
 				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
+			}
 		}
 	}
 
@@ -612,13 +706,16 @@ export abstract class BaseSegment implements ISegment {
 		}
 
 		this.copyPropertiesTo(leafSegment);
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 		const thisAsMergeSegment: ISegmentLeaf = this;
 		leafSegment.parent = thisAsMergeSegment.parent;
 
 		// Give the leaf a temporary yet valid ordinal.
 		// when this segment is put in the tree, it will get its real ordinal,
 		// but this ordinal meets all the necessary invariants for now.
+		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+		// eslint-disable-next-line unicorn/prefer-code-point
 		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
 		leafSegment.removedClientIds = this.removedClientIds?.slice();
@@ -644,15 +741,18 @@ export abstract class BaseSegment implements ISegment {
 		return leafSegment;
 	}
 
-	private copyPropertiesTo(other: ISegment) {
-		if (this.propertyManager) {
-			if (this.properties) {
+	private copyPropertiesTo(other: ISegment): void {
+		if (this.properties !== undefined) {
+			if (this.propertyManager) {
+				// eslint-disable-next-line import/no-deprecated
 				other.propertyManager = new PropertiesManager();
 				other.properties = this.propertyManager.copyTo(
 					this.properties,
 					other.properties,
 					other.propertyManager,
 				);
+			} else {
+				other.properties = clone(this.properties);
 			}
 		}
 	}
@@ -688,6 +788,7 @@ export abstract class BaseSegment implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
+ * @legacy
  * @alpha
  */
 export const reservedMarkerIdKey = "markerId";
@@ -698,6 +799,7 @@ export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
@@ -713,6 +815,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
  *
+ * @legacy
  * @alpha
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
@@ -722,47 +825,46 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	}
 	public readonly type = Marker.type;
 
-	public static make(refType: ReferenceType, props?: PropertySet) {
-		const marker = new Marker(refType);
-		if (props) {
-			marker.addProperties(props);
-		}
-		return marker;
+	public static make(refType: ReferenceType, props?: PropertySet): Marker {
+		return new Marker(refType, props);
 	}
 
-	constructor(public refType: ReferenceType) {
-		super();
+	constructor(
+		public refType: ReferenceType,
+		props?: PropertySet,
+	) {
+		super(props);
 		this.cachedLength = 1;
 	}
 
-	toJSONObject() {
+	toJSONObject(): IJSONMarkerSegment {
 		const obj: IJSONMarkerSegment = { marker: { refType: this.refType } };
 		super.addSerializedProps(obj);
 		return obj;
 	}
 
-	static fromJSONObject(spec: any) {
+	static fromJSONObject(spec: IJSONSegment): Marker | undefined {
 		if (spec && typeof spec === "object" && "marker" in spec) {
-			return Marker.make(spec.marker.refType, spec.props as PropertySet);
+			return Marker.make((spec.marker as Marker).refType, spec.props as PropertySet);
 		}
 		return undefined;
 	}
 
-	clone() {
+	clone(): Marker {
 		const b = Marker.make(this.refType, this.properties);
 		this.cloneInto(b);
 		return b;
 	}
 
-	getSegment() {
+	getSegment(): Marker {
 		return this;
 	}
 
-	getOffset() {
+	getOffset(): number {
 		return 0;
 	}
 
-	getProperties() {
+	getProperties(): PropertySet | undefined {
 		return this.properties;
 	}
 
@@ -770,11 +872,11 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 		return this.properties?.[reservedMarkerIdKey] as string;
 	}
 
-	toString() {
+	toString(): string {
 		return `M${this.getId()}`;
 	}
 
-	protected createSplitSegmentAt(pos: number) {
+	protected createSplitSegmentAt(pos: number): undefined {
 		return undefined;
 	}
 
@@ -782,13 +884,14 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 		return false;
 	}
 
-	append() {
+	append(): void {
 		throw new Error("Can not append to marker");
 	}
 }
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export class CollaborationWindow {
@@ -869,7 +972,7 @@ export class CollaborationWindow {
 	 */
 	localSeq = 0;
 
-	loadFrom(a: CollaborationWindow) {
+	loadFrom(a: CollaborationWindow): void {
 		this.clientId = a.clientId;
 		this.collaborating = a.collaborating;
 		this.minSeq = a.minSeq;
@@ -878,14 +981,14 @@ export class CollaborationWindow {
 }
 
 /**
- * @internal
+ * Compares two numbers.
  */
-export const compareNumbers = (a: number, b: number) => a - b;
+export const compareNumbers = (a: number, b: number): number => a - b;
 
 /**
- * @internal
+ * Compares two strings.
  */
-export const compareStrings = (a: string, b: string) => a.localeCompare(b);
+export const compareStrings = (a: string, b: string): number => a.localeCompare(b);
 
 /**
  * Get a human-readable string for a given {@link Marker}.
@@ -921,9 +1024,10 @@ export function debugMarkerToString(marker: Marker): string {
 		pbuf += JSON.stringify(marker.properties, (key, value) => {
 			// Avoid circular reference when stringifying makers containing handles.
 			// (Substitute a debug string instead.)
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const handle = !!value && value.IFluidHandle;
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
 			return handle ? `#Handle(${handle.routeContext.path}/${handle.path})` : value;
 		});
 	}

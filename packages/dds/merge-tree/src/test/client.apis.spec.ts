@@ -5,10 +5,10 @@
 
 /* eslint-disable guard-for-in, no-restricted-syntax */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { Client } from "../client.js";
-import { PropertySet, createMap, matchProperties } from "../properties.js";
+import { PropertySet, matchProperties } from "../properties.js";
 
 import { TestClient } from "./testClient.js";
 
@@ -17,7 +17,7 @@ function checkGetPropertiesAtPos(
 	pos: number,
 	props?: PropertySet,
 	verbose = false,
-) {
+): boolean {
 	const propsRetrieved = client.getPropertiesAtPosition(pos);
 	const result = matchProperties(props, propsRetrieved);
 	if (!result && verbose) {
@@ -35,11 +35,10 @@ function checkGetPropertiesAtPos(
 	return result;
 }
 
-export function clientGetPropertiesAtPositionTest() {
+export function clientGetPropertiesAtPositionTest(): boolean {
 	const client = new TestClient();
 	client.insertTextLocal(0, "the cat is on the mat");
-	const props = createMap<any>();
-	props.prop1 = 10;
+	const props: PropertySet = { prop1: 10 };
 	client.insertTextLocal(4, "fuzzy, fuzzy ", props);
 
 	const testResult1 = checkGetPropertiesAtPos(client, 4, props, true);
@@ -56,7 +55,7 @@ function checkGetSegmentExtentsOfPos(
 	posStart: number,
 	posAfterEnd: number,
 	verbose = false,
-) {
+): boolean {
 	const segExtents = client.getRangeExtentsOfPosition(pos);
 	const result = segExtents.posStart === posStart && segExtents.posAfterEnd === posAfterEnd;
 	if (!result && verbose) {
@@ -69,11 +68,10 @@ function checkGetSegmentExtentsOfPos(
 	return result;
 }
 
-export function clientGetSegmentExtentsOfPositionTest() {
+export function clientGetSegmentExtentsOfPositionTest(): boolean {
 	const client = new TestClient();
 	client.insertTextLocal(0, "the cat is on the mat");
-	const props = createMap<any>();
-	props.prop1 = 10;
+	const props: PropertySet = { prop1: 10 };
 	client.insertTextLocal(4, "fuzzy, fuzzy ", props);
 	client.insertTextLocal(8, "more fuzzy text", {});
 

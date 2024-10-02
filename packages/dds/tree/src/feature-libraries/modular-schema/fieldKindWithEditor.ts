@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
+import type {
 	FieldKindIdentifier,
 	TreeFieldStoredSchema,
 	TreeStoredSchema,
@@ -13,8 +13,8 @@ import {
 	Multiplicity,
 } from "../../core/index.js";
 
-import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
-import { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+import type { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
+import { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField } from "./isNeverTree.js";
 
 // TODO: stronger typing

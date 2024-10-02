@@ -100,8 +100,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
 				[
 					notFound,
-					async (): Promise<MockResponse> =>
-						okResponse({ "x-fluid-epoch": "epoch1" }, {}),
+					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}),
 				],
 			);
 		});
@@ -124,10 +123,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
 				[
 					notFound, // joinSession
-					async (): Promise<MockResponse> =>
-						okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "treesLatest"
-					async (): Promise<MockResponse> =>
-						okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "joinSession"
+					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "treesLatest"
+					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "joinSession"
 				],
 			);
 		});
@@ -139,8 +136,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				epochCallback.setCallback(async () => {
 					try {
 						await mockFetchSingle(
-							async () =>
-								epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
+							async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
 							notFound,
 							"internal",
 						);

@@ -49,18 +49,19 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 		this._externalDataSnapshot = { ...newValue };
 		this.emit("changesAvailable", changesAvailable);
 	}
-	private _externalDataSnapshot: ExternalSnapshotTask = {
-		id: this._id,
-		name: undefined,
-		priority: undefined,
-		changeType: undefined,
-	};
+	private _externalDataSnapshot: ExternalSnapshotTask;
 	public constructor(
-		private readonly _id: string,
+		public readonly _id: string,
 		private readonly _draftName: SharedString,
 		private readonly _draftPriority: ISharedCell<number>,
 	) {
 		super();
+		this._externalDataSnapshot = {
+			id: _id,
+			name: undefined,
+			priority: undefined,
+			changeType: undefined,
+		};
 		this._draftName.on("sequenceDelta", () => {
 			this.emit("draftNameChanged");
 		});

@@ -24,7 +24,11 @@ import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
-import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge.js";
+import {
+	IProseMirrorNode,
+	ProseMirrorTransactionBuilder,
+	sliceToGroupOps,
+} from "./fluidBridge.js";
 import { schema } from "./fluidSchema.js";
 import { create as createSelection } from "./selection.js";
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
@@ -255,11 +259,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 					}
 
 					if (stepAsJson.slice) {
-						const sliceOperations = sliceToGroupOps(
-							from,
-							stepAsJson.slice,
-							this.schema,
-						);
+						const sliceOperations = sliceToGroupOps(from, stepAsJson.slice, this.schema);
 						operations = operations.concat(sliceOperations);
 					}
 

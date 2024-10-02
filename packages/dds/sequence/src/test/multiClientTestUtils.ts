@@ -21,6 +21,7 @@ export function constructClient(
 	dataStoreRuntimeOptions: Record<string | number, any> = {
 		intervalStickinessEnabled: true,
 		mergeTreeEnableObliterate: true,
+		mergeTreeEnableObliterateReconnect: true,
 	},
 	factory = SharedString.getFactory(),
 ) {

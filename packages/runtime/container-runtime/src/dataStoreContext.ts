@@ -52,7 +52,6 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	channelsTreeName,
-	gcDataBlobKey,
 	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -60,7 +59,6 @@ import {
 	isSnapshotFetchRequiredForLoadingGroupId,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,
@@ -71,7 +69,6 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
@@ -95,7 +92,10 @@ function createAttributes(
 		isRootDataStore,
 	};
 }
-export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
+export function createAttributesBlob(
+	pkg: readonly string[],
+	isRootDataStore: boolean,
+): ITreeEntry {
 	const attributes = createAttributes(pkg, isRootDataStore);
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
@@ -115,13 +115,9 @@ export interface ISnapshotDetails {
  * @internal
  */
 export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
-	getAttachData(
-		includeGCData: boolean,
-		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	};
+	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+
+	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -162,7 +158,8 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
  * Properties necessary for creating a local FluidDataStoreContext
  * @internal
  */
-export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
+export interface ILocalDetachedFluidDataStoreContextProps
+	extends ILocalFluidDataStoreContextProps {
 	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
@@ -256,9 +253,15 @@ export abstract class FluidDataStoreContext
 	public get tombstoned() {
 		return this._tombstoned;
 	}
-	/** If true, throw an error when a tombstone data store is used. */
-	public readonly gcThrowOnTombstoneUsage: boolean;
-	public readonly gcTombstoneEnforcementAllowed: boolean;
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	public readonly gcThrowOnTombstoneUsage: boolean = false;
+	/**
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	public readonly gcTombstoneEnforcementAllowed: boolean = false;
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	protected deleted: boolean = false;
@@ -306,6 +309,13 @@ export abstract class FluidDataStoreContext
 		return this._isInMemoryRoot;
 	}
 
+	/**
+	 * Returns the count of pending messages that are stored until the data store is realized.
+	 */
+	public get pendingCount(): number {
+		return this.pending?.length ?? 0;
+	}
+
 	protected registry: IFluidDataStoreRegistry | undefined;
 
 	protected detachedRuntimeCreation = false;
@@ -327,10 +337,6 @@ export abstract class FluidDataStoreContext
 	 * controlled via feature flags.
 	 */
 	private localChangesTelemetryCount: number;
-
-	// The used routes of this node as per the last GC run. This is used to update the used routes of the channel
-	// if it realizes after GC is run.
-	private lastUsedRoutes: string[] | undefined;
 
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
@@ -394,9 +400,6 @@ export abstract class FluidDataStoreContext
 			this.mc.logger,
 		);
 
-		this.gcThrowOnTombstoneUsage = this.parentContext.gcThrowOnTombstoneUsage;
-		this.gcTombstoneEnforcementAllowed = this.parentContext.gcTombstoneEnforcementAllowed;
-
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
@@ -436,7 +439,9 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	public abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	public abstract setAttachState(
+		attachState: AttachState.Attaching | AttachState.Attached,
+	): void;
 
 	private rejectDeferredRealize(
 		reason: string,
@@ -453,7 +458,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
-		assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
+		assert(
+			!this.detachedRuntimeCreation,
+			0x13d /* "Detached runtime creation on realize()" */,
+		);
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
@@ -560,14 +568,8 @@ export abstract class FluidDataStoreContext
 	): void {
 		const safeTelemetryProps = extractSafePropertiesFromMessage(message);
 		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
-		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
+		// "verifyNotClosed" which logs tombstone errors.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
-		if (this.tombstoned && this.gcThrowOnTombstoneUsage) {
-			throw new DataCorruptionError(
-				"Context is tombstoned! Call site [process]",
-				safeTelemetryProps,
-			);
-		}
 
 		this.summarizerNode.recordChange(message);
 
@@ -686,17 +688,10 @@ export abstract class FluidDataStoreContext
 
 	/**
 	 * After GC has run, called to notify the data store of routes used in it. These are used for the following:
-	 *
 	 * 1. To identify if this data store is being referenced in the document or not.
-	 *
 	 * 2. To determine if it needs to re-summarize in case used routes changed since last summary.
-	 *
-	 * 3. These are added to the summary generated by the data store.
-	 *
-	 * 4. To notify child contexts of their used routes. This is done immediately if the data store is loaded.
-	 * Else, it is done when realizing the data store.
-	 *
-	 * 5. To update the timestamp when this data store or any children are marked as unreferenced.
+	 * 3. To notify child contexts of their used routes. This is done immediately if the data store is loaded.
+	 * Else, it is done by the data stores's summarizer node when child summarizer nodes are created.
 	 *
 	 * @param usedRoutes - The routes that are used in this data store.
 	 */
@@ -704,18 +699,17 @@ export abstract class FluidDataStoreContext
 		// Update the used routes in this data store's summarizer node.
 		this.summarizerNode.updateUsedRoutes(usedRoutes);
 
-		/**
-		 * Store the used routes to update the channel if the data store is not loaded yet. If the used routes changed
-		 * since the previous run, the data store will be loaded during summarize since the used state changed. So, it's
-		 * safe to only store the last used routes.
-		 */
-		this.lastUsedRoutes = usedRoutes;
-
-		// If we are loaded, call the channel so it can update the used routes of the child contexts.
-		// If we are not loaded, we will update this when we are realized.
-		if (this.loaded) {
-			this.updateChannelUsedRoutes();
+		// If the channel doesn't exist yet (data store is not realized), the summarizer node will update it
+		// when it creates child nodes.
+		if (!this.channel) {
+			return;
 		}
+
+		// Remove the route to this data store, if it exists.
+		const usedChannelRoutes = usedRoutes.filter((id: string) => {
+			return id !== "/" && id !== "";
+		});
+		this.channel.updateUsedRoutes(usedChannelRoutes);
 	}
 
 	/**
@@ -724,34 +718,10 @@ export abstract class FluidDataStoreContext
 	 *
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.parentContext.addedGCOutboundRoute(fromPath, toPath);
-	}
-
-	/**
-	 * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
-	 * It is called in these two scenarios:
-	 * 1. When the used routes of the data store is updated and the data store is loaded.
-	 * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
-	 */
-	private updateChannelUsedRoutes() {
-		assert(this.loaded, 0x144 /* "Channel should be loaded when updating used routes" */);
-		assert(
-			this.channel !== undefined,
-			0x145 /* "Channel should be present when data store is loaded" */,
-		);
-
-		// If there is no lastUsedRoutes, GC has not run up until this point.
-		if (this.lastUsedRoutes === undefined) {
-			return;
-		}
-
-		// Remove the route to this data store, if it exists.
-		const usedChannelRoutes = this.lastUsedRoutes.filter((id: string) => {
-			return id !== "/" && id !== "";
-		});
-		this.channel.updateUsedRoutes(usedChannelRoutes);
+	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
 	/**
@@ -848,15 +818,6 @@ export abstract class FluidDataStoreContext
 		// Freeze the package path to ensure that someone doesn't modify it when it is
 		// returned in packagePath().
 		Object.freeze(this.pkg);
-
-		/**
-		 * Update the used routes of the channel. If GC has run before this data store was realized, we will have
-		 * the used routes saved. So, this will ensure that all the child contexts have up-to-date used routes as
-		 * per the last time GC was run.
-		 * Also, this data store may have been realized during summarize. In that case, the child contexts need to
-		 * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
-		 */
-		this.updateChannelUsedRoutes();
 	}
 
 	protected async bindRuntime(channel: IFluidDataStoreChannel, existing: boolean) {
@@ -893,18 +854,20 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Get the data required when attaching this context's DataStore.
+	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
-	 *
-	 * @returns the summary, type, and GC Data for this context's DataStore.
 	 */
-	public abstract getAttachData(
-		includeGCData: boolean,
+	public abstract getAttachSummary(
 		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	};
+	): ISummaryTreeWithStats;
+
+	/**
+	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's
+	 * outbound routes.
+	 */
+	public abstract getAttachGCData(
+		telemetryContext?: ITelemetryContext,
+	): IGarbageCollectionData;
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -954,7 +917,12 @@ export abstract class FluidDataStoreContext
 	) {
 		if (this.deleted) {
 			const messageString = `Context is deleted! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+			);
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
@@ -972,22 +940,21 @@ export abstract class FluidDataStoreContext
 
 		if (checkTombstone && this.tombstoned) {
 			const messageString = `Context is tombstoned! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+			);
 
-			sendGCUnexpectedUsageEvent(
-				this.mc,
+			this.mc.logger.sendTelemetryEvent(
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
-					category: this.gcThrowOnTombstoneUsage ? "error" : "generic",
-					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
+					category: "generic",
 					callSite,
 				},
-				this.pkg,
 				error,
 			);
-			if (this.gcThrowOnTombstoneUsage) {
-				throw error;
-			}
 		}
 	}
 
@@ -1011,12 +978,15 @@ export abstract class FluidDataStoreContext
 			eventName,
 			type,
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
-			stack: generateStack(),
+			stack: generateStack(30),
 		});
 		this.localChangesTelemetryCount--;
 	}
 
-	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+	public getCreateChildSummarizerNodeFn(
+		id: string,
+		createParam: CreateChildSummarizerNodeParam,
+	) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -1048,6 +1018,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1058,11 +1029,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (isInstanceOfISnapshot(props.snapshot)) {
 			this.blobContents = props.snapshot.blobContents;
 			this._baseSnapshot = props.snapshot.snapshotTree;
+			this.isSnapshotInISnapshotFormat = true;
 		} else {
 			this._baseSnapshot = props.snapshot;
-		}
-		if (this._baseSnapshot !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
+			this.isSnapshotInISnapshotFormat = false;
 		}
 	}
 
@@ -1081,8 +1051,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
-		// Check whether we need to fetch the snapshot first to load.
-		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
+		// Check whether we need to fetch the snapshot first to load. The snapshot should be in new format to see
+		// whether we want to evaluate to fetch snapshot or not for loadingGroupId. Otherwise, the snapshot
+		// will contain all the blobs.
+		if (
+			this.snapshotFetchRequired === undefined &&
+			this._baseSnapshot?.groupId !== undefined &&
+			this.isSnapshotInISnapshotFormat
+		) {
 			assert(
 				this.blobContents !== undefined,
 				0x97a /* Blob contents should be present to evaluate */,
@@ -1150,7 +1126,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
-		assert(this.pkg !== undefined, 0x8f6 /* The datastore context package should be defined */);
+		assert(
+			this.pkg !== undefined,
+			0x8f6 /* The datastore context package should be defined */,
+		);
 		return {
 			pkg: this.pkg,
 			isRootDataStore,
@@ -1164,12 +1143,16 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachData
+	 * @see FluidDataStoreContext.getAttachSummary
 	 */
-	public getAttachData(includeGCData: boolean): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	} {
+	public getAttachSummary(): ISummaryTreeWithStats {
+		throw new Error("Cannot attach remote store");
+	}
+
+	/**
+	 * @see FluidDataStoreContext.getAttachGCData
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
 	}
 }
@@ -1245,15 +1228,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachData
+	 * @see FluidDataStoreContext.getAttachSummary
 	 */
-	public getAttachData(
-		includeGCData: boolean,
-		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	} {
+	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
 			this.channel !== undefined,
 			0x14f /* "There should be a channel when generating attach message" */,
@@ -1271,22 +1248,24 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
-		if (includeGCData) {
-			const gcData = this.channel.getAttachGCData?.(telemetryContext);
-			if (gcData !== undefined) {
-				addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
-			}
-		}
 
 		// Add loadingGroupId to the summary
 		if (this.loadingGroupId !== undefined) {
 			attachSummary.summary.groupId = this.loadingGroupId;
 		}
 
-		return {
-			attachSummary,
-			type: this.pkg[this.pkg.length - 1],
-		};
+		return attachSummary;
+	}
+
+	/**
+	 * @see FluidDataStoreContext.getAttachGCData
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		assert(
+			this.channel !== undefined,
+			0x9a6 /* There should be a channel when generating attach GC data */,
+		);
+		return this.channel.getAttachGCData(telemetryContext);
 	}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
@@ -1338,16 +1317,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	 */
 	public delete() {
 		// TODO: GC:Validation - potentially prevent this from happening or asserting. Maybe throw here.
-		sendGCUnexpectedUsageEvent(
-			this.mc,
-			{
-				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
-				message: "Unexpected deletion of a local data store context",
-				category: "error",
-				gcTombstoneEnforcementAllowed: undefined,
-			},
-			this.pkg,
-		);
+		this.mc.logger.sendErrorEvent({
+			eventName: "GC_Deleted_DataStore_Unexpected_Delete",
+			message: "Unexpected deletion of a local data store context",
+		});
 		super.delete();
 	}
 }

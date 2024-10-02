@@ -4,7 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentAttributes,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Reads a blob from storage and parses it from JSON.
@@ -24,7 +27,9 @@ export async function seqFromTree(
 	tree: ISnapshotTree,
 	readAndParseBlob: ReadAndParseBlob,
 ): Promise<number> {
-	const attributesHash = tree.trees[".protocol"].blobs.attributes;
+	// TODO why are we non null asserting here?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const attributesHash = tree.trees[".protocol"]!.blobs.attributes!;
 	const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
 	return attrib.sequenceNumber;
 }

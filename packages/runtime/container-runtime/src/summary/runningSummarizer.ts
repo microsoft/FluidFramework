@@ -43,7 +43,11 @@ import {
 	SummarizerStopReason,
 	type IRetriableFailureError,
 } from "./summarizerTypes.js";
-import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
+import {
+	IAckedSummary,
+	IClientSummaryWatcher,
+	SummaryCollection,
+} from "./summaryCollection.js";
 import {
 	RetriableSummaryError,
 	SummarizeReason,
@@ -72,7 +76,10 @@ export const defaultMaxAttemptsForSubmitFailures = 5;
  * track of summaries that it is generating as they are broadcast and acked/nacked.
  * This object is created and controlled by Summarizer object.
  */
-export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> implements IDisposable {
+export class RunningSummarizer
+	extends TypedEventEmitter<ISummarizerEvents>
+	implements IDisposable
+{
 	public static async start(
 		logger: ITelemetryBaseLogger,
 		summaryWatcher: IClientSummaryWatcher,
@@ -234,7 +241,10 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		// Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
 		// configuration.maxAckWaitTime is composed from defaults, server values, and runtime overrides
 
-		const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
+		const maxAckWaitTime = Math.min(
+			this.configuration.maxAckWaitTime,
+			maxSummarizeAckWaitTime,
+		);
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
@@ -262,8 +272,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		});
 
 		const immediatelyRefreshLatestSummaryAck =
-			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ??
-			true;
+			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ?? true;
 		this.generator = new SummaryGenerator(
 			this.pendingAckTimer,
 			this.heuristicData,
@@ -442,7 +451,10 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	 * @param op - op to check
 	 * @returns true if this op can trigger a summary
 	 */
-	private opCanTriggerSummary(op: ISequencedDocumentMessage, runtimeMessage: boolean): boolean {
+	private opCanTriggerSummary(
+		op: ISequencedDocumentMessage,
+		runtimeMessage: boolean,
+	): boolean {
 		switch (op.type) {
 			case MessageType.Summarize:
 			case MessageType.SummaryAck:
@@ -587,8 +599,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 					...options,
 					summaryLogger,
 					cancellationToken: this.cancellationToken,
-					latestSummaryRefSeqNum:
-						this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+					latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				};
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
@@ -882,7 +893,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 					...results,
 					alreadyEnqueued: true,
 					overridden: true,
-			  }
+				}
 			: results;
 	}
 

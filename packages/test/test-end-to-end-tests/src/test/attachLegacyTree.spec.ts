@@ -5,7 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import { BuildNode, Change, SharedTree, StablePlace, TraitLabel } from "@fluid-experimental/tree";
+import {
+	BuildNode,
+	Change,
+	SharedTree,
+	StablePlace,
+	TraitLabel,
+} from "@fluid-experimental/tree";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 

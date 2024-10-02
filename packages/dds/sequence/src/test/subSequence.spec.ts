@@ -10,7 +10,7 @@ import {
 	createInsertSegmentOp,
 	createRemoveRangeOp,
 } from "@fluidframework/merge-tree/internal";
-import { TestClient } from "@fluidframework/merge-tree/internal/test";
+import { TestClient, addProperties } from "@fluidframework/merge-tree/internal/test";
 
 import { SubSequence } from "../sharedSequence.js";
 
@@ -36,7 +36,7 @@ class SubSequenceTestClient extends TestClient {
 	) {
 		const segment = new SubSequence(items);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = addProperties(segment.properties, props);
 		}
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),

@@ -3,47 +3,47 @@
  * Licensed under the MIT License.
  */
 
+import { Lazy, oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
-	EmptyKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-} from "../core/index.js";
-import {
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
-	FlexTreeFieldNode,
-	FlexTreeNode,
-	FlexTreeNodeSchema,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeUnboxField,
+	type FlexTreeNode,
+	type FlexTreeSequenceField,
 	getSchemaAndPolicy,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
+import { prepareContentForHydration } from "./proxies.js";
+import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
-	InsertableContent,
-	getOrCreateNodeProxy,
-	markContentType,
-	prepareContentForInsert,
-} from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
-import {
-	NodeKind,
+	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
-	type,
-	normalizeFieldSchema,
 } from "./schemaTypes.js";
-import { cursorFromFieldData } from "./toMapTree.js";
-import { TreeNode, TreeNodeValid } from "./types.js";
+import {
+	type WithType,
+	// eslint-disable-next-line import/no-deprecated
+	typeNameSymbol,
+	NodeKind,
+	type TreeNode,
+	type InternalTreeNode,
+	type TreeNodeSchema,
+	typeSchemaSymbol,
+	type Context,
+	getOrCreateNodeFromInnerNode,
+	type TreeNodeSchemaBoth,
+	getSimpleNodeSchemaFromInnerNode,
+} from "./core/index.js";
+import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
-import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, rawError } from "./rawNode.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	getKernel,
+	UnhydratedFlexTreeNode,
+	UnhydratedTreeSequenceField,
+} from "./core/index.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
+import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -51,7 +51,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * @privateRemarks
  * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
- * @public
+ * @system @sealed @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -131,27 +131,96 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 
 	/**
 	 * Moves the specified item to the desired location in the array.
-	 * @param index - The index to move the item to.
-	 * This is based on the state of the array before moving the source item.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationGap` parameter carefully.
+	 *
+	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
+	 *
+	 * WARNING - `destinationGap` describes a location between existing items *prior to applying the move operation*.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
+	 *
+	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if any of the input indices are not in the range [0, `array.length`).
 	 */
-	moveToIndex(index: number, sourceIndex: number): void;
+	moveToIndex(destinationGap: number, sourceIndex: number): void;
 
 	/**
 	 * Moves the specified item to the desired location in the array.
-	 * @param index - The index to move the item to.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationGap` parameter carefully.
+	 *
+	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
+	 *
+	 * WARNING - `destinationGap` describes a location between existing items *prior to applying the move operation*.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
+	 *
+	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceIndex - The index of the item to move.
 	 * @param source - The source array to move the item out of.
-	 * @throws Throws if any of the input indices are not in the range [0, `array.length`).
+	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
+	 * or if the index is not in the range [0, `array.length`].
 	 */
-	moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
+	moveToIndex(destinationGap: number, sourceIndex: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified items to the start of the array.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
@@ -162,6 +231,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
@@ -170,6 +240,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
@@ -180,34 +251,108 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
-	 * @param index - The index to move the items to.
-	 * This is based on the state of the array before moving the source items.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationGap` parameter carefully.
+	 *
+	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
+	 *
+	 * WARNING - `destinationGap` describes a location between existing items *prior to applying the move operation*.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
+	 *
+	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+	moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
-	 * @param index - The index to move the items to.
+	 *
+	 * WARNING - This API is easily misused.
+	 * Please read the documentation for the `destinationGap` parameter carefully.
+	 *
+	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
+	 *
+	 * WARNING - `destinationGap` describes a location between existing items *prior to applying the move operation*.
+	 *
+	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
+	 *
+	 * - `0` (between the start of the array and `A`'s original position)
+	 * - `1` (between `A`'s original position and `B`'s original position)
+	 * - `2` (between `B`'s original position and `C`'s original position)
+	 * - `3` (between `C`'s original position and the end of the array)
+	 *
+	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
+	 *
+	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
+	 * or relative to the start or end of the array:
+	 *
+	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
+	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
+	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
+	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
+	 *
+	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
+	 *
+	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
+	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
+	 *
+	 * Notice the asymmetry between `-1` and `+2` in the above examples.
+	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
+	 * If items A and B are adjacent, such that A precedes B,
+	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
+	 *
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(
-		index: number,
+		destinationGap: number,
 		sourceStart: number,
 		sourceEnd: number,
 		source: TMoveFrom,
 	): void;
+
+	/**
+	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
+	 */
+	values(): IterableIterator<T>;
 }
 
 /**
@@ -215,10 +360,11 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
  *
  * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
  *
- * @public
+ * @sealed @public
  */
-export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeArrayNodeBase<
+export interface TreeArrayNode<
+	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		TreeArrayNode
@@ -240,7 +386,7 @@ export const TreeArrayNode = {
 	 * ```
 	 */
 	spread: <T>(content: Iterable<T>) => create(content),
-};
+} as const;
 
 /**
  * Package internal construction API.
@@ -251,7 +397,7 @@ let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
  * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type.
- * @public
+ * @sealed @public
  */
 export class IterableTreeArrayContent<T> implements Iterable<T> {
 	static {
@@ -271,11 +417,10 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-function getSequenceField<
-	TTypes extends FlexAllowedTypes,
-	TSimpleType extends ImplicitAllowedTypes,
->(arrayNode: TreeArrayNode<TSimpleType>): FlexTreeSequenceField<TTypes> {
-	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
+function getSequenceField<TSimpleType extends ImplicitAllowedTypes>(
+	arrayNode: TreeArrayNode<TSimpleType>,
+): FlexTreeSequenceField {
+	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -307,7 +452,6 @@ const arrayPrototypeKeys = [
 	"some",
 	"toLocaleString",
 	"toString",
-	"values",
 
 	// "copyWithin",
 	// "fill",
@@ -379,33 +523,108 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
 	entries(): IterableIterator<[number, T]>;
-	every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is readonly S[];
-	every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
-	filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
-	filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
-	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
-	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
-	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+	every<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): this is readonly S[];
+	every(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
+	filter<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): S[];
+	filter(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): T[];
+	find<S extends T>(
+		predicate: (value: T, index: number, obj: readonly T[]) => value is S,
+		thisArg?: any,
+	): S | undefined;
+	find(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): T | undefined;
+	findIndex(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): number;
 	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
-	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
-	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+	flatMap<U, This = undefined>(
+		callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
+		thisArg?: This | undefined,
+	): U[];
+	forEach(
+		callbackfn: (value: T, index: number, array: readonly T[]) => void,
+		thisArg?: any,
+	): void;
 	includes(searchElement: T, fromIndex?: number | undefined): boolean;
 	indexOf(searchElement: T, fromIndex?: number | undefined): number;
 	join(separator?: string | undefined): string;
 	keys(): IterableIterator<number>;
 	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
 	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduceRight<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
 	slice(start?: number | undefined, end?: number | undefined): T[];
-	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+	some(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
 	toLocaleString(): string;
 	toString(): string;
-	values(): IterableIterator<T>;
 }
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
@@ -470,23 +689,17 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const value = field.boxedAt(maybeIndex);
-
-			if (value === undefined) {
-				return undefined;
-			}
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(value);
+			const maybeContent = field.at(maybeIndex);
+			return isFlexTreeNode(maybeContent)
+				? getOrCreateNodeFromInnerNode(maybeContent)
+				: maybeContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
 				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
 				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
 				// Therefor length has to be handled in this proxy.
-				// Since its not actually mutable, return false so setting it will produce a type error.
+				// Since it's not actually mutable, return false so setting it will produce a type error.
 				return false;
 			}
 
@@ -501,9 +714,12 @@ function createArrayNodeProxy(
 			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
 			if (maybeIndex !== undefined) {
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
-				return false;
+				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
+				throw new UsageError(
+					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
+				);
 			}
-			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
+			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
@@ -531,15 +747,12 @@ function createArrayNodeProxy(
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
-				const val = field.boxedAt(maybeIndex);
+				const val = field.at(maybeIndex);
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
-					//       inner field.
-					value: val === undefined ? val : getOrCreateNodeProxy(val),
-					writable: true, // For MVP, disallow setting indexed properties.
+					value: isFlexTreeNode(val) ? getOrCreateNodeFromInnerNode(val) : val,
+					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
 				};
@@ -554,6 +767,13 @@ function createArrayNodeProxy(
 				};
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
+		},
+		defineProperty(target, key, attributes) {
+			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			if (maybeIndex !== undefined) {
+				throw new UsageError("Shadowing of array indices is not permitted.");
+			}
+			return Reflect.defineProperty(dispatchTarget, key, attributes);
 		},
 	});
 	return proxy;
@@ -577,30 +797,41 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public static readonly kind = NodeKind.Array;
 
 	protected abstract get simpleSchema(): T;
+	protected abstract get allowedTypes(): ReadonlySet<TreeNodeSchema>;
 
-	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
+	public constructor(
+		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+	) {
+		super(input);
+	}
+
+	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
 		const sequenceField = getSequenceField(this);
+		const content = value as readonly (
+			| InsertableContent
+			| IterableTreeArrayContent<InsertableContent>
+		)[];
 
-		const content = prepareContentForInsert(
-			(
-				value as readonly (
-					| InsertableContent
-					| IterableTreeArrayContent<InsertableContent>
-				)[]
-			).flatMap((c) => (c instanceof IterableTreeArrayContent ? Array.from(c) : [c])),
-			sequenceField.context.checkout.forest,
-		);
+		const mapTrees = content
+			.flatMap((c): InsertableContent[] =>
+				c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+			)
+			.map((c) =>
+				mapTreeFromNodeData(
+					c,
+					this.simpleSchema,
+					sequenceField.context.isHydrated()
+						? sequenceField.context.nodeKeyManager
+						: undefined,
+					getSchemaAndPolicy(sequenceField),
+				),
+			);
 
-		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
-		// but it works since cursorFromFieldData special cases arrays.
-		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
+		if (sequenceField.context.isHydrated()) {
+			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
+		}
 
-		return cursorFromFieldData(
-			content,
-			simpleFieldSchema,
-			getFlexNode(this).context.nodeKeyManager,
-			getSchemaAndPolicy(sequenceField),
-		);
+		return mapTrees;
 	}
 
 	public toJSON(): unknown {
@@ -627,7 +858,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return Array.prototype[Symbol.unscopables];
 	}
 
-	public at(this: TreeArrayNode, index: number): TreeNode | TreeValue | undefined {
+	public at(
+		this: TreeArrayNode<T>,
+		index: number,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
 		const field = getSequenceField(this);
 		const val = field.boxedAt(index);
 
@@ -635,23 +869,27 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			return val;
 		}
 
-		return getOrCreateNodeProxy(val);
+		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
-		getSequenceField(this).insertAt(index, this.#cursorFromFieldData(value));
+		const field = getSequenceField(this);
+		validateIndex(index, field, "insertAt", true);
+		const content = this.#mapTreesFromFieldData(value);
+		field.editor.insert(index, content);
 	}
 	public insertAtStart(...value: Insertable<T>): void {
-		getSequenceField(this).insertAtStart(this.#cursorFromFieldData(value));
+		this.insertAt(0, ...value);
 	}
 	public insertAtEnd(...value: Insertable<T>): void {
-		getSequenceField(this).insertAtEnd(this.#cursorFromFieldData(value));
+		this.insertAt(this.length, ...value);
 	}
 	public removeAt(index: number): void {
-		getSequenceField(this).removeAt(index);
+		const field = getSequenceField(this);
+		validateIndex(index, field, "removeAt");
+		field.editor.remove(index, 1);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
-		const fieldEditor = field.sequenceEditor();
 		const { length } = field;
 		const removeStart = start ?? 0;
 		const removeEnd = Math.min(length, end ?? length);
@@ -661,62 +899,138 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			// This catches both the case where start is > array.length and when start is > end.
 			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
 		}
-		fieldEditor.remove(removeStart, removeEnd - removeStart);
+		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveToStart(sourceIndex);
-		}
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToStart");
+		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveToEnd(sourceIndex);
-		}
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToEnd");
+		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveToIndex(index, sourceIndex);
-		}
+	public moveToIndex(
+		destinationGap: number,
+		sourceIndex: number,
+		source?: TreeArrayNode,
+	): void {
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		const destinationField = getSequenceField(this);
+		validateIndex(destinationGap, destinationField, "moveToIndex", true);
+		validateIndex(sourceIndex, sourceField, "moveToIndex");
+		this.moveRangeToIndex(destinationGap, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToStart(
-				sourceStart,
-				sourceEnd,
-				getSequenceField(source),
-			);
-		} else {
-			getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
-		}
-	}
-	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
-		}
-	}
-	public moveRangeToIndex(
-		index: number,
+	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
 		source?: TreeArrayNode,
 	): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToIndex(
-				index,
-				sourceStart,
-				sourceEnd,
-				getSequenceField(source),
-			);
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToStart",
+		);
+		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
+	}
+	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToEnd",
+		);
+		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
+	}
+	public moveRangeToIndex(
+		destinationGap: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source?: TreeArrayNode,
+	): void {
+		const destinationField = getSequenceField(this);
+		const destinationSchema = this.allowedTypes;
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
+
+		validateIndex(destinationGap, destinationField, "moveRangeToIndex", true);
+		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
+
+		// TODO: determine support for move across different sequence types
+		if (sourceField !== destinationField) {
+			for (let i = sourceStart; i < sourceEnd; i++) {
+				const sourceNode = sourceField.boxedAt(i) ?? oob();
+				const sourceSchema = getSimpleNodeSchemaFromInnerNode(sourceNode);
+				if (!destinationSchema.has(sourceSchema)) {
+					throw new UsageError("Type in source sequence is not allowed in destination.");
+				}
+			}
+		}
+
+		const movedCount = sourceEnd - sourceStart;
+		if (!destinationField.context.isHydrated()) {
+			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+				throw new UsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				);
+			}
+
+			if (sourceField.context.isHydrated()) {
+				throw new UsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				);
+			}
+
+			if (sourceField !== destinationField || destinationGap < sourceStart) {
+				destinationField.editor.insert(
+					destinationGap,
+					sourceField.editor.remove(sourceStart, movedCount),
+				);
+			} else if (destinationGap > sourceStart + movedCount) {
+				destinationField.editor.insert(
+					destinationGap - movedCount,
+					sourceField.editor.remove(sourceStart, movedCount),
+				);
+			}
 		} else {
-			getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
+			if (!sourceField.context.isHydrated()) {
+				throw new UsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				);
+			}
+			if (sourceField.context !== destinationField.context) {
+				throw new UsageError("Cannot move elements between two different TreeViews.");
+			}
+
+			destinationField.context.checkout.editor.move(
+				sourceField.getFieldPath(),
+				sourceStart,
+				movedCount,
+				destinationField.getFieldPath(),
+				destinationGap,
+			);
+		}
+	}
+
+	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+		return this.generateValues(getKernel(this).generationNumber);
+	}
+	private *generateValues(
+		initialLastUpdatedStamp: number,
+	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+		const kernel = getKernel(this);
+		if (initialLastUpdatedStamp !== kernel.generationNumber) {
+			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+		}
+		for (let i = 0; i < this.length; i++) {
+			yield this.at(i) ?? fail("Index is out of bounds");
+			if (initialLastUpdatedStamp !== kernel.generationNumber) {
+				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+			}
 		}
 	}
 }
@@ -726,6 +1040,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  *
  * @param name - Unique identifier for this schema including the factory's scope.
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
@@ -735,19 +1050,23 @@ export function arraySchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-): TreeNodeSchemaClass<
-	TName,
-	NodeKind.Array,
-	TreeArrayNode<T> & WithType<TName>,
-	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-	ImplicitlyConstructable,
-	T
-> {
-	let flexSchema: FlexFieldNodeSchema;
+) {
+	type Output = TreeNodeSchemaBoth<
+		TName,
+		NodeKind.Array,
+		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		ImplicitlyConstructable,
+		T
+	>;
+
+	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+
+	let unhydratedContext: Context;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class schema extends CustomArrayNodeBase<T> {
+	class Schema extends CustomArrayNodeBase<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -765,66 +1084,80 @@ export function arraySchema<
 					configurable: false,
 				});
 			}
-			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as schema;
+			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as Schema;
 		}
 
 		public static override buildRawNode<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): RawTreeNode<FlexTreeNodeSchema, unknown> {
-			return new RawFieldNode(
-				flexSchema,
-				copyContent(
-					flexSchema.name,
-					input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				) as object,
+		): UnhydratedFlexTreeNode {
+			return UnhydratedFlexTreeNode.getOrCreate(
+				unhydratedContext,
+				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
-			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
+			const schema = this as unknown as TreeNodeSchema;
+			unhydratedContext = getUnhydratedContext(schema);
+
+			// First run, do extra validation.
+			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
+			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
+			{
+				let prototype: object = this.prototype;
+				// There isn't a clear cleaner way to author this loop.
+				while (prototype !== Schema.prototype) {
+					// Search prototype keys and check for positive integers. Throw if any are found.
+					// Shadowing of index properties on array nodes is not supported.
+					for (const key of Object.getOwnPropertyNames(prototype)) {
+						const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+						if (maybeIndex !== undefined) {
+							throw new UsageError(
+								`Schema ${identifier} defines an inherited index property "${key.toString()}" which shadows a possible array index. Shadowing of array indices is not permitted.`,
+							);
+						}
+					}
+
+					// Since this stops at the array node base schema, it should never see a null prototype, so this case is safe.
+					// Additionally, if the prototype chain is ever messed up such that the array base schema is not in it,
+					// the null that would show up here does at least ensure this code throws instead of hanging.
+					prototype = Reflect.getPrototypeOf(prototype) as object;
+				}
+			}
+
+			return unhydratedContext;
 		}
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
+		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
+			return lazyChildTypes.value;
+		}
 
-		public get [type](): TName {
+		// eslint-disable-next-line import/no-deprecated
+		public get [typeNameSymbol](): TName {
 			return identifier;
+		}
+		public get [typeSchemaSymbol](): Output {
+			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
 		protected get simpleSchema(): T {
 			return info;
 		}
+		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
+			return lazyChildTypes.value;
+		}
 	}
 
-	return schema;
-}
-
-/**
- * The implementation of a field node created by {@link createRawNode}.
- */
-class RawFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends RawTreeNode<TSchema, InsertableContent>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of an array node");
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of an array node");
-	}
-}
-
-function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>): T[] {
-	const copy = Array.from(content);
-	markContentType(typeName, copy);
-	return copy;
+	const output: Output = Schema;
+	return output;
 }
 
 function validateSafeInteger(index: number): void {
@@ -837,5 +1170,42 @@ function validatePositiveIndex(index: number): void {
 	validateSafeInteger(index);
 	if (index < 0) {
 		throw new UsageError(`Expected non-negative index, got ${index}.`);
+	}
+}
+
+function validateIndex(
+	index: number,
+	array: { readonly length: number },
+	methodName: string,
+	allowOnePastEnd: boolean = false,
+): void {
+	validatePositiveIndex(index);
+	if (allowOnePastEnd) {
+		if (index > array.length) {
+			throw new UsageError(
+				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+			);
+		}
+	} else {
+		if (index >= array.length) {
+			throw new UsageError(
+				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+			);
+		}
+	}
+}
+
+function validateIndexRange(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+	methodName: string,
+): void {
+	validateIndex(startIndex, array, methodName, true);
+	validateIndex(endIndex, array, methodName, true);
+	if (startIndex > endIndex || array.length < endIndex) {
+		throw new UsageError(
+			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+		);
 	}
 }

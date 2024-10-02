@@ -47,7 +47,6 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	}
 
 	const config = {
-		"exit": true,
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",

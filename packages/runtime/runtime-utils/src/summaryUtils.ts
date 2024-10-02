@@ -30,6 +30,7 @@ import {
 	IGarbageCollectionData,
 	ISummarizeResult,
 	ITelemetryContextExt,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -146,25 +147,44 @@ export function addSummarizeResultToSummary(
 }
 
 /**
+ * An object who's properties are used to initialize a {@link SummaryTreeBuilder}
+ * @legacy
+ * @alpha
+ */
+export interface SummaryTreeBuilderParams {
+	/**
+	 * This value will become the {@link @fluidframework/driver-definitions#ISummaryTree.groupId}
+	 * of the {@link @fluidframework/driver-definitions#ISummaryTree} built by the {@link SummaryTreeBuilder}.
+	 */
+	groupId?: string;
+}
+/**
+ * @legacy
  * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
+	private readonly groupId?: string;
 
 	public get summary(): ISummaryTree {
-		return {
+		const summary: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
 		};
+		if (this.groupId !== undefined) {
+			summary.groupId = this.groupId;
+		}
+		return summary;
 	}
 
 	public get stats(): Readonly<ISummaryStats> {
 		return { ...this.summaryStats };
 	}
 
-	constructor() {
+	constructor(params?: { groupId?: string }) {
 		this.summaryStats = mergeStats();
 		this.summaryStats.treeNodeCount++;
+		this.groupId = params?.groupId;
 	}
 
 	private readonly summaryTree: { [path: string]: SummaryObject } = {};
@@ -185,6 +205,16 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		);
 	}
 
+	/**
+	 * Adds an {@link @fluidframework/driver-definitions#ISummaryHandle} that references a subtree, blob, or attachment in a previous summary.
+	 *
+	 * @remarks
+	 * There are special limitations to both the key and handle parameters: We use encodeURIComponent and decodeURIComponent to encode and decode the key and handle parameters after they are added to the summary tree. This means that the key and handle parameters must be valid URI components. If they are not, the encoding and decoding will fail and the summary will not be generated correctly.
+	 *
+	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
+	 * @param handleType - the type of {@link @fluidframework/driver-definitions#SummaryObject} besides a SummaryHandle, i.e. {@link @fluidframework/driver-definitions#SummaryType.Tree}, {@link @fluidframework/driver-definitions#SummaryType.Blob}, {@link @fluidframework/driver-definitions#SummaryType.Attachment}
+	 * @param handle - The path pointing to the part of the previous summary being used to duplicate the data. Use {@link @fluidframework/driver-definitions#ISummaryHandle.handle} to help generate proper handle strings. Should not contain any "/" characters.
+	 */
 	public addHandle(
 		key: string,
 		handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
@@ -216,6 +246,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @legacy
  * @alpha
  */
 export function convertToSummaryTreeWithStats(
@@ -228,9 +259,7 @@ export function convertToSummaryTreeWithStats(
 			case TreeEntry.Blob: {
 				const blob = entry.value;
 				const content =
-					blob.encoding === "base64"
-						? IsoBuffer.from(blob.contents, "base64")
-						: blob.contents;
+					blob.encoding === "base64" ? IsoBuffer.from(blob.contents, "base64") : blob.contents;
 				builder.addBlob(entry.path, content);
 				break;
 			}
@@ -266,7 +295,10 @@ export function convertToSummaryTreeWithStats(
  * @param fullTree - true to never use handles, even if id is specified
  * @internal
  */
-export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): ISummarizeResult {
+export function convertToSummaryTree(
+	snapshot: ITree,
+	fullTree: boolean = false,
+): ISummarizeResult {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (snapshot.id && !fullTree) {
 		const stats = mergeStats();
@@ -297,14 +329,18 @@ export function convertSnapshotTreeToSummaryTree(
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
 		if (snapshot.blobsContents !== undefined) {
-			const content: ArrayBufferLike = snapshot.blobsContents[id];
+			// TODO Why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const content: ArrayBufferLike = snapshot.blobsContents[id]!;
 			if (content !== undefined) {
 				decoded = bufferToString(content, "utf-8");
 			}
 			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
 			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
 		} else if (snapshot.blobs[id] !== undefined) {
-			decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+			// Non null asserting here because of the undefined check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			decoded = fromBase64ToUtf8(snapshot.blobs[id]!);
 		}
 		if (decoded !== undefined) {
 			builder.addBlob(path, decoded);
@@ -386,7 +422,7 @@ export function processAttachMessageGCData(
 	snapshot: ITree | null,
 	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
 ): boolean {
-	const gcDataEntry = snapshot?.entries.find((e) => e.path === ".gcdata");
+	const gcDataEntry = snapshot?.entries.find((e) => e.path === gcDataBlobKey);
 
 	// Old attach messages won't have GC Data
 	// (And REALLY old DataStore Attach messages won't even have a snapshot!)

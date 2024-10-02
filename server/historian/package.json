@@ -15,7 +15,7 @@
 		"build:compile": "pnpm run -r --stream build:compile",
 		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
-		"clean": "rimraf --glob \"dist\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"lint": "npm run prettier && npm run ci:eslint",
@@ -43,9 +43,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.44.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/compression": "0.0.36",
 		"@types/cors": "^2.8.4",

@@ -27,7 +27,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		this._policies = policies;
 	}
 
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this._policies ?? this.internalStorageService.policies;
 	}
 
@@ -55,7 +55,12 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		scenarioName?: string,
 		fetchSource?: FetchSource,
 	): Promise<IVersion[]> {
-		return this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource);
+		return this.internalStorageService.getVersions(
+			versionId,
+			count,
+			scenarioName,
+			fetchSource,
+		);
 	}
 
 	public async uploadSummaryWithContext(

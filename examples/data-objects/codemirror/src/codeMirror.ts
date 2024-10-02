@@ -4,7 +4,12 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,

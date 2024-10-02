@@ -18,7 +18,11 @@ import { detectOutboundReferences } from "@fluidframework/container-runtime/inte
 import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
+import {
+	DirectoryFactory,
+	type ISharedDirectory,
+	MapFactory,
+} from "@fluidframework/map/internal";
 import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection/internal";
@@ -29,7 +33,7 @@ import {
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 /**
@@ -140,11 +144,10 @@ describe("DDS Handle Encoding", () => {
 					h: builder.optional(builder.handle),
 				}) {}
 
-				const config = new TreeConfiguration(Bar, () => ({
-					h: undefined,
-				}));
+				const config = new TreeViewConfiguration({ schema: Bar });
 
-				const treeView = dds.schematize(config);
+				const treeView = dds.viewWith(config);
+				treeView.initialize({ h: undefined });
 
 				treeView.root.h = handle;
 			},

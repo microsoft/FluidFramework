@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
-import { insertText, useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils.js";
+import {
+	insertText,
+	obliterateRange,
+	useStrictPartialLengthChecks,
+	validatePartialLengths,
+} from "./testUtils.js";
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;
@@ -109,14 +114,15 @@ describe("obliterate partial lengths", () => {
 	describe("overlapping remove+obliterate", () => {
 		it("passes for local remove and remote obliterate", () => {
 			const localRemoveOp = client.removeRangeLocal(0, "hello ".length);
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, client.mergeTree, [
@@ -170,14 +176,15 @@ describe("obliterate partial lengths", () => {
 				refSeq,
 				client.getLongClientId(remoteClientId),
 			);
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,
 				clientId: remoteClientId + 1,
 				seq: refSeq + 2,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, client.mergeTree, [
@@ -211,14 +218,15 @@ describe("obliterate partial lengths", () => {
 	describe("overlapping obliterate+obliterate", () => {
 		it("passes for local obliterate and remote obliterate", () => {
 			const localObliterateOp = client.obliterateRangeLocal(0, "hello ".length);
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, client.mergeTree, [
@@ -242,14 +250,15 @@ describe("obliterate partial lengths", () => {
 		});
 
 		it("passes for remote obliterate and local obliterate", () => {
-			client.obliterateRange({
+			obliterateRange({
+				mergeTree: client.mergeTree,
 				start: 0,
 				end: "hello ".length,
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			const localObliterateOp = client.obliterateRangeLocal(0, "hello".length);
 

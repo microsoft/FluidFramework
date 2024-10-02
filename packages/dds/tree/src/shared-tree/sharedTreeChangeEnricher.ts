@@ -6,16 +6,16 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AnchorSet,
-	DeltaDetachedNodeId,
-	DetachedFieldIndex,
-	IEditableForest,
-	RevisionTag,
-	TreeStoredSchemaRepository,
+	type DeltaDetachedNodeId,
+	type DetachedFieldIndex,
+	type IEditableForest,
+	type RevisionTag,
+	type TreeStoredSchemaRepository,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
 import {
-	TreeChunk,
+	type TreeChunk,
 	chunkTree,
 	defaultChunkPolicy,
 	intoDelta,
@@ -24,11 +24,12 @@ import {
 } from "../feature-libraries/index.js";
 import { disposeSymbol } from "../util/index.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import {
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type {
 	ChangeEnricherMutableCheckout,
 	ChangeEnricherReadonlyCheckout,
 } from "../shared-tree-core/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export class SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherReadonlyCheckout<SharedTreeChange>
@@ -44,6 +45,7 @@ export class SharedTreeReadonlyChangeEnricher
 		protected readonly forest: IEditableForest,
 		private readonly schema: TreeStoredSchemaRepository,
 		protected readonly removedRoots: DetachedFieldIndex,
+		private readonly idCompressor?: IIdCompressor,
 	) {}
 
 	public fork(): ChangeEnricherMutableCheckout<SharedTreeChange> {
@@ -70,7 +72,10 @@ export class SharedTreeReadonlyChangeEnricher
 			const parentField = this.removedRoots.toFieldKey(root);
 			cursor.enterField(parentField);
 			cursor.enterNode(0);
-			return chunkTree(cursor, defaultChunkPolicy);
+			return chunkTree(cursor, {
+				policy: defaultChunkPolicy,
+				idCompressor: this.idCompressor,
+			});
 		}
 		return undefined;
 	};
@@ -87,7 +92,7 @@ export class SharedTreeMutableChangeEnricher
 				case "data": {
 					const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
 					const visitor = this.forest.acquireVisitor();
-					visitDelta(delta, visitor, this.removedRoots);
+					visitDelta(delta, visitor, this.removedRoots, revision);
 					visitor.free();
 					break;
 				}

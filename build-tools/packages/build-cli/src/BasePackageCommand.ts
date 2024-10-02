@@ -83,7 +83,7 @@ export abstract class PackageCommand<
 		}
 
 		const ctx = await this.getContext();
-		const { selected, filtered } = selectAndFilterPackages(
+		const { selected, filtered } = await selectAndFilterPackages(
 			ctx,
 			this.selectionOptions,
 			this.filterOptions,

@@ -12,7 +12,7 @@
  */
 export declare class Buffer extends Uint8Array {
 	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-	toString(encoding?: "utf8" | "utf-8" | "base64"): string;
+	public toString(encoding?: "utf8" | "utf-8" | "base64"): string;
 
 	/**
 	 * Static constructor
@@ -23,8 +23,8 @@ export declare class Buffer extends Uint8Array {
 	 *
 	 * @privateRemarks TODO: Use actual types
 	 */
-	static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
-	static isBuffer(obj: unknown): obj is Buffer;
+	public static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
+	public static isBuffer(obj: unknown): obj is Buffer;
 }
 
 /**
@@ -80,7 +80,7 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  * @param encoding - Output string's encoding
  * @returns The blob in string format
  *
- * @alpha
+ * @internal
  */
 export const bufferToString = (
 	blob: ArrayBufferLike,

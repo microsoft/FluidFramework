@@ -1,13 +1,13 @@
 {
 	"name": "@fluid-example/tree-shim",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.4.0",
 	"private": true,
 	"description": "Migrating from legacy SharedTree to new SharedTree using a tree shim.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/apps/tree-shim"
+		"directory": "examples/version-migration/tree-shim"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -16,11 +16,14 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -57,11 +60,11 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@biomejs/biome": "~1.8.3",
+		"@fluid-tools/build-cli": "^0.46.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/build-tools": "^0.46.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
@@ -69,10 +72,10 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/uuid": "^9.0.2",
 		"cross-env": "^7.0.3",
-		"css-loader": "^6.11.0",
+		"css-loader": "^7.1.2",
 		"eslint": "~8.55.0",
 		"expect-puppeteer": "^9.0.2",
-		"html-webpack-plugin": "^5.5.0",
+		"html-webpack-plugin": "^5.6.0",
 		"jest": "^29.6.2",
 		"jest-environment-puppeteer": "^9.0.2",
 		"jest-junit": "^10.0.0",
@@ -82,15 +85,15 @@
 		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
-		"style-loader": "^1.0.0",
-		"tinylicious": "^5.0.0-265463",
+		"style-loader": "^4.0.0",
+		"tinylicious": "^5.0.0",
 		"ts-jest": "^29.1.1",
-		"ts-loader": "^9.3.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.15.1",
-		"webpack-merge": "^5.8.0"
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4",
+		"webpack-dev-server": "~4.15.2",
+		"webpack-merge": "^6.0.1"
 	},
 	"fluid": {
 		"browser": {
@@ -104,6 +107,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

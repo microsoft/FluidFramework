@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import {
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../codec/index.js";
+import {
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	schemaFormat,
@@ -19,7 +23,8 @@ import { brand, fail } from "../../util/index.js";
 import { Format } from "./format.js";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
-	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> = Object.create(null);
+	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> =
+		Object.create(null);
 	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
 		const schema = repo.nodeSchema.get(name) ?? fail("missing schema");

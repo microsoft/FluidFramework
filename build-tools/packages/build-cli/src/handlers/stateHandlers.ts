@@ -42,7 +42,6 @@ export abstract class BaseStateHandler implements StateHandler {
 		data: unknown,
 	): Promise<boolean>;
 
-	// eslint-disable-next-line no-useless-constructor
 	public constructor(
 		protected readonly machine: Machine<unknown>,
 		protected readonly log: CommandLogger,

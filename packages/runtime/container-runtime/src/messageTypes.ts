@@ -17,6 +17,7 @@ import { IChunkedOp } from "./opLifecycle/index.js";
 import { IDocumentSchemaChangeMessage } from "./summary/index.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export enum ContainerMessageType {
@@ -60,6 +61,7 @@ export enum ContainerMessageType {
 /**
  * How should an older client handle an unrecognized remote op type?
  *
+ * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
  * @internal
  */
 export type CompatModeBehavior =
@@ -71,6 +73,7 @@ export type CompatModeBehavior =
 /**
  * All the info an older client would need to know how to handle an unrecognized remote op type
  *
+ * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
  * @internal
  */
 export interface IContainerRuntimeMessageCompatDetails {
@@ -85,16 +88,22 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents>
-	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
+type TypedContainerRuntimeMessage<
+	TType extends ContainerMessageType,
+	TContents,
+	TUSedCompatDetails extends boolean = false,
+> = {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
 	contents: TContents;
-}
+} & (TUSedCompatDetails extends true
+	? Partial<RecentlyAddedContainerRuntimeMessageDetails>
+	: { compatDetails?: undefined });
 
 /**
  * Additional details expected for any recently added message.
+ * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
  * @internal
  */
 export interface RecentlyAddedContainerRuntimeMessageDetails {
@@ -136,7 +145,8 @@ export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 >;
 export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
-	GarbageCollectionMessage
+	GarbageCollectionMessage,
+	true // TUsedCompatDetails
 >;
 export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
@@ -213,42 +223,8 @@ export type InboundSequencedContainerRuntimeMessage = Omit<
 > &
 	InboundContainerRuntimeMessage;
 
-/** Essentially ISequencedDocumentMessage except that `type` is not `string` to enable narrowing
- * as `Exclude<string, InboundContainerRuntimeMessage['type']>` is not supported.
- * There should never be a runtime value of "__not_a_...".
- * Currently additionally replaces `contents` type until protocol-definitions update is taken with `unknown` instead of `any`.
- */
-type InboundSequencedNonContainerRuntimeMessage = Omit<
-	ISequencedDocumentMessage,
-	"type" | "contents"
-> & { type: "__not_a_container_runtime_message_type__"; contents: unknown };
-
-export type InboundSequencedContainerRuntimeMessageOrSystemMessage =
-	| InboundSequencedContainerRuntimeMessage
-	| InboundSequencedNonContainerRuntimeMessage;
-
 /** A [loose] InboundSequencedContainerRuntimeMessage that is recent and may contain compat details.
  * It exists solely to to provide access to those details.
  */
 export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDocumentMessage &
 	Partial<RecentlyAddedContainerRuntimeMessageDetails>;
-
-/**
- * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime
- *
- * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
- * This way stringified values can be compared.
- *
- * @deprecated this is an internal type which should not be used outside of the package.
- * Internally, it is superseded by `TypedContainerRuntimeMessage`.
- *
- * @internal
- */
-export interface ContainerRuntimeMessage {
-	/** Type of the op, within the ContainerRuntime's domain */
-	type: ContainerMessageType;
-	/** Domain-specific contents, interpreted according to the type */
-	contents: any;
-	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
-	compatDetails?: IContainerRuntimeMessageCompatDetails;
-}

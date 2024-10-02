@@ -6,6 +6,7 @@
 import type { IsoDate } from "./date.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IDocumentAttributes {
@@ -21,6 +22,7 @@ export interface IDocumentAttributes {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export enum FileMode {
@@ -32,6 +34,7 @@ export enum FileMode {
 
 /**
  * Raw blob stored within the tree.
+ * @legacy
  * @alpha
  */
 export interface IBlob {
@@ -48,6 +51,7 @@ export interface IBlob {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IAttachment {
@@ -55,6 +59,7 @@ export interface IAttachment {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICreateBlobResponse {
@@ -63,6 +68,7 @@ export interface ICreateBlobResponse {
 
 /**
  * A tree entry wraps a path with a type of node.
+ * @legacy
  * @alpha
  */
 export type ITreeEntry = {
@@ -93,6 +99,7 @@ export type ITreeEntry = {
 
 /**
  * Type of entries that can be stored in a tree.
+ * @legacy
  * @alpha
  */
 export enum TreeEntry {
@@ -102,6 +109,7 @@ export enum TreeEntry {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ITree {
@@ -128,6 +136,7 @@ export interface ITree {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISnapshotTree {
@@ -159,6 +168,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 
 /**
  * Represents a version of the snapshot of a data store.
+ * @legacy
  * @alpha
  */
 export interface IVersion {

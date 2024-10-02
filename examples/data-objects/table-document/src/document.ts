@@ -52,7 +52,10 @@ export interface ITableDocumentEvents extends IEvent {
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
  * @alpha
  */
-export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
+export class TableDocument
+	extends DataObject<{ Events: ITableDocumentEvents }>
+	implements ITable
+{
 	public static getFactory() {
 		return TableDocument.factory;
 	}

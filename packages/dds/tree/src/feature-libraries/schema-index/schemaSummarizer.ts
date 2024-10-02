@@ -5,12 +5,12 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -18,18 +18,21 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
-import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
+import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import {
+	type MutableTreeStoredSchema,
+	type TreeStoredSchema,
+	schemaDataIsEmpty,
+} from "../../core/index.js";
+import type {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { JsonCompatible } from "../../util/index.js";
-import { CollabWindow } from "../incrementalSummarizationUtils.js";
+import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
-import { Format } from "./format.js";
+import type { Format } from "./format.js";
 
 const schemaStringKey = "SchemaString";
 /**
@@ -123,18 +126,11 @@ export class SchemaSummarizer implements Summarizable {
 }
 
 /**
- * Dumps schema into a deterministic JSON compatible semi-human readable but unspecified format.
+ * Dumps schema into a deterministic JSON compatible semi-human readable format.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
- *
- * This format may change across major versions of this package: such changes are considered breaking.
- * Beyond that, no compatibility guarantee is provided for this format: it should never be relied upon to load data, it should only be used for comparing outputs from this function.
- * @privateRemarks
- * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
- * This intentionally does not leak the format types in the API.
- * @internal
  */
-export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
+export function encodeTreeSchema(schema: TreeStoredSchema): Format {
 	return encodeRepo(schema);
 }

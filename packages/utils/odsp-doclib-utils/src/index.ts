@@ -41,6 +41,7 @@ export {
 	fetchIncorrectResponse,
 	getSPOAndGraphRequestIdsFromResponse,
 	hasFacetCodes,
+	hasRedirectionLocation,
 	OdspErrorResponse,
 	OdspErrorResponseInnerError,
 	OdspRedirectError,

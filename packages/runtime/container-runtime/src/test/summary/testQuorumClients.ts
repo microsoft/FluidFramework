@@ -7,7 +7,10 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 import { IQuorumEvents } from "@fluidframework/driver-definitions/internal";
 
-export class TestQuorumClients extends TypedEventEmitter<IQuorumEvents> implements IQuorumClients {
+export class TestQuorumClients
+	extends TypedEventEmitter<IQuorumEvents>
+	implements IQuorumClients
+{
 	public disposed = false;
 	public dispose() {
 		this.disposed = true;

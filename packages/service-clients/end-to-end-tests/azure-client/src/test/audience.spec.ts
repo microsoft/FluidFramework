@@ -49,12 +49,11 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.findOriginalMember,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.findOriginalMember,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -95,12 +94,11 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.findPartnerMember,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.findPartnerMember,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -160,12 +158,11 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.observeMemberLeaving,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.observeMemberLeaving,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -216,22 +213,15 @@ for (const testOpts of testMatrix) {
 		 * to resolve original member, and the original member should be able to observe the read-only member.
 		 */
 		it("can find read-only partner member", async function () {
-			// TODO: Fix tests when ran against local service - ADO:7876
-			const useAzure = process.env.FLUID_CLIENT === "azure";
-			if (!useAzure) {
-				this.skip();
-			}
-
 			let containerId: string;
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.observeMemberLeaving,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.observeMemberLeaving,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -333,21 +323,14 @@ for (const testOpts of testMatrix) {
 		 * the original read-only partner should observe memberAdded event and have correct partner count.
 		 */
 		it("can observe member leaving and joining in read-only mode", async function () {
-			// TODO: Fix tests when ran against local service - ADO:7876
-			const useAzure = process.env.FLUID_CLIENT === "azure";
-			if (!useAzure) {
-				this.skip();
-			}
-
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.observeMemberLeaving,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.observeMemberLeaving,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {

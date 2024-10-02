@@ -6,13 +6,14 @@
 export {
 	createEmitter,
 	EventEmitter,
-	Listeners,
-	Listenable,
-	Off,
-	IsListener,
-	TransformListeners,
-	UnionToIntersection,
-	IEmitter,
-	NoListenersCallback,
-	HasListeners,
-} from "./events.js";
+	type IEmitter,
+	type NoListenersCallback,
+	type HasListeners,
+} from "./emitter.js";
+
+export {
+	type Listeners,
+	type Listenable,
+	type Off,
+	type IsListener,
+} from "./listeners.js";

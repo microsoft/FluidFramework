@@ -15,11 +15,11 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
 		try {
 			console.log(
-				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.arithmeticMean}`,
+				`emitting metric ${arithmeticMeanMetricName} with value ${testData.customData["Period (ns/op)"]}`,
 			);
 			telemetryClient.trackMetric({
 				name: arithmeticMeanMetricName,
-				value: testData.stats.arithmeticMean,
+				value: testData.customData["Period (ns/op)"],
 				namespace: "performance_benchmark_executionTime",
 				properties: {
 					buildId: process.env.BUILD_ID,
@@ -39,11 +39,11 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 		const marginOfErrorMetricName = `${fileData.suiteName}_${testData.benchmarkName}_marginOfError`;
 		try {
 			console.log(
-				`emitting metric ${arithmeticMeanMetricName} with value ${testData.stats.marginOfError}`,
+				`emitting metric ${arithmeticMeanMetricName} with value ${testData.customData["Margin of Error"]}`,
 			);
 			telemetryClient.trackMetric({
 				name: marginOfErrorMetricName,
-				value: testData.stats.marginOfError,
+				value: testData.customData["Margin of Error"],
 				namespace: "performance_benchmark_executionTime",
 				properties: {
 					buildId: process.env.BUILD_ID,

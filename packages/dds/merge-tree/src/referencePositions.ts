@@ -18,6 +18,7 @@ export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
 /**
+ * Determines if the given reference type includes the given flags.
  * @internal
  */
 export function refTypeIncludesFlag(
@@ -30,6 +31,8 @@ export function refTypeIncludesFlag(
 }
 
 /**
+ * Gets the tile labels stored in the given reference position.
+ * @legacy
  * @alpha
  */
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
@@ -38,6 +41,8 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		: undefined;
 
 /**
+ * Determines if a reference position has the given tile label.
+ * @legacy
  * @alpha
  */
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
@@ -46,6 +51,7 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 }
 
 /**
+ * Determines if a reference position has any tile labels.
  * @internal
  */
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
@@ -56,6 +62,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
  * Represents a reference to a place within a merge tree. This place conceptually remains stable over time
  * by referring to a particular segment and offset within that segment.
  * Thus, this reference's character position changes as the tree is edited.
+ * @legacy
  * @alpha
  */
 export interface ReferencePosition {
@@ -94,6 +101,12 @@ export interface ReferencePosition {
 	 * @param newProps - Properties to add to this reference.
 	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
 	 * to ensure broadcast happens if that is desired.
+	 *
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 *
+	 * @privateRemarks This interface is used by both marker segments and local reference positions. We will remove
+	 * this function from segments, but keep it on local reference positions for now. So it has been added to local reference
+	 * positions, and must be removed here to not apply to marker segments.
 	 */
 	addProperties(newProps: PropertySet): void;
 	isLeaf(): this is ISegment;
@@ -105,6 +118,7 @@ export interface ReferencePosition {
 export const DetachedReferencePosition = -1;
 
 /**
+ * Finds the minimum reference position.
  * @internal
  */
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
@@ -112,6 +126,7 @@ export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T
 }
 
 /**
+ * Finds the maximum reference position.
  * @internal
  */
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
@@ -119,6 +134,7 @@ export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T
 }
 
 /**
+ * Compares two reference positions.
  * @internal
  */
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {

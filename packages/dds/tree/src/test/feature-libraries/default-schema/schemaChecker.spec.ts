@@ -13,7 +13,12 @@ import {
 	isNodeInSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
-import { FieldKinds } from "../../../feature-libraries/index.js";
+import {
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	FieldKinds,
+	mapTreeFromCursor,
+} from "../../../feature-libraries/index.js";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -31,6 +36,8 @@ import {
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
+import { testTrees } from "../../testTrees.js";
+import { testIdCompressor } from "../../utils.js";
 
 /**
  * Creates a schema and policy. Indicates stored schema validation should be performed.
@@ -61,7 +68,7 @@ function getFieldSchema(
 ): TreeFieldStoredSchema {
 	return {
 		kind: kind.identifier,
-		types: allowedTypes === undefined ? undefined : new Set(allowedTypes),
+		types: new Set(allowedTypes),
 	};
 }
 
@@ -125,11 +132,28 @@ describe("schema validation", () => {
 	});
 
 	describe("isNodeInSchema", () => {
-		it(`not in schema due to missing node schema entry in schemaCollection`, () => {
+		it(`skips validation if stored schema is completely empty`, () => {
 			assert.equal(
 				isNodeInSchema(
 					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
-					createSchemaAndPolicy(),
+					createSchemaAndPolicy(), // Note this passes an empty stored schema
+				),
+				SchemaValidationErrors.NoError,
+			);
+		});
+
+		it(`not in schema due to missing node schema entry in schemaCollection`, () => {
+			const { node: stringNode, schema: stringSchema } = createLeafNode(
+				"myStringNode",
+				"string",
+				ValueSchema.String,
+			);
+			assert.equal(
+				isNodeInSchema(
+					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
+					// Note, this cannot use an empty stored schema because that would skip validation,
+					// So just putting a schema for a node that is not the one we pass in for validation.
+					createSchemaAndPolicy(new Map([[stringNode.type, stringSchema]])),
 				),
 				SchemaValidationErrors.Node_MissingSchema,
 			);
@@ -472,5 +496,23 @@ describe("schema validation", () => {
 				SchemaValidationErrors.Field_IncorrectMultiplicity,
 			);
 		});
+	});
+
+	describe("testTrees", () => {
+		for (const testTree of testTrees) {
+			it(testTree.name, () => {
+				const mapTrees = testTree
+					.treeFactory(testIdCompressor)
+					.map((j) => mapTreeFromCursor(cursorForJsonableTreeNode(j)));
+				const schema = testTree.schemaData;
+				assert.equal(
+					isFieldInSchema(mapTrees, schema.rootFieldSchema, {
+						schema,
+						policy: defaultSchemaPolicy,
+					}),
+					SchemaValidationErrors.NoError,
+				);
+			});
+		}
 	});
 });
