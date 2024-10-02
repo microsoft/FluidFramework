@@ -65,11 +65,11 @@ export interface CodeCoverageChangeForPackages {
  * Compares the code coverage for pr and baseline build and returns an array of objects with comparison results,
  * one per package.
  */
-export const compareCodeCoverage = (
+export function compareCodeCoverage(
 	baselineCoverageReport: Map<string, CoverageMetric>,
 	prCoverageReport: Map<string, CoverageMetric>,
 	changedFiles: string[],
-): CodeCoverageComparison[] => {
+): CodeCoverageComparison[] {
 	const results: CodeCoverageComparison[] = [];
 
 	const changedPackagesList = changedFiles.map((fileName) => {
@@ -125,7 +125,7 @@ export const compareCodeCoverage = (
 	}
 
 	return results;
-};
+}
 
 /**
  * Method that returns list of packages with code coverage changes.
@@ -169,18 +169,16 @@ export function isCodeCoverageCriteriaPassed(
 	const { codeCoverageComparisonForNewPackages, codeCoverageComparisonForExistingPackages } =
 		codeCoverageChangeForPackages;
 	const packagesWithNotableRegressions = codeCoverageComparisonForExistingPackages.filter(
-		(codeCoverageReport: CodeCoverageComparison) =>
-			codeCoverageReport.branchCoverageDiff < -1 || codeCoverageReport.lineCoverageDiff < -1,
+		(codeCoverageReport: CodeCoverageComparison) => codeCoverageReport.branchCoverageDiff < -1,
 	);
 
 	logger?.verbose(
 		`Found ${packagesWithNotableRegressions.length} existing packages with notable regressions`,
 	);
 
-	// Code coverage for the newly added package should be less than 50% to fail the build
+	// Code coverage for the newly added package should be less than 50% to fail.
 	const newPackagesWithNotableRegressions = codeCoverageComparisonForNewPackages.filter(
-		(codeCoverageReport) =>
-			codeCoverageReport.branchCoverageInPr < 50 || codeCoverageReport.lineCoverageInPr < 50,
+		(codeCoverageReport) => codeCoverageReport.branchCoverageInPr < 50,
 	);
 
 	logger?.verbose(

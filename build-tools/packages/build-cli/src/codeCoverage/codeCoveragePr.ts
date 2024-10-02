@@ -12,7 +12,7 @@ import {
 } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CommandLogger } from "../logging.js";
 import { type CodeCoverageComparison, compareCodeCoverage } from "./compareCodeCoverage.js";
-import { getCoverageMetricsForBaseline } from "./getCoverageMetrics.js";
+import { getCoverageMetricsFromArtifact } from "./getCoverageMetrics.js";
 
 /**
  * Report of code coverage comparison.
@@ -68,8 +68,8 @@ export async function getCodeCoverageReport(
 
 	// Extract the coverage metrics for the baseline and PR builds.
 	const [coverageMetricsForBaseline, coverageMetricsForPr] = await Promise.all([
-		getCoverageMetricsForBaseline(baselineBuildInfo.artifactZip),
-		getCoverageMetricsForBaseline(prBuildInfo.artifactZip),
+		getCoverageMetricsFromArtifact(baselineBuildInfo.artifactZip),
+		getCoverageMetricsFromArtifact(prBuildInfo.artifactZip),
 	]);
 
 	// Compare the code coverage metrics for the baseline and PR builds.

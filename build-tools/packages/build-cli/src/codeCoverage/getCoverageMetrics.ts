@@ -8,7 +8,7 @@ import { Parser } from "xml2js";
 import type { CommandLogger } from "../logging.js";
 
 /**
- * The type for the coverage report, containing the line coverage and branch coverage
+ * The type for the coverage report, containing the line coverage and branch coverage(in percentage)
  */
 export interface CoverageMetric {
 	lineCoverage: number;
@@ -60,7 +60,7 @@ const extractCoverageMetrics = (
  * @param logger - The logger to log messages.
  * @returns an map of coverage metrics for build containing packageName, lineCoverage and branchCoverage
  */
-export const getCoverageMetricsForBaseline = async (
+export const getCoverageMetricsFromArtifact = async (
 	artifactZip: JSZip,
 	logger?: CommandLogger,
 ): Promise<Map<string, CoverageMetric>> => {
