@@ -85,7 +85,7 @@ export const getCoverageMetricsForBaseline = async (
 				);
 			}
 
-			// eslint-disable-next-line no-await-in-loop
+			// eslint-disable-next-line no-await-in-loop -- Since we only need 1 report file, it is easier to run it serially rather than extracting all jsZipObjects and then awaiting promises in parallel
 			const coverageReportXML = await jsZipObject?.async("nodebuffer");
 			if (coverageReportXML !== undefined) {
 				xmlParser.parseString(
