@@ -6332,8 +6332,8 @@ importers:
         specifier: ~1.8.3
         version: 1.8.3
       '@fluid-experimental/attributable-map-previous':
-        specifier: npm:@fluid-experimental/attributable-map@2.3.0
-        version: /@fluid-experimental/attributable-map@2.3.0
+        specifier: npm:@fluid-experimental/attributable-map@~2.3.0
+        version: /@fluid-experimental/attributable-map@2.3.1
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -9237,8 +9237,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@fluidframework/tree-previous':
-        specifier: npm:@fluidframework/tree@2.3.0
-        version: /@fluidframework/tree@2.3.0
+        specifier: npm:@fluidframework/tree@~2.3.0
+        version: /@fluidframework/tree@2.3.1
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -19159,8 +19159,8 @@ packages:
       tslib: 2.7.0
     dev: false
 
-  /@fluid-experimental/attributable-map@2.3.0:
-    resolution: {integrity: sha512-AfOrHkXtlF/W54W+dB6PRePsvHQQrPasjqeSHbIiUtpKAvA1C7L3ohhoew/MwEfoUP2oxnBDoyv44xm9TgTfIA==}
+  /@fluid-experimental/attributable-map@2.3.1:
+    resolution: {integrity: sha512-ZXpN9roT4GbrphJem3hwzKJJt5+84elYT66WsF9RykJPJb8lJaawmT9w4JQEXErwNgwCYr/vu5U4yH1MY+uZCw==}
     dependencies:
       '@fluid-internal/client-utils': 2.3.1
       '@fluidframework/core-interfaces': 2.3.1
@@ -21026,29 +21026,6 @@ packages:
       proper-lockfile: 4.1.2
     transitivePeerDependencies:
       - encoding
-      - supports-color
-    dev: true
-
-  /@fluidframework/tree@2.3.0:
-    resolution: {integrity: sha512-VBHan0/QuoJPhoCU9R3Drj/czhdpxmWt5G7qFyQjYt2bjcCsxSuNq/QmG3F3k9bxKM/q1KLzqq+fWWp+tVGXcg==}
-    dependencies:
-      '@fluid-internal/client-utils': 2.3.1
-      '@fluidframework/container-runtime': 2.3.1(debug@4.3.7)
-      '@fluidframework/core-interfaces': 2.3.1
-      '@fluidframework/core-utils': 2.3.1
-      '@fluidframework/datastore-definitions': 2.3.1
-      '@fluidframework/driver-definitions': 2.3.1
-      '@fluidframework/id-compressor': 2.3.1
-      '@fluidframework/runtime-definitions': 2.3.1
-      '@fluidframework/runtime-utils': 2.3.1(debug@4.3.7)
-      '@fluidframework/shared-object-base': 2.3.1(debug@4.3.7)
-      '@fluidframework/telemetry-utils': 2.3.1
-      '@sinclair/typebox': 0.32.35
-      '@tylerbu/sorted-btree-es6': 1.8.0
-      '@ungap/structured-clone': 1.2.0
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - debug
       - supports-color
     dev: true
 
