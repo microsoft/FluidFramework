@@ -18,7 +18,6 @@ import { IContainerExperimental } from "@fluidframework/container-loader/interna
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import {
