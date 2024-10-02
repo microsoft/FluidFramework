@@ -164,6 +164,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"entrypoint": "internal"
+		"entrypoint": "alpha"
 	}
 }
