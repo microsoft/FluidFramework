@@ -5,8 +5,9 @@
 
 import { EOL } from "node:os";
 import { runCommand } from "@oclif/test";
-import chai, { expect } from "chai";
-import { describe, it } from "mocha";
+import { expect } from "chai";
+import { describe, it, after } from "mocha";
+import mockedEnv from "mocked-env";
 /**
  * This list of git tags is deliberately unordered since often the list provided to commands is unordered.
  */
@@ -80,7 +81,8 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("reads build number from env variable", async () => {
-		setEnv({ VERSION_BUILDNUMBER: "88802" });
+		const restore = mockedEnv({ VERSION_BUILDNUMBER: "88802" });
+		after(() => restore());
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
