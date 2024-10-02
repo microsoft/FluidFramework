@@ -1620,6 +1620,11 @@ export class MergeTree {
 			next.segmentGroups ??= new SegmentGroupCollection(next);
 			segment.segmentGroups.copyTo(next);
 		}
+
+		if (segment.prevObliterateByInserter) {
+			next.prevObliterateByInserter = segment.prevObliterateByInserter;
+		}
+
 		if (segment.properties) {
 			if (segment.propertyManager === undefined) {
 				next.properties = clone(segment.properties);
