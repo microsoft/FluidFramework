@@ -16,6 +16,8 @@ import {
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
 import { ITenantRepository } from "./mongoTenantRepository";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	tenantRepository: ITenantRepository,
@@ -28,6 +30,7 @@ export function create(
 	riddlerStorageRequestMetricInterval: number,
 	tenantKeyGenerator: ITenantKeyGenerator,
 	cache?: ICache,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -65,6 +68,9 @@ export function create(
 		),
 	);
 
+	const healthEndpoints = createHealthCheckEndpoints("riddler", readinessCheck);
+
+	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler
 	app.use(catch404());
 

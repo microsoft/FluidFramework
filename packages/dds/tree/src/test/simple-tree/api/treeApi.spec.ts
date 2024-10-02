@@ -753,7 +753,7 @@ describe("treeNodeApi", () => {
 			Tree.on(root, "nodeChanged", () => shallowChanges++);
 			Tree.on(root, "treeChanged", () => deepChanges++);
 
-			const branch = checkout.fork();
+			const branch = checkout.branch();
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop1") })
 				.set(cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 2 }));

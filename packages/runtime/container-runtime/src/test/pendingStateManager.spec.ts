@@ -18,7 +18,11 @@ import type {
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
+import {
+	BatchManager,
+	BatchMessage,
+	type InboundMessageResult,
+} from "../opLifecycle/index.js";
 import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
@@ -157,26 +161,30 @@ describe("Pending State Manager", () => {
 			);
 		};
 
-		const process = (
+		const processFullBatch = (
 			messages: Partial<ISequencedDocumentMessage>[],
 			batchStartCsn: number,
 			emptyBatchSequenceNumber?: number,
 			resubmittedBatchId?: string,
 		) =>
-			pendingStateManager.processInboundBatch(
+			pendingStateManager.processInboundMessages(
 				{
+					type: "fullBatch",
 					messages: messages as InboundSequencedContainerRuntimeMessage[],
-					batchStartCsn,
-					keyMessage: {
-						sequenceNumber: emptyBatchSequenceNumber,
-					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-					clientId,
-					batchId: resubmittedBatchId,
+					batchStart: {
+						batchStartCsn,
+						keyMessage: {
+							sequenceNumber: emptyBatchSequenceNumber,
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						clientId,
+						batchId: resubmittedBatchId,
+					},
+					length: messages.length,
 				},
 				true /* local */,
 			);
 
-		it("proper batch is processed correctly", () => {
+		it("Grouped batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
 				{
 					clientId,
@@ -201,7 +209,62 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			process(messages, 0 /* batchStartCsn */);
+			processFullBatch(messages, 0 /* batchStartCsn */);
+		});
+
+		it("Ungrouped batch is processed correctly", () => {
+			const messages: Partial<ISequencedDocumentMessage>[] = [
+				{
+					clientId,
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					metadata: { batch: true },
+				},
+				{
+					clientId,
+					type: MessageType.Operation,
+					clientSequenceNumber: 1,
+					referenceSequenceNumber: 0,
+				},
+				{
+					clientId,
+					type: MessageType.Operation,
+					metadata: { batch: false },
+					clientSequenceNumber: 2,
+					referenceSequenceNumber: 0,
+				},
+			];
+
+			submitBatch(messages);
+			pendingStateManager.processInboundMessages(
+				{
+					type: "batchStartingMessage",
+					nextMessage: messages[0] as InboundSequencedContainerRuntimeMessage,
+					batchStart: {
+						batchStartCsn: 0,
+						keyMessage: messages[0] as ISequencedDocumentMessage,
+						clientId,
+						batchId: undefined,
+					},
+				} satisfies InboundMessageResult,
+				true /* local */,
+			);
+			pendingStateManager.processInboundMessages(
+				{
+					type: "nextBatchMessage",
+					nextMessage: messages[1] as InboundSequencedContainerRuntimeMessage,
+				} satisfies InboundMessageResult,
+				true /* local */,
+			);
+			pendingStateManager.processInboundMessages(
+				{
+					type: "nextBatchMessage",
+					nextMessage: messages[2] as InboundSequencedContainerRuntimeMessage,
+					batchEnd: true,
+				} satisfies InboundMessageResult,
+				true /* local */,
+			);
 		});
 
 		it("empty batch is processed correctly", () => {
@@ -221,7 +284,7 @@ describe("Pending State Manager", () => {
 			// A groupedBatch is supposed to have nested messages inside its contents,
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
 			// the psm will expect the next pending message to be an "empty" message as portrayed above.
-			process(
+			processFullBatch(
 				[],
 				1 /* batchStartCsn */,
 				3 /* emptyBatchSequenceNumber */,
@@ -243,7 +306,7 @@ describe("Pending State Manager", () => {
 				submitBatch(messages);
 				assert.throws(
 					() =>
-						process(
+						processFullBatch(
 							messages.map((message) => ({
 								...message,
 								type: "otherType",
@@ -281,7 +344,7 @@ describe("Pending State Manager", () => {
 				submitBatch(messages);
 				assert.throws(
 					() =>
-						process(
+						processFullBatch(
 							messages.map((message) => ({
 								...message,
 								contents: undefined,
@@ -319,7 +382,7 @@ describe("Pending State Manager", () => {
 				submitBatch(messages);
 				assert.throws(
 					() =>
-						process(
+						processFullBatch(
 							messages.map((message) => ({
 								...message,
 								contents: { prop1: true },
@@ -367,7 +430,7 @@ describe("Pending State Manager", () => {
 				);
 
 				assert.throws(
-					() => process([message], 0 /* batchStartCsn */),
+					() => processFullBatch([message], 0 /* batchStartCsn */),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
@@ -411,7 +474,7 @@ describe("Pending State Manager", () => {
 			);
 
 			assert.throws(
-				() => process([message], 0 /* batchStartCsn */),
+				() => processFullBatch([message], 0 /* batchStartCsn */),
 				(closeError: any) => closeError.errorType === ContainerErrorTypes.dataProcessingError,
 			);
 			mockLogger.assertMatch(
@@ -444,7 +507,7 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			process(
+			processFullBatch(
 				messages.map((message) => ({
 					...message,
 					contents: { prop1: true },
@@ -463,7 +526,7 @@ describe("Pending State Manager", () => {
 					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
-				process(messages, 0 /* batchStartCsn */);
+				processFullBatch(messages, 0 /* batchStartCsn */);
 				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 				pendingState = pendingStateManager.getLocalState(5).pendingStates;
@@ -556,13 +619,17 @@ describe("Pending State Manager", () => {
 				);
 				const inboundMessage = futureRuntimeMessage as ISequencedDocumentMessage &
 					UnknownContainerRuntimeMessage;
-				pendingStateManager.processInboundBatch(
+				pendingStateManager.processInboundMessages(
 					{
+						type: "fullBatch",
 						messages: [inboundMessage],
-						batchStartCsn: 1 /* batchStartCsn */,
-						batchId: undefined,
-						clientId: "clientId",
-						keyMessage: inboundMessage,
+						batchStart: {
+							batchStartCsn: 1 /* batchStartCsn */,
+							batchId: undefined,
+							clientId: "clientId",
+							keyMessage: inboundMessage,
+						},
+						length: 1,
 					},
 					true /* local */,
 				);

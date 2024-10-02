@@ -26,7 +26,9 @@ import {
 	loadChangesets,
 } from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { remarkHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
+import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 
 /**
  * Generates release notes from individual changeset files.
@@ -196,7 +198,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 						.join("");
 					body.append(`Affected packages:\n\n${affectedPackages}\n\n`);
 					body.append(
-						`[⬆️ Table of contents](#${flags.headingLinks ? "user-content-" : ""}contents)\n\n`,
+						`[${RELEASE_NOTES_TOC_LINK_TEXT}](#${flags.headingLinks ? "user-content-" : ""}contents)\n\n`,
 					);
 				} else {
 					this.info(
@@ -233,9 +235,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				},
 			});
 
-		const processor = flags.headingLinks
-			? baseProcessor.use(remarkHeadingLinks)
-			: baseProcessor;
+		const processor = flags.headingLinks ? baseProcessor.use(addHeadingLinks) : baseProcessor;
 
 		const contents = String(
 			await processor.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),

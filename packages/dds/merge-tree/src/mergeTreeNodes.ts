@@ -14,7 +14,7 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "./constants.js";
-import { LocalReferenceCollection } from "./localReference.js";
+import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
@@ -30,7 +30,6 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
-import { Side } from "./sequencePlace.js";
 
 /**
  * Common properties for a node in a merge tree.
@@ -161,6 +160,13 @@ export interface IMoveInfo {
 	 * calculations
 	 */
 	wasMovedOnInsert: boolean;
+
+	/**
+	 * If a segment is inserted into an obliterated range,
+	 * but the newest obliteration of that range was by the inserting client,
+	 * then the segment is not obliterated because it is aware of the latest obliteration.
+	 */
+	prevObliterateByInserter?: ObliterateInfo;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
@@ -263,14 +269,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
-	/**
-	 * Stores side information passed to obliterate for the start of a range.
-	 */
-	startSide?: Side.Before | Side.After;
-	/**
-	 * Stores side information passed to obliterate for the end of a range.
-	 */
-	endSide?: Side.Before | Side.After;
 
 	/**
 	 * Add properties to this segment via annotation.
@@ -398,11 +396,27 @@ export interface SegmentActions<TClientData> {
  * @legacy
  * @alpha
  */
+export interface ObliterateInfo {
+	start: LocalReferencePosition;
+	end: LocalReferencePosition;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	localSeq: number | undefined;
+	segmentGroup: SegmentGroup | undefined;
+}
+
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
+ * @alpha
+ */
 export interface SegmentGroup {
 	segments: ISegment[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
+	obliterateInfo?: ObliterateInfo;
 }
 
 /**
@@ -654,13 +668,17 @@ export abstract class BaseSegment implements ISegment {
 				return false;
 			}
 
-			case MergeTreeDeltaType.OBLITERATE: {
+			case MergeTreeDeltaType.OBLITERATE:
+			case MergeTreeDeltaType.OBLITERATE_SIDED: {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
-				this.localMovedSeq = undefined;
+				const obliterateInfo = segmentGroup.obliterateInfo;
+				assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
+				this.localMovedSeq = obliterateInfo.localSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
+				moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
+					opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
 					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;

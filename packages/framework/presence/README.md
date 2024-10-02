@@ -61,6 +61,10 @@ const presence = await acquirePresenceViaDataObject(container.initialObjects.pre
 
 ## Limitations
 
+### States Reliability
+
+The current implementation relies on Fluid Framework's Signal infrastructure instead of Ops. This has advantages, but comes with some risk of unreliable messaging. The most common known case of unreliable signals occurs during reconnection periods and current implementation attempts to account for that. Be aware that all clients are not guaranteed to arrive at eventual consistency. Please [file a new issue](https://github.com/microsoft/FluidFramework/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=Presence:%20States:%20) if one is not found under [Presence States issues](https://github.com/microsoft/FluidFramework/issues?q=is%3Aissue+%22Presence%3A+States%3A%22).
+
 ### Compatibility and Versioning
 
 Current API does not provide a mechanism to validate that state and notification data received within session from other clients matches the types declared. The schema of workspace address, states and notifications names, and their types will only be consistent when all clients connected to the session are using the same types for a unique value/notification path (workspace address + name within workspace). In other words, don't mix versions or make sure to change identifiers when changing types in a non-compatible way.
@@ -80,6 +84,13 @@ as "app:v1states"+"myState" have different value type expectations: `{x: number}
 presence.getStates("app:v1states", { myState2: Latest({x: true})});
 ```
  would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
+
+
+### Notifications
+
+Notifications API is mostly unimplemented. All messages are always broadcast even if `unicast` API is used and all are emitted as `unattendedNotification` event rather than the appropriate custom event.
+
+Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
 
 
 ### Experimental

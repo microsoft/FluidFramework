@@ -38,8 +38,7 @@ import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager
 function insertMarkers(
 	text: SharedString,
 	treeRangeLabel: string,
-	beginMarkerPos: number,
-	endMarkerPos: number,
+	position: number,
 	nodeType: string,
 ) {
 	const endMarkerProps = {};
@@ -50,8 +49,8 @@ function insertMarkers(
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
 
-	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
-	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position + 1, ReferenceType.Simple, endMarkerProps);
 }
 
 /**
@@ -105,7 +104,7 @@ export class ProseMirror
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
-			insertMarkers(text, "prosemirror", 0, 1, "paragraph");
+			insertMarkers(text, "prosemirror", 0, "paragraph");
 			text.insertText(1, "Hello, world!");
 
 			this.root.set("text", text.handle);

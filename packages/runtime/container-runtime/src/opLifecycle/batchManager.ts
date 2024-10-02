@@ -10,7 +10,7 @@ import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
-import type { InboundBatch } from "./remoteMessageProcessor.js";
+import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;
@@ -37,15 +37,15 @@ export function generateBatchId(originalClientId: string, batchStartCsn: number)
 
 /**
  * Get the effective batch ID for the input argument.
- * Supports either an IPendingMessage or an InboundBatch.
+ * Supports either an IPendingMessage or BatchStartInfo.
  * If the batch ID is explicitly present, return it.
  * Otherwise, generate a new batch ID using the client ID and batch start CSN.
  */
 export function getEffectiveBatchId(
-	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
+	pendingMessageOrBatchStartInfo: IPendingMessage | BatchStartInfo,
 ): string {
-	if ("localOpMetadata" in pendingMessageOrInboundBatch) {
-		const pendingMessage: IPendingMessage = pendingMessageOrInboundBatch;
+	if ("localOpMetadata" in pendingMessageOrBatchStartInfo) {
+		const pendingMessage: IPendingMessage = pendingMessageOrBatchStartInfo;
 		return (
 			asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
 			generateBatchId(
@@ -55,10 +55,8 @@ export function getEffectiveBatchId(
 		);
 	}
 
-	const inboundBatch: InboundBatch = pendingMessageOrInboundBatch;
-	return (
-		inboundBatch.batchId ?? generateBatchId(inboundBatch.clientId, inboundBatch.batchStartCsn)
-	);
+	const batchStart: BatchStartInfo = pendingMessageOrBatchStartInfo;
+	return batchStart.batchId ?? generateBatchId(batchStart.clientId, batchStart.batchStartCsn);
 }
 
 /**

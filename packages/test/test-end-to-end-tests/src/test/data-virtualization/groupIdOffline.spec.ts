@@ -19,7 +19,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 
 import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
@@ -82,7 +82,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let callCount = 0;
 	let latestSnapshot: ISnapshot | undefined;
-	const persistedCache = new TestSnapshotCache();
+	const persistedCache = new TestPersistedCache();
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ persistedCache });
 		if (!supportsDataVirtualization(provider)) {

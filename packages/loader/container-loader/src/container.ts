@@ -70,7 +70,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
-	MessageType2,
 	OnlineStatus,
 	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
@@ -2355,8 +2354,7 @@ export class Container
 			this.noopHeuristic.notifyMessageProcessed(message);
 			// The contract with the protocolHandler is that returning "immediateNoOp" is equivalent to "please immediately accept the proposal I just processed".
 			if (result.immediateNoOp === true) {
-				// ADO:1385: Remove cast and use MessageType once definition changes propagate
-				this.submitMessage(MessageType2.Accept as unknown as MessageType);
+				this.submitMessage(MessageType.Accept);
 			}
 		}
 
