@@ -185,27 +185,27 @@ const configExplorer = cosmiconfigSync(configName, {
 });
 
 /**
- * Get an IFluidRepoLayout from the config file.
+ * Search a path for a repo layout config file, and return the parsed config and the path to the file, if found.
  *
- * @param rootDir - The path to the root package.json to load.
+ * @param searchPath - The path to start searching for config files in.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The fluidBuild section of the package.json, or undefined if not found
+ *
+ * @throws If a config is not found or if the config version is not supported.
  */
 export function getFluidRepoLayout(
-	rootDir: string,
+	searchPath: string,
 	noCache = false,
-	// log = defaultLogger,
-): IFluidRepoLayout {
+): { config: IFluidRepoLayout; configFile: string } {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
 
-	const configResult = configExplorer.search(rootDir);
-	const config = configResult?.config as IFluidRepoLayout | undefined;
-
-	if (config === undefined) {
+	const configResult = configExplorer.search(searchPath);
+	if (configResult === null || configResult === undefined) {
 		throw new Error("No fluidRepo configuration found.");
 	}
+	const config = configResult.config as IFluidRepoLayout;
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
 	if (config.version !== FLUIDREPO_CONFIG_VERSION) {
@@ -213,5 +213,6 @@ export function getFluidRepoLayout(
 			`Configuration version is not supported: ${config?.version}. Config version must be ${FLUIDREPO_CONFIG_VERSION}.`,
 		);
 	}
-	return config;
+
+	return { config, configFile: configResult.filepath };
 }

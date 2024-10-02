@@ -4,31 +4,56 @@
  */
 
 import path from "node:path";
+import { type SimpleGit, simpleGit } from "simple-git";
 
 import { getFluidRepoLayout } from "./config.js";
-import type {
-	IFluidRepo,
-	IPackage,
-	IReleaseGroup,
-	IWorkspace,
-	PackageName,
-	ReleaseGroupName,
-	WorkspaceName,
+import { NotInGitRepository } from "./errors.js";
+import {
+	type IFluidRepo,
+	type IPackage,
+	type IReleaseGroup,
+	type IWorkspace,
+	type PackageName,
+	type ReleaseGroupName,
+	type WorkspaceName,
 } from "./types.js";
+import { findGitRootSync } from "./utils.js";
 import { Workspace } from "./workspace.js";
 import { loadWorkspacesFromLegacyConfig } from "./workspaceCompat.js";
 
 export class FluidRepo implements IFluidRepo {
-	// public readonly root: string;
-	//
-	public constructor(public readonly root: string) {
-		const config = getFluidRepoLayout(this.root);
+	/**
+	 * The absolute path to the root of the FluidRepo. This is the path where the config file is located.
+	 */
+	public readonly root: string;
 
+	/**
+	 * The absolute path to the root of the Git repository that contains this FluidRepo. If the FluidRepo is not within a
+	 * Git repository, gitRoot will be undefined.
+	 */
+	// public readonly gitRoot: string|undefined;
+
+	/**
+	 * @param searchPath - The path that should be searched for a repo layout config file.
+	 * @param gitRepository - A SimpleGit instance rooted in the root of the Git repository housing the FluidRepo. This
+	 * should be set to false if the FluidRepo is not within a Git repository.
+	 */
+	public constructor(
+		searchPath: string,
+		private readonly gitRepository: SimpleGit | false = false,
+	) {
+		const { config, configFile } = getFluidRepoLayout(searchPath);
+		this.root = path.resolve(path.dirname(configFile));
+
+		// Check for the repoLayout config first
 		if (config.repoLayout === undefined) {
+			// If there's no `repoLayout` _and_ no `repoPackages`, then we need to error since there's no loadable config.
 			if (config.repoPackages === undefined) {
 				throw new Error(`Can't find configuration.`);
 			} else {
-				console.warn(`The repoPackages setting is deprecated. Use repoLayout instead.`);
+				console.warn(
+					`The repoPackages setting is deprecated and will no longer be read in a future version. Use repoLayout instead.`,
+				);
 				this._workspaces = loadWorkspacesFromLegacyConfig(config.repoPackages, this.root);
 			}
 		} else {
@@ -80,9 +105,9 @@ export class FluidRepo implements IFluidRepo {
 	}
 
 	/**
-	 * Transforms an absolute path to a path relative to the repo root.
+	 * Transforms an absolute path to a path relative to the FluidRepo root.
 	 *
-	 * @param p - The path to make relative to the repo root.
+	 * @param p - The path to make relative to the FluidRepo root.
 	 * @returns the relative path.
 	 */
 	public relativeToRepo(p: string): string {
@@ -93,8 +118,34 @@ export class FluidRepo implements IFluidRepo {
 	public reload(): void {
 		this.workspaces.forEach((ws) => ws.reload());
 	}
+
+	public async getGitRepository(): Promise<Readonly<SimpleGit>> {
+		if (this.gitRepository === false) {
+			throw new NotInGitRepository(this.root);
+		}
+		return this.gitRepository;
+	}
 }
 
-export function loadFluidRepo(root: string): IFluidRepo {
-	return new FluidRepo(root);
+/**
+ * Searches for a Fluid repo config file and loads the repo layout from the config if found.
+ *
+ * @param searchPath - The path to start searching for a Fluid repo config.
+ * @returns The loaded Fluid repo.
+ */
+export function loadFluidRepo(searchPath: string): IFluidRepo {
+	let repo: IFluidRepo;
+	try {
+		// Check if the path is within a Git repo by trying to find the path to the Git repo root
+		const gitRoot = findGitRootSync(searchPath);
+		repo = new FluidRepo(searchPath, simpleGit(gitRoot));
+	} catch (error) {
+		if (error instanceof NotInGitRepository) {
+			// Not in a git repo, so initialize the repo accordingly
+			repo = new FluidRepo(searchPath, false);
+		}
+		throw error;
+	}
+
+	return repo;
 }

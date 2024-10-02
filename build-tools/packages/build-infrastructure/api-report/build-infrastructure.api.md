@@ -7,6 +7,7 @@
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
 import type { SetRequired } from 'type-fest';
+import { SimpleGit } from 'simple-git';
 
 // @public (undocumented)
 export type AdditionalPackageProps = Record<string, string> | undefined;
@@ -38,8 +39,9 @@ export interface IFluidBuildDirs {
     [name: string]: IFluidBuildDirEntry;
 }
 
-// @public (undocumented)
+// @public
 export interface IFluidRepo extends Reloadable {
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
     // (undocumented)
     packages: Map<PackageName, IPackage>;
     relativeToRepo(p: string): string;
@@ -62,11 +64,9 @@ export interface IFluidRepoLayout {
     version: typeof FLUIDREPO_CONFIG_VERSION;
 }
 
-// @public (undocumented)
+// @public
 export interface Installable {
-    // (undocumented)
     checkInstall(): Promise<boolean>;
-    // (undocumented)
     install(updateLockfile: boolean): Promise<boolean>;
 }
 
@@ -148,8 +148,8 @@ export interface IWorkspace extends Installable, Reloadable {
     rootPackage: IPackage;
 }
 
-// @public (undocumented)
-export function loadFluidRepo(root: string): IFluidRepo;
+// @public
+export function loadFluidRepo(searchPath: string): IFluidRepo;
 
 // @public (undocumented)
 export abstract class PackageBase<TAddProps extends AdditionalPackageProps = undefined, J extends PackageJson = PackageJson> implements IPackage {

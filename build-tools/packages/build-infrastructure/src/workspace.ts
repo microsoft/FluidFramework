@@ -94,6 +94,7 @@ export class Workspace implements IWorkspace {
 			// Prepend the root package to the list of packages
 			this.packages.unshift(this.rootPackage);
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.rootPackage = this.packages[0]!;
 		}
 

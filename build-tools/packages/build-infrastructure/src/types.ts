@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SimpleGit } from "simple-git";
 import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 /**
@@ -24,9 +25,14 @@ export type PackageJson = SetRequired<
 
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
+/**
+ * A Fluid repo organizes a collection of npm packages into workspaces and release groups. A Fluid repo can contain
+ * multiple workspaces, and a workspace can in turn contain multiple release groups. Both workspaces and release groups
+ * represent ways to organize packages in the repo, but their purpose and function are different.
+ */
 export interface IFluidRepo extends Reloadable {
 	/**
-	 * Absolute path to the root of the repo.
+	 * The absolute path to the root of the IFluidRepo. This is the path where the config file is located.
 	 */
 	root: string;
 
@@ -37,16 +43,39 @@ export interface IFluidRepo extends Reloadable {
 	packages: Map<PackageName, IPackage>;
 
 	/**
-	 * Transforms an absolute path to a path relative to the repo root.
+	 * Transforms an absolute path to a path relative to the FluidRepo root.
 	 *
-	 * @param p - The path to make relative to the repo root.
+	 * @param p - The path to make relative to the FluidRepo root.
 	 * @returns the relative path.
 	 */
 	relativeToRepo(p: string): string;
+
+	/**
+	 * If the FluidRepo is within a Git repository, this function will return a SimpleGit instance rooted at the root of
+	 * the Git repository. If the FluidRepo is _not_ within a Git repository, this function will throw a
+	 * {@link NotInGitRepository} error.
+	 *
+	 * @throws A {@link NotInGitRepository} error if the path is not within a Git repository.
+	 */
+	getGitRepository(): Promise<Readonly<SimpleGit>>;
 }
 
+/**
+ * A common interface for installable things, like packages, release groups, and workspaces.
+ */
 export interface Installable {
+	/**
+	 * Returns `true` if the item is installed. If this returns `false`, then the `install` function can be called to
+	 * install.
+	 */
 	checkInstall(): Promise<boolean>;
+
+	/**
+	 * Installs the item.
+	 *
+	 * @param updateLockfile - If true, the lockfile will be updated. Otherwise, the lockfile will not be updated. This
+	 * may cause the installation to fail.
+	 */
 	install(updateLockfile: boolean): Promise<boolean>;
 }
 

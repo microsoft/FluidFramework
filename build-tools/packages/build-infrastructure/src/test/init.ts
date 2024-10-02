@@ -8,7 +8,9 @@ import path from "node:path";
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+export const packageRootPath = path.resolve(__dirname, "../..");
+
 /**
  * Path to the test data. It's rooted two directories up because the tests get executed from lib/.
  */
-export const testDataPath = path.resolve(__dirname, "../../src/test/data");
+export const testDataPath = path.resolve(__dirname, packageRootPath, "src/test/data");

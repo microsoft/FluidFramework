@@ -10,7 +10,7 @@ import { describe, it } from "mocha";
 
 import { loadFluidRepo } from "../fluidRepo.js";
 import type { WorkspaceName } from "../types.js";
-import { findGitRoot } from "../utils.js";
+import { findGitRootSync } from "../utils.js";
 import { testDataPath } from "./init.js";
 
 describe("loadFluidRepo", () => {
@@ -51,7 +51,7 @@ describe("loadFluidRepo", () => {
 		describe("loadFluidRepo", () => {
 			it("loads correctly", () => {
 				// Load the root config
-				const repo = loadFluidRepo(findGitRoot());
+				const repo = loadFluidRepo(findGitRootSync());
 				assert.strictEqual(
 					repo.workspaces.size,
 					14,
