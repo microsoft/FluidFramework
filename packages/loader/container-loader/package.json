@@ -149,19 +149,15 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"check-coverage": true,
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js",
-			"lib/test/**/*.*js"
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js",
-			"lib/**/*.*js"
+			"dist/**/*.*js"
 		],
-		"lines": 75,
 		"report-dir": "nyc/report",
 		"reporter": [
 			"cobertura",

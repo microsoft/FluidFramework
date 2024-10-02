@@ -206,6 +206,7 @@ extends:
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
     - ci:test:mocha
+    - ci:test:jest
     - ci:test:realsvc:local
     - test:copyresults
     testResultDirs:
