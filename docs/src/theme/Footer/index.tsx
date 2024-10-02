@@ -26,7 +26,7 @@ function Footer(): JSX.Element {
 			</div>
 			<div className="footer-copyright">
 				<FooterLogo
-					src="https://fluidframework-docs-cdn.azureedge.net/static/images/microsoft-logo.png"
+					src="https://storage.fluidframework.com/static/images/microsoft-logo.png"
 					href="https://www.microsoft.com/"
 					width={200}
 					alt="Microsoft Logo"

@@ -24,8 +24,7 @@ export function FluidBundleLoader({
 }: FluidBundleLoaderProps): JSX.Element {
 	React.useEffect(() => {
 		const script = document.createElement("script");
-
-		script.src = `https://fluidframework.blob.core.windows.net/static/js/${bundleName}`;
+		script.src = `https://storage.fluidframework.com/static/js/${bundleName}`;
 		script.async = true;
 
 		document.body.appendChild(script);
