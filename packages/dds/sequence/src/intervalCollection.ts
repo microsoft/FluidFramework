@@ -30,6 +30,7 @@ import {
 	SequencePlace,
 	endpointPosAndSide,
 	PropertiesManager,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -1649,7 +1650,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
 		}
-		const segoff = { segment: lref.getSegment(), offset: lref.getOffset() };
+		const segoff: { segment: ISegmentInternal | undefined; offset: number | undefined } = {
+			segment: lref.getSegment(),
+			offset: lref.getOffset(),
+		};
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
@@ -1727,7 +1731,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				if (props) {
 					interval.start.addProperties(props);
 				}
-				const oldSeg = oldInterval.start.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.start.getSegment();
 				// remove and rebuild start interval as transient for event
 				this.client.removeLocalReferencePosition(oldInterval.start);
 				oldInterval.start.refType = ReferenceType.Transient;
@@ -1749,7 +1753,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					interval.end.addProperties(props);
 				}
 				// remove and rebuild end interval as transient for event
-				const oldSeg = oldInterval.end.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.end.getSegment();
 				this.client.removeLocalReferencePosition(oldInterval.end);
 				oldInterval.end.refType = ReferenceType.Transient;
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());

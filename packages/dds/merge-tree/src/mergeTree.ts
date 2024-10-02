@@ -534,7 +534,6 @@ class Obliterates {
 		const overlapping: ObliterateInfo[] = [];
 		for (const start of this.startOrdered.items) {
 			if (start.getSegment()!.ordinal <= seg.ordinal) {
-				// eslint-disable-next-line import/no-deprecated
 				const ob = start.properties?.obliterate as ObliterateInfo;
 				if (ob.end.getSegment()!.ordinal >= seg.ordinal) {
 					overlapping.push(ob);
@@ -1596,10 +1595,8 @@ export class MergeTree {
 					continue;
 				}
 
-				// eslint-disable-next-line import/no-deprecated
 				let oldest: ObliterateInfo | undefined;
 				let normalizedOldestSeq: number = 0;
-				// eslint-disable-next-line import/no-deprecated
 				let newest: ObliterateInfo | undefined;
 				let normalizedNewestSeq: number = 0;
 				const movedClientIds: number[] = [];
@@ -1673,15 +1670,18 @@ export class MergeTree {
 		const next: ISegmentLeaf = segment.splitAt(pos)!;
 
 		if (segment?.segmentGroups) {
-			// eslint-disable-next-line import/no-deprecated
 			next.segmentGroups ??= new SegmentGroupCollection(next);
 			segment.segmentGroups.copyTo(next.segmentGroups);
 		}
+
+		if (segment.prevObliterateByInserter) {
+			next.prevObliterateByInserter = segment.prevObliterateByInserter;
+		}
+
 		if (segment.properties) {
 			if (segment.propertyManager === undefined) {
 				next.properties = clone(segment.properties);
 			} else {
-				// eslint-disable-next-line import/no-deprecated
 				next.propertyManager ??= new PropertiesManager();
 				next.properties = segment.propertyManager.copyTo(
 					segment.properties,
@@ -1929,7 +1929,6 @@ export class MergeTree {
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
 
-			// eslint-disable-next-line import/no-deprecated
 			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
 			const properties = (segment.properties ??= createMap());
 			const propertyDeltas = propertyManager.addProperties(
@@ -2421,7 +2420,6 @@ export class MergeTree {
 						UniversalSequenceNumber,
 						{ op: annotateOp },
 
-						// eslint-disable-next-line import/no-deprecated
 						PropertiesRollback.Rollback,
 					);
 					i++;
