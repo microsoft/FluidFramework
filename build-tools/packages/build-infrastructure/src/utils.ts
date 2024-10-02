@@ -18,19 +18,23 @@ import { NotInGitRepository } from "./errors";
  * This function is helpful because it is synchronous. The SimpleGit wrapper is async-only.
  */
 export function findGitRootSync(cwd = process.cwd()): string {
-	const result = execa.sync("git", ["rev-parse", "--show-toplevel"], {
-		cwd,
-		encoding: "utf8",
-		// Ignore stdin but pipe (capture) stdout and stderr since git will write to both.
-		stdio: ["ignore", "pipe", "pipe"],
-	});
+	try {
+		const result = execa.sync("git", ["rev-parse", "--show-toplevel"], {
+			cwd,
+			encoding: "utf8",
+			// Ignore stdin but pipe (capture) stdout and stderr since git will write to both.
+			stdio: ["ignore", "pipe", "pipe"],
+		});
 
-	// If anything was written to stderr, then it's not a git repo.
-	if (result.stderr) {
+		// If anything was written to stderr, then it's not a git repo.
+		if (result.stderr) {
+			throw new NotInGitRepository(cwd);
+		}
+
+		return result.stdout.trim();
+	} catch (error) {
 		throw new NotInGitRepository(cwd);
 	}
-
-	return result.stdout.trim();
 }
 
 /**
@@ -43,15 +47,19 @@ export function findGitRootSync(cwd = process.cwd()): string {
  * This function is helpful because it is synchronous. The SimpleGit wrapper is async-only.
  */
 export function isInGitRepositorySync(cwd = process.cwd()): boolean {
-	const result = execa.sync("git", ["rev-parse", "--is-inside-work-tree"], {
-		cwd,
-		encoding: "utf8",
-		// Ignore stdin but pipe (capture) stdout and stderr since git will write to both - we will only check stdout though
-		stdio: ["ignore", "pipe", "pipe"],
-	});
+	try {
+		const result = execa.sync("git", ["rev-parse", "--is-inside-work-tree"], {
+			cwd,
+			encoding: "utf8",
+			// Ignore stdin, pipe (capture) stdout, and ignore stderr
+			stdio: ["ignore", "pipe", "pipe"],
+		});
 
-	const isInWorktree = result.stdout.trim() === "true";
-	return isInWorktree;
+		const isInWorktree = result.stdout.trim() === "true";
+		return isInWorktree;
+	} catch (error) {
+		return false;
+	}
 }
 
 export function lookUpDirSync(dir: string, callback: (currentDir: string) => boolean) {

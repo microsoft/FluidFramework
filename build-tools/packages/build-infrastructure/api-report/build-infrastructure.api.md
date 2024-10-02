@@ -152,6 +152,13 @@ export interface IWorkspace extends Installable, Reloadable {
 export function loadFluidRepo(searchPath: string): IFluidRepo;
 
 // @public (undocumented)
+export class NotInGitRepository extends Error {
+    constructor(path: string);
+    // (undocumented)
+    readonly path: string;
+}
+
+// @public (undocumented)
 export abstract class PackageBase<TAddProps extends AdditionalPackageProps = undefined, J extends PackageJson = PackageJson> implements IPackage {
     constructor(packageJsonFilePath: string, packageManager: IPackageManager, isWorkspaceRoot: boolean, releaseGroup: ReleaseGroupName, isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
     // (undocumented)

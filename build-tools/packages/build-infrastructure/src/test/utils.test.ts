@@ -5,10 +5,12 @@
 
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
+import * as os from "node:os";
 import { describe, it } from "mocha";
 
 import { findGitRootSync, isInGitRepositorySync } from "../utils.js";
 import { packageRootPath } from "./init.js";
+import { NotInGitRepository } from "../errors.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
@@ -18,12 +20,11 @@ describe("findGitRootSync", () => {
 		assert.strictEqual(actual, expected);
 	});
 
-	// it("throws outside git repo", () => {
-	// 	const testFile = path.resolve(testDataPath, "tabs/_package.json");
-	// 	const [, indent] = readPackageJsonAndIndent(testFile);
-	// 	const expectedIndent = "\t";
-	// 	assert.strictEqual(indent, expectedIndent);
-	// });
+	it("throws outside git repo", () => {
+		assert.throws(() => {
+			findGitRootSync(os.tmpdir());
+	}, NotInGitRepository);
+	});
 });
 
 describe("isInGitRepository", () => {
@@ -33,11 +34,9 @@ describe("isInGitRepository", () => {
 		assert.strictEqual(actual, true);
 	});
 
-	// it("returns false outside repo", () => {
-	// 	const testFile = path.resolve(testDataPath, "tabs/_package.json");
-	// 	const expectedIndent = "\t";
-	// 	updatePackageJsonFile(testFile, testTransformer);
-	// 	const [, indent] = readPackageJsonAndIndent(testFile);
-	// 	assert.strictEqual(indent, expectedIndent);
-	// });
+	it("returns false outside repo", () => {
+		const testPath = os.tmpdir();
+		const actual = isInGitRepositorySync(testPath);
+		assert.strictEqual(actual, false);
+	});
 });
