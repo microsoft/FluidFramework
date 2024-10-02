@@ -62,10 +62,12 @@ export async function start(): Promise<{
 		const currentAccounts = msalInstance.getAllAccounts();
 		if (currentAccounts.length === 0) {
 			// no accounts signed-in, attempt to sign a user in
-			msalInstance.loginRedirect({
+			await msalInstance.loginRedirect({
 				scopes: ["FileStorageContainer.Selected", "Files.ReadWrite"],
 			});
-		} else if (currentAccounts.length > 1 || currentAccounts.length === 1) {
+
+			throw new Error("This should never happen! The previous line should have caused a browser redirect.");
+		} else {
 			// The user is singed in.
 			// Treat more than one account signed in and a single account the same as
 			// this is just a sample. But a real app would need to handle the multiple accounts case.
@@ -74,14 +76,6 @@ export async function start(): Promise<{
 			return await signedInStart(msalInstance, account!);
 		}
 	}
-
-	return {
-		client: undefined as unknown as OdspClient,
-		containerId: "",
-		getShareLink: (fluidContainerId: string) => {
-			throw new Error("Not implemented");
-		},
-	};
 }
 
 async function signedInStart(
