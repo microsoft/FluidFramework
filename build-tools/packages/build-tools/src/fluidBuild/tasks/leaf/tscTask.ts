@@ -79,7 +79,13 @@ export class TscTask extends LeafTask {
 				continue;
 			}
 			checkedProjects.add(dir);
-			const tempTscTask = new TscTask(this.node, `tsc -p ${dir}`, undefined, true);
+			const tempTscTask = new TscTask(
+				this.node,
+				`tsc -p ${dir}`,
+				this.context,
+				undefined,
+				true,
+			);
 			if (!(await tempTscTask.checkTscIsUpToDate(checkedProjects))) {
 				this.traceTrigger(`project reference ${dir} is not up to date`);
 				return false;
@@ -169,7 +175,7 @@ export class TscTask extends LeafTask {
 				if (this._projectReference) {
 					fullPath = this._projectReference.remapSrcDeclFile(fullPath, config);
 				}
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				const hash = await this.node.context.fileHashCache.getFileHash(
 					fullPath,
 					tscUtils.getSourceFileVersion,
 				);
@@ -605,7 +611,7 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 
 			// Calculate hashes of all the files; only the hashes will be stored in the donefile.
 			const hashesP = files.map(async (name) => {
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				const hash = await this.node.context.fileHashCache.getFileHash(
 					this.getPackageFileFullPath(name),
 				);
 				return { name, hash };
