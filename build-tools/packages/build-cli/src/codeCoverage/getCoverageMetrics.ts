@@ -65,7 +65,7 @@ export const getCoverageMetricsForBaseline = async (
 	logger?: CommandLogger,
 ): Promise<Map<string, CoverageMetric>> => {
 	const coverageReportsFiles: string[] = [];
-	// eslint-disable-next-line unicorn/no-array-for-each -- required as the for..of does not return what for each does here.
+	// eslint-disable-next-line unicorn/no-array-for-each -- required as JSZip does not implement [Symbol.iterator]() which is required by for...of
 	artifactZip.forEach((filePath) => {
 		if (filePath.endsWith("cobertura-coverage-patched.xml"))
 			coverageReportsFiles.push(filePath);
