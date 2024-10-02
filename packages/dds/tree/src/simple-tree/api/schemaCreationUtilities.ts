@@ -9,7 +9,12 @@ import { fail } from "../../util/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 import type { NodeFromSchema } from "../schemaTypes.js";
-import type { NodeKind, TreeNode, TreeNodeSchemaClass } from "../core/index.js";
+import type {
+	InternalTreeNode,
+	NodeKind,
+	TreeNode,
+	TreeNodeSchemaClass,
+} from "../core/index.js";
 
 /*
  * This file does two things:
@@ -39,7 +44,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	name: TName,
 ) {
 	class SingletonSchema extends factory.object(name, {}) {
-		public constructor(data?: unknown) {
+		public constructor(data?: InternalTreeNode) {
 			super(data ?? {});
 		}
 		public get value(): TName {

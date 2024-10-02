@@ -666,6 +666,9 @@ export interface TreeViewEvents {
     schemaChanged(): void;
 }
 
+// @alpha
+export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
+
 // @public @deprecated
 const typeNameSymbol: unique symbol;
 
