@@ -25,7 +25,7 @@ import type {
 	ImplicitFieldSchema,
 	ImplicitAllowedTypes,
 } from "../schemaTypes.js";
-import { getSimpleNodeSchema, NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
@@ -39,9 +39,9 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { toFlexSchema } from "../toFlexSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Verbose encoding of a {@link TreeNode} or {@link TreeValue}.
@@ -174,9 +174,7 @@ export function applySchemaToParserOptions<TCustom>(
 		...options,
 	};
 
-	// TODO: should provide a way to look up schema by name efficiently without converting to flex tree schema and back.
-	// Maybe cache identifier->schema map on simple tree schema lazily.
-	const flexSchema = toFlexSchema(schema);
+	const context = getUnhydratedContext(schema);
 
 	return {
 		valueConverter: config.valueConverter,
@@ -185,9 +183,7 @@ export function applySchemaToParserOptions<TCustom>(
 			: {
 					encode: (type, key: FieldKey): string => {
 						// translate stored key into property key.
-						const flexNodeSchema =
-							flexSchema.nodeSchema.get(brand(type)) ?? fail("missing schema");
-						const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
+						const simpleNodeSchema = context.schema.get(brand(type)) ?? fail("missing schema");
 						if (isObjectNodeSchema(simpleNodeSchema)) {
 							const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
 							if (propertyKey !== undefined) {
@@ -208,9 +204,7 @@ export function applySchemaToParserOptions<TCustom>(
 						return key;
 					},
 					parse: (type, inputKey): FieldKey => {
-						const flexNodeSchema =
-							flexSchema.nodeSchema.get(brand(type)) ?? fail("missing schema");
-						const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
+						const simpleNodeSchema = context.schema.get(brand(type)) ?? fail("missing schema");
 						if (isObjectNodeSchema(simpleNodeSchema)) {
 							const info =
 								simpleNodeSchema.flexKeyMap.get(inputKey) ?? fail("missing field info");

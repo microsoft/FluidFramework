@@ -5,7 +5,7 @@
 
 import { getOrCreate } from "../../util/index.js";
 import type { TreeNodeSchema } from "../core/index.js";
-import type { ImplicitAllowedTypes } from "../schemaTypes.js";
+import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import type { SimpleTreeSchema } from "./simpleSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
@@ -64,6 +64,6 @@ const simpleSchemaCache = new WeakMap<TreeNodeSchema, SimpleTreeSchema>();
  * @privateRemarks In the future, we may wish to move this to a more discoverable API location.
  * For now, while still an experimental API, it is surfaced as a free function.
  */
-export function getSimpleSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
+export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema {
 	return getOrCreate(simpleSchemaCache, schema, () => toSimpleTreeSchema(schema));
 }

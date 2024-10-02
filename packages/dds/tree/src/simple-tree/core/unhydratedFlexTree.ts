@@ -7,14 +7,18 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type AnchorEvents,
 	type AnchorNode,
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
+	type FieldKindIdentifier,
 	type FieldUpPath,
+	forbiddenFieldKindIdentifier,
 	type MapTree,
-	type TreeFieldStoredSchema,
+	type SchemaPolicy,
 	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
@@ -32,15 +36,12 @@ import {
 	flexTreeMarker,
 	indexForAt,
 	type FlexTreeHydratedContext,
-	FlexFieldSchema,
-	type FlexTreeNodeSchema,
-	type FlexTreeSchema,
-	intoStoredSchemaCollection,
 	type FlexFieldKind,
-	defaultSchemaPolicy,
 	FieldKinds,
 	type SequenceFieldEditBuilder,
 } from "../../feature-libraries/index.js";
+import type { Context } from "./context.js";
+import { createEmitter, type Listenable } from "../../events/index.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<ExclusiveMapTree[]> {
@@ -52,6 +53,8 @@ interface UnhydratedTreeSequenceFieldEditBuilder
 	 */
 	remove(index: number, count: number): ExclusiveMapTree[];
 }
+
+type UnhydratedFlexTreeNodeEvents = Pick<AnchorEvents, "childrenChangedAfterBatch">;
 
 /** A node's parent field and its index in that field */
 interface LocationInField {
@@ -72,11 +75,16 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 		return this.mapTree.type;
 	}
 
-	public get flexSchema(): FlexTreeNodeSchema {
-		return this.context.flexSchema.nodeSchema.get(this.mapTree.type) ?? fail("missing schema");
+	public get storedSchema(): TreeNodeStoredSchema {
+		return this.context.schema.nodeSchema.get(this.mapTree.type) ?? fail("missing schema");
 	}
 
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
+
+	private readonly _events = createEmitter<UnhydratedFlexTreeNodeEvents>();
+	public get events(): Listenable<UnhydratedFlexTreeNodeEvents> {
+		return this._events;
+	}
 
 	/**
 	 * Create a {@link UnhydratedFlexTreeNode} that wraps the given {@link MapTree}, or get the node that already exists for that {@link MapTree} if there is one.
@@ -85,10 +93,14 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	 * @remarks It must conform to the `nodeSchema`.
 	 */
 	public static getOrCreate(
-		context: UnhydratedContext,
+		context: Context,
 		mapTree: ExclusiveMapTree,
 	): UnhydratedFlexTreeNode {
 		return nodeCache.get(mapTree) ?? new UnhydratedFlexTreeNode(context, mapTree, undefined);
+	}
+
+	public get context(): FlexTreeContext {
+		return this.simpleContext.flexContext;
 	}
 
 	/**
@@ -100,7 +112,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	 * Instead, it should always be acquired via {@link getOrCreateNode}.
 	 */
 	public constructor(
-		public readonly context: UnhydratedContext,
+		public readonly simpleContext: Context,
 		/** The underlying {@link MapTree} that this `UnhydratedFlexTreeNode` reads its data from */
 		public readonly mapTree: ExclusiveMapTree,
 		private location = unparentedLocation,
@@ -119,7 +131,7 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	}
 
 	public get type(): TreeNodeSchemaIdentifier {
-		return this.flexSchema.name;
+		return this.mapTree.type;
 	}
 
 	/**
@@ -156,26 +168,31 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 		return this.location;
 	}
 
-	public is(schema: FlexTreeNodeSchema): boolean {
-		return (schema as unknown) === this.flexSchema;
-	}
-
 	public tryGetField(key: FieldKey): UnhydratedFlexTreeField | undefined {
 		const field = this.mapTree.fields.get(key);
 		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
 		if (field !== undefined && field.length > 0) {
-			return getOrCreateField(this, key, this.flexSchema.getFieldSchema(key));
+			return getOrCreateField(this, key, this.storedSchema.getFieldSchema(key).kind, () =>
+				this.emitChangedEvent(key),
+			);
 		}
 	}
 
 	public getBoxed(key: string): FlexTreeField {
 		const fieldKey: FieldKey = brand(key);
-		return getOrCreateField(this, fieldKey, this.flexSchema.getFieldSchema(fieldKey));
+		return getOrCreateField(
+			this,
+			fieldKey,
+			this.storedSchema.getFieldSchema(fieldKey).kind,
+			() => this.emitChangedEvent(fieldKey),
+		);
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		return mapIterable(this.mapTree.fields.entries(), ([key]) =>
-			getOrCreateField(this, key, this.flexSchema.getFieldSchema(key)),
+			getOrCreateField(this, key, this.storedSchema.getFieldSchema(key).kind, () =>
+				this.emitChangedEvent(key),
+			),
 		);
 	}
 
@@ -196,9 +213,14 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 
 	private walkTree(): void {
 		for (const [key, mapTrees] of this.mapTree.fields) {
-			const field = getOrCreateField(this, key, this.flexSchema.getFieldSchema(key));
+			const field = getOrCreateField(
+				this,
+				key,
+				this.storedSchema.getFieldSchema(key).kind,
+				() => this.emitChangedEvent(key),
+			);
 			for (let index = 0; index < field.length; index++) {
-				const child = getOrCreateChild(this.context, mapTrees[index] ?? oob(), {
+				const child = getOrCreateChild(this.simpleContext, mapTrees[index] ?? oob(), {
 					parent: field,
 					index,
 				});
@@ -213,6 +235,10 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 			}
 		}
 	}
+
+	private emitChangedEvent(key: FieldKey): void {
+		this._events.emit("childrenChangedAfterBatch", { changedFields: new Set([key]) });
+	}
 }
 
 /**
@@ -221,17 +247,13 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
  * @remarks An editor is required to edit the FlexTree.
  */
 export class UnhydratedContext implements FlexTreeContext {
-	public readonly schema: TreeStoredSchema;
-
 	/**
 	 * @param flexSchema - Schema to use when working with the tree.
 	 */
-	public constructor(public readonly flexSchema: FlexTreeSchema) {
-		this.schema = {
-			rootFieldSchema: flexSchema.rootFieldSchema.stored,
-			...intoStoredSchemaCollection(flexSchema),
-		};
-	}
+	public constructor(
+		public readonly schemaPolicy: SchemaPolicy,
+		public readonly schema: TreeStoredSchema,
+	) {}
 
 	public isHydrated(): this is FlexTreeHydratedContext {
 		return false;
@@ -239,13 +261,6 @@ export class UnhydratedContext implements FlexTreeContext {
 }
 
 // #region Fields
-
-const emptyContext = new UnhydratedContext({
-	adapters: {},
-	nodeSchema: new Map(),
-	policy: defaultSchemaPolicy,
-	rootFieldSchema: FlexFieldSchema.empty,
-});
 
 /**
  * A special singleton that is the implicit {@link LocationInField} of all un-parented {@link UnhydratedFlexTreeNode}s.
@@ -262,7 +277,7 @@ const unparentedLocation: LocationInField = {
 		key: EmptyKey,
 		parent: undefined,
 		is<TKind2 extends FlexFieldKind>(kind: TKind2) {
-			return this.schema.kind === kind.identifier;
+			return this.schema === kind.identifier;
 		},
 		boxedIterator(): IterableIterator<FlexTreeNode> {
 			return [].values();
@@ -270,8 +285,10 @@ const unparentedLocation: LocationInField = {
 		boxedAt(index: number): FlexTreeNode | undefined {
 			return undefined;
 		},
-		schema: FlexFieldSchema.empty.stored,
-		context: emptyContext,
+		schema: brand(forbiddenFieldKindIdentifier),
+		get context(): never {
+			return fail("unsupported");
+		},
 		getFieldPath() {
 			fail("unsupported");
 		},
@@ -282,15 +299,16 @@ const unparentedLocation: LocationInField = {
 class UnhydratedFlexTreeField implements FlexTreeField {
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
-	public get schema(): TreeFieldStoredSchema {
-		return this.flexSchema.stored;
+	public get context(): FlexTreeContext {
+		return this.simpleContext.flexContext;
 	}
 
 	public constructor(
-		public readonly context: UnhydratedContext,
-		public readonly flexSchema: FlexFieldSchema,
+		public readonly simpleContext: Context,
+		public readonly schema: FieldKindIdentifier,
 		public readonly key: FieldKey,
 		public readonly parent: UnhydratedFlexTreeNode,
+		public readonly onEdit?: () => void,
 	) {
 		const fieldKeyCache = getFieldKeyCache(parent);
 		assert(!fieldKeyCache.has(key), 0x990 /* A field already exists for the given MapTrees */);
@@ -318,14 +336,14 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 	}
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
-		return this.schema.kind === kind.identifier;
+		return this.schema === kind.identifier;
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeNode> {
 		return this.mapTrees
 			.map(
 				(m, index) =>
-					getOrCreateChild(this.context, m, {
+					getOrCreateChild(this.simpleContext, m, {
 						parent: this,
 						index,
 					}) as FlexTreeNode,
@@ -340,7 +358,7 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		}
 		const m = this.mapTrees[i];
 		if (m !== undefined) {
-			return getOrCreateChild(this.context, m, {
+			return getOrCreateChild(this.simpleContext, m, {
 				parent: this,
 				index: i,
 			}) as FlexTreeNode;
@@ -363,6 +381,8 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 		} else {
 			this.parent.mapTree.fields.delete(this.key);
 		}
+
+		this.onEdit?.();
 	}
 
 	public getFieldPath(): FieldUpPath {
@@ -370,16 +390,14 @@ class UnhydratedFlexTreeField implements FlexTreeField {
 	}
 
 	/** Unboxes leaf nodes to their values */
-	protected unboxed(
-		mapTree: ExclusiveMapTree,
-		parent: LocationInField,
-	): FlexTreeUnknownUnboxed {
+	protected unboxed(index: number): FlexTreeUnknownUnboxed {
+		const mapTree: ExclusiveMapTree = this.mapTrees[index] ?? oob();
 		const value = mapTree.value;
 		if (value !== undefined) {
 			return value;
 		}
 
-		return getOrCreateChild(parent.parent.context, mapTree, parent);
+		return getOrCreateChild(this.simpleContext, mapTree, { parent: this, index });
 	}
 }
 
@@ -412,10 +430,7 @@ class EagerMapTreeOptionalField
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		const value = this.mapTrees[0];
 		if (value !== undefined) {
-			return this.unboxed(value, {
-				parent: this,
-				index: 0,
-			});
+			return this.unboxed(0);
 		}
 
 		return undefined;
@@ -471,15 +486,15 @@ export class UnhydratedTreeSequenceField
 		if (i === undefined) {
 			return undefined;
 		}
-		return this.unboxed(this.mapTrees[i] ?? oob(), { parent: this, index: i });
+		return this.unboxed(i);
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
 	}
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
-		for (const [i, mapTree] of this.mapTrees.entries()) {
-			yield this.unboxed(mapTree, { parent: this, index: i });
+		for (const [i] of this.mapTrees.entries()) {
+			yield this.unboxed(i);
 		}
 	}
 }
@@ -512,7 +527,7 @@ export function tryUnhydratedFlexTreeNode(
 
 /** Helper for creating a `UnhydratedFlexTreeNode` given the parent field (e.g. when "walking down") */
 function getOrCreateChild(
-	context: UnhydratedContext,
+	context: Context,
 	mapTree: ExclusiveMapTree,
 	parent: LocationInField | undefined,
 ): UnhydratedFlexTreeNode {
@@ -528,7 +543,8 @@ function getOrCreateChild(
 function getOrCreateField(
 	parent: UnhydratedFlexTreeNode,
 	key: FieldKey,
-	schema: FlexFieldSchema,
+	schema: FieldKindIdentifier,
+	onEdit?: () => void,
 ): UnhydratedFlexTreeField {
 	const cached = getFieldKeyCache(parent).get(key);
 	if (cached !== undefined) {
@@ -536,21 +552,21 @@ function getOrCreateField(
 	}
 
 	if (
-		schema.kind.identifier === FieldKinds.required.identifier ||
-		schema.kind.identifier === FieldKinds.identifier.identifier
+		schema === FieldKinds.required.identifier ||
+		schema === FieldKinds.identifier.identifier
 	) {
-		return new EagerMapTreeRequiredField(parent.context, schema, key, parent);
+		return new EagerMapTreeRequiredField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	if (schema.kind.identifier === FieldKinds.optional.identifier) {
-		return new EagerMapTreeOptionalField(parent.context, schema, key, parent);
+	if (schema === FieldKinds.optional.identifier) {
+		return new EagerMapTreeOptionalField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	if (schema.kind.identifier === FieldKinds.sequence.identifier) {
-		return new UnhydratedTreeSequenceField(parent.context, schema, key, parent);
+	if (schema === FieldKinds.sequence.identifier) {
+		return new UnhydratedTreeSequenceField(parent.simpleContext, schema, key, parent, onEdit);
 	}
 
-	return new UnhydratedFlexTreeField(parent.context, schema, key, parent);
+	return new UnhydratedFlexTreeField(parent.simpleContext, schema, key, parent, onEdit);
 }
 
 // #endregion Caching and unboxing utilities

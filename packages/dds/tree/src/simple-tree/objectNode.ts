@@ -44,7 +44,7 @@ import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
-import { createUnhydratedContext } from "./createContext.js";
+import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -151,7 +151,7 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
  * If not provided `{}` is used for the target.
  */
 function createProxyHandler(
-	flexKeyMap: SimpleKeyMap,
+	schema: ObjectNodeSchema & ObjectNodeSchemaInternalData,
 	allowAdditionalProperties: boolean,
 ): ProxyHandler<TreeNode> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
@@ -165,7 +165,7 @@ function createProxyHandler(
 	// a dispatch object to see if it improves performance.
 	const handler: ProxyHandler<TreeNode> = {
 		get(target, propertyKey, proxy): unknown {
-			const fieldInfo = flexKeyMap.get(propertyKey);
+			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 
 			if (fieldInfo !== undefined) {
 				const flexNode = getOrCreateInnerNode(proxy);
@@ -190,11 +190,20 @@ function createProxyHandler(
 				return undefined;
 			}
 
+			// POJO mode objects don't have TreeNode's build in members on their targets, so special case them:
+			if (propertyKey === typeSchemaSymbol) {
+				return schema;
+			}
+			// eslint-disable-next-line import/no-deprecated
+			if (propertyKey === typeNameSymbol) {
+				return schema.identifier;
+			}
+
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 			return Reflect.get(target, propertyKey, proxy);
 		},
 		set(target, propertyKey, value: InsertableContent | undefined, proxy) {
-			const fieldInfo = flexKeyMap.get(propertyKey);
+			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 			if (fieldInfo === undefined) {
 				// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
 				return allowAdditionalProperties
@@ -217,18 +226,18 @@ function createProxyHandler(
 		},
 		has: (target, propertyKey) => {
 			return (
-				flexKeyMap.has(propertyKey) ||
+				schema.flexKeyMap.has(propertyKey) ||
 				(allowAdditionalProperties ? Reflect.has(target, propertyKey) : false)
 			);
 		},
 		ownKeys: (target) => {
 			return [
-				...flexKeyMap.keys(),
+				...schema.flexKeyMap.keys(),
 				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
 			];
 		},
 		getOwnPropertyDescriptor: (target, propertyKey) => {
-			const fieldInfo = flexKeyMap.get(propertyKey);
+			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 
 			if (fieldInfo === undefined) {
 				return allowAdditionalProperties
@@ -274,7 +283,7 @@ export function setField(
 		prepareContentForHydration(mapTree, field.context.checkout.forest);
 	}
 
-	switch (field.schema.kind) {
+	switch (field.schema) {
 		case FieldKinds.required.identifier: {
 			assert(mapTree !== undefined, 0xa04 /* Cannot set a required field to undefined */);
 			const typedField = field as FlexTreeRequiredField;
@@ -320,6 +329,13 @@ export function objectSchema<
 	// Performance optimization: cache property key => stored key and schema.
 	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
+	const identifierFieldKeys: FieldKey[] = [];
+	for (const item of flexKeyMap.values()) {
+		if (item.schema.kind === FieldKind.Identifier) {
+			identifierFieldKeys.push(item.storedKey);
+		}
+	}
+
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
@@ -342,6 +358,7 @@ export function objectSchema<
 				key as string,
 			]),
 		);
+		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -379,7 +396,7 @@ export function objectSchema<
 			input: T2,
 		): UnhydratedFlexTreeNode {
 			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext.flexContext,
+				unhydratedContext,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
@@ -389,9 +406,9 @@ export function objectSchema<
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
-			handler = createProxyHandler(flexKeyMap, customizable);
-			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = createUnhydratedContext(schema);
+			const schema = this as unknown as ObjectNodeSchema & ObjectNodeSchemaInternalData;
+			handler = createProxyHandler(schema, customizable);
+			unhydratedContext = getUnhydratedContext(schema);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.

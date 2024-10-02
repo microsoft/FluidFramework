@@ -71,6 +71,7 @@ export {
 	type JsonLeafSchemaType,
 	getJsonSchema,
 	getSimpleSchema,
+	ViewSchema,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -94,7 +95,6 @@ export {
 	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
 export { getOrCreateInnerNode } from "./proxyBinding.js";
-export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
@@ -131,7 +131,7 @@ export {
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-export { toStoredSchema, getStoredSchema, getFlexSchema } from "./toFlexSchema.js";
+export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
 export {
 	numberSchema,
 	stringSchema,

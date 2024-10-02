@@ -16,9 +16,6 @@ import {
 } from "../core/index.js";
 import {
 	FieldKinds,
-	type FlexFieldSchema,
-	type FlexTreeSchema,
-	type ViewSchema,
 	allowsRepoSuperset,
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -27,6 +24,7 @@ import {
 import { fail, isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
+import type { ViewSchema } from "../simple-tree/index.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -246,7 +244,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(viewSchema.storedSchema);
+			checkout.updateSchema(viewSchema.schema);
 			return true;
 		}
 		case UpdateType.Initialize: {
@@ -266,28 +264,6 @@ export function ensureSchema(
 }
 
 /**
- * View Schema for a `SharedTree`.
- */
-export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema> {
-	/**
-	 * The schema which the application wants to view the tree with.
-	 */
-	readonly schema: FlexTreeSchema<TRoot>;
-}
-
-/**
- * Content that can populate a `SharedTree`.
- */
-export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
-	extends SchemaConfiguration<TRoot> {
-	/**
-	 * Default tree content to initialize the tree with iff the tree is uninitialized
-	 * (meaning it does not even have any schema set at all).
-	 */
-	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
-}
-
-/**
  * Content that can populate a `SharedTree`.
  */
 export interface TreeStoredContent {
@@ -298,34 +274,4 @@ export interface TreeStoredContent {
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
-}
-
-/**
- * Options used to schematize a `SharedTree`.
- */
-export interface SchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema>
-	extends SchemaConfiguration<TRoot> {
-	/**
-	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
-	 */
-	readonly allowedSchemaModifications: AllowedUpdateType;
-}
-
-/**
- * Options used to initialize (if needed) and schematize a `SharedTree`.
- */
-export interface InitializeAndSchematizeConfiguration<
-	TRoot extends FlexFieldSchema = FlexFieldSchema,
-> extends TreeContent<TRoot>,
-		SchematizeConfiguration<TRoot> {}
-
-/**
- * Options used to initialize (if needed) and schematize a `SharedTree`.
- * @remarks
- * Using this builder improves type safety and error quality over just constructing the configuration as a object.
- */
-export function buildTreeConfiguration<T extends FlexFieldSchema>(
-	config: InitializeAndSchematizeConfiguration<T>,
-): InitializeAndSchematizeConfiguration<T> {
-	return config;
 }

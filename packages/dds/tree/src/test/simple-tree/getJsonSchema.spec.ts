@@ -15,6 +15,37 @@ import { hydrate } from "./utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
 describe("getJsonSchema", () => {
+	it("Field Schema", async () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = schemaFactory.optional(schemaFactory.string, {
+			metadata: { description: "An optional string." },
+		});
+
+		const actual = getJsonSchema(Schema);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/com.fluidframework.leaf.string",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator(hydrate(Schema, "Hello world"), true);
+		validator("Hello world", true);
+		validator(42, false);
+		validator({}, false);
+		validator([], false);
+		validator(null, false);
+	});
+
 	it("Leaf node", async () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.string;
