@@ -4,13 +4,8 @@
  */
 
 /*
- * Copies local _api-extractor-temp/doc-models to docs/doc-models/v2
+ * Copies local _api-extractor-temp/doc-models to docs/doc-models/local
  * This is for running local doc builds to see api changes immediately in the docs.
- * TODO: Hugo has some limitations with the way it renders the different doc versions.
- * Since it relies on reading the fixed version data from versions.json, an optional local
- * version cannot be added to the list.
- * The current workaround is to display local content by overriding the v2 api doc-models
- * when running build:local.
  */
 
 import fs from "fs-extra";
