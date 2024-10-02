@@ -6,7 +6,6 @@
 import * as child_process from "child_process";
 import * as fs from "fs";
 import * as path from "path";
-import * as util from "util";
 import isEqual from "lodash.isequal";
 
 /**
@@ -30,18 +29,6 @@ export function getExecutableFromCommand(command: string) {
 	}
 	return toReturn;
 }
-
-export const statAsync = util.promisify(fs.stat);
-export const lstatAsync = util.promisify(fs.lstat);
-export const readFileAsync = util.promisify(fs.readFile);
-export const writeFileAsync = util.promisify(fs.writeFile);
-export const unlinkAsync = util.promisify(fs.unlink);
-export const existsSync = fs.existsSync;
-export const realpathAsync = util.promisify(fs.realpath.native);
-export const symlinkAsync = util.promisify(fs.symlink);
-export const mkdirAsync = util.promisify(fs.mkdir);
-export const copyFileAsync = util.promisify(fs.copyFile);
-export const renameAsync = util.promisify(fs.rename);
 
 export interface ExecAsyncResult {
 	error: child_process.ExecException | null;

@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { TaggedChange } from "../rebase/index.js";
 import type { ChangeFamily, ChangeFamilyEditor } from "./changeFamily.js";
 
 export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
 	public constructor(
 		protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>,
-		private readonly changeReceiver: (change: TChange) => void,
+		private readonly changeReceiver: (change: TaggedChange<TChange>) => void,
 	) {}
 
 	/**
@@ -16,7 +17,7 @@ export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
 	 *
 	 * @sealed
 	 */
-	protected applyChange(change: TChange): void {
+	protected applyChange(change: TaggedChange<TChange>): void {
 		this.changeReceiver(change);
 	}
 

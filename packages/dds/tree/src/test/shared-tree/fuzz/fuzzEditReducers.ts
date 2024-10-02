@@ -12,11 +12,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import {
-	Tree,
-	type ITreeCheckoutFork,
-	type SharedTreeFactory,
-} from "../../../shared-tree/index.js";
+import { Tree, type SharedTreeFactory } from "../../../shared-tree/index.js";
 import { fail } from "../../../util/index.js";
 import { validateFuzzTreeConsistency, viewCheckout } from "../../utils.js";
 
@@ -315,7 +311,7 @@ export function applyTransactionBoundary(
 			boundary === "start",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
-		const treeViewFork = viewFromState(state).checkout.fork();
+		const treeViewFork = viewFromState(state).checkout.branch();
 		const treeSchema = simpleSchemaFromStoredSchema(state.client.channel.storedSchema);
 		const treeView = viewCheckout(
 			treeViewFork,
@@ -349,7 +345,7 @@ export function applyTransactionBoundary(
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
 		const rootView = viewFromState(state);
-		rootView.checkout.merge(checkout as ITreeCheckoutFork);
+		rootView.checkout.merge(checkout);
 	}
 }
 
