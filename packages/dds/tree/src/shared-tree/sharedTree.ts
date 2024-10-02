@@ -392,6 +392,10 @@ export const SharedTreeFormatVersion = {
  * @alpha
  * @privateRemarks
  * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
+ *
+ * TODO: Before this gets promoted past Alpha,
+ * a separate abstraction more suited for use in the public API should be adopted rather than reusing the same types used internally.
+ * Such an abstraction should probably be in the form of a Fluid-Framework wide compatibility enum.
  */
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
