@@ -241,7 +241,7 @@ export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObjec
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     localReferencePositionToPosition(lref: ReferencePosition): number;
-    obliterateRange(start: number, end: number): void;
+    obliterateRange(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): void;
     posFromRelativePos(relativePos: IRelativePosition): number;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
@@ -417,7 +417,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // (undocumented)
-    obliterateRange(start: number, end: number): void;
+    obliterateRange(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): void;
     protected onConnect(): void;
     protected onDisconnect(): void;
     // (undocumented)

@@ -17,6 +17,7 @@ import {
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { ConfigDumper } from "./configDumper";
+import { StartupChecker } from "./startupChecker";
 
 /**
  * Uses the provided factories to create and execute a runner.
@@ -82,6 +83,8 @@ export async function run<T extends IResources>(
 			);
 		});
 	});
+
+	StartupChecker.instance.setReady();
 
 	try {
 		// Wait for the runner to complete
