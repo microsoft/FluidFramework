@@ -430,6 +430,7 @@ extends:
                             echo "List files 7"
                             ls ${{ parameters.buildDirectory }}/nyc/report
                             echo "Now in directory: $(pwd)"
+                            echo "TARGET_BRANCH_NAME: $(targetBranchName)"
 
 
                   # Process test result, include publishing and logging
@@ -564,7 +565,7 @@ extends:
                   targetType: inline
                   script: |
                     git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
-                    if [ `cat git_status.log | wc -l` != "0" ]; then
+                    if [ `cat git_status.log | wc -l` != "0" ]; thenƒc
                       cat git_status.log
                       echo "##vso[task.logissue type=error]Build should not create extraneous files"
                       exit -1;
