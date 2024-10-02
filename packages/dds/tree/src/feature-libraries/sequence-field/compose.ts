@@ -442,6 +442,11 @@ function handleMovePivot(
 				truncatedEndpoint2,
 			);
 		}
+
+		// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
+		// so we remove it as a normalization.
+		delete baseAttach.finalEndpoint;
+		delete newDetach.finalEndpoint;
 	}
 }
 
