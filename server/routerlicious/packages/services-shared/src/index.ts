@@ -36,3 +36,4 @@ export {
 } from "./webServer";
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
+export { createHealthCheckEndpoints } from "./healthCheckEndpoints";
