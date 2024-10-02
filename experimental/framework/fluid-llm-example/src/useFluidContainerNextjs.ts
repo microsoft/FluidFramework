@@ -28,7 +28,7 @@ export async function getExistingFluidContainerV2<T extends ContainerSchema, V>(
 	containerSchema: T,
 	getExistingData: (container: IFluidContainer<T>) => V,
 ) {
-	console.log("attempting to get container with id", id);
+	console.log(`attempting to get container with id '${id}'`);
 	const res = await odspClient.getContainer(id, containerSchema);
 
 	if (!res) {
