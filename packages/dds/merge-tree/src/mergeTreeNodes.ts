@@ -48,11 +48,43 @@ export interface IMergeNodeCommon {
 	ordinal: string;
 	isLeaf(): this is ISegment;
 }
+
 /**
+ * This interface exposes internal things to dds that leverage merge tree,
+ * like sequence and matrix.
+ *
+ * We use tiered interface to control visibility of segment properties.
+ * This sits between ISegment and ISegmentLeaf. It should only expose
+ * things tagged internal.
+ *
+ * @internal
+ */
+export type ISegmentInternal = ISegment & {
+	localRefs?: LocalReferenceCollection;
+};
+
+/**
+ * We use tiered interface to control visibility of segment properties.
+ * This is the lowest interface and is not exported, it site below ISegment and ISegmentInternal.
+ * It should only expose unexported things.
+ *
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegment & { parent?: MergeBlock };
+export type ISegmentLeaf = ISegmentInternal & {
+	parent?: MergeBlock;
+	// eslint-disable-next-line import/no-deprecated
+	segmentGroups?: SegmentGroupCollection;
+	// eslint-disable-next-line import/no-deprecated
+	propertyManager?: PropertiesManager;
+
+	/**
+	 * If a segment is inserted into an obliterated range,
+	 * but the newest obliteration of that range was by the inserting client,
+	 * then the segment is not obliterated because it is aware of the latest obliteration.
+	 */
+	prevObliterateByInserter?: ObliterateInfo;
+};
 export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
@@ -160,13 +192,6 @@ export interface IMoveInfo {
 	 * calculations
 	 */
 	wasMovedOnInsert: boolean;
-
-	/**
-	 * If a segment is inserted into an obliterated range,
-	 * but the newest obliteration of that range was by the inserting client,
-	 * then the segment is not obliterated because it is aware of the latest obliteration.
-	 */
-	prevObliterateByInserter?: ObliterateInfo;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
@@ -240,7 +265,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
 	 *
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localSeq?: number;
 	/**
@@ -249,7 +273,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * will be updated to the seq at which that client removed this segment.
 	 *
 	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localRemovedSeq?: number;
 	/**
@@ -395,6 +418,7 @@ export interface SegmentActions<TClientData> {
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @legacy
  * @alpha
+ * @privateRemarks After deprecation period this interface should be made internal
  */
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
@@ -705,7 +729,6 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		this.copyPropertiesTo(leafSegment);
 		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 		const thisAsMergeSegment: ISegmentLeaf = this;
 		leafSegment.parent = thisAsMergeSegment.parent;
@@ -729,32 +752,13 @@ export abstract class BaseSegment implements ISegment {
 		leafSegment.movedSeqs = this.movedSeqs?.slice();
 		leafSegment.localMovedSeq = this.localMovedSeq;
 		leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
-		this.segmentGroups.copyTo(leafSegment);
+
 		this.trackingCollection.copyTo(leafSegment);
-		if (this.localRefs) {
-			this.localRefs.split(pos, leafSegment);
-		}
 		if (this.attribution) {
 			leafSegment.attribution = this.attribution.splitAt(pos);
 		}
 
 		return leafSegment;
-	}
-
-	private copyPropertiesTo(other: ISegment): void {
-		if (this.properties !== undefined) {
-			if (this.propertyManager) {
-				// eslint-disable-next-line import/no-deprecated
-				other.propertyManager = new PropertiesManager();
-				other.properties = this.propertyManager.copyTo(
-					this.properties,
-					other.properties,
-					other.propertyManager,
-				);
-			} else {
-				other.properties = clone(this.properties);
-			}
-		}
 	}
 
 	public abstract clone(): ISegment;
@@ -890,9 +894,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * @internal
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;

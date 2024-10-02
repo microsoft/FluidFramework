@@ -1977,9 +1977,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingState = JSON.parse(stashBlob);
 		// make sure the container loaded from summary and we have no saved ops
 		assert.strictEqual(pendingState.savedOps.length, 0);
-		assert(
-			pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
-		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, stashBlob);

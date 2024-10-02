@@ -78,19 +78,6 @@ export abstract class BaseSegment implements ISegment {
     wasMovedOnInsert?: boolean | undefined;
 }
 
-// @alpha @deprecated (undocumented)
-export class CollaborationWindow {
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    collaborating: boolean;
-    currentSeq: number;
-    // (undocumented)
-    loadFrom(a: CollaborationWindow): void;
-    localSeq: number;
-    minSeq: number;
-}
-
 // @alpha
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
@@ -313,7 +300,6 @@ export interface IMoveInfo {
     movedSeq: number;
     movedSeqs: number[];
     moveDst?: ReferencePosition;
-    prevObliterateByInserter?: ObliterateInfo;
     wasMovedOnInsert: boolean;
 }
 
