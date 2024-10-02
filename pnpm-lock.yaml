@@ -3519,7 +3519,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       debug:
-        specifier: ^4.3.4
+        specifier: ^4.3.6
         version: 4.3.7(supports-color@8.1.1)
     devDependencies:
       '@arethetypeswrong/cli':
@@ -3761,7 +3761,7 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       debug:
-        specifier: ^4.3.4
+        specifier: ^4.3.6
         version: 4.3.7(supports-color@8.1.1)
       react:
         specifier: ^17.0.1
@@ -11748,7 +11748,7 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0
       debug:
-        specifier: ^4.3.4
+        specifier: ^4.3.6
         version: 4.3.7(supports-color@8.1.1)
       double-ended-queue:
         specifier: ^2.1.0-0
@@ -14584,7 +14584,7 @@ importers:
         specifier: ^1.0.0
         version: 1.0.3
       debug:
-        specifier: ^4.3.4
+        specifier: ^4.3.6
         version: 4.3.7(supports-color@8.1.1)
       mocha:
         specifier: ^10.2.0
@@ -16180,7 +16180,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/driver-definitions
       debug:
-        specifier: ^4.3.4
+        specifier: ^4.3.6
         version: 4.3.7(supports-color@8.1.1)
       uuid:
         specifier: ^9.0.0
@@ -16286,7 +16286,7 @@ importers:
         specifier: ^0.3.1
         version: 0.3.2
       debug:
-        specifier: ^4.3.4
+        specifier: ^4.3.6
         version: 4.3.7(supports-color@8.1.1)
       jwt-decode:
         specifier: ^4.0.0
