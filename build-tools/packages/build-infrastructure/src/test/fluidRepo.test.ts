@@ -10,9 +10,8 @@ import { describe, it } from "mocha";
 
 import { loadFluidRepo } from "../fluidRepo.js";
 import type { WorkspaceName } from "../types.js";
-// import { findGitRoot } from "../utils.js";
-import { testDataPath } from "./init.js";
 import { findGitRoot } from "../utils.js";
+import { testDataPath } from "./init.js";
 
 describe("loadFluidRepo", () => {
 	describe("testRepo", () => {
@@ -49,39 +48,38 @@ describe("loadFluidRepo", () => {
 	});
 
 	describe("FluidFramework repo", () => {
-	describe("loadFluidRepo", () => {
-		it("loads correctly", () => {
-			// Load the root config
-			const repo = loadFluidRepo(findGitRoot());
-			assert.strictEqual(
-				repo.workspaces.size,
-				14,
-				`Expected 14 workspaces, found ${repo.workspaces.size}`,
-			);
+		describe("loadFluidRepo", () => {
+			it("loads correctly", () => {
+				// Load the root config
+				const repo = loadFluidRepo(findGitRoot());
+				assert.strictEqual(
+					repo.workspaces.size,
+					14,
+					`Expected 14 workspaces, found ${repo.workspaces.size}`,
+				);
 
-			const client = repo.workspaces.get("client" as WorkspaceName);
-			expect(client).to.not.be.undefined;
-			expect(client?.packages.length).to.equal(
-				153,
-				"client workspace has the wrong number of packages",
-			);
-			expect(client?.releaseGroups.size).to.equal(
-				1,
-				"client workspace has the wrong number of release groups",
-			);
+				const client = repo.workspaces.get("client" as WorkspaceName);
+				expect(client).to.not.be.undefined;
+				expect(client?.packages.length).to.equal(
+					153,
+					"client workspace has the wrong number of packages",
+				);
+				expect(client?.releaseGroups.size).to.equal(
+					1,
+					"client workspace has the wrong number of release groups",
+				);
 
-			const buildTools = repo.workspaces.get("build-tools" as WorkspaceName);
-			expect(buildTools).to.not.be.undefined;
-			expect(buildTools?.packages.length).to.equal(
-				6,
-				"build-tools workspace has the wrong number of packages",
-			);
-			expect(buildTools?.releaseGroups.size).to.equal(
-				1,
-				"build-tools workspace has the wrong number of release groups",
-			);
+				const buildTools = repo.workspaces.get("build-tools" as WorkspaceName);
+				expect(buildTools).to.not.be.undefined;
+				expect(buildTools?.packages.length).to.equal(
+					6,
+					"build-tools workspace has the wrong number of packages",
+				);
+				expect(buildTools?.releaseGroups.size).to.equal(
+					1,
+					"build-tools workspace has the wrong number of release groups",
+				);
+			});
 		});
-	});
-
 	});
 });
