@@ -20,13 +20,9 @@ import { loadWorkspacesFromLegacyConfig } from "./workspaceCompat.js";
 
 export class FluidRepo implements IFluidRepo {
 	// public readonly root: string;
-
+	//
 	public constructor(public readonly root: string) {
 		const config = getFluidRepoLayout(this.root);
-
-		// if (config.repoPackages !== undefined) {
-		// 	// TODO: Warning that this setting is deprecated.
-		// }
 
 		if (config.repoLayout === undefined) {
 			if (config.repoPackages === undefined) {
@@ -40,7 +36,7 @@ export class FluidRepo implements IFluidRepo {
 				Object.entries(config.repoLayout.workspaces).map((entry) => {
 					const name = entry[0] as WorkspaceName;
 					const definition = entry[1];
-					const ws = Workspace.load(name, definition);
+					const ws = Workspace.load(name, definition, this.root);
 					return [name, ws];
 				}),
 			);

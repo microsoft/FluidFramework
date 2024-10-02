@@ -91,7 +91,7 @@ function loadWorkspacesFromLegacyConfigEntry(
 			releaseGroups: releaseGroupDefinitions,
 		};
 
-		return [Workspace.load(workspaceName, workspaceDefinition)];
+		return [Workspace.load(workspaceName, workspaceDefinition, fluidRepoRoot)];
 	}
 
 	const packageJsonPaths = globby

@@ -1,0 +1,30 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@fluid-tools/build-infrastructure':
+        specifier: link:../../../../../build-infrastructure
+        version: link:../../../..
+
+  packages/pkg-a:
+    dependencies:
+      pkg-b:
+        specifier: workspace:~
+        version: link:../pkg-b
+      shared:
+        specifier: workspace:~
+        version: link:../shared
+
+  packages/pkg-b:
+    dependencies:
+      pkg-b:
+        specifier: workspace:~
+        version: 'link:'
+
+  packages/shared: {}

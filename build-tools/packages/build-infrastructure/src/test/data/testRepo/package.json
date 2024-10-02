@@ -1,0 +1,7 @@
+{
+	"name": "main-release-group-root",
+	"version": "1.0.0",
+	"dependencies": {
+		"@fluid-tools/build-infrastructure": "link:../../../../../build-infrastructure"
+	}
+}

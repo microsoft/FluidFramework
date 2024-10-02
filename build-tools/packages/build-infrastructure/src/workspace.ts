@@ -19,7 +19,6 @@ import type {
 	ReleaseGroupName,
 	WorkspaceName,
 } from "./types.js";
-import { findGitRoot } from "./utils.js";
 
 export class Workspace implements IWorkspace {
 	public readonly name: WorkspaceName;
@@ -34,10 +33,14 @@ export class Workspace implements IWorkspace {
 
 	private readonly packageManager: IPackageManager;
 
-	private constructor(name: string, definition: WorkspaceDefinition) {
+	private constructor(
+		name: string,
+		definition: WorkspaceDefinition,
+		public readonly root: string,
+	) {
 		this.name = name as WorkspaceName;
-		const repoRoot = findGitRoot();
-		this.directory = path.resolve(repoRoot, definition.directory);
+		// const repoRoot = findGitRoot();
+		this.directory = path.resolve(root, definition.directory);
 
 		const {
 			tool,
@@ -147,8 +150,8 @@ export class Workspace implements IWorkspace {
 		this.packages.forEach((pkg) => pkg.reload());
 	}
 
-	public static load(name: string, definition: WorkspaceDefinition): IWorkspace {
-		const workspace = new Workspace(name, definition);
+	public static load(name: string, definition: WorkspaceDefinition, root: string): IWorkspace {
+		const workspace = new Workspace(name, definition, root);
 		return workspace;
 	}
 }

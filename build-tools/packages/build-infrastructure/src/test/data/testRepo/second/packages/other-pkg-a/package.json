@@ -1,0 +1,7 @@
+{
+	"name": "other-pkg-a",
+	"version": "2.0.0",
+	"dependencies": {
+		"other-pkg-b": "workspace:~"
+	}
+}
