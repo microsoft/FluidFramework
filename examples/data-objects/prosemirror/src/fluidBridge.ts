@@ -450,10 +450,7 @@ function sliceToGroupOpsInternal(
 	const node = schema.nodes[value.type];
 	if (node.isInline) {
 		if (value.type === "text") {
-			const segment = new TextSegment(value.text);
-			if (props) {
-				segment.addProperties(props);
-			}
+			const segment = TextSegment.make(value.text, props);
 			ops.push(createInsertSegmentOp(from + offset, segment));
 
 			offset = adjustOffset(from, offset, value.text.length, insert, gapDistance);
@@ -466,8 +463,7 @@ function sliceToGroupOpsInternal(
 				},
 			};
 
-			const marker = new Marker(ReferenceType.Simple);
-			marker.addProperties(nodeProps);
+			const marker = Marker.make(ReferenceType.Simple, nodeProps);
 			ops.push(createInsertSegmentOp(from + offset, marker));
 
 			offset = adjustOffset(from, offset, 1, insert, gapDistance);
@@ -483,8 +479,7 @@ function sliceToGroupOpsInternal(
 				},
 			};
 
-			const marker = new Marker(ReferenceType.Simple);
-			marker.addProperties(beginProps);
+			const marker = Marker.make(ReferenceType.Simple, beginProps);
 			ops.push(createInsertSegmentOp(from + offset, marker));
 
 			offset = adjustOffset(from, offset, 1, insert, gapDistance);
@@ -514,8 +509,7 @@ function sliceToGroupOpsInternal(
 				},
 			};
 
-			const marker = new Marker(ReferenceType.Simple);
-			marker.addProperties(endProps);
+			const marker = Marker.make(ReferenceType.Simple, endProps);
 			ops.push(createInsertSegmentOp(from + offset, marker));
 
 			offset = adjustOffset(from, offset, 1, insert, gapDistance);

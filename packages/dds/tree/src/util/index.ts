@@ -89,17 +89,14 @@ export {
 	transformObjectMap,
 	compareStrings,
 	find,
+	count,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
 export type {
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
 	_RecursiveTrick,
-	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
-	Assume,
+	RestrictiveStringRecord,
 	_InlineTrick,
 	FlattenKeys,
 } from "./typeUtils.js";

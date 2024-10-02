@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
-import * as path from "path";
+import { existsSync } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
-import { commonOptionString, parseOption } from "../common/commonOptions";
-import { defaultBuildTaskName, defaultCleanTaskName } from "../common/fluidTaskDefinitions";
 import { defaultLogger } from "../common/logging";
-import { existsSync } from "../common/utils";
+import { commonOptionString, parseOption } from "./commonOptions";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
+import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
 import { ISymlinkOptions } from "./symlinkUtils";
 
 const { log, warning, errorLog } = defaultLogger;
@@ -24,8 +24,20 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	buildTaskNames: string[];
 	build?: boolean;
 	vscode: boolean;
+
+	/**
+	 * @deprecated symlink-related functionality will be removed in an upcoming release.
+	 */
 	symlink: boolean;
+
+	/**
+	 * @deprecated symlink-related functionality will be removed in an upcoming release.
+	 */
 	fullSymlink: boolean | undefined;
+
+	/**
+	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
+	 */
 	depcheck: boolean;
 	force: boolean;
 	install: boolean;
@@ -212,16 +224,25 @@ export function parseOptions(argv: string[]) {
 		}
 
 		if (arg === "--symlink") {
+			console.warn(
+				"The --symlink flag is deprecated and will be removed in an upcoming release.",
+			);
 			setSymlink(false);
 			continue;
 		}
 
 		if (arg === "--symlink:full") {
+			console.warn(
+				"The --symlink:full flag is deprecated and will be removed in an upcoming release.",
+			);
 			setSymlink(true);
 			continue;
 		}
 
 		if (arg === "--depcheck") {
+			console.warn(
+				"The --depcheck flag is deprecated and will be removed in an upcoming release.",
+			);
 			options.depcheck = true;
 			setBuild(false);
 			continue;

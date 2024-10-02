@@ -12,6 +12,4 @@ export { HasContainerKey }
 
 export { IDevtoolsLogger }
 
-// (No @packageDocumentation comment for this package)
-
 ```

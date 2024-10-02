@@ -19,23 +19,36 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 0,
+                            "maxId": 1,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
+                                "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "insert": {
-                                        "id": 0
-                                      }
-                                    },
-                                    "cellId": {
-                                      "atom": 0
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 0
+                                                }
+                                              },
+                                              "cellId": {
+                                                "atom": 0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -79,7 +92,7 @@
                           }
                         }
                       ],
-                      "revision": 2,
+                      "revision": 4,
                       "sequenceNumber": 4,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
@@ -87,23 +100,36 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 1,
+                            "maxId": 3,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
+                                "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "insert": {
-                                        "id": 1
-                                      }
-                                    },
-                                    "cellId": {
-                                      "atom": 1
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 2
+                                                }
+                                              },
+                                              "cellId": {
+                                                "atom": 2
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -112,7 +138,7 @@
                                 [
                                   [
                                     [
-                                      1,
+                                      2,
                                       0
                                     ]
                                   ]
@@ -147,7 +173,7 @@
                           }
                         }
                       ],
-                      "revision": 3,
+                      "revision": 5,
                       "sequenceNumber": 6,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
@@ -155,26 +181,39 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 1,
+                            "maxId": 3,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
+                                "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "count": 2
-                                  },
-                                  {
-                                    "count": 2,
-                                    "effect": {
-                                      "insert": {
-                                        "id": 0
-                                      }
-                                    },
-                                    "cellId": {
-                                      "atom": 0
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 2
+                                            },
+                                            {
+                                              "count": 2,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 0
+                                                }
+                                              },
+                                              "cellId": {
+                                                "atom": 0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -222,7 +261,7 @@
                           }
                         }
                       ],
-                      "revision": 4,
+                      "revision": 6,
                       "sequenceNumber": 8,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     },
@@ -230,26 +269,39 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 2,
+                            "maxId": 4,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
+                                "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "count": 3
-                                  },
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "insert": {
-                                        "id": 2
-                                      }
-                                    },
-                                    "cellId": {
-                                      "atom": 2
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 3
+                                            },
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 3
+                                                }
+                                              },
+                                              "cellId": {
+                                                "atom": 3
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ],
@@ -258,7 +310,7 @@
                                 [
                                   [
                                     [
-                                      2,
+                                      3,
                                       0
                                     ]
                                   ]
@@ -293,7 +345,7 @@
                           }
                         }
                       ],
-                      "revision": 5,
+                      "revision": 7,
                       "sequenceNumber": 9,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
@@ -317,59 +369,24 @@
                 "content": {
                   "version": 1,
                   "nodes": {
-                    "com.fluidframework.json.array": {
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "concurrent-inserts.Array<[\"com.fluidframework.leaf.string\"]>": {
                       "object": {
                         "": {
                           "kind": "Sequence",
                           "types": [
-                            "com.fluidframework.json.object",
-                            "com.fluidframework.json.array",
-                            "com.fluidframework.leaf.number",
-                            "com.fluidframework.leaf.boolean",
-                            "com.fluidframework.leaf.string",
-                            "com.fluidframework.leaf.null"
+                            "com.fluidframework.leaf.string"
                           ]
                         }
                       }
-                    },
-                    "com.fluidframework.json.object": {
-                      "map": {
-                        "kind": "Optional",
-                        "types": [
-                          "com.fluidframework.json.object",
-                          "com.fluidframework.json.array",
-                          "com.fluidframework.leaf.number",
-                          "com.fluidframework.leaf.boolean",
-                          "com.fluidframework.leaf.string",
-                          "com.fluidframework.leaf.null"
-                        ]
-                      }
-                    },
-                    "com.fluidframework.leaf.boolean": {
-                      "leaf": 2
-                    },
-                    "com.fluidframework.leaf.handle": {
-                      "leaf": 3
-                    },
-                    "com.fluidframework.leaf.null": {
-                      "leaf": 4
-                    },
-                    "com.fluidframework.leaf.number": {
-                      "leaf": 0
-                    },
-                    "com.fluidframework.leaf.string": {
-                      "leaf": 1
                     }
                   },
                   "root": {
-                    "kind": "Sequence",
+                    "kind": "Value",
                     "types": [
-                      "com.fluidframework.json.object",
-                      "com.fluidframework.json.array",
-                      "com.fluidframework.leaf.number",
-                      "com.fluidframework.leaf.boolean",
-                      "com.fluidframework.leaf.string",
-                      "com.fluidframework.leaf.null"
+                      "concurrent-inserts.Array<[\"com.fluidframework.leaf.string\"]>"
                     ]
                   }
                 },
@@ -407,26 +424,33 @@
                       [
                         1,
                         [
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "x",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "y",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "a",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "b",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "c",
-                          []
+                          "concurrent-inserts.Array<[\"com.fluidframework.leaf.string\"]>",
+                          false,
+                          [
+                            "",
+                            [
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "x",
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "y",
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "a",
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "b",
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "c",
+                              []
+                            ]
+                          ]
                         ]
                       ]
                     ]
@@ -449,7 +473,7 @@
                 "content": {
                   "version": 1,
                   "data": [],
-                  "maxId": 4
+                  "maxId": 5
                 },
                 "encoding": "utf-8"
               }

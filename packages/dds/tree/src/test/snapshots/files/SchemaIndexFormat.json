@@ -33,7 +33,8 @@
                     }
                   },
                   "required": [
-                    "kind"
+                    "kind",
+                    "types"
                   ]
                 }
               }
@@ -53,7 +54,8 @@
                 }
               },
               "required": [
-                "kind"
+                "kind",
+                "types"
               ]
             },
             "leaf": {
@@ -99,7 +101,8 @@
         }
       },
       "required": [
-        "kind"
+        "kind",
+        "types"
       ]
     }
   },

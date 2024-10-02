@@ -23,7 +23,7 @@ import {
 	getParam,
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
-	getCorrelationIdWithHttpFallback,
+	getTelemetryContextPropertiesWithHttpInfo,
 } from "@fluidframework/server-services-utils";
 import {
 	getBooleanParam,
@@ -74,6 +74,9 @@ export function create(
 			: undefined;
 	const sessionStickinessDurationMs: number | undefined = config.get(
 		"alfred:sessionStickinessDurationMs",
+	);
+	const ephemeralDocumentTTLSec: number | undefined = config.get(
+		"storage:ephemeralDocumentTTLSec",
 	);
 
 	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
@@ -294,6 +297,7 @@ export function create(
 				sessionStickinessDurationMs,
 				messageBrokerId,
 				clusterDrainingChecker,
+				ephemeralDocumentTTLSec,
 			);
 			handleResponse(session, response, false);
 		},
@@ -345,7 +349,10 @@ export function create(
 				);
 			}
 			if (tokenRevocationManager) {
-				const correlationId = getCorrelationIdWithHttpFallback(request, response);
+				const correlationId = getTelemetryContextPropertiesWithHttpInfo(
+					request,
+					response,
+				).correlationId;
 				const options: IRevokeTokenOptions = {
 					correlationId,
 				};

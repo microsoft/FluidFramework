@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, type TreeNodeSchema } from "../../simple-tree/index.js";
 import {
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
@@ -18,7 +18,6 @@ import {
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
-	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";

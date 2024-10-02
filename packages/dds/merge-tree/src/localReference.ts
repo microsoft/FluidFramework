@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentInternal, type ISegment } from "./mergeTreeNodes.js";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
 import { PropertySet, addProperties } from "./properties.js";
@@ -70,6 +70,13 @@ export interface LocalReferencePosition extends ReferencePosition {
 	 * special segments representing the position before or after the tree
 	 */
 	readonly canSlideToEndpoint?: boolean;
+
+	/**
+	 * @param newProps - Properties to add to this reference.
+	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
+	 * to ensure broadcast happens if that is desired.
+	 */
+	addProperties(newProps: PropertySet): void;
 }
 
 /**
@@ -79,7 +86,7 @@ export interface LocalReferencePosition extends ReferencePosition {
 class LocalReference implements LocalReferencePosition {
 	public properties: PropertySet | undefined;
 
-	private segment: ISegment | undefined;
+	private segment: ISegmentInternal | undefined;
 	private offset: number = 0;
 	private listNode: ListNode<LocalReference> | undefined;
 
@@ -102,7 +109,7 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	public link(
-		segment: ISegment | undefined,
+		segment: ISegmentInternal | undefined,
 		offset: number,
 		listNode: ListNode<LocalReference> | undefined,
 	): void {
@@ -125,7 +132,7 @@ class LocalReference implements LocalReferencePosition {
 		this.offset = offset;
 	}
 
-	public isLeaf(): boolean {
+	public isLeaf(): this is ISegmentInternal {
 		return false;
 	}
 
@@ -133,7 +140,7 @@ class LocalReference implements LocalReferencePosition {
 		this.properties = addProperties(this.properties, newProps);
 	}
 
-	public getSegment(): ISegment | undefined {
+	public getSegment(): ISegmentInternal | undefined {
 		return this.segment;
 	}
 
@@ -290,9 +297,7 @@ export class LocalReferenceCollection {
 		const iterator = {
 			next(): IteratorResult<LocalReferencePosition> {
 				while (subiterators.length > 0) {
-					// TODO Non null asserting, why is this not null?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const next = subiterators[0]!.next();
+					const next = subiterators[0].next();
 					if (next.done === true) {
 						subiterators.shift();
 					} else {

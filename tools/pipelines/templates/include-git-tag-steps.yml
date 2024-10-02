@@ -8,11 +8,8 @@ parameters:
   type: string
 
 steps:
+# Assumes that the repo is already checked out
 - ${{ if ne(parameters.tagName, '') }}:
-  - checkout: self
-    clean: true
-    persistCredentials: true
-    condition: and(succeeded(), eq(variables['release'], 'release'))
   - task: Bash@3
     displayName: Tag Release
     condition: and(succeeded(), eq(variables['release'], 'release'))

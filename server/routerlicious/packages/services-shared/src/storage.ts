@@ -50,6 +50,7 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
 		private readonly storageNameAssigner: IStorageNameAllocator,
+		private readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
 	) {}
 
 	/**
@@ -290,7 +291,7 @@ export class DocumentStorage implements IDocumentStorage {
 			...document,
 		};
 		if (isEphemeralContainer) {
-			documentDbValue.ttl = 60 * 60 * 24; // 24 hours in seconds
+			documentDbValue.ttl = this.ephemeralDocumentTTLSec;
 		}
 
 		try {

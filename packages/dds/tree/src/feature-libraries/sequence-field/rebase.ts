@@ -31,6 +31,7 @@ import {
 	type CellId,
 	type CellMark,
 	type Changeset,
+	type Detach,
 	type Mark,
 	type MarkEffect,
 	type MarkList,
@@ -237,7 +238,7 @@ class RebaseQueue {
  * and `effect` is an effect from the same changeset whose target has been moved by the base changeset.
  * @returns a mark which has the composite effect of `mark` and `effect`.
  */
-function addMovedMarkEffect(mark: Mark, effect: MarkEffect): Mark {
+function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 	if (isMoveIn(mark) && isMoveOut(effect)) {
 		return { ...mark, type: "Insert" };
 	} else if (isRename(mark) && isMoveOut(effect)) {
@@ -348,7 +349,7 @@ function rebaseMarkIgnoreChild(
  */
 function separateEffectsForMove(mark: MarkEffect): {
 	remains?: MarkEffect;
-	follows?: MarkEffect;
+	follows?: Detach;
 } {
 	const type = mark.type;
 	switch (type) {
@@ -396,7 +397,7 @@ function separateEffectsForMove(mark: MarkEffect): {
 
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function sendEffectToDest(
-	markEffect: MarkEffect,
+	markEffect: Detach,
 	moveEffects: MoveEffectTable,
 	{ revision, localId: id }: ChangeAtomId,
 	count: number,
@@ -502,7 +503,7 @@ function withCellId<TMark extends Mark>(mark: TMark, cellId: CellId | undefined)
 function getMovedEffectFromBaseMark(
 	moveEffects: MoveEffectTable,
 	baseMark: Mark,
-): MarkEffect | undefined {
+): Detach | undefined {
 	if (isMoveIn(baseMark)) {
 		return getMovedEffect(moveEffects, baseMark.revision, baseMark.id, baseMark.count);
 	} else if (isAttachAndDetachEffect(baseMark) && isMoveIn(baseMark.attach)) {
@@ -526,14 +527,16 @@ function getMovedEffect(
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	count: number,
-): MarkEffect | undefined {
+): Detach | undefined {
 	const effect = getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count);
 	assert(effect.length === count, 0x6f3 /* Expected effect to cover entire mark */);
 	const movedEffect = effect.value?.movedEffect;
-	if (movedEffect !== undefined && movedEffect.type === "MoveOut") {
+	if (movedEffect === undefined) {
+		return undefined;
+	}
+	if (isMoveOut(movedEffect)) {
 		moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
 	}
-
 	return movedEffect;
 }
 

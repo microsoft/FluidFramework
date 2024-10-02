@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.42.0",
+	"version": "0.47.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -90,23 +90,30 @@
 		"@oclif/plugin-help": "^6.2.7",
 		"@oclif/plugin-not-found": "^3.2.13",
 		"@octokit/core": "^4.2.4",
+		"@octokit/rest": "^21.0.2",
 		"@rushstack/node-core-library": "^3.59.5",
 		"async": "^3.2.4",
 		"chalk": "^5.3.0",
 		"change-case": "^3.1.0",
+		"cosmiconfig": "^8.3.6",
 		"danger": "^11.3.0",
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.4",
 		"execa": "^5.1.1",
 		"fflate": "^0.8.2",
 		"fs-extra": "^11.2.0",
+		"github-slugger": "^2.0.0",
 		"globby": "^11.1.0",
 		"gray-matter": "^4.0.3",
 		"human-id": "^4.0.0",
 		"inquirer": "^8.2.5",
+		"issue-parser": "^7.0.1",
 		"json5": "^2.2.3",
 		"jssm": "5.98.2",
 		"latest-version": "^5.1.0",
+		"mdast": "^3.0.0",
+		"mdast-util-heading-range": "^4.0.0",
+		"mdast-util-to-string": "^4.0.0",
 		"minimatch": "^7.4.6",
 		"node-fetch": "^3.3.2",
 		"npm-check-updates": "^16.14.20",
@@ -114,6 +121,11 @@
 		"prettier": "~3.2.4",
 		"prompts": "^2.4.2",
 		"read-pkg-up": "^7.0.1",
+		"remark": "^15.0.1",
+		"remark-gfm": "^4.0.0",
+		"remark-github": "^12.0.0",
+		"remark-github-beta-blockquote-admonitions": "^3.1.1",
+		"remark-toc": "^9.0.0",
 		"replace-in-file": "^7.1.0",
 		"resolve.exports": "^2.0.2",
 		"semver": "^7.5.4",
@@ -124,7 +136,8 @@
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.1",
 		"ts-morph": "^22.0.0",
-		"type-fest": "^2.19.0"
+		"type-fest": "^2.19.0",
+		"unist-util-visit": "^5.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
@@ -137,14 +150,17 @@
 		"@types/debug": "^4.1.7",
 		"@types/fs-extra": "^11.0.4",
 		"@types/inquirer": "^8.2.6",
+		"@types/issue-parser": "^3.0.5",
+		"@types/mdast": "^4.0.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.18.6",
 		"@types/node-fetch": "^2.5.10",
 		"@types/prettier": "^2.7.3",
-		"@types/prompts": "^2.4.4",
+		"@types/prompts": "^2.4.9",
 		"@types/semver": "^7.5.0",
 		"@types/semver-utils": "^1.1.1",
 		"@types/sort-json": "^2.0.1",
+		"@types/unist": "^3.0.3",
 		"c8": "^7.14.0",
 		"chai": "^4.3.7",
 		"chai-arrays": "^2.2.0",
@@ -221,6 +237,12 @@
 			},
 			"publish": {
 				"description": "Publish commands are used to publish packages to an npm registry."
+			},
+			"promote": {
+				"description": "Promote commands are used to promote packages published to an npm registry."
+			},
+			"transform": {
+				"description": "Transform commands are used to transform code, docs, etc. into alternative forms."
 			}
 		}
 	}

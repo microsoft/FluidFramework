@@ -37,7 +37,7 @@ export function loadSegments(
 		if (withProps) {
 			if (paragraph.includes("Chapter") || paragraph.includes("PRIDE AND PREJ")) {
 				if (pgMarker) {
-					pgMarker.addProperties({ header: 2 });
+					pgMarker.properties = { header: 2 };
 					segments.push(new TextSegment(paragraph));
 				} else {
 					segments.push(TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }));

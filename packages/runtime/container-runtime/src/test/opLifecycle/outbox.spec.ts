@@ -320,7 +320,7 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Flush empty", () => {
+	it("Flush empty (GroupedBatching enabled)", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			opGroupingConfig: {

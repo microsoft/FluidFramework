@@ -272,6 +272,24 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, clone({ prop1: "foo" }));
 		});
+
+		it("for text segments with no initial properties", () => {
+			const insertOp = client.insertTextLocal(0, "abc");
+			assert(insertOp);
+			client.annotateRangeLocal(0, 3, { prop2: "bar" });
+
+			const otherClient = new TestClient();
+			otherClient.startOrUpdateCollaboration("other user");
+			const regeneratedInsert = client.regeneratePendingOp(
+				insertOp,
+				client.mergeTree.pendingSegments.first!.data,
+			);
+			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
+
+			const { segment: otherSegment } = otherClient.getContainingSegment(0);
+			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
+			assert.deepStrictEqual(otherSegment.properties, undefined);
+		});
 	});
 });
 

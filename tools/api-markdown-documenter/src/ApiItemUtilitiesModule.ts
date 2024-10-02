@@ -15,6 +15,7 @@ export {
 	shouldItemBeIncluded,
 } from "./api-item-transforms/index.js";
 export {
+	ancestryHasModifierTag,
 	getCustomBlockComments,
 	getDefaultValueBlock,
 	getDeprecatedBlock,

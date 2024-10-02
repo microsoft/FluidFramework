@@ -1194,7 +1194,7 @@ export class FluidDataStoreRuntime
 				fluidDataStoreId: this.id,
 				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
 			}),
-			stack: generateStack(),
+			stack: generateStack(30),
 		});
 		this.localChangesTelemetryCount--;
 	}

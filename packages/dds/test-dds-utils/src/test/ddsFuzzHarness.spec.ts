@@ -604,8 +604,12 @@ describe("DDS Fuzz Harness", () => {
 			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 3);
 
 			// client loaded from stash
-			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
-			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
+			assert.strictEqual(
+				clientCreates[2].channel.applyStashedOpCalls,
+				2,
+				"3 should be saved, and 2 should be stashed",
+			);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 7);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
 		});
 	});

@@ -46,6 +46,7 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
+	type InteriorSequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import {
 	ISummaryTreeWithStats,
@@ -253,12 +254,30 @@ export interface ISharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Obliterate is similar to remove, but differs in that segments concurrently
-	 * inserted into an obliterated range will also be removed
+	 * inserted into an obliterated range will also be removed.
+	 * Inserts are considered concurrent to an obliterate iff the insert op's seq is after the obliterate op's refSeq
+	 * and the insert's refSeq is before the obliterates seq.
+	 * Inserts made by the client which most recently obliterated a range containing the insert position
+	 * are not considered concurrent to any obliteration (the last client to obliterate gets the right to insert).
 	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
+	 * The endpoints can either be inclusive or exclusive.
+	 * Exclusive endpoints allow the obliterated range to "grow" to include adjacent concurrently inserted segments on that side.
+	 *
+	 * @param start - The start of the range to obliterate.
+	 * Inclusive if side is Before or a number is provided.
+	 * @param end - The end of the range to obliterate. Inclusive if side is After.
+	 * If a number is provided it is treated as exclusive,
+	 * but the endpoint does not expand in order to preserve existing behavior.
+	 *
+	 * @example Given the initial state `"|ABC>"`,
+	 * `obliterateRange({ pos: 0, side: Side.After }, { pos: 4, side: Side.Before })` obliterates `"ABC"`, leaving only `"|>"`.
+	 * `insertFromSpec(1, { text: "AAA"})` would insert `"AAA"` before |, resulting in `"|AAA>"`.
+	 * If another client does the same thing but inserts `"BBB"` and gets sequenced later, all clients will eventually see `|BBB>`.
 	 */
-	obliterateRange(start: number, end: number): void;
+	obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void;
 
 	/**
 	 * @returns The most recent sequence number which has been acked by the server and processed by this
@@ -345,6 +364,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 /**
  * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
@@ -495,6 +515,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			"Fluid.Sequence",
 			{
 				mergeTreeEnableObliterate: (c, n) => c.getBoolean(n),
+				mergeTreeEnableSidedObliterate: (c, n) => c.getBoolean(n),
 				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
 				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
 			},
@@ -544,7 +565,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
-	public obliterateRange(start: number, end: number): void {
+	public obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void {
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
@@ -941,9 +965,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			// Do GC every once in a while...
 			if (
 				this.messagesSinceMSNChange.length > 20 &&
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.messagesSinceMSNChange[20]!.sequenceNumber < message.minimumSequenceNumber
+				this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber
 			) {
 				this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
 			}
@@ -953,9 +975,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private processMinSequenceNumberChanged(minSeq: number) {
 		let index = 0;
 		for (; index < this.messagesSinceMSNChange.length; index++) {
-			// TODO Non null asserting, why is this not null?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (this.messagesSinceMSNChange[index]!.sequenceNumber > minSeq) {
+			if (this.messagesSinceMSNChange[index].sequenceNumber > minSeq) {
 				break;
 			}
 		}

@@ -10,12 +10,18 @@ import { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-l
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { AxiosResponse } from "axios";
+import type { SinonSandbox } from "sinon";
+import { createSandbox } from "sinon";
 
 import {
 	createAzureClient,
@@ -24,7 +30,7 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix } from "./utils.js";
+import { getTestMatrix, mapWait } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -368,6 +374,7 @@ for (const testOpts of testMatrix) {
 		let clientCurrent1: AzureClient;
 		let clientCurrent2: AzureClient;
 		let clientLegacy: AzureClientLegacy;
+		let sandbox: SinonSandbox;
 
 		const schemaCurrent = {
 			initialObjects: {
@@ -381,6 +388,10 @@ for (const testOpts of testMatrix) {
 			},
 		};
 
+		before(function () {
+			sandbox = createSandbox();
+		});
+
 		beforeEach("createAzureClients", function () {
 			clientCurrent1 = createAzureClient();
 			clientCurrent2 = createAzureClient();
@@ -388,6 +399,10 @@ for (const testOpts of testMatrix) {
 			if (isEphemeral) {
 				this.skip();
 			}
+		});
+
+		afterEach(function () {
+			sandbox.restore();
 		});
 
 		/**
@@ -516,5 +531,134 @@ for (const testOpts of testMatrix) {
 			const result = containerCurrent1.initialObjects.map1.get<string>("key");
 			assert.strictEqual(result, "value", "Value not found in copied container");
 		});
+
+		it("op grouping disabled as expected for 1.x clients", async () => {
+			const { container: container1 } = await clientCurrent1.createContainer(
+				schemaCurrent,
+				"1",
+			);
+			const containerId = await container1.attach();
+
+			if (container1.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
+			}
+
+			const containerProcessSpy = sandbox.spy(
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(container1 as any).container,
+				"processRemoteMessage",
+			);
+
+			// Explicitly force ops sent to be in the same batch
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			(container1 as any).container._runtime.orderSequentially(() => {
+				const map1 = container1.initialObjects.map1;
+				map1.set("1", 1);
+				map1.set("2", 2);
+				map1.set("3", 3);
+			});
+
+			const { container: containerLegacy } = await clientLegacy.getContainer(
+				containerId,
+				schemaLegacy,
+			);
+			if (containerLegacy.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "containerLegacy connect() timeout",
+				});
+			}
+
+			const legacyMap = containerLegacy.initialObjects.map1 as SharedMapLegacy;
+
+			// Verify ops are processed by legacy AzureClient
+			assert.strictEqual(legacyMap.get("1"), 1);
+			assert.strictEqual(legacyMap.get("2"), 2);
+			assert.strictEqual(legacyMap.get("3"), 3);
+
+			// Inspect the incoming ops
+			for (const call of containerProcessSpy.getCalls()) {
+				const message = call.firstArg as ISequencedDocumentMessage;
+				if (
+					message.type === MessageType.Operation &&
+					(message.contents as { type: string }).type === "groupedBatch"
+				) {
+					assert.fail("unexpected groupedBatch found");
+				}
+			}
+		});
+
+		for (const compatibilityMode of ["1", "2"] as const) {
+			it(`op grouping works as expected (compatibilityMode: ${compatibilityMode})`, async () => {
+				const { container: container1 } = await clientCurrent1.createContainer(
+					schemaCurrent,
+					compatibilityMode,
+				);
+				const containerId = await container1.attach();
+
+				if (container1.connectionState !== ConnectionState.Connected) {
+					await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
+						durationMs: connectTimeoutMs,
+						errorMsg: "container connect() timeout",
+					});
+				}
+
+				const containerProcessSpy = sandbox.spy(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					(container1 as any).container,
+					"processRemoteMessage",
+				);
+
+				// Explicitly force ops sent to be in the same batch
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(container1 as any).container._runtime.orderSequentially(() => {
+					const map1 = container1.initialObjects.map1;
+					map1.set("1", 1);
+					map1.set("2", 2);
+					map1.set("3", 3);
+				});
+
+				const { container: container2 } = await clientCurrent1.getContainer(
+					containerId,
+					schemaCurrent,
+					compatibilityMode,
+				);
+				const map2 = container2.initialObjects.map1;
+
+				// Process ops coming from service
+				assert.strictEqual(await mapWait(map2, "1"), 1);
+				assert.strictEqual(await mapWait(map2, "2"), 2);
+				assert.strictEqual(await mapWait(map2, "3"), 3);
+
+				// Inspect the incoming ops
+				let groupedBatchCount = 0;
+				for (const call of containerProcessSpy.getCalls()) {
+					const message = call.firstArg as ISequencedDocumentMessage;
+					if (
+						message.type === MessageType.Operation &&
+						(message.contents as { type: string }).type === "groupedBatch"
+					) {
+						groupedBatchCount++;
+					}
+				}
+
+				if (compatibilityMode === "1") {
+					assert.strictEqual(
+						groupedBatchCount,
+						0,
+						"expect no op grouping in compatibilityMode 1",
+					);
+				} else {
+					assert.strictEqual(
+						groupedBatchCount,
+						1,
+						"expect op grouping in compatibilityMode 2",
+					);
+				}
+			});
+		}
 	});
 }

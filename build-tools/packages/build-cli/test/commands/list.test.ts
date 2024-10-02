@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	GitRepo,
-	type Package,
-	type PackageNamePolicyConfig,
-	getResolvedFluidRoot,
-} from "@fluidframework/build-tools";
+import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
 
+import { type PackageNamePolicyConfig } from "../../src/config.js";
 import { Context } from "../../src/library/index.js";
 import {
 	type Feed,
@@ -52,7 +48,7 @@ describe("feeds", async () => {
 	const branch = await gitRepo.getCurrentBranchName();
 
 	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
-	const config = context.rootFluidBuildConfig?.policy?.packageNames!;
+	const config = context.flubConfig.policy?.packageNames!;
 	const packages = FeedsForPackages(context.packages, config);
 
 	it("dev and build feed are mutually exclusive", () => {

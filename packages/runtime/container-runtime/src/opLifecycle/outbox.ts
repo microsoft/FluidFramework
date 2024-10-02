@@ -279,7 +279,7 @@ export class Outbox {
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
 			referenceSequenceNumber !== undefined,
-			"reference sequence number should be defined",
+			0xa01 /* reference sequence number should be defined */,
 		);
 		const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
 			resubmittingBatchId,
@@ -446,9 +446,7 @@ export class Outbox {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				batch.messages[0]!.compression === undefined,
+				batch.messages[0].compression === undefined,
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 

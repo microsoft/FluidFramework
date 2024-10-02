@@ -7,13 +7,7 @@ import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	FieldKinds,
-	FlexFieldSchema,
-	intoStoredSchema,
-	MockNodeKeyManager,
-	SchemaBuilderBase,
-} from "../../feature-libraries/index.js";
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -25,15 +19,15 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
-	cursorFromUnhydratedRoot,
-	insert,
+	cursorFromInsertableTreeField,
 	validateUsageError,
 } from "../utils.js";
-import type { TreeContent, TreeCheckout } from "../../shared-tree/index.js";
+import { insert } from "../sequenceRootUtils.js";
+import type { TreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -49,26 +43,20 @@ function checkoutWithInitialTree(
 	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromUnhydratedRoot(
+	const initialTree = cursorFromInsertableTreeField(
 		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,
 	);
-	const treeContent: TreeContent = {
-		schema: toFlexSchema(viewConfig.schema),
+	const treeContent: TreeStoredContent = {
+		schema: toStoredSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
 }
 
 // Schema for tree that must always be empty.
-const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "Empty",
-	lint: {
-		rejectEmpty: false,
-		rejectForbidden: false,
-	},
-}).intoSchema(FlexFieldSchema.empty);
+const emptySchema = toStoredSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	it("Initialize document", () => {
@@ -165,7 +153,7 @@ describe("SchematizingSimpleTreeView", () => {
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
-		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number, schema.string])));
+		checkout.updateSchema(toStoredSchema([schema.number, schema.string]));
 
 		assert.deepEqual(log, [
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
@@ -181,7 +169,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
+		checkout.updateSchema(toStoredSchema([schema.number]));
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
@@ -274,5 +262,19 @@ describe("SchematizingSimpleTreeView", () => {
 		undoStack.pop()?.revert();
 		assert.equal(undoStack.length, 0);
 		assert.equal(redoStack.length, 1);
+	});
+
+	it("schemaChanged event", () => {
+		const content = {
+			schema: toStoredSchema([]),
+			initialTree: undefined,
+		};
+		const checkout = checkoutWithContent(content);
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const log: string[] = [];
+		view.events.on("schemaChanged", () => log.push("changed"));
+		assert.deepEqual(log, []);
+		view.upgradeSchema();
+		assert.deepEqual(log, ["changed"]);
 	});
 });

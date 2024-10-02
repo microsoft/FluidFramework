@@ -41,7 +41,6 @@ parameters:
   type: string
   default: $(Pipeline.Workspace)/.pnpm-store
 
-
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -58,6 +57,7 @@ jobs:
           steps:
           - checkout: self
             clean: true
+            persistCredentials: true # Necessary for creation of git tags to work
           - download: current
             artifact: pack
           - template: /tools/pipelines/templates/include-use-node-version.yml@self

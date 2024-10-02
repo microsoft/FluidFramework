@@ -73,3 +73,21 @@ steps:
       # Clean up; remove the npmrc
       rm ~/.npmrc
       exit 0
+- task: Bash@3
+  displayName: Promote Packages for ${{ parameters.artifactPath }}
+  condition: and(succeeded(), eq(variables['release'], 'release'), eq('${{ parameters.feedKind }}', 'internal-build'))
+  env:
+    ADO_API_TOKEN: $(System.AccessToken)
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
+    script: |
+      set -eux -o pipefail
+      echo "Artifact path: ${{ parameters.artifactPath }}"
+      orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
+
+      flub promote package \
+      --version "$(version)" \
+      --orderFile $orderFile \
+      --verbose
+      exit 0

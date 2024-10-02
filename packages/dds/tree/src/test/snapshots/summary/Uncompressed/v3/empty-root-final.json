@@ -22,29 +22,15 @@
                             "new": {
                               "version": 1,
                               "nodes": {
-                                "com.fluidframework.leaf.boolean": {
-                                  "leaf": 2
-                                },
-                                "com.fluidframework.leaf.handle": {
-                                  "leaf": 3
-                                },
-                                "com.fluidframework.leaf.null": {
-                                  "leaf": 4
-                                },
                                 "com.fluidframework.leaf.number": {
                                   "leaf": 0
-                                },
-                                "com.fluidframework.leaf.string": {
-                                  "leaf": 1
-                                },
-                                "test trees.TestInner": {
-                                  "map": {
-                                    "kind": "Sequence"
-                                  }
                                 }
                               },
                               "root": {
-                                "kind": "Sequence"
+                                "kind": "Optional",
+                                "types": [
+                                  "com.fluidframework.leaf.number"
+                                ]
                               }
                             },
                             "old": {
@@ -56,9 +42,26 @@
                               }
                             }
                           }
+                        },
+                        {
+                          "data": {
+                            "maxId": 0,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "r": {
+                                    "e": true,
+                                    "d": 0
+                                  }
+                                }
+                              }
+                            ]
+                          }
                         }
                       ],
-                      "revision": 1,
+                      "revision": 2,
                       "sequenceNumber": 2,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
@@ -82,29 +85,15 @@
                 "content": {
                   "version": 1,
                   "nodes": {
-                    "com.fluidframework.leaf.boolean": {
-                      "leaf": 2
-                    },
-                    "com.fluidframework.leaf.handle": {
-                      "leaf": 3
-                    },
-                    "com.fluidframework.leaf.null": {
-                      "leaf": 4
-                    },
                     "com.fluidframework.leaf.number": {
                       "leaf": 0
-                    },
-                    "com.fluidframework.leaf.string": {
-                      "leaf": 1
-                    },
-                    "test trees.TestInner": {
-                      "map": {
-                        "kind": "Sequence"
-                      }
                     }
                   },
                   "root": {
-                    "kind": "Sequence"
+                    "kind": "Optional",
+                    "types": [
+                      "com.fluidframework.leaf.number"
+                    ]
                   }
                 },
                 "encoding": "utf-8"

@@ -23,30 +23,6 @@ export interface IEnvelope {
 }
 
 /**
- * @internal
- * @deprecated - This interface is now moved to `@fluidframework/container-definitions` package. Please import from that package.
- */
-export interface ISignalEnvelope {
-	/**
-	 * The target for the envelope, undefined for the container
-	 */
-	address?: string;
-
-	/**
-	 * Identifier for the signal being submitted.
-	 */
-	clientSignalSequenceNumber: number;
-
-	/**
-	 * The contents of the envelope
-	 */
-	contents: {
-		type: string;
-		content: any;
-	};
-}
-
-/**
  * Represents ISignalMessage with its type.
  * @legacy
  * @alpha

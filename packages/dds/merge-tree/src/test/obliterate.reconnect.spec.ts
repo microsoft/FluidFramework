@@ -39,7 +39,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("does not delete reconnected insert into obliterate range if insert is rebased", () => {
+		it("does delete reconnected insert into obliterate range if insert is rebased", () => {
 			const helper = new ReconnectTestHelper();
 
 			helper.insertText("B", 0, "ABCD");
@@ -51,8 +51,8 @@ for (const incremental of [true, false]) {
 			helper.submitDisconnectedOp("C", cOp);
 			helper.processAllOps();
 
-			assert.equal(helper.clients.A.getText(), "aaaD");
-			assert.equal(helper.clients.C.getText(), "aaaD");
+			assert.equal(helper.clients.A.getText(), "D");
+			assert.equal(helper.clients.C.getText(), "D");
 
 			helper.logger.validate();
 		});
@@ -69,8 +69,8 @@ for (const incremental of [true, false]) {
 			helper.submitDisconnectedOp("C", cOp);
 			helper.processAllOps();
 
-			assert.equal(helper.clients.A.getText(), "aaa");
-			assert.equal(helper.clients.C.getText(), "aaa");
+			assert.equal(helper.clients.A.getText(), "");
+			assert.equal(helper.clients.C.getText(), "");
 
 			helper.logger.validate();
 		});

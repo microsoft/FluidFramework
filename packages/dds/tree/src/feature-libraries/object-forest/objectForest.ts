@@ -31,6 +31,7 @@ import {
 	type UpPath,
 	type Value,
 	aboveRootPlaceholder,
+	deepCopyMapTree,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
 import {
@@ -39,7 +40,6 @@ import {
 	assertValidRange,
 	brand,
 	fail,
-	mapIterable,
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
@@ -59,18 +59,6 @@ function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTre
 	const newField: MutableMapTree[] = [];
 	mapTree.fields.set(key, newField);
 	return newField;
-}
-
-function deepCopyMapTree(mapTree: MapTree): MutableMapTree {
-	return {
-		...mapTree,
-		fields: new Map(
-			mapIterable(mapTree.fields.entries(), ([key, field]) => [
-				key,
-				field.map(deepCopyMapTree),
-			]),
-		),
-	};
 }
 
 /**

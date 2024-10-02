@@ -39,6 +39,7 @@ import {
 	createAndAttachContainer,
 	ITestFluidObject,
 	type ITestObjectProvider,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 import {
 	ITree,
@@ -46,7 +47,7 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "@fluidframework/tree";
-import { SharedTree, type ISharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -75,19 +76,48 @@ function treeSetup(dds: ITree) {
 	return view;
 }
 
-interface aDDSType {
+/**
+ * Abstraction over some DDS which allows storing and retrieving a handle in that DDS.
+ *
+ * The attach flow for new DDS/data stores relies on walking the graph of referenced content.
+ * That graph is constructed at the time the referencer produces an op or attach summary.
+ *
+ * This file ensures that all DDS types we support work correctly when they act as the referencer
+ * for various different types of attach scenarios.
+ * This abstraction allows us to write a single test for a particular handle reference graph and exercise it
+ * using various different DDS types.
+ */
+interface HandleStorage {
+	/**
+	 * {@link IChannel.id} of the corresponding DDS.
+	 */
 	id: string;
 	storeHandle(handle: IFluidHandle): Promise<void>;
 	readHandle(): Promise<unknown>;
+	/**
+	 * {@link IChannel.handle} of the corresponding DDS.
+	 */
 	handle: IFluidHandle;
 }
 
-interface aDDSFactory {
+interface HandleStorageFactory {
+	/**
+	 * Registry ID for this type of DDS within TestFluidObject.
+	 */
 	id: string;
+	/**
+	 * `IChannel.attributes.type` of the DDS that this factory creates.
+	 */
 	type: string;
-	createDDS(runtime: IFluidDataStoreRuntime): aDDSType;
-	downCast(channel: IChannel): aDDSType;
-	getDDS(dataStore: ITestFluidObject): Promise<aDDSType>;
+	/**
+	 * Like {@link IChannelFactory.create}, but wraps the returned channel to make it a {@link HandleStorage}.
+	 */
+	createDDS(runtime: IFluidDataStoreRuntime): HandleStorage;
+	/**
+	 * Turns a channel into a {@link HandleStorage}.
+	 * Fails if the channel is not of the expected type (i.e. `IChannel.attributes.type !== this.type`).
+	 */
+	downCast(channel: IChannel): HandleStorage;
 }
 
 /**
@@ -127,6 +157,18 @@ async function dereferenceToSharedObject<TSharedObject>(
 	return sharedObject;
 }
 
+/**
+ * Retrieves an (already attached) handle storage from the given TestFluidObject based on the pre-initialized
+ * DDS of the given factory's type.
+ */
+async function getExistingHandleStorage(
+	testFluidObject: ITestFluidObject,
+	factory: HandleStorageFactory,
+): Promise<HandleStorage> {
+	const channel = await testFluidObject.getSharedObject(factory.id);
+	return factory.downCast(channel);
+}
+
 describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		SharedMap,
@@ -164,7 +206,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		// ],
 	];
 
-	const handleStorageFactories: aDDSFactory[] = [
+	const handleStorageFactories: HandleStorageFactory[] = [
 		{
 			id: mapId,
 			type: "https://graph.microsoft.com/types/map",
@@ -172,7 +214,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const map = runtime.createChannel(undefined, SharedMap.getFactory().type);
 				return this.downCast(map);
 			},
-			downCast(channel): aDDSType {
+			downCast(channel): HandleStorage {
 				const map = channel as ISharedMap;
 				return {
 					id: map.id,
@@ -185,10 +227,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					handle: map.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-				return this.downCast(map);
-			},
 		},
 		{
 			id: cellId,
@@ -197,7 +235,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const cell = runtime.createChannel(undefined, SharedCell.getFactory().type);
 				return this.downCast(cell);
 			},
-			downCast(channel): aDDSType {
+			downCast(channel): HandleStorage {
 				const cell = channel as ISharedCell;
 				return {
 					id: cell.id,
@@ -210,10 +248,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					handle: cell.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const cell = await dataStore.getSharedObject<ISharedCell>(cellId);
-				return this.downCast(cell);
-			},
 		},
 		{
 			id: directoryId,
@@ -222,7 +256,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const directory = runtime.createChannel(undefined, SharedDirectory.getFactory().type);
 				return this.downCast(directory);
 			},
-			downCast(channel): aDDSType {
+			downCast(channel): HandleStorage {
 				const directory = channel as ISharedDirectory;
 				return {
 					id: directory.id,
@@ -235,10 +269,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					handle: directory.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const directory = await dataStore.getSharedObject<ISharedDirectory>(directoryId);
-				return this.downCast(directory);
-			},
 		},
 		{
 			id: stringId,
@@ -247,7 +277,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const string = runtime.createChannel(undefined, SharedString.getFactory().type);
 				return this.downCast(string);
 			},
-			downCast(channel): aDDSType {
+			downCast(channel): HandleStorage {
 				const string = channel as SharedString;
 				return {
 					id: string.id,
@@ -262,10 +292,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					handle: string.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const string = await dataStore.getSharedObject<SharedString>(stringId);
-				return this.downCast(string);
-			},
 		},
 		{
 			id: matrixId,
@@ -274,7 +300,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const matrix = runtime.createChannel(undefined, SharedMatrix.getFactory().type);
 				return this.downCast(matrix);
 			},
-			downCast(channel): aDDSType {
+			downCast(channel): HandleStorage {
 				const matrix = channel as ISharedMatrix;
 				return {
 					id: matrix.id,
@@ -289,10 +315,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					handle: matrix.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const matrix = await dataStore.getSharedObject<ISharedMatrix>(matrixId);
-				return this.downCast(matrix);
-			},
 		},
 		{
 			id: treeId,
@@ -301,8 +323,8 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const tree = runtime.createChannel(undefined, SharedTree.getFactory().type);
 				return this.downCast(tree);
 			},
-			downCast(channel): aDDSType {
-				const view: TreeView<typeof Bar> = treeSetup(channel as ISharedTree);
+			downCast(channel): HandleStorage {
+				const view: TreeView<typeof Bar> = treeSetup(channel as IFluidLoadable as ITree);
 
 				return {
 					id: channel.id,
@@ -315,10 +337,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					handle: channel.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const tree = await dataStore.getSharedObject<ISharedTree>(treeId);
-				return this.downCast(tree);
-			},
 		},
 		{
 			id: registerId,
@@ -330,7 +348,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				);
 				return this.downCast(register);
 			},
-			downCast(channel): aDDSType {
+			downCast(channel): HandleStorage {
 				const register = channel as IConsensusRegisterCollection<FluidObject>;
 				return {
 					id: register.id,
@@ -343,13 +361,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					handle: register.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const register =
-					await dataStore.getSharedObject<IConsensusRegisterCollection<FluidObject>>(
-						registerId,
-					);
-				return this.downCast(register);
-			},
 		},
 		{
 			id: queueId,
@@ -358,7 +369,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const register = runtime.createChannel(undefined, ConsensusQueue.getFactory().type);
 				return this.downCast(register);
 			},
-			downCast(channel): aDDSType {
+			downCast(channel): HandleStorage {
 				const queue = channel as ConsensusQueue<FluidObject>;
 				return {
 					id: queue.id,
@@ -366,31 +377,38 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						await queue.add(handle);
 					},
 					async readHandle(): Promise<unknown> {
-						const value = await new Promise((resolve, reject) => {
-							queue
-								.acquire(async (result: FluidObject) => {
-									resolve(result);
-									return ConsensusResult.Release;
-								})
-								.catch((error) => reject(error));
-						});
+						const value = await timeoutAwait(
+							new Promise((resolve, reject) => {
+								queue
+									.acquire(async (result: FluidObject) => {
+										resolve(result);
+										return ConsensusResult.Release;
+									})
+									.then((wasNonempty) => {
+										if (!wasNonempty) {
+											// This could happen if a test never calls `storeHandle` before attempting to read it.
+											// Other modes of failure are possible (e.g. correctness issues in ConsensusQueue causing it to have the wrong data).
+											// Resolving the promise with `undefined` here could be another reasonable option, but this gives slightly more information.
+											reject(new Error("No values found in consensus queue."));
+										}
+									})
+									.catch((error) => reject(error));
+							}),
+							{ errorMsg: "Timeout waiting for acquiring value from consensus queue." },
+						);
 						return value;
 					},
 					handle: queue.handle,
 				};
 			},
-			async getDDS(dataStore) {
-				const queue = await dataStore.getSharedObject<ConsensusQueue<FluidObject>>(queueId);
-				return this.downCast(queue);
-			},
 		},
 	];
 
-	const ddsFactoriesByType = new Map<string, aDDSFactory>(
+	const ddsFactoriesByType = new Map<string, HandleStorageFactory>(
 		handleStorageFactories.map((factory) => [factory.type, factory]),
 	);
 
-	async function getReferencedDDS(handle: IFluidHandle): Promise<aDDSType> {
+	async function getReferencedDDS(handle: IFluidHandle): Promise<HandleStorage> {
 		const channel = (await handle.get()) as IChannel;
 		const factory = ddsFactoriesByType.get(channel.attributes.type);
 		assert(factory !== undefined);
@@ -543,15 +561,15 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 	}
 
 	for (const {
-		detachedDds1Utils,
-		attachedDdsUtils,
-		detachedDds2Utils,
+		detachedFactory1,
+		detachedFactory2,
+		attachedFactory,
 	} of generatePairwiseOptions({
-		detachedDds1Utils: handleStorageFactories,
-		detachedDds2Utils: handleStorageFactories,
-		attachedDdsUtils: handleStorageFactories,
+		detachedFactory1: handleStorageFactories,
+		detachedFactory2: handleStorageFactories,
+		attachedFactory: handleStorageFactories,
 	})) {
-		it(`stores ${detachedDds1Utils.id} handle in ${detachedDds2Utils.id} and attaches by storing in ${attachedDdsUtils.id}`, async () => {
+		it(`stores ${detachedFactory1.id} handle in ${detachedFactory2.id} and attaches by storing in ${attachedFactory.id}`, async () => {
 			/**
 			 * setup required for all portions of the test
 			 */
@@ -563,18 +581,18 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			/**
 			 * create the first detached dds
 			 */
-			const createdDds1 = detachedDds1Utils.createDDS(attachedDataStore.runtime);
+			const createdDds1 = detachedFactory1.createDDS(attachedDataStore.runtime);
 
 			/**
 			 * create the second detached dds and store a handle to the first dds in it
 			 */
-			const createdDds2 = detachedDds2Utils.createDDS(attachedDataStore.runtime);
+			const createdDds2 = detachedFactory2.createDDS(attachedDataStore.runtime);
 			await createdDds2.storeHandle(createdDds1.handle);
 
 			/**
 			 * get the attached dds
 			 */
-			const attachedDds = await attachedDdsUtils.getDDS(attachedDataStore);
+			const attachedDds = await getExistingHandleStorage(attachedDataStore, attachedFactory);
 
 			/**
 			 * store handle to dds2 in attached dds (which will attach dds 1 and 2)
@@ -587,7 +605,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			container1.dispose();
 
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const attached2 = await attachedDdsUtils.getDDS(default2);
+			const attached2 = await getExistingHandleStorage(default2, attachedFactory);
 			/**
 			 * validation
 			 */
@@ -611,15 +629,15 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 	}
 
 	for (const {
-		detachedDds1Utils,
-		attachedDdsUtils,
-		detachedDds2Utils,
+		detachedFactory1,
+		detachedFactory2,
+		attachedFactory,
 	} of generatePairwiseOptions({
-		detachedDds1Utils: handleStorageFactories,
-		detachedDds2Utils: handleStorageFactories,
-		attachedDdsUtils: handleStorageFactories,
+		detachedFactory1: handleStorageFactories,
+		detachedFactory2: handleStorageFactories,
+		attachedFactory: handleStorageFactories,
 	})) {
-		it(`stores ${detachedDds1Utils.id} handle in ${detachedDds2Utils.id} and attaches by storing in ${attachedDdsUtils.id} with new data store`, async () => {
+		it(`stores ${detachedFactory1.id} handle in ${detachedFactory2.id} and attaches by storing in ${attachedFactory.id} with new data store`, async () => {
 			/**
 			 * setup required for all portions of the test
 			 */
@@ -636,18 +654,18 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			/**
 			 * create the first detached dds
 			 */
-			const createdDds1 = detachedDds1Utils.createDDS(dataObjectB.runtime);
+			const createdDds1 = detachedFactory1.createDDS(dataObjectB.runtime);
 
 			/**
 			 * create the second detached dds and store a handle to the first dds in it
 			 */
-			const createdDds2 = detachedDds2Utils.createDDS(dataObjectB.runtime);
+			const createdDds2 = detachedFactory2.createDDS(dataObjectB.runtime);
 			await createdDds2.storeHandle(createdDds1.handle);
 
 			/**
 			 * get the attached dds
 			 */
-			const attachedDds = await attachedDdsUtils.getDDS(attachedDataStore);
+			const attachedDds = await getExistingHandleStorage(attachedDataStore, attachedFactory);
 
 			/**
 			 * store handle to dds2 in attached dds (which will attach ddss 1 and 2)
@@ -660,7 +678,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			container1.dispose();
 
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const attached2 = await attachedDdsUtils.getDDS(default2);
+			const attached2 = await getExistingHandleStorage(default2, attachedFactory);
 			/**
 			 * validation
 			 */

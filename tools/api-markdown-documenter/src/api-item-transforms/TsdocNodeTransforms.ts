@@ -9,8 +9,6 @@ import {
 	type DocDeclarationReference,
 	type DocEscapedText,
 	type DocFencedCode,
-	type DocHtmlEndTag,
-	type DocHtmlStartTag,
 	type DocLinkTag,
 	type DocNode,
 	DocNodeKind,
@@ -18,6 +16,8 @@ import {
 	type DocPlainText,
 	type DocSection,
 	type DocInlineTag,
+	type DocHtmlEndTag,
+	type DocHtmlStartTag,
 } from "@microsoft/tsdoc";
 
 import { type Link } from "../Link.js";
@@ -79,9 +79,9 @@ export interface TsdocNodeTransformOptions extends ConfigurationBase {
 	 * Callback for resolving symbolic links to API items.
 	 *
 	 * @param codeDestination - The referenced target.
-	 * @param contextApiItem -
 	 *
-	 * @returns The appropriate URL target if the reference can be resolved. Otherwise, `undefined`.
+	 * @returns The appropriate URL target if the reference can be resolved.
+	 * Otherwise, `undefined`.
 	 */
 	readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
 }
@@ -111,11 +111,9 @@ export function _transformTsdocNode(
 		case DocNodeKind.FencedCode: {
 			return transformTsdocFencedCode(node as DocFencedCode, options);
 		}
-		case DocNodeKind.HtmlStartTag: {
-			return transformTsdocHtmlTag(node as DocHtmlStartTag, options);
-		}
+		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
-			return transformTsdocHtmlTag(node as DocHtmlEndTag, options);
+			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
 		}
 		case DocNodeKind.InheritDocTag: {
 			options.logger?.error(
@@ -156,6 +154,31 @@ export function transformTsdocCodeSpan(
 	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
 	return CodeSpanNode.createFromPlainText(node.code.trim());
+}
+
+/**
+ * Handler for TSDoc HTML tag nodes.
+ *
+ * @remarks
+ *
+ * This library has made the policy choice to not support embedded HTML content.
+ * Instead, we will emit a warning and ignore the HTML tags (return `undefined`).
+ * "Contained" content (represented as adjacent nodes in the list, appearing between the start and end tag nodes) will
+ * be transformed as normal.
+ *
+ * This matches intellisense's policy for HTML in TSDoc/JSDoc comments.
+ *
+ * We may revisit this in the future.
+ */
+export function transformTsdocHtmlTag(
+	node: DocHtmlStartTag | DocHtmlEndTag,
+	options: TsdocNodeTransformOptions,
+): undefined {
+	const tag = node.emitAsHtml();
+	options.logger?.warning(
+		`Encountered an HTML tag: "${tag}". This library does not support embedded HTML content. Inner contents will be mapped as normal, but the HTML tags will be ignored.`,
+	);
+	return undefined;
 }
 
 /**
@@ -203,19 +226,6 @@ export function transformTsdocEscapedText(
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.encodedText, /* escaped: */ true);
-}
-
-/**
- * Converts a {@link @microsoft/tsdoc#DocHtmlStartTag} | {@link @microsoft/tsdoc#DocHtmlEndTag} to a {@link PlainTextNode}.
- */
-export function transformTsdocHtmlTag(
-	node: DocHtmlStartTag | DocHtmlEndTag,
-	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	// TODO: this really isn't right. Mapping this forward as plain text assumes that any output format can support embedded HTML.
-	// That is valid for HTML and Markdown, but not necessarily for other formats.
-	// Instead, we should map embedded HTML content forward in an encapsulated format, and let the renderer decide how to handle it.
-	return new PlainTextNode(node.emitAsHtml(), /* escaped: */ true);
 }
 
 /**

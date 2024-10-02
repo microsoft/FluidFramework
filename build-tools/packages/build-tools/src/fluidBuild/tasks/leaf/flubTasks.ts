@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync } from "fs";
-import path from "path";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { GitRepo } from "../../../common/gitRepo";
-import { readFileAsync } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
@@ -28,7 +28,7 @@ export class FlubListTask extends LeafWithDoneFileTask {
 		if (resourceGroup === undefined) {
 			return undefined;
 		}
-		const packages = Array.from(this.node.buildContext.repoPackageMap.values()).filter(
+		const packages = Array.from(this.node.context.repoPackageMap.values()).filter(
 			(pkg) => pkg.monoRepo?.kind === resourceGroup,
 		);
 		if (packages.length === 0) {
@@ -50,7 +50,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 		const infoFilePath = path.join(this.node.pkg.directory, infoFile);
-		return existsSync(infoFilePath) ? readFileAsync(infoFilePath) : undefined;
+		return existsSync(infoFilePath) ? readFile(infoFilePath) : undefined;
 	}
 
 	public async getDoneFileContent(): Promise<string | undefined> {
@@ -58,7 +58,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 		return layerInfoFile
 			? JSON.stringify({
 					layerInfo: layerInfoFile,
-					packageJson: Array.from(this.node.buildContext.repoPackageMap.values()).map(
+					packageJson: Array.from(this.node.context.repoPackageMap.values()).map(
 						(pkg) => pkg.packageJson,
 					),
 				})
@@ -73,9 +73,7 @@ export class FlubCheckPolicyTask extends LeafWithDoneFileTask {
 		const fileHashP = Promise.all(
 			modifiedFiles.map(async (file) => [
 				file,
-				await this.node.buildContext.fileHashCache.getFileHash(
-					this.getPackageFileFullPath(file),
-				),
+				await this.node.context.fileHashCache.getFileHash(this.getPackageFileFullPath(file)),
 			]),
 		);
 		// We are using the "commit" as a summary of the state of unchanged files to speed this up

@@ -20,7 +20,7 @@ const extendedConfig = {
 	...baseConfig,
 	"fgrep": ["@Benchmark", "@MemoryUsage"],
 	"node-option": [...baseNodeOptions, "expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
-	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js", // Changed reporter option to use the memory test reporter.
+	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
 };
 

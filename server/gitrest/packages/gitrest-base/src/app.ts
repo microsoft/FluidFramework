@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import {
@@ -13,7 +12,6 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
@@ -29,6 +27,8 @@ import {
 	IRepoManagerParams,
 	IRepositoryManagerFactory,
 } from "./utils";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 
 function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: express.Request) {
 	return params.storageRoutingId?.tenantId ?? (request.body as ICreateRepoParams)?.name;
@@ -38,7 +38,7 @@ export function create(
 	store: nconf.Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repositoryManagerFactory: IRepositoryManagerFactory,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
 	const app: Express = express();
@@ -83,8 +83,6 @@ export function create(
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
 
-	app.use(bindCorrelationId(asyncLocalStorage));
-
 	app.use(cors());
 
 	const apiRoutes = routes.create(store, fileSystemManagerFactories, repositoryManagerFactory);
@@ -97,6 +95,9 @@ export function create(
 	app.use(apiRoutes.repository.commits);
 	app.use(apiRoutes.repository.contents);
 	app.use(apiRoutes.summaries);
+
+	const healthCheckEndpoints = createHealthCheckEndpoints("gitrest", readinessCheck);
+	app.use("/healthz", healthCheckEndpoints);
 
 	// catch 404 and forward to error handler
 	app.use((req, res, next) => {

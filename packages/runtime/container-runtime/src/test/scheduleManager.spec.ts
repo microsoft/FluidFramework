@@ -13,6 +13,7 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
+import { asBatchMetadata } from "../metadata.js";
 import { ScheduleManager } from "../scheduleManager.js";
 
 describe("ScheduleManager", () => {
@@ -24,13 +25,31 @@ describe("ScheduleManager", () => {
 		let deltaManager: MockDeltaManager;
 		let scheduleManager: ScheduleManager;
 		const testClientId = "test-client";
+		let batchClientId: string | undefined;
 
 		beforeEach(() => {
 			emitter = new EventEmitter();
 			deltaManager = new MockDeltaManager();
 			deltaManager.inbound.processCallback = (message: ISequencedDocumentMessage) => {
-				scheduleManager.beforeOpProcessing(message);
-				scheduleManager.afterOpProcessing(undefined, message);
+				// Simulate batch accumulation by container runtime's remote message processor.
+				// It saves batch messages until the entire batch is received. It calls batch begin
+				// and end on schedule manager accordingly.
+				const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
+				if (batchMetadataFlag === true) {
+					assert(
+						batchClientId === undefined,
+						"Received batch message while another batch is in progress",
+					);
+					scheduleManager.batchBegin(message);
+					batchClientId = message.clientId ?? undefined;
+				} else if (batchMetadataFlag === false) {
+					assert(batchClientId !== undefined, "Received batch end message without batch");
+					scheduleManager.batchEnd(undefined /* error */, message);
+					batchClientId = undefined;
+				} else if (batchClientId === undefined) {
+					scheduleManager.batchBegin(message);
+					scheduleManager.batchEnd(undefined /* error */, message);
+				}
 				deltaManager.emit("op", message);
 			};
 			scheduleManager = new ScheduleManager(
