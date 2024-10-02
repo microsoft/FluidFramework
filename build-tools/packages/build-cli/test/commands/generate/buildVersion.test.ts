@@ -5,6 +5,8 @@
 
 import { EOL } from "node:os";
 import { runCommand } from "@oclif/test";
+import chai, { expect } from "chai";
+import assertArrays from "chai-arrays";
 
 /**
  * This list of git tags is deliberately unordered since often the list provided to commands is unordered.
@@ -30,6 +32,11 @@ const test_tags = [
 	"build-tools_v0.3.2000",
 	"build-tools_v0.4.2000",
 ];
+
+function setEnv(variable: Record<string, string>): void {
+	const { name, value } = variable;
+	process.env[name] = value;
+}
 
 /**
  * Convenience function to check if a particular line of stdout output equals the expected value.
