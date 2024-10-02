@@ -19,6 +19,7 @@ import {
 	type IEditableForest,
 	type JsonableTree,
 	RevisionTagCodec,
+	type TaggedChange,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
@@ -278,7 +279,8 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(change: TaggedChange<SharedTreeChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			),
 			changeEnricher,
