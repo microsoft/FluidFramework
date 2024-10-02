@@ -3,30 +3,61 @@
  * Licensed under the MIT License.
  */
 
-'use client';
+"use client";
 
-import { SharedTreeAppState, INITIAL_APP_STATE, CONTAINER_SCHEMA, TREE_CONFIGURATION, type SharedTreeTaskList, type SharedTreeTaskGroup, type SharedTreeTaskGroupList } from "@/types/sharedTreeAppSchema";
-import { Box, Button, CircularProgress, Container, Stack, Tab, Tabs, Typography } from "@mui/material";
+import {
+	SharedTreeAppState,
+	INITIAL_APP_STATE,
+	CONTAINER_SCHEMA,
+	TREE_CONFIGURATION,
+	type SharedTreeTaskGroup,
+} from "@/types/sharedTreeAppSchema";
+import {
+	Box,
+	Button,
+	CircularProgress,
+	Container,
+	Stack,
+	Tab,
+	Tabs,
+	Typography,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { TaskGroup } from "@/components/TaskGroup";
 import { type TreeView } from "@fluidframework/tree";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 import { useFluidContainerNextJs } from "@/useFluidContainerNextjs";
+import { start } from "@/infra/authHelper";
+
+const { client, getShareLink, containerId } = await start();
 
 export default function TasksListPage() {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
-	const [sharedTreeBranch, setSharedTreeBranch] = useState<TreeView<typeof SharedTreeAppState>>();
+	const [sharedTreeBranch, setSharedTreeBranch] =
+		useState<TreeView<typeof SharedTreeAppState>>();
 
 	const { container, isFluidInitialized, data } = useFluidContainerNextJs(
+		client,
+		containerId,
 		CONTAINER_SCHEMA,
-		// initialize from new container
+		// initialize new container
 		(container) => {
 			const sharedTree = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			sharedTree.initialize(new SharedTreeAppState(INITIAL_APP_STATE));
 			setSharedTreeBranch(sharedTree);
 			return { sharedTree };
 		},
-		// initialize from existing container
+		// attach callback
+		async (container, containerId) => {
+			// Create a sharing id to the container.
+			// This allows the user to collaborate on the same Fluid container
+			// with other users just by sharing the link.
+			const shareId = await getShareLink(containerId);
+
+			// Set the URL hash to the sharing id.
+			history.replaceState(undefined, "", "#" + shareId);
+		},
+		// load from existing container
 		(container) => {
 			const sharedTree = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setSharedTreeBranch(sharedTree);
@@ -35,7 +66,7 @@ export default function TasksListPage() {
 	);
 
 	const taskGroups = data?.sharedTree.root.taskGroups;
-	useSharedTreeRerender({ sharedTreeNode: taskGroups ?? null, logId: 'WorkItemRoot' });
+	useSharedTreeRerender({ sharedTreeNode: taskGroups ?? null, logId: "WorkItemRoot" });
 
 	useEffect(() => {
 		if (isFluidInitialized === true && data !== undefined) {
@@ -47,42 +78,61 @@ export default function TasksListPage() {
 	}, [container]);
 
 	return (
-		<Container sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }} maxWidth={'lg'}>
+		<Container
+			sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+			maxWidth={"lg"}
+		>
 			<Typography variant="h2" sx={{ my: 3 }}>
 				My Work Items
 			</Typography>
 
 			{isFluidInitialized === false && <CircularProgress />}
 
-			{isFluidInitialized === true && sharedTreeBranch !== undefined && taskGroups !== undefined && selectedTaskGroup !== undefined && <React.Fragment>
+			{isFluidInitialized === true &&
+				sharedTreeBranch !== undefined &&
+				taskGroups !== undefined &&
+				selectedTaskGroup !== undefined && (
+					<React.Fragment>
+						<Stack direction="row" spacing={2} alignItems="center">
+							<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+								<Tabs
+									value={selectedTaskGroup.id}
+									sx={{ mb: 2 }}
+									aria-label="basic tabs example"
+									onChange={(e, newSelectedTaskGroupId) => {
+										const foundTaskGroup = taskGroups.find(
+											(taskGroup) => taskGroup.id === newSelectedTaskGroupId,
+										);
+										setSelectedTaskGroup(foundTaskGroup);
+									}}
+								>
+									{taskGroups?.map((taskGroup) => (
+										<Tab label={taskGroup.title} value={taskGroup.id} key={taskGroup.id} />
+									))}
+								</Tabs>
+							</Box>
 
-				<Stack direction='row' spacing={2} alignItems='center' >
-					<Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-						<Tabs value={selectedTaskGroup.id} sx={{ mb: 2 }} aria-label="basic tabs example"
-							onChange={(e, newSelectedTaskGroupId) => {
-								const foundTaskGroup = taskGroups.find((taskGroup) => taskGroup.id === newSelectedTaskGroupId);
-								setSelectedTaskGroup(foundTaskGroup);
-							}}
-						>
-							{taskGroups?.map(taskGroup => <Tab label={taskGroup.title} value={taskGroup.id} key={taskGroup.id} />)}
-						</Tabs>
-					</Box>
+							<Button
+								variant="contained"
+								size="small"
+								color="success"
+								onClick={() => taskGroups.insertAtEnd(getNewTaskGroup(taskGroups.length))}
+							>
+								New Group
+							</Button>
+						</Stack>
 
-					<Button variant='contained' size='small' color='success'
-						onClick={() => taskGroups.insertAtEnd(getNewTaskGroup(taskGroups.length))}
-					>
-						New Group
-					</Button>
-				</Stack>
-
-				<TaskGroup sharedTreeBranch={sharedTreeBranch} sharedTreeTaskGroup={selectedTaskGroup} />
-			</React.Fragment>
-			}
-		</Container >
+						<TaskGroup
+							sharedTreeBranch={sharedTreeBranch}
+							sharedTreeTaskGroup={selectedTaskGroup}
+						/>
+					</React.Fragment>
+				)}
+		</Container>
 	);
 }
 
-export const getNewTaskGroup = (groupLength: number) => {
+const getNewTaskGroup = (groupLength: number) => {
 	return {
 		title: `New Task Group ${groupLength}`,
 		description: "New task group description",
@@ -119,8 +169,7 @@ export const getNewTaskGroup = (groupLength: number) => {
 			{
 				name: "Alice",
 				maxCapacity: 15,
-				skills:
-					"Senior engineer capable of handling complex tasks. Versed in most languages",
+				skills: "Senior engineer capable of handling complex tasks. Versed in most languages",
 			},
 			{
 				name: "Bob",
@@ -135,4 +184,4 @@ export const getNewTaskGroup = (groupLength: number) => {
 			},
 		],
 	};
-}
+};

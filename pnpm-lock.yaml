@@ -7053,6 +7053,12 @@ importers:
 
   experimental/framework/fluid-llm-example:
     dependencies:
+      '@azure/identity':
+        specifier: ^4.4.1
+        version: 4.4.1
+      '@azure/msal-browser':
+        specifier: ^3.23.0
+        version: 3.24.0
       '@emotion/react':
         specifier: ^11.13.3
         version: 11.13.3(@types/react@17.0.71)(react@18.3.1)
@@ -7065,6 +7071,9 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
@@ -7074,6 +7083,9 @@ importers:
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
+      '@fluidframework/odsp-client':
+        specifier: workspace:~
+        version: link:../../../packages/service-clients/odsp-client
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
@@ -7089,6 +7101,9 @@ importers:
       '@iconify/react':
         specifier: ^5.0.2
         version: 5.0.2(react@18.3.1)
+      '@microsoft/microsoft-graph-client':
+        specifier: ^3.0.7
+        version: 3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.24.0)
       '@mui/lab':
         specifier: 6.0.0-beta.9
         version: 6.0.0-beta.9(@emotion/react@11.13.3)(@emotion/styled@11.13.0)(@mui/material@6.0.2)(@types/react@17.0.71)(react-dom@18.3.1)(react@18.3.1)
@@ -7147,6 +7162,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.1)
+      '@microsoft/microsoft-graph-types':
+        specifier: ^2.40.0
+        version: 2.40.0
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -16702,7 +16720,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@azure/abort-controller': 1.1.0
-      '@azure/core-util': 1.2.0
+      '@azure/core-util': 1.9.0
       tslib: 2.6.2
 
   /@azure/core-client@1.9.2:
@@ -16742,13 +16760,6 @@ packages:
     dependencies:
       tslib: 2.6.2
 
-  /@azure/core-util@1.2.0:
-    resolution: {integrity: sha512-ffGIw+Qs8bNKNLxz5UPkz4/VBM/EZY07mPve1ZYFqYUdPwFqRj0RPk0U7LZMOfT7GCck9YjuT1Rfp1PApNl1ng==}
-    engines: {node: '>=14.0.0'}
-    dependencies:
-      '@azure/abort-controller': 1.1.0
-      tslib: 2.6.2
-
   /@azure/core-util@1.9.0:
     resolution: {integrity: sha512-AfalUQ1ZppaKuxPPMsFEUdX6GZPB3d9paR9d/TTL7Ow2De8cJaC7ibi7kWVlFAVPCYo31OcnGymc0R89DX8Oaw==}
     engines: {node: '>=18.0.0'}
@@ -16761,7 +16772,7 @@ packages:
     engines: {node: '>=18.0.0'}
     dependencies:
       '@azure/core-auth': 1.5.0
-      '@azure/identity': 4.3.0
+      '@azure/identity': 4.4.1
       '@azure/msal-node': 2.9.2
       '@azure/msal-node-extensions': 1.0.19
       keytar: 7.9.0
@@ -16780,7 +16791,29 @@ packages:
       '@azure/core-tracing': 1.0.1
       '@azure/core-util': 1.9.0
       '@azure/logger': 1.0.4
-      '@azure/msal-browser': 3.17.0
+      '@azure/msal-browser': 3.24.0
+      '@azure/msal-node': 2.9.2
+      events: 3.3.0
+      jws: 4.0.0
+      open: 8.4.2
+      stoppable: 1.1.0
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@azure/identity@4.4.1:
+    resolution: {integrity: sha512-DwnG4cKFEM7S3T+9u05NstXU/HN0dk45kPOinUyNKsn5VWwpXd9sbPKEg6kgJzGbm1lMuhx9o31PVbCtM5sfBA==}
+    engines: {node: '>=18.0.0'}
+    dependencies:
+      '@azure/abort-controller': 1.1.0
+      '@azure/core-auth': 1.5.0
+      '@azure/core-client': 1.9.2
+      '@azure/core-rest-pipeline': 1.10.1
+      '@azure/core-tracing': 1.0.1
+      '@azure/core-util': 1.9.0
+      '@azure/logger': 1.0.4
+      '@azure/msal-browser': 3.24.0
       '@azure/msal-node': 2.9.2
       events: 3.3.0
       jws: 4.0.0
@@ -16804,11 +16837,11 @@ packages:
       '@azure/msal-common': 13.3.1
     dev: false
 
-  /@azure/msal-browser@3.17.0:
-    resolution: {integrity: sha512-csccKXmW2z7EkZ0I3yAoW/offQt+JECdTIV/KrnRoZyM7wCSsQWODpwod8ZhYy7iOyamcHApR9uCh0oD1M+0/A==}
+  /@azure/msal-browser@3.24.0:
+    resolution: {integrity: sha512-JGNV9hTYAa7lsum9IMIibn2kKczAojNihGo1hi7pG0kNrcKej530Fl6jxwM05A44/6I079CSn6WxYxbVhKUmWg==}
     engines: {node: '>=0.8.0'}
     dependencies:
-      '@azure/msal-common': 14.12.0
+      '@azure/msal-common': 14.15.0
 
   /@azure/msal-common@13.3.1:
     resolution: {integrity: sha512-Lrk1ozoAtaP/cp53May3v6HtcFSVxdFrg2Pa/1xu5oIvsIwhxW6zSPibKefCOVgd5osgykMi5jjcZHv8XkzZEQ==}
@@ -16817,6 +16850,10 @@ packages:
 
   /@azure/msal-common@14.12.0:
     resolution: {integrity: sha512-IDDXmzfdwmDkv4SSmMEyAniJf6fDu3FJ7ncOjlxkDuT85uSnLEhZi3fGZpoR7T4XZpOMx9teM9GXBgrfJgyeBw==}
+    engines: {node: '>=0.8.0'}
+
+  /@azure/msal-common@14.15.0:
+    resolution: {integrity: sha512-ImAQHxmpMneJ/4S8BRFhjt1MZ3bppmpRPYYNyzeQPeFN288YKbb8TmmISQEbtfkQ1BPASvYZU5doIZOPBAqENQ==}
     engines: {node: '>=0.8.0'}
 
   /@azure/msal-node-extensions@1.0.19:
@@ -19598,7 +19635,7 @@ packages:
     resolution: {integrity: sha512-LkdSt8g/2dFKCA8SHFMrTmuN6kfoBvY6UbXfnV0vHqnzB+Q8ZlHfJslXaCkS5hDcrUV+/i1zuVNuLB2ajrtpCg==}
     hasBin: true
     dependencies:
-      '@azure/identity': 4.3.0
+      '@azure/identity': 4.4.1
       '@azure/identity-cache-persistence': 1.1.1
       '@fluid-internal/client-utils': 2.2.0
       '@fluidframework/container-runtime': 2.2.0
@@ -22434,6 +22471,34 @@ packages:
   /@microsoft/load-themed-styles@1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
     dev: false
+
+  /@microsoft/microsoft-graph-client@3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.24.0):
+    resolution: {integrity: sha512-/AazAV/F+HK4LIywF9C+NYHcJo038zEnWkteilcxC1FM/uK/4NVGDKGrxx7nNq1ybspAroRKT4I1FHfxQzxkUw==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      '@azure/identity': '*'
+      '@azure/msal-browser': '*'
+      buffer: '*'
+      stream-browserify: '*'
+    peerDependenciesMeta:
+      '@azure/identity':
+        optional: true
+      '@azure/msal-browser':
+        optional: true
+      buffer:
+        optional: true
+      stream-browserify:
+        optional: true
+    dependencies:
+      '@azure/identity': 4.4.1
+      '@azure/msal-browser': 3.24.0
+      '@babel/runtime': 7.25.6
+      tslib: 2.6.2
+    dev: false
+
+  /@microsoft/microsoft-graph-types@2.40.0:
+    resolution: {integrity: sha512-1fcPVrB/NkbNcGNfCy+Cgnvwxt6/sbIEEFgZHFBJ670zYLegENYJF8qMo7x3LqBjWX2/Eneq5BVVRCLTmlJN+g==}
+    dev: true
 
   /@microsoft/tsdoc-config@0.16.2:
     resolution: {integrity: sha512-OGiIzzoBLgWWR0UdRJX98oYO+XKGf7tiK4Zk6tQ/E4IJqGCe7dvkTvgDZV5cFJUzLGDOjeAXrnZoA6QkVySuxw==}
