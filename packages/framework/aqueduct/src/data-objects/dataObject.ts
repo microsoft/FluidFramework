@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
 import {
 	type ISharedDirectory,
 	MapFactory,
@@ -29,8 +28,8 @@ import type { DataObjectTypes } from "./types.js";
 export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
-	private internalRoot: ISharedDirectory | undefined;
-	private readonly rootDirectoryId = "root";
+	protected internalRoot: ISharedDirectory | undefined;
+	protected readonly rootDirectoryId = "root";
 
 	/**
 	 * The root directory will either be ready or will return an error. If an error is thrown
@@ -68,7 +67,6 @@ export abstract class DataObject<
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
-			// eslint-disable-next-line import/no-deprecated
 			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
 			this.internalRoot.bindToContext();
 		}

@@ -53,10 +53,20 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 }
 
 // @alpha
+export function createDataObject<TObj extends PureDataObject, I extends DataObjectTypes = DataObjectTypes>(ctor: new (props: IDataObjectProps<I>) => TObj, context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, runtimeClassArg: typeof FluidDataStoreRuntime, existing: boolean, initProps?: I["InitialState"]): Promise<{
+    instance: TObj;
+    runtime: FluidDataStoreRuntime;
+}>;
+
+// @alpha
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
+    // (undocumented)
+    protected internalRoot: ISharedDirectory | undefined;
     protected get root(): ISharedDirectory;
+    // (undocumented)
+    protected readonly rootDirectoryId = "root";
 }
 
 // @alpha
@@ -123,10 +133,20 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // @deprecated
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
+    // (undocumented)
+    protected readonly ctor: new (props: IDataObjectProps<I>) => TObj;
     get IFluidDataStoreFactory(): this;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    protected readonly optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+    // (undocumented)
+    protected readonly registry: IFluidDataStoreRegistry | undefined;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
+    // (undocumented)
+    protected readonly runtimeClass: typeof FluidDataStoreRuntime;
+    // (undocumented)
+    protected readonly sharedObjectRegistry: ISharedObjectRegistry;
     readonly type: string;
 }
 
