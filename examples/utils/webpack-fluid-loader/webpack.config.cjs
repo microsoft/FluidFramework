@@ -33,6 +33,13 @@ module.exports = {
 			},
 		],
 	},
+	// Some of Fluid's dependencies depend on process.env.NODE_ENV being defined.
+	// This can be removed when we no longer get runtime errors like 'process is not defined'
+	plugins: [
+		new webpack.DefinePlugin({
+			process: { env: { NODE_ENV: JSON.stringify(mode) } },
+		}),
+	],
 	output: {
 		filename: "[name].bundle.js",
 		path: path.resolve(__dirname, "dist"),
