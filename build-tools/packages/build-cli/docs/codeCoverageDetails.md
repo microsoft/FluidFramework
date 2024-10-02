@@ -83,5 +83,4 @@ export interface CodeCoverageComparison {
 ```
 
 ### Success Criteria
-If the branch code coverage decreased by more than one percentage point, then we fail the build for the PR. We also fail the build in case the code coverage for a newly added package is less than 50%.
-_See code: [src/codeCoverage/compareCodeCoverage.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/codeCoverage/compareCodeCoverage.ts)_
+If the branch code coverage decreased by more than one percentage point, then we fail the build for the PR. We also fail the build in case the code coverage for a newly added package is less than 50%. This is enforced in this function `isCodeCoverageCriteriaPassed`.
