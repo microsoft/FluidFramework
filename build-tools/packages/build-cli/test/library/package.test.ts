@@ -7,6 +7,7 @@ import type { PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
+import { describe, it } from "mocha";
 
 import { VersionDetails } from "../../src/library/index.js";
 import {

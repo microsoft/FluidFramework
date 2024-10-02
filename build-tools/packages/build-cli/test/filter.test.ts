@@ -6,8 +6,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { PackageName } from "@rushstack/node-core-library";
-import chai, { assert, expect } from "chai";
+import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,

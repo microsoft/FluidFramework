@@ -5,6 +5,7 @@
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import { assert } from "chai";
+import { describe, it } from "mocha";
 
 import type { ExportData, Node10CompatExportData } from "../../src/library/packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../../src/library/packageExports.js";

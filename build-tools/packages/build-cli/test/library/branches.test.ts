@@ -4,6 +4,7 @@
  */
 
 import { assert } from "chai";
+import { describe, it } from "mocha";
 
 import { MonoRepoKind } from "../../src/library/index.js";
 

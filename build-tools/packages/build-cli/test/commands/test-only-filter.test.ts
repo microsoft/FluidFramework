@@ -23,7 +23,7 @@ describe("flub test-only-filter", async () => {
 		});
 		const output: jsonOutput = JSON.parse(stdout);
 		const { selected, filtered } = output;
-		expect(selected).toHaveLength(filtered.length);
+		expect(selected).to.be.ofSize(filtered.length);
 	});
 
 	it(`--dir selector`, async () => {
@@ -62,8 +62,8 @@ describe("flub test-only-filter", async () => {
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);
-		expect(names).toContain("@fluid-private/changelog-generator-wrapper");
-		expect(names).toContain("@fluid-example/example-utils");
+		expect(names).to.be.containing("@fluid-private/changelog-generator-wrapper");
+		expect(names).to.be.containing("@fluid-example/example-utils");
 	});
 
 	it(`--no-private filter`, async () => {
@@ -76,7 +76,7 @@ describe("flub test-only-filter", async () => {
 
 		const names = filtered.map((p) => p.name);
 		// expect(names.includes("@fluid-private/readme-command")).to.be.true;
-		expect(names).not.toContain("@fluid-private/changelog-generator-wrapper");
+		expect(names).not.to.be.containing("@fluid-private/changelog-generator-wrapper");
 	});
 
 	it(`--scope filter`, async () => {
@@ -93,7 +93,7 @@ describe("flub test-only-filter", async () => {
 			"@fluid-tools/build-cli",
 			"fluid-framework",
 		].forEach((item) => {
-			expect(names).toContain(item);
+			expect(names).to.be.containing(item);
 		});
 	});
 });

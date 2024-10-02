@@ -5,6 +5,7 @@
 
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
+import { describe, it } from "mocha";
 
 import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine.js";
 
@@ -135,13 +136,13 @@ describe("FluidReleaseMachine", () => {
 
 			if (!state.startsWith("Do") || requiresBothActions.includes(state)) {
 				it(state, () => {
-					["failure", "success"].forEach((item) => expect(exits).toContain(item));
+					["failure", "success"].forEach((item) => expect(exits).to.be.containing(item));
 				});
 			} else {
 				// Do* actions are not required to have a failure action
 				it(state, () => {
-					expect(exits).toContain("success");
-					expect(exits).toHaveLength(1);
+					expect(exits).to.be.containing("success");
+					expect(exits).to.be.ofSize(1);
 				});
 			}
 		}
