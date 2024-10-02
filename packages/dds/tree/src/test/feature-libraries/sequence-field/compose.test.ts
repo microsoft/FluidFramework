@@ -1500,6 +1500,39 @@ export function testCompose() {
 			compose([move, modify, moveBack], undefined, childComposer);
 		});
 
+		it("move & remove ○ revive & move", () => {
+			const moveId1: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const cellId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const removeId: ChangeAtomId = { revision: tag1, localId: brand(2) };
+			const moveId2: ChangeAtomId = { revision: tag2, localId: brand(0) };
+
+			const moveAndRemove = tagChangeInline(
+				[
+					Mark.moveOut(1, moveId1),
+					Mark.attachAndDetach(Mark.moveIn(1, moveId1, { cellId }), Mark.remove(1, removeId)),
+				],
+				tag1,
+			);
+
+			const reviveAndMove = tagChangeInline(
+				[
+					Mark.tomb(moveId1.revision, moveId1.localId),
+					Mark.moveOut(1, moveId2, { cellId: removeId }),
+					Mark.moveIn(1, moveId2),
+				],
+				tag2,
+			);
+
+			const composed = shallowCompose([moveAndRemove, reviveAndMove]);
+			const expected = [
+				Mark.moveOut(1, moveId1, { finalEndpoint: moveId2 }),
+				Mark.rename(1, cellId, moveId2),
+				Mark.moveIn(1, moveId2, { finalEndpoint: moveId1 }),
+			];
+
+			assertChangesetsEqual(composed, expected);
+		});
+
 		describe("empty cell ordering", () => {
 			const tombA = Mark.tomb(tag1, brand(1));
 			const tombB = Mark.tomb(tag1, brand(2));

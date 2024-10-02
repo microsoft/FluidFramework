@@ -140,7 +140,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.3.0",
+		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@~2.3.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
@@ -157,7 +157,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"socket.io-client": "^4.7.3",
+		"socket.io-client": "~4.7.5",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
