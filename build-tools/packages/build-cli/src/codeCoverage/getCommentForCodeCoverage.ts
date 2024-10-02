@@ -3,98 +3,61 @@
  * Licensed under the MIT License.
  */
 
-import type { IPRBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
-import type { CommandLogger } from "../logging.js";
-import type { CodeCoverageSummary } from "./codeCoveragePr.js";
-import type { CodeCoverageComparison } from "./compareCodeCoverage.js";
+import type { IBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
+import type {
+	CodeCoverageChangeForPackages,
+	CodeCoverageComparison,
+} from "./compareCodeCoverage.js";
 
 const codeCoverageDetailsHeader = `<table><tr><th>Metric Name</th><th>Baseline coverage</th><th>PR coverage</th><th>Coverage Diff</th></tr>`;
 
 /**
  * Method that returns the comment to be posted on PRs about code coverage
- * @param codeCoverageComparisonReport - The comparison report between baseline and pr test coverage
+ * @param packagesListWithCodeCoverageChanges - The comparison data for packages with code coverage changes.
  * @param baselineBuildInfo - The baseline build information.
- * @param logger - The logger to log messages.
+ * @param success - Flag to indicate if the code coverage comparison check passed or not
  * @returns Comment to be posted on the PR, and whether the code coverage comparison check passed or not
  */
-export const getCommentForCodeCoverageDiff = async (
-	codeCoverageComparisonReport: CodeCoverageComparison[],
-	baselineBuildInfo: IPRBuildMetrics,
-	logger?: CommandLogger,
-): Promise<CodeCoverageSummary> => {
-	// Find new packages that do not have test setup and are being impacted by changes in the PR
-	const newPackagesIdentifiedByCodeCoverage = codeCoverageComparisonReport.filter(
-		(codeCoverageReport) => codeCoverageReport.isNewPackage,
-	);
-	logger?.verbose(`Found ${newPackagesIdentifiedByCodeCoverage.length} new packages`);
-
-	// Find existing packages that have reported a change in coverage for the current PR
-	const existingPackagesWithCoverageChange = codeCoverageComparisonReport.filter(
-		(codeCoverageReport) =>
-			codeCoverageReport.branchCoverageDiff !== 0 || codeCoverageReport.lineCoverageDiff !== 0,
-	);
-	logger?.verbose(
-		`Found ${existingPackagesWithCoverageChange.length} packages with code coverage changes`,
-	);
-
-	const packagesWithNotableRegressions = existingPackagesWithCoverageChange.filter(
-		(codeCoverageReport: CodeCoverageComparison) =>
-			codeCoverageReport.branchCoverageDiff < -1 || codeCoverageReport.lineCoverageDiff < -1,
-	);
-
-	logger?.verbose(
-		`Found ${packagesWithNotableRegressions.length} existing packages with notable regressions`,
-	);
-
-	// Code coverage for the newly added package should be less than 50% to fail the build
-	const newPackagesWithNotableRegressions = newPackagesIdentifiedByCodeCoverage.filter(
-		(codeCoverageReport) =>
-			codeCoverageReport.branchCoverageInPr < 50 || codeCoverageReport.lineCoverageInPr < 50,
-	);
-
-	logger?.verbose(
-		`Found ${newPackagesWithNotableRegressions.length} new packages with notable regressions`,
-	);
-	let failBuild: boolean = false;
-	if (
-		newPackagesWithNotableRegressions.length > 0 ||
-		packagesWithNotableRegressions.length > 0
-	) {
-		failBuild = true;
-	}
+export function getCommentForCodeCoverageDiff(
+	packagesListWithCodeCoverageChanges: CodeCoverageChangeForPackages,
+	baselineBuildInfo: IBuildMetrics,
+	success: boolean,
+): string {
+	const { codeCoverageComparisonForNewPackages, codeCoverageComparisonForExistingPackages } =
+		packagesListWithCodeCoverageChanges;
 
 	let coverageSummaryForImpactedPackages = "";
 	let coverageSummaryForNewPackages = "";
 
 	if (
-		existingPackagesWithCoverageChange.length === 0 &&
-		newPackagesIdentifiedByCodeCoverage.length === 0
+		codeCoverageComparisonForExistingPackages.length === 0 &&
+		codeCoverageComparisonForNewPackages.length === 0
 	) {
 		coverageSummaryForImpactedPackages = `No packages impacted by the change.`;
 	}
 
-	if (existingPackagesWithCoverageChange.length > 0) {
+	if (codeCoverageComparisonForExistingPackages.length > 0) {
 		coverageSummaryForImpactedPackages = getCodeCoverageSummary(
-			existingPackagesWithCoverageChange,
+			codeCoverageComparisonForExistingPackages,
 		);
 	}
 
-	if (newPackagesIdentifiedByCodeCoverage.length > 0) {
+	if (codeCoverageComparisonForNewPackages.length > 0) {
 		coverageSummaryForNewPackages = getCodeCoverageSummary(
-			newPackagesIdentifiedByCodeCoverage,
+			codeCoverageComparisonForNewPackages,
 		);
 	}
-	return {
-		commentMessage: [
-			coverageSummaryForImpactedPackages,
-			coverageSummaryForNewPackages,
-			getSummaryFooter(baselineBuildInfo),
-		].join("\n\n"),
-		failBuild,
-	};
-};
+	return [
+		coverageSummaryForImpactedPackages,
+		coverageSummaryForNewPackages,
+		getSummaryFooter(baselineBuildInfo),
+		success
+			? "###Code coverage comparison check passed"
+			: "###Code coverage comparison check failed",
+	].join("\n\n");
+}
 
-const getSummaryFooter = (baselineBuildInfo: IPRBuildMetrics): string => {
+const getSummaryFooter = (baselineBuildInfo: IBuildMetrics): string => {
 	return `<hr><p>Baseline commit: ${
 		baselineBuildInfo.build.sourceVersion
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

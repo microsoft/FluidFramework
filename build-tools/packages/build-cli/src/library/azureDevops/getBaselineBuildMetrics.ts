@@ -13,7 +13,7 @@ import type { CommandLogger } from "../../logging.js";
 import type { IAzureDevopsBuildCoverageConstants } from "./constants.js";
 import { getBuild, getBuilds } from "./utils.js";
 
-export interface IPRBuildMetrics {
+export interface IBuildMetrics {
 	build: Build & { id: number };
 	/**
 	 * The artifact that was published by the PR build in zip format
@@ -31,7 +31,7 @@ export async function getBaselineBuildMetrics(
 	azureDevopsBuildCoverageConstants: IAzureDevopsBuildCoverageConstants,
 	adoConnection: WebApi,
 	logger?: CommandLogger,
-): Promise<IPRBuildMetrics | string | undefined> {
+): Promise<IBuildMetrics> {
 	const recentBuilds = await getBuilds(adoConnection, {
 		project: azureDevopsBuildCoverageConstants.projectName,
 		definitions: [azureDevopsBuildCoverageConstants.ciBuildDefinitionId],
@@ -48,8 +48,8 @@ export async function getBaselineBuildMetrics(
 		// Baseline build does not have id
 		if (build.id === undefined) {
 			const message = `Baseline build does not have a build id`;
-			logger?.info(message);
-			return message;
+			logger?.warning(message);
+			throw new Error(message);
 		}
 
 		// Baseline build succeeded
@@ -85,7 +85,7 @@ export async function getBaselineBuildMetrics(
 			);
 			continue;
 		}
-		// Found usable baseline zip
+		// Found usable baseline zip, so break out of the loop early.
 		baselineBuild = build;
 		break;
 	}
@@ -94,20 +94,20 @@ export async function getBaselineBuildMetrics(
 	if (baselineArtifactZip === undefined) {
 		const message = `Could not find a usable baseline build`;
 		logger?.warning(message);
-		return message;
+		throw new Error(message);
 	}
 
 	if (!baselineBuild) {
 		const message = `Could not find baseline build for CI`;
 		logger?.warning(message);
-		return message;
+		throw new Error(message);
 	}
 
 	// Baseline build does not have id
 	if (baselineBuild.id === undefined) {
 		const message = `Baseline build does not have a build id`;
 		logger?.warning(message);
-		return message;
+		throw new Error(message);
 	}
 
 	logger?.verbose(`Found baseline build with id: ${baselineBuild.id}`);
@@ -128,7 +128,7 @@ export async function getBuildArtifactForSpecificBuild(
 	azureDevopsBuildCoverageConstants: IAzureDevopsBuildCoverageConstants,
 	adoConnection: WebApi,
 	logger?: CommandLogger,
-): Promise<IPRBuildMetrics | string | undefined> {
+): Promise<IBuildMetrics> {
 	assert(azureDevopsBuildCoverageConstants.buildId !== undefined, "buildId is required");
 	logger?.verbose(`The buildId id ${azureDevopsBuildCoverageConstants.buildId}`);
 
@@ -145,8 +145,8 @@ export async function getBuildArtifactForSpecificBuild(
 	// Build does not have id
 	if (build.id === undefined) {
 		const message = `build does not have a build id`;
-		logger?.info(message);
-		return message;
+		logger?.warning(message);
+		throw new Error(message);
 	}
 
 	logger?.verbose(`Found build with id: ${build.id}`);
@@ -175,7 +175,7 @@ export async function getBuildArtifactForSpecificBuild(
 	if (artifactZip === undefined) {
 		const message = `Could not find a usable artifact`;
 		logger?.warning(message);
-		return message;
+		throw new Error(message);
 	}
 
 	return {

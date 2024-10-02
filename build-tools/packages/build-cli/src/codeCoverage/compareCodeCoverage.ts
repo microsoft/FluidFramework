@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { CommandLogger } from "../logging.js";
 import type { CoverageMetric } from "./getCoverageMetrics.js";
 
 // List of packages to be ignored from code coverage analysis. These are just prefixes. Reason is that when the package src code contains different
@@ -53,6 +54,11 @@ export interface CodeCoverageComparison {
 	 * Flag to indicate if the package is new
 	 */
 	isNewPackage: boolean;
+}
+
+export interface CodeCoverageChangeForPackages {
+	codeCoverageComparisonForNewPackages: CodeCoverageComparison[];
+	codeCoverageComparisonForExistingPackages: CodeCoverageComparison[];
 }
 
 /**
@@ -120,3 +126,73 @@ export const compareCodeCoverage = (
 
 	return results;
 };
+
+/**
+ * Method that returns list of packages with code coverage changes.
+ * @param codeCoverageComparisonData - The comparison data between baseline and pr test coverage
+ * @param logger - The logger to log messages.
+ */
+export function getPackagesWithCodeCoverageChanges(
+	codeCoverageComparisonData: CodeCoverageComparison[],
+	logger?: CommandLogger,
+): CodeCoverageChangeForPackages {
+	// Find new packages that do not have test setup and are being impacted by changes in the PR
+	const newPackagesIdentifiedByCodeCoverage = codeCoverageComparisonData.filter(
+		(codeCoverageReport) => codeCoverageReport.isNewPackage,
+	);
+	logger?.verbose(`Found ${newPackagesIdentifiedByCodeCoverage.length} new packages`);
+
+	// Find existing packages that have reported a change in coverage for the current PR
+	const existingPackagesWithCoverageChange = codeCoverageComparisonData.filter(
+		(codeCoverageReport) =>
+			codeCoverageReport.branchCoverageDiff !== 0 || codeCoverageReport.lineCoverageDiff !== 0,
+	);
+	logger?.verbose(
+		`Found ${existingPackagesWithCoverageChange.length} packages with code coverage changes`,
+	);
+
+	return {
+		codeCoverageComparisonForNewPackages: newPackagesIdentifiedByCodeCoverage,
+		codeCoverageComparisonForExistingPackages: existingPackagesWithCoverageChange,
+	};
+}
+
+/**
+ * Method that returns whether the code coverage comparison check passed or not.
+ * @param codeCoverageChangeForPackages - The comparison data for packages with code coverage changes.
+ * @param logger - The logger to log messages.
+ */
+export function isCodeCoverageCriteriaPassed(
+	codeCoverageChangeForPackages: CodeCoverageChangeForPackages,
+	logger?: CommandLogger,
+): boolean {
+	const { codeCoverageComparisonForNewPackages, codeCoverageComparisonForExistingPackages } =
+		codeCoverageChangeForPackages;
+	const packagesWithNotableRegressions = codeCoverageComparisonForExistingPackages.filter(
+		(codeCoverageReport: CodeCoverageComparison) =>
+			codeCoverageReport.branchCoverageDiff < -1 || codeCoverageReport.lineCoverageDiff < -1,
+	);
+
+	logger?.verbose(
+		`Found ${packagesWithNotableRegressions.length} existing packages with notable regressions`,
+	);
+
+	// Code coverage for the newly added package should be less than 50% to fail the build
+	const newPackagesWithNotableRegressions = codeCoverageComparisonForNewPackages.filter(
+		(codeCoverageReport) =>
+			codeCoverageReport.branchCoverageInPr < 50 || codeCoverageReport.lineCoverageInPr < 50,
+	);
+
+	logger?.verbose(
+		`Found ${newPackagesWithNotableRegressions.length} new packages with notable regressions`,
+	);
+	let success: boolean = false;
+	if (
+		newPackagesWithNotableRegressions.length === 0 &&
+		packagesWithNotableRegressions.length === 0
+	) {
+		success = true;
+	}
+
+	return success;
+}

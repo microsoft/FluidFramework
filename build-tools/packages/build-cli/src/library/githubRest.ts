@@ -112,7 +112,7 @@ export async function isPrApprovedByUsers(
 }
 
 /**
- * Create or Update a review comment on a PR.
+ * Create or Update(If already exists based on commentIdentifier) a review comment on a PR.
  *
  * @param github - Details about the GitHub repo and auth to use.
  * @param prNumber - Pull request number.
@@ -136,16 +136,16 @@ export async function createOrUpdateCommentOnPr(
 		pull_number: prNumber,
 	});
 
-	let comment_id: number | undefined;
+	let commentId: number | undefined;
 	// Log the comments to find the comment_id
 	for (const comment of comments) {
 		if (comment.body.startsWith(commentIdentifier)) {
-			comment_id = comment.id;
+			commentId = comment.id;
 			break;
 		}
 	}
 
-	if (comment_id === undefined) {
+	if (commentId === undefined) {
 		const response = await octokit.pulls.createReview({
 			owner,
 			repo,
@@ -161,12 +161,18 @@ export async function createOrUpdateCommentOnPr(
 		repo,
 		pull_number: prNumber,
 		body,
-		review_id: comment_id,
+		review_id: commentId,
 	});
 	return data.id;
 }
 
-export async function getChangedFilenames(
+/**
+ * Api to get the changed file paths in a PR. The paths are relative to the root of the repo.
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param prNumber - Pr number for which the changed files paths are to be fetched
+ * @returns - List of file paths that are changed in the PR
+ */
+export async function getChangedFilePaths(
 	{ owner, repo, token }: GitHubProps,
 	prNumber: number,
 ): Promise<string[]> {

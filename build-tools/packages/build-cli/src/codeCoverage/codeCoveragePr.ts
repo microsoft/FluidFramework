@@ -6,58 +6,54 @@
 import { getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
 import { type IAzureDevopsBuildCoverageConstants } from "../library/azureDevops/constants.js";
 import {
+	type IBuildMetrics,
 	getBaselineBuildMetrics,
 	getBuildArtifactForSpecificBuild,
 } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CommandLogger } from "../logging.js";
-import { compareCodeCoverage } from "./compareCodeCoverage.js";
-import { getCommentForCodeCoverageDiff } from "./getCommentForCodeCoverage.js";
+import { type CodeCoverageComparison, compareCodeCoverage } from "./compareCodeCoverage.js";
 import { getCoverageMetricsForBaseline } from "./getCoverageMetrics.js";
 
 /**
- * Summary of code coverage analysis.
+ * Report of code coverage comparison.
  */
-export interface CodeCoverageSummary {
+export interface CodeCoverageReport {
 	/**
-	 * Message to be put in the comment.
+	 * Comparison data for each package.
 	 */
-	commentMessage: string;
+	comparisonData: CodeCoverageComparison[];
 
 	/**
-	 * Whether to fail the build or not.
+	 * Baseline build metrics against which the PR build metrics are compared.
 	 */
-	failBuild: boolean;
+	baselineBuildMetrics: IBuildMetrics;
 }
 
 /**
- * API to get the code coverage summary for a PR.
+ * API to get the code coverage report for a PR.
  * @param adoToken - ADO token that will be used to download artifacts from ADO pipeline runs.
  * @param codeCoverageConstantsBaseline - The code coverage constants required for fetching the baseline build artifacts.
  * @param codeCoverageConstantsPR - The code coverage constants required for fetching the PR build artifacts.
  * @param changedFiles - The list of files changed in the PR.
  * @param logger - The logger to log messages.
  */
-export const getCodeCoverageSummary = async (
+export async function getCodeCoverageReport(
 	adoToken: string,
 	codeCoverageConstantsBaseline: IAzureDevopsBuildCoverageConstants,
 	codeCoverageConstantsPR: IAzureDevopsBuildCoverageConstants,
 	changedFiles: string[],
 	logger?: CommandLogger,
-): Promise<CodeCoverageSummary> => {
+): Promise<CodeCoverageReport> {
 	const adoConnection = getAzureDevopsApi(adoToken, codeCoverageConstantsBaseline.orgUrl);
 
 	const baselineBuildInfo = await getBaselineBuildMetrics(
 		codeCoverageConstantsBaseline,
 		adoConnection,
 		logger,
-	);
-
-	if (baselineBuildInfo === undefined || typeof baselineBuildInfo === "string") {
-		return {
-			commentMessage: baselineBuildInfo ?? "No Baseline build found",
-			failBuild: false,
-		};
-	}
+	).catch((error) => {
+		logger?.errorLog(`Error getting baseline build metrics: ${error}`);
+		throw error;
+	});
 
 	const adoConnectionForPR = getAzureDevopsApi(adoToken, codeCoverageConstantsPR.orgUrl);
 
@@ -65,14 +61,10 @@ export const getCodeCoverageSummary = async (
 		codeCoverageConstantsPR,
 		adoConnectionForPR,
 		logger,
-	);
-
-	if (prBuildInfo === undefined || typeof prBuildInfo === "string") {
-		return {
-			commentMessage: prBuildInfo ?? "No PR build found",
-			failBuild: false,
-		};
-	}
+	).catch((error) => {
+		logger?.errorLog(`Error getting PR build metrics: ${error}`);
+		throw error;
+	});
 
 	// Extract the coverage metrics for the baseline and PR builds.
 	const [coverageMetricsForBaseline, coverageMetricsForPr] = await Promise.all([
@@ -81,12 +73,14 @@ export const getCodeCoverageSummary = async (
 	]);
 
 	// Compare the code coverage metrics for the baseline and PR builds.
-	const codeCoverageComparison = compareCodeCoverage(
+	const comparisonData = compareCodeCoverage(
 		coverageMetricsForBaseline,
 		coverageMetricsForPr,
 		changedFiles,
 	);
 
-	// Get the comment for the code coverage diff.
-	return getCommentForCodeCoverageDiff(codeCoverageComparison, baselineBuildInfo);
-};
+	return {
+		comparisonData,
+		baselineBuildMetrics: baselineBuildInfo,
+	};
+}
