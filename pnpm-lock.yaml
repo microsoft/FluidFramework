@@ -1139,7 +1139,7 @@ importers:
         version: link:../../../packages/dds/tree
       '@sinclair/typebox':
         specifier: ^0.32.29
-        version: 0.32.29
+        version: 0.32.35
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -1158,7 +1158,7 @@ importers:
         version: 9.1.1
       '@types/node':
         specifier: ^18.19.0
-        version: 18.19.1
+        version: 18.19.54
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -1167,13 +1167,13 @@ importers:
         version: 8.55.0
       mocha:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.7.3
       mocha-json-output-reporter:
         specifier: ^2.0.1
-        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
+        version: 2.1.0(mocha@10.7.3)(moment@2.30.1)
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.2.0)
+        version: 1.5.1(mocha@10.7.3)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1

@@ -35,6 +35,14 @@ export interface CommitMetadata {
 }
 
 // @alpha
+export function comparePersistedSchema(persisted: JsonCompatible, view: JsonCompatible, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
+
+// @beta
+export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
+    [key: string]: ConciseTree<THandle>;
+};
+
+// @alpha
 export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
 
 // @public
@@ -164,18 +172,6 @@ export type FluidObject<T = unknown> = {
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
-
-// @alpha (undocumented)
-export interface ForestOptions {
-    readonly forest?: ForestType;
-}
-
-// @alpha
-export enum ForestType {
-    Expensive = 2,
-    Optimized = 1,
-    Reference = 0
-}
 
 // @alpha
 export interface ForestOptions {
@@ -464,11 +460,6 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @alpha
 export function independentInitializedView<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeView<TSchema>;
-
-// @alpha
-export function independentView<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & {
-    idCompressor?: IIdCompressor | undefined;
-}): TreeView<TSchema>;
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
