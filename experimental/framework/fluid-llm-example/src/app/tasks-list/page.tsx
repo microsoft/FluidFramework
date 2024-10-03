@@ -6,6 +6,8 @@
 "use client";
 
 import {
+	CONTAINER_SCHEMA,
+	INITIAL_APP_STATE,
 	SharedTreeAppState,
 	TREE_CONFIGURATION,
 	type SharedTreeTaskGroup,
@@ -25,7 +27,19 @@ import { TaskGroup } from "@/components/TaskGroup";
 import { type TreeView } from "@fluidframework/tree";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 import { useFluidContainerNextJs } from "@/useFluidContainerNextjs";
-import { createAndInitializeContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
+
+// Uncomment the import line that corresponds to the server you want to use
+// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe";
+import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious";
+
+export async function createAndInitializeContainer(): Promise<IFluidContainer<typeof CONTAINER_SCHEMA>> {
+	const container = await createContainer(CONTAINER_SCHEMA);
+	const treeView = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+	treeView.initialize(new SharedTreeAppState(INITIAL_APP_STATE));
+	treeView.dispose(); // After initializing, dispose the tree view so later loading of the data can work correctly
+	return container;
+}
 
 export default function TasksListPage() {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
@@ -36,7 +50,7 @@ export default function TasksListPage() {
 		containerIdFromUrl(),
 		createAndInitializeContainer,
 		postAttach,
-		loadContainer,
+		(id) => loadContainer(CONTAINER_SCHEMA, id),
 		// Get data from existing container
 		(container) => {
 			const treeView = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);

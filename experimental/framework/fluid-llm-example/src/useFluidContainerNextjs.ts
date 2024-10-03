@@ -31,11 +31,13 @@ export function useFluidContainerNextJs<T extends ContainerSchema, V>(
 			let init: () => Promise<{container:IFluidContainer<T>, containerId: string}>;
 			if (containerId.length > 0) {
 				init = async () => {
+					console.log(`Loading container with id '${containerId}'`);
 					const container = await loadExistingContainer(containerId);
 					return { container, containerId };
 				};
 			} else {
 				init = async () => {
+					console.log(`Creating new container`);
 					const container = await createAndInitializeContainer();
 					const id = await container.attach();
 					postAttachCallback?.(id, container);
