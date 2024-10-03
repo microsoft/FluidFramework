@@ -68,7 +68,7 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 
 				// If versions do not match on first major version encounter, then the input version is not the latest
 				this.log(
-					`skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
+					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
 				);
 				this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]false`);
 				return;
@@ -76,7 +76,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		}
 
 		// Error if no major version corresponds to input version
-		this.log(`No major version found corresponding to input version ${versionInput.version}`);
+		this.log(
+			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
+		);
 		this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]false`);
 	}
 }
