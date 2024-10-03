@@ -584,8 +584,19 @@ export function resolveSymbolicReference(
  */
 export class SymbolicReferenceError extends Error {
 	public constructor(
+		/**
+		 * The API item with the TSDoc comment containing the unresolvable reference.
+		 */
 		public readonly sourceItem: ApiItem,
+
+		/**
+		 * The symbolic code target that could not be resolved.
+		 */
 		public readonly target: DocDeclarationReference,
+
+		/**
+		 * The error message returned by API-Extractor.
+		 */
 		public readonly innerErrorMessage: string,
 	) {
 		super(
