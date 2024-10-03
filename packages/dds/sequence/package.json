@@ -191,17 +191,36 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {
 			"ClassStatics_SequenceMaintenanceEvent": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"Class_SequenceMaintenanceEvent": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"ClassStatics_SequenceDeltaEvent": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassStatics_SequenceEvent": {
 				"backCompat": false
 			},
 			"Class_SequenceDeltaEvent": {
+				"backCompat": false
+			},
+			"Class_SequenceInterval": {
+				"backCompat": false
+			},
+			"ClassStatics_SequenceInterval": {
+				"backCompat": false
+			},
+			"TypeAlias_IntervalRevertible": {
+				"backCompat": false
+			},
+			"TypeAlias_SharedStringRevertible": {
 				"backCompat": false
 			}
 		},

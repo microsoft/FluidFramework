@@ -38,9 +38,6 @@ export class Interval implements ISerializableInterval {
 	/***/
 	public auxProps: PropertySet[] | undefined;
 
-	/**
-	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 */
 	public readonly propertyManager: PropertiesManager = new PropertiesManager();
 
 	constructor(
@@ -170,19 +167,6 @@ export class Interval implements ISerializableInterval {
 
 	public getProperties() {
 		return this.properties;
-	}
-
-	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collaborating: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		if (newProps) {
-			return this.propertyManager.addProperties(this.properties, newProps, seq, collaborating);
-		}
 	}
 
 	/**

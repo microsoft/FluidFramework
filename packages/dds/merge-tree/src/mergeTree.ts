@@ -10,7 +10,6 @@ import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
@@ -143,9 +142,72 @@ const LRUSegmentComparer: IComparer<LRUSegment> = {
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
+function ackSegment(
+	segment: ISegmentLeaf,
+	segmentGroup: SegmentGroup,
+	opArgs: IMergeTreeDeltaOpArgs,
+): boolean {
+	const currentSegmentGroup = segment.segmentGroups?.dequeue();
+	assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
+	switch (opArgs.op.type) {
+		case MergeTreeDeltaType.ANNOTATE: {
+			assert(
+				!!segment.propertyManager,
+				0x044 /* "On annotate ack, missing segment property manager!" */,
+			);
+			segment.propertyManager.ackPendingProperties(opArgs.op);
+			return true;
+		}
+
+		case MergeTreeDeltaType.INSERT: {
+			assert(
+				segment.seq === UnassignedSequenceNumber,
+				0x045 /* "On insert, seq number already assigned!" */,
+			);
+			segment.seq = opArgs.sequencedMessage!.sequenceNumber;
+			segment.localSeq = undefined;
+			return true;
+		}
+
+		case MergeTreeDeltaType.REMOVE: {
+			const removalInfo: IRemovalInfo | undefined = toRemovalInfo(segment);
+			assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
+			segment.localRemovedSeq = undefined;
+			if (removalInfo.removedSeq === UnassignedSequenceNumber) {
+				removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
+				return true;
+			}
+			return false;
+		}
+
+		case MergeTreeDeltaType.OBLITERATE:
+		case MergeTreeDeltaType.OBLITERATE_SIDED: {
+			const moveInfo: IMoveInfo | undefined = toMoveInfo(segment);
+			assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
+			const obliterateInfo = segmentGroup.obliterateInfo;
+			assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
+			segment.localMovedSeq = obliterateInfo.localSeq = undefined;
+			const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
+			assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
+			moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
+				opArgs.sequencedMessage!.sequenceNumber;
+
+			if (moveInfo.movedSeq === UnassignedSequenceNumber) {
+				moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+				return true;
+			}
+
+			return false;
+		}
+
+		default: {
+			throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
+		}
+	}
+}
+
 /**
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
@@ -222,9 +284,7 @@ export function errorIfOptionNotTrue(
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IMergeTreeAttributionOptions {
 	/**
@@ -250,9 +310,7 @@ export interface IMergeTreeAttributionOptions {
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
  * @sealed
- * @legacy
- * @alpha
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface AttributionPolicy {
 	/**
@@ -262,7 +320,6 @@ export interface AttributionPolicy {
 	 *
 	 * This must be done in an eventually consistent fashion.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	attach: (client: Client) => void;
 	/**
 	 * Disables tracking attribution information on segments.
@@ -477,7 +534,6 @@ class Obliterates {
 		const overlapping: ObliterateInfo[] = [];
 		for (const start of this.startOrdered.items) {
 			if (start.getSegment()!.ordinal <= seg.ordinal) {
-				// eslint-disable-next-line import/no-deprecated
 				const ob = start.properties?.obliterate as ObliterateInfo;
 				if (ob.end.getSegment()!.ordinal >= seg.ordinal) {
 					overlapping.push(ob);
@@ -1234,7 +1290,7 @@ export class MergeTree {
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
 			const overlappingRemoves: boolean[] = [];
 			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
-				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
+				const overlappingRemove = !ackSegment(pendingSegment, pendingSegmentGroup, opArgs);
 
 				overwrite = overlappingRemove || overwrite;
 
@@ -1539,10 +1595,8 @@ export class MergeTree {
 					continue;
 				}
 
-				// eslint-disable-next-line import/no-deprecated
 				let oldest: ObliterateInfo | undefined;
 				let normalizedOldestSeq: number = 0;
-				// eslint-disable-next-line import/no-deprecated
 				let newest: ObliterateInfo | undefined;
 				let normalizedNewestSeq: number = 0;
 				const movedClientIds: number[] = [];
@@ -1616,9 +1670,8 @@ export class MergeTree {
 		const next: ISegmentLeaf = segment.splitAt(pos)!;
 
 		if (segment?.segmentGroups) {
-			// eslint-disable-next-line import/no-deprecated
 			next.segmentGroups ??= new SegmentGroupCollection(next);
-			segment.segmentGroups.copyTo(next);
+			segment.segmentGroups.copyTo(next.segmentGroups);
 		}
 
 		if (segment.prevObliterateByInserter) {
@@ -1629,7 +1682,6 @@ export class MergeTree {
 			if (segment.propertyManager === undefined) {
 				next.properties = clone(segment.properties);
 			} else {
-				// eslint-disable-next-line import/no-deprecated
 				next.propertyManager ??= new PropertiesManager();
 				next.properties = segment.propertyManager.copyTo(
 					segment.properties,
@@ -1877,7 +1929,6 @@ export class MergeTree {
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
 
-			// eslint-disable-next-line import/no-deprecated
 			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
 			const properties = (segment.properties ??= createMap());
 			const propertyDeltas = propertyManager.addProperties(
@@ -2369,7 +2420,6 @@ export class MergeTree {
 						UniversalSequenceNumber,
 						{ op: annotateOp },
 
-						// eslint-disable-next-line import/no-deprecated
 						PropertiesRollback.Rollback,
 					);
 					i++;

@@ -152,7 +152,7 @@ export type {
 	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
-export {
+export type {
 	IntervalType,
 	SequenceDeltaEvent,
 	SequenceEvent,
