@@ -258,6 +258,7 @@ module.exports = {
 				"docs/api/fallback/index.js",
 				"docs/build-redirects.js",
 				"docs/download-apis.js",
+				"docs/local-api-rollup.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",

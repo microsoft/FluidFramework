@@ -192,6 +192,7 @@ The replacement syntax to use in `.mdx` files would be:
 
 -   Add component-level unit testing (with accessibility tests)
 -   Add end-to-end testing
+-   "Local" API docs mode
 -   Add button for users to report docs issues / edit pages on github
 -   Verify specific browser support
 -   Remove sample blog contents
