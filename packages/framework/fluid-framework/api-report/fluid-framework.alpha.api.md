@@ -35,12 +35,7 @@ export interface CommitMetadata {
 }
 
 // @alpha
-export function comparePersistedSchema(persisted: JsonCompatible, view: JsonCompatible, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
-
-// @beta
-export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
-    [key: string]: ConciseTree<THandle>;
-};
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
 
 // @public
 export enum ConnectionState {
@@ -171,6 +166,18 @@ export type FluidObject<T = unknown> = {
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @alpha (undocumented)
+export interface ForestOptions {
+    readonly forest?: ForestType;
+}
+
+// @alpha
+export enum ForestType {
+    Expensive = 2,
+    Optimized = 1,
+    Reference = 0
+}
+
+// @alpha
 export interface ForestOptions {
     readonly forest?: ForestType;
 }
@@ -871,7 +878,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {
-    // (undocumented)
     check(data: unknown): data is Static<Schema>;
 }
 
@@ -885,6 +891,25 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+// @alpha
+export interface SharedTreeFormatOptions {
+    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+    treeEncodeType: TreeCompressionStrategy;
+}
+
+// @alpha
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+    readonly v2: 2;
+    readonly v3: 3;
+};
+
+// @alpha
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @alpha
+export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -986,6 +1011,12 @@ export interface TreeChangeEvents {
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+}
+
+// @alpha
+export enum TreeCompressionStrategy {
+    Compressed = 0,
+    Uncompressed = 1
 }
 
 // @public

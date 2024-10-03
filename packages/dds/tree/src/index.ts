@@ -40,9 +40,7 @@ export {
 } from "./events/index.js";
 
 export {
-	type LazyItem,
 	TreeStatus,
-	type Unenforced,
 	TreeCompressionStrategy,
 } from "./feature-libraries/index.js";
 
@@ -156,22 +154,11 @@ export {
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
 	getJsonSchema,
-	type ConciseTree,
 } from "./simple-tree/index.js";
-export {
-	SharedTree,
-	configuredSharedTree,
-	independentView,
-	independentInitializedView,
-	type ViewContent,
-} from "./treeFactory.js";
+export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
-export type {
-	ICodecOptions,
-	JsonValidator,
-	SchemaValidationFunction,
-} from "./codec/index.js";
-export { noopValidator, FluidClientVersion } from "./codec/index.js";
+export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
+export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export {

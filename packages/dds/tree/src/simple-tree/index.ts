@@ -22,6 +22,7 @@ export {
 	tryDisposeTreeNode,
 	HydratedContext,
 	SimpleContextSlot,
+	getOrCreateInnerNode,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -76,6 +77,22 @@ export {
 	type ConciseTree,
 	comparePersistedSchemaInternal,
 	ViewSchema,
+	type Unenforced,
+	type FieldHasDefaultUnsafe,
+	type ObjectFromSchemaRecordUnsafe,
+	type TreeObjectNodeUnsafe,
+	type TreeFieldFromImplicitFieldUnsafe,
+	type TreeNodeFromImplicitAllowedTypesUnsafe,
+	type FieldSchemaUnsafe,
+	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type TreeArrayNodeUnsafe,
+	type TreeMapNodeUnsafe,
+	type InsertableObjectFromSchemaRecordUnsafe,
+	type InsertableTreeFieldFromImplicitFieldUnsafe,
+	type InsertableTypedNodeUnsafe,
+	type NodeBuilderDataUnsafe,
+	type NodeFromSchemaUnsafe,
+	type ReadonlyMapInlined,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -98,29 +115,10 @@ export {
 	type ApplyKind,
 	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
-export { getOrCreateInnerNode } from "./proxyBinding.js";
-export type {
-	FieldHasDefaultUnsafe,
-	ObjectFromSchemaRecordUnsafe,
-	TreeObjectNodeUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
-	FieldSchemaUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTypedNodeUnsafe,
-	NodeBuilderDataUnsafe,
-	NodeFromSchemaUnsafe,
-	ReadonlyMapInlined,
-} from "./typesUnsafe.js";
 export {
 	getTreeNodeForField,
 	prepareContentForHydration,
 } from "./proxies.js";
-
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
@@ -143,3 +141,4 @@ export {
 	handleSchema,
 	nullSchema,
 } from "./leafNodeSchema.js";
+export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";

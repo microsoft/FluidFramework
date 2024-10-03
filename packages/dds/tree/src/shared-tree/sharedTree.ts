@@ -19,6 +19,7 @@ import {
 	type IEditableForest,
 	type JsonableTree,
 	RevisionTagCodec,
+	type TaggedChange,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
@@ -152,6 +153,9 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	return versions;
 }
 
+/**
+ * Build and return a forest of the requested type.
+ */
 export function buildConfiguredForest(
 	type: ForestType,
 	schema: TreeStoredSchemaSubscription,
@@ -278,7 +282,8 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(change: TaggedChange<SharedTreeChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			),
 			changeEnricher,
@@ -363,7 +368,7 @@ export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): Tr
  * Format versions supported by SharedTree.
  *
  * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @internal
+ * @alpha
  */
 export const SharedTreeFormatVersion = {
 	/**
@@ -389,20 +394,26 @@ export const SharedTreeFormatVersion = {
  * Format versions supported by SharedTree.
  *
  * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @internal
+ * @alpha
  * @privateRemarks
  * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
+ *
+ * TODO: Before this gets promoted past Alpha,
+ * a separate abstraction more suited for use in the public API should be adopted rather than reusing the same types used internally.
+ * Such an abstraction should probably be in the form of a Fluid-Framework wide compatibility enum.
  */
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 /**
- * @internal
+ * Configuration options for SharedTree.
+ * @alpha
  */
 export type SharedTreeOptions = Partial<ICodecOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
 /**
+ * Configuration options for SharedTree's internal tree storage.
  * @alpha
  */
 export interface ForestOptions {
@@ -414,7 +425,7 @@ export interface ForestOptions {
 
 /**
  * Options for configuring the persisted format SharedTree uses.
- * @internal
+ * @alpha
  */
 export interface SharedTreeFormatOptions {
 	/**

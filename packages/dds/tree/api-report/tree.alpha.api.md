@@ -134,6 +134,18 @@ export enum ForestType {
 }
 
 // @alpha
+export interface ForestOptions {
+    readonly forest?: ForestType;
+}
+
+// @alpha
+export enum ForestType {
+    Expensive = 2,
+    Optimized = 1,
+    Reference = 0
+}
+
+// @alpha
 export function getBranch(tree: ITree): TreeBranch;
 
 // @alpha
@@ -521,12 +533,30 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {
-    // (undocumented)
     check(data: unknown): data is Static<Schema>;
 }
 
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+
+// @alpha
+export interface SharedTreeFormatOptions {
+    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+    treeEncodeType: TreeCompressionStrategy;
+}
+
+// @alpha
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+    readonly v2: 2;
+    readonly v3: 3;
+};
+
+// @alpha
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @alpha
+export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
@@ -614,6 +644,12 @@ export interface TreeChangeEvents {
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+}
+
+// @alpha
+export enum TreeCompressionStrategy {
+    Compressed = 0,
+    Uncompressed = 1
 }
 
 // @public
