@@ -371,7 +371,7 @@ export function unboxedFlexNode(
 	if (anchor !== undefined) {
 		const anchorNode = context.checkout.forest.anchors.locate(anchor);
 		assert(anchorNode !== undefined, "missing anchor");
-		child = anchorNode.tryGetChild(fieldAnchor.fieldKey, cursor.fieldIndex);
+		child = anchorNode.childIfAnchored(fieldAnchor.fieldKey, cursor.fieldIndex);
 	} else {
 		child = context.checkout.forest.anchors.find({
 			parent: undefined,

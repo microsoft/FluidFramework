@@ -234,10 +234,11 @@ export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents>
 	child(key: FieldKey, index: number): UpPath<AnchorNode>;
 
 	/**
-	 * Gets a child if it exists.
-	 * Does NOT add a ref.
+	 * Gets the child AnchorNode if already exists.
+	 *
+	 * Does NOT add a ref, so the returned AnchorNode must be used with care.
 	 */
-	tryGetChild(key: FieldKey, index: number): AnchorNode | undefined;
+	childIfAnchored(key: FieldKey, index: number): AnchorNode | undefined;
 
 	/**
 	 * Gets a child AnchorNode (creating it if needed), and an Anchor owning a ref to it.
@@ -430,7 +431,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		}
 		const parent = path.parent ?? this.root;
 		const parentPath = this.find(parent);
-		return parentPath?.tryGetChild(path.parentField, path.parentIndex);
+		return parentPath?.childIfAnchored(path.parentField, path.parentIndex);
 	}
 
 	/**
@@ -460,7 +461,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		while ((wrapWith = stack.pop()) !== undefined) {
 			if (path === undefined || path instanceof PathNode) {
 				// If path already has an anchor, get an anchor for it's child if there is one:
-				const child = (path ?? this.root).tryGetChild(
+				const child = (path ?? this.root).childIfAnchored(
 					wrapWith.parentField,
 					wrapWith.parentIndex,
 				);
@@ -1218,7 +1219,11 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	public child(key: FieldKey, index: number): UpPath<AnchorNode> {
 		// Fast path: if child exists, return it.
 		return (
-			this.tryGetChild(key, index) ?? { parent: this, parentField: key, parentIndex: index }
+			this.childIfAnchored(key, index) ?? {
+				parent: this,
+				parentField: key,
+				parentIndex: index,
+			}
 		);
 	}
 
@@ -1291,11 +1296,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		return child;
 	}
 
-	/**
-	 * Gets a child if it exists.
-	 * Does NOT add a ref.
-	 */
-	public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
+	public childIfAnchored(key: FieldKey, index: number): PathNode | undefined {
 		assert(this.status === Status.Alive, 0x40d /* PathNode must be alive */);
 		const field = this.children.get(key);
 
