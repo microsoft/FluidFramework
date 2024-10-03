@@ -42,7 +42,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { SinonSandbox, createSandbox } from "sinon";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -597,7 +597,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			options: { summarizeProtocolTree: true },
 		},
 	};
-	const testCache = new TestSnapshotCache();
+	const testCache = new TestPersistedCache();
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ persistedCache: testCache });
 		mainContainer = await provider.makeTestContainer(testContainerConfig);
