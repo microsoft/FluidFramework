@@ -28,7 +28,6 @@ import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
  * Options for how to interpret a `CustomTree<TCustom>` without relying on schema.
- * @beta
  */
 export interface EncodeOptions<TCustom> {
 	/**
@@ -45,10 +44,24 @@ export interface EncodeOptions<TCustom> {
 	readonly useStoredKeys?: boolean;
 }
 
+/**
+ * Tree representation with fields as properties and customized handle and child representations.
+ */
 export type CustomTree<TChild, THandle> = CustomTreeNode<TChild> | CustomTreeValue<THandle>;
+
+/**
+ * TreeLeafValue except the handle type is customized.
+ */
 export type CustomTreeValue<THandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle;
+
+/**
+ * Tree node representation with fields as properties and customized child representation.
+ */
 export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
 
+/**
+ * Builds an {@link CustomTree} from a cursor in Nodes mode.
+ */
 export function customFromCursorInner<TChild, THandle>(
 	reader: ITreeCursor,
 	options: Required<EncodeOptions<THandle>>,
