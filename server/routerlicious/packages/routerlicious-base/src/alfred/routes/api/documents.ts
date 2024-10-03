@@ -48,7 +48,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, getSession } from "../../../utils";
+import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 
 export function create(
@@ -298,6 +298,8 @@ export function create(
 				LumberEventName.GetSession,
 				lumberjackProperties,
 			);
+			// Tracks the different stages of getSessionMetric
+			const connectionTrace = new StageTrace<string>("GetSession");
 
 			const session = getSession(
 				externalOrdererUrl,
@@ -310,13 +312,16 @@ export function create(
 				messageBrokerId,
 				clusterDrainingChecker,
 				ephemeralDocumentTTLSec,
+				connectionTrace,
 			);
 
 			const onSuccess = (result: ISession): void => {
+				getSessionMetric.setProperty("connectTrace", connectionTrace);
 				getSessionMetric.success("GetSession succeeded.");
 			};
 
 			const onError = (error: any): void => {
+				getSessionMetric.setProperty("connectTrace", connectionTrace);
 				getSessionMetric.error("GetSession failed.", error);
 			};
 
