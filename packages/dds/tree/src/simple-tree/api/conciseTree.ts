@@ -9,7 +9,7 @@ import type { ITreeCursor } from "../../core/index.js";
 import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "../core/index.js";
 import { customFromCursorInner, type EncodeOptions } from "./customTree.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
+import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Concise encoding of a {@link TreeNode} or {@link TreeLeafValue}.
@@ -45,14 +45,7 @@ export function conciseFromCursor<TCustom>(
 		...options,
 	};
 
-	// TODO: get schema map from context when available
-	const schemaMap = new Map<string, TreeNodeSchema>();
-	walkFieldSchema(rootSchema, {
-		node(schema) {
-			schemaMap.set(schema.identifier, schema);
-		},
-	});
-
+	const schemaMap = getUnhydratedContext(rootSchema).schema;
 	return conciseFromCursorInner(reader, config, schemaMap);
 }
 
