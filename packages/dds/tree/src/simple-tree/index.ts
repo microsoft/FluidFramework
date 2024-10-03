@@ -22,6 +22,7 @@ export {
 	tryDisposeTreeNode,
 	HydratedContext,
 	SimpleContextSlot,
+	getOrCreateInnerNode,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -106,7 +107,6 @@ export {
 	type ApplyKind,
 	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
-export { getOrCreateInnerNode } from "./proxyBinding.js";
 export {
 	getTreeNodeForField,
 	prepareContentForHydration,
