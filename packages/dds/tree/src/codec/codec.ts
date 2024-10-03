@@ -39,7 +39,7 @@ export interface IDecoder<TDecoded, TEncoded, TContext> {
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
-	 * @returns Whether the data matches a schema.
+	 * Returns whether the data matches a schema.
 	 */
 	check(data: unknown): data is Static<Schema>;
 }

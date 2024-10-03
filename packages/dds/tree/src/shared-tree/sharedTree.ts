@@ -153,6 +153,9 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	return versions;
 }
 
+/**
+ * Build and return a forest of the requested type.
+ */
 export function buildConfiguredForest(
 	type: ForestType,
 	schema: TreeStoredSchemaSubscription,

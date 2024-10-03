@@ -470,7 +470,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {
-    // (undocumented)
     check(data: unknown): data is Static<Schema>;
 }
 
