@@ -1,12 +1,12 @@
 import { SharedTreeTaskGroup, sharedTreeTaskGroupToJson, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
-import { Box, Button, Card, CircularProgress, Dialog, Divider, Popover, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { Box, Button, Card, Dialog, Divider, Popover, Stack, TextField, Typography } from "@mui/material";
+import { useState } from "react";
 import { TaskCard } from "./TaskCard";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { Tree, type TreeView } from "@fluidframework/tree";
+import { type TreeView } from "@fluidframework/tree";
 import { editTaskGroup } from "@/actions/task";
 import { LoadingButton } from "@mui/lab";
-import { branch, merge, SharedTreeBranchManager, type Difference, type DifferenceChange } from "@fluid-experimental/fluid-llm";
+import { branch, merge, SharedTreeBranchManager, type Difference } from "@fluid-experimental/fluid-llm";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 import { useSnackbar } from 'notistack';
 
@@ -182,6 +182,10 @@ export function TaskGroup(props: {
 						const llmChangeBranch = branch(props.sharedTreeBranch);
 						const indexOfTaskGroup = props.sharedTreeBranch.root.taskGroups.indexOf(props.sharedTreeTaskGroup);
 						const targetTaskGroup = llmChangeBranch.root.taskGroups[indexOfTaskGroup];
+
+						if (targetTaskGroup === undefined) {
+							throw new Error(`Target Task Group not found (index: '${indexOfTaskGroup}')`);
+						}
 
 						const resp = await editTaskGroup(sharedTreeTaskGroupToJson(targetTaskGroup), query);
 						if (resp.success) {

@@ -1,14 +1,14 @@
 'use client';
 
 import { editTask } from "@/actions/task";
-import { branch, SharedTreeBranchManager, type Difference, type DifferenceChange, type DifferenceMove } from "@fluid-experimental/fluid-llm"
-import { SharedTreeEngineerList, SharedTreeTask, SharedTreeTaskGroup, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
+import { SharedTreeBranchManager, type Difference, type DifferenceChange, type DifferenceMove } from "@fluid-experimental/fluid-llm"
+import { SharedTreeTask, SharedTreeTaskGroup, type SharedTreeAppState } from "@/types/sharedTreeAppSchema";
 import { TaskPriorities, TaskStatuses, type Task, type TaskPriority } from "@/types/task";
-import { Tree, type TreeView } from "@fluidframework/tree";
+import { type TreeView } from "@fluidframework/tree";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { Box, Button, Card, CircularProgress, Divider, FormControl, IconButton, InputLabel, MenuItem, Popover, Select, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Card, Divider, FormControl, IconButton, InputLabel, MenuItem, Popover, Select, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { LoadingButton } from '@mui/lab';
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 import { useSnackbar } from "notistack";
 
@@ -49,7 +49,11 @@ export function TaskCard(props: {
 
 	for (const diff of props.branchDifferences ?? []) {
 		if (diff.type === 'CHANGE') {
-			fieldDifferences.changes[diff.path[diff.path.length - 1]] = diff;
+			const path = diff.path[diff.path.length - 1];
+			if (path === undefined) {
+				throw new Error(`List of paths in CHANGE diff is empty`);
+			}
+			fieldDifferences.changes[path] = diff;
 		}
 		if (diff.type === 'CREATE') {
 			fieldDifferences.isNewCreation = true;
@@ -219,7 +223,7 @@ export function TaskCard(props: {
 					/>
 					{fieldDifferences.changes['description'] &&
 						<IconButton onClick={(event) => {
-							setDiffOldValue(fieldDifferences.changes['description'].oldValue);
+							setDiffOldValue(fieldDifferences.changes['description']!.oldValue);
 							setDiffOldValuePopoverAnchor(event.currentTarget)
 						}}>
 							<Icon icon='clarity:info-standard-line' width={20} height={20} />
@@ -268,7 +272,7 @@ export function TaskCard(props: {
 
 					{fieldDifferences.changes['priority'] &&
 						<IconButton onClick={(event) => {
-							setDiffOldValue(fieldDifferences.changes['priority'].oldValue);
+							setDiffOldValue(fieldDifferences.changes['priority']!.oldValue);
 							setDiffOldValuePopoverAnchor(event.currentTarget)
 						}}>
 							<Icon icon='clarity:info-standard-line' width={20} height={20} />
@@ -345,7 +349,7 @@ export function TaskCard(props: {
 					</FormControl>
 					{fieldDifferences.changes['assignee'] &&
 						<IconButton onClick={(event) => {
-							setDiffOldValue(fieldDifferences.changes['assignee'].oldValue);
+							setDiffOldValue(fieldDifferences.changes['assignee']!.oldValue);
 							setDiffOldValuePopoverAnchor(event.currentTarget)
 						}}>
 							<Icon icon='clarity:info-standard-line' width={20} height={20} />

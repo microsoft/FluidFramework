@@ -7,7 +7,6 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
 import type { Task, TaskGroup } from "@/types/task";
-import type { SharedTreeTaskGroup } from "@/types/sharedTreeAppSchema";
 
 // Todo: Make use of system prompts with the open ai model, this may yield better results.
 // I am unsure if this is possible using typechat as a controller of the underlying open AI API's
@@ -89,22 +88,28 @@ export async function editTaskGroup(
 
 		// Replaces short id's with the original hash based id's.
 		const modifiedTaskGroup = response.data;
-		modifiedTaskGroup.id = newToOldTaskGroupId[modifiedTaskGroup.id];
+		const tmp = newToOldTaskGroupId[modifiedTaskGroup.id];
+		if (tmp === undefined) {
+			throw new Error("TaskGroup id was not found in the map");
+		}
+		modifiedTaskGroup.id = tmp;
 		modifiedTaskGroup.tasks.forEach((task) => {
-			if (newToOldTaskIds[task.id] !== undefined) {
-				task.id = newToOldTaskIds[task.id];
-			} else {
+			const tmp2 = newToOldTaskIds[task.id];
+			if (tmp2 === undefined) {
 				// If the LLM created a task with a new id using our prompt of a monotnically increasing integer
 				// then we need to replace it with an actual hash so we don't have duplicate id's
 				task.id = uuidv4();
+			} else {
+				task.id = tmp2;
 			}
 		});
 		modifiedTaskGroup.engineers.forEach((engineer) => {
-			if (newToOldEngineerIds[engineer.id] !== undefined) {
-				engineer.id = newToOldEngineerIds[engineer.id];
-			} else {
+			const tmp2 = newToOldEngineerIds[engineer.id];
+			if (tmp2 === undefined) {
 				// see above comment on replacing task id's with a hash.
 				engineer.id = uuidv4();
+			} else {
+				engineer.id = tmp2;
 			}
 		});
 
@@ -130,19 +135,21 @@ function replaceTaskGroupIdsWithSimpleId(taskGroup: TaskGroup) {
 
 	// Replace task id's
 	const newToOldTaskIds: Record<string, string> = {};
-	for (let i = 0; i < taskGroup.tasks.length; i++) {
-		const originalTaskId = `${taskGroup.tasks[i].id}`;
-		const newTaskId = `${i}`;
-		taskGroupCopy.tasks[i].id = newTaskId;
+	let counter = 0;
+	for (const task of taskGroup.tasks) {
+		const originalTaskId = `${task.id}`;
+		const newTaskId = `${counter++}`;
+		task.id = newTaskId;
 		newToOldTaskIds[newTaskId] = originalTaskId;
 	}
 
 	// Replace engineer id's
+	counter = 0;
 	const newToOldEngineerIds: Record<string, string> = {};
-	for (let i = 0; i < taskGroup.engineers.length; i++) {
-		const originalId = `${taskGroup.engineers[i].id}`;
-		const newId = `${i}`;
-		taskGroupCopy.engineers[i].id = newId;
+	for (const engineer of taskGroup.engineers) {
+		const originalId = `${engineer.id}`;
+		const newId = `${counter++}`;
+		engineer.id = newId;
 		newToOldEngineerIds[newId] = originalId;
 	}
 

@@ -63,11 +63,11 @@ export class GraphHelper {
 
 			const fileStorageContainers: FileStorageContainer[] = response.value;
 
-			if (fileStorageContainers.length == 0) {
-				throw new Error("TEST: no fileStorageContainers");
+			if (fileStorageContainers.length === 0) {
+				throw new Error("Graph client found no fileStorageContainers");
 			}
 
-			return fileStorageContainers[0].id;
+			return fileStorageContainers[0]!.id;
 		} catch (error) {
 			console.error("Error while fetching file storage container ID: ", error);
 			throw error; // re-throw the error if you want it to propagate
@@ -85,7 +85,11 @@ export class GraphHelper {
 
 		const sites: Site[] = response.value;
 
-		return sites[0].webUrl as string;
+		if (sites.length === 0) {
+			throw new Error("Graph client found no sites");
+		}
+
+		return sites[0]!.webUrl as string;
 	}
 
 	// Function to create a sharing link which will be used to get the shared item
