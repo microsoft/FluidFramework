@@ -14561,6 +14561,9 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../dds/map
+      '@fluidframework/odsp-driver':
+        specifier: workspace:~
+        version: link:../../drivers/odsp-driver
       '@fluidframework/request-handler':
         specifier: workspace:~
         version: link:../../framework/request-handler
