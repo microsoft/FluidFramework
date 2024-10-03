@@ -130,7 +130,7 @@ stages:
             script: |
               echo "generated buildVersion: $(SetVersion.version)"
               # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
-              flub check latestVersions 1.4.0 client
+              flub check latestVersions $(SetVersion.version) client
 
 - stage: test_deploy
   dependsOn: check_branch_version
