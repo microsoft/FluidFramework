@@ -1,0 +1,66 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
+import type { ITreeCursor } from "../../core/index.js";
+import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
+import type { TreeNodeSchema } from "../core/index.js";
+import { customFromCursorInner, type EncodeOptions } from "./customTree.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
+
+/**
+ * Concise encoding of a {@link TreeNode} or {@link TreeLeafValue}.
+ * @remarks
+ * This is concise meaning that explicit type information is omitted.
+ * If the schema is compatible with {@link ITreeConfigurationOptions.preventAmbiguity},
+ * types will be lossless and compatible with {@link TreeBeta.create} (unless the options are used to customize it).
+ *
+ * Every {@link TreeNode} is an array or object.
+ * Any IFluidHandle values have been replaced by `THandle`.
+ * @privateRemarks
+ * This can store all possible simple trees,
+ * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
+ * @beta
+ */
+export type ConciseTree<THandle = IFluidHandle> =
+	| Exclude<TreeLeafValue, IFluidHandle>
+	| THandle
+	| ConciseTree<THandle>[]
+	| {
+			[key: string]: ConciseTree<THandle>;
+	  };
+
+/**
+ * Used to read a node cursor as a ConciseTree.
+ */
+export function conciseFromCursor<TCustom>(
+	reader: ITreeCursor,
+	rootSchema: ImplicitAllowedTypes,
+	options: EncodeOptions<TCustom>,
+): ConciseTree<TCustom> {
+	const config: Required<EncodeOptions<TCustom>> = {
+		useStoredKeys: false,
+		...options,
+	};
+
+	// TODO: get schema map from context when available
+	const schemaMap = new Map<string, TreeNodeSchema>();
+	walkFieldSchema(rootSchema, {
+		node(schema) {
+			schemaMap.set(schema.identifier, schema);
+		},
+	});
+
+	return conciseFromCursorInner(reader, config, schemaMap);
+}
+
+function conciseFromCursorInner<TCustom>(
+	reader: ITreeCursor,
+	options: Required<EncodeOptions<TCustom>>,
+	schema: ReadonlyMap<string, TreeNodeSchema>,
+): ConciseTree<TCustom> {
+	return customFromCursorInner(reader, options, schema, conciseFromCursorInner);
+}
