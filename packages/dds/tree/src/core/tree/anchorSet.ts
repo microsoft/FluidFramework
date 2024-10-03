@@ -1356,6 +1356,16 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
  * @param sorted - array of PathNode's sorted by parentIndex.
  * @param index - index being looked for.
  * @returns child with the requested parentIndex, or undefined.
+ * @privateRemarks
+ * This function is very commonly used with small arrays (length 0 or one for all non sequence fields),
+ * and is currently a hot path due to how flex tree leaves to excessive cursor to anchor and anchor to cursor translations,
+ * both of which walk paths down the AnchorSet.
+ * Additionally current usages tends to fully populate the anchor tree leading the correct array index to be the requested parent index.
+ * This makes the performance of this performance both important in small cases and easy to overly tune to the current usage patterns.
+ * This lead to not implementing a general purpose reusable binary search.
+ * Once this function is not so heavily overused due to inefficient patterns in flex-tree,
+ * replacing it with a standard binary search is likely fine.
+ * Until then, care and benchmarking should be used when messing with this function.
  */
 function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
 	// Try guessing the list is not sparse as a starter:
