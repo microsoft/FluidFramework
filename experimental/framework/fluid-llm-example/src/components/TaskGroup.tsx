@@ -1,11 +1,7 @@
-import {
-	branch,
-	merge,
-	SharedTreeBranchManager,
-	type Difference,
-} from "@fluid-experimental/fluid-llm";
+import { SharedTreeBranchManager, type Difference } from "@fluid-experimental/fluid-llm";
 import { type TreeView } from "@fluidframework/tree";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
+import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
 	Box,
@@ -47,7 +43,9 @@ export function TaskGroup(props: {
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
 		differences: Difference[];
-		newBranch: TreeView<typeof SharedTreeAppState>;
+		originalBranch: TreeBranch;
+		forkBranch: TreeBranchFork;
+		forkView: TreeView<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
@@ -189,7 +187,7 @@ export function TaskGroup(props: {
 										color="success"
 										sx={{ textTransform: "none" }}
 										onClick={() => {
-											merge(llmBranchData.newBranch, props.sharedTreeBranch);
+											llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
 											setIsDiffModelOpen(false);
 										}}
 									>
@@ -214,7 +212,7 @@ export function TaskGroup(props: {
 								</Stack>
 							</Stack>
 							<TaskGroup
-								sharedTreeBranch={llmBranchData?.newBranch}
+								sharedTreeBranch={llmBranchData?.forkView}
 								sharedTreeTaskGroup={llmBranchData?.newBranchTargetNode}
 								branchDifferences={llmBranchData?.differences}
 							/>
@@ -267,11 +265,12 @@ export function TaskGroup(props: {
 									autoHideDuration: 5000,
 								});
 
-								const llmChangeBranch = branch(props.sharedTreeBranch);
+								const llmChangeBranch = getBranch(props.sharedTreeBranch);
+								const llmChangeView = llmChangeBranch.viewWith(TREE_CONFIGURATION);
 								const indexOfTaskGroup = props.sharedTreeBranch.root.taskGroups.indexOf(
 									props.sharedTreeTaskGroup,
 								);
-								const targetTaskGroup = llmChangeBranch.root.taskGroups[indexOfTaskGroup];
+								const targetTaskGroup = llmChangeView.root.taskGroups[indexOfTaskGroup];
 
 								if (targetTaskGroup === undefined) {
 									throw new Error(
@@ -293,7 +292,7 @@ export function TaskGroup(props: {
 										targetTaskGroup as unknown as Record<string, unknown>,
 										resp.data as unknown as Record<string, unknown>,
 									);
-									const { newBranch, newBranchTargetNode } =
+									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
 										branchManager.checkoutNewMergedBranchV2(
 											props.sharedTreeBranch,
 											TREE_CONFIGURATION,
@@ -301,12 +300,14 @@ export function TaskGroup(props: {
 											differences,
 										);
 
-									console.log("newBranch:", newBranch);
+									console.log("forkBranch:", forkBranch);
 									console.log("newBranchTargetNode:", { ...newBranchTargetNode });
 									console.log("differences:", { ...differences });
 									setLlmBranchData({
 										differences,
-										newBranch,
+										originalBranch,
+										forkBranch,
+										forkView,
 										newBranchTargetNode: newBranchTargetNode as unknown as SharedTreeTaskGroup,
 									});
 									setIsDiffModelOpen(true);

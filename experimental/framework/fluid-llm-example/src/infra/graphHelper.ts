@@ -5,8 +5,9 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import {
 	AuthCodeMSALBrowserAuthenticationProvider,
 	AuthCodeMSALBrowserAuthenticationProviderOptions,
+	// eslint-disable-next-line import/no-internal-modules -- Not exported in the public API; docs use this pattern.
 } from "@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser";
-import { Site } from "@microsoft/microsoft-graph-types";
+import type { Site } from "@microsoft/microsoft-graph-types";
 
 export interface FileStorageContainer {
 	containerTypeId: string;

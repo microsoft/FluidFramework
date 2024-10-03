@@ -106,6 +106,7 @@
 		"@microsoft/microsoft-graph-client": "^3.0.7",
 		"@mui/lab": "6.0.0-beta.9",
 		"@mui/material": "^6.0.2",
+		"fluid-framework": "workspace:^",
 		"mui": "^0.0.1",
 		"next": "^14.2.8",
 		"notistack": "^3.0.1",

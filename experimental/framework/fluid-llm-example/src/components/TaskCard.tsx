@@ -7,7 +7,7 @@ import {
 	type DifferenceMove,
 } from "@fluid-experimental/fluid-llm";
 import { type TreeView } from "@fluidframework/tree";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
 	Box,

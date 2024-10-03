@@ -67,13 +67,14 @@ export default function TasksListPage(): JSX.Element {
 	useSharedTreeRerender({ sharedTreeNode: taskGroups, logId: "WorkItemRoot" });
 
 	useEffect(() => {
-		if (isFluidInitialized === true && data !== undefined) {
-			// initialize the selected task group
-			if (data.sharedTree.root.taskGroups.length > 0) {
-				setSelectedTaskGroup(data.sharedTree.root.taskGroups[0]);
-			}
+		if (
+			isFluidInitialized === true &&
+			data !== undefined &&
+			data.sharedTree.root.taskGroups.length > 0
+		) {
+			setSelectedTaskGroup(data.sharedTree.root.taskGroups[0]);
 		}
-	}, [container]);
+	}, [container, data, isFluidInitialized]);
 
 	return (
 		<Container
@@ -130,6 +131,7 @@ export default function TasksListPage(): JSX.Element {
 	);
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Too repetitive to do it
 const getNewTaskGroup = (groupLength: number) => {
 	return {
 		title: `New Task Group ${groupLength}`,

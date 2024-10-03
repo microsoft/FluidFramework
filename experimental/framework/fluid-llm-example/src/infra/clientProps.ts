@@ -9,9 +9,9 @@ export const getClientProps = (
 	tokenProvider: IOdspTokenProvider,
 ): OdspClientProps => {
 	const connectionConfig = {
-		tokenProvider: tokenProvider,
-		siteUrl: siteUrl,
-		driveId: driveId,
+		tokenProvider,
+		siteUrl,
+		driveId,
 		filePath: "",
 	};
 

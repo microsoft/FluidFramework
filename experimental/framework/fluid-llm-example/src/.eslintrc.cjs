@@ -13,8 +13,8 @@ module.exports = {
 			"error",
 			{
 				allow: [
-					// Within Fluid Framework allow import of '/beta' from other FF packages.
-					"@fluidframework/*/beta",
+					"@fluidframework/odsp-client/beta",
+					"@fluidframework/tree/alpha",
 
 					// Experimental package APIs and exports are unknown, so allow any imports from them.
 					"@fluid-experimental/**",

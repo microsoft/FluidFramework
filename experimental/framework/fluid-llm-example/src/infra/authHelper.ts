@@ -5,11 +5,11 @@ import {
 	PublicClientApplication,
 	type AuthenticationResult,
 } from "@azure/msal-browser";
+import { OdspClient } from "@fluidframework/odsp-client/beta";
 
 import { getClientProps } from "./clientProps";
 import { GraphHelper } from "./graphHelper";
 import { SampleOdspTokenProvider } from "./tokenProvider";
-import { OdspClient } from "@fluidframework/odsp-client/beta";
 
 // Helper function to authenticate the user
 export async function authHelper(): Promise<PublicClientApplication> {
@@ -56,9 +56,7 @@ export async function start(): Promise<{
 
 	// If the tokenResponse is not null, then the user is signed in
 	// and the tokenResponse is the result of the redirect.
-	if (tokenResponse !== null) {
-		return await signedInStart(msalInstance, tokenResponse.account);
-	} else {
+	if (tokenResponse === null) {
 		const currentAccounts = msalInstance.getAllAccounts();
 		if (currentAccounts.length === 0) {
 			// no accounts signed-in, attempt to sign a user in
@@ -70,13 +68,18 @@ export async function start(): Promise<{
 				"This should never happen! The previous line should have caused a browser redirect.",
 			);
 		} else {
-			// The user is singed in.
-			// Treat more than one account signed in and a single account the same as
-			// this is just a sample. But a real app would need to handle the multiple accounts case.
+			// The user is signed in.
+			// Treat more than one account signed in and a single account the same as this is just a sample.
+			// A real app would need to handle the multiple accounts case.
 			// For now, just use the first account.
 			const account = msalInstance.getAllAccounts()[0];
-			return await signedInStart(msalInstance, account!);
+			if (account === undefined) {
+				throw new Error("No account found after logging in");
+			}
+			return signedInStart(msalInstance, account);
 		}
+	} else {
+		return signedInStart(msalInstance, tokenResponse.account);
 	}
 }
 
@@ -102,13 +105,15 @@ async function signedInStart(
 	// The URL hash is the shared item id and will be used to get the file storage container id
 	// and the Fluid container id. If there is no hash, then the app will create a new Fluid container
 	// in a later step.
-	const getContainerInfo = async () => {
-		const shareId = location.hash.substring(1);
+	const getContainerInfo = async (): Promise<
+		{ driveId: string; itemId: string } | undefined
+	> => {
+		const shareId = location.hash.slice(1);
 		if (shareId.length > 0) {
 			try {
 				return await graphHelper.getSharedItem(shareId);
 			} catch (error) {
-				console.error("Error while fetching shared item: ", error as string);
+				console.error("Error while fetching shared item:", error as string);
 				return undefined;
 			}
 		} else {
@@ -121,11 +126,11 @@ async function signedInStart(
 
 	// Define a function to get the file storage container id using the Graph API
 	// If the user doesn't have access to the file storage container, then the app will fail here.
-	const getFileStorageContainerId = async () => {
+	const getFileStorageContainerId = async (): Promise<string> => {
 		try {
 			return await graphHelper.getFileStorageContainerId();
 		} catch (error) {
-			console.error("Error while fetching file storage container ID: ", error as string);
+			console.error("Error while fetching file storage container ID:", error as string);
 			return "";
 		}
 	};
@@ -145,7 +150,7 @@ async function signedInStart(
 	}
 
 	// If the file storage container id is empty, then the app will fail here.
-	if (fileStorageContainerId.length == 0) {
+	if (fileStorageContainerId.length === 0) {
 		throw new Error("No file storage container id found.");
 	}
 
@@ -162,7 +167,7 @@ async function signedInStart(
 	const client = new OdspClient(clientProps);
 
 	async function getShareLink(fluidContainerId: string): Promise<string> {
-		return await graphHelper.createSharingLink(
+		return graphHelper.createSharingLink(
 			clientProps.connection.driveId,
 			fluidContainerId,
 			"edit",

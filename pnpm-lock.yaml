@@ -7111,6 +7111,9 @@ importers:
       '@mui/material':
         specifier: ^6.0.2
         version: 6.0.2(@emotion/react@11.13.3)(@emotion/styled@11.13.0)(@types/react@17.0.83)(react-dom@18.3.1)(react@18.3.1)
+      fluid-framework:
+        specifier: workspace:^
+        version: link:../../../packages/framework/fluid-framework
       mui:
         specifier: ^0.0.1
         version: 0.0.1

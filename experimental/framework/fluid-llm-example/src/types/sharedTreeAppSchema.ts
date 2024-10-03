@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory } from "@fluidframework/tree";
-import { SharedTree, TreeViewConfiguration } from "@fluidframework/tree/alpha";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "fluid-framework";
 
 import type { Engineer, Task, TaskGroup } from "./task";
 
