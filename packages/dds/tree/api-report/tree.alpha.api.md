@@ -495,13 +495,6 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha
-<<<<<<< HEAD
-export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
-    readonly value: TName;
-}, never, true, unknown> & (new () => TreeNode & {
-    readonly value: TName;
-});
-=======
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
@@ -519,7 +512,13 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha
 export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
->>>>>>> fba24a86bf7f748e448e09302fbfa89513d08715
+
+// @alpha
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
+    readonly value: TName;
+}, never, true, unknown> & (new () => TreeNode & {
+    readonly value: TName;
+});
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
@@ -723,11 +722,10 @@ export interface TreeViewEvents {
 }
 
 // @alpha
-<<<<<<< HEAD
-export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
-=======
 export const typeboxValidator: JsonValidator;
->>>>>>> fba24a86bf7f748e448e09302fbfa89513d08715
+
+// @alpha
+export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
 
 // @public @deprecated
 const typeNameSymbol: unique symbol;

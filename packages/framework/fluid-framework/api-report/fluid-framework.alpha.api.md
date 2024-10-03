@@ -874,6 +874,13 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 // @alpha
 export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
+// @alpha
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
+    readonly value: TName;
+}, never, true, unknown> & (new () => TreeNode & {
+    readonly value: TName;
+});
+
 // @public
 export interface Tagged<V, T extends string = string> {
     // (undocumented)
@@ -1091,6 +1098,9 @@ export interface TreeViewEvents {
 
 // @alpha
 export const typeboxValidator: JsonValidator;
+
+// @alpha
+export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
 
 // @public @deprecated
 const typeNameSymbol: unique symbol;
