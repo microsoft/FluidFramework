@@ -1,7 +1,12 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 "use client";
 
-import { useEffect, useState } from "react";
 import { IFluidContainer, type ContainerSchema } from "@fluidframework/fluid-static";
+import { useEffect, useState } from "react";
 
 /**
  * A simple hook to manage the initialization lifecycle of a Fluid container.
@@ -16,10 +21,18 @@ import { IFluidContainer, type ContainerSchema } from "@fluidframework/fluid-sta
 export function useFluidContainerNextJs<T extends ContainerSchema, V>(
 	inputContainerId: string,
 	createAndInitializeContainer: () => Promise<IFluidContainer<T>>,
-	postAttachCallback: (containerId: string, container: IFluidContainer<T>) => Promise<void> | undefined,
+	postAttachCallback: (
+		containerId: string,
+		container: IFluidContainer<T>,
+	) => Promise<void> | undefined,
 	loadExistingContainer: (id: string) => Promise<IFluidContainer<T>>,
 	getDataFromContainer: (container: IFluidContainer<T>) => V,
-) {
+): {
+	container: IFluidContainer<T> | undefined;
+	containerId: string | undefined;
+	isFluidInitialized: boolean;
+	data: V | undefined;
+} {
 	const [containerId, setContainerId] = useState<string>(inputContainerId);
 	const [container, setContainer] = useState<IFluidContainer<T>>();
 	const [isFluidInitialized, setIsFluidInitialized] = useState(false);
@@ -28,29 +41,28 @@ export function useFluidContainerNextJs<T extends ContainerSchema, V>(
 	// TODO: Support the container id being updated without a page refresh.
 	useEffect(() => {
 		if (!isFluidInitialized) {
-			let init: () => Promise<{container:IFluidContainer<T>, containerId: string}>;
-			if (containerId.length > 0) {
-				init = async () => {
-					console.log(`Loading container with id '${containerId}'`);
-					const container = await loadExistingContainer(containerId);
-					return { container, containerId };
-				};
-			} else {
-				init = async () => {
-					console.log(`Creating new container`);
-					const container = await createAndInitializeContainer();
-					const id = await container.attach();
-					postAttachCallback?.(id, container);
-					return {container, containerId: id};
-				};
-			}
+			const init =
+				containerId.length > 0
+					? async () => {
+							console.log(`Loading container with id '${containerId}'`);
+							const containerInner = await loadExistingContainer(containerId);
+							return { container: containerInner, containerId };
+						}
+					: async () => {
+							console.log(`Creating new container`);
+							const containerInner = await createAndInitializeContainer();
+							const id = await containerInner.attach();
+							await postAttachCallback?.(id, containerInner);
+							return { container: containerInner, containerId: id };
+						};
 
-			init().then((initResult: { container: IFluidContainer<T>, containerId: string}) => {
-				const data: V = getDataFromContainer(initResult.container);
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises -- Inside a React effect we can't await promises
+			init().then((initResult: { container: IFluidContainer<T>; containerId: string }) => {
+				const dataInner: V = getDataFromContainer(initResult.container);
 				setIsFluidInitialized(true);
 				setContainerId(initResult.containerId);
 				setContainer(initResult.container);
-				setData(data);
+				setData(dataInner);
 			});
 		}
 	}, [containerId]);

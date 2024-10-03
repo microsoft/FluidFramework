@@ -66,7 +66,9 @@ export async function start(): Promise<{
 				scopes: ["FileStorageContainer.Selected", "Files.ReadWrite"],
 			});
 
-			throw new Error("This should never happen! The previous line should have caused a browser redirect.");
+			throw new Error(
+				"This should never happen! The previous line should have caused a browser redirect.",
+			);
 		} else {
 			// The user is singed in.
 			// Treat more than one account signed in and a single account the same as

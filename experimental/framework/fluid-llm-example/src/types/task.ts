@@ -28,7 +28,7 @@ export const TaskStatuses = {
 	IN_PROGRESS: "in-progress",
 	DONE: "done",
 } as const;
-type TaskStatus = (typeof TaskStatuses)[keyof typeof TaskStatuses];
+export type TaskStatus = (typeof TaskStatuses)[keyof typeof TaskStatuses];
 
 export const TaskPriorities = {
 	LOW: "low",

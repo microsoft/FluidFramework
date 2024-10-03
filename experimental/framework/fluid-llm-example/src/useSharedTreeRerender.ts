@@ -1,5 +1,9 @@
-import { Tree, TreeNode } from "@fluidframework/tree";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
+import { Tree, TreeNode } from "@fluidframework/tree";
 import { useEffect, useState } from "react";
 
 /**
@@ -7,24 +11,24 @@ import { useEffect, useState } from "react";
  * @remarks TODO: Add more complexity to the re-render conditional logic.
  */
 export function useSharedTreeRerender(props: {
-	sharedTreeNode: TreeNode | null;
+	sharedTreeNode: TreeNode | undefined;
 	logId?: string;
-}) {
-	const { sharedTreeNode } = props;
+}): number {
+	const { sharedTreeNode, logId } = props;
 
 	const [forceReRender, setForceReRender] = useState<number>(0);
 
 	useEffect(() => {
-		if (sharedTreeNode === null) return;
+		if (sharedTreeNode === undefined) return;
 
 		const treeNodeListenerStopFunctions: VoidFunction[] = [];
 
 		const listenerStopFunction = Tree.on(sharedTreeNode, "nodeChanged", () => {
-			console.log(`useSharedTreeRerender ${props.logId}: nodeChanged`);
+			console.log(`useSharedTreeRerender ${logId}: nodeChanged`);
 		});
 
 		const listenerStopFunction2 = Tree.on(sharedTreeNode, "treeChanged", () => {
-			console.log(`useSharedTreeRerender ${props.logId}: treeChanged`);
+			console.log(`useSharedTreeRerender ${logId}: treeChanged`);
 			setForceReRender((prevReRender) => prevReRender + 1);
 		});
 
@@ -32,7 +36,9 @@ export function useSharedTreeRerender(props: {
 
 		// Clean up tree node listeners.
 		return () => {
-			treeNodeListenerStopFunctions.forEach((stopFunction) => stopFunction());
+			for (const stopFunction of treeNodeListenerStopFunctions) {
+				stopFunction();
+			}
 		};
 	}, [sharedTreeNode]);
 

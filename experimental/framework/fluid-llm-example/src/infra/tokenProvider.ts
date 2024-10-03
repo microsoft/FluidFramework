@@ -50,7 +50,7 @@ export class SampleOdspTokenProvider implements IOdspTokenProvider {
 					scopes: scope,
 				});
 			} else {
-				throw new Error(`MSAL error: ${error}`);
+				throw error;
 			}
 		}
 		return response.accessToken;

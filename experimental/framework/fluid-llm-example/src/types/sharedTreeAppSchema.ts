@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree, TreeViewConfiguration } from "@fluidframework/tree/internal";
 import { SchemaFactory } from "@fluidframework/tree";
+import { SharedTree, TreeViewConfiguration } from "@fluidframework/tree/alpha";
+
 import type { Engineer, Task, TaskGroup } from "./task";
 
 // The string passed to the SchemaFactory should be unique

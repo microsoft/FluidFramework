@@ -4,11 +4,12 @@
  */
 
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { start } from "@/infra/authHelper";
 
-const { client, getShareLink, containerId } = await start();
+import { start } from "@/infra/authHelper"; // eslint-disable-line import/no-internal-modules
 
-export const containerIdFromUrl = (): string => containerId;
+const { client, getShareLink, containerId: _containerId } = await start();
+
+export const containerIdFromUrl = (): string => _containerId;
 
 export async function loadContainer<T extends ContainerSchema>(
 	containerSchema: T,
@@ -18,14 +19,19 @@ export async function loadContainer<T extends ContainerSchema>(
 	return container;
 }
 
-export async function createContainer<T extends ContainerSchema>(containerSchema: T): Promise<IFluidContainer<T>> {
+export async function createContainer<T extends ContainerSchema>(
+	containerSchema: T,
+): Promise<IFluidContainer<T>> {
 	const { container } = await client.createContainer(containerSchema);
 	return container;
 }
 
-export async function postAttach<T extends ContainerSchema>(containerId: string, container: IFluidContainer<T>) {
+export async function postAttach<T extends ContainerSchema>(
+	containerId: string,
+	container: IFluidContainer<T>,
+): Promise<void> {
 	// Create a sharing id to the container and set it in the URL hash.
 	// This allows the user to collaborate on the same Fluid container with other users just by sharing the link.
 	const shareId = await getShareLink(containerId);
-	history.replaceState(undefined, "", "#" + shareId);
+	history.replaceState(undefined, "", `#${shareId}`);
 }

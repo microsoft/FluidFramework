@@ -5,13 +5,8 @@
 
 "use client";
 
-import {
-	CONTAINER_SCHEMA,
-	INITIAL_APP_STATE,
-	SharedTreeAppState,
-	TREE_CONFIGURATION,
-	type SharedTreeTaskGroup,
-} from "@/types/sharedTreeAppSchema";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
+import { type TreeView } from "@fluidframework/tree";
 import {
 	Box,
 	Button,
@@ -23,17 +18,25 @@ import {
 	Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
+
 import { TaskGroup } from "@/components/TaskGroup";
-import { type TreeView } from "@fluidframework/tree";
-import { useSharedTreeRerender } from "@/useSharedTreeRerender";
+import {
+	CONTAINER_SCHEMA,
+	INITIAL_APP_STATE,
+	SharedTreeAppState,
+	TREE_CONFIGURATION,
+	type SharedTreeTaskGroup,
+} from "@/types/sharedTreeAppSchema";
 import { useFluidContainerNextJs } from "@/useFluidContainerNextjs";
-import type { IFluidContainer } from "@fluidframework/fluid-static";
+import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 // Uncomment the import line that corresponds to the server you want to use
-// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe";
-import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious";
+// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
+import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
 
-export async function createAndInitializeContainer(): Promise<IFluidContainer<typeof CONTAINER_SCHEMA>> {
+export async function createAndInitializeContainer(): Promise<
+	IFluidContainer<typeof CONTAINER_SCHEMA>
+> {
 	const container = await createContainer(CONTAINER_SCHEMA);
 	const treeView = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 	treeView.initialize(new SharedTreeAppState(INITIAL_APP_STATE));
@@ -41,7 +44,8 @@ export async function createAndInitializeContainer(): Promise<IFluidContainer<ty
 	return container;
 }
 
-export default function TasksListPage() {
+// eslint-disable-next-line import/no-default-export -- NextJS uses default exports
+export default function TasksListPage(): JSX.Element {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
 	const [sharedTreeBranch, setSharedTreeBranch] =
 		useState<TreeView<typeof SharedTreeAppState>>();
@@ -50,17 +54,17 @@ export default function TasksListPage() {
 		containerIdFromUrl(),
 		createAndInitializeContainer,
 		postAttach,
-		(id) => loadContainer(CONTAINER_SCHEMA, id),
+		async (id) => loadContainer(CONTAINER_SCHEMA, id),
 		// Get data from existing container
-		(container) => {
-			const treeView = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+		(fluidContainer) => {
+			const treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setSharedTreeBranch(treeView);
 			return { sharedTree: treeView };
 		},
 	);
 
 	const taskGroups = data?.sharedTree.root.taskGroups;
-	useSharedTreeRerender({ sharedTreeNode: taskGroups ?? null, logId: "WorkItemRoot" });
+	useSharedTreeRerender({ sharedTreeNode: taskGroups, logId: "WorkItemRoot" });
 
 	useEffect(() => {
 		if (isFluidInitialized === true && data !== undefined) {

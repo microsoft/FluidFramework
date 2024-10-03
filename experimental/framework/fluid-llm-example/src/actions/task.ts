@@ -1,12 +1,13 @@
 "use server";
 
+import fs from "node:fs";
+import path from "node:path";
+
 import { createJsonTranslator, createOpenAILanguageModel, type Result } from "typechat";
-import { createTypeScriptJsonValidator } from "typechat/ts";
-import fs from "fs";
-import path from "path";
+import { createTypeScriptJsonValidator } from "typechat/ts"; // eslint-disable-line import/no-internal-modules
 import { v4 as uuidv4 } from "uuid";
 
-import type { Task, TaskGroup } from "@/types/task";
+import type { Task, TaskGroup } from "@/types/task"; // eslint-disable-line import/no-internal-modules
 
 // Todo: Make use of system prompts with the open ai model, this may yield better results.
 // I am unsure if this is possible using typechat as a controller of the underlying open AI API's
@@ -33,9 +34,9 @@ export async function editTask(workItem: Task, specificAsk: string): Promise<Res
 	This is the specific ask you have been given: "${specificAsk}"
 	`;
 
-	console.log("sending prompt: ", prompt);
+	console.log("sending prompt:", prompt);
 	const response = await translator.translate(prompt);
-	console.log("response: ", response);
+	console.log("response:", response);
 	return response;
 }
 
@@ -58,10 +59,10 @@ export async function editTaskGroup(
 
 	const { taskGroupCopy, newToOldTaskGroupId, newToOldTaskIds, newToOldEngineerIds } =
 		replaceTaskGroupIdsWithSimpleId(taskGroup);
-	console.log("newToOldTaskGroupId: ", newToOldTaskGroupId);
-	console.log("newToOldTaskIds: ", newToOldTaskIds);
-	console.log("taskGroupCopy: ", newToOldEngineerIds);
-	console.log("taskGroupCopy: ", taskGroupCopy);
+	console.log("newToOldTaskGroupId:", newToOldTaskGroupId);
+	console.log("newToOldTaskIds:", newToOldTaskIds);
+	console.log("taskGroupCopy:", newToOldEngineerIds);
+	console.log("taskGroupCopy:", taskGroupCopy);
 
 	const prompt = `You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks. \n\n
 	The task group is as follows:
@@ -74,9 +75,9 @@ export async function editTaskGroup(
 	Keep in mind that adding a task with a new id is considered a new task. id's must be unique and are a montonically increasing integer represented as a string.
 	`;
 
-	console.log("sending prompt: ", prompt);
+	console.log("sending prompt:", prompt);
 	const response = await translator.translate(prompt);
-	console.log("response: ", response);
+	console.log("response:", response);
 
 	if (response.success) {
 		console.log(
@@ -93,25 +94,15 @@ export async function editTaskGroup(
 			throw new Error("TaskGroup id was not found in the map");
 		}
 		modifiedTaskGroup.id = tmp;
-		modifiedTaskGroup.tasks.forEach((task) => {
-			const tmp2 = newToOldTaskIds[task.id];
-			if (tmp2 === undefined) {
-				// If the LLM created a task with a new id using our prompt of a monotnically increasing integer
-				// then we need to replace it with an actual hash so we don't have duplicate id's
-				task.id = uuidv4();
-			} else {
-				task.id = tmp2;
-			}
-		});
-		modifiedTaskGroup.engineers.forEach((engineer) => {
-			const tmp2 = newToOldEngineerIds[engineer.id];
-			if (tmp2 === undefined) {
-				// see above comment on replacing task id's with a hash.
-				engineer.id = uuidv4();
-			} else {
-				engineer.id = tmp2;
-			}
-		});
+		for (const task of modifiedTaskGroup.tasks) {
+			// If the LLM created a task with a new id using our prompt of a monotnically increasing integer
+			// then we need to replace it with an actual hash so we don't have duplicate id's
+			task.id = newToOldTaskIds[task.id] ?? uuidv4();
+		}
+		for (const engineer of modifiedTaskGroup.engineers) {
+			// see above comment on replacing task id's with a hash.
+			engineer.id = newToOldEngineerIds[engineer.id] ?? uuidv4();
+		}
 
 		console.log("response data:", {
 			...modifiedTaskGroup,
@@ -126,7 +117,12 @@ export async function editTaskGroup(
 	return response;
 }
 
-function replaceTaskGroupIdsWithSimpleId(taskGroup: TaskGroup) {
+function replaceTaskGroupIdsWithSimpleId(taskGroup: TaskGroup): {
+	taskGroupCopy: TaskGroup;
+	newToOldTaskGroupId: Record<string, string>;
+	newToOldTaskIds: Record<string, string>;
+	newToOldEngineerIds: Record<string, string>;
+} {
 	const taskGroupCopy = { ...taskGroup };
 
 	// Replace task group id
