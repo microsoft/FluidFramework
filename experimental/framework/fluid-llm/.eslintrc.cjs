@@ -10,5 +10,13 @@ module.exports = {
 	},
 	rules: {
 		"unicorn/no-null": "off",
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: [
+					"@fluidframework/tree/alpha",
+				],
+			},
+		],
 	},
 };

@@ -4,9 +4,8 @@
  */
 
 import type { ImplicitFieldSchema, TreeArrayNode, TreeView } from "@fluidframework/tree";
+import { getBranch } from "@fluidframework/tree/alpha";
 import type { z } from "zod";
-
-import { branch as sharedTreeBranch } from "../branching/index.js";
 
 import {
 	createMergableDiffSeries,
@@ -88,7 +87,7 @@ export class SharedTreeBranchManager {
 		newBranch: TreeView<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
-		const newBranch = sharedTreeBranch(treeView);
+		const newBranch = getBranch(treeView);
 
 		console.log("traveling to absolute path from root:", absolutePathToObjectNode);
 		const newBranchTargetNode = sharedTreeTraverse(
