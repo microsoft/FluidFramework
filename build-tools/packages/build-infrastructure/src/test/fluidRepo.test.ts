@@ -9,7 +9,7 @@ import { expect } from "chai";
 import { describe, it } from "mocha";
 
 import { loadFluidRepo } from "../fluidRepo.js";
-import type { WorkspaceName } from "../types.js";
+import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 import { findGitRootSync } from "../utils.js";
 import { testDataPath } from "./init.js";
 
@@ -23,15 +23,22 @@ describe("loadFluidRepo", () => {
 				`Expected 2 workspaces, found ${repo.workspaces.size}`,
 			);
 
-			const client = repo.workspaces.get("main" as WorkspaceName);
-			expect(client).to.not.be.undefined;
-			expect(client?.packages.length).to.equal(
-				5,
+			const main = repo.workspaces.get("main" as WorkspaceName);
+			expect(main).to.not.be.undefined;
+			expect(main?.packages.length).to.equal(
+				7,
 				"main workspace has the wrong number of packages",
 			);
-			expect(client?.releaseGroups.size).to.equal(
-				1,
+			expect(main?.releaseGroups.size).to.equal(
+				2,
 				"main workspace has the wrong number of release groups",
+			);
+
+			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
+			expect(mainReleaseGroup).to.not.be.undefined;
+			expect(mainReleaseGroup?.packages.length).to.equal(
+				4,
+				"main release group has the wrong number of packages",
 			);
 
 			const second = repo.workspaces.get("second" as WorkspaceName);

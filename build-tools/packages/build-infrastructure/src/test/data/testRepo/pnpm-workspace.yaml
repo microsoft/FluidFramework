@@ -9,4 +9,4 @@
 #    output directories during compilation.
 
 packages:
-  - "packages/*"
+  - "packages/**"

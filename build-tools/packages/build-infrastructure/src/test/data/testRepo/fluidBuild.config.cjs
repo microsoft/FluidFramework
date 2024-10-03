@@ -21,9 +21,9 @@ const config = {
 						include: ["*"],
 						rootPackageName: "main-release-group-root",
 					},
-					// examples: {
-					// 	include: ["@fluid-example"],
-					// },
+					group2: {
+						include: ["@group2"],
+					},
 				},
 			},
 			second: {
