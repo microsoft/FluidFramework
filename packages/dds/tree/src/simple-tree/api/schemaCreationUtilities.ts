@@ -23,10 +23,6 @@ import type {
  *
  * 2. Demonstrates the kinds of schema utilities apps can write.
  * Nothing in here needs access to package internal APIs.
- * TODO:
- * Typing around overloaded constructors (hiding that flex nodes can be passed in)
- * for schema currently leads to needing inside knowledge to implement the correctly.
- * That should be fixed.
  */
 
 /**
