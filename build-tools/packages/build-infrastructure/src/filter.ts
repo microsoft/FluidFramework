@@ -4,29 +4,62 @@
  */
 
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { Context, Repository } from "./library/index.js";
-import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
+import mm from "micromatch";
+
+import { getChangedSinceRef, getRemote } from "./git.js";
+import { type IFluidRepo, IPackage } from "./types.js";
+
+export const defaultSelectionKinds = ["dir", "all"] as const;
+
+/**
+ * A convenience type representing a glob string.
+ */
+export type GlobString = string;
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.
  */
 export interface PackageSelectionCriteria {
 	/**
-	 * True if independent packages are selected; false otherwise.
+	 * An array of workspaces whose packages are selected. All packages in the workspace _except_ the root package
+	 * will be selected. To include workspace roots, use the `workspaceRoots` property.
+	 *
+	 * Values should either be complete workspace names or micromatch glob strings. To select all workspaces, use `"*"`.
+	 * See <https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing> for more details.
+	 *
+	 * Workspace names will be compared against all globs - if any match, the workspace will be selected.
 	 */
-	independentPackages: boolean;
+	workspaces: (GlobString | string)[];
 
 	/**
-	 * An array of release groups whose packages are selected.
+	 * An array of workspaces whose root packages are selected. Only the roots of each workspace will be included.
+	 *
+	 * Values should either be complete workspace names or micromatch glob strings. To select all workspaces, use `"*"`.
+	 * See <https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing> for more details.
+	 *
+	 * Workspace names will be compared against all globs - if any match, the workspace will be selected.
 	 */
-	releaseGroups: ReleaseGroup[];
+	workspaceRoots: (GlobString | string)[];
 
 	/**
-	 * An array of release groups whose root packages are selected.
+	 * An array of release groups whose packages are selected. All packages in the release group _except_ the root package
+	 * will be selected. To include release group roots, use the `releaseGroupRoots` property.
+	 *
+	 * Values should either be complete release group names or micromatch glob strings. To select all release groups, use
+	 * `"*"`. See <https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing> for more details.
+	 *
+	 * Workspace names will be compared against all globs - if any match, the workspace will be selected.
 	 */
-	releaseGroupRoots: ReleaseGroup[];
+	releaseGroups: (GlobString | string)[];
+
+	/**
+	 * An array of release groups whose root packages are selected. Only the roots of each release group will be included.
+	 * Rootless release groups will never be selected with this criteria.
+	 *
+	 * The reserved string "\*" will select all packages when included in one of the criteria. If used, the "\*" value is
+	 * expected to be the only item in the selection array.
+	 */
+	releaseGroupRoots: (GlobString | string)[];
 
 	/**
 	 * If set, only selects the single package in this directory.
@@ -43,9 +76,10 @@ export interface PackageSelectionCriteria {
  * A pre-defined PackageSelectionCriteria that selects all packages.
  */
 export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
-	independentPackages: true,
-	releaseGroups: [...knownReleaseGroups],
-	releaseGroupRoots: [...knownReleaseGroups],
+	workspaces: ["*"],
+	workspaceRoots: ["*"],
+	releaseGroups: [],
+	releaseGroupRoots: [],
 	directory: undefined,
 	changedSinceBranch: undefined,
 };
@@ -70,208 +104,90 @@ export interface PackageFilterOptions {
 }
 
 /**
- * Parses {@link selectionFlags} into a typed object that is more ergonomic than working with the flag values directly.
+ * Selects packages from a FluidRepo based on the selection criteria.
  *
- * @param flags - The parsed command flags.
- * @param defaultSelection - Controls what packages are selected when all flags are set to their default values. With
- * the default value of undefined, no packages will be selected. Setting this to `all` will select all packages by
- * default. Setting it to `dir` will select the package in the current directory.
- */
-export const parsePackageSelectionFlags = (
-	flags: selectionFlags,
-	defaultSelection: PackageSelectionDefault,
-): PackageSelectionCriteria => {
-	const useDefault =
-		flags.releaseGroup === undefined &&
-		flags.releaseGroupRoot === undefined &&
-		flags.dir === undefined &&
-		(flags.packages === false || flags.packages === undefined) &&
-		(flags.all === false || flags.all === undefined);
-
-	if (flags.all || (useDefault && defaultSelection === "all")) {
-		return AllPackagesSelectionCriteria;
-	}
-
-	if (useDefault && defaultSelection === "dir") {
-		return {
-			independentPackages: false,
-			releaseGroups: [],
-			releaseGroupRoots: [],
-			directory: ".",
-		};
-	}
-
-	const releaseGroups =
-		flags.releaseGroup?.includes("all") === true
-			? AllPackagesSelectionCriteria.releaseGroups
-			: flags.releaseGroup;
-
-	const roots =
-		flags.releaseGroupRoot?.includes("all") === true
-			? AllPackagesSelectionCriteria.releaseGroupRoots
-			: flags.releaseGroupRoot;
-
-	return {
-		independentPackages: flags.packages ?? false,
-		releaseGroups: (releaseGroups ?? []) as ReleaseGroup[],
-		releaseGroupRoots: (roots ?? []) as ReleaseGroup[],
-		directory: flags.dir,
-	};
-};
-
-/**
- * Parses {@link filterFlags} into a typed object that is more ergonomic than working with the flag values directly.
- *
- * @param flags - The parsed command flags.
- */
-export const parsePackageFilterFlags = (flags: filterFlags): PackageFilterOptions => {
-	const options: PackageFilterOptions = {
-		private: flags.private,
-		scope: flags.scope,
-		skipScope: flags.skipScope,
-	};
-
-	return options;
-};
-
-/**
- * A type indicating the kind of package that is being processed. This enables subcommands to vary behavior based on the
- * type of package.
- */
-export type PackageKind =
-	/**
-	 * Package is an independent package.
-	 */
-	| "independentPackage"
-
-	/**
-	 * Package is part of a release group, but is _not_ the root.
-	 */
-	| "releaseGroupChildPackage"
-
-	/**
-	 * Package is the root package of a release group.
-	 */
-	| "releaseGroupRootPackage"
-
-	/**
-	 * Package is being loaded from a directory. The package may be one of the other three kinds. This kind is only used
-	 * when running on a package directly using its directory.
-	 */
-	| "packageFromDirectory";
-
-/**
- * A convenience type mapping a package to its PackageKind.
- */
-export type PackageWithKind = Package & { kind: PackageKind };
-
-/**
- * Selects packages from the context based on the selection.
- *
- * @param context - The context.
+ * @param fluidRepo - The Fluid repo.
  * @param selection - The selection criteria to use to select packages.
  * @returns An array containing the selected packages.
  */
-const selectPackagesFromContext = async (
-	context: Context,
+const selectPackagesFromRepo = async (
+	fluidRepo: IFluidRepo,
 	selection: PackageSelectionCriteria,
-): Promise<PackageWithKind[]> => {
-	const selected: PackageWithKind[] = [];
+): Promise<Set<IPackage>> => {
+	const selected: Set<IPackage> = new Set();
 
 	if (selection.changedSinceBranch !== undefined) {
-		const git = new Repository({ baseDir: context.gitRepo.resolvedRoot });
-		const remote = await git.getRemote(context.originRemotePartialUrl);
+		const git = await fluidRepo.getGitRepository();
+		const remote = await getRemote(git, fluidRepo.upstreamRemotePartialUrl);
 		if (remote === undefined) {
-			throw new Error(`Can't find a remote with ${context.originRemotePartialUrl}`);
+			throw new Error(`Can't find a remote with ${fluidRepo.upstreamRemotePartialUrl}`);
 		}
-		const { packages } = await git.getChangedSinceRef(
+		const { packages } = await getChangedSinceRef(
+			fluidRepo,
 			selection.changedSinceBranch,
 			remote,
-			context,
 		);
-		selected.push(
-			...packages.map((p) => {
-				const pkg = Package.load(p.packageJsonFileName, "none", undefined, {
-					kind: "packageFromDirectory" as PackageKind,
-				});
-				return pkg;
-			}),
-		);
+		addAllToSet(selected, packages);
 	}
 
 	if (selection.directory !== undefined) {
-		const pkg = Package.load(
-			path.join(
-				selection.directory === "." ? process.cwd() : selection.directory,
-				"package.json",
-			),
-			"none",
-			undefined,
-			{
-				kind: "packageFromDirectory" as PackageKind,
-			},
+		const repoRelativePath = path.join(
+			selection.directory === "." ? process.cwd() : selection.directory,
+			"package.json",
 		);
-		selected.push(pkg);
-	}
 
-	// Select independent packages
-	if (selection.independentPackages === true) {
-		for (const pkg of context.independentPackages) {
-			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
-					kind: "independentPackage",
-				}),
-			);
+		const dirPackage = [...fluidRepo.packages.values()].find(
+			(p) => p.directory === repoRelativePath,
+		);
+		if (dirPackage === undefined) {
+			throw new Error(`Cannot find package with directory: ${repoRelativePath}`);
 		}
+		selected.add(dirPackage);
 	}
 
-	// Select release group packages
-	for (const rg of selection.releaseGroups) {
-		for (const pkg of context.packagesInReleaseGroup(rg)) {
-			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
-					kind: "releaseGroupChildPackage",
-				}),
-			);
+	// Select workspace and workspace root packages
+	for (const workspace of fluidRepo.workspaces.values()) {
+		if (mm.isMatch(workspace.name, selection.workspaces)) {
+			addAllToSet(selected, workspace.packages);
+		}
+
+		if (mm.isMatch(workspace.name, selection.workspaceRoots)) {
+			addAllToSet(selected, workspace.packages);
 		}
 	}
 
-	// Select release group root packages
-	for (const rg of selection.releaseGroupRoots ?? []) {
-		const packages = context.packagesInReleaseGroup(rg);
-		if (packages.length === 0) {
-			continue;
+	// Select release group and release group root packages
+	for (const releaseGroup of fluidRepo.releaseGroups.values()) {
+		if (mm.isMatch(releaseGroup.name, selection.releaseGroups)) {
+			addAllToSet(selected, releaseGroup.packages);
 		}
 
-		if (packages[0].monoRepo === undefined) {
-			throw new Error(`No release group found for package: ${packages[0].name}`);
+		if (mm.isMatch(releaseGroup.name, selection.releaseGroupRoots)) {
+			addAllToSet(selected, releaseGroup.packages);
 		}
-
-		const dir = packages[0].monoRepo.directory;
-		const pkg = Package.loadDir(dir, rg);
-		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
 	}
 
 	return selected;
 };
 
 /**
- * Selects packages from the context based on the selection. The selected packages will be filtered by the filter
- * criteria if provided.
+ * Selects packages from the Fluid repo based on the selection criteria. The selected packages will be filtered by the
+ * filter criteria if provided.
  *
- * @param context - The context.
+ * @param fluidRepo - The Fluid repo.
  * @param selection - The selection criteria to use to select packages.
  * @param filter - An optional filter criteria to filter selected packages by.
  * @returns An object containing the selected packages and the filtered packages.
  */
 export async function selectAndFilterPackages(
-	context: Context,
+	fluidRepo: IFluidRepo,
 	selection: PackageSelectionCriteria,
 	filter?: PackageFilterOptions,
-): Promise<{ selected: PackageWithKind[]; filtered: PackageWithKind[] }> {
-	const selected = await selectPackagesFromContext(context, selection);
+): Promise<{ selected: IPackage[]; filtered: IPackage[] }> {
+	// Select the packages from the repo
+	const selected = [...(await selectPackagesFromRepo(fluidRepo, selection))];
 
-	// Filter packages if needed
+	// Filter resulting list if needed
 	const filtered = filter === undefined ? selected : await filterPackages(selected, filter);
 
 	return { selected, filtered };
@@ -280,7 +196,7 @@ export async function selectAndFilterPackages(
 /**
  * Convenience type that extracts only the properties of a package that are needed for filtering.
  */
-type FilterablePackage = Pick<Package, "name" | "private">;
+type FilterablePackage = Pick<IPackage, "name" | "private">;
 
 /**
  * Filters a list of packages by the filter criteria.
@@ -331,4 +247,16 @@ export async function filterPackages<T extends FilterablePackage>(
 
 function scopesToPrefix(scopes: string[] | undefined): string[] | undefined {
 	return scopes === undefined ? undefined : scopes.map((s) => `${s}/`);
+}
+
+/**
+ * Adds all the items of an iterable to a set.
+ *
+ * @param set - The set to which items will be added.
+ * @param iterable - The iterable containing items to add to the set.
+ */
+export function addAllToSet<T>(set: Set<T>, iterable: Iterable<T>): void {
+	for (const item of iterable) {
+		set.add(item);
+	}
 }

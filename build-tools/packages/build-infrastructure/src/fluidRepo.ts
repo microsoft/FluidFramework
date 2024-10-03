@@ -35,6 +35,7 @@ export class FluidRepo implements IFluidRepo {
 	public constructor(
 		searchPath: string,
 		private readonly gitRepository: SimpleGit | false = false,
+		public readonly upstreamRemotePartialUrl?: string,
 	) {
 		const { config, configFile } = getFluidRepoLayout(searchPath);
 		this.root = path.resolve(path.dirname(configFile));
@@ -118,7 +119,6 @@ export class FluidRepo implements IFluidRepo {
 		}
 		return this.gitRepository;
 	}
-
 
 	public getPackageReleaseGroup(pkg: Readonly<IPackage>): Readonly<IReleaseGroup> {
 		const found = this.releaseGroups.get(pkg.releaseGroup);

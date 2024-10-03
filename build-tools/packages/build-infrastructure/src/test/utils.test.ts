@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import * as path from "node:path";
 import * as os from "node:os";
+import * as path from "node:path";
 import { describe, it } from "mocha";
 
+import { NotInGitRepository } from "../errors.js";
 import { findGitRootSync, isInGitRepositorySync } from "../utils.js";
 import { packageRootPath } from "./init.js";
-import { NotInGitRepository } from "../errors.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
@@ -23,7 +23,7 @@ describe("findGitRootSync", () => {
 	it("throws outside git repo", () => {
 		assert.throws(() => {
 			findGitRootSync(os.tmpdir());
-	}, NotInGitRepository);
+		}, NotInGitRepository);
 	});
 });
 

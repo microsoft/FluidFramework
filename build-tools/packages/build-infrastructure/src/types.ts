@@ -42,6 +42,8 @@ export interface IFluidRepo extends Reloadable {
 
 	packages: Map<PackageName, IPackage>;
 
+	upstreamRemotePartialUrl?: string;
+
 	/**
 	 * Transforms an absolute path to a path relative to the FluidRepo root.
 	 *
