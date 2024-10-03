@@ -1,13 +1,14 @@
 `api-markdown-documenter lint-api-model`
 ========================================
 
-describe the command here
+Runs a validation pass over the specified API model, reporting any errors found.
+This includes broken `{@link}` and `{@inheritDoc}` tag references, which can not be evaluated on a package-by-package basis by API-Extractor.
 
 * [`api-markdown-documenter lint-api-model APIMODELDIRECTORY`](#api-markdown-documenter-lint-api-model-apimodeldirectory)
 
 ## `api-markdown-documenter lint-api-model APIMODELDIRECTORY`
 
-describe the command here
+Runs a validation pass over the specified API model, reporting any errors found.
 
 ```
 USAGE
@@ -23,7 +24,9 @@ FLAGS
                                   directory to run the command in.
 
 DESCRIPTION
-  describe the command here
+  Runs a validation pass over the specified API model, reporting any errors found.
+  This includes broken `{@link}` and `{@inheritDoc}` tag references, which can not be evaluated on a package-by-package
+  basis by API-Extractor.
 
 EXAMPLES
   $ api-markdown-documenter lint-api-model

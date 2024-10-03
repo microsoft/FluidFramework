@@ -14,6 +14,9 @@ import { loadModel } from "../LoadModel.js";
 import { silentLogger, type Logger } from "../Logging.js";
 import { DocumentWriter } from "../renderers/index.js";
 
+const commandDescription = `Runs a validation pass over the specified API model, reporting any errors found.
+This includes broken \`{@link}\` and \`{@inheritDoc}\` tag references, which can not be evaluated on a package-by-package basis by API-Extractor.`;
+
 /**
  * `oclif` command for linting an API model.
  *
@@ -29,7 +32,7 @@ export default class LintApiModelCommand extends Command {
 		}),
 	};
 
-	public static override description = "describe the command here";
+	public static override description = commandDescription;
 
 	public static override examples = ["<%= config.bin %> <%= command.id %>"];
 
