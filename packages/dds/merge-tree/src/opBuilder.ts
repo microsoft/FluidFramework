@@ -57,7 +57,7 @@ export function createAnnotateMarkerOp(
 export function createAnnotateRangeOp(
 	start: number,
 	end: number,
-	props: PropertySet,
+	props?: PropertySet,
 	adjust?: MapLike<AdjustParams>,
 ): IMergeTreeAnnotateMsg {
 	return {

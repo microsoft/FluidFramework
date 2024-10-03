@@ -494,9 +494,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this._mergeTree.obliterateRange(
 				start,
 				end,
-				clientArgs.referenceSequenceNumber,
+				clientArgs.refSeq,
 				clientArgs.clientId,
-				clientArgs.sequenceNumber,
+				clientArgs.seq,
 				false,
 				opArgs,
 			);
@@ -509,9 +509,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this._mergeTree.obliterateRange(
 				range.start,
 				range.end,
-				clientArgs.referenceSequenceNumber,
+				clientArgs.refSeq,
 				clientArgs.clientId,
-				clientArgs.sequenceNumber,
+				clientArgs.seq,
 				false,
 				opArgs,
 			);
@@ -534,9 +534,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		this._mergeTree.markRangeRemoved(
 			range.start,
 			range.end,
-			clientArgs.referenceSequenceNumber,
+			clientArgs.refSeq,
 			clientArgs.clientId,
-			clientArgs.sequenceNumber,
+			clientArgs.seq,
 			false,
 			opArgs,
 		);
@@ -555,15 +555,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
-		this._mergeTree.annotateRange(
-			range.start,
-			range.end,
-			op.props,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
+		this._mergeTree.annotateRange({
+			...range,
+			...clientArgs,
+			props: op.props,
+			adjust: op.adjust,
 			opArgs,
-		);
+		});
 	}
 
 	/**
@@ -586,9 +584,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		this._mergeTree.insertSegments(
 			range.start,
 			segments,
-			clientArgs.referenceSequenceNumber,
+			clientArgs.refSeq,
 			clientArgs.clientId,
-			clientArgs.sequenceNumber,
+			clientArgs.seq,
 			opArgs,
 		);
 	}
@@ -687,7 +685,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (start === undefined && op.relativePos1) {
 			start = this._mergeTree.posFromRelativePos(
 				op.relativePos1,
-				clientArgs.referenceSequenceNumber,
+				clientArgs.refSeq,
 				clientArgs.clientId,
 			);
 		}
@@ -696,7 +694,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (end === undefined && op.relativePos2) {
 			end = this._mergeTree.posFromRelativePos(
 				op.relativePos2,
-				clientArgs.referenceSequenceNumber,
+				clientArgs.refSeq,
 				clientArgs.clientId,
 			);
 		}
@@ -758,28 +756,24 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
 			| undefined,
-	): {
-		clientId: number;
-		referenceSequenceNumber: number;
-		sequenceNumber: number;
-	} {
+	): IMergeTreeClientSequenceArgs {
 		// If there this no sequenced message, then the op is local
 		// and unacked, so use this clients sequenced args
 		//
 		if (sequencedMessage) {
 			return {
 				clientId: this.getOrAddShortClientIdFromMessage(sequencedMessage),
-				referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
+				refSeq: sequencedMessage.referenceSequenceNumber,
 				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
 				// return value isn't expected to have it either.
-				sequenceNumber: (sequencedMessage as ISequencedDocumentMessage).sequenceNumber,
+				seq: (sequencedMessage as ISequencedDocumentMessage).sequenceNumber,
 			};
 		} else {
 			const segWindow = this.getCollabWindow();
 			return {
 				clientId: segWindow.clientId,
-				referenceSequenceNumber: segWindow.currentSeq,
-				sequenceNumber: this.getLocalSequenceNumber(),
+				refSeq: segWindow.currentSeq,
+				seq: this.getLocalSequenceNumber(),
 			};
 		}
 	}
@@ -1337,14 +1331,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		const { referenceSequenceNumber, clientId } =
-			this.getClientSequenceArgsForMessage(sequenceArgs);
-		return this._mergeTree.getContainingSegment<T>(
-			pos,
-			referenceSequenceNumber,
-			clientId,
-			localSeq,
-		);
+		const { refSeq, clientId } = this.getClientSequenceArgsForMessage(sequenceArgs);
+		return this._mergeTree.getContainingSegment<T>(pos, refSeq, clientId, localSeq);
 	}
 
 	getPropertiesAtPosition(pos: number): PropertySet | undefined {

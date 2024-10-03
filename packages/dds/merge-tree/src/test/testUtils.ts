@@ -23,9 +23,28 @@ import {
 	verifyPartialLengths,
 } from "../partialLengths.js";
 import { PropertySet } from "../properties.js";
+import { PropertiesRollback } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
+
+/**
+ * Converts the old param list to the new param object taken by merge trees annotate range.
+ * @deprecated this should not be used by new tests,
+ */
+export function oldAnnotateParamsToObject(
+	start: number,
+	end: number,
+	props: PropertySet,
+	refSeq: number,
+	clientId: number,
+	seq: number,
+	opArgs: IMergeTreeDeltaOpArgs,
+
+	rollback: PropertiesRollback = PropertiesRollback.None,
+): Parameters<MergeTree["annotateRange"]>[0] {
+	return { start, end, props, refSeq, clientId, seq, opArgs, rollback };
+}
 
 export function loadTextFromFile(
 	filename: string,
