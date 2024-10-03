@@ -17,6 +17,8 @@ const viewToCheckoutMap = new Map<TreeView<ImplicitFieldSchema>, ITreeCheckoutFo
  * @param treeView - The tree view to branch from
  *
  * @remarks Right now it only supports
+ *
+ * @public
  */
 export function branch<T extends ImplicitFieldSchema>(treeView: TreeView<T>): TreeView<T> {
 	const { forkView, forkCheckout } = getViewForForkedBranch(
@@ -26,7 +28,9 @@ export function branch<T extends ImplicitFieldSchema>(treeView: TreeView<T>): Tr
 	// NOTE: this currently has the limitation that a given tree view can only have one fork at a time.
 	// How would we allow users to discard a fork they don't want anymore but still tell us, so we can clean up here?
 	if (viewToCheckoutMap.has(forkView)) {
-		throw new Error("A fork already exists for this tree view. Merge it before creating a new one.");
+		throw new Error(
+			"A fork already exists for this tree view. Merge it before creating a new one.",
+		);
 	}
 	viewToCheckoutMap.set(forkView, forkCheckout);
 	return forkView;
@@ -38,6 +42,8 @@ export function branch<T extends ImplicitFieldSchema>(treeView: TreeView<T>): Tr
  * This must be the same view that was returned by {@link branch}.
  * @param originalTreeView - The tree view to merge into.
  * This must be the same view that was passed to {@link branch} to create the fork.
+ *
+ * @public
  */
 export function merge<T extends ImplicitFieldSchema>(
 	forkedTreeView: TreeView<T>,

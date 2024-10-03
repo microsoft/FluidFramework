@@ -20,6 +20,8 @@ import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
 /**
  * Manages determining the differences between two branches of a SharedTree represented as an actual tree node or a plain javascript object
  * and applies said differences to the original SharedTree branch.
+ *
+ * @public
  */
 export class SharedTreeBranchManager {
 	private readonly objectSchema?: z.Schema;

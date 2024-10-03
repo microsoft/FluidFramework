@@ -10,12 +10,16 @@ import { isTreeMapNode, sharedTreeTraverse } from "./utils.js";
 /**
  * Represents a path through a tree of objects.
  * number values represent array indices whereas string values represent object keys.
+ *
+ * @public
  */
 export type ObjectPath = (string | number)[];
 
 /**
  * Represents a create operation between two branches of a tree.
  * Meaning that an attribute (a shared tree node) was identified as being created.
+ *
+ * @public
  */
 export interface DifferenceCreate {
 	type: "CREATE";
@@ -27,6 +31,8 @@ export interface DifferenceCreate {
  * Represents a remove operation between two branches of a tree.
  * Meaning that an attribute (a shared tree node) was identified as being deleted.
  * When using object ids, removes are idenitified by an object with a given id no longer existing.
+ *
+ * @public
  */
 export interface DifferenceRemove {
 	type: "REMOVE";
@@ -38,6 +44,8 @@ export interface DifferenceRemove {
 /**
  * Represents a change operation between two branches of a tree.
  * Meaning that an attribute (a shared tree node) was identified as being changed from one value to another.
+ *
+ * @public
  */
 export interface DifferenceChange {
 	type: "CHANGE";
@@ -50,6 +58,8 @@ export interface DifferenceChange {
 /**
  * Represents a move operation between two branches of a tree.
  * Meaning that an object (shared tree node) was identified as being moved from one index to another based on its unique id.
+ *
+ * @public
  */
 export interface DifferenceMove {
 	type: "MOVE";
@@ -61,6 +71,8 @@ export interface DifferenceMove {
 
 /**
  * Union for all possible difference types.
+ *
+ * @public
  */
 export type Difference =
 	| DifferenceCreate
@@ -68,7 +80,11 @@ export type Difference =
 	| DifferenceChange
 	| DifferenceMove;
 
-interface Options {
+/**
+ * Options for tree diffing.
+ * @public
+ */
+export interface Options {
 	cyclesFix: boolean;
 	useObjectIds?: {
 		idAttributeName: string;
@@ -85,6 +101,8 @@ const DEFAULT_OPTIONS: Options = { cyclesFix: true };
 
 /**
  * Compares two objects and returns an array of differences between them.
+ *
+ * @public
  */
 export function sharedTreeDiff(
 	obj: Record<string, unknown> | unknown[],
@@ -445,6 +463,8 @@ function createObjectArrayItemIdsToIndexMap(
 /**
  * Creates a set of mergeable diffs from a series of diffs produced by {@link sharedTreeDiff}
  * that are using the object ID strategy. These diffs don't need any modifications to be applied to the old object.
+ *
+ * @public
  */
 export function createMergableIdDiffSeries(
 	oldObject: unknown,
@@ -658,6 +678,8 @@ export function createMergableIdDiffSeries(
 /**
  * Creates a set of mergeable diffs from a series of diffs produced by {@link sharedTreeDiff}
  * that AREN'T using the object ID strategy. These diffs don't need any modifications to be applied to the old object.
+ *
+ * @public
  */
 export function createMergableDiffSeries(diffs: Difference[]): Difference[] {
 	// the final series of diffs that will be returned.

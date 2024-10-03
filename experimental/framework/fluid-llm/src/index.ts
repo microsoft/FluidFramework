@@ -4,6 +4,8 @@ export {
 	type DifferenceMove,
 	type DifferenceRemove,
 	type Difference,
+	type ObjectPath,
+	type Options,
 	sharedTreeDiff,
 	createMergableIdDiffSeries,
 	createMergableDiffSeries,

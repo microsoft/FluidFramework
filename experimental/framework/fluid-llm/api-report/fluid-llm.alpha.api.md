@@ -70,6 +70,19 @@ export interface DifferenceRemove {
 export function merge<T extends ImplicitFieldSchema>(forkedTreeView: TreeView<T>, originalTreeView: TreeView<T>): void;
 
 // @public
+export type ObjectPath = (string | number)[];
+
+// @public
+export interface Options {
+    // (undocumented)
+    cyclesFix: boolean;
+    // (undocumented)
+    useObjectIds?: {
+        idAttributeName: string;
+    };
+}
+
+// @public
 export class SharedTreeBranchManager {
     constructor(params?: {
         objectSchema?: z.Schema;

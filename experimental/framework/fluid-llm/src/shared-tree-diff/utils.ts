@@ -33,6 +33,8 @@ export function isTreeArrayNode(obj: unknown): obj is TreeArrayNode {
 
 /**
  * Traverses the provided {@link ObjectPath} on the provided Shared Tree or JSON object and returns the value at the end of the path.
+ *
+ * @public
  */
 export function sharedTreeTraverse<T = unknown>(
 	jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[],
