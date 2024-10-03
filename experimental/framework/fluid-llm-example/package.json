@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/fluid-llm-example",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"description": "Experimental SharedTree API for React integration.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -53,18 +53,18 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"next:dev": "next dev",
 		"next:build": "next build",
+		"next:dev": "next dev",
 		"next:start": "next start",
 		"postpack": "tar -cf ./fluid-llm-example .test-files.tar ./src/test ./dist/test ./lib/test",
+		"start:server": "tinylicious",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"start:server": "tinylicious"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {
 		"all": true,
