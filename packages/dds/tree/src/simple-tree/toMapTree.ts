@@ -20,7 +20,6 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 	type NodeKeyManager,
-	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, find } from "../util/index.js";
 
@@ -39,13 +38,14 @@ import {
 } from "./schemaTypes.js";
 import {
 	getKernel,
-	getSimpleNodeSchemaFromNode,
+	getSimpleNodeSchemaFromInnerNode,
 	isTreeNode,
 	NodeKind,
 	type InnerNode,
 	type TreeNode,
 	type TreeNodeSchema,
 	type Unhydrated,
+	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
@@ -161,8 +161,8 @@ function nodeDataToMapTree(
 	// They already have the mapTree, so there is no need to recompute it.
 	const innerNode = tryGetInnerNode(data);
 	if (innerNode !== undefined) {
-		if (isMapTreeNode(innerNode)) {
-			if (!allowedTypes.has(getSimpleNodeSchemaFromNode(innerNode))) {
+		if (innerNode instanceof UnhydratedFlexTreeNode) {
+			if (!allowedTypes.has(getSimpleNodeSchemaFromInnerNode(innerNode))) {
 				throw new UsageError("Invalid schema for this context.");
 			}
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
@@ -170,14 +170,14 @@ function nodeDataToMapTree(
 			// This is unnecessary and inefficient, but should be a no-op if all calls provide the same context (which they might not).
 			// A cleaner design (avoiding this cast) might be to apply defaults eagerly if they don't need a context, and lazily (when hydrating) if they do.
 			// This could avoid having to mutate the map tree to apply defaults, removing the need for this cast.
-			return innerNode.mapTree as ExclusiveMapTree;
+			return innerNode.mapTree;
 		} else {
 			// The node is already hydrated, meaning that it already got inserted into the tree previously
 			throw new UsageError("A node may not be inserted into the tree more than once");
 		}
 	}
 
-	assert(!isTreeNode(data), "data without an inner node cannot be TreeNode");
+	assert(!isTreeNode(data), 0xa23 /* data without an inner node cannot be TreeNode */);
 
 	const schema = getType(data, allowedTypes);
 

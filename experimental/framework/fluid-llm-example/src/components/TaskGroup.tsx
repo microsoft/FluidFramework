@@ -27,6 +27,7 @@ import { editTaskGroup } from "@/actions/task";
 import {
 	SharedTreeTaskGroup,
 	sharedTreeTaskGroupToJson,
+	TREE_CONFIGURATION,
 	type SharedTreeAppState,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
@@ -295,6 +296,7 @@ export function TaskGroup(props: {
 									const { newBranch, newBranchTargetNode } =
 										branchManager.checkoutNewMergedBranchV2(
 											props.sharedTreeBranch,
+											TREE_CONFIGURATION,
 											["taskGroups", indexOfTaskGroup],
 											differences,
 										);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.46.0",
+	"version": "0.47.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -112,6 +112,7 @@
 		"jssm": "5.98.2",
 		"latest-version": "^5.1.0",
 		"mdast": "^3.0.0",
+		"mdast-util-heading-range": "^4.0.0",
 		"mdast-util-to-string": "^4.0.0",
 		"minimatch": "^7.4.6",
 		"node-fetch": "^3.3.2",
@@ -239,6 +240,9 @@
 			},
 			"promote": {
 				"description": "Promote commands are used to promote packages published to an npm registry."
+			},
+			"transform": {
+				"description": "Transform commands are used to transform code, docs, etc. into alternative forms."
 			}
 		}
 	}

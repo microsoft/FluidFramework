@@ -15,11 +15,10 @@ import {
 	getOrCreateInnerNode,
 	treeNodeApi,
 } from "../simple-tree/index.js";
-import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { contextToTreeView } from "./treeView.js";
+import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
@@ -440,9 +439,7 @@ export function runTransaction<
 				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
 			);
 		}
-		const treeView =
-			contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
-
+		const treeView = getCheckoutFlexTreeView(context);
 		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
 	}
 }

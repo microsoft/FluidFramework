@@ -3,15 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import type { ValueManager } from "./internalTypes.js";
+import { brandedObjectEntries } from "./internalTypes.js";
 import type { LatestValueControls } from "./latestValueControls.js";
+import { LatestValueControl } from "./latestValueControls.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
+import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
+import { brandIVM } from "./valueManager.js";
 
 import type {
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluid-experimental/presence/internal/core-interfaces";
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import { createEmitter } from "@fluid-experimental/presence/internal/events";
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
 
@@ -72,12 +78,92 @@ export interface LatestValueManager<T> {
 	clientValue(client: ISessionClient): LatestValueData<T>;
 }
 
+class LatestValueManagerImpl<T, Key extends string>
+	implements
+		LatestValueManager<T>,
+		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
+{
+	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
+	public readonly controls: LatestValueControl;
+
+	public constructor(
+		private readonly key: Key,
+		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
+		public readonly value: InternalTypes.ValueRequiredState<T>,
+		controlSettings: LatestValueControls,
+	) {
+		this.controls = new LatestValueControl(controlSettings);
+	}
+
+	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
+		return this.value.value;
+	}
+
+	public set local(value: JsonSerializable<T> & JsonDeserialized<T>) {
+		this.value.rev += 1;
+		this.value.timestamp = Date.now();
+		this.value.value = value;
+		this.datastore.localUpdate(this.key, this.value, /* forceUpdate */ false);
+	}
+
+	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		for (const [clientSessionId, value] of brandedObjectEntries(allKnownStates.states)) {
+			if (clientSessionId !== allKnownStates.self) {
+				yield {
+					client: this.datastore.lookupClient(clientSessionId),
+					value: value.value,
+					metadata: { revision: value.rev, timestamp: value.timestamp },
+				};
+			}
+		}
+	}
+
+	public clients(): ISessionClient[] {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		return Object.keys(allKnownStates.states)
+			.filter((clientSessionId) => clientSessionId !== allKnownStates.self)
+			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
+	}
+
+	public clientValue(client: ISessionClient): LatestValueData<T> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		const clientSessionId = client.sessionId;
+		if (clientSessionId in allKnownStates.states) {
+			const { value, rev: revision } = allKnownStates.states[clientSessionId];
+			return { value, metadata: { revision, timestamp: Date.now() } };
+		}
+		throw new Error("No entry for clientId");
+	}
+
+	public update(
+		client: ISessionClient,
+		_received: number,
+		value: InternalTypes.ValueRequiredState<T>,
+	): void {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		const clientSessionId = client.sessionId;
+		if (clientSessionId in allKnownStates.states) {
+			const currentState = allKnownStates.states[clientSessionId];
+			if (currentState.rev >= value.rev) {
+				return;
+			}
+		}
+		this.datastore.update(this.key, clientSessionId, value);
+		this.events.emit("updated", {
+			client,
+			value: value.value,
+			metadata: { revision: value.rev, timestamp: value.timestamp },
+		});
+	}
+}
+
 /**
  * Factory for creating a {@link LatestValueManager}.
  *
  * @alpha
  */
-export function Latest<T extends object, Key extends string>(
+export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 	controls?: LatestValueControls,
 ): InternalTypes.ManagerFactory<
@@ -85,5 +171,38 @@ export function Latest<T extends object, Key extends string>(
 	InternalTypes.ValueRequiredState<T>,
 	LatestValueManager<T>
 > {
-	throw new Error("Method not implemented.");
+	// LatestValueManager takes ownership of initialValue but makes a shallow
+	// copy for basic protection.
+	const value: InternalTypes.ValueRequiredState<T> = {
+		rev: 0,
+		timestamp: Date.now(),
+		value: { ...initialValue },
+	};
+	const controlSettings = controls
+		? { ...controls }
+		: {
+				allowableUpdateLatency: 60,
+				forcedRefreshInterval: 0,
+			};
+	const factory = (
+		key: Key,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<
+			Key,
+			InternalTypes.ValueRequiredState<T>
+		>,
+	): {
+		value: typeof value;
+		manager: InternalTypes.StateValue<LatestValueManager<T>>;
+	} => ({
+		value,
+		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
+			new LatestValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				controlSettings,
+			),
+		),
+	});
+	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }

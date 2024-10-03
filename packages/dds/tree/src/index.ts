@@ -40,9 +40,7 @@ export {
 } from "./events/index.js";
 
 export {
-	type LazyItem,
 	TreeStatus,
-	type Unenforced,
 	TreeCompressionStrategy,
 } from "./feature-libraries/index.js";
 
@@ -58,6 +56,10 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	type ForestOptions,
+	getBranch,
+	type TreeBranch,
+	type TreeBranchFork,
 } from "./shared-tree/index.js";
 
 export {
@@ -65,6 +67,7 @@ export {
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
+	type ViewableTree,
 	type ITree,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
@@ -82,6 +85,7 @@ export {
 	type TreeLeafValue,
 	FieldKind,
 	FieldSchema,
+	type FieldSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
@@ -112,6 +116,7 @@ export {
 	type FieldSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
+	type TreeNodeSchemaNonClass,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -143,10 +148,19 @@ export {
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
 	getJsonSchema,
+	type LazyItem,
+	type Unenforced,
 } from "./simple-tree/index.js";
-export { SharedTree, configuredSharedTree } from "./treeFactory.js";
+export {
+	SharedTree,
+	configuredSharedTree,
+} from "./treeFactory.js";
 
-export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
+export type {
+	ICodecOptions,
+	JsonValidator,
+	SchemaValidationFunction,
+} from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
@@ -154,6 +168,7 @@ export {
 	type Covariant,
 	BrandedType,
 	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	type MakeNominal,
 } from "./util/index.js";
 

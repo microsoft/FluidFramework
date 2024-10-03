@@ -15,6 +15,11 @@ module.exports = {
 			{
 				allow: [
 					"@fluidframework/tree/alpha",
+
+					// Allow imports from sibling and ancestral sibling directories,
+					// but not from cousin directories. Parent is allowed but only
+					// because there isn't a known way to deny it.
+					"*/index.js",
 				],
 			},
 		],

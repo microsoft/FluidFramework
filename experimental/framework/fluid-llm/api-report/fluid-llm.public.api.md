@@ -5,9 +5,6 @@
 ```ts
 
 // @public
-export function branch<T extends ImplicitFieldSchema>(treeView: TreeView<T>): TreeView<T>;
-
-// @public
 export function createMergableDiffSeries(diffs: Difference[]): Difference[];
 
 // @public
@@ -67,9 +64,6 @@ export interface DifferenceRemove {
 }
 
 // @public
-export function merge<T extends ImplicitFieldSchema>(forkedTreeView: TreeView<T>, originalTreeView: TreeView<T>): void;
-
-// @public
 export type ObjectPath = (string | number)[];
 
 // @public
@@ -89,12 +83,12 @@ export class SharedTreeBranchManager {
         nodeIdAttributeName?: string;
     });
     applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): boolean;
-    checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeView<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
+    checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
         differences: Difference[];
         newBranch: TreeView<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
-    checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeView<T>, absolutePathToObjectNode: ObjectPath, differences: Difference[]): {
+    checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, differences: Difference[]): {
         newBranch: TreeView<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };

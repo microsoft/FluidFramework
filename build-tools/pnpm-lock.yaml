@@ -192,6 +192,9 @@ importers:
       mdast:
         specifier: ^3.0.0
         version: 3.0.0
+      mdast-util-heading-range:
+        specifier: ^4.0.0
+        version: 4.0.0
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
@@ -388,6 +391,9 @@ importers:
 
   packages/build-tools:
     dependencies:
+      '@fluid-tools/version-tools':
+        specifier: workspace:~
+        version: link:../version-tools
       '@manypkg/get-packages':
         specifier: ^2.2.0
         version: 2.2.0
@@ -7829,6 +7835,15 @@ packages:
       mdast-util-to-markdown: 2.1.0
     transitivePeerDependencies:
       - supports-color
+
+  /mdast-util-heading-range@4.0.0:
+    resolution: {integrity: sha512-9qadnTU+W0MR69yITfUr/52eoVXcqUpFhN1ThjGSn59KGOdxgaOr4Nx4swa60SaXEq8/tjQZcq2sVPp2yJMNCA==}
+    dependencies:
+      '@types/mdast': 4.0.4
+      '@types/unist': 3.0.3
+      devlop: 1.1.0
+      mdast-util-to-string: 4.0.0
+    dev: false
 
   /mdast-util-phrasing@4.1.0:
     resolution: {integrity: sha512-TqICwyvJJpBwvGAMZjj4J2n0X8QWp21b9l0o7eXyVJ25YNWYbJDVIyD1bZXE6WtV6RmKJVYmQAKWa0zWOABz2w==}

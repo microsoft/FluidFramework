@@ -7,11 +7,13 @@ import type { LatestMapItemValueClientData } from "../index.js";
 import { LatestMap } from "../index.js";
 import type { IPresence } from "../presence.js";
 
-describe("LatestMapValueManager", () => {
-	/**
-	 * See {@link checkCompiles} below
-	 */
-	it("API use compiles", () => {});
+describe("Presence", () => {
+	describe("LatestMapValueManager", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
 });
 
 // ---- test (example) code ----
@@ -53,7 +55,7 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	map.add("pointers", LatestMap<PointerData, "pointers">({}));
+	map.add("pointers", LatestMap<PointerData>({}));
 
 	const pointers = map.pointers;
 	const localPointers = pointers.local;
@@ -66,7 +68,7 @@ export function checkCompiles(): void {
 		LatestMapItemValueClientData<T, string | number>,
 		"client" | "key" | "value"
 	>): void {
-		console.log(client.currentClientId(), key, value);
+		console.log(client.sessionId, key, value);
 	}
 
 	localPointers.set("pen", { x: 1, y: 2 });
@@ -75,8 +77,8 @@ export function checkCompiles(): void {
 	pointerItemUpdatedOff();
 
 	for (const client of pointers.clients()) {
-		const clientData = pointers.clientValue(client);
-		for (const [key, { value }] of clientData.items.entries()) {
+		const items = pointers.clientValue(client);
+		for (const [key, { value }] of items.entries()) {
 			logClientValue({ client, key, value });
 		}
 	}

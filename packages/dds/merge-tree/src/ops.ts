@@ -70,6 +70,7 @@ export const MergeTreeDeltaType = {
 	 */
 	GROUP: 3,
 	OBLITERATE: 4,
+	OBLITERATE_SIDED: 5,
 } as const;
 
 /**
@@ -166,6 +167,26 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
  * @legacy
  * @alpha
  */
+export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
+	type: typeof MergeTreeDeltaType.OBLITERATE_SIDED;
+	pos1: { pos: number; before: boolean };
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos1?: never;
+	pos2: { pos: number; before: boolean };
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos2?: never;
+}
+
+/**
+ * @legacy
+ * @alpha
+ */
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
 	pos1?: number;
@@ -206,7 +227,8 @@ export type IMergeTreeDeltaOp =
 	| IMergeTreeInsertMsg
 	| IMergeTreeRemoveMsg
 	| IMergeTreeAnnotateMsg
-	| IMergeTreeObliterateMsg;
+	| IMergeTreeObliterateMsg
+	| IMergeTreeObliterateSidedMsg;
 
 /**
  * @legacy

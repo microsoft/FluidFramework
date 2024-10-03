@@ -12,13 +12,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
+import type { NodeKeyManager } from "../../feature-libraries/index.js";
 import {
-	type NodeKeyManager,
-	type Unenforced,
-	isLazy,
-} from "../../feature-libraries/index.js";
-import {
-	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
@@ -48,6 +44,8 @@ import type {
 	WithType,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaBoth,
 } from "../core/index.js";
 import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
@@ -71,9 +69,11 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
-} from "../typesUnsafe.js";
+	Unenforced,
+} from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
+import { isLazy } from "../flexList.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -291,7 +291,7 @@ export class SchemaFactory<
 	 */
 	public object<
 		const Name extends TName,
-		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	>(
 		name: Name,
 		fields: T,
@@ -331,7 +331,7 @@ export class SchemaFactory<
 	 */
 	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
@@ -362,6 +362,12 @@ export class SchemaFactory<
 		T
 	>;
 
+	/**
+	 * @privateRemarks
+	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
+	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
+	 * and the implementation is type safe, and forcing an unsafe typing instead.
+	 */
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
@@ -379,7 +385,7 @@ export class SchemaFactory<
 						false,
 						true,
 					) as TreeNodeSchema,
-			) as TreeNodeSchemaClass<
+			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
 				TreeMapNode<T>,
@@ -388,7 +394,16 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		const out: TreeNodeSchemaBoth<
+			string,
+			NodeKind.Map,
+			TreeMapNode<T>,
+			MapNodeInsertableData<T>,
+			true,
+			T
+		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return out;
 	}
 
 	/**
@@ -405,7 +420,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
@@ -457,7 +472,7 @@ export class SchemaFactory<
 	 */
 	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
@@ -490,6 +505,10 @@ export class SchemaFactory<
 		T
 	>;
 
+	/**
+	 * @privateRemarks
+	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
+	 */
 	public array<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
@@ -515,7 +534,15 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		const out: TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, string>,
+			NodeKind.Array,
+			TreeArrayNode<T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			true,
+			T
+		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return out;
 	}
 
 	/**
@@ -536,7 +563,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
@@ -552,11 +579,14 @@ export class SchemaFactory<
 	 *
 	 * @param t - The types allowed under the field.
 	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public optional<const T extends ImplicitAllowedTypes>(
+	public optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Optional, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
 		});
@@ -575,11 +605,14 @@ export class SchemaFactory<
 	 * @remarks
 	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
 	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public required<const T extends ImplicitAllowedTypes>(
+	public required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Required, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
 
@@ -656,12 +689,12 @@ export class SchemaFactory<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 	>(name: Name, t: T) {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
-			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
@@ -754,7 +787,7 @@ export class SchemaFactory<
 				>;
 			},
 			// Ideally this would be included, but doing so breaks recursive types.
-			// | RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
 			false,
 			T
 		>;

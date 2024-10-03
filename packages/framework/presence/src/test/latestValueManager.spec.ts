@@ -7,11 +7,13 @@ import type { LatestValueClientData } from "../index.js";
 import { Latest } from "../index.js";
 import type { IPresence } from "../presence.js";
 
-describe("LatestValueManager", () => {
-	/**
-	 * See {@link checkCompiles} below
-	 */
-	it("API use compiles", () => {});
+describe("Presence", () => {
+	describe("LatestValueManager", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
 });
 
 // ---- test (example) code ----
@@ -40,7 +42,7 @@ export function checkCompiles(): void {
 	function logClientValue<
 		T /* following extends should not be required: */ extends Record<string, unknown>,
 	>({ client, value }: Pick<LatestValueClientData<T>, "client" | "value">): void {
-		console.log(client.currentClientId(), value);
+		console.log(client.sessionId, value);
 	}
 
 	// Create new cursor state
@@ -51,9 +53,7 @@ export function checkCompiles(): void {
 
 	// Listen to others cursor updates
 	const cursorUpdatedOff = cursor.events.on("updated", ({ client, value }) =>
-		console.log(
-			`client ${client.currentClientId()}'s cursor is now at (${value.x},${value.y})`,
-		),
+		console.log(`client ${client.sessionId}'s cursor is now at (${value.x},${value.y})`),
 	);
 	cursorUpdatedOff();
 

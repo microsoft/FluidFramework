@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import { readFile, readdir, stat } from "node:fs/promises";
+import * as path from "node:path";
 
-import { readdir, stat } from "fs/promises";
 import picomatch from "picomatch";
 import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
-import { readFileAsync, statAsync } from "../../../common/utils";
+import type { BuildContext } from "../../buildContext";
 import { BuildPackage } from "../../buildGraph";
 import { globFn, toPosixPath } from "../taskUtils";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
@@ -48,8 +48,8 @@ export class LesscTask extends LeafTask {
 		const srcPath = unquote(args[1]);
 		const dstPath = unquote(args[2]);
 		try {
-			const srcTimeP = statAsync(path.join(this.node.pkg.directory, srcPath));
-			const dstTimeP = statAsync(path.join(this.node.pkg.directory, dstPath));
+			const srcTimeP = stat(path.join(this.node.pkg.directory, srcPath));
+			const dstTimeP = stat(path.join(this.node.pkg.directory, dstPath));
 			const [srcTime, dstTime] = await Promise.all([srcTimeP, dstTimeP]);
 			const result = srcTime <= dstTime;
 			if (!result) {
@@ -74,8 +74,13 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private readonly flat: boolean = false;
 	private readonly copyDstArg: string = "";
 
-	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
-		super(node, command, taskName);
+	constructor(
+		node: BuildPackage,
+		command: string,
+		context: BuildContext,
+		taskName: string | undefined,
+	) {
+		super(node, command, context, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");
@@ -211,7 +216,7 @@ export class GenVerTask extends LeafTask {
 	protected async checkLeafIsUpToDate() {
 		const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
 		try {
-			const content = await readFileAsync(file, "utf8");
+			const content = await readFile(file, "utf8");
 			const match = content.match(
 				/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m,
 			);

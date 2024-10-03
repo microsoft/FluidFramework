@@ -12,8 +12,3 @@ export {
 	SharedTreeBranchManager,
 	sharedTreeTraverse,
 } from "./shared-tree-diff/index.js";
-
-export {
-	branch,
-	merge,
-} from "./branching/index.js";
