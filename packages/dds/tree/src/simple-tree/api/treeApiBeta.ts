@@ -3,8 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeKind, TreeChangeEvents, TreeNode, WithType } from "../core/index.js";
+import {
+	getKernel,
+	isTreeNode,
+	type HydratedContext,
+	type NodeKind,
+	type TreeChangeEvents,
+	type TreeNode,
+	type Unhydrated,
+	type WithType,
+} from "../core/index.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
 import { treeNodeApi } from "./treeNodeApi.js";
+import { createFromCursor, cursorFromInsertable } from "./create.js";
+import type { ITreeCursorSynchronous } from "../../core/index.js";
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
@@ -82,7 +94,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
  * Extensions to {@link Tree} which are not yet stable.
  * @sealed @beta
  */
-export const TreeBeta = {
+export const TreeBeta: {
 	/**
 	 * Register an event listener on the given node.
 	 * @param node - The node whose events should be subscribed to.
@@ -95,7 +107,57 @@ export const TreeBeta = {
 		node: TNode,
 		eventName: K,
 		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
+	): () => void;
+
+	/**
+	 * Clones the persisted data associated with a node. Some key things to note:
+	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
+	 * initialized to the state after running the constructor, just like if a remote client had inserted the same node.
+	 * - Primitive node types (i.e., numbers, strings, booleans, nulls and fluid handles) will be returned as is.
+	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
+	 *
+	 * @param node - The node to clone.
+	 * @returns A new unhydrated node with the same persisted data as the original node.
+	 */
+	clone<TSchema extends ImplicitFieldSchema>(
+		node: TreeFieldFromImplicitField<TSchema>,
+	): TreeFieldFromImplicitField<TSchema>;
+} = {
+	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
-} as const;
+	clone<TSchema extends ImplicitFieldSchema>(
+		node: TreeFieldFromImplicitField<TSchema>,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		// If it's a primitive type (i.e., not a tree node), return it as is.
+		if (!isTreeNode(node)) {
+			return node;
+		}
+
+		const kernel = getKernel(node);
+		// For unhydrated nodes, we can create a cursor by calling `cursorFromInsertable` because the node
+		// hasn't been inserted yet. We can then create a new node from the cursor.
+		if (!kernel.isHydrated()) {
+			return createFromCursor(
+				kernel.schema,
+				cursorFromInsertable(kernel.schema, node),
+			) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+		}
+
+		// For hydrated nodes, we need to create a new cursor in the forest and then create a new node from
+		// the cursor.
+		const forest = (kernel.context as HydratedContext).flexContext.checkout.forest;
+		const cursor = forest.allocateCursor("tree.clone");
+		forest.moveCursorToPath(kernel.anchorNode, cursor);
+		const clonedNode = createFromCursor(
+			kernel.schema,
+			cursor as ITreeCursorSynchronous,
+		) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+		cursor.free();
+		return clonedNode;
+	},
+};

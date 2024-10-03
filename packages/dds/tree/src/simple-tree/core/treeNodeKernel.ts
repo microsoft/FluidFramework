@@ -267,6 +267,14 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
+	public get anchorNode(): AnchorNode {
+		// If the kernel is unhydrated, it has no anchor node. It calls innerNode.anchorNode which
+		// throws an error.
+		return this.#hydrated !== undefined
+			? this.#hydrated.anchorNode
+			: this.innerNode.anchorNode;
+	}
+
 	/**
 	 * Retrieves the flex node associated with the given target via {@link setInnerNode}.
 	 * @remarks
