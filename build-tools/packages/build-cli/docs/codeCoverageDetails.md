@@ -18,7 +18,7 @@ Code coverage data is included in the cobertura-format coverage files we collect
 
 ### Identifying the baseline build
 
-Before running coverage comparison, a baseline build needs to be determined for the PR. This is typically based on the target branch for the PR. For example, if a pull request was targeting main, we would consider the baseline to be the latest successful build in that branch.
+Before running coverage comparison, a baseline build needs to be determined for the PR. This is typically based on the target branch for the PR. For example, if a pull request was targeting `main`, we would consider the baseline to be the latest successful `main` branch build.
 
 ### Downloading artifacts from baseline build
 
