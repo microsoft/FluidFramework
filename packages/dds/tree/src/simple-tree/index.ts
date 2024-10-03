@@ -41,7 +41,6 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-	type EmptyObject,
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
