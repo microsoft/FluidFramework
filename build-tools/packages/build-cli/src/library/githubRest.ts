@@ -112,7 +112,7 @@ export async function isPrApprovedByUsers(
 }
 
 /**
- * Create or Update(If already exists based on commentIdentifier) a review comment on a PR.
+ * Creates or modifies a single review comment on a PR. The comment is identified with a unique identifier, so the same comment is updated on repeated calls.
  *
  * @param github - Details about the GitHub repo and auth to use.
  * @param prNumber - Pull request number.
