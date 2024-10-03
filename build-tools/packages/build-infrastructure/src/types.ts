@@ -58,6 +58,16 @@ export interface IFluidRepo extends Reloadable {
 	 * @throws A {@link NotInGitRepository} error if the path is not within a Git repository.
 	 */
 	getGitRepository(): Promise<Readonly<SimpleGit>>;
+
+	/**
+	 * Returns the {@link IReleaseGroup} associated with a package.
+	 */
+	getPackageReleaseGroup(pkg: Readonly<IPackage>): Readonly<IReleaseGroup>;
+
+	/**
+	 * Returns the {@link IWorkspace} associated with a package.
+	 */
+	getPackageWorkspace(pkg: Readonly<IPackage>): Readonly<IWorkspace>;
 }
 
 /**

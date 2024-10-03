@@ -28,12 +28,6 @@ export class FluidRepo implements IFluidRepo {
 	public readonly root: string;
 
 	/**
-	 * The absolute path to the root of the Git repository that contains this FluidRepo. If the FluidRepo is not within a
-	 * Git repository, gitRoot will be undefined.
-	 */
-	// public readonly gitRoot: string|undefined;
-
-	/**
 	 * @param searchPath - The path that should be searched for a repo layout config file.
 	 * @param gitRepository - A SimpleGit instance rooted in the root of the Git repository housing the FluidRepo. This
 	 * should be set to false if the FluidRepo is not within a Git repository.
@@ -78,7 +72,6 @@ export class FluidRepo implements IFluidRepo {
 		}
 		this._releaseGroups = releaseGroups;
 	}
-
 	private readonly _workspaces: Map<WorkspaceName, IWorkspace>;
 	public get workspaces() {
 		return this._workspaces;
@@ -124,6 +117,22 @@ export class FluidRepo implements IFluidRepo {
 			throw new NotInGitRepository(this.root);
 		}
 		return this.gitRepository;
+	}
+
+
+	public getPackageReleaseGroup(pkg: Readonly<IPackage>): Readonly<IReleaseGroup> {
+		const found = this.releaseGroups.get(pkg.releaseGroup);
+		if (found === undefined) {
+			throw new Error(`Cannot find release group for package: ${pkg}`);
+		}
+
+		return found;
+	}
+
+	public getPackageWorkspace(pkg: Readonly<IPackage>): Readonly<IWorkspace> {
+		const releaseGroup = this.getPackageReleaseGroup(pkg);
+		const found = releaseGroup.workspace;
+		return found;
 	}
 }
 
