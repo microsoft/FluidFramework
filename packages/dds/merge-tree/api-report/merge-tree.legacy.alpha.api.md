@@ -4,6 +4,16 @@
 
 ```ts
 
+// @alpha (undocumented)
+export interface AdjustParams {
+    // (undocumented)
+    max?: number;
+    // (undocumented)
+    min?: number;
+    // (undocumented)
+    value: number;
+}
+
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
@@ -161,6 +171,8 @@ export interface IMergeNodeCommon {
 
 // @alpha (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    adjust?: Record<string, AdjustParams>;
     // (undocumented)
     pos1?: number;
     // (undocumented)

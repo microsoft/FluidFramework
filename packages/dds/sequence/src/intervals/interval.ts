@@ -193,11 +193,7 @@ export class Interval implements ISerializableInterval {
 		}
 		const newInterval = new Interval(startPos, endPos);
 		if (this.properties) {
-			this.propertyManager.copyTo(
-				this.properties,
-				newInterval.properties,
-				newInterval.propertyManager,
-			);
+			this.propertyManager.copyTo(this.properties, newInterval);
 		}
 		return newInterval;
 	}

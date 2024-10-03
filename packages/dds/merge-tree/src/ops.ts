@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { AdjustParams } from "./adjust.js";
+
 /**
  * Flags enum that dictates behavior of a {@link ReferencePosition}
  * @legacy
@@ -195,6 +197,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	relativePos2?: IRelativePosition;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props: Record<string, any>;
+	adjust?: Record<string, AdjustParams>;
 }
 
 /**

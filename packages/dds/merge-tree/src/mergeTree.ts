@@ -76,6 +76,7 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type IMergeTreeAnnotateMsg,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
@@ -149,13 +150,14 @@ function ackSegment(
 ): boolean {
 	const currentSegmentGroup = segment.segmentGroups?.dequeue();
 	assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
-	switch (opArgs.op.type) {
+	const op = opArgs.op;
+	switch (op.type) {
 		case MergeTreeDeltaType.ANNOTATE: {
 			assert(
 				!!segment.propertyManager,
 				0x044 /* "On annotate ack, missing segment property manager!" */,
 			);
-			segment.propertyManager.ackPendingProperties(opArgs.op);
+			segment.propertyManager.ack(op);
 			return true;
 		}
 
@@ -1682,12 +1684,7 @@ export class MergeTree {
 			if (segment.propertyManager === undefined) {
 				next.properties = clone(segment.properties);
 			} else {
-				next.propertyManager ??= new PropertiesManager();
-				next.properties = segment.propertyManager.copyTo(
-					segment.properties,
-					next.properties,
-					next.propertyManager,
-				);
+				segment.propertyManager.copyTo(segment.properties, next);
 			}
 		}
 		if (segment.localRefs) {
@@ -1930,10 +1927,9 @@ export class MergeTree {
 			);
 
 			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
-			const properties = (segment.properties ??= createMap());
-			const propertyDeltas = propertyManager.addProperties(
-				properties,
-				props,
+			const propertyDeltas = propertyManager.handleProperties(
+				opArgs.op as IMergeTreeAnnotateMsg,
+				segment,
 				seq,
 				this.collabWindow.collaborating,
 				rollback,

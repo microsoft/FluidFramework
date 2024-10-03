@@ -140,9 +140,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 		);
 	}
 
-	/**
-	 * @deprecated  This functionality was not meant to be exported and will be removed in a future release
-	 */
 	constructor(
 		private readonly client: Client,
 		/**
@@ -345,17 +342,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collab: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
-	}
-
-	/**
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
@@ -437,11 +423,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
-			this.propertyManager.copyTo(
-				this.properties,
-				newInterval.properties,
-				newInterval.propertyManager,
-			);
+			this.propertyManager.copyTo(this.properties, newInterval);
 		}
 		return newInterval;
 	}

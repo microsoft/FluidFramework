@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { AdjustParams } from "./adjust.js";
 export {
 	IAttributionCollection,
 	IAttributionCollectionSerializer,
