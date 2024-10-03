@@ -7,21 +7,10 @@ import { strict as assert } from "assert";
 
 import {
 	EventEmitter,
-	type Listenable,
 	createEmitter,
-	type UnionToIntersection,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../events/events.js";
-import type { areSafelyAssignable, requireTrue } from "../../util/index.js";
-
-// UnionToIntersection
-{
-	type U = UnionToIntersection<1 | 2>;
-	type _check = requireTrue<areSafelyAssignable<U, never>>;
-
-	type U2 = UnionToIntersection<number | 5>;
-	type _check2 = requireTrue<areSafelyAssignable<U2, number>>;
-}
+} from "../../events/emitter.js";
+import type { Listenable } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -202,12 +191,12 @@ describe("EventEmitter", () => {
 	});
 });
 
+// The below classes correspond to the examples given in the doc comment of `EventEmitter` to ensure that they compile
+
 interface MyEvents {
 	loaded: () => void;
 	computed: () => number;
 }
-
-// The below classes correspond to the examples given in the doc comment of `EventEmitter` to ensure that they compile
 
 class MyInheritanceClass extends EventEmitter<MyEvents> {
 	private load() {

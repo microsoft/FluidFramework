@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { TreeValue } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
@@ -106,7 +106,7 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
  */
 export function getChecked<T>(data: readonly T[], index: number): T {
 	assertValidIndex(index, data);
-	return data[index];
+	return data[index] ?? oob();
 }
 
 /**

@@ -2,7 +2,7 @@
 
 Contains handshake interfaces for communication between the container runtime layer and the data store runtime layer.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -49,7 +49,7 @@ API documentation for **@fluidframework/runtime-definitions** is available at <h
 
 These interfaces needs to have strong back-compat guaranetee to support dynamic data store loading scenario where the FluidDataStoreRuntime might be built with different version.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

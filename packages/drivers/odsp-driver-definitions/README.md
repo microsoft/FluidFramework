@@ -5,7 +5,7 @@ Currently it contains all the contracts for driver factory.
 
 Though the host is responsible for implementing the IPersistedCache, snapshot cached entries will be disregarded if they are older than 5 days, per the maximumCacheDurationMs policy on IDocumentStorageServicePolicies
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -43,7 +43,7 @@ API documentation for **@fluidframework/odsp-driver-definitions** is available a
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

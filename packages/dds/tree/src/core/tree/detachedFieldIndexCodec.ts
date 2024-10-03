@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type ICodecOptions,
@@ -84,10 +84,11 @@ export function makeDetachedNodeToFieldCodec(
 					rootRanges.push([minor, detachedField.root]);
 				}
 				if (rootRanges.length === 1) {
+					const firstRootRange = rootRanges[0] ?? oob();
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
-						rootRanges[0][0],
-						rootRanges[0][1],
+						firstRootRange[0],
+						firstRootRange[1],
 					];
 					rootsForRevisions.push(rootsForRevision);
 				} else {

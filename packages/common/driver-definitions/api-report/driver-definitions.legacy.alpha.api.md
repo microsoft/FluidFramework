@@ -291,7 +291,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
-    readonly policies?: IDocumentStorageServicePolicies;
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
     readBlob(id: string): Promise<ArrayBufferLike>;
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }

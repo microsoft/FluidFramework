@@ -4,7 +4,7 @@
 
 This package provides a reference application that executes pre-set scenarios with the intent of measuring the Fluid Framework's performance and reliability. We primarily use this package as part of a pipeline scheduled to run periodically to measure, log, and report various performance and reliability metrics. These metrics can then be used to gauge an undrestanding of the expected behavior/performance of the Fluid Framework in these various scenarios, which can help define the SLA.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -87,7 +87,7 @@ You can add new scenarios by following existing patterns (see `MapTrafficRunner`
 
 # Appendix
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

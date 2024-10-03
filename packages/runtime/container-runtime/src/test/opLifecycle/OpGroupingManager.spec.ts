@@ -21,8 +21,9 @@ describe("OpGroupingManager", () => {
 		length: number,
 		hasReentrantOps?: boolean,
 		opHasMetadata: boolean = false,
+		batchId?: string,
 	): IBatch => ({
-		...messagesToBatch(new Array(length).fill(createMessage(opHasMetadata))),
+		...messagesToBatch(new Array(length).fill(createMessage(opHasMetadata, batchId))),
 		hasReentrantOps,
 	});
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
@@ -32,12 +33,18 @@ describe("OpGroupingManager", () => {
 			.reduce((a, b) => a + b),
 		referenceSequenceNumber: messages[0].referenceSequenceNumber,
 	});
-	const createMessage = (opHasMetadata: boolean) => ({
-		metadata: opHasMetadata ? { flag: true } : undefined,
-		type: ContainerMessageType.FluidDataStoreOp,
-		contents: "0",
-		referenceSequenceNumber: 0,
-	});
+	const createMessage = (opHasMetadata: boolean, batchId?: string) => {
+		let metadata: { flag?: boolean; batchId?: string } | undefined = opHasMetadata
+			? { flag: true }
+			: undefined;
+		metadata = batchId ? { ...metadata, batchId } : metadata;
+		return {
+			metadata,
+			type: ContainerMessageType.FluidDataStoreOp,
+			contents: "0",
+			referenceSequenceNumber: 0,
+		};
+	};
 
 	describe("Configs", () => {
 		interface ConfigOption {
@@ -104,10 +111,74 @@ describe("OpGroupingManager", () => {
 				{
 					contents:
 						'{"type":"groupedBatch","contents":[{"contents":0},{"contents":0},{"contents":0},{"contents":0},{"contents":0}]}',
-					metadata: undefined,
+					metadata: { batchId: undefined },
 					referenceSequenceNumber: 0,
 				},
 			]);
+		});
+
+		it("batchId on grouped batch", () => {
+			const batchId = "batchId";
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).groupBatch(createBatch(5, false, false, batchId));
+			assert.strictEqual(result.messages.length, 1);
+			assert.strictEqual(result.messages[0].metadata?.batchId, batchId);
+		});
+
+		it("empty grouped batching disabled", () => {
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: false,
+						opCountThreshold: 2,
+						reentrantBatchGroupingEnabled: false,
+					},
+					mockLogger,
+				).createEmptyGroupedBatch("resubmittingBatchId", 0);
+			});
+		});
+
+		it("create empty batch", () => {
+			const batchId = "batchId";
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).createEmptyGroupedBatch(batchId, 0);
+			assert.deepStrictEqual(result.messages, [
+				{
+					contents: '{"type":"groupedBatch","contents":[]}',
+					metadata: { batchId },
+					localOpMetadata: { emptyBatch: true },
+					referenceSequenceNumber: 0,
+				},
+			]);
+		});
+
+		it("should group on empty batch", () => {
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).shouldGroup({
+				messages: [],
+				contentSizeInBytes: 0,
+				referenceSequenceNumber: 0,
+				hasReentrantOps: false,
+			});
+			assert.strictEqual(result, true);
 		});
 
 		it("grouped batching enabled, not large enough", () => {
@@ -133,6 +204,19 @@ describe("OpGroupingManager", () => {
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true));
+			});
+		});
+
+		it("grouped batching enabled, op metadata not allowed with batch id", () => {
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: true,
+						opCountThreshold: 2,
+						reentrantBatchGroupingEnabled: false,
+					},
+					mockLogger,
+				).groupBatch(createBatch(5, false, true, "batchId"));
 			});
 		});
 	});

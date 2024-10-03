@@ -120,7 +120,7 @@ For active Fluid sessions, Azure dynamically choses the lowest-latency region/cl
 <b id="f2">2</b>: You may use either the 'primary key' or 'secondary key' for the tenantSecret.
 Two keys are provided to enable a production system to to regenerate a key without downtime by first migrating to the alternate key.[↩](#a2)
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

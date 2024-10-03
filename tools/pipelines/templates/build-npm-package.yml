@@ -319,9 +319,9 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-              # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
-              # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
-              # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
+              # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
+              # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
+              # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
               # true, we use that to determine whether to set versions.
               - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
@@ -332,8 +332,6 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
-                      STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                      STORAGE_KEY: $(STORAGE_KEY)
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
@@ -383,26 +381,32 @@ extends:
                   - ${{ if parameters.testCoverage }}:
                       - task: Bash@3
                         displayName: Check for nyc/report directory
+                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                         inputs:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
                             test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
-                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                       - task: Bash@3
                         displayName: Patch Coverage Results
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
                           script: |
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                       - task: PublishCodeCoverageResults@2
                         displayName: Publish Code Coverage
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
+                      - task: CopyFiles@2
+                        displayName: Copy code coverage report to artifact staging directory
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                          targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
@@ -572,6 +576,15 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
+                - ${{ if eq(parameters.testCoverage, true) }}:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifacts - code-coverage
+                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'), ne(variables['Build.Reason'], 'PullRequest'))
+                    targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                    artifactName: codeCoverageAnalysis
+                    sbomEnabled: false
+                    publishLocation: pipeline
+
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - _api-extractor-temp
@@ -580,22 +593,14 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                # This condition should be kept in sync with the one in include-set-package-version, which decides if
-                # upload-dev-manifest.yml should be included or not.
-                - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))) }}:
-                  - output: pipelineArtifact
-                    displayName: Publish Artifact - release_reports
-                    targetPath: $(Build.ArtifactStagingDirectory)/release_reports
-                    artifactName: release_reports
-                    sbomEnabled: false
-                    publishLocation: pipeline
-
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
         - template: include-publish-npm-package.yml
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
@@ -604,20 +609,17 @@ extends:
           condition: succeededOrFailed()
           dependsOn:
             - build
-            # NOTE: This is brittle; we need to only apply these stage dependencies when the corresponding stages actually
-            # get created in the pipeline, in the include-publish-npm-package.yml file, so we want to match the compile-time
-            # conditions *and exact stage names* that exist there. At some point it might be preferable to always create the
-            # stages, control their execution with 'condition:', and update this stage to always depend on all previous
-            # stages (while still running if some of the dependencies were skipped).
-            - ${{ if eq(parameters.publish, true) }}:
-              - ${{ if eq(variables['testBuild'], true) }}:
-                - publish_npm_internal_test
-              - ${{ if eq(variables['testBuild'], false) }}:
-                - publish_npm_internal_build
-              - ${{ if and(eq(variables['testBuild'], false), eq(parameters.isReleaseGroup, true)) }}:
-                - publish_npm_internal_dev
-              - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
-                - publish_npm_public
+            # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
+            - publish_npm_internal_test
+            - publish_npm_internal_build
+            - publish_npm_public
+            # NOTE: This is brittle; since the publish_npm_internal_dev stage is addded to the pipeline conditionally,
+            # we create a dependency on it based on the same condition.
+            # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
+            # At some point it might be preferable to always create the stage, control its execution solely with
+            # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
+            - ${{ if eq(parameters.isReleaseGroup, true) }}:
+              - publish_npm_internal_dev
           jobs:
             - job: upload_run_telemetry
               displayName: Upload pipeline run telemetry to Kusto
@@ -625,7 +627,7 @@ extends:
               variables:
               - group: ado-feeds
               - name: pipelineTelemetryWorkdir
-                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
                 readonly: true
               - name: absolutePathToTelemetryGenerator
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
@@ -637,21 +639,30 @@ extends:
                   officeFeedUrl: $(ado-feeds-office)
                   isCheckoutNeeded: true
               - task: Bash@3
-                displayName: Retrieve buildId results
+                displayName: Get stage timing and result data from ADO
+                env:
+                  BUILD_ID: $(Build.BuildId)
+                  ADO_API_TOKEN: $(System.AccessToken)
+                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
+                inputs:
+                  targetType: inline
+                  script: |
+                    echo "Creating work folder '$WORK_FOLDER'";
+                    mkdir -p $WORK_FOLDER;
+
+                    echo "Retrieving data from ADO API";
+                    echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
+                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+              - task: Bash@3
+                displayName: Submit telemetry for stage timing and result
+                env:
+                  BUILD_ID: $(Build.BuildId)
+                  PIPELINE: BuildClient
+                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
                 inputs:
                   targetType: inline
                   workingDirectory: $(absolutePathToTelemetryGenerator)
                   script: |
-                    echo "Creating output folder ..."
-                    mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
-                    echo "Retrieving pipeline run timeline data ..."
-                    echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
-                    pwd;
-                    ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-                    cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-                    node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
-                env:
-                  BUILD_ID: $(Build.BuildId)
-                  ADO_API_TOKEN: $(System.AccessToken)
-                  PIPELINE: BuildClient
+                    echo "Listing files in '$WORK_FOLDER'"
+                    ls -laR $WORK_FOLDER;
+                    node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";

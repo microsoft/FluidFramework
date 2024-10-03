@@ -33,6 +33,7 @@ declare function get_old_ClassDeclaration_AlfredResources():
 declare function use_current_ClassDeclaration_AlfredResources(
     use: TypeOnly<current.AlfredResources>): void;
 use_current_ClassDeclaration_AlfredResources(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AlfredResources());
 
 /*

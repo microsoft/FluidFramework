@@ -246,12 +246,16 @@ function transferRoots(
 /**
  * Visitor for changes in a delta.
  * Must be freed after use.
- * @internal
  */
 export interface DeltaVisitor {
 	/**
-	 * Frees/releases the visitor. Must be called once the visitor is no longer needed, since trying to acquire
-	 * a new one before freeing an existing one is invalid.
+	 * Frees/releases the visitor.
+	 *
+	 * Must be called once the visitor finished traversing the delta for a couple of reasons:
+	 *
+	 * 1. Some visitors, such as those from forests, are put into a special mode while they have a visitor, forbidding some actions (like making more visitors).
+	 *
+	 * 2. Some visitors, such as those from an anchorSet, defer some events for batching purposes until the visitor is freed.
 	 */
 	free(): void;
 	/**
@@ -473,13 +477,13 @@ function buildTrees(
 	latestRevision: RevisionTag | undefined,
 	visitor: DeltaVisitor,
 ): void {
-	for (let i = 0; i < trees.length; i += 1) {
+	for (const [i, tree] of trees.entries()) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = detachedFieldIndex.tryGetEntry(offsettedId);
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
 		const field = detachedFieldIndex.toFieldKey(root);
-		visitor.create([trees[i]], field);
+		visitor.create([tree], field);
 	}
 }
 

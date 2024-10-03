@@ -27,6 +27,7 @@ import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
 import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -74,6 +75,8 @@ export class NexusResources implements core.IResources {
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
+		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
+		public readinessCheck?: IReadinessCheck,
 	) {}
 
 	public async dispose(): Promise<void> {
@@ -160,6 +163,46 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			redisClientConnectionManager,
 			redisParams2,
 		);
+
+		/**
+		 * Whether to enable collaboration session tracking.
+		 */
+		const enableCollaborationSessionTracking: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionTracking",
+		);
+		/**
+		 * Whether to enable pruning of collaboration session tracking information on an interval.
+		 */
+		const enableCollaborationSessionPruning: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionPruning",
+		);
+		const redisCollaborationSessionManagerOptions: Partial<services.IRedisCollaborationSessionManagerOptions> =
+			config.get("nexus:redisCollaborationSessionManagerOptions") ?? {};
+		const collaborationSessionManager =
+			enableCollaborationSessionTracking === true
+				? new services.RedisCollaborationSessionManager(
+						redisClientConnectionManager,
+						redisParams2,
+						redisCollaborationSessionManagerOptions,
+				  )
+				: undefined;
+		const collaborationSessionTracker =
+			enableCollaborationSessionTracking === true
+				? new services.CollaborationSessionTracker(
+						clientManager,
+						collaborationSessionManager,
+						// Same as Deli close on inactivity, which signals session end.
+						core.DefaultServiceConfiguration.documentLambda.partitionActivityTimeout,
+				  )
+				: undefined;
+		if (
+			enableCollaborationSessionPruning === true &&
+			collaborationSessionTracker !== undefined
+		) {
+			setInterval(() => {
+				collaborationSessionTracker.pruneInactiveSessions();
+			}, core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval);
+		}
 
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
@@ -340,6 +383,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+			| number
+			| undefined;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
@@ -351,6 +397,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableWholeSummaryUpload,
 			opsCollection,
 			storageNameAllocator,
+			ephemeralDocumentTTLSec,
 		);
 
 		const maxSendMessageSize = bytes.parse(config.get("nexus:maxMessageSize"));
@@ -515,6 +562,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
+			collaborationSessionTracker,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -545,6 +594,8 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
 			resources.clusterDrainingChecker,
+			resources.collaborationSessionTracker,
+			resources.readinessCheck,
 		);
 	}
 }

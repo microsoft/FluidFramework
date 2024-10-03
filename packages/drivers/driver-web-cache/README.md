@@ -5,7 +5,7 @@ storing of user content on the user's machine in order to provide faster boot ex
 containers more than once. This implementation has a dependency on indexeddb, so it is intended to only be used in a browser
 context.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -86,7 +86,7 @@ import { deleteFluidCacheIndexDbInstance } from "@fluidframework/driver-web-cach
 deleteFluidCacheIndexDbInstance().catch(() => {});
 ```
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

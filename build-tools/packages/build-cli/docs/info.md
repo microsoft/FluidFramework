@@ -12,7 +12,7 @@ Get info about the repo, release groups, and packages.
 ```
 USAGE
   $ flub info [--json] [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian] [-c
-    releaseGroup|name|private|version|path] [-p]
+    releaseGroup|name|private|version|path...] [-p]
 
 FLAGS
   -c, --columns=<option>...    [default: releaseGroup,name,private,version] Specify which columns are included in

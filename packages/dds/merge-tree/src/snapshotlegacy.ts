@@ -83,8 +83,7 @@ export class SnapshotLegacy {
 			sequenceLength < approxSequenceLength &&
 			startIndex + segCount < allSegments.length
 		) {
-			// TODO Non null asserting, why is this not null?
-			const pseg = allSegments[startIndex + segCount]!;
+			const pseg = allSegments[startIndex + segCount];
 			segs.push(pseg);
 			if (pseg.attribution) {
 				segsWithAttribution++;
@@ -113,7 +112,7 @@ export class SnapshotLegacy {
 			chunkSequenceNumber: this.header!.seq,
 			segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
 			attribution:
-				segsWithAttribution > 0
+				segsWithAttribution > 0 || this.mergeTree.attributionPolicy?.isAttached
 					? attributionSerializer?.serializeAttributionCollections(segs)
 					: undefined,
 		};
@@ -247,7 +246,6 @@ export class SnapshotLegacy {
 			totalLength += segment.cachedLength;
 			if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 				segment.properties = undefined;
-				segment.propertyManager = undefined;
 			}
 			this.segments!.push(segment);
 		});

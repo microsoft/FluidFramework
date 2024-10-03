@@ -9,6 +9,12 @@ https://twitter.com/intent/follow*
 https://twitter.com/intent/tweet*
 https://twitter.com/fluidframework
 https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/*
+# GitHub returns 429
+https://github.com/microsoft/FluidFramework/issues/*
+
+# denied by robots.txt
+https://aka.ms/*
+https://go.microsoft.com/fwlink/*
 
 # These URLs have false positives with their anchors. Linkcheck thinks the anchors are missing.
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort*

@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeFamilyEditor, TreeStoredSchema } from "../core/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	ChangeFamilyEditor,
+	RevisionTag,
+	TaggedChange,
+	TreeStoredSchema,
+} from "../core/index.js";
 import {
 	DefaultEditBuilder,
 	type IDefaultEditBuilder,
@@ -15,7 +21,6 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 /**
  * Editor for schema changes.
  * The only currently supported operation is to replace the stored schema.
- * @internal
  */
 export interface ISchemaEditor {
 	/**
@@ -28,7 +33,6 @@ export interface ISchemaEditor {
 
 /**
  * SharedTree editor for transactional tree data and schema changes.
- * @internal
  */
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
 	/**
@@ -49,26 +53,36 @@ export class SharedTreeEditBuilder
 
 	public constructor(
 		modularChangeFamily: ModularChangeFamily,
-		private readonly changeReceiver: (change: SharedTreeChange) => void,
+		mintRevisionTag: () => RevisionTag,
+		private readonly changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
+		idCompressor?: IIdCompressor,
 	) {
-		super(modularChangeFamily, (change) =>
-			changeReceiver({
-				changes: [{ type: "data", innerChange: change }],
-			}),
+		super(
+			modularChangeFamily,
+			mintRevisionTag,
+			(taggedChange) =>
+				changeReceiver({
+					...taggedChange,
+					change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
+				}),
+			idCompressor,
 		);
 
 		this.schema = {
 			setStoredSchema: (oldSchema, newSchema) => {
 				this.changeReceiver({
-					changes: [
-						{
-							type: "schema",
-							innerChange: {
-								schema: { new: newSchema, old: oldSchema },
-								isInverse: false,
+					revision: mintRevisionTag(),
+					change: {
+						changes: [
+							{
+								type: "schema",
+								innerChange: {
+									schema: { new: newSchema, old: oldSchema },
+									isInverse: false,
+								},
 							},
-						},
-					],
+						],
+					},
 				});
 			},
 		};

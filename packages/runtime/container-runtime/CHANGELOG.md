@@ -1,5 +1,50 @@
 # @fluidframework/container-runtime
 
+## 2.3.0
+
+### Minor Changes
+
+-   Restored old op processing behavior around batched ops to avoid potential regression ([#22508](https://github.com/microsoft/FluidFramework/pull/22508)) [709f085c580](https://github.com/microsoft/FluidFramework/commit/709f085c5802bb4ad80145911ca3b05e457e9d6e)
+
+    There's a theoretical risk of indeterminate behavior due to a recent change to how batches of ops are processed.
+    This fix reverses that change.
+
+    Pull Request #21785 updated the ContainerRuntime to hold onto the messages in an incoming batch until they've all arrived, and only then process the set of messages.
+
+    While the batch is being processed, the DeltaManager and ContainerRuntime's view of the latest sequence numbers will be
+    out of sync. This may have unintended side effects, so out of an abundance of caution we're reversing this behavior until
+    we can add the proper protections to ensure the system stays properly in sync.
+
+## 2.2.0
+
+### Minor Changes
+
+-   gcThrowOnTombstoneUsage and gcTombstoneEnforcementAllowed are deprecated ([#21992](https://github.com/microsoft/FluidFramework/pull/21992)) [b2bfed3a62](https://github.com/microsoft/FluidFramework/commit/b2bfed3a624d590d776c64a3317c60400b4b3e81)
+
+    These properties `gcThrowOnTombstoneUsage` and `gcTombstoneEnforcementAllowed` have been deprecated in
+    `IFluidParentContext` and `ContainerRuntime`. These were included in certain garbage collection (GC) telemetry to
+    identify whether the corresponding features have been enabled. These features are now enabled by default and this
+    information is added to the "GarbageCollectorLoaded" telemetry.
+
+    Also, the following Garbage collection runtime options and configs have been removed. They were added during GC feature
+    development to roll out and control functionalities. The corresponding features are on by default and can no longer be
+    disabled or controlled:
+
+    GC runtime options removed:
+
+    -   `gcDisableThrowOnTombstoneLoad`
+    -   `disableDataStoreSweep`
+
+    GC configs removed:
+
+    -   `"Fluid.GarbageCollection.DisableTombstone"`
+    -   `"Fluid.GarbageCollection.ThrowOnTombstoneUsage"`
+    -   `"Fluid.GarbageCollection.DisableDataStoreSweep"`
+
+-   InactiveResponseHeaderKey header is deprecated ([#22107](https://github.com/microsoft/FluidFramework/pull/22107)) [2e4e9b2cfc](https://github.com/microsoft/FluidFramework/commit/2e4e9b2cfcdd7f5d2aa460ab9dedabd6dc2b20ba)
+
+    The header `InactiveResponseHeaderKey` is deprecated and will be removed in the future. It was part of an experimental feature where loading an inactive data store would result in returning a 404 with this header set to true. This feature is no longer supported.
+
 ## 2.1.0
 
 Dependency updates only.

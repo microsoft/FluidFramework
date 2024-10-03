@@ -144,6 +144,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 		this.producer.once(event, listener);
 	}
 
+	public off(event: "error", listener: (...args: any[]) => void) {
+		this.producer.off(event, listener);
+	}
+
 	private async submitRawOperation(messages: core.IRawOperationMessage[]): Promise<void> {
 		if (this.serviceConfiguration.enableTraces) {
 			// Add trace

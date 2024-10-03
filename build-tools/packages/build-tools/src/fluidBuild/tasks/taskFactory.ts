@@ -4,13 +4,14 @@
  */
 
 import { getExecutableFromCommand } from "../../common/utils";
+import type { BuildContext } from "../buildContext";
 import { BuildPackage } from "../buildGraph";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
-import { LeafTask, UnknownLeafTask } from "./leaf/leafTask";
+import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
@@ -30,7 +31,12 @@ import { Task } from "./task";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
-	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
+	[key: string]: new (
+		node: BuildPackage,
+		command: string,
+		context: BuildContext,
+		taskName?: string,
+	) => LeafTask;
 } = {
 	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
@@ -47,7 +53,6 @@ const executableToLeafTask: {
 	"gen-version": GenVerTask,
 	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
-	"flub list": FlubListTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate entrypoints": GenerateEntrypointsTask,
@@ -56,6 +61,15 @@ const executableToLeafTask: {
 	"depcruise": DepCruiseTask,
 	"biome check": BiomeTask,
 	"biome format": BiomeTask,
+
+	// flub list does not require a -g flag - the third argument is the release group. Rather than add custom handling for
+	// that, we just add mappings for all three.
+	"flub list": FlubListTask,
+	"flub list build-tools": FlubListTask,
+	"flub list client": FlubListTask,
+	"flub list server": FlubListTask,
+	"flub list gitrest": FlubListTask,
+	"flub list historian": FlubListTask,
 
 	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
 	// pipeline then this mapping will have to be updated.
@@ -76,6 +90,7 @@ export class TaskFactory {
 	public static Create(
 		node: BuildPackage,
 		command: string,
+		context: BuildContext,
 		pendingInitDep: Task[],
 		taskName?: string,
 	) {
@@ -84,10 +99,10 @@ export class TaskFactory {
 		const steps = command.split("&&");
 		if (steps.length > 1) {
 			for (const step of steps) {
-				subTasks.push(TaskFactory.Create(node, step.trim(), pendingInitDep));
+				subTasks.push(TaskFactory.Create(node, step.trim(), context, pendingInitDep));
 			}
 			// create a sequential group task
-			return new GroupTask(node, command, subTasks, taskName, true);
+			return new GroupTask(node, command, context, subTasks, taskName, true);
 		}
 
 		// Parse concurrently
@@ -125,7 +140,7 @@ export class TaskFactory {
 						subTasks.push(task);
 					}
 				} else {
-					subTasks.push(TaskFactory.Create(node, step, pendingInitDep));
+					subTasks.push(TaskFactory.Create(node, step, context, pendingInitDep));
 				}
 			}
 			if (subTasks.length === 0) {
@@ -135,7 +150,7 @@ export class TaskFactory {
 					}`,
 				);
 			}
-			return new GroupTask(node, command, subTasks, taskName);
+			return new GroupTask(node, command, context, subTasks, taskName);
 		}
 
 		// Resolve "npm run" to the actual script
@@ -148,16 +163,16 @@ export class TaskFactory {
 				);
 			}
 			// Even though there is only one task, create a group task for the taskName
-			return new GroupTask(node, command, [subTask], taskName);
+			return new GroupTask(node, command, context, [subTask], taskName);
 		}
 
 		// Leaf task
 		const executable = getExecutableFromCommand(command).toLowerCase();
 		const ctor = executableToLeafTask[executable];
 		if (ctor) {
-			return new ctor(node, command, taskName);
+			return new ctor(node, command, context, taskName);
 		}
-		return new UnknownLeafTask(node, command, taskName);
+		return new UnknownLeafTask(node, command, context, taskName);
 	}
 
 	/**
@@ -167,12 +182,17 @@ export class TaskFactory {
 	 * @param taskName target name
 	 * @returns the target task
 	 */
-	public static CreateTargetTask(node: BuildPackage, taskName: string | undefined) {
-		return new GroupTask(node, `fluid-build -t ${taskName}`, [], taskName);
+	public static CreateTargetTask(
+		node: BuildPackage,
+		context: BuildContext,
+		taskName: string | undefined,
+	) {
+		return new GroupTask(node, `fluid-build -t ${taskName}`, context, [], taskName);
 	}
 
 	public static CreateTaskWithLifeCycle(
 		node: BuildPackage,
+		context: BuildContext,
 		scriptTask: Task,
 		preScriptTask?: Task,
 		postScriptTask?: Task,
@@ -191,6 +211,7 @@ export class TaskFactory {
 		return new GroupTask(
 			node,
 			`npm run ${scriptTask.taskName}`,
+			context,
 			subTasks,
 			scriptTask.taskName,
 			true,

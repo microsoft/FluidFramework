@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { type MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
 import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
@@ -37,7 +37,7 @@ export class MarkQueue {
 
 		const splitMarks = splitMarkForMoveEffects(mark, this.moveEffects);
 		for (let i = splitMarks.length - 1; i > 0; i--) {
-			this.stack.push(splitMarks[i]);
+			this.stack.push(splitMarks[i] ?? oob());
 		}
 		return splitMarks[0];
 	}

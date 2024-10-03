@@ -4,29 +4,97 @@
  */
 
 export {
+	typeNameSymbol,
+	typeSchemaSymbol,
+	type WithType,
+	type TreeNodeSchema,
+	NodeKind,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaNonClass,
+	type TreeNodeSchemaCore,
+	type TreeChangeEvents,
+	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
+	// See docs on TreeNode for more details.
+	type TreeNode,
+	type Unhydrated,
+	type InternalTreeNode,
+	isTreeNode,
+	tryDisposeTreeNode,
+	HydratedContext,
+	SimpleContextSlot,
+	getOrCreateInnerNode,
+} from "./core/index.js";
+export {
 	type ITree,
 	type TreeView,
+	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
-} from "./tree.js";
+	SchemaFactory,
+	type ScopedSchemaName,
+	type ValidateRecursiveSchema,
+	type FixRecursiveArraySchema,
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
+	type EmptyObject,
+	test_RecursiveObject,
+	test_RecursiveObject_base,
+	test_RecursiveObjectPojoMode,
+	treeNodeApi,
+	type TreeNodeApi,
+	cursorFromInsertable,
+	createFromInsertable,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+	type SimpleTreeSchema,
+	type JsonSchemaId,
+	type JsonSchemaType,
+	type JsonObjectNodeSchema,
+	type JsonArrayNodeSchema,
+	type JsonMapNodeSchema,
+	type JsonLeafNodeSchema,
+	type JsonSchemaRef,
+	type JsonRefPath,
+	type JsonNodeSchema,
+	type JsonNodeSchemaBase,
+	type JsonTreeSchema,
+	type JsonFieldSchema,
+	type JsonLeafSchemaType,
+	getJsonSchema,
+	getSimpleSchema,
+	ViewSchema,
+	type Unenforced,
+	type FieldHasDefaultUnsafe,
+	type ObjectFromSchemaRecordUnsafe,
+	type TreeObjectNodeUnsafe,
+	type TreeFieldFromImplicitFieldUnsafe,
+	type TreeNodeFromImplicitAllowedTypesUnsafe,
+	type FieldSchemaUnsafe,
+	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type TreeArrayNodeUnsafe,
+	type TreeMapNodeUnsafe,
+	type InsertableObjectFromSchemaRecordUnsafe,
+	type InsertableTreeFieldFromImplicitFieldUnsafe,
+	type InsertableTypedNodeUnsafe,
+	type NodeBuilderDataUnsafe,
+	type NodeFromSchemaUnsafe,
+	type ReadonlyMapInlined,
+} from "./api/index.js";
 export {
-	type TreeNodeSchema,
 	type NodeFromSchema,
-	NodeKind,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchemaNonClass,
-	type TreeNodeSchemaCore,
+	isTreeNodeSchemaClass,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	typeNameSymbol,
-	type WithType,
 	type AllowedTypes,
 	FieldKind,
 	FieldSchema,
@@ -37,52 +105,12 @@ export {
 	type FieldProps,
 	normalizeFieldSchema,
 	type ApplyKind,
+	type FieldSchemaMetadata,
 } from "./schemaTypes.js";
-export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-export { getFlexNode, tryDisposeTreeNode } from "./proxyBinding.js";
-export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
-export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
-export type {
-	FieldHasDefaultUnsafe,
-	ObjectFromSchemaRecordUnsafe,
-	TreeObjectNodeUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
-	FieldSchemaUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTypedNodeUnsafe,
-	NodeBuilderDataUnsafe,
-	NodeFromSchemaUnsafe,
-} from "./typesUnsafe.js";
-export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
 export {
-	getProxyForField,
-	type InsertableContent,
+	getTreeNodeForField,
 	prepareContentForHydration,
 } from "./proxies.js";
-
-export {
-	adaptEnum,
-	enumFromStrings,
-	singletonSchema,
-	typedObjectValues,
-} from "./schemaCreationUtilities.js";
-
-// Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
-// These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
-export {
-	RecursiveObject as test_RecursiveObject,
-	base as test_RecursiveObject_base,
-	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
-} from "./testRecursiveDomain.js";
-
-// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
-// See docs on TreeNode for more details.
-export type { TreeChangeEvents, TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
@@ -95,5 +123,14 @@ export {
 	type TreeObjectNode,
 	setField,
 } from "./objectNode.js";
-export type { TreeMapNode } from "./mapNode.js";
-export { mapTreeFromNodeData } from "./toMapTree.js";
+export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
+export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
+export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
+export {
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+} from "./leafNodeSchema.js";
+export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";

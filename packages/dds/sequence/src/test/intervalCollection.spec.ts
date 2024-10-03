@@ -11,6 +11,8 @@ import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
+	Side,
+	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -22,7 +24,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection, Side, type SequencePlace } from "../intervalCollection.js";
+import { IIntervalCollection } from "../intervalCollection.js";
 import { IntervalIndex } from "../intervalIndex/index.js";
 import {
 	ISerializableInterval,

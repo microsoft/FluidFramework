@@ -54,7 +54,7 @@ import { brand, disposeSymbol } from "../../util/index.js";
 import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../utils.js";
 
 import { TestSharedTreeCore } from "./utils.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const enableSchemaValidation = true;
 
@@ -308,10 +308,14 @@ describe("SharedTreeCore", () => {
 			factory.attributes,
 		);
 
-		const view1 = tree1.viewWith({ schema: TestNode, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: TestNode, enableSchemaValidation }),
+		);
 		view1.initialize(new TestNode({}));
 		containerRuntimeFactory.processAllMessages();
-		const view2 = tree2.viewWith({ schema: TestNode, enableSchemaValidation });
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: TestNode, enableSchemaValidation }),
+		);
 
 		view2.root = new TestNode({});
 		view1.root = new TestNode({});
@@ -334,16 +338,20 @@ describe("SharedTreeCore", () => {
 
 	it("Does not submit changes that were aborted in an outer transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view1 = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		view1.initialize(["A", "B"]);
 		provider.processMessages();
-		const view2 = provider.trees[1].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view2 = provider.trees[1].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 
 		const root1 = view1.root;
 		const root2 = view2.root;
@@ -374,16 +382,20 @@ describe("SharedTreeCore", () => {
 
 	it("Does not submit changes that were aborted in an inner transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view1 = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		view1.initialize(["A", "B"]);
 		provider.processMessages();
-		const view2 = provider.trees[1].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view2 = provider.trees[1].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 
 		const root1 = view1.root;
 		const root2 = view2.root;

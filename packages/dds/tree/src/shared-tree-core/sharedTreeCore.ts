@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -32,6 +32,7 @@ import {
 	RevisionTagCodec,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
+	type TaggedChange,
 	type TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -214,7 +215,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 					change.newCommits.length === 1,
 					0x983 /* Unexpected number of commits when committing transaction */,
 				);
-				this.commitEnricher.prepareCommit(change.newCommits[0], true);
+				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
 			}
 		});
 		this.editManager.localBranch.on("afterChange", (change) => {
@@ -271,7 +272,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine =
 			resubmitMachine ??
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(change: TaggedChange<TChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			);
 		this.commitEnricher = new BranchCommitEnricher(changeFamily.rebaser, changeEnricher);
@@ -446,7 +448,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const {
 			commit: { revision, change },
 		} = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
-		this.editManager.localBranch.apply(change, revision);
+		this.editManager.localBranch.apply({ change, revision });
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -455,7 +457,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
-					gcNodes[id].push(route);
+					// Non null asserting here because we are creating an array at gcNodes[id] if it is undefined
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					gcNodes[id]!.push(route);
 				}
 			}
 		}

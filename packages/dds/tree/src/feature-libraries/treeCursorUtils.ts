@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -23,7 +23,6 @@ import { fail } from "../util/index.js";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
- * @internal
  */
 export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 	/**
@@ -48,7 +47,6 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
  * Create a cursor, in `nodes` mode at the root of the provided tree.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single root in `nodes` mode.
- * @internal
  */
 export function stackTreeNodeCursor<TNode>(
 	adapter: CursorAdapter<TNode>,
@@ -61,7 +59,6 @@ export function stackTreeNodeCursor<TNode>(
  * Create a cursor, in `fields` mode at the `detachedField` under the provided `root`.
  *
  * @returns an {@link ITreeCursorSynchronous} for `detachedField` of `root` in `fields` mode.
- * @internal
  */
 export function stackTreeFieldCursor<TNode>(
 	adapter: CursorAdapter<TNode>,
@@ -77,7 +74,6 @@ export function stackTreeFieldCursor<TNode>(
 
 /**
  * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
- * @internal
  */
 export interface CursorAdapter<TNode> {
 	/**
@@ -156,17 +152,21 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	private getStackedFieldKey(height: number): FieldKey {
 		assert(height % 2 === 1, 0x3b8 /* must field height */);
-		return this.siblingStack[height][this.indexStack[height]] as FieldKey;
+		const siblingStack = this.siblingStack[height] ?? oob();
+		const indexStack = this.indexStack[height] ?? oob();
+		return siblingStack[indexStack] as FieldKey;
 	}
 
 	private getStackedNodeIndex(height: number): number {
 		// assert(height % 2 === 0, "must be node height");
-		return this.indexStack[height];
+		return this.indexStack[height] ?? oob();
 	}
 
 	private getStackedNode(height: number): TNode {
 		const index = this.getStackedNodeIndex(height);
-		return (this.siblingStack[height] as readonly TNode[])[index];
+		// Test is failing when using `?? oob()` here.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return (this.siblingStack[height] as readonly TNode[])[index]!;
 	}
 
 	public getFieldLength(): number {
@@ -350,7 +350,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public getNode(): TNode {
 		// assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
-		return (this.siblings as TNode[])[this.index];
+		// Test is failing when using `?? oob()` here.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return (this.siblings as TNode[])[this.index]!;
 	}
 
 	private getField(): readonly TNode[] {
@@ -389,7 +391,6 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 /**
  * Apply `prefix` to `path`.
- * @internal
  */
 export function prefixPath(
 	prefix: PathRootPrefix | undefined,
@@ -410,7 +411,6 @@ export function prefixPath(
 
 /**
  * Apply `prefix` to `path`.
- * @internal
  */
 export function prefixFieldPath(
 	prefix: PathRootPrefix | undefined,

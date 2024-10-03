@@ -3,7 +3,7 @@
 This package provides an implementation of an in-memory undo redo stack, as well as handlers for the SharedMap and
 SharedSegmentSequence distributed data structures.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -89,7 +89,7 @@ This object minimizes the number of TrackingGroups created, so this overhead is 
 is entirely in-memory so it does not affect other users or sessions. If custom IRevertible objects use TrackingGroups
 this overhead should be kept in mind to avoid possible performance issues.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

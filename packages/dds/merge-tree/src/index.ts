@@ -70,6 +70,8 @@ export {
 	reservedMarkerSimpleTypeKey,
 	SegmentGroup,
 	toRemovalInfo,
+	ObliterateInfo,
+	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
 	Trackable,
@@ -99,6 +101,7 @@ export {
 	MergeTreeDeltaType,
 	ReferenceType,
 	IMergeTreeObliterateMsg,
+	IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 export {
 	addProperties,
@@ -122,6 +125,12 @@ export {
 } from "./referencePositions.js";
 export { SegmentGroupCollection } from "./segmentGroupCollection.js";
 export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+export {
+	InteriorSequencePlace,
+	Side,
+	SequencePlace,
+	endpointPosAndSide,
+} from "./sequencePlace.js";
 export { SortedSet } from "./sortedSet.js";
 export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet.js";
 export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegment.js";

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-base",
-	"version": "2.2.0",
+	"version": "2.4.0",
 	"description": "Shared driver code for Fluid driver implementations",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -108,12 +108,12 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.41.0",
+		"@fluid-tools/build-cli": "^0.46.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/driver-base-previous": "npm:@fluidframework/driver-base@2.0.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@fluidframework/build-tools": "^0.46.0",
+		"@fluidframework/driver-base-previous": "npm:@fluidframework/driver-base@~2.3.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
@@ -127,10 +127,11 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"socket.io-client": "^4.7.3",
+		"socket.io-client": "~4.7.5",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

@@ -252,13 +252,14 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 
 	return (
 		<div>
-			Show &nbsp;
+			Max events to display &nbsp;
 			<Dropdown
 				aria-label="Max Events to Display"
 				placeholder="Select an option"
 				size="small"
 				style={{ minWidth: "30px", zIndex: "1" }}
 				defaultValue={currentLimit.toString()}
+				selectedOptions={[currentLimit.toString()]}
 				// change the number of logs displayed on the page
 				onOptionSelect={handleMaxEventChange}
 			>
@@ -520,6 +521,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	return (
 		<>
 			<div style={{ display: "flex", gap: "10px" }}>
+				Category
 				<Dropdown
 					aria-label="Category Filter"
 					aria-expanded="false"
@@ -535,6 +537,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 						</Option>
 					))}
 				</Dropdown>
+				Event Name
 				<Combobox
 					aria-label="Event Name Filter"
 					freeform

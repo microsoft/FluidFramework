@@ -28,8 +28,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
 
 // @public
 export interface BenchmarkData {
-    customData: Record<string, unknown>;
-    customDataFormatters: Record<string, (value: unknown) => string>;
+    customData: CustomData;
     elapsedSeconds: number;
 }
 
@@ -56,7 +55,7 @@ export class BenchmarkReporter {
     constructor(outputDirectory?: string);
     recordResultsSummary(): void;
     recordSuiteResults(suiteName: string): void;
-    recordTestResult(suiteName: string, testName: string, result: Readonly<BenchmarkResult>): void;
+    recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
 }
 
 // @public
@@ -114,6 +113,12 @@ export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark &
 export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions {
     run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
 }
+
+// @public
+export type CustomData = Record<string, {
+    rawValue: unknown;
+    formattedValue: string;
+}>;
 
 // @public
 export function geometricMean(values: number[]): number;

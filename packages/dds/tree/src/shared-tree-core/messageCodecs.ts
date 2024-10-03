@@ -76,6 +76,7 @@ export function makeMessageCodecs<TChangeset>(
 		[1, v1Codec],
 		[2, makeV1CodecWithVersion(changeCodecs.resolve(2).json, revisionTagCodec, options, 2)],
 		[3, makeV1CodecWithVersion(changeCodecs.resolve(3).json, revisionTagCodec, options, 3)],
+		[4, makeV1CodecWithVersion(changeCodecs.resolve(4).json, revisionTagCodec, options, 4)],
 	]);
 }
 
@@ -88,7 +89,7 @@ function makeV1CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: 1 | 2 | 3,
+	version: 1 | 2 | 3 | 4,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,

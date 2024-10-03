@@ -24,10 +24,10 @@ import {
 	type Serializable,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { PropertySet } from "@fluidframework/merge-tree/internal";
+import { PropertySet, Side } from "@fluidframework/merge-tree/internal";
 
 import type { SequenceInterval, SharedStringClass } from "../../index.js";
-import { type IIntervalCollection, Side } from "../../intervalCollection.js";
+import { type IIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString } from "../../sharedString.js";

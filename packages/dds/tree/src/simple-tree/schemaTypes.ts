@@ -7,156 +7,32 @@ import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type LazyItem,
-	type NodeKeyManager,
-	isLazy,
-	type FlexListToUnion,
-} from "../feature-libraries/index.js";
+import type { NodeKeyManager } from "../feature-libraries/index.js";
 import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
-import type { InternalTreeNode, Unhydrated } from "./types.js";
+import type {
+	Unhydrated,
+	NodeKind,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+} from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
-import type { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./toMapTree.js";
+import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 
 /**
- * Schema for a tree node.
- * @typeParam Name - The full (including scope) name/identifier for the schema.
- * @typeParam Kind - Which kind of node this schema is for.
- * @typeParam TNode - API for nodes that use this schema.
- * @typeParam TBuild - Data which can be used to construct an {@link Unhydrated} node of this type.
- * @typeParam Info - Data used when defining this schema.
- * @remarks
- * Captures the schema both as runtime data and compile time type information.
- * @sealed @public
+ * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
  */
-export type TreeNodeSchema<
-	Name extends string = string,
-	Kind extends NodeKind = NodeKind,
-	TNode = unknown,
-	TBuild = never,
-	ImplicitlyConstructable extends boolean = boolean,
-	Info = unknown,
-> =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
-
-/**
- * Schema which is not a class.
- * @remarks
- * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
- * @privateRemarks
- * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
- * @sealed @public
- */
-export interface TreeNodeSchemaNonClass<
-	out Name extends string = string,
-	out Kind extends NodeKind = NodeKind,
-	out TNode = unknown,
-	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-	out Info = unknown,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
-	create(data: TInsertable): TNode;
-}
-
-/**
- * Tree node schema which is implemented using a class.
- * @remarks
- * Instances of this class are nodes in the tree.
- * This is also a constructor so that it can be subclassed.
- *
- * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
- * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
- *
- * When sub-classing a a `TreeNodeSchemaClass`, some extra rules must be followed:
- *
- * - Only ever use a single class from the schema's class hierarchy within a document and its schema.
- * For example, if using {@link SchemaFactory.object} you can do:
- * ```typescript
- * // Recommended "customizable" object schema pattern.
- * class Good extends schemaFactory.object("A", {
- * 	exampleField: schemaFactory.number,
- * }) {
- * 	public exampleCustomMethod(): void {
- * 		this.exampleField++;
- * 	}
- * }
- * ```
- * But should avoid:
- * ```typescript
- * // This by itself is ok, and opts into "POJO mode".
- * const base = schemaFactory.object("A", {});
- * // This is a bad pattern since it leaves two classes in scope which derive from the same SchemaFactory defined class.
- * // If both get used, its an error!
- * class Invalid extends base {}
- * ```
- * - Do not modify the constructor input parameter types or values:
- * ```typescript
- * class Invalid extends schemaFactory.object("A", {
- * 	exampleField: schemaFactory.number,
- * }) {
- * 	// This Modifies the type of the constructor input.
- * 	// This is unsupported due to programmatic access to the constructor being used internally.
- * 	public constructor(a: number) {
- * 		super({ exampleField: a });
- * 	}
- * }
- * ```
- * @sealed @public
- */
-export interface TreeNodeSchemaClass<
-	out Name extends string = string,
-	out Kind extends NodeKind = NodeKind,
-	out TNode = unknown,
-	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-	out Info = unknown,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
-	/**
-	 * Constructs an {@link Unhydrated} node with this schema.
-	 * @remarks
-	 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
-	 * Therefore, overriding this constructor with different argument types is not type-safe and is not supported.
-	 * @sealed
-	 */
-	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
-}
-
-/**
- * Data common to all tree node schema.
- * @remarks
- * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
- * @sealed @public
- */
-export interface TreeNodeSchemaCore<
-	out Name extends string,
-	out Kind extends NodeKind,
-	out ImplicitlyConstructable extends boolean,
-	out Info = unknown,
-> {
-	readonly identifier: Name;
-	readonly kind: Kind;
-
-	/**
-	 * Data used to define this schema.
-	 *
-	 * @remarks
-	 * The format depends on the kind of node it is for.
-	 * For example, the "object" node kind could store the field schema here.
-	 */
-	readonly info: Info;
-
-	/**
-	 * When constructing insertable content,
-	 * data that could be passed to the node's constructor can be used instead of an {@link Unhydrated} node
-	 * iff implicitlyConstructable is true.
-	 * @privateRemarks
-	 * Currently the logic for traversing insertable content,
-	 * both to build trees and to hydrate them does not defer to the schema classes to handle the policy,
-	 * so if their constructors differ from what is supported, some cases will not work.
-	 * Setting this to false adjusts the insertable types to disallow cases which could be impacted by these inconsistencies.
-	 */
-	readonly implicitlyConstructable: ImplicitlyConstructable;
+export function isTreeNodeSchemaClass<
+	Name extends string,
+	Kind extends NodeKind,
+	TNode,
+	TBuild,
+	ImplicitlyConstructable extends boolean,
+	Info,
+>(
+	schema: TreeNodeSchema<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>,
+): schema is TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info> {
+	return schema.constructor !== undefined;
 }
 
 /**
@@ -196,42 +72,15 @@ export enum FieldKind {
 }
 
 /**
- * Kind of tree node.
- * @remarks
- * More kinds may be added over time, so do not assume this is an exhaustive set.
- * @public
- */
-export enum NodeKind {
-	/**
-	 * A node which serves as a map, storing children under string keys.
-	 */
-	Map,
-	/**
-	 * A node which serves as an array, storing children in an ordered sequence.
-	 */
-	Array,
-	/**
-	 * A node which stores a heterogenous collection of children in named fields.
-	 * @remarks
-	 * Each field gets its own schema.
-	 */
-	Object,
-	/**
-	 * A node which stores a single leaf value.
-	 */
-	Leaf,
-}
-
-/**
- * Maps from a view key to its corresponding {@link FieldProps.key | stored key} for the provided
+ * Maps from a property key to its corresponding {@link FieldProps.key | stored key} for the provided
  * {@link ImplicitFieldSchema | field schema}.
  *
  * @remarks
  * If an explicit stored key was specified in the schema, it will be used.
- * Otherwise, the stored key is the same as the view key.
+ * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
-	return brand(getExplicitStoredKey(fieldSchema) ?? viewKey);
+export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
 /**
@@ -245,9 +94,12 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
 /**
  * Additional information to provide to a {@link FieldSchema}.
  *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
  * @public
  */
-export interface FieldProps {
+export interface FieldProps<TCustomMetadata = unknown> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -299,12 +151,19 @@ export interface FieldProps {
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
 	readonly key?: string;
+
 	/**
 	 * A default provider used for fields which were not provided any values.
 	 * @privateRemarks
 	 * We are using an erased type here, as we want to expose this API but `InsertableContent` and `NodeKeyManager` are not public.
 	 */
 	readonly defaultProvider?: DefaultProvider;
+
+	/**
+	 * Optional metadata to associate with the field.
+	 * @remarks Note: this metadata is not persisted in the document.
+	 */
+	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
 
 /**
@@ -334,7 +193,7 @@ export function isConstant(
  * Provides a default value for a field.
  * @remarks
  * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
@@ -347,16 +206,43 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
 }
 
 /**
+ * Metadata associated with a {@link FieldSchema}.
+ *
+ * @remarks Specified via {@link FieldProps.metadata}.
+ *
+ * @sealed
+ * @public
+ */
+export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
+	/**
+	 * User-defined metadata.
+	 */
+	readonly custom?: TCustomMetadata;
+
+	/**
+	 * The description of the field.
+	 *
+	 * @remarks
+	 *
+	 * If provided, will be used by the system in scenarios where a description of the field is useful.
+	 * E.g., when converting a field schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * used as the `description` field.
+	 */
+	readonly description?: string | undefined;
+}
+
+/**
  * Package internal construction API.
  */
 export let createFieldSchema: <
 	Kind extends FieldKind = FieldKind,
 	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	allowedTypes: Types,
-	props?: FieldProps,
-) => FieldSchema<Kind, Types>;
+	props?: FieldProps<TCustomMetadata>,
+) => FieldSchema<Kind, Types, TCustomMetadata>;
 
 /**
  * All policy for a specific field,
@@ -367,27 +253,33 @@ export let createFieldSchema: <
  * @privateRemarks
  * Public access to the constructor is removed to prevent creating expressible but unsupported (or not stable) configurations.
  * {@link createFieldSchema} can be used internally to create instances.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
  * @sealed @public
  */
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	out TCustomMetadata = unknown,
 > {
 	static {
 		createFieldSchema = <
 			Kind2 extends FieldKind = FieldKind,
 			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+			TCustomMetadata2 = unknown,
 		>(
 			kind: Kind2,
 			allowedTypes: Types2,
-			props?: FieldProps,
+			props?: FieldProps<TCustomMetadata2>,
 		) => new FieldSchema(kind, allowedTypes, props);
 	}
 	/**
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
 	 */
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck!: MakeNominal;
 
 	private readonly lazyTypes: Lazy<ReadonlySet<TreeNodeSchema>>;
 
@@ -397,6 +289,18 @@ export class FieldSchema<
 	 */
 	public get allowedTypeSet(): ReadonlySet<TreeNodeSchema> {
 		return this.lazyTypes.value;
+	}
+
+	/**
+	 * True if and only if, when constructing a node with this field, a value must be provided for it.
+	 */
+	public readonly requiresValue: boolean;
+
+	/**
+	 * {@inheritDoc FieldProps.metadata}
+	 */
+	public get metadata(): FieldSchemaMetadata<TCustomMetadata> | undefined {
+		return this.props?.metadata;
 	}
 
 	private constructor(
@@ -412,9 +316,12 @@ export class FieldSchema<
 		/**
 		 * Optional properties associated with the field.
 		 */
-		public readonly props?: FieldProps,
+		public readonly props?: FieldProps<TCustomMetadata>,
 	) {
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
+		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
+		this.requiresValue =
+			this.props?.defaultProvider === undefined && this.kind !== FieldKind.Optional;
 	}
 }
 
@@ -499,7 +406,7 @@ export type InsertableTreeFieldFromImplicitField<
 /**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
- * @public
+ * @system @public
  */
 export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
 	[FieldKind.Required]: T;
@@ -559,7 +466,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * This could be changed if needed.
  *
  * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
- * @public
+ * @system @public
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,
@@ -572,35 +479,9 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 
 /**
  * Value that may be stored as a leaf node.
+ * @remarks
+ * Some limitations apply, see the documentation for {@link SchemaFactory.number} and {@link SchemaFactory.string} for those restrictions.
  * @public
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
-
-/**
- * The type of a {@link TreeNode}.
- * For more information about the type, use `Tree.schema(theNode)` instead.
- * @remarks
- * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
- * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
- *
- * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where nodes are expected.
- * Instead construct a real node of the desired type using its constructor.
- * @privateRemarks
- * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
- * @public
- */
-export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
-
-/**
- * Adds a type symbol to a type for stronger typing.
- * @remarks
- * An implementation detail of {@link TreeNode}'s strong typing setup: not intended for direct use outside of this package.
- * @sealed @public
- */
-export interface WithType<TName extends string = string> {
-	/**
-	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
-	 */
-	get [typeNameSymbol](): TName;
-}

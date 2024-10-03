@@ -6,7 +6,6 @@
 import type { BTree } from "@tylerbu/sorted-btree-es6";
 import type {
 	ChangeAtomId,
-	ChangeAtomIdMap,
 	ChangesetLocalId,
 	FieldKey,
 	FieldKindIdentifier,
@@ -18,7 +17,6 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
 /**
- * @internal
  */
 export interface ModularChangeset extends HasFieldChanges {
 	/**
@@ -37,13 +35,13 @@ export interface ModularChangeset extends HasFieldChanges {
 	/**
 	 * Maps from this changeset's canonical ID for a node (see comment on node aliases) to the changes for that node.
 	 */
-	readonly nodeChanges: ChangeAtomIdMap<NodeChangeset>;
+	readonly nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
 
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
 	 */
 	// TODO: Should this be merged with `nodeChanges`?
-	readonly nodeToParent: ChangeAtomIdMap<FieldId>;
+	readonly nodeToParent: ChangeAtomIdBTree<FieldId>;
 
 	/**
 	 * Maps from a node ID to another ID for the same node.
@@ -56,15 +54,16 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * Node aliases are preserved when composing changesets so we can avoid having to find and update all changed node IDs
 	 * in the field IDs in nodeToParent and crossFieldKeys.
 	 */
-	readonly nodeAliases: ChangeAtomIdMap<NodeId>;
+	readonly nodeAliases: ChangeAtomIdBTree<NodeId>;
 	readonly crossFieldKeys: CrossFieldKeyTable;
 	readonly constraintViolationCount?: number;
-	readonly builds?: ChangeAtomIdMap<TreeChunk>;
-	readonly destroys?: ChangeAtomIdMap<number>;
-	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
+	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
+	readonly destroys?: ChangeAtomIdBTree<number>;
+	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
 
 export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
+export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
 export type CrossFieldKeyTable = TupleBTree<CrossFieldKeyRange, FieldId>;
 export type CrossFieldKeyRange = readonly [
 	CrossFieldTarget,
@@ -89,7 +88,6 @@ export interface FieldId {
 }
 
 /**
- * @internal
  */
 export interface NodeExistsConstraint {
 	violated: boolean;
@@ -97,7 +95,6 @@ export interface NodeExistsConstraint {
 
 /**
  * Changeset for a subtree rooted at a specific node.
- * @internal
  */
 export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
@@ -106,19 +103,16 @@ export interface NodeChangeset extends HasFieldChanges {
 export type NodeId = ChangeAtomId;
 
 /**
- * @internal
  */
 export interface HasFieldChanges {
 	fieldChanges?: FieldChangeMap;
 }
 
 /**
- * @internal
  */
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 /**
- * @internal
  */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
@@ -126,6 +120,5 @@ export interface FieldChange {
 }
 
 /**
- * @internal
  */
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

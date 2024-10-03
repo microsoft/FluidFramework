@@ -33,14 +33,14 @@ import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig } from "./testConfigFile.js";
+import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
 import { VirtualDataStoreFactory, type VirtualDataStore } from "./virtualDataStore.js";
 
 export interface IRunConfig {
 	runId: number;
 	profileName: string;
-	testConfig: ILoadTestConfig;
+	testConfig: TestConfiguration;
 	verbose: boolean;
 	random: IRandom;
 	logger: ITelemetryLoggerExt;
@@ -70,7 +70,7 @@ const defaultBlobSize = 1024;
  * and provide common abstractions for workload scheduling
  * via task picking.
  */
-export class LoadTestDataStoreModel {
+class LoadTestDataStoreModel {
 	private static async waitForCatchupOrDispose(
 		runtime: IFluidDataStoreRuntime,
 	): Promise<void> {
@@ -947,7 +947,7 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 	{},
 );
 
-export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
 		registryEntries: [

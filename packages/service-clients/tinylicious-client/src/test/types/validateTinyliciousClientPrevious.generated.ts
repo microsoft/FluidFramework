@@ -16,42 +16,6 @@ import type * as current from "../../index.js";
 declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CompatibilityMode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<old.CompatibilityMode>, TypeOnly<current.CompatibilityMode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CompatibilityMode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<current.CompatibilityMode>, TypeOnly<old.CompatibilityMode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ITinyliciousAudience": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ITinyliciousAudience = requireAssignableTo<TypeOnly<old.ITinyliciousAudience>, TypeOnly<current.ITinyliciousAudience>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ITinyliciousAudience": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ITinyliciousAudience = requireAssignableTo<TypeOnly<current.ITinyliciousAudience>, TypeOnly<old.ITinyliciousAudience>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -70,15 +34,6 @@ declare type current_as_old_for_Class_TinyliciousClient = requireAssignableTo<Ty
 declare type current_as_old_for_ClassStatics_TinyliciousClient = requireAssignableTo<TypeOnly<typeof current.TinyliciousClient>, TypeOnly<typeof old.TinyliciousClient>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TinyliciousClientProps": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_TinyliciousClientProps = requireAssignableTo<TypeOnly<old.TinyliciousClientProps>, TypeOnly<current.TinyliciousClientProps>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -86,15 +41,6 @@ declare type old_as_current_for_Interface_TinyliciousClientProps = requireAssign
  * "Interface_TinyliciousClientProps": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_TinyliciousClientProps = requireAssignableTo<TypeOnly<current.TinyliciousClientProps>, TypeOnly<old.TinyliciousClientProps>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TinyliciousConnectionConfig": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_TinyliciousConnectionConfig = requireAssignableTo<TypeOnly<old.TinyliciousConnectionConfig>, TypeOnly<current.TinyliciousConnectionConfig>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -106,15 +52,6 @@ declare type old_as_current_for_Interface_TinyliciousConnectionConfig = requireA
 declare type current_as_old_for_Interface_TinyliciousConnectionConfig = requireAssignableTo<TypeOnly<current.TinyliciousConnectionConfig>, TypeOnly<old.TinyliciousConnectionConfig>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TinyliciousContainerServices": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_TinyliciousContainerServices = requireAssignableTo<TypeOnly<old.TinyliciousContainerServices>, TypeOnly<current.TinyliciousContainerServices>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -122,15 +59,6 @@ declare type old_as_current_for_Interface_TinyliciousContainerServices = require
  * "Interface_TinyliciousContainerServices": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_TinyliciousContainerServices = requireAssignableTo<TypeOnly<current.TinyliciousContainerServices>, TypeOnly<old.TinyliciousContainerServices>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TinyliciousMember": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_TinyliciousMember = requireAssignableTo<TypeOnly<old.TinyliciousMember>, TypeOnly<current.TinyliciousMember>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -142,15 +70,6 @@ declare type old_as_current_for_Interface_TinyliciousMember = requireAssignableT
 declare type current_as_old_for_Interface_TinyliciousMember = requireAssignableTo<TypeOnly<current.TinyliciousMember>, TypeOnly<old.TinyliciousMember>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TinyliciousUser": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_TinyliciousUser = requireAssignableTo<TypeOnly<old.TinyliciousUser>, TypeOnly<current.TinyliciousUser>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -158,3 +77,30 @@ declare type old_as_current_for_Interface_TinyliciousUser = requireAssignableTo<
  * "Interface_TinyliciousUser": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_TinyliciousUser = requireAssignableTo<TypeOnly<current.TinyliciousUser>, TypeOnly<old.TinyliciousUser>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CompatibilityMode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<old.CompatibilityMode>, TypeOnly<current.CompatibilityMode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CompatibilityMode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<current.CompatibilityMode>, TypeOnly<old.CompatibilityMode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ITinyliciousAudience": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ITinyliciousAudience = requireAssignableTo<TypeOnly<current.ITinyliciousAudience>, TypeOnly<old.ITinyliciousAudience>>

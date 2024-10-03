@@ -22,6 +22,7 @@ export type {
 	HasMarkFields,
 	CellMark,
 	AttachAndDetach,
+	Rename,
 } from "./types.js";
 export { DetachIdOverrideType } from "./formatV1.js";
 export {

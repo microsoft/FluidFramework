@@ -99,7 +99,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[map1Id, SharedMap.getFactory()],
 		[map2Id, SharedMap.getFactory()],
 	];
-	const testContainerConfig: ITestContainerConfig = {
+	let testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		loaderProps: {
@@ -122,7 +122,16 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let dataObject2map1: ISharedMap;
 	let dataObject2map2: ISharedMap;
 
-	async function setupContainers(runtimeOptions?: IContainerRuntimeOptions) {
+	async function setupContainers(
+		runtimeOptions?: IContainerRuntimeOptions,
+		disableOfflineLoad = false,
+	) {
+		if (disableOfflineLoad) {
+			testContainerConfig = {
+				...testContainerConfig,
+				loaderProps: { configProvider: configProvider({}) },
+			};
+		}
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.
@@ -191,13 +200,23 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	it("Can't set up a container with Immediate Mode and Offline Load", async () => {
+		await assert.rejects(
+			setupContainers({ flushMode: FlushMode.Immediate }),
+			"Offline load is not supported with Immediate mode",
+		);
+	});
+
 	describe("Batch metadata verification when ops are flushed in batches", () => {
 		let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
 		let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
-		function testFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
+		function testFlushingUsingOrderSequentially(
+			options: IContainerRuntimeOptions,
+			disableOfflineLoad,
+		) {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers(options);
+				await setupContainers(options, disableOfflineLoad);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -354,16 +373,26 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		describe("Flushing of batches via orderSequentially [TurnBased]", () => {
-			testFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased });
+			testFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased }, false);
 		});
 
 		describe("Flushing of batches via orderSequentially [Immediate]", () => {
-			testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate });
+			testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
 		});
 
-		describe("TurnBased flushing of batches", () => {
+		function testFlushingOfBatches(compressionEnabled: boolean) {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({ flushMode: FlushMode.TurnBased });
+				const noCompressionConfig = {
+					flushMode: FlushMode.TurnBased,
+				};
+				const compressionConfig = {
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 1,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+				};
+				await setupContainers(compressionEnabled ? compressionConfig : noCompressionConfig);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -471,130 +500,19 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 				verifyBatchMetadata(dataObject2BatchMessages.slice(2, 4));
 				verifyBatchMetadata(dataObject2BatchMessages.slice(4, 6));
 			});
+		}
+
+		describe("TurnBased flushing of batches: compression [false]", () => {
+			testFlushingOfBatches(false);
 		});
 
-		describe("TurnBased flushing of batches with compression", () => {
-			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({
-					flushMode: FlushMode.TurnBased,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-				});
-				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
-				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
-			});
-
-			it("can send and receive multiple batch ops that are flushed on JS turn", async () => {
-				// Send the ops that are to be batched together.
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Wait for the ops to get processed by both the containers.
-				await provider.ensureSynchronized();
-
-				assert.equal(
-					filterDatastoreOps(dataObject1BatchMessages).length,
-					4,
-					"Incorrect number of messages received on local client",
-				);
-				assert.equal(
-					filterDatastoreOps(dataObject2BatchMessages).length,
-					4,
-					"Incorrect number of messages received on remote client",
-				);
-
-				verifyBatchMetadata(dataObject1BatchMessages);
-				verifyBatchMetadata(dataObject2BatchMessages);
-			});
-
-			it("can send and receive single batch op that is flushed on JS turn", async () => {
-				dataObject1map1.set("key1", "value1");
-
-				// Yield a turn so that the op is flushed.
-				await yieldJSTurn();
-
-				// Wait for the ops to get processed by both the containers.
-				await provider.ensureSynchronized();
-
-				assert.equal(
-					dataObject1BatchMessages.length,
-					1,
-					"Incorrect number of messages received on local client",
-				);
-				assert.equal(
-					dataObject2BatchMessages.length,
-					1,
-					"Incorrect number of messages received on remote client",
-				);
-
-				verifyBatchMetadata(dataObject1BatchMessages);
-				verifyBatchMetadata(dataObject2BatchMessages);
-			});
-
-			// Disabled due to issue #9546
-			it.skip("can send and receive consecutive batches that are flushed on JS turn", async () => {
-				/**
-				 * This test verifies that among other things, the PendingStateManager's algorithm of handling
-				 * consecutive batches is correct.
-				 */
-
-				// Send the ops that are to be batched together.
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Send the second set of ops that are to be batched together.
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Send a third set of ops that are to be batched together.
-				dataObject1map1.set("key5", "value5");
-				dataObject1map2.set("key6", "value6");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Wait for the ops to get processed by both the containers.
-				await provider.ensureSynchronized();
-
-				assert.equal(
-					dataObject1BatchMessages.length,
-					6,
-					"Incorrect number of messages received on local client",
-				);
-				assert.equal(
-					dataObject2BatchMessages.length,
-					6,
-					"Incorrect number of messages received on remote client",
-				);
-
-				// Verify the local client's batches.
-				verifyBatchMetadata(dataObject1BatchMessages.slice(0, 2));
-				verifyBatchMetadata(dataObject1BatchMessages.slice(2, 4));
-				verifyBatchMetadata(dataObject1BatchMessages.slice(4, 6));
-
-				// Verify the remote client's batches.
-				verifyBatchMetadata(dataObject2BatchMessages.slice(0, 2));
-				verifyBatchMetadata(dataObject2BatchMessages.slice(2, 4));
-				verifyBatchMetadata(dataObject2BatchMessages.slice(4, 6));
-			});
+		describe("TurnBased flushing of batches: compression [true]", () => {
+			testFlushingOfBatches(true);
 		});
 
 		describe("Immediate flushing of ops", () => {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({ flushMode: FlushMode.Immediate });
+				await setupContainers({ flushMode: FlushMode.Immediate }, true);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -624,13 +542,16 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		describe("Immediate flushing of ops with compression", () => {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({
-					flushMode: FlushMode.Immediate,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
+				await setupContainers(
+					{
+						flushMode: FlushMode.Immediate,
+						compressionOptions: {
+							minimumBatchSizeInBytes: 1,
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
 					},
-				});
+					true,
+				);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -671,9 +592,12 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.equal(dirty, expectedState, "The document dirty state is not as expected");
 		}
 
-		function testAutomaticFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
+		function testAutomaticFlushingUsingOrderSequentially(
+			options: IContainerRuntimeOptions,
+			disableOfflineLoad,
+		) {
 			beforeEach("setupContainers", async () => {
-				await setupContainers(options);
+				await setupContainers(options, disableOfflineLoad);
 			});
 
 			it("should clean document dirty state after a batch with single message is sent", async () => {
@@ -763,11 +687,11 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		describe("Automatic flushing of batches via orderSequentially [TurnBased]", () => {
-			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased });
+			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased }, false);
 		});
 
 		describe("Automatic flushing of batches via orderSequentially [Immediate]", () => {
-			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate });
+			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
 		});
 
 		describe("TurnBased flushing of batches", () => {

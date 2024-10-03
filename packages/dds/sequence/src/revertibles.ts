@@ -21,9 +21,11 @@ import {
 	isMergeTreeDeltaRevertible,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
+	InteriorSequencePlace,
+	Side,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 
-import { InteriorSequencePlace, Side } from "./intervalCollection.js";
 import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import { ISharedString, SharedStringSegment } from "./sharedString.js";
@@ -301,7 +303,8 @@ export function appendSharedStringDeltaToRevertibles(
 
 		// find interval endpoints in each segment
 		for (const deltaRange of delta.ranges) {
-			const refs = deltaRange.segment.localRefs;
+			const segment: ISegmentInternal = deltaRange.segment;
+			const refs = segment.localRefs;
 			if (refs !== undefined && deltaRange.position !== -1) {
 				for (const ref of refs) {
 					addIfIntervalEndpoint(ref, segmentLengths, startIntervals, endIntervals);
@@ -323,9 +326,7 @@ export function appendSharedStringDeltaToRevertibles(
 				event: IntervalOpType.POSITION_REMOVE,
 				intervals: [],
 				revertibleRefs,
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				mergeTreeRevertible: removeRevertibles[0]!,
+				mergeTreeRevertible: removeRevertibles[0],
 			};
 
 			// add an interval for each startInterval, accounting for any corresponding endIntervals
@@ -336,9 +337,7 @@ export function appendSharedStringDeltaToRevertibles(
 				});
 				let endOffset: number | undefined;
 				if (endIntervalIndex !== -1) {
-					// TODO Non null asserting, why is this not null?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					endOffset = endIntervals[endIntervalIndex]!.offset;
+					endOffset = endIntervals[endIntervalIndex].offset;
 					endIntervals.splice(endIntervalIndex, 1);
 				}
 
@@ -588,9 +587,7 @@ interface RangeInfo {
 // eslint-disable-next-line import/no-deprecated
 class SortedRangeSet extends SortedSet<RangeInfo, string> {
 	protected getKey(item: RangeInfo): string {
-		// TODO Non null asserting, why is this not null?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return item.ranges[0]!.segment.ordinal;
+		return item.ranges[0].segment.ordinal;
 	}
 }
 

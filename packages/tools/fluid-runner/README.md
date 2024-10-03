@@ -2,7 +2,7 @@
 
 This package contains utility for running various functionality inside a Fluid Framework environment.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:apiDocs=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:apiDocs=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -117,7 +117,7 @@ The code around `exportFile` can be consumed in multiple different layers. It is
 
 For an example of a consumption path that differs slightly to [`exportFile(...)`](./src/exportFile.ts), see [`parseBundleAndExportFile(...)`](./src/parseBundleAndExportFile.ts). In addition to running the same logic as [`exportFile`](./src/exportFile.ts) method, it implements the logic around parsing a dynamically provided bundle path into an `IFluidFileConverter` object.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:clientRequirements=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

@@ -8,6 +8,7 @@ import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
 import { PackageCommand } from "../../BasePackageCommand.js";
+import { semverFlag } from "../../flags.js";
 
 export default class CheckBuildVersionCommand extends PackageCommand<
 	typeof CheckBuildVersionCommand
@@ -16,7 +17,7 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 		`Checks that all packages have the same version set in package.json. The packages checked can be filtered by standard criteria. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.`;
 
 	static readonly flags = {
-		version: Flags.string({
+		version: semverFlag({
 			description: "The version against which to check all the packages.",
 			exclusive: ["path"],
 		}),
@@ -46,7 +47,7 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 			const pkg = new Package(path.join(this.flags.path, "package.json"), "none");
 			this.versionToCheck = pkg.version;
 		} else {
-			this.versionToCheck = this.flags.version;
+			this.versionToCheck = this.flags.version.version;
 		}
 	}
 

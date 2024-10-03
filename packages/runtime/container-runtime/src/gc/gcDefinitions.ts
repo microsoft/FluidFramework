@@ -38,20 +38,6 @@ export const stableGCVersion: GCVersion = 3;
 export const nextGCVersion: GCVersion = 4;
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable throwing an error when tombstone
- * object is loaded (requested), merely logging a message instead.
- *
- * By default, attempting to load a Tombstoned object will result in an error.
- */
-export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
-
-/**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable Sweep for blobs only.
- * Only applies if enableGCSweep option is set to true.
- */
-export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
-
-/**
  * This undocumented GC Option (on ContainerRuntime Options) allows configuring which documents can have Sweep enabled.
  * This provides a way to disable both Tombstone Enforcement and Sweep.
  *
@@ -68,19 +54,11 @@ export const gcGenerationOptionName = "gcGeneration";
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-/** Config key to disable the tombstone feature, i.e., tombstone information is not read / written into summary. */
-export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
-/** Config key to override throwing an error when tombstone object is loaded (requested). */
-export const throwOnTombstoneLoadOverrideKey =
-	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride";
-/** Config key to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops). */
-export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
+/** Config key to disable throwing an error when tombstone object is loaded (requested). */
+export const disableThrowOnTombstoneLoadKey =
+	"Fluid.GarbageCollection.DisableThrowOnTombstoneLoad";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
-/** Config key to disable GC sweep for datastores. They'll merely be Tombstoned. */
-export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
-/** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
-export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -339,12 +317,6 @@ export interface IGarbageCollector {
 	readonly shouldRunGC: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
-	/** Tells whether tombstone feature is enabled and enforced. */
-	readonly tombstoneEnforcementAllowed: boolean;
-	/** Tells whether loading a tombstone object should fail or merely log. */
-	readonly throwOnTombstoneLoad: boolean;
-	/** Tells whether using a tombstone object should fail or merely log. */
-	readonly throwOnTombstoneUsage: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
@@ -480,22 +452,17 @@ export interface IGCRuntimeOptions {
  */
 export interface IGarbageCollectorConfigs {
 	/**
-	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC.
+	 * Tracks if GC is allowed for this document. GC may not be allowed for old documents created pre-GC.
+	 * If GC is allowed for a document, it will always be enabled. It cannot be disabled per session.
 	 */
-	readonly gcEnabled: boolean;
+	readonly gcAllowed: boolean;
 	/**
-	 * Tracks if sweep phase is allowed for this document. This is specified during document creation and doesn't change
-	 * throughout its lifetime.
+	 * Tracks whether sweep phase is allowed for this document. Sweep can be disabled per session via the sweepEnabled
+	 * flag defined below.
 	 */
+	readonly sweepAllowed: boolean;
+	/** Tracks if sweep phase is enabled to run in this session or not */
 	readonly sweepEnabled: boolean;
-	/** Is Tombstone AutoRecovery enabled? Useful for preventing the GC "TombstoneLoaded" op, for compatibility reasons */
-	readonly tombstoneAutorecoveryEnabled: boolean;
-	/**
-	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
-	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled
-	 * for the session, depending on a variety of other configurations present.
-	 */
-	readonly shouldRunSweep: "YES" | "ONLY_BLOBS" | "NO";
 	/**
 	 * If true, bypass optimizations and generate GC data for all nodes irrespective of whether a node changed or not.
 	 */
@@ -513,26 +480,14 @@ export interface IGarbageCollectorConfigs {
 	readonly inactiveTimeoutMs: number;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
-	/**
-	 * Tracks whether GC should run in tombstone mode. In this mode, objects are marked as tombstones as a step along the
-	 * way before they are fully deleted.
-	 * In interactive (non-summarizer) clients, tombstone objects behave as if they are deleted, i.e., access to them
-	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a "warning"
-	 * step before sweep, where objects wrongly marked as unreferenced can be recovered.
-	 */
-	readonly tombstoneMode: boolean;
 	/** @see GCFeatureMatrix. */
 	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 	/** The version of GC in the base snapshot. */
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 	/** The current version of GC data in the running code */
 	readonly gcVersionInEffect: GCVersion;
-	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
-	readonly throwOnInactiveLoad: boolean | undefined;
 	/** If true, throw an error when a tombstone data store is retrieved */
 	readonly throwOnTombstoneLoad: boolean;
-	/** If true, throw an error when a tombstone data store is used. */
-	readonly throwOnTombstoneUsage: boolean;
 }
 
 /** The state of node that is unreferenced. */

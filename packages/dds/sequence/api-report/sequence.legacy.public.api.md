@@ -6,6 +6,8 @@
 
 export { BaseSegment }
 
+export { InteriorSequencePlace }
+
 export { ISegment }
 
 export { LocalReferencePosition }
@@ -23,6 +25,10 @@ export { ReferencePosition }
 export { ReferenceType }
 
 export { reservedMarkerIdKey }
+
+export { SequencePlace }
+
+export { Side }
 
 export { TextSegment }
 

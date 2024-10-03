@@ -62,6 +62,27 @@ To strictly run documentation generation for the remainder of the repo (everythi
 npm run build:repo-docs
 ```
 
+## Building the documentation locally
+
+To build the website and run other repo-wide documentation generation, first run the `build` script in the root of the repo.
+This will generate local api docs in the `_api-extractor-temp` directory.
+
+```bash
+npm run build
+```
+
+Once the local api docs is generated, run the `build:local` script.
+The output will be in the `public/` folder.
+
+```bash
+npm run build:local
+```
+
+Note that this calls the `local-api-rollup` script which simulates the `download` process in the regular build.
+However, instead of downloading the api content, the `_doc-models` directory is populated by copying the models from `_api-extractor-temp`.
+The local api content from `_api-extractor-temp` is copied to `_doc-models/local`.
+
+
 ### Drafts
 
 Work-in-progress documents that are not ready for public consumption can be safely added by annotating them with the `draft` flag in their frontmatter.
@@ -334,7 +355,7 @@ The site theme/template lives in `themes/thxvscode`.
 
 The following npm scripts are supported in this directory:
 
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCRIPTS:includeHeading=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -344,6 +365,10 @@ The following npm scripts are supported in this directory:
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
+| `build:local` | `concurrently npm:build:local:api npm:build:md-magic && npm run hugo` |
+| `build:local:api` | `npm run download:api && npm run build:local:rollup && npm run build:local:api-documentation && npm run build:redirects` |
+| `build:local:api-documentation` | `node ./api-markdown-documenter/index.js true` |
+| `build:local:rollup` | `node ./local-api-rollup.js` |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
 | `build:redirects` | Copies the versions file from Hugo's data directory, so the redirection azure function has access to it. |

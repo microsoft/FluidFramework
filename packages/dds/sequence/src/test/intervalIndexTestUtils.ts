@@ -6,10 +6,9 @@
 import { strict as assert } from "assert";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { PropertySet } from "@fluidframework/merge-tree/internal";
+import { PropertySet, type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
 import { v4 as uuid } from "uuid";
 
-import { type SequencePlace, Side } from "../intervalCollection.js";
 import { Interval, IntervalStickiness, type SequenceInterval } from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
 

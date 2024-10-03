@@ -254,6 +254,14 @@ export class Outbox {
 		// Don't use resubmittingBatchId for idAllocationBatch.
 		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);
+		// We need to flush an empty batch if the main batch *becomes* empty on resubmission.
+		// When resubmitting the main batch, the blobAttach batch will always be empty since we don't resubmit them simultaneously.
+		// And conversely, the blobAttach will never *become* empty on resubmit.
+		// So if both blobAttachBatch and mainBatch are empty, we must submit an empty main batch.
+		if (resubmittingBatchId && this.blobAttachBatch.empty && this.mainBatch.empty) {
+			this.flushEmptyBatch(resubmittingBatchId);
+			return;
+		}
 		this.flushInternal(
 			this.blobAttachBatch,
 			true /* disableGroupedBatching */,
@@ -264,6 +272,28 @@ export class Outbox {
 			false /* disableGroupedBatching */,
 			resubmittingBatchId,
 		);
+	}
+
+	private flushEmptyBatch(resubmittingBatchId: BatchId) {
+		const referenceSequenceNumber =
+			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
+		assert(
+			referenceSequenceNumber !== undefined,
+			0xa01 /* reference sequence number should be defined */,
+		);
+		const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+			resubmittingBatchId,
+			referenceSequenceNumber,
+		);
+		let clientSequenceNumber: number | undefined;
+		if (this.params.shouldSend()) {
+			clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+		}
+		this.params.pendingStateManager.onFlushBatch(
+			emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+			clientSequenceNumber,
+		);
+		return;
 	}
 
 	private flushInternal(
@@ -416,9 +446,7 @@ export class Outbox {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				batch.messages[0]!.compression === undefined,
+				batch.messages[0].compression === undefined,
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 

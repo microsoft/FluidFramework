@@ -70,7 +70,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
-	MessageType2,
 	OnlineStatus,
 	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
@@ -221,6 +220,7 @@ export interface IContainerCreateProps {
 	 * A property bag of options used by various layers
 	 * to control features
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly options: ILoaderOptions;
 
 	/**
@@ -482,6 +482,7 @@ export class Container
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
+	// eslint-disable-next-line import/no-deprecated
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
@@ -881,9 +882,7 @@ export class Container
 							: this.deltaManager?.lastMessage?.clientId,
 					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 					connectionStateDuration: () =>
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						performance.now() - this.connectionTransitionTimes[this.connectionState]!,
+						performance.now() - this.connectionTransitionTimes[this.connectionState],
 				},
 			},
 		});
@@ -927,10 +926,7 @@ export class Container
 						mode,
 						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
-							performance.now() -
-							// TODO why are we non null asserting here?
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							this.connectionTransitionTimes[ConnectionState.CatchingUp]!,
+							performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
 					});
 
@@ -1049,8 +1045,7 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError): void {
-		this._deltaManager.dispose(error);
-		this.verifyClosed();
+		this.verifyClosedAfter(() => this._deltaManager.dispose(error));
 	}
 
 	public close(error?: ICriticalContainerError): void {
@@ -1058,20 +1053,30 @@ export class Container
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		this._deltaManager.close(error);
-		this.verifyClosed();
+		this.verifyClosedAfter(() => this._deltaManager.close(error));
 	}
 
-	private verifyClosed(): void {
-		assert(
-			this.connectionState === ConnectionState.Disconnected,
-			0x0cf /* "disconnect event was not raised!" */,
-		);
+	private verifyClosedAfterCalls = 0;
+	private verifyClosedAfter(callback: () => void): void {
+		this.verifyClosedAfterCalls++;
+		try {
+			callback();
+		} finally {
+			this.verifyClosedAfterCalls--;
+		}
 
-		assert(
-			this._lifecycleState === "closed" || this._lifecycleState === "disposed",
-			0x314 /* Container properly closed */,
-		);
+		// We only want to verify connectionState and lifecycleState after close/dispose has fully finished
+		if (this.verifyClosedAfterCalls === 0) {
+			assert(
+				this.connectionState === ConnectionState.Disconnected,
+				0x0cf /* "disconnect event was not raised!" */,
+			);
+
+			assert(
+				this._lifecycleState === "closed" || this._lifecycleState === "disposed",
+				0x314 /* Container properly closed */,
+			);
+		}
 	}
 
 	private closeCore(error?: ICriticalContainerError): void {
@@ -1842,9 +1847,7 @@ export class Container
 		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			baseTree.blobs.quorumValues!,
+			baseTree.blobs.quorumValues,
 		);
 		this.initializeProtocolState(
 			attributes,
@@ -1880,24 +1883,12 @@ export class Container
 			const baseTree = getProtocolSnapshotTree(snapshot);
 			[quorumSnapshot.members, quorumSnapshot.proposals, quorumSnapshot.values] =
 				await Promise.all([
-					readAndParse<[string, ISequencedClient][]>(
-						storage,
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						baseTree.blobs.quorumMembers!,
-					),
+					readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
 					readAndParse<[number, ISequencedProposal, string[]][]>(
 						storage,
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						baseTree.blobs.quorumProposals!,
+						baseTree.blobs.quorumProposals,
 					),
-					readAndParse<[string, ICommittedProposal][]>(
-						storage,
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						baseTree.blobs.quorumValues!,
-					),
+					readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
 				]);
 		}
 
@@ -2133,14 +2124,14 @@ export class Container
 		lastProcessedSequenceNumber?: number,
 	): Promise<void> {
 		return this._deltaManager.attachOpHandler(
-			attributes.minimumSequenceNumber,
-			attributes.sequenceNumber,
+			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
+			attributes.sequenceNumber /* snapshotSequenceNumber */,
 			{
 				process: (message) => this.processRemoteMessage(message),
 				processSignal: (message) => {
 					this.processSignal(message);
 				},
-			},
+			} /* handler to process incoming delta messages */,
 			prefetchType,
 			lastProcessedSequenceNumber,
 		);
@@ -2154,9 +2145,7 @@ export class Container
 		// Log actual event
 		const time = performance.now();
 		this.connectionTransitionTimes[value] = time;
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const duration = time - this.connectionTransitionTimes[oldState]!;
+		const duration = time - this.connectionTransitionTimes[oldState];
 
 		let durationFromDisconnected: number | undefined;
 		let connectionInitiationReason: string | undefined;
@@ -2168,9 +2157,7 @@ export class Container
 		} else {
 			if (value === ConnectionState.Connected) {
 				durationFromDisconnected =
-					// TODO why are we non null asserting here?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					time - this.connectionTransitionTimes[ConnectionState.Disconnected]!;
+					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
 				durationFromDisconnected = formatTick(durationFromDisconnected);
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
@@ -2333,6 +2320,10 @@ export class Container
 		);
 	}
 
+	/**
+	 * Processes incoming delta messages
+	 * @param message - delta message received from the server
+	 */
 	private processRemoteMessage(message: ISequencedDocumentMessage): void {
 		const local = this.clientId === message.clientId;
 
@@ -2372,8 +2363,7 @@ export class Container
 			this.noopHeuristic.notifyMessageProcessed(message);
 			// The contract with the protocolHandler is that returning "immediateNoOp" is equivalent to "please immediately accept the proposal I just processed".
 			if (result.immediateNoOp === true) {
-				// ADO:1385: Remove cast and use MessageType once definition changes propagate
-				this.submitMessage(MessageType2.Accept as unknown as MessageType);
+				this.submitMessage(MessageType.Accept);
 			}
 		}
 

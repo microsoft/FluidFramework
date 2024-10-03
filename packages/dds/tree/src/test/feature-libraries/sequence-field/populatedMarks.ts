@@ -37,10 +37,9 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		finalEndpoint: atomId,
 	};
 	const detach: Populated<Detach> = {
-		type: "MoveOut",
+		type: "Remove",
 		id: brand(0),
 		revision: tag,
-		finalEndpoint: atomId,
 		idOverride: atomId,
 	};
 	const populatedMarks: PopulatedMark[] = [
@@ -82,6 +81,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 			attach,
 			detach,
 		},
+		{ type: "Rename", count: 1, cellId: atomId, changes, idOverride: atomId },
 	];
 	return populatedMarks;
 }

@@ -14,12 +14,8 @@
           }
         },
         "detach": {
-          "moveOut": {
+          "delete": {
             "revision": 0,
-            "finalEndpoint": [
-              0,
-              0
-            ],
             "idOverride": {
               "type": 0,
               "id": {

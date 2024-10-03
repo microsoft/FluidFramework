@@ -26,6 +26,9 @@ import {
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
+	Side,
+	SequencePlace,
+	endpointPosAndSide,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -64,58 +67,6 @@ import {
 	sequenceIntervalHelpers,
 	startReferenceSlidingPreference,
 } from "./intervals/index.js";
-
-/**
- * Defines a position and side relative to a character in a sequence.
- *
- * For this purpose, sequences look like:
- *
- * `{start} - {character 0} - {character 1} - ... - {character N} - {end}`
- *
- * Each `{value}` in the diagram is a character within a sequence.
- * Each `-` in the above diagram is a position where text could be inserted.
- * Each position between a `{value}` and a `-` is a `SequencePlace`.
- *
- * The special endpoints `{start}` and `{end}` refer to positions outside the
- * contents of the string.
- *
- * This gives us 2N + 2 possible positions to refer to within a string, where N
- * is the number of characters.
- *
- * If the position is specified with a bare number, the side defaults to
- * `Side.Before`.
- *
- * If a SequencePlace is the endpoint of a range (e.g. start/end of an interval or search range),
- * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
- * E.g. the start of a range with Side.After is exclusive of the character at the position.
- * @legacy
- * @alpha
- */
-export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
-
-/**
- * A sequence place that does not refer to the special endpoint segments.
- *
- * See {@link SequencePlace} for additional context.
- * @legacy
- * @alpha
- */
-export interface InteriorSequencePlace {
-	pos: number;
-	side: Side;
-}
-
-/**
- * Defines a side relative to a character in a sequence.
- *
- * @remarks See {@link SequencePlace} for additional context on usage.
- * @legacy
- * @alpha
- */
-export enum Side {
-	Before = 0,
-	After = 1,
-}
 
 export const reservedIntervalIdKey = "intervalId";
 
@@ -177,28 +128,6 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 	}
 
 	return base;
-}
-
-export function endpointPosAndSide(
-	start: SequencePlace | undefined,
-	end: SequencePlace | undefined,
-) {
-	const startIsPlainEndpoint =
-		typeof start === "number" || start === "start" || start === "end";
-	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
-
-	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
-	const endSide = endIsPlainEndpoint ? Side.Before : end?.side;
-
-	const startPos = startIsPlainEndpoint ? start : start?.pos;
-	const endPos = endIsPlainEndpoint ? end : end?.pos;
-
-	return {
-		startSide,
-		endSide,
-		startPos,
-		endPos,
-	};
 }
 
 export function toSequencePlace(
@@ -375,7 +304,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 						"Adding an interval that belongs to another interval collection is not permitted",
 					);
 				}
-				interval.addProperties(props);
+				interval.properties = addProperties(interval.properties, props);
 			}
 			interval.properties[reservedIntervalIdKey] ??= uuid();
 			this.add(interval);
@@ -668,9 +597,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	public next(): IteratorResult<TInterval> {
 		if (this.index < this.results.length) {
 			return {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				value: this.results[this.index++]!,
+				value: this.results[this.index++],
 				done: false,
 			};
 		}
@@ -816,7 +743,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * it is possible to control whether the interval expands to include content
 	 * inserted at its start or end.
 	 *
-	 *	See {@link SequencePlace} for more details on the model.
+	 *	See {@link @fluidframework/merge-tree#SequencePlace} for more details on the model.
 	 *
 	 *	@example
 	 *
@@ -1189,7 +1116,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					this.options.mergeTreeReferencesCanSlideToEndpoint,
 				);
 				if (properties) {
-					interval.addProperties(properties);
+					interval.properties = addProperties(interval.properties, properties);
 				}
 				this.localCollection.add(interval);
 			}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
@@ -38,6 +38,7 @@ import {
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
@@ -61,6 +62,7 @@ export class SharedTreeChangeFamily
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
+		private readonly idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -77,9 +79,15 @@ export class SharedTreeChangeFamily
 	}
 
 	public buildEditor(
-		changeReceiver: (change: SharedTreeChange) => void,
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
 	): SharedTreeEditBuilder {
-		return new SharedTreeEditBuilder(this.modularChangeFamily, changeReceiver);
+		return new SharedTreeEditBuilder(
+			this.modularChangeFamily,
+			mintRevisionTag,
+			changeReceiver,
+			this.idCompressor,
+		);
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
@@ -114,6 +122,7 @@ export class SharedTreeChangeFamily
 	public invert(
 		change: TaggedChange<SharedTreeChange>,
 		isRollback: boolean,
+		revision: RevisionTag,
 	): SharedTreeChange {
 		const invertInnerChange: (
 			innerChange: SharedTreeChange["changes"][number],
@@ -125,6 +134,7 @@ export class SharedTreeChangeFamily
 						innerChange: this.modularChangeFamily.invert(
 							mapTaggedChange(change, innerChange.innerChange),
 							isRollback,
+							revision,
 						),
 					};
 				case "schema": {
@@ -173,8 +183,8 @@ export class SharedTreeChangeFamily
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention = change.change.changes[0];
-		const dataChangeOver = over.change.changes[0];
+		const dataChangeIntention = change.change.changes[0] ?? oob();
+		const dataChangeOver = over.change.changes[0] ?? oob();
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
 			0x885 /* Data change should be present. */,

@@ -2,7 +2,7 @@
 
 This is an implementation of a driver which provides a DocumentService which uses local filesystem to get data for different endpoints like Document Storage, Delta Storage and Delta stream. It also provides implementation of Document Storage, Delta Storage and Delta stream. It also has a replay service which provides user the capability to replays ops accordingly.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -31,7 +31,7 @@ API documentation for **@fluidframework/file-driver** is available at <https://f
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
