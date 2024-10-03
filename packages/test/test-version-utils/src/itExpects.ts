@@ -36,7 +36,7 @@ export function createExpectsTest(
 		}
 		const orderedEvents = Array.isArray(orderedExpectedEvents)
 			? orderedExpectedEvents
-			: orderedExpectedEvents[provider.driver.type] ?? [];
+			: (orderedExpectedEvents[provider.driver.type] ?? []);
 
 		try {
 			provider.tracker.registerExpectedEvent(...orderedEvents);

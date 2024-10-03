@@ -311,55 +311,52 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					{ messagesInBatch: 3, messageSize: 51 * bytesPerKB }, // Three large messages (51 KB each)
 					{ messagesInBatch: 1500, messageSize: bytesPerKB }, // Many small messages (1 KB each)
 				].forEach((testConfig) => {
-					it(
-						"Large payloads pass when compression enabled, " +
-							"compressed content is over max op size and chunking enabled. " +
-							`${testConfig.messagesInBatch.toLocaleString()} messages of ${testConfig.messageSize.toLocaleString()} bytes == ` +
-							`${((testConfig.messagesInBatch * testConfig.messageSize) / bytesPerKB).toFixed(
-								2,
-							)} KB`,
-						async function () {
-							// This test is flaky on tinylicious (1500 messages being sent sometimes slows the system down)
-							if (provider.driver.type === "tinylicious") {
-								this.skip();
-							}
-							await setupContainers({
-								...containerConfig,
-								runtimeOptions: {
-									...containerConfig.runtimeOptions,
-									compressionOptions: {
-										minimumBatchSizeInBytes: 50 * bytesPerKB, // 50 KB
-										compressionAlgorithm: CompressionAlgorithms.lz4,
-									},
-									chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
+					it("Large payloads pass when compression enabled, " +
+						"compressed content is over max op size and chunking enabled. " +
+						`${testConfig.messagesInBatch.toLocaleString()} messages of ${testConfig.messageSize.toLocaleString()} bytes == ` +
+						`${((testConfig.messagesInBatch * testConfig.messageSize) / bytesPerKB).toFixed(
+							2,
+						)} KB`, async function () {
+						// This test is flaky on tinylicious (1500 messages being sent sometimes slows the system down)
+						if (provider.driver.type === "tinylicious") {
+							this.skip();
+						}
+						await setupContainers({
+							...containerConfig,
+							runtimeOptions: {
+								...containerConfig.runtimeOptions,
+								compressionOptions: {
+									minimumBatchSizeInBytes: 50 * bytesPerKB, // 50 KB
+									compressionAlgorithm: CompressionAlgorithms.lz4,
 								},
-							});
+								chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
+							},
+						});
 
-							const generated: string[] = [];
-							for (let i = 0; i < testConfig.messagesInBatch; i++) {
-								// Ensure that the contents don't get compressed properly, by
-								// generating a random string for each map value instead of repeating it
-								const content = generateRandomStringOfSize(testConfig.messageSize);
-								generated.push(content);
-								localMap.set(`key${i}`, content);
-							}
+						const generated: string[] = [];
+						for (let i = 0; i < testConfig.messagesInBatch; i++) {
+							// Ensure that the contents don't get compressed properly, by
+							// generating a random string for each map value instead of repeating it
+							const content = generateRandomStringOfSize(testConfig.messageSize);
+							generated.push(content);
+							localMap.set(`key${i}`, content);
+						}
 
-							await provider.ensureSynchronized();
+						await provider.ensureSynchronized();
 
-							for (let i = 0; i < testConfig.messagesInBatch; i++) {
-								assert.strictEqual(
-									localMap.get(`key${i}`),
-									generated[i],
-									`Wrong value for key${i} in local map`,
-								);
-								assert.strictEqual(
-									remoteMap.get(`key${i}`),
-									generated[i],
-									`Wrong value for key${i} in remote map`,
-								);
-							}
-						},
-					);
+						for (let i = 0; i < testConfig.messagesInBatch; i++) {
+							assert.strictEqual(
+								localMap.get(`key${i}`),
+								generated[i],
+								`Wrong value for key${i} in local map`,
+							);
+							assert.strictEqual(
+								remoteMap.get(`key${i}`),
+								generated[i],
+								`Wrong value for key${i} in remote map`,
+							);
+						}
+					});
 				}));
 
 			itExpects(
@@ -490,35 +487,32 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						payloadGenerator: generateRandomStringOfSize,
 					}, // Ten large messages with compression and chunking
 				].forEach((config) => {
-					it(
-						"Payload size check, " +
-							"Sending " +
-							`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
-							`${((config.messagesInBatch * config.messageSize) / bytesPerKB).toFixed(
-								4,
-							)} KB, expecting ${(config.expectedSize / bytesPerKB).toFixed(4)} KB on the wire`,
-						async function () {
-							// This is not supported by the local server due to chunking. See ADO:2690
-							if (provider.driver.type === "local") {
-								this.skip();
-							}
+					it("Payload size check, " +
+						"Sending " +
+						`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
+						`${((config.messagesInBatch * config.messageSize) / bytesPerKB).toFixed(
+							4,
+						)} KB, expecting ${(config.expectedSize / bytesPerKB).toFixed(4)} KB on the wire`, async function () {
+						// This is not supported by the local server due to chunking. See ADO:2690
+						if (provider.driver.type === "local") {
+							this.skip();
+						}
 
-							await setup();
+						await setup();
 
-							for (let i = 0; i < config.messagesInBatch; i++) {
-								localMap.set(`key${i}`, config.payloadGenerator(config.messageSize));
-							}
+						for (let i = 0; i < config.messagesInBatch; i++) {
+							localMap.set(`key${i}`, config.payloadGenerator(config.messageSize));
+						}
 
-							await provider.ensureSynchronized();
-							assertPayloadSize(config.expectedSize);
-							assert.ok(
-								!enableGroupedBatching ||
-									// In case of chunking, we will have more independent messages (chunks) on the wire than in the original batch
-									config.payloadGenerator === generateRandomStringOfSize ||
-									totalOps === 1,
-							);
-						},
-					);
+						await provider.ensureSynchronized();
+						assertPayloadSize(config.expectedSize);
+						assert.ok(
+							!enableGroupedBatching ||
+								// In case of chunking, we will have more independent messages (chunks) on the wire than in the original batch
+								config.payloadGenerator === generateRandomStringOfSize ||
+								totalOps === 1,
+						);
+					});
 				}));
 		});
 	});

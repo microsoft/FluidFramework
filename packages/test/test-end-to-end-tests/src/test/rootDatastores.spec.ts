@@ -187,32 +187,29 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult6, "AlreadyAliased");
 		});
 
-		it(
-			"Trying to create multiple datastores aliased to the same value on the same client " +
-				"will always return the same datastore",
-			async function () {
-				const datastores: IDataStore[] = [];
-				const createAliasedDataStore = async () => {
-					try {
-						await getAliasedDataStoreEntryPoint(dataObject1, alias);
-					} catch (err) {
-						const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
-						datastores.push(newDataStore);
-						await newDataStore.trySetAlias(alias);
-						return getAliasedDataStoreEntryPoint(dataObject1, alias);
-					}
-				};
+		it("Trying to create multiple datastores aliased to the same value on the same client " +
+			"will always return the same datastore", async function () {
+			const datastores: IDataStore[] = [];
+			const createAliasedDataStore = async () => {
+				try {
+					await getAliasedDataStoreEntryPoint(dataObject1, alias);
+				} catch (err) {
+					const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
+					datastores.push(newDataStore);
+					await newDataStore.trySetAlias(alias);
+					return getAliasedDataStoreEntryPoint(dataObject1, alias);
+				}
+			};
 
-				await Promise.all([
-					await createAliasedDataStore(),
-					await createAliasedDataStore(),
-					await createAliasedDataStore(),
-					await createAliasedDataStore(),
-				]);
+			await Promise.all([
+				await createAliasedDataStore(),
+				await createAliasedDataStore(),
+				await createAliasedDataStore(),
+				await createAliasedDataStore(),
+			]);
 
-				assert.equal(datastores.length, 1);
-			},
-		);
+			assert.equal(datastores.length, 1);
+		});
 
 		it("Aliasing a datastore during an alias operation with the same name", async function () {
 			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
@@ -326,46 +323,42 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 
 	describe("Aliasing with summary", () => {
 		const alias = "alias";
-		it(
-			"Assign multiple data stores to the same alias, first write wins, " +
-				"different containers from snapshot",
-			async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
-				if (provider.type === "TestObjectProviderWithVersionedLoad") {
-					this.skip();
-				}
+		it("Assign multiple data stores to the same alias, first write wins, " +
+			"different containers from snapshot", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 
-				const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
-				const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
+			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+			const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
-				const aliasResult1 = await ds1.trySetAlias(alias);
-				const aliasResult2 = await ds2.trySetAlias(alias);
-				assert.equal(aliasResult1, "Success");
-				assert.equal(aliasResult2, "Conflict");
+			const aliasResult1 = await ds1.trySetAlias(alias);
+			const aliasResult2 = await ds2.trySetAlias(alias);
+			assert.equal(aliasResult1, "Success");
+			assert.equal(aliasResult2, "Conflict");
 
-				await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-				const { summarizer } = await createSummarizer(provider, container1, {
-					fluidDataObjectType: DataObjectFactoryType.Test,
-				});
-				const { summaryVersion } = await summarizeNow(summarizer);
+			const { summarizer } = await createSummarizer(provider, container1, {
+				fluidDataObjectType: DataObjectFactoryType.Test,
+			});
+			const { summaryVersion } = await summarizeNow(summarizer);
 
-				// For the ODSP driver, we need to clear the cache to ensure we get the latest snapshot
-				testPersistedCache.clearCache();
-				const container3 = await provider.loadTestContainer(
-					testContainerConfig,
-					{
-						[LoaderHeader.version]: summaryVersion,
-					}, // requestHeader
-				);
-				const dataObject3 =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-				const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
-				const aliasResult3 = await ds3.trySetAlias(alias);
+			// For the ODSP driver, we need to clear the cache to ensure we get the latest snapshot
+			testPersistedCache.clearCache();
+			const container3 = await provider.loadTestContainer(
+				testContainerConfig,
+				{
+					[LoaderHeader.version]: summaryVersion,
+				}, // requestHeader
+			);
+			const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+			const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
+			const aliasResult3 = await ds3.trySetAlias(alias);
 
-				assert.equal(aliasResult3, "Conflict");
-				assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
-			},
-		);
+			assert.equal(aliasResult3, "Conflict");
+			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
+		});
 	});
 });

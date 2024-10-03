@@ -890,23 +890,22 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
-					describe(
-						includeStringification ? "with stringification" : "without stringification",
-						() => {
-							for (const [name, data, context] of encodingTestData.successes) {
-								it(name, () => {
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									let encoded = jsonCodec.encode(data, context!);
-									if (includeStringification) {
-										encoded = JSON.parse(JSON.stringify(encoded));
-									}
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									const decoded = jsonCodec.decode(encoded, context!);
-									assertEquivalent(decoded, data);
-								});
-							}
-						},
-					);
+					describe(includeStringification
+						? "with stringification"
+						: "without stringification", () => {
+						for (const [name, data, context] of encodingTestData.successes) {
+							it(name, () => {
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								let encoded = jsonCodec.encode(data, context!);
+								if (includeStringification) {
+									encoded = JSON.parse(JSON.stringify(encoded));
+								}
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								const decoded = jsonCodec.decode(encoded, context!);
+								assertEquivalent(decoded, data);
+							});
+						}
+					});
 				}
 			});
 

@@ -1114,8 +1114,8 @@ export class IdCompressor {
 				if (key === inversionKey) {
 					return IdCompressor.isUnfinalizedOverride(compressionMapping)
 						? compressionMapping
-						: compressionMapping.associatedLocalId ??
-								(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId);
+						: (compressionMapping.associatedLocalId ??
+								(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId));
 				}
 			} else {
 				if (!isStable) {

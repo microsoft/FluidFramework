@@ -3630,35 +3630,29 @@ describe("Template registration", function () {
 		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
 	});
 
-	it(
-		"should pass when registering a versioned remote template that exists" +
-			" in the local registry but is the same from what is locally registered",
-		function () {
-			myPropertyFactory.register(ColorID["1-0-0"].original);
-			myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
+	it("should pass when registering a versioned remote template that exists" +
+		" in the local registry but is the same from what is locally registered", function () {
+		myPropertyFactory.register(ColorID["1-0-0"].original);
+		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
 
-			myPropertyFactory = new PropertyFactory.constructor();
+		myPropertyFactory = new PropertyFactory.constructor();
 
-			myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
-			myPropertyFactory.register(ColorID["1-0-0"].original);
-			expect(console.warn.callCount).to.equal(0);
-		},
-	);
+		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
+		myPropertyFactory.register(ColorID["1-0-0"].original);
+		expect(console.warn.callCount).to.equal(0);
+	});
 
-	it(
-		"should fail when registering a versioned remote template that exists" +
-			" in the local registry but differs from what is locally registered",
-		function () {
-			myPropertyFactory.register(ColorID["1-0-0"].original);
-			expect(
-				myPropertyFactory._registerRemoteTemplate.bind(
-					myPropertyFactory,
-					ColorID["1-0-0"].modified,
-					generateGUID(),
-				),
-			).to.throw(Error);
-		},
-	);
+	it("should fail when registering a versioned remote template that exists" +
+		" in the local registry but differs from what is locally registered", function () {
+		myPropertyFactory.register(ColorID["1-0-0"].original);
+		expect(
+			myPropertyFactory._registerRemoteTemplate.bind(
+				myPropertyFactory,
+				ColorID["1-0-0"].modified,
+				generateGUID(),
+			),
+		).to.throw(Error);
+	});
 
 	it("should throw when registering an unversioned remote template", function () {
 		expect(
@@ -4163,22 +4157,19 @@ describe("inheritsFrom() method", () => {
 		expect(result).to.be.true;
 	});
 
-	it(
-		"should recognize that the test set that inherits from NamedNodeProperty" +
-			" also inherits from AbstractStaticCollectionProperty",
-		() => {
-			PropertyFactory._reregister({
-				typeid: "autodesk.examples:test.set-1.0.0",
-				inherits: "NamedNodeProperty",
-			});
-			const result = PropertyFactory.inheritsFrom(
-				"autodesk.examples:test.set-1.0.0",
-				"AbstractStaticCollectionProperty",
-			);
+	it("should recognize that the test set that inherits from NamedNodeProperty" +
+		" also inherits from AbstractStaticCollectionProperty", () => {
+		PropertyFactory._reregister({
+			typeid: "autodesk.examples:test.set-1.0.0",
+			inherits: "NamedNodeProperty",
+		});
+		const result = PropertyFactory.inheritsFrom(
+			"autodesk.examples:test.set-1.0.0",
+			"AbstractStaticCollectionProperty",
+		);
 
-			expect(result).to.be.true;
-		},
-	);
+		expect(result).to.be.true;
+	});
 
 	it("should recognize that the test set that inherits from NamedNodeProperty also inherits from NodeProperty", () => {
 		PropertyFactory._reregister({
