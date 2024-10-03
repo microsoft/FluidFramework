@@ -72,7 +72,6 @@ export default class LintApiModelCommand extends Command {
 			return messageOrError;
 		}
 
-		// TODO: what is the right way to plumb logs through oclif?
 		let logger: Logger = {
 			...silentLogger,
 		};
@@ -155,7 +154,7 @@ function writeReferenceErrors(
 ): void {
 	const sortedErrors = sortReferenceErrors(referenceErrors);
 
-	// Write errors by package
+	// Group errors by package->api-item
 	documentWriter.ensureNewLine();
 	for (const [packageName, packageErrors] of sortedErrors) {
 		documentWriter.writeLine(`${packageName}:`);
