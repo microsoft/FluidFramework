@@ -43,6 +43,9 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
+// @alpha
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -160,6 +163,18 @@ export type FluidObject<T = unknown> = {
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @alpha
+export interface ForestOptions {
+    readonly forest?: ForestType;
+}
+
+// @alpha
+export enum ForestType {
+    Expensive = 2,
+    Optimized = 1,
+    Reference = 0
+}
+
+// @alpha
 export function getBranch(tree: ITree): TreeBranch;
 
 // @alpha
@@ -167,6 +182,11 @@ export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
+
+// @alpha
+export interface ICodecOptions {
+    readonly jsonValidator: JsonValidator;
+}
 
 // @public
 export interface IConnection {
@@ -627,6 +647,11 @@ export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 };
 
+// @alpha
+export interface JsonValidator {
+    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
+}
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -687,6 +712,9 @@ export enum NodeKind {
     Map = 0,
     Object = 2
 }
+
+// @alpha
+export const noopValidator: JsonValidator;
 
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
@@ -811,6 +839,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @alpha
+export interface SchemaValidationFunction<Schema extends TSchema> {
+    check(data: unknown): data is Static<Schema>;
+}
+
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
@@ -823,11 +856,23 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 export const SharedTree: SharedObjectKind<ITree>;
 
 // @alpha
-export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
-    readonly value: TName;
-}, never, true, unknown> & (new () => TreeNode & {
-    readonly value: TName;
-});
+export interface SharedTreeFormatOptions {
+    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+    treeEncodeType: TreeCompressionStrategy;
+}
+
+// @alpha
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+    readonly v2: 2;
+    readonly v3: 3;
+};
+
+// @alpha
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @alpha
+export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -917,6 +962,12 @@ export interface TreeChangeEvents {
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+}
+
+// @alpha
+export enum TreeCompressionStrategy {
+    Compressed = 0,
+    Uncompressed = 1
 }
 
 // @public
@@ -1039,7 +1090,7 @@ export interface TreeViewEvents {
 }
 
 // @alpha
-export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
+export const typeboxValidator: JsonValidator;
 
 // @public @deprecated
 const typeNameSymbol: unique symbol;
