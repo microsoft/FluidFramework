@@ -48,10 +48,8 @@ export {
 
 export {
 	type ISharedTree,
-	type ITreeCheckoutFork,
 	type SharedTreeOptions,
 	ForestType,
-	SchematizingSimpleTreeView,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
@@ -60,7 +58,6 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
-	getViewForForkedBranch,
 } from "./shared-tree/index.js";
 
 export {

@@ -12,9 +12,8 @@ import {
 	getTreeContext,
 	type FlexTreeHydratedContext,
 } from "../feature-libraries/index.js";
-import { tryDisposeTreeNode, type ImplicitFieldSchema } from "../simple-tree/index.js";
+import { tryDisposeTreeNode } from "../simple-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../util/index.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
 import type { ITreeCheckout, ITreeCheckoutFork } from "./treeCheckout.js";
 
@@ -97,30 +96,3 @@ export class CheckoutFlexTreeView<out TCheckout extends ITreeCheckout = ITreeChe
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
 export const contextToTreeView = new WeakMap<FlexTreeHydratedContext, FlexTreeView>();
-
-
-/**
- * Creates a branch of the input tree view and returns a new tree view for the branch.
- *
- * @remarks To merge the branch back into the original view after applying changes on the branch view, use
- * `<originalView>.checkout.merge(<branchView>.checkout)`.
- *
- * @param originalView - The tree view to branch.
- * @returns A new tree view for a branch of the input tree view, and an {@link ITreeCheckoutFork} object that can be
- * used to merge the branch back into the original view.
- *
- * @internal
- */
-export function getViewForForkedBranch<TSchema extends ImplicitFieldSchema>(
-	originalView: SchematizingSimpleTreeView<TSchema>,
-): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: ITreeCheckoutFork } {
-	const forkCheckout = originalView.checkout.fork();
-	return {
-		forkView: new SchematizingSimpleTreeView<TSchema>(
-			forkCheckout,
-			originalView.config,
-			originalView.nodeKeyManager,
-		),
-		forkCheckout,
-	};
-}

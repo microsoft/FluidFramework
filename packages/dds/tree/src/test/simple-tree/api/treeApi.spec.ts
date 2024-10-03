@@ -25,9 +25,8 @@ import {
 	type TreeNode,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { getViewForForkedBranch } from "../../../shared-tree/index.js";
 import { getView, validateUsageError } from "../../utils.js";
-import { hydrate } from "../utils.js";
+import { getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
@@ -807,7 +806,7 @@ describe("treeNodeApi", () => {
 			assert.equal(treeChanged, true, "'treeChanged' should have fired");
 		});
 
-		it.only(`'nodeChanged' includes the names of changed properties (objectNode)`, () => {
+		it(`'nodeChanged' includes the names of changed properties (objectNode)`, () => {
 			const sb = new SchemaFactory("test");
 			class TestNode extends sb.object("root", {
 				prop1: sb.optional(sb.number),

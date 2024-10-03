@@ -6990,12 +6990,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/id-compressor':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/id-compressor
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
