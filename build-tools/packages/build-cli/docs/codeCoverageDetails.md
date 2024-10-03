@@ -36,7 +36,7 @@ export interface CoverageMetric {
 
 ### Generating the coverage report on PR build
 
-As mentioned earlier, the PR build also uploads coverage reports as artifacts that can be used to run coverage analysis against a baseline build. To help with this, we use the `getCoverageMetricsFromArtifact` helper function to extract code coverage numbers of format `CoverageMetric` that contains code coverage metrics corresponding to the PR for each package.
+As mentioned earlier, the PR build also uploads coverage data as artifacts that can be used to run coverage analysis against a baseline build. To help with this, we use the `getCoverageMetricsFromArtifact` helper function to extract code coverage numbers of format `CoverageMetric` that contains code coverage metrics corresponding to the PR for each package.
 
 ### Comparing code coverage reports
 
