@@ -1,5 +1,3 @@
 This directory contains `oclif` commands.
 
-# lint-api-model
-
-TODO
+Corresponding documentation can be found under [docs](../../docs/).
