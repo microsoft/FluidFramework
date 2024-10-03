@@ -39,8 +39,8 @@
 		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"build:manifest": "oclif manifest",
 		"build:readme": "npm run build:readme:markdown-magic && npm run build:readme:oclif",
-		"build:readme:oclif": "oclif readme --version 0.0.0 --multi --no-aliases",
 		"build:readme:markdown-magic": "markdown-magic --files \"**/*.md\"",
+		"build:readme:oclif": "oclif readme --version 0.0.0 --multi --no-aliases",
 		"build:tsc": "npm run tsc",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
@@ -137,6 +137,12 @@
 			]
 		}
 	},
+	"oclif": {
+		"bin": "api-markdown-documenter",
+		"dirname": "api-markdown-documenter",
+		"commands": "./lib/commands",
+		"topicSeparator": " "
+	},
 	"pnpm": {
 		"comments": [
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details."
@@ -144,11 +150,5 @@
 		"overrides": {
 			"nodegit": "npm:empty-npm-package@1.0.0"
 		}
-	},
-	"oclif": {
-		"bin": "api-markdown-documenter",
-		"dirname": "api-markdown-documenter",
-		"commands": "./lib/commands",
-		"topicSeparator": " "
 	}
 }
