@@ -245,6 +245,11 @@ import { Throttler, formExponentialFn } from "./throttler.js";
  *
  * @param unknownContainerRuntimeMessageType - Typed as something unexpected, to ensure all known types have been
  * handled before calling this function (e.g. in a switch statement).
+ *
+ * @param codePath - The code path where the unexpected message type was encountered.
+ *
+ * @param sequencedMessage - The sequenced message that contained the unexpected message type.
+ *
  */
 function getUnknownMessageTypeError(
 	unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
