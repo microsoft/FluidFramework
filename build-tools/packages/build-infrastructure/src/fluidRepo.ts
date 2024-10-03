@@ -142,16 +142,19 @@ export class FluidRepo implements IFluidRepo {
  * @param searchPath - The path to start searching for a Fluid repo config.
  * @returns The loaded Fluid repo.
  */
-export function loadFluidRepo(searchPath: string): IFluidRepo {
+export function loadFluidRepo(
+	searchPath: string,
+	upstreamRemotePartialUrl?: string,
+): IFluidRepo {
 	let repo: IFluidRepo;
 	try {
 		// Check if the path is within a Git repo by trying to find the path to the Git repo root
 		const gitRoot = findGitRootSync(searchPath);
-		repo = new FluidRepo(searchPath, simpleGit(gitRoot));
+		repo = new FluidRepo(searchPath, simpleGit(gitRoot), upstreamRemotePartialUrl);
 	} catch (error) {
 		if (error instanceof NotInGitRepository) {
 			// Not in a git repo, so initialize the repo accordingly
-			repo = new FluidRepo(searchPath, false);
+			repo = new FluidRepo(searchPath, false, undefined);
 		}
 		throw error;
 	}

@@ -14,7 +14,7 @@ const config = {
 	version: 1,
 	repoLayout: {
 		workspaces: {
-			"main": {
+			main: {
 				directory: ".",
 				releaseGroups: {
 					main: {
@@ -26,7 +26,7 @@ const config = {
 					// },
 				},
 			},
-			"second": {
+			second: {
 				directory: "./second",
 				releaseGroups: {
 					"second-release-group": {

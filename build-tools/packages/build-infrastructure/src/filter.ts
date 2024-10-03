@@ -64,12 +64,12 @@ export interface PackageSelectionCriteria {
 	/**
 	 * If set, only selects the single package in this directory.
 	 */
-	directory?: string;
+	directory?: string | undefined;
 
 	/**
 	 * If set, only selects packages that have changes when compared with the branch of this name.
 	 */
-	changedSinceBranch?: string;
+	changedSinceBranch?: string | undefined;
 }
 
 /**
@@ -91,11 +91,11 @@ export interface PackageFilterOptions {
 	/**
 	 * If set, filters IN packages whose scope matches the strings provided.
 	 */
-	scope?: string[];
+	scope?: string[] | undefined;
 	/**
 	 * If set, filters OUT packages whose scope matches the strings provided.
 	 */
-	skipScope?: string[];
+	skipScope?: string[] | undefined;
 
 	/**
 	 * If set, filters private packages in/out.
@@ -133,37 +133,58 @@ const selectPackagesFromRepo = async (
 	if (selection.directory !== undefined) {
 		const repoRelativePath = path.join(
 			selection.directory === "." ? process.cwd() : selection.directory,
-			"package.json",
 		);
 
 		const dirPackage = [...fluidRepo.packages.values()].find(
-			(p) => p.directory === repoRelativePath,
+			(p) => fluidRepo.relativeToRepo(p.directory) === repoRelativePath,
 		);
 		if (dirPackage === undefined) {
 			throw new Error(`Cannot find package with directory: ${repoRelativePath}`);
 		}
 		selected.add(dirPackage);
+		return selected;
 	}
 
 	// Select workspace and workspace root packages
 	for (const workspace of fluidRepo.workspaces.values()) {
-		if (mm.isMatch(workspace.name, selection.workspaces)) {
-			addAllToSet(selected, workspace.packages);
+		if (selection.workspaces.length > 0 && mm.isMatch(workspace.name, selection.workspaces)) {
+			addAllToSet(
+				selected,
+				workspace.packages.filter((p) => !p.isWorkspaceRoot),
+			);
 		}
 
-		if (mm.isMatch(workspace.name, selection.workspaceRoots)) {
-			addAllToSet(selected, workspace.packages);
+		if (
+			selection.workspaceRoots.length > 0 &&
+			mm.isMatch(workspace.name, selection.workspaceRoots)
+		) {
+			addAllToSet(
+				selected,
+				workspace.packages.filter((p) => p.isWorkspaceRoot),
+			);
 		}
 	}
 
 	// Select release group and release group root packages
 	for (const releaseGroup of fluidRepo.releaseGroups.values()) {
-		if (mm.isMatch(releaseGroup.name, selection.releaseGroups)) {
-			addAllToSet(selected, releaseGroup.packages);
+		if (
+			selection.releaseGroups.length > 0 &&
+			mm.isMatch(releaseGroup.name, selection.releaseGroups)
+		) {
+			addAllToSet(
+				selected,
+				releaseGroup.packages.filter((p) => !p.isReleaseGroupRoot),
+			);
 		}
 
-		if (mm.isMatch(releaseGroup.name, selection.releaseGroupRoots)) {
-			addAllToSet(selected, releaseGroup.packages);
+		if (
+			selection.releaseGroupRoots.length > 0 &&
+			mm.isMatch(releaseGroup.name, selection.releaseGroupRoots)
+		) {
+			addAllToSet(
+				selected,
+				releaseGroup.packages.filter((p) => p.isReleaseGroupRoot),
+			);
 		}
 	}
 
