@@ -40,9 +40,7 @@ export {
 } from "./events/index.js";
 
 export {
-	type LazyItem,
 	TreeStatus,
-	type Unenforced,
 	TreeCompressionStrategy,
 } from "./feature-libraries/index.js";
 
@@ -150,6 +148,8 @@ export {
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
 	getJsonSchema,
+	type LazyItem,
+	type Unenforced,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
