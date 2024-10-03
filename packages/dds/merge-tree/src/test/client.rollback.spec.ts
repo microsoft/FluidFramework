@@ -361,8 +361,8 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "efg");
 		client.insertTextLocal(0, "d");
 		client.insertTextLocal(0, "abc");
-		const segInfo1 = client.getContainingSegment(2);
-		const segInfo3 = client.getContainingSegment(5);
+		const segInfo1 = client.getContainingSegment<ISegmentLeaf>(2);
+		const segInfo3 = client.getContainingSegment<ISegmentLeaf>(5);
 		const ref1 = client.createLocalReferencePosition(
 			segInfo1.segment!,
 			0,
@@ -392,12 +392,12 @@ describe("client.rollback", () => {
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcdefg");
-		const segInfo1After = client.getContainingSegment(2);
+		const segInfo1After = client.getContainingSegment<ISegmentLeaf>(2);
 		assert.notEqual(segInfo1After, undefined);
 		assert.notEqual(segInfo1After.segment?.localRefs, undefined);
 		assert(segInfo1After.segment?.localRefs!.has(ref1));
 		assert(segInfo1After.segment?.localRefs!.has(refSlide));
-		const segInfo3After = client.getContainingSegment(5);
+		const segInfo3After = client.getContainingSegment<ISegmentLeaf>(5);
 		assert.notEqual(segInfo3After, undefined);
 		assert.notEqual(segInfo3After.segment?.localRefs, undefined);
 		assert(segInfo3After.segment?.localRefs!.has(ref2));

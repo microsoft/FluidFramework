@@ -97,11 +97,11 @@ export interface IExperimentalIncrementalSummaryContext {
 	/**
 	 * The sequence number of the summary generated that will be sent to the server.
 	 */
-	summarySequenceNumber: number;
+	readonly summarySequenceNumber: number;
 	/**
 	 * The sequence number of the most recent summary that was acknowledged by the server.
 	 */
-	latestSummarySequenceNumber: number;
+	readonly latestSummarySequenceNumber: number;
 	/**
 	 * The path to the runtime/datastore/dds that is used to generate summary handles
 	 * Note: Summary handles are nodes of the summary tree that point to previous parts of the last successful summary
@@ -113,7 +113,7 @@ export interface IExperimentalIncrementalSummaryContext {
 	 * more dependencies.
 	 */
 	// TODO: remove summaryPath
-	summaryPath: string;
+	readonly summaryPath: string;
 }
 
 /**
@@ -209,6 +209,9 @@ export interface ISummarizerNode {
 	 * that it might have. For example: if datastore "a" contains dds "b", but the
 	 * path is "/a/.channels/b", then the additional path part is ".channels".
 	 * @param snapshot - the base summary to parse
+	 *
+	 * @deprecated The code now always assumes that all summary nodes have .channels
+	 * in their handle so there is no need to maintain any additional path information.
 	 */
 	updateBaseSummaryState(snapshot: ISnapshotTree): void;
 	/**

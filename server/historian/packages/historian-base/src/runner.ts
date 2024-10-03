@@ -12,6 +12,7 @@ import {
 	IRevokedTokenChecker,
 	IStorageNameRetriever,
 	IDocumentManager,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -36,6 +37,7 @@ export class HistorianRunner implements IRunner {
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
 		private readonly ephemeralDocumentTTLSec?: number,
+		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -53,6 +55,7 @@ export class HistorianRunner implements IRunner {
 			this.revokedTokenChecker,
 			this.denyList,
 			this.ephemeralDocumentTTLSec,
+			this.readinessCheck,
 		);
 		historian.set("port", this.port);
 

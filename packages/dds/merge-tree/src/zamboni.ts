@@ -135,8 +135,9 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 	// when possible.
 	let prevSegment: ISegment | undefined;
 	for (let k = 0; k < node.childCount; k++) {
-		const childNode = node.children[k];
-		if (!childNode.isLeaf() || !childNode.segmentGroups.empty) {
+		// TODO Non null asserting, why is this not null?
+		const childNode = node.children[k]!;
+		if (!childNode.isLeaf() || childNode.segmentGroups?.empty === false) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;
 			continue;

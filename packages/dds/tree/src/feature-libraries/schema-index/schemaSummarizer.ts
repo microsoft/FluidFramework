@@ -29,7 +29,6 @@ import type {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import type { JsonCompatible } from "../../util/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
@@ -127,18 +126,11 @@ export class SchemaSummarizer implements Summarizable {
 }
 
 /**
- * Dumps schema into a deterministic JSON compatible semi-human readable but unspecified format.
+ * Dumps schema into a deterministic JSON compatible semi-human readable format.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
- *
- * This format may change across major versions of this package: such changes are considered breaking.
- * Beyond that, no compatibility guarantee is provided for this format: it should never be relied upon to load data, it should only be used for comparing outputs from this function.
- * @privateRemarks
- * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
- * This intentionally does not leak the format types in the API.
- * @internal
  */
-export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
+export function encodeTreeSchema(schema: TreeStoredSchema): Format {
 	return encodeRepo(schema);
 }

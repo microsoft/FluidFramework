@@ -260,7 +260,7 @@ async function start(): Promise<void> {
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
 event object.
 
-<img src="https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png" alt="The
+<img src="https://storage.fluidframework.com/static/images/consoleLogger_telemetry_in_action.png" alt="The
   ConsoleLogger sends telemetry events to the browser console for display.">
 
 {{% callout warning %}}

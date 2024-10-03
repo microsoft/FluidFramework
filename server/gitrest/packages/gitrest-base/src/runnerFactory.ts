@@ -32,6 +32,7 @@ export class GitrestResources implements core.IResources {
 		public readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		public readonly repositoryManagerFactory: IRepositoryManagerFactory,
 		public readonly enableOptimizedInitialSummary?: boolean,
+		public readonly readinessCheck?: core.IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -63,6 +64,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			port,
 			fileSystemManagerFactories,
 			repositoryManagerFactory,
+			undefined,
+			customizations?.readinessCheck,
 		);
 	}
 
@@ -172,6 +175,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
 			resources.port,
 			resources.fileSystemManagerFactories,
 			resources.repositoryManagerFactory,
+			resources.readinessCheck,
 		);
 	}
 }

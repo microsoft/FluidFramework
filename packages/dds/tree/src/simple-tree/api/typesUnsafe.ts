@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
-import type { RestrictiveStringRecord, _InlineTrick } from "../util/index.js";
+import type { RestrictiveStringRecord, _InlineTrick } from "../../util/index.js";
 
 import type {
 	AllowedTypes,
@@ -15,15 +14,16 @@ import type {
 	ImplicitFieldSchema,
 	NodeFromSchema,
 	TreeNodeFromImplicitAllowedTypes,
-} from "./schemaTypes.js";
+} from "../schemaTypes.js";
 import type {
 	NodeKind,
 	TreeNodeSchema,
 	WithType,
 	TreeNode,
 	Unhydrated,
-} from "./core/index.js";
-import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
+} from "../core/index.js";
+import type { TreeArrayNodeBase, TreeArrayNode } from "../arrayNode.js";
+import type { FlexListToUnion } from "../flexList.js";
 
 /*
  * TODO:
@@ -36,6 +36,16 @@ import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
  * 3. Add type tests that check that the two copies of these types produce identical results.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+/**
+ * A placeholder to use in {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints | extends constraints} when using the real type breaks compilation of some recursive types due to {@link https://github.com/microsoft/TypeScript/issues/55758 | a design limitation of TypeScript}.
+ *
+ * These extends constraints only serve as documentation:
+ * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
+ * Therefore the type safety is the responsibility of the user of the API.
+ * @public
+ */
+export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 /**
  * {@link Unenforced} version of `ObjectFromSchemaRecord`.

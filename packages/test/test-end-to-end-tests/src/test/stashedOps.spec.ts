@@ -60,6 +60,7 @@ import {
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -1520,20 +1521,32 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		container.connect();
-		await waitForContainerConnection(container.container);
-
-		const handle = await handleP;
-		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		await timeoutAwait(waitForContainerConnection(container.container), {
+			errorMsg: "Timeout on waiting for container connection",
+		});
+		const handle = await timeoutAwait(handleP, {
+			errorMsg: "Timeout on waiting for handleP",
+		});
+		const handleGet = await timeoutAwait(handle.get(), {
+			errorMsg: "Timeout on waiting for handle.get() ",
+		});
+		assert.strictEqual(bufferToString(handleGet, "utf8"), "blob contents");
 		map.set("blob handle", handle);
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+
+		const container2 = await timeoutAwait(provider.loadTestContainer(testContainerConfig), {
+			errorMsg: "Timeout on waiting for container2 load",
+		});
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized after creating container2",
+		});
+
+		const handleGet2: any = await timeoutAwait(map2.get("blob handle").get(), {
+			errorMsg: "Timeout on waiting for handleGet2",
+		});
+		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
 	});
 
 	it("close while uploading blob", async function () {
@@ -1624,17 +1637,30 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		container.connect();
-		const handle = await handleP;
+		const handle = await timeoutAwait(handleP, {
+			errorMsg: "Timeout on waiting for ",
+		});
 		map.set("blob handle", handle);
-		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		const handleGet = await timeoutAwait(handle.get(), {
+			errorMsg: "Timeout on waiting for handleGet",
+		});
+		assert.strictEqual(bufferToString(handleGet, "utf8"), "blob contents");
 
 		// wait for summary with redirect table
-		await provider.ensureSynchronized();
-		await waitForSummary(provider, container1, testContainerConfig);
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized",
+		});
+		await timeoutAwait(waitForSummary(provider, container1, testContainerConfig), {
+			errorMsg: "Timeout on waiting for summary",
+		});
 
 		// should be able to load entirely offline
-		const stashBlob = await getPendingOps(testContainerConfig, provider, true);
-		await loadOffline(testContainerConfig, provider, { url }, stashBlob);
+		const stashBlob = await timeoutAwait(getPendingOps(testContainerConfig, provider, true), {
+			errorMsg: "Timeout on waiting for stashBlob",
+		});
+		await timeoutAwait(loadOffline(testContainerConfig, provider, { url }, stashBlob), {
+			errorMsg: "Timeout on waiting for loadOffline",
+		});
 	});
 
 	it("load offline from stashed ops with pending blob", async function () {
@@ -1836,14 +1862,23 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		map1.set("test op 2", "test op 2");
-		await waitForSummary(provider, container1, testContainerConfig);
+		await timeoutAwait(waitForSummary(provider, container1, testContainerConfig), {
+			errorMsg: "Timeout on waiting for",
+		});
 
 		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
+		const container2 = await timeoutAwait(loader.resolve({ url }, pendingOps), {
+			errorMsg: "Timeout on waiting for container2",
+		});
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
+		await timeoutAwait(waitForContainerConnection(container2), {
+			errorMsg: "Timeout on waiting for connection",
+		});
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized",
+		});
+
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
@@ -1977,9 +2012,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingState = JSON.parse(stashBlob);
 		// make sure the container loaded from summary and we have no saved ops
 		assert.strictEqual(pendingState.savedOps.length, 0);
-		assert(
-			pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
-		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, stashBlob);

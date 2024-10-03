@@ -30,7 +30,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 
 import {
 	clearCacheIfOdsp,
@@ -140,7 +140,7 @@ describeCompat(
 			}
 		};
 
-		const persistedCache = new TestSnapshotCache();
+		const persistedCache = new TestPersistedCache();
 		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ persistedCache });
 			if (

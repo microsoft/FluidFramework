@@ -71,6 +71,7 @@ export {
 	SegmentGroup,
 	toRemovalInfo,
 	ObliterateInfo,
+	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
 	Trackable,

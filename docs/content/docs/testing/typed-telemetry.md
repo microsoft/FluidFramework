@@ -161,7 +161,7 @@ Going into more detail, A `Session` or `Collaborative Session` is defined as a p
 
 Before we can query, we must first navigate to your Azure App Insights telemetry page. To do this, go to your Azure App Insights Instance and click on the `Logs` tab under Monitoring.
 
-![Logs on App Insights Portal](https://fluidframework.blob.core.windows.net/static/images/telemetry_1.png)
+![Logs on App Insights Portal](https://storage.fluidframework.com/static/images/telemetry_1.png)
 
 Now, close out the `Queries` pane if it showed up for you and you will be in the view where we can execute our queries. Note that if you are using the Fluid Azure App Insights logger, your telemetry data will be available in the `customEvents` table.
 
@@ -188,7 +188,7 @@ customEvents
 | project SessionId, containerId , NumCollaborators, PeriodDurationInMinutes, StartTime, EndTime
 ```
 
-![Query result](https://fluidframework.blob.core.windows.net/static/images/telemetry_2.png)
+![Query result](https://storage.fluidframework.com/static/images/telemetry_2.png)
 
 1. Total number of sessions over time period
 
@@ -217,7 +217,7 @@ customEvents
 | render timechart with (title = "Total Number of Sessions Occurring Over 1 Hour Intervals")
 ```
 
-![Total sessions over time period](https://fluidframework.blob.core.windows.net/static/images/telemetry_3.png)
+![Total sessions over time period](https://storage.fluidframework.com/static/images/telemetry_3.png)
 
 1. Average number of sessions over time period
 
@@ -246,7 +246,7 @@ customEvents
 | render timechart with (title = "Average Number of Sessions Occurring Over 1 Hour Intervals")
 ```
 
-![Average number of sessions over time period](https://fluidframework.blob.core.windows.net/static/images/telemetry_4.png)
+![Average number of sessions over time period](https://storage.fluidframework.com/static/images/telemetry_4.png)
 
 1. Average number of containers per session over a time period
 
@@ -275,7 +275,7 @@ customEvents
 | render timechart with (title = "Approximate Average Number Of Container Per Session Over 1 Hour Intervals")
 ```
 
-![Average number of containers per session over time period](https://fluidframework.blob.core.windows.net/static/images/telemetry_5.png)
+![Average number of containers per session over time period](https://storage.fluidframework.com/static/images/telemetry_5.png)
 
 1. Length of Individual Sessions in Minutes
 
@@ -307,7 +307,7 @@ customEvents
 
 ```
 
-![Length of Individual Sessions in Minutes](https://fluidframework.blob.core.windows.net/static/images/telemetry_6.png)
+![Length of Individual Sessions in Minutes](https://storage.fluidframework.com/static/images/telemetry_6.png)
 
 ##### General Query Adjustments
 
@@ -315,7 +315,7 @@ customEvents
 
     To adjust the time span of this query, simply use the Time Range dropdown provided by azure. You do not need to modify the query directly. By default, these queries will query against all logs you have available.
 
-    ![Adjusting date](https://fluidframework.blob.core.windows.net/static/images/telemetry_time_period.png)
+    ![Adjusting date](https://storage.fluidframework.com/static/images/telemetry_time_period.png)
 
 2. Adjusting the gap of time that defines a session
 

@@ -67,7 +67,9 @@ export interface IMapMessageLocalMetadata {
 export interface SequenceOptions
 	extends Pick<
 		IMergeTreeOptions,
-		"mergeTreeReferencesCanSlideToEndpoint" | "mergeTreeEnableObliterate"
+		| "mergeTreeReferencesCanSlideToEndpoint"
+		| "mergeTreeEnableObliterate"
+		| "mergeTreeEnableSidedObliterate"
 	> {
 	/**
 	 * Enable the ability to use interval APIs that rely on positions before and

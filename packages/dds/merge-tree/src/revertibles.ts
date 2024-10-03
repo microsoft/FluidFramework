@@ -12,7 +12,12 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { ISegment, ISegmentLeaf, toRemovalInfo } from "./mergeTreeNodes.js";
+import {
+	ISegment,
+	ISegmentInternal,
+	toRemovalInfo,
+	type ISegmentLeaf,
+} from "./mergeTreeNodes.js";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
@@ -241,7 +246,8 @@ export function discardMergeTreeDeltaRevertible(
 			t.trackingCollection.unlink(r.trackingGroup);
 			// remove untracked local references
 			if (t.trackingCollection.empty && !t.isLeaf()) {
-				t.getSegment()?.localRefs?.removeLocalRef(t);
+				const segment: ISegmentInternal | undefined = t.getSegment();
+				segment?.localRefs?.removeLocalRef(t);
 			}
 		}
 	}
@@ -281,7 +287,7 @@ function revertLocalRemove(
 
 		assert(!tracked.isLeaf(), 0x3f4 /* removes must track local refs */);
 
-		const refSeg = tracked.getSegment();
+		const refSeg: ISegmentInternal | undefined = tracked.getSegment();
 		let realPos = mergeTreeWithRevert.referencePositionToLocalPosition(tracked);
 
 		// References which are on EndOfStringSegment don't return detached for pos,
@@ -334,7 +340,7 @@ function revertLocalRemove(
 			insertSegment.parent!,
 			insertSegment,
 			undefined,
-			(seg) => {
+			(seg: ISegmentInternal) => {
 				if (seg.localRefs?.empty === false) {
 					return seg.localRefs.walkReferences(refHandler, undefined, forward);
 				}
@@ -366,7 +372,8 @@ function revertLocalRemove(
 			tg.link(insertSegment);
 			tg.unlink(tracked);
 		}
-		tracked.getSegment()?.localRefs?.removeLocalRef(tracked);
+		const segment: ISegmentInternal | undefined = tracked.getSegment();
+		segment?.localRefs?.removeLocalRef(tracked);
 	}
 }
 

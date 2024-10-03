@@ -11,6 +11,7 @@ export {
 	type InnerNode,
 	tryDisposeTreeNode,
 	tryGetTreeNodeFromMapNode,
+	getOrCreateInnerNode,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {

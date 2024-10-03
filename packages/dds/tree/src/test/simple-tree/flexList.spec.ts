@@ -13,8 +13,8 @@ import {
 	normalizeFlexListEager,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/typed-schema/flexList.js";
-import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
+} from "../../simple-tree/flexList.js";
+import type { areSafelyAssignable, requireTrue } from "../../util/index.js";
 
 // Test FlexListToUnion
 {

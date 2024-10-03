@@ -62,9 +62,7 @@ import {
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
+import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,

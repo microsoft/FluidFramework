@@ -10,7 +10,6 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import type { FlexListToUnion } from "../../../feature-libraries/index.js";
 import {
 	type FieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
@@ -21,6 +20,7 @@ import {
 	SchemaFactory,
 	type InternalTreeNode,
 	type ApplyKind,
+	type FlexListToUnion,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
@@ -33,7 +33,7 @@ import type {
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/typesUnsafe.js";
+} from "../../../simple-tree/api/typesUnsafe.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,

@@ -18,11 +18,12 @@ import {
 	type Context,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { type FlexTreeNode, isFlexTreeNode, markEager } from "../feature-libraries/index.js";
+import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../util/index.js";
 
 import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
+import { markEager } from "./flexList.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.

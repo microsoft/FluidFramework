@@ -23,6 +23,7 @@ import {
 	revertMergeTreeDeltaRevertibles,
 	InteriorSequencePlace,
 	Side,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 
 import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
@@ -302,7 +303,8 @@ export function appendSharedStringDeltaToRevertibles(
 
 		// find interval endpoints in each segment
 		for (const deltaRange of delta.ranges) {
-			const refs = deltaRange.segment.localRefs;
+			const segment: ISegmentInternal = deltaRange.segment;
+			const refs = segment.localRefs;
 			if (refs !== undefined && deltaRange.position !== -1) {
 				for (const ref of refs) {
 					addIfIntervalEndpoint(ref, segmentLengths, startIntervals, endIntervals);
