@@ -14,7 +14,7 @@ import { walkFieldSchema } from "../walkFieldSchema.js";
 /**
  * Concise encoding of a {@link TreeNode} or {@link TreeLeafValue}.
  * @remarks
- * This is concise meaning that explicit type information is omitted.
+ * This is "concise" meaning that explicit type information is omitted.
  * If the schema is compatible with {@link ITreeConfigurationOptions.preventAmbiguity},
  * types will be lossless and compatible with {@link TreeBeta.create} (unless the options are used to customize it).
  *

@@ -72,7 +72,7 @@ export function customFromCursorInner<TChild, THandle>(
 			return reader.value;
 		case handleSchema.identifier:
 			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			assert(isFluidHandle(reader.value), "out of schema: expected FluidHandle");
 			return options.valueConverter(reader.value);
 		default: {
 			assert(reader.value === undefined, "out of schema: unexpected value");
