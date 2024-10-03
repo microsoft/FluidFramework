@@ -48,6 +48,9 @@ export async function create(
 		(config.get("scriptorium:logSavedOpsTimeIntervalMs") as number) ?? 60000;
 	const opsCountTelemetryEnabled =
 		(config.get("scriptorium:opsCountTelemetryEnabled") as boolean) ?? false;
+	const circuitBreakerEnabled =
+		(config.get("scriptorium:circuitBreakerEnabled") as boolean) ?? false;
+	const circuitBreakerOptions = config.get("scriptorium:circuitBreakerOptions") as Record<string, any> ?? {};
 
 	const factory = await services.getDbFactory(config);
 
@@ -132,5 +135,7 @@ export async function create(
 		shouldLogInitialSuccessVerbose,
 		logSavedOpsTimeIntervalMs,
 		opsCountTelemetryEnabled,
+		circuitBreakerEnabled,
+		circuitBreakerOptions,
 	});
 }

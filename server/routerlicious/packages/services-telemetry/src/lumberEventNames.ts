@@ -67,4 +67,5 @@ export enum LumberEventName {
 	StartupProbe = "StartupProbe",
 	LivenessProbe = "LivenessProbe",
 	ReadinessProbe = "ReadinessProbe",
+	CircuitBreaker = "CircuitBreaker",
 }
