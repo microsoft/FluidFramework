@@ -151,6 +151,10 @@ export class Workspace implements IWorkspace {
 		this.packages.forEach((pkg) => pkg.reload());
 	}
 
+	public toString(): string {
+		return `${this.name} (WORKSPACE)`;
+	}
+
 	public static load(name: string, definition: WorkspaceDefinition, root: string): IWorkspace {
 		const workspace = new Workspace(name, definition, root);
 		return workspace;

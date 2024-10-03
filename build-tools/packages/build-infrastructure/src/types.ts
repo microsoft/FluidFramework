@@ -91,6 +91,7 @@ export interface IWorkspace extends Installable, Reloadable {
 	rootPackage: IPackage;
 	releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 	packages: IPackage[];
+	toString(): string;
 }
 
 export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
@@ -102,6 +103,7 @@ export interface IReleaseGroup extends Reloadable {
 	readonly packages: IPackage[];
 	readonly workspace: IWorkspace;
 	readonly adoPipelineUrl?: string;
+	toString(): string;
 }
 
 export function isIReleaseGroup(
@@ -157,6 +159,7 @@ export interface IPackage<J extends PackageJson = PackageJson>
 	getScript(name: string): string | undefined;
 	savePackageJson(): Promise<void>;
 	combinedDependencies: Generator<PackageDependency, void>;
+	toString(): string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this is a type guard

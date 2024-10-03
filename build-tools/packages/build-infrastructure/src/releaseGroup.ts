@@ -49,6 +49,10 @@ export class ReleaseGroup implements IReleaseGroup {
 		return this.packages;
 	}
 
+	public toString(): string {
+		return `${this.name} (RELEASE GROUP)`;
+	}
+
 	public reload(): void {
 		this.packages.forEach((pkg) => pkg.reload());
 	}

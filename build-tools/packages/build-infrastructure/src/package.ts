@@ -150,7 +150,7 @@ export abstract class PackageBase<
 	}
 
 	public toString() {
-		return this.name;
+		return `${this.name} (${this.directory})`;
 	}
 
 	public getScript(name: string): string | undefined {
