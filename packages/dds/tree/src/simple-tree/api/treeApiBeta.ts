@@ -132,15 +132,16 @@ export const TreeBeta: {
 	clone<TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		// The only non-TreeNode cases are TreeLeafValue and undefined (for an empty optional field) which can be
-		// returned as is.
+		/** The only non-TreeNode cases are {@link Value} (for an empty optional field) which can be returned as is. */
 		if (!isTreeNode(node)) {
 			return node;
 		}
 
 		const kernel = getKernel(node);
-		// For unhydrated nodes, we can create a cursor by calling `cursorFromInsertable` because the node
-		// hasn't been inserted yet. We can then create a new node from the cursor.
+		/**
+		 * For unhydrated nodes, we can create a cursor by calling `cursorFromInsertable` because the node
+		 * hasn't been inserted yet. We can then create a new node from the cursor.
+		 */
 		if (!kernel.context.flexContext.isHydrated()) {
 			return createFromCursor(
 				kernel.schema,
