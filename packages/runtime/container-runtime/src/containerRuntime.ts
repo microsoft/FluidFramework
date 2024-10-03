@@ -103,7 +103,10 @@ import {
 	responseToException,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
-import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
+import type {
+	IFluidErrorBase,
+	ITelemetryGenericEventExt,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
@@ -166,6 +169,7 @@ import {
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { ISavedOpMetadata } from "./metadata.js";
 import {
@@ -234,6 +238,30 @@ import {
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
+
+/**
+ * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
+ * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
+ *
+ * @param unknownContainerRuntimeMessageType - Typed as something unexpected, to ensure all known types have been
+ * handled before calling this function (e.g. in a switch statement).
+ */
+function getUnknownMessageTypeError(
+	unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
+	codePath: string,
+	sequencedMessage?: ISequencedDocumentMessage,
+): IFluidErrorBase {
+	return DataProcessingError.create(
+		"Found a ContainerRuntime message of unexpected type",
+		codePath,
+		sequencedMessage,
+		{
+			messageDetails: {
+				type: unknownContainerRuntimeMessageType,
+			},
+		},
+	);
+}
 
 /**
  * @legacy
@@ -2507,11 +2535,14 @@ export class ContainerRuntime
 			case ContainerMessageType.GC:
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
-			default:
-				unreachableCase(
-					opContents.type as never,
-					`Unknown ContainerMessageType: ${opContents.type}`,
+			default: {
+				const error = getUnknownMessageTypeError(
+					opContents.type,
+					"applyStashedOp" /* codePath */,
 				);
+				this.closeFn(error);
+				throw error;
+			}
 		}
 	}
 
