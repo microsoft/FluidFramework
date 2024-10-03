@@ -22,6 +22,7 @@ import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export interface IRoutes {
 	agent: Router;
@@ -44,6 +45,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	readinessCheck?: IReadinessCheck,
 ) {
 	return {
 		api: api.create(
@@ -62,6 +64,7 @@ export function create(
 			revokedTokenChecker,
 			collaborationSessionEventEmitter,
 			clusterDrainingChecker,
+			readinessCheck,
 		),
 	};
 }

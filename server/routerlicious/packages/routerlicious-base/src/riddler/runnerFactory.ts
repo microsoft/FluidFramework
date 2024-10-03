@@ -24,6 +24,7 @@ import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
 import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 /**
  * @internal
@@ -46,6 +47,7 @@ export class RiddlerResources implements IResources {
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
 		public readonly cache: RedisCache,
+		public readonly readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -177,6 +179,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			riddlerStorageRequestMetricIntervalMs,
 			tenantKeyGenerator,
 			cache,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -200,6 +203,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 			resources.tenantKeyGenerator,
 			resources.cache,
 			resources.config,
+			resources.readinessCheck,
 		);
 	}
 }
