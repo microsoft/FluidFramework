@@ -3,8 +3,13 @@
 This package contains types and helper functions that are used across multiple build-tools packages, including
 `@fluidframework/build-tools` and `@fluid-tools/build-cli`.
 
-The primary purpose of this package is to provide a common way to enumerate Packages, Release Groups, and Workspaces
-across a Fluid repo.
+The primary purpose of this package is to provide a common way to organize npm packages into groups called release
+groups, and leverages workspaces functionality provided by package managers like npm, yarn, and pnpm to manage
+interdependencies between packages across a Fluid repo. It then provides APIs to select, filter, and work with those
+package groups.
+
+Conceptually, a **Fluid repo** is a way to organize npm packages into groups for versioning, release, and dependency
+management. A Fluid repo can contain multiple **workspaces**, each of which may contain one or more **release groups**.
 
 ## API Overview
 
@@ -29,31 +34,75 @@ package in a workspace, all dependencies for all packages in the workspace will 
 trivial to link multiple packages so they can depend on one another. The `IWorkspace` type is a thin wrapper on top of
 these package manager features.
 
+Importantly, this package does not attempt to re-implement any features provided by workspaces themselves. Users are
+expected to configure their package managers' workspace features in addition to the Fluid repo configuration.
+
+A Fluid repo will only load packages identified by the package manager's workspace feature. That is, any package in the
+repo that is not configured as part of a workspace is invisible to the
+
 ### Release groups
 
 While workspaces manage dependencies and physical layout of packages, release groups are focused on groups of packages
-that are versioned and released together. Release groups are always a subset of a workspace, and must contain at least
+that are _versioned and released together_. Release groups are always a subset of a workspace, and must contain at least
 one package. **Release groups cannot span multiple workspaces.**
 
-Importantly, release groups are the unit that we release and version. In the v0 version of build-tools, release groups
-and workspaces have a 1:1 relationship. With the types defined here in build-infrastructure, workspaces can contain
-multiple release groups.
+Importantly, release groups are the unit of packages that are released and versions together.
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > A workspace _must_ have at least one release group, and all packages must be a part of a release group.
+
+> [!NOTE]
+> In the v0 version of build-tools, release groups and workspaces have a 1:1 relationship. In contrast, with the types
+> defined here in build-infrastructure, workspaces can contain multiple release groups.
 
 ### Packages
 
-Packages are the lowest-level entity in build-infrastructure. A package _must_ be a part of a release group and
+Packages are the lowest-level entity in build-infrastructure. A package _must_ be a part of both a release group and
 workspace in order to be managed with build-infrastructure. In general, developers should prefer using release groups -
 which are ultimately just groups of packages - to working with individual packages.
 
 ### What about "independent packages?"
 
-In the v0 version of build-tools, we have the concept of "independent packages:" packages that are not part of a release
+In the v0 version of build-tools, we have the concept of _independent packages_: packages that are not part of a release
 group and are released independently. **This concept no longer exists. There are only release groups.** Packages that
 release independently can either be part of a single-package workspace (and release group), or they can be part of
 another larger workspace, contained within a single-package release group.
+
+## Features
+
+In addition to loading and
+
+### Git repo capabilities
+
+A Fluid repo is often contained within a Git repository, and some functionality expects to be used within a Git
+repository. To support this, the Fluid repo will check if it is within aGit repository upon initialization, and if it
+is, it will instantiate a SimpleGit instance rooted at the root of the Git repo (which may not match the root of the
+Fluid repo).
+
+Features that need to execute Git operations can asynchronously retrieve the SimpleGit instance using the
+`IFluidRepo.getGitRepository` API. If the Fluid repo is not within a Git repo, then that call will throw an exception
+that callers should handle appropriately. If they don't, though, the exception makes it clear what has happened.
+
+> [!NOTE]
+>
+> This design addresses a major problem with build-tools v0, which was that code often made assumptions that it was
+> operating within a Git repo. That's often true, and some fetures can and should only work in that context, but the
+> implementation attempted to load the Git functionality blindly and would fail outright outside a Git context. With
+> `IFluidRepo`, the Git integration is more loosely coupled and the APIs make it clearer that it is not safe to assume
+> the presence of a Git repo.
+
+### Package selection and filtering APIs
+
+The IFluidRepo object provides access to workspaces, release groups, and their constiuent packages, but often one wants
+to operate on a subset of all packages in the repo. To support this, build-infrastructure provides a selection and
+filtering API. Packages can be selected based on criteria like workspace and release group, and the lists can be further
+filtered by scope or private/not private. Advanced filtering not covered by the built-in filters can be implemented
+using `Array.prototype.filter` on the results of package selection.
+
+### Loading old config formats
+
+The `repoPackages` configuration currently used by fluid-build will be loaded if the newer `repoLayout` config can't be
+found. This is for back-compat only and will not be maintained indefinitely. Users should convert to `repoLayout` when possible.
 
 ## Configuration
 
@@ -78,7 +127,7 @@ repoLayout: {
         // This key is the name of the release group. It must be unique across all
         // release groups.
         client: {
-          // The include property can contain package names OR package scopes. If 
+          // The include property can contain package names OR package scopes. If
           // a scope is provided, all packages with that scope will be a part of
           // the release group.
           include: [
@@ -95,7 +144,7 @@ repoLayout: {
           // A release group can have an OPTIONAL root package. This package
           // is typically private and is similar to the root package for a workspace.
           // This release group root package may be useful to store scripts or other
-          // configuration only applies on the release group, 
+          // configuration only applies on the release group,
           rootPackageName: "client-release-group-root",
           defaultInterdependencyRange: "workspace:~",
 
@@ -163,3 +212,28 @@ You can use the `isIPackage` and `isIReleaseGroup` functions to determine if an 
 ### Base classes
 
 The `PackageBase` abstract class can be used as a base class to create custom `IPackage` classes.
+
+## Miscellaneous improvements
+
+### Fluid repos can be rooted anywhere
+
+Fluid repos are rooted where their config file is located, _not_ at the root of a Git repo. There can be multiple Fluid
+repos within a Git repo, though this is usually only needed for testing. In typical use only a single Fluid repo per
+Git repo is needed. However, the Fluid repo does _not_ need to be rooted at the root of Git repo, and code should not
+assume that the root of the Fluid repo is the same as the root of a Git repo.
+
+### Better testing
+
+There is now a test project within the repo that is a fully functional Fluid repo. There are basic unit tests that verify the
+loading of the Fluid repo config and that packages are organized as expected. This is a dramatic improvement from v0
+build-tools, in which all package traversal logic was effectively untested.
+
+There are also tests for the selection and filtering APIs.
+
+This infrastructure also provides a foundation for further test improvements, and testing other new features of Fluid
+repos. In the past it was challenging to add new features because there was no way to test those features effectively.
+That should be much easier now.
+
+## Known gaps
+
+- Inadequate testing of git-related APIs - can we mock git somehow?
