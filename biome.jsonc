@@ -15,6 +15,7 @@
 			"**/dist/*",
 			"**/lib/*",
 			"**/*.done.build.log",
+			"**/.next/**/*", // NextJS
 
 			// test collateral
 			"**/_package.json",

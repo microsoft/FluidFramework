@@ -1,4 +1,8 @@
-import { SharedTreeBranchManager, type Difference } from "@fluid-experimental/fluid-llm";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { type TreeView } from "@fluidframework/tree";
 import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";

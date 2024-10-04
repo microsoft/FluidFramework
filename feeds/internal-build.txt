@@ -71,7 +71,6 @@ fluid-framework
 @fluid-internal/client-utils
 @fluid-experimental/tree-react-api
 @fluid-experimental/last-edited
-@fluid-experimental/fluid-llm-example
 @fluid-experimental/fluid-llm
 @fluid-experimental/data-objects
 @fluid-experimental/tree

@@ -1,6 +1,7 @@
 {
 	"name": "@fluid-experimental/fluid-llm-example",
 	"version": "2.4.0",
+	"private": true,
 	"description": "Experimental SharedTree API for React integration.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -12,28 +13,6 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		}
-	},
 	"main": "dist/index.js",
 	"types": "./dist/public.d.ts",
 	"scripts": {
@@ -110,8 +89,8 @@
 		"mui": "^0.0.1",
 		"next": "^14.2.8",
 		"notistack": "^3.0.1",
-		"react": "^18.3.1",
-		"react-dom": "^18.3.1",
+		"react": "^17.0.1",
+		"react-dom": "^17.0.1",
 		"tinylicious": "^5.0.0",
 		"typechat": "^0.1.1",
 		"uuid": "^9.0.0"
@@ -120,12 +99,12 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@fluid-tools/build-cli": "^0.46.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/devtools": "workspace:^",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@microsoft/microsoft-graph-types": "^2.40.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
