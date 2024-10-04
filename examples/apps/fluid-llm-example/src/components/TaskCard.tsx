@@ -31,7 +31,7 @@ import {
 	Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import React, { useState } from "react";
+import React, { useState, type ReactNode, type SetStateAction } from "react";
 
 import { editTask } from "@/actions/task";
 import {
@@ -140,7 +140,7 @@ export function TaskCard(props: {
 				</Box>
 			)}
 
-			{fieldDifferences.moved && (
+			{fieldDifferences.moved !== undefined && (
 				<Box component="span" sx={{ position: "absolute", top: 5, left: 5 }}>
 					<Tooltip
 						title={`This was moved from index: ${fieldDifferences.moved.path[fieldDifferences.moved.path.length - 1]}`}
@@ -295,9 +295,8 @@ export function TaskCard(props: {
 									multiline: true,
 									sx: {
 										alignItems: "flex-start",
-										backgroundColor: fieldDifferences.changes.description
-											? "#a4dbfc"
-											: "white",
+										backgroundColor:
+											fieldDifferences.changes.description === undefined ? "white" : "#a4dbfc",
 									},
 								},
 								inputLabel: {
@@ -305,10 +304,13 @@ export function TaskCard(props: {
 								},
 							}}
 						/>
-						{fieldDifferences.changes.description && (
+						{fieldDifferences.changes.description !== undefined && (
 							<IconButton
 								onClick={(event) => {
-									setDiffOldValue(fieldDifferences.changes.description?.oldValue);
+									setDiffOldValue(
+										fieldDifferences.changes.description
+											?.oldValue as SetStateAction<ReactNode>,
+									);
 									setDiffOldValuePopoverAnchor(event.currentTarget);
 								}}
 							>
@@ -334,7 +336,8 @@ export function TaskCard(props: {
 								}}
 								inputProps={{
 									sx: {
-										backgroundColor: fieldDifferences.changes.priority ? "#a4dbfc" : "white",
+										backgroundColor:
+											fieldDifferences.changes.priority === undefined ? "white" : "#a4dbfc",
 									},
 								}}
 								size="small"
@@ -355,10 +358,12 @@ export function TaskCard(props: {
 							</Select>
 						</FormControl>
 
-						{fieldDifferences.changes.priority && (
+						{fieldDifferences.changes.priority !== undefined && (
 							<IconButton
 								onClick={(event) => {
-									setDiffOldValue(fieldDifferences.changes.priority?.oldValue);
+									setDiffOldValue(
+										fieldDifferences.changes.priority?.oldValue as SetStateAction<ReactNode>,
+									);
 									setDiffOldValuePopoverAnchor(event.currentTarget);
 								}}
 							>
@@ -381,7 +386,8 @@ export function TaskCard(props: {
 								size="small"
 								inputProps={{
 									sx: {
-										backgroundColor: fieldDifferences.changes.status ? "#a4dbfc" : "white",
+										backgroundColor:
+											fieldDifferences.changes.status === undefined ? "white" : "#a4dbfc",
 									},
 								}}
 							>
@@ -416,7 +422,8 @@ export function TaskCard(props: {
 								size="small"
 								inputProps={{
 									sx: {
-										backgroundColor: fieldDifferences.changes.assignee ? "#a4dbfc" : "white",
+										backgroundColor:
+											fieldDifferences.changes.assignee === undefined ? "white" : "#a4dbfc",
 									},
 								}}
 							>
@@ -430,10 +437,12 @@ export function TaskCard(props: {
 								))}
 							</Select>
 						</FormControl>
-						{fieldDifferences.changes.assignee && (
+						{fieldDifferences.changes.assignee !== undefined && (
 							<IconButton
 								onClick={(event) => {
-									setDiffOldValue(fieldDifferences.changes.assignee?.oldValue);
+									setDiffOldValue(
+										fieldDifferences.changes.assignee?.oldValue as SetStateAction<ReactNode>,
+									);
 									setDiffOldValuePopoverAnchor(event.currentTarget);
 								}}
 							>
@@ -452,9 +461,10 @@ export function TaskCard(props: {
 								slotProps={{
 									htmlInput: {
 										sx: {
-											backgroundColor: fieldDifferences.changes.complexity
-												? "#a4dbfc"
-												: "white",
+											backgroundColor:
+												fieldDifferences.changes.complexity === undefined
+													? "white"
+													: "#a4dbfc",
 										},
 									},
 								}}
