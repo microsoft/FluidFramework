@@ -109,19 +109,35 @@ export class KafkaRunner implements IRunner {
 		});
 
 		this.partitionManager.on("pause", (partitionId: number, offset: number, reason?: any) => {
-			this.pause(partitionId, offset).then(() => {
-				Lumberjack.info("KafkaRunner paused", { partitionId, offset, reason: serializeError(reason) });
-			}).catch((error) => {
-				Lumberjack.error("KafkaRunner encountered an error during pause", { partitionId, offset, reason }, error);
-			});
+			this.pause(partitionId, offset)
+				.then(() => {
+					Lumberjack.info("KafkaRunner paused", {
+						partitionId,
+						offset,
+						reason: serializeError(reason),
+					});
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						"KafkaRunner encountered an error during pause",
+						{ partitionId, offset, reason },
+						error,
+					);
+				});
 		});
 
 		this.partitionManager.on("resume", (partitionId: number) => {
-			this.resume(partitionId).then(() => {
-				Lumberjack.info("KafkaRunner resumed", { partitionId });
-			}).catch((error) => {
-				Lumberjack.error("KafkaRunner encountered an error during resume", { partitionId }, error);
-			});
+			this.resume(partitionId)
+				.then(() => {
+					Lumberjack.info("KafkaRunner resumed", { partitionId });
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						"KafkaRunner encountered an error during resume",
+						{ partitionId },
+						error,
+					);
+				});
 		});
 
 		this.stopped = false;

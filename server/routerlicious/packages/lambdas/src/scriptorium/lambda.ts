@@ -58,7 +58,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		private readonly opCollection: ICollection<any>,
 		protected context: IContext,
 		private readonly providerConfig: Record<string, any> | undefined,
-		private readonly dbHealthCheckFunction: ((...args: any[]) => Promise<any>),
+		private readonly dbHealthCheckFunction: (...args: any[]) => Promise<any>,
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 		this.telemetryEnabled = this.providerConfig?.enableTelemetry;
@@ -75,16 +75,24 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		if (this.circuitBreakerEnabled) {
 			try {
 				const dbCircuitBreakerOptions: circuitBreakerOptions = {
-					errorThresholdPercentage: this.circuitBreakerOptions.errorThresholdPercentage ?? 0.001, // Percentage of errors before opening the circuit
+					errorThresholdPercentage:
+						this.circuitBreakerOptions.errorThresholdPercentage ?? 0.001, // Percentage of errors before opening the circuit
 					resetTimeout: this.circuitBreakerOptions.resetTimeout ?? 30000, // Time in milliseconds before attempting to close the circuit after it has been opened
 					timeout: this.circuitBreakerOptions.timeout ?? false, // Time in milliseconds before a request is considered timed out
 					rollingCountTimeout: this.circuitBreakerOptions.rollingCountTimeout ?? 1000, // Time in milliseconds before the rolling window resets
 					rollingCountBuckets: this.circuitBreakerOptions.rollingCountBuckets ?? 1000, // Number of buckets in the rolling window
 					errorFilter: this.errorFilterForCircuitBreaker.bind(this), // Function to filter errors - if it returns true for certain errors, they will not open the circuit
-					fallbackToRestartTimeoutMs: this.circuitBreakerOptions.fallbackToRestartTimeoutMs ?? 180000,
-				}
+					fallbackToRestartTimeoutMs:
+						this.circuitBreakerOptions.fallbackToRestartTimeoutMs ?? 180000,
+				};
 
-				this.dbCircuitBreaker = new LambdaCircuitBreaker(dbCircuitBreakerOptions, this.context, "MongoDB", runWithRetry, this.dbHealthCheckFunction);
+				this.dbCircuitBreaker = new LambdaCircuitBreaker(
+					dbCircuitBreakerOptions,
+					this.context,
+					"MongoDB",
+					runWithRetry,
+					this.dbHealthCheckFunction,
+				);
 			} catch (error) {
 				Lumberjack.error("Error while creating circuit breaker in scriptorium", {}, error);
 				throw error; // will be caught in partition.ts during factory.create and it will restart the service
@@ -188,7 +196,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 	private errorFilterForCircuitBreaker(error: any): boolean {
 		for (const errorFilter of this.circuitBreakerOptions.filterOnErrors ?? []) {
-			if (error?.message?.toString()?.indexOf(errorFilter) >= 0 || error?.stack?.toString()?.indexOf(errorFilter) >= 0) {
+			if (
+				error?.message?.toString()?.indexOf(errorFilter) >= 0 ||
+				error?.stack?.toString()?.indexOf(errorFilter) >= 0
+			) {
 				return false; // circuit breaker will open and pause the lambda
 			}
 		}
@@ -281,15 +292,28 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				metric?.setProperty("timestampProcessingFailed", new Date().toISOString());
 
 				if (error.circuitBreakerOpen === true && this.lastSuccessfulOffset !== undefined) {
-					const errorMessage = "Scriptorium failed to process batch, circuit breaker is opened and pausing lambda";
-					this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+					const errorMessage =
+						"Scriptorium failed to process batch, circuit breaker is opened and pausing lambda";
+					this.logErrorTelemetry(
+						errorMessage,
+						error,
+						status,
+						batchOffset?.offset,
+						metric,
+					);
 
 					// Circuit breaker is open, pause lambda. It will be resumed when circuit breaker closes after some time.
 					this.context.pause(this.lastSuccessfulOffset + 1, error);
 					return;
 				} else {
 					const errorMessage = "Scriptorium failed to process batch, going to restart";
-					this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
+					this.logErrorTelemetry(
+						errorMessage,
+						error,
+						status,
+						batchOffset?.offset,
+						metric,
+					);
 
 					// Restart scriptorium
 					this.context.error(error, { restart: true });
@@ -345,7 +369,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			((error: any, numRetries: number, retryAfterInterval: number) => number) | undefined,
 			((error: any) => void) | undefined,
 			boolean,
-			boolean
+			boolean,
 		] = [
 			async (): Promise<any> => this.opCollection.insertMany(dbOps, false),
 			"insertOpScriptorium",
@@ -365,7 +389,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			undefined /* onErrorFn */,
 			this.telemetryEnabled,
 			this.shouldLogInitialSuccessVerbose,
-		]
-		return this.dbCircuitBreaker ? this.dbCircuitBreaker.execute(runWithRetryArgs) : runWithRetry(...runWithRetryArgs);
+		];
+		return this.dbCircuitBreaker
+			? this.dbCircuitBreaker.execute(runWithRetryArgs)
+			: runWithRetry(...runWithRetryArgs);
 	}
 }

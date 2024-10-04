@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import CircuitBreaker from 'opossum';
+import CircuitBreaker from "opossum";
 import { serializeError } from "serialize-error";
 import { IContext } from "@fluidframework/server-services-core";
-import {
-	Lumberjack,
-	Lumber,
-	LumberEventName,
-} from "@fluidframework/server-services-telemetry";
+import { Lumberjack, Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
 
 export interface circuitBreakerOptions {
 	errorThresholdPercentage: number; // Percentage of errors before opening the circuit
@@ -23,7 +19,10 @@ export interface circuitBreakerOptions {
 }
 
 // executes `functionCall` with `args`
-async function wrapperCircuitBreakerAction (functionCall: (...args: any[]) => Promise<any>, args: any[]): Promise<any> {
+async function wrapperCircuitBreakerAction(
+	functionCall: (...args: any[]) => Promise<any>,
+	args: any[],
+): Promise<any> {
 	return functionCall(...args);
 }
 
@@ -31,8 +30,8 @@ export class LambdaCircuitBreaker {
 	private readonly circuitBreaker: CircuitBreaker;
 	private readonly context: IContext;
 	private readonly dependencyName: string;
-	private readonly executeFunction: (...args: any[]) => Promise<any>
-	private readonly healthCheckFunction: ((...args: any[]) => Promise<any>);
+	private readonly executeFunction: (...args: any[]) => Promise<any>;
+	private readonly healthCheckFunction: (...args: any[]) => Promise<any>;
 	private readonly healthCheckParams: any[] = [];
 	private readonly fallbackToRestartTimeoutMs: number = 180000; // 3 minutes by default
 
@@ -48,14 +47,15 @@ export class LambdaCircuitBreaker {
 		dependencyName: string,
 		executeFunction: (...args: any[]) => Promise<any>,
 		healthCheckFunction: (...args: any[]) => Promise<any>,
-		healthCheckParams?: any[]
+		healthCheckParams?: any[],
 	) {
 		this.context = context;
 		this.dependencyName = dependencyName;
 		this.executeFunction = executeFunction;
 		this.healthCheckFunction = healthCheckFunction;
 		this.healthCheckParams = healthCheckParams ?? [];
-		this.fallbackToRestartTimeoutMs = circuitBreakerOptions.fallbackToRestartTimeoutMs ?? this.fallbackToRestartTimeoutMs;
+		this.fallbackToRestartTimeoutMs =
+			circuitBreakerOptions.fallbackToRestartTimeoutMs ?? this.fallbackToRestartTimeoutMs;
 
 		const lambdaErrorFilter = circuitBreakerOptions.errorFilter;
 
@@ -66,11 +66,12 @@ export class LambdaCircuitBreaker {
 			rollingCountTimeout: circuitBreakerOptions.rollingCountTimeout,
 			rollingCountBuckets: circuitBreakerOptions.rollingCountBuckets,
 			errorFilter: (error): boolean => {
-				if (error.healthCheckFailed) { // open the circuit breaker if health check fails with any error, else use lambdaErrorFilter
+				if (error.healthCheckFailed) {
+					// open the circuit breaker if health check fails with any error, else use lambdaErrorFilter
 					return false;
 				}
 				return lambdaErrorFilter ? lambdaErrorFilter(error) : false;
-			}
+			},
 		});
 
 		this.circuitBreaker.on("open", () => this.openCallback());
@@ -81,12 +82,19 @@ export class LambdaCircuitBreaker {
 	}
 
 	public async execute(params: any[], doHealthCheck?: boolean): Promise<void> {
-		const functionToFire = doHealthCheck && this.healthCheckFunction ? this.healthCheckFunction : this.executeFunction;
+		const functionToFire =
+			doHealthCheck && this.healthCheckFunction
+				? this.healthCheckFunction
+				: this.executeFunction;
 		return this.circuitBreaker.fire(functionToFire, params); // calls wrapperCircuitBreakerAction with these params
 	}
 
 	public getCurrentState(): string {
-		return this.circuitBreaker.opened ? "opened" : this.circuitBreaker.halfOpen ? "halfOpen" : "closed";
+		return this.circuitBreaker.opened
+			? "opened"
+			: this.circuitBreaker.halfOpen
+			? "halfOpen"
+			: "closed";
 	}
 
 	public shutdown(): void {
@@ -96,14 +104,16 @@ export class LambdaCircuitBreaker {
 	private openCallback(): void {
 		// telemetry for circuit breaker open
 		this.circuitBreakerOpenCount++;
-		if (this.circuitBreakerMetric) { // opening the circuit agan after halfOpen state
+		if (this.circuitBreakerMetric) {
+			// opening the circuit agan after halfOpen state
 			this.circuitBreakerMetric.setProperty("openCount", this.circuitBreakerOpenCount);
-		} else { // opening the circuit first time, create new metric
+		} else {
+			// opening the circuit first time, create new metric
 			this.circuitBreakerMetric = Lumberjack.newLumberMetric(LumberEventName.CircuitBreaker, {
 				timestampOpened: new Date().toISOString(),
 				dependencyName: this.dependencyName,
 				error: serializeError(this.error),
-				openCount: this.circuitBreakerOpenCount
+				openCount: this.circuitBreakerOpenCount,
 			});
 
 			// setup the fallback to restart the service if the circuit breaker is not closed for more than fallbackToRestartTimeoutMs
@@ -111,7 +121,7 @@ export class LambdaCircuitBreaker {
 		}
 		Lumberjack.info("Circuit breaker opened", {
 			metricId: this.circuitBreakerMetric.id,
-			error: serializeError(this.error)
+			error: serializeError(this.error),
 		});
 	}
 
@@ -138,12 +148,16 @@ export class LambdaCircuitBreaker {
 
 	private halfOpenCallback(): void {
 		Lumberjack.info("Circuit breaker halfOpen", {
-			metricId: this.circuitBreakerMetric?.id
+			metricId: this.circuitBreakerMetric?.id,
 		});
 
 		// check the health of the dependency service, and let circuit breaker change its state accordingly
 		this.execute(this.healthCheckParams, true).catch((error) => {
-			Lumberjack.error("Circuit breaker health check failed in halfOpen state, circuit will remain open.", {metricId: this.circuitBreakerMetric?.id}, error);
+			Lumberjack.error(
+				"Circuit breaker health check failed in halfOpen state, circuit will remain open.",
+				{ metricId: this.circuitBreakerMetric?.id },
+				error,
+			);
 		});
 	}
 
@@ -163,10 +177,15 @@ export class LambdaCircuitBreaker {
 					openCount: this.circuitBreakerOpenCount,
 					timestampFallbackToRestart: new Date().toISOString(),
 					state: this.circuitBreaker.toJSON()?.state,
-					fallbackToRestartTimeoutMs: this.fallbackToRestartTimeoutMs
+					fallbackToRestartTimeoutMs: this.fallbackToRestartTimeoutMs,
 				});
-				this.circuitBreakerMetric?.error("Circuit breaker not closed for a long time, going to restart the service");
-				this.context.error(initialError, { restart: true, errorLabel: "circuitBreaker:fallbackToRestartTimeout" });
+				this.circuitBreakerMetric?.error(
+					"Circuit breaker not closed for a long time, going to restart the service",
+				);
+				this.context.error(initialError, {
+					restart: true,
+					errorLabel: "circuitBreaker:fallbackToRestartTimeout",
+				});
 			}
 		}, this.fallbackToRestartTimeoutMs);
 	}

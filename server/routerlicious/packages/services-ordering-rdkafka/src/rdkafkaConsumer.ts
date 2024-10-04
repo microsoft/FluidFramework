@@ -462,25 +462,35 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 * @param seekTimeout - The timeout value for consumer.seek in ms
 	 * @param offset - The offset to seek to after pausing
 	 */
-	public async pauseFetching(partitionId: number, seekTimeout: number, offset?: number): Promise<void> {
+	public async pauseFetching(
+		partitionId: number,
+		seekTimeout: number,
+		offset?: number,
+	): Promise<void> {
 		if (!this.assignedPartitions.has(partitionId)) {
-			return Promise.reject(new Error(`Consumer pause called for unassigned partitionId ${partitionId}`));
+			return Promise.reject(
+				new Error(`Consumer pause called for unassigned partitionId ${partitionId}`),
+			);
 		}
 		if (this.paused.get(partitionId) === true) {
 			Lumberjack.info(`Consumer partition already paused, returning early.`, { partitionId });
 			return Promise.resolve();
 		}
-		this.consumer?.pause([{topic: this.topic, partition: partitionId}]);
+		this.consumer?.pause([{ topic: this.topic, partition: partitionId }]);
 		Lumberjack.info(`Consumer paused`, { partitionId, offset });
 		if (offset !== undefined) {
-			this.consumer?.seek({ topic: this.topic, partition: partitionId, offset }, seekTimeout, (err) => {
-				if (err) {
-					this.error(err, {
-						restart: true,
-						errorLabel: "rdkafkaConsumer:pauseFetching.seek"
-					});
-				}
-			});
+			this.consumer?.seek(
+				{ topic: this.topic, partition: partitionId, offset },
+				seekTimeout,
+				(err) => {
+					if (err) {
+						this.error(err, {
+							restart: true,
+							errorLabel: "rdkafkaConsumer:pauseFetching.seek",
+						});
+					}
+				},
+			);
 			Lumberjack.info(`Consumer seeked to paused offset`, { partitionId, offset });
 			this.pausedOffsets.set(partitionId, offset);
 		}
@@ -495,20 +505,23 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 */
 	public async resumeFetching(partitionId: number): Promise<void> {
 		if (!this.assignedPartitions.has(partitionId)) {
-			return Promise.reject(new Error(`Consumer resume called for unassigned partition ${partitionId}`));
+			return Promise.reject(
+				new Error(`Consumer resume called for unassigned partition ${partitionId}`),
+			);
 		}
 		if (this.paused.get(partitionId) !== true) {
-			Lumberjack.info(`Consumer partition already resumed, returning early.`, { partitionId });
+			Lumberjack.info(`Consumer partition already resumed, returning early.`, {
+				partitionId,
+			});
 			return;
 		}
-		this.consumer?.resume([{topic: this.topic, partition: partitionId}]);
+		this.consumer?.resume([{ topic: this.topic, partition: partitionId }]);
 		Lumberjack.info(`Consumer resumed`, { partitionId });
 		this.pausedOffsets.delete(partitionId);
 		this.paused.set(partitionId, false);
 		this.emit("resumeFetching");
 		return Promise.resolve();
 	}
-
 
 	/**
 	 * Saves the latest offset for the partition and emits the data event with the message.
@@ -594,10 +607,16 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 					if (this.paused.get(assignment.partition) && this.topic === assignment.topic) {
 						// if the partition was paused, we need to pause it again
-						consumer.pause([{topic: assignment.topic, partition: assignment.partition}]);
+						consumer.pause([
+							{ topic: assignment.topic, partition: assignment.partition },
+						]);
 						// ensure that we continue reading from the paused offset
-						if (this.pausedOffsets.has(assignment.partition) && this.pausedOffsets.get(assignment.partition) !== undefined) {
-							(assignment as kafkaTypes.TopicPartitionOffset).offset = this.pausedOffsets.get(assignment.partition)?? 0;
+						if (
+							this.pausedOffsets.has(assignment.partition) &&
+							this.pausedOffsets.get(assignment.partition) !== undefined
+						) {
+							(assignment as kafkaTypes.TopicPartitionOffset).offset =
+								this.pausedOffsets.get(assignment.partition) ?? 0;
 						}
 					}
 				}

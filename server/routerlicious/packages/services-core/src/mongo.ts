@@ -26,7 +26,7 @@ export class MongoManager {
 		this.healthCheck = async (): Promise<void> => {
 			const database = await this.databaseP;
 			return database.healthCheck();
-		}
+		};
 	}
 
 	/**

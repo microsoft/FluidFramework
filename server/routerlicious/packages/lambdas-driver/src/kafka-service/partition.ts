@@ -88,7 +88,7 @@ export class Partition extends EventEmitter {
 
 				const errorData: IContextErrorData = {
 					restart: true,
-					errorLabel: "partition:lambdaFactory.create"
+					errorLabel: "partition:lambdaFactory.create",
 				};
 				this.emit("error", error, errorData);
 				this.q.kill();
@@ -161,8 +161,10 @@ export class Partition extends EventEmitter {
 	}
 
 	public resume(): void {
-		if(!this.paused) {
-			Lumberjack.info(`Partition already resumed, returning early.`, { partitionId: this.id });
+		if (!this.paused) {
+			Lumberjack.info(`Partition already resumed, returning early.`, {
+				partitionId: this.id,
+			});
 			return;
 		}
 		this.paused = false;

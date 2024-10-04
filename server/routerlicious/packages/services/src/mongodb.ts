@@ -581,10 +581,13 @@ export class MongoDb implements core.IDb {
 	}
 
 	public async healthCheck(dbName = "admin"): Promise<void> {
-		await this.client.db(dbName).command({ ping: 1 }).catch((error) => {
-			error.healthCheckFailed = true;
-			throw error;
-		});
+		await this.client
+			.db(dbName)
+			.command({ ping: 1 })
+			.catch((error) => {
+				error.healthCheckFailed = true;
+				throw error;
+			});
 	}
 
 	public async dropCollection(name: string, dbName = "admin"): Promise<boolean> {

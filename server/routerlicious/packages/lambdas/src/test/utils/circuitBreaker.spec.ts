@@ -28,13 +28,16 @@ describe("Lambda CircuitBreaker", () => {
 		if (timeoutMs > 0) {
 			await new Promise((resolve) => setTimeout(resolve, timeoutMs));
 		}
-		return success ? Promise.resolve(successfulResponse) : Promise.reject(new Error(errorResponse));
-	}
+		return success
+			? Promise.resolve(successfulResponse)
+			: Promise.reject(new Error(errorResponse));
+	};
 	const dummyHealthCheck = async (success = true) => {
 		await new Promise((resolve) => setTimeout(resolve, 100));
-		return success ? Promise.resolve(healthCheckSuccessResponse) : Promise.reject(new Error(healthCheckFailedResponse));
-	}
-
+		return success
+			? Promise.resolve(healthCheckSuccessResponse)
+			: Promise.reject(new Error(healthCheckFailedResponse));
+	};
 
 	afterEach(() => {
 		circuitBreaker["circuitBreaker"].close();
@@ -42,7 +45,13 @@ describe("Lambda CircuitBreaker", () => {
 	});
 
 	it("should execute the function successfully when the circuit is closed", async () => {
-		circuitBreaker = new LambdaCircuitBreaker(options, testContext, dependencyName, dummyFunction, dummyHealthCheck);
+		circuitBreaker = new LambdaCircuitBreaker(
+			options,
+			testContext,
+			dependencyName,
+			dummyFunction,
+			dummyHealthCheck,
+		);
 		const response = await circuitBreaker.execute([]);
 		assert.strictEqual(response, successfulResponse);
 		await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -50,9 +59,18 @@ describe("Lambda CircuitBreaker", () => {
 	});
 
 	it("should open the circuit when execution fails, and fail immediately for further requests", async () => {
-		circuitBreaker = new LambdaCircuitBreaker(options, testContext, dependencyName, dummyFunction, dummyHealthCheck);
+		circuitBreaker = new LambdaCircuitBreaker(
+			options,
+			testContext,
+			dependencyName,
+			dummyFunction,
+			dummyHealthCheck,
+		);
 
-		await assert.rejects(circuitBreaker.execute([false]), { message: errorResponse, circuitBreakerOpen: true });
+		await assert.rejects(circuitBreaker.execute([false]), {
+			message: errorResponse,
+			circuitBreakerOpen: true,
+		});
 		assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
 
 		// Execute the function again, this time it should reject immediately without calling the action
@@ -65,13 +83,16 @@ describe("Lambda CircuitBreaker", () => {
 
 	it("should not open the circuit breaker if errorFilter returns true even though the function returned an error", async () => {
 		circuitBreaker = new LambdaCircuitBreaker(
-			{...options, errorFilter: (_) => {
-				return true;
-			}},
+			{
+				...options,
+				errorFilter: (_) => {
+					return true;
+				},
+			},
 			testContext,
 			dependencyName,
 			dummyFunction,
-			dummyHealthCheck
+			dummyHealthCheck,
 		);
 		try {
 			await circuitBreaker.execute([false]);
@@ -86,9 +107,18 @@ describe("Lambda CircuitBreaker", () => {
 	});
 
 	it("should halfOpen the circuit after resetTimeout and close the circuit if healthCheck is successful", async () => {
-		circuitBreaker = new LambdaCircuitBreaker(options, testContext, dependencyName, dummyFunction, dummyHealthCheck);
+		circuitBreaker = new LambdaCircuitBreaker(
+			options,
+			testContext,
+			dependencyName,
+			dummyFunction,
+			dummyHealthCheck,
+		);
 
-		await assert.rejects(circuitBreaker.execute([false]), { message: errorResponse, circuitBreakerOpen: true });
+		await assert.rejects(circuitBreaker.execute([false]), {
+			message: errorResponse,
+			circuitBreakerOpen: true,
+		});
 		assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
 
 		await new Promise((resolve) => setTimeout(resolve, resetTimeout));
@@ -101,9 +131,19 @@ describe("Lambda CircuitBreaker", () => {
 	});
 
 	it("should halfOpen the circuit after resetTimeout and open the circuit if healthCheck is failing", async () => {
-		circuitBreaker = new LambdaCircuitBreaker(options, testContext, dependencyName, dummyFunction, dummyHealthCheck, [false]);
+		circuitBreaker = new LambdaCircuitBreaker(
+			options,
+			testContext,
+			dependencyName,
+			dummyFunction,
+			dummyHealthCheck,
+			[false],
+		);
 
-		await assert.rejects(circuitBreaker.execute([false]), { message: errorResponse, circuitBreakerOpen: true });
+		await assert.rejects(circuitBreaker.execute([false]), {
+			message: errorResponse,
+			circuitBreakerOpen: true,
+		});
 		assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
 
 		await new Promise((resolve) => setTimeout(resolve, resetTimeout));
@@ -118,38 +158,61 @@ describe("Lambda CircuitBreaker", () => {
 	});
 
 	it("should open the circuit if any one out of multiple parallel calls fail and pending requests resolving should not close the circuit", async () => {
-		circuitBreaker = new LambdaCircuitBreaker(options, testContext, dependencyName, dummyFunction, dummyHealthCheck);
+		circuitBreaker = new LambdaCircuitBreaker(
+			options,
+			testContext,
+			dependencyName,
+			dummyFunction,
+			dummyHealthCheck,
+		);
 		const promises = [];
 
 		// successful case
-		promises.push(circuitBreaker.execute([true, 100]).then(response => {
-			assert.strictEqual(response, successfulResponse);
-		}));
+		promises.push(
+			circuitBreaker.execute([true, 100]).then((response) => {
+				assert.strictEqual(response, successfulResponse);
+			}),
+		);
 
 		// failure case - this should open the circuit
-		promises.push(circuitBreaker.execute([false, 0]).then(_ => {
-			assert.fail("Should not reach here");
-		}).catch(error => {
-			assert.strictEqual(error.message, errorResponse);
-			assert.strictEqual(error.circuitBreakerOpen, true);
-			assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
-		}));
+		promises.push(
+			circuitBreaker
+				.execute([false, 0])
+				.then((_) => {
+					assert.fail("Should not reach here");
+				})
+				.catch((error) => {
+					assert.strictEqual(error.message, errorResponse);
+					assert.strictEqual(error.circuitBreakerOpen, true);
+					assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
+				}),
+		);
 
 		// circuit should remain opened even when the successful case resolved
-		Promise.all(promises).then(_ => {
+		Promise.all(promises).then((_) => {
 			assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
 		});
 	});
 
 	it("should fallback to restart if not closed for a long time", async () => {
-		circuitBreaker = new LambdaCircuitBreaker({ ...options, resetTimeout: 100, fallbackToRestartTimeoutMs: 1000 }, testContext, dependencyName, dummyFunction, dummyHealthCheck, [false]);
+		circuitBreaker = new LambdaCircuitBreaker(
+			{ ...options, resetTimeout: 100, fallbackToRestartTimeoutMs: 1000 },
+			testContext,
+			dependencyName,
+			dummyFunction,
+			dummyHealthCheck,
+			[false],
+		);
 
 		testContext.on("error", (error, errorData) => {
 			assert.strictEqual(error.message, errorResponse);
 			assert.strictEqual(errorData.restart, true);
 		});
 
-		await assert.rejects(circuitBreaker.execute([false]), { message: errorResponse, circuitBreakerOpen: true });
+		await assert.rejects(circuitBreaker.execute([false]), {
+			message: errorResponse,
+			circuitBreakerOpen: true,
+		});
 		assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	});
