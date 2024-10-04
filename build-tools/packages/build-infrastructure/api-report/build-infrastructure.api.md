@@ -42,12 +42,16 @@ export interface IFluidBuildDirs {
 // @public
 export interface IFluidRepo extends Reloadable {
     getGitRepository(): Promise<Readonly<SimpleGit>>;
+    getPackageReleaseGroup(pkg: Readonly<IPackage>): Readonly<IReleaseGroup>;
+    getPackageWorkspace(pkg: Readonly<IPackage>): Readonly<IWorkspace>;
     // (undocumented)
     packages: Map<PackageName, IPackage>;
     relativeToRepo(p: string): string;
     // (undocumented)
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
     root: string;
+    // (undocumented)
+    upstreamRemotePartialUrl?: string;
     // (undocumented)
     workspaces: Map<WorkspaceName, IWorkspace>;
 }
@@ -101,6 +105,8 @@ export interface IPackage<J extends PackageJson = PackageJson> extends Pick<Inst
     // (undocumented)
     savePackageJson(): Promise<void>;
     // (undocumented)
+    toString(): string;
+    // (undocumented)
     readonly version: string;
 }
 
@@ -122,6 +128,8 @@ export interface IReleaseGroup extends Reloadable {
     readonly packages: IPackage[];
     // (undocumented)
     readonly rootPackage?: IPackage;
+    // (undocumented)
+    toString(): string;
     // (undocumented)
     readonly version: string;
     // (undocumented)
@@ -146,10 +154,12 @@ export interface IWorkspace extends Installable, Reloadable {
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
     // (undocumented)
     rootPackage: IPackage;
+    // (undocumented)
+    toString(): string;
 }
 
 // @public
-export function loadFluidRepo(searchPath: string): IFluidRepo;
+export function loadFluidRepo(searchPath: string, upstreamRemotePartialUrl?: string): IFluidRepo;
 
 // @public (undocumented)
 export class NotInGitRepository extends Error {
@@ -192,7 +202,7 @@ export abstract class PackageBase<TAddProps extends AdditionalPackageProps = und
     // (undocumented)
     savePackageJson(): Promise<void>;
     // (undocumented)
-    toString(): PackageName;
+    toString(): string;
     // (undocumented)
     get version(): string;
 }
