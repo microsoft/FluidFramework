@@ -40,9 +40,7 @@ export {
 } from "./events/index.js";
 
 export {
-	type LazyItem,
 	TreeStatus,
-	type Unenforced,
 	TreeCompressionStrategy,
 } from "./feature-libraries/index.js";
 
@@ -58,6 +56,7 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	type ForestOptions,
 	getBranch,
 	type TreeBranch,
 	type TreeBranchFork,
@@ -121,12 +120,11 @@ export {
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
-	// experimental @internal APIs:
+	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-	type EmptyObject,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -149,10 +147,19 @@ export {
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
 	getJsonSchema,
+	type LazyItem,
+	type Unenforced,
 } from "./simple-tree/index.js";
-export { SharedTree, configuredSharedTree } from "./treeFactory.js";
+export {
+	SharedTree,
+	configuredSharedTree,
+} from "./treeFactory.js";
 
-export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
+export type {
+	ICodecOptions,
+	JsonValidator,
+	SchemaValidationFunction,
+} from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 

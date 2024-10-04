@@ -6,15 +6,8 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import {
-	type LazyItem,
-	type TreeStatus,
-	isLazy,
-	isTreeValue,
-	FieldKinds,
-} from "../../feature-libraries/index.js";
+import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
@@ -43,8 +36,10 @@ import {
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
 	typeSchemaSymbol,
+	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { isLazy, type LazyItem } from "../flexList.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
