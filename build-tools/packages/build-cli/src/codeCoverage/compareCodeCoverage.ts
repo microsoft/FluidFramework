@@ -184,7 +184,8 @@ export function isCodeCoverageCriteriaPassed(
 	const { codeCoverageComparisonForNewPackages, codeCoverageComparisonForExistingPackages } =
 		codeCoverageChangeForPackages;
 	const packagesWithNotableRegressions = codeCoverageComparisonForExistingPackages.filter(
-		(codeCoverageReport: CodeCoverageComparison) => codeCoverageReport.branchCoverageDiff < -1,
+		(codeCoverageReport: CodeCoverageComparison) =>
+			codeCoverageReport.branchCoverageDiff < -1 || codeCoverageReport.lineCoverageDiff < -1,
 	);
 
 	logger?.verbose(
@@ -193,7 +194,8 @@ export function isCodeCoverageCriteriaPassed(
 
 	// Code coverage for the newly added package should be less than 50% to fail.
 	const newPackagesWithNotableRegressions = codeCoverageComparisonForNewPackages.filter(
-		(codeCoverageReport) => codeCoverageReport.branchCoverageInPr < 50,
+		(codeCoverageReport) =>
+			codeCoverageReport.branchCoverageInPr < 50 || codeCoverageReport.lineCoverageInPr < 50,
 	);
 
 	logger?.verbose(

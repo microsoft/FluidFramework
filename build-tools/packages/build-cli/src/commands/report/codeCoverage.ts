@@ -12,9 +12,9 @@ import {
 import { getCommentForCodeCoverageDiff } from "../../codeCoverage/getCommentForCodeCoverage.js";
 import { type IAzureDevopsBuildCoverageConstants } from "../../library/azureDevops/constants.js";
 import {
+	type GitHubProps,
 	createOrUpdateCommentOnPr,
 	getChangedFilePaths,
-	type GitHubProps,
 } from "../../library/githubRest.js";
 import { BaseCommand } from "../../library/index.js";
 
