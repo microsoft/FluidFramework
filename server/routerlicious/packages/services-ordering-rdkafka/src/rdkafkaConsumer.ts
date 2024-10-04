@@ -466,10 +466,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			return Promise.reject(new Error(`Consumer pause called for unassigned partitionId ${partitionId}`));
 		}
 		if (this.paused.get(partitionId) === true) {
-			Lumberjack.info(`Consumer partitionId ${partitionId} already paused, returning early.`);
+			Lumberjack.info(`Consumer partition already paused, returning early.`, { partitionId });
 			return Promise.resolve();
 		}
 		this.consumer?.pause([{topic: this.topic, partition: partitionId}]);
+		Lumberjack.info(`Consumer paused`, { partitionId, offset });
 		if (offset !== undefined) {
 			this.consumer?.seek({ topic: this.topic, partition: partitionId, offset }, seekTimeout, (err) => {
 				if (err) {
@@ -479,11 +480,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					});
 				}
 			});
+			Lumberjack.info(`Consumer seeked to paused offset`, { partitionId, offset });
 			this.pausedOffsets.set(partitionId, offset);
 		}
 		this.paused.set(partitionId, true);
 		this.emit("pauseFetching");
-		Lumberjack.info(`Consumer paused`, { partitionId, offset });
 		return Promise.resolve();
 	}
 
@@ -493,17 +494,17 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 */
 	public async resumeFetching(partitionId: number): Promise<void> {
 		if (!this.assignedPartitions.has(partitionId)) {
-			return Promise.reject(new Error(`Consumer resume called for unassigned partitionId ${partitionId}`));
+			return Promise.reject(new Error(`Consumer resume called for unassigned partition ${partitionId}`));
 		}
 		if (this.paused.get(partitionId) !== true) {
-			Lumberjack.info(`Consumer partitionId ${partitionId} already resumed, returning early.`);
+			Lumberjack.info(`Consumer partition already resumed, returning early.`, { partitionId });
 			return;
 		}
 		this.consumer?.resume([{topic: this.topic, partition: partitionId}]);
+		Lumberjack.info(`Consumer resumed`, { partitionId });
 		this.pausedOffsets.delete(partitionId);
 		this.paused.set(partitionId, false);
 		this.emit("resumeFetching");
-		Lumberjack.info(`Consumer resumed`, { partitionId });
 		return Promise.resolve();
 	}
 

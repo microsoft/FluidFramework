@@ -146,7 +146,7 @@ export class Partition extends EventEmitter {
 
 	public pause(): void {
 		if (this.paused) {
-			Lumberjack.info(`PartitionId ${this.id} already paused, returning early.`);
+			Lumberjack.info(`Partition already paused, returning early.`, { partitionId: this.id });
 			return;
 		}
 		this.paused = true;
@@ -157,18 +157,18 @@ export class Partition extends EventEmitter {
 		if (this.lambda?.pause) {
 			this.lambda.pause();
 		}
-		Lumberjack.info(`PartitionId ${this.id} paused`);
+		Lumberjack.info(`Partition paused`, { partitionId: this.id });
 	}
 
 	public resume(): void {
 		if(!this.paused) {
-			Lumberjack.info(`PartitionId ${this.id} resumed, returning early.`);
+			Lumberjack.info(`Partition already resumed, returning early.`, { partitionId: this.id });
 			return;
 		}
 		this.paused = false;
 
 		this.q.resume();
-		Lumberjack.info(`PartitionId ${this.id} resumed`);
+		Lumberjack.info(`Partition resumed`, { partitionId: this.id });
 	}
 
 	/**

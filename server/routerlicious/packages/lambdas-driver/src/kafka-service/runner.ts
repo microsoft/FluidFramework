@@ -110,7 +110,7 @@ export class KafkaRunner implements IRunner {
 
 		this.partitionManager.on("pause", (partitionId: number, offset: number, reason?: any) => {
 			this.pause(partitionId, offset).then(() => {
-				Lumberjack.info("KafkaRunner paused", { partitionId, offset, reason });
+				Lumberjack.info("KafkaRunner paused", { partitionId, offset, reason: serializeError(reason) });
 			}).catch((error) => {
 				Lumberjack.error("KafkaRunner encountered an error during pause", { partitionId, offset, reason }, error);
 			});
@@ -130,7 +130,7 @@ export class KafkaRunner implements IRunner {
 	}
 
 	public async pause(partitionId: number, offset: number): Promise<void> {
-		Lumberjack.info(`KafkaRunner.pause starting for partitionId ${partitionId}, offset ${offset}.`);
+		Lumberjack.info(`KafkaRunner.pause starting`, { partitionId, offset });
 		if (this.consumer.pauseFetching) {
 			const seekTimeout = this.config?.get("kafka:seekTimeoutAfterPause") ?? 1000;
 			await this.consumer.pauseFetching(partitionId, seekTimeout, offset);
@@ -139,7 +139,7 @@ export class KafkaRunner implements IRunner {
 	}
 
 	public async resume(partitionId: number): Promise<void> {
-		Lumberjack.info(`KafkaRunner.resume starting for partitionId ${partitionId}.`);
+		Lumberjack.info(`KafkaRunner.resume starting`, { partitionId });
 		if (this.consumer.resumeFetching) {
 			await this.consumer.resumeFetching(partitionId);
 		}
