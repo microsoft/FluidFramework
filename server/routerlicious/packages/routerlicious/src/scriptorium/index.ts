@@ -50,7 +50,8 @@ export async function create(
 		(config.get("scriptorium:opsCountTelemetryEnabled") as boolean) ?? false;
 	const circuitBreakerEnabled =
 		(config.get("scriptorium:circuitBreakerEnabled") as boolean) ?? false;
-	const circuitBreakerOptions = config.get("scriptorium:circuitBreakerOptions") as Record<string, any> ?? {};
+	const circuitBreakerOptions =
+		(config.get("scriptorium:circuitBreakerOptions") as Record<string, any>) ?? {};
 
 	const factory = await services.getDbFactory(config);
 

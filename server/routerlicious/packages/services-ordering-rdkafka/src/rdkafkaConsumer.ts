@@ -458,7 +458,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 	/**
 	 * Pauses retrieval of new messages without a rebalance
-	 * @param partition - The partition to pause fetching
+	 * @param partitionId - The partition to pause fetching
+	 * @param seekTimeout - The timeout value for consumer.seek in ms
 	 * @param offset - The offset to seek to after pausing
 	 */
 	public async pauseFetching(partitionId: number, seekTimeout: number, offset?: number): Promise<void> {

@@ -335,7 +335,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		const sequenceNumberRanges = convertSortedNumberArrayToRanges(sequenceNumbers);
 		const insertBatchSize = dbOps.length;
 		const runWithRetryArgs: [
-			() => Promise<void>,
+			() => Promise<any>,
 			string,
 			number,
 			number,
@@ -347,7 +347,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			boolean,
 			boolean
 		] = [
-			async (): Promise<void> => this.opCollection.insertMany(dbOps, false),
+			async (): Promise<any> => this.opCollection.insertMany(dbOps, false),
 			"insertOpScriptorium",
 			3 /* maxRetries */,
 			1000 /* retryAfterMs */,
