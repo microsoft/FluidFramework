@@ -83,4 +83,10 @@ export interface CodeCoverageComparison {
 ```
 
 ### Success Criteria
-If the branch code coverage decreased by more than one percentage point, then we fail the build for the PR. We also fail the build in case the code coverage for a newly added package is less than 50%. This is enforced in this function `isCodeCoverageCriteriaPassed`.
+
+The code coverage PR checks will fail in the following cases:
+
+- If the **branch code coverage** decreased by > 1%.
+- If the code coverage for a newly added package is < 50%.
+
+The enforcement code is in the function `isCodeCoverageCriteriaPassed`.
