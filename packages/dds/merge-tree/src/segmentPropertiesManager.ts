@@ -32,7 +32,7 @@ export enum PropertiesRollback {
 export class PropertiesManager {
 	public handleProperties(
 		op: { props?: MapLike<unknown>; adjust?: MapLike<AdjustParams> },
-		seg: { properties?: PropertySet },
+		seg: { properties?: MapLike<unknown> },
 		seq?: number,
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
@@ -45,12 +45,11 @@ export class PropertiesManager {
 				.filter(([_, v]) => v.raw !== undefined),
 			...Object.entries(op.adjust ?? {}),
 		]) {
-			// eslint-disable-next-line unicorn/no-null
-			deltas[key] = properties[key] ?? null;
+			const previousValue = properties[key];
 			if (seq === UnassignedSequenceNumber && collaborating) {
 				const adjustments = (this.pending ??= {});
 				const pending: PendingChanges = (adjustments[key] ??= {
-					consensus: properties[key],
+					consensus: previousValue,
 					changes: new DoublyLinkedList(),
 				});
 				pending.changes.push(value);
@@ -62,7 +61,7 @@ export class PropertiesManager {
 				const pending = this.pending?.[key];
 				if (pending === undefined) {
 					// no pending changes, so no need to update the adjustments
-					properties[key] = computeValue(properties[key], [value]);
+					properties[key] = computeValue(previousValue, [value]);
 				} else {
 					// there are pending changes, so update the baseline remote value
 					// and then compute the current value
@@ -72,6 +71,11 @@ export class PropertiesManager {
 						pending.changes.map((n) => n.data),
 					);
 				}
+			}
+			// if the value changed, it should be expressed in the delta
+			if (properties[key] !== previousValue) {
+				// eslint-disable-next-line unicorn/no-null
+				deltas[key] = previousValue ?? null;
 			}
 			if (properties[key] === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete

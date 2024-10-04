@@ -36,7 +36,7 @@ const defaultOptions = {
 	minLength: { min: 1, max: 256, growthFunc: (i): number => i * i },
 	concurrentOpsWithRevert: { min: 0, max: 8 },
 	revertOps: { min: 1, max: 16 },
-	ackBeforeRevert: ["None", "Some", "All"] as ("None" | "Some" | "All")[],
+	ackBeforeRevert: ["None", "Some", "All"] satisfies ("None" | "Some" | "All")[],
 	rounds: 10,
 	operations: [removeRange, annotateRange],
 	growthFunc: (i): number => i * 2,
