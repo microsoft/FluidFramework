@@ -20,7 +20,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const versions = ["1", "2"];
 
 // TODO: automate the generation of these URLs and output directories
-const artifactUrlBase = "https://fluidframework.blob.core.windows.net/api-extractor-json/latest";
+const artifactUrlBase = "https://storage.fluidframework.com/api-extractor-json/latest";
 const artifacts = {
 	"1": `${artifactUrlBase}-v1.tar.gz`,
 	"2": `${artifactUrlBase}.tar.gz`
