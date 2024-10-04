@@ -9,7 +9,8 @@ module.exports = {
 		project: ["./tsconfig.json"],
 	},
 	rules: {
-		// AB#18875
+		// TODO: AB#18875 - Re-enable react/no-deprecated once we replace uses of the deprecated ReactDOM.render()
+		// with the new React 18 createRoot().
 		"react/no-deprecated": "off",
 	},
 };
