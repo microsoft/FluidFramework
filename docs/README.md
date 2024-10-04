@@ -196,7 +196,6 @@ The replacement syntax to use in `.mdx` files would be:
     -   See https://github.com/microsoft/FluidFramework/pull/20203 for reference
 -   Add button for users to report docs issues / edit pages on github
 -   Verify specific browser support
--   Remove sample blog contents
 -   Remove "new website features" demo page
 -   Add prettier (wait until after merge to reduce diff noise)
 -   Add markdown-lint (same as above)
