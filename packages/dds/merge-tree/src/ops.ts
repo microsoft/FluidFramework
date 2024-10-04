@@ -189,16 +189,22 @@ export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
  * @legacy
  * @alpha
  */
-export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+export type IMergeTreeAnnotateMsg = {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
 	pos1?: number;
 	relativePos1?: IRelativePosition;
 	pos2?: number;
 	relativePos2?: IRelativePosition;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	props: Record<string, any>;
-	adjust?: Record<string, AdjustParams>;
-}
+} & (
+	| {
+			props: Record<string, unknown>;
+			adjust?: undefined;
+	  }
+	| {
+			props?: undefined;
+			adjust: Record<string, AdjustParams>;
+	  }
+);
 
 /**
  * @deprecated The ability to create group ops will be removed in an upcoming

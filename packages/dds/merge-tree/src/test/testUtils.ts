@@ -43,7 +43,7 @@ export function oldAnnotateParamsToObject(
 
 	rollback: PropertiesRollback = PropertiesRollback.None,
 ): Parameters<MergeTree["annotateRange"]>[0] {
-	return { start, end, props, refSeq, clientId, seq, opArgs, rollback };
+	return { start, end, props, refSeq, clientId, seq, opArgs, rollback, adjust: undefined };
 }
 
 export function loadTextFromFile(

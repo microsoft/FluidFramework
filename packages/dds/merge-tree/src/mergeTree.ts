@@ -1687,12 +1687,10 @@ export class MergeTree {
 			next.prevObliterateByInserter = segment.prevObliterateByInserter;
 		}
 
-		if (segment.properties) {
-			if (segment.propertyManager === undefined) {
-				next.properties = clone(segment.properties);
-			} else {
-				segment.propertyManager.copyTo(segment.properties, next);
-			}
+		if (segment.propertyManager === undefined) {
+			next.properties = clone(segment.properties);
+		} else {
+			segment.propertyManager.copyTo(segment.properties, next);
 		}
 		if (segment.localRefs) {
 			segment.localRefs.split(pos, next);
@@ -1928,12 +1926,12 @@ export class MergeTree {
 		/**
 		 * The properties to annotate the range with
 		 */
-		props: PropertySet;
+		props: PropertySet | undefined;
 
 		/**
 		 *
 		 */
-		adjust?: MapLike<AdjustParams> | undefined;
+		adjust: MapLike<AdjustParams> | undefined;
 		/**
 		 * The reference sequence number to use to apply the annotate
 		 */
@@ -1965,6 +1963,7 @@ export class MergeTree {
 		const annotateSegment = (segment: ISegmentLeaf): boolean => {
 			assert(
 				!Marker.is(segment) ||
+					props === undefined ||
 					!(reservedMarkerIdKey in props) ||
 					props.markerId === segment.properties?.markerId,
 				0x5ad /* Cannot change the markerId of an existing marker */,
@@ -2455,6 +2454,7 @@ export class MergeTree {
 						start,
 						end: start + segment.cachedLength,
 						props,
+						adjust: undefined,
 						seq: UniversalSequenceNumber,
 						clientId: this.collabWindow.clientId,
 						refSeq: UniversalSequenceNumber,

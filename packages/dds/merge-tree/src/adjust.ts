@@ -11,8 +11,8 @@ import type { DoublyLinkedList } from "./collections/index.js";
  */
 export interface AdjustParams {
 	value: number;
-	min?: number;
-	max?: number;
+	min?: number | undefined;
+	max?: number | undefined;
 }
 
 export interface PendingChanges {

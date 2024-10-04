@@ -7,9 +7,9 @@
 // @alpha (undocumented)
 export interface AdjustParams {
     // (undocumented)
-    max?: number;
+    max?: number | undefined;
     // (undocumented)
-    min?: number;
+    min?: number | undefined;
     // (undocumented)
     value: number;
 }
@@ -170,22 +170,19 @@ export interface IMergeNodeCommon {
 }
 
 // @alpha (undocumented)
-export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
-    // (undocumented)
-    adjust?: Record<string, AdjustParams>;
-    // (undocumented)
-    pos1?: number;
-    // (undocumented)
-    pos2?: number;
-    // (undocumented)
-    props: Record<string, any>;
-    // (undocumented)
-    relativePos1?: IRelativePosition;
-    // (undocumented)
-    relativePos2?: IRelativePosition;
-    // (undocumented)
+export type IMergeTreeAnnotateMsg = {
     type: typeof MergeTreeDeltaType.ANNOTATE;
-}
+    pos1?: number;
+    relativePos1?: IRelativePosition;
+    pos2?: number;
+    relativePos2?: IRelativePosition;
+} & ({
+    props: Record<string, unknown>;
+    adjust?: undefined;
+} | {
+    props?: undefined;
+    adjust: Record<string, AdjustParams>;
+});
 
 // @alpha (undocumented)
 export interface IMergeTreeDelta {

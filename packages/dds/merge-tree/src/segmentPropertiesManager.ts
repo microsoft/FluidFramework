@@ -61,7 +61,7 @@ export class PropertiesManager {
 			} else {
 				const pending = this.pending?.[key];
 				if (pending === undefined) {
-					// not pending changes, so no need to update the adjustments
+					// no pending changes, so no need to update the adjustments
 					properties[key] = computeValue(properties[key], [value]);
 				} else {
 					// there are pending changes, so update the baseline remote value
@@ -105,7 +105,7 @@ export class PropertiesManager {
 	}
 
 	public copyTo(
-		oldProps: PropertySet,
+		oldProps: PropertySet | undefined,
 		dest: {
 			properties?: PropertySet;
 			propertyManager?: PropertiesManager;
