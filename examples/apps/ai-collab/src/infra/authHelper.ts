@@ -18,15 +18,15 @@ import { SampleOdspTokenProvider } from "./tokenProvider";
 // Helper function to authenticate the user
 export async function authHelper(): Promise<PublicClientApplication> {
 	// Get the client id (app id) from the environment variables
-	const clientId = "387a09f5-2f02-4b7e-8d88-ef5ba3eca484"; // process.env.SPE_CLIENT_ID;
+	const clientId = process.env.NEXT_PUBLIC_SPE_CLIENT_ID;
 
-	if (!clientId) {
-		throw new Error("SPE_CLIENT_ID is not defined");
+	if (clientId === undefined) {
+		throw new Error("NEXT_PUBLIC_SPE_CLIENT_ID is not defined");
 	}
 
-	const tenantId = "22a0ab87-8f78-43c0-9f86-417daa547a4d"; // process.env.SPE_ENTRA_TENANT_ID;
-	if (!tenantId) {
-		throw new Error("SPE_ENTRA_TENANT_ID is not defined");
+	const tenantId = process.env.NEXT_PUBLIC_SPE_ENTRA_TENANT_ID;
+	if (tenantId === undefined) {
+		throw new Error("NEXT_PUBLIC_SPE_ENTRA_TENANT_ID is not defined");
 	}
 
 	// Create the MSAL instance

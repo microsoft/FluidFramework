@@ -53,10 +53,10 @@ export class GraphHelper {
 	// Function to get the file storage container ID
 	public async getFileStorageContainerId(): Promise<string> {
 		// Get the container type id from the environment variables
-		const containerTypeId = "c840ebfb-61c6-4494-ad14-248bcbeed88e"; // process.env.SPE_CONTAINER_TYPE_ID;
+		const containerTypeId = process.env.NEXT_PUBLIC_SPE_CONTAINER_TYPE_ID;
 
-		if (!containerTypeId) {
-			throw new Error("SPE_CONTAINER_TYPE_ID is not defined");
+		if (containerTypeId === undefined) {
+			throw new Error("NEXT_PUBLIC_SPE_CONTAINER_TYPE_ID is not defined");
 		}
 
 		// Fetch the file storage container ID using the Graph API

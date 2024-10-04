@@ -361,8 +361,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1
       '@azure/msal-browser':
-        specifier: ^3.23.0
-        version: 3.24.0
+        specifier: ^3.25.0
+        version: 3.25.0
       '@emotion/react':
         specifier: ^11.13.3
         version: 11.13.3(@types/react@18.3.11)(react@18.3.1)
@@ -407,7 +407,7 @@ importers:
         version: 5.0.2(react@18.3.1)
       '@microsoft/microsoft-graph-client':
         specifier: ^3.0.7
-        version: 3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.24.0)
+        version: 3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.25.0)
       '@mui/lab':
         specifier: 6.0.0-beta.9
         version: 6.0.0-beta.9(@emotion/react@11.13.3)(@emotion/styled@11.13.0)(@mui/material@6.0.2)(@types/react@18.3.11)(react-dom@18.3.1)(react@18.3.1)
@@ -4394,8 +4394,8 @@ importers:
   examples/service-clients/odsp-client/shared-tree-demo:
     dependencies:
       '@azure/msal-browser':
-        specifier: ^3.23.0
-        version: 3.24.0
+        specifier: ^3.25.0
+        version: 3.25.0
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/odsp-client
@@ -16744,7 +16744,7 @@ packages:
       '@azure/core-tracing': 1.1.2
       '@azure/core-util': 1.10.0
       '@azure/logger': 1.1.4
-      '@azure/msal-browser': 3.24.0
+      '@azure/msal-browser': 3.25.0
       '@azure/msal-node': 2.14.0
       events: 3.3.0
       jws: 4.0.0
@@ -16760,8 +16760,8 @@ packages:
     dependencies:
       tslib: 2.7.0
 
-  /@azure/msal-browser@3.24.0:
-    resolution: {integrity: sha512-JGNV9hTYAa7lsum9IMIibn2kKczAojNihGo1hi7pG0kNrcKej530Fl6jxwM05A44/6I079CSn6WxYxbVhKUmWg==}
+  /@azure/msal-browser@3.25.0:
+    resolution: {integrity: sha512-a0Y7pmSy8SC1s9bvwr+REvyAA1nQcITlZvkElM2gNUPYFTTNUTEdcpg73TmawNucyMdZ9xb/GFcuhrLOqYAzwg==}
     engines: {node: '>=0.8.0'}
     dependencies:
       '@azure/msal-common': 14.15.0
@@ -22244,7 +22244,7 @@ packages:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
     dev: false
 
-  /@microsoft/microsoft-graph-client@3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.24.0):
+  /@microsoft/microsoft-graph-client@3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.25.0):
     resolution: {integrity: sha512-/AazAV/F+HK4LIywF9C+NYHcJo038zEnWkteilcxC1FM/uK/4NVGDKGrxx7nNq1ybspAroRKT4I1FHfxQzxkUw==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
@@ -22263,7 +22263,7 @@ packages:
         optional: true
     dependencies:
       '@azure/identity': 4.4.1
-      '@azure/msal-browser': 3.24.0
+      '@azure/msal-browser': 3.25.0
       '@babel/runtime': 7.25.7
       tslib: 2.7.0
     dev: false
