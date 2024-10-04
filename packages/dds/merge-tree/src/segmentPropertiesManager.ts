@@ -39,6 +39,7 @@ export class PropertiesManager {
 	): MapLike<unknown> {
 		const properties = (seg.properties ??= createMap<unknown>());
 		const deltas = createMap();
+
 		for (const [key, value] of [
 			...Object.entries(op.props ?? {})
 				.map<[string, { raw: unknown }]>(([k, raw]) => [k, { raw }])
@@ -46,30 +47,51 @@ export class PropertiesManager {
 			...Object.entries(op.adjust ?? {}),
 		]) {
 			const previousValue = properties[key];
-			if (seq === UnassignedSequenceNumber && collaborating) {
-				const adjustments = (this.pending ??= {});
-				const pending: PendingChanges = (adjustments[key] ??= {
-					consensus: previousValue,
-					changes: new DoublyLinkedList(),
-				});
-				pending.changes.push(value);
-				properties[key] = computeValue(
-					pending.consensus,
-					pending.changes.map((n) => n.data),
-				);
-			} else {
+
+			if (rollback === PropertiesRollback.Rollback) {
 				const pending = this.pending?.[key];
-				if (pending === undefined) {
-					// no pending changes, so no need to update the adjustments
-					properties[key] = computeValue(previousValue, [value]);
-				} else {
-					// there are pending changes, so update the baseline remote value
-					// and then compute the current value
-					pending.consensus = computeValue(pending.consensus, [value]);
+
+				if (collaborating) {
+					assert(pending !== undefined, "pending must exist for rollback");
+					pending?.changes.pop();
+					delete this.pending?.[key];
+					if (Object.keys(this.pending ?? {}).length === 0) {
+						this.pending = undefined;
+					}
 					properties[key] = computeValue(
 						pending.consensus,
 						pending.changes.map((n) => n.data),
 					);
+				} else {
+					assert(pending === undefined, "must not have pending when not collaborating");
+					properties[key] = computeValue(previousValue, [value]);
+				}
+			} else {
+				if (seq === UnassignedSequenceNumber && collaborating) {
+					const adjustments = (this.pending ??= {});
+					const pending: PendingChanges = (adjustments[key] ??= {
+						consensus: previousValue,
+						changes: new DoublyLinkedList(),
+					});
+					pending.changes.push(value);
+					properties[key] = computeValue(
+						pending.consensus,
+						pending.changes.map((n) => n.data),
+					);
+				} else {
+					const pending = this.pending?.[key];
+					if (pending === undefined) {
+						// no pending changes, so no need to update the adjustments
+						properties[key] = computeValue(previousValue, [value]);
+					} else {
+						// there are pending changes, so update the baseline remote value
+						// and then compute the current value
+						pending.consensus = computeValue(pending.consensus, [value]);
+						properties[key] = computeValue(
+							pending.consensus,
+							pending.changes.map((n) => n.data),
+						);
+					}
 				}
 			}
 			// if the value changed, it should be expressed in the delta
