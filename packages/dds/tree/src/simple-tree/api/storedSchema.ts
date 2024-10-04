@@ -34,6 +34,13 @@ import { ViewSchema } from "./view.js";
  *
  * See also {@link comparePersistedSchema}.
  *
+ * @example
+ * An application could use this API to generate a `schema.json` file when it first releases,
+ * then test that the schema is sill compatible with documents from that version with a test like :
+ * ```typescript
+ * assert.deepEqual(extractPersistedSchema(MySchema), require("./schema.json"));
+ * ```
+ *
  * @privateRemarks
  * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
  * This intentionally does not leak the format types in the API.
@@ -61,6 +68,19 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.
  * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
  *
+ * @example
+ * An application could use {@link extractPersistedSchema} to generate a `schema.json` file for various versions of the app,
+ * then test that documents using those schema can be upgraded to work with the current schema using a test like:
+ * ```typescript
+ * assert(
+ * 	comparePersistedSchema(
+ * 		require("./schema.json"),
+ * 		extractPersistedSchema(MySchema),
+ * 		{ jsonValidator: typeboxValidator },
+ * 		false,
+ * 	).canUpgrade,
+ * );
+ * ```
  * @alpha
  */
 export function comparePersistedSchema(
