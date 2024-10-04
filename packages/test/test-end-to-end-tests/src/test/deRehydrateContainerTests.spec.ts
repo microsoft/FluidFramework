@@ -730,125 +730,119 @@ describeCompat(
 				);
 			});
 
-			it(
-				"Rehydrate container, don't load a data store and then load after container attachment. Make changes to " +
-					"dds from rehydrated container and check reflection of changes in other container",
-				async () => {
-					const { container, defaultDataStore } =
-						await createDetachedContainerAndGetEntryPoint();
+			it("Rehydrate container, don't load a data store and then load after container attachment. Make changes to " +
+				"dds from rehydrated container and check reflection of changes in other container", async () => {
+				const { container, defaultDataStore } =
+					await createDetachedContainerAndGetEntryPoint();
 
-					// Create and reference another dataStore
-					const { peerDataStore: dataStore2 } = await createPeerDataStore(
-						defaultDataStore.context.containerRuntime,
-					);
-					const dataStore2Key = "dataStore2";
-					defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
-					await provider.ensureSynchronized();
+				// Create and reference another dataStore
+				const { peerDataStore: dataStore2 } = await createPeerDataStore(
+					defaultDataStore.context.containerRuntime,
+				);
+				const dataStore2Key = "dataStore2";
+				defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
+				await provider.ensureSynchronized();
 
-					const sharedMap1 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
-					sharedMap1.set("0", "A");
-					const snapshotTree = container.serialize();
-					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
-					container.close();
+				const sharedMap1 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
+				sharedMap1.set("0", "A");
+				const snapshotTree = container.serialize();
+				// close the container that we don't use any more, so it doesn't block ensureSynchronized()
+				container.close();
 
-					const rehydratedContainer =
-						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-					await rehydratedContainer.attach(request);
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				await rehydratedContainer.attach(request);
 
-					// Now load the container from another loader.
-					const urlResolver2 = provider.urlResolver;
-					const loader2 = createTestLoader();
-					assert(rehydratedContainer.resolvedUrl);
-					const requestUrl2 = await urlResolver2.getAbsoluteUrl(
-						rehydratedContainer.resolvedUrl,
-						"",
-					);
-					const container2 = await loader2.resolve({ url: requestUrl2 });
+				// Now load the container from another loader.
+				const urlResolver2 = provider.urlResolver;
+				const loader2 = createTestLoader();
+				assert(rehydratedContainer.resolvedUrl);
+				const requestUrl2 = await urlResolver2.getAbsoluteUrl(
+					rehydratedContainer.resolvedUrl,
+					"",
+				);
+				const container2 = await loader2.resolve({ url: requestUrl2 });
 
-					// Get the sharedString1 from dataStore2 in rehydrated container.
-					const dataStore2FromRC = await getDataObjectFromContainer(
-						rehydratedContainer,
-						dataStore2Key,
-					);
-					const sharedMapFromRC =
-						await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
-					sharedMapFromRC.set("1", "B");
+				// Get the sharedString1 from dataStore2 in rehydrated container.
+				const dataStore2FromRC = await getDataObjectFromContainer(
+					rehydratedContainer,
+					dataStore2Key,
+				);
+				const sharedMapFromRC =
+					await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
+				sharedMapFromRC.set("1", "B");
 
-					const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
-					const sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(sharedMapId);
+				const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
+				const sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(sharedMapId);
 
-					await loaderContainerTracker.ensureSynchronized();
-					assert.strictEqual(sharedMap3.get("1"), "B", "Contents should be as required");
-					assert.strictEqual(
-						JSON.stringify(sharedMap3.summarize()),
-						JSON.stringify(sharedMapFromRC.summarize()),
-						"Summaries of shared string should match and contents should be same!!",
-					);
-				},
-			);
+				await loaderContainerTracker.ensureSynchronized();
+				assert.strictEqual(sharedMap3.get("1"), "B", "Contents should be as required");
+				assert.strictEqual(
+					JSON.stringify(sharedMap3.summarize()),
+					JSON.stringify(sharedMapFromRC.summarize()),
+					"Summaries of shared string should match and contents should be same!!",
+				);
+			});
 
-			it(
-				"Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
-					"container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
-					"in it check reflection of changes in rehydrated container",
-				async function () {
-					const { container, defaultDataStore } =
-						await createDetachedContainerAndGetEntryPoint();
+			it("Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
+				"container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
+				"in it check reflection of changes in rehydrated container", async function () {
+				const { container, defaultDataStore } =
+					await createDetachedContainerAndGetEntryPoint();
 
-					// Create and reference another dataStore
-					const { peerDataStore: dataStore2 } = await createPeerDataStore(
-						defaultDataStore.context.containerRuntime,
-					);
-					const dataStore2Key = "dataStore2";
-					defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
-					await provider.ensureSynchronized();
+				// Create and reference another dataStore
+				const { peerDataStore: dataStore2 } = await createPeerDataStore(
+					defaultDataStore.context.containerRuntime,
+				);
+				const dataStore2Key = "dataStore2";
+				defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
+				await provider.ensureSynchronized();
 
-					const sharedMap1 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
-					sharedMap1.set("0", "A");
-					const snapshotTree = container.serialize();
-					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
-					container.close();
+				const sharedMap1 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
+				sharedMap1.set("0", "A");
+				const snapshotTree = container.serialize();
+				// close the container that we don't use any more, so it doesn't block ensureSynchronized()
+				container.close();
 
-					const rehydratedContainer =
-						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-					await rehydratedContainer.attach(request);
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				await rehydratedContainer.attach(request);
 
-					// Now load the container from another loader.
-					const urlResolver2 = provider.urlResolver;
-					const loader2 = createTestLoader();
-					assert(rehydratedContainer.resolvedUrl);
-					const requestUrl2 = await urlResolver2.getAbsoluteUrl(
-						rehydratedContainer.resolvedUrl,
-						"",
-					);
-					const container2 = await loader2.resolve({ url: requestUrl2 });
+				// Now load the container from another loader.
+				const urlResolver2 = provider.urlResolver;
+				const loader2 = createTestLoader();
+				assert(rehydratedContainer.resolvedUrl);
+				const requestUrl2 = await urlResolver2.getAbsoluteUrl(
+					rehydratedContainer.resolvedUrl,
+					"",
+				);
+				const container2 = await loader2.resolve({ url: requestUrl2 });
 
-					// Get the sharedString1 from dataStore2 in container2.
-					const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
-					const sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(sharedMapId);
-					sharedMap3.set("1", "B");
+				// Get the sharedString1 from dataStore2 in container2.
+				const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
+				const sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(sharedMapId);
+				sharedMap3.set("1", "B");
 
-					// Get the sharedString1 from dataStore2 in rehydrated container.
-					const dataStore2FromRC = await getDataObjectFromContainer(
-						rehydratedContainer,
-						dataStore2Key,
-					);
-					const sharedMapFromRC =
-						await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
+				// Get the sharedString1 from dataStore2 in rehydrated container.
+				const dataStore2FromRC = await getDataObjectFromContainer(
+					rehydratedContainer,
+					dataStore2Key,
+				);
+				const sharedMapFromRC =
+					await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
 
-					await loaderContainerTracker.ensureSynchronized();
-					assert.strictEqual(
-						sharedMapFromRC.get("1"),
-						"B",
-						"Changes should be reflected in other map",
-					);
-					assert.strictEqual(
-						JSON.stringify(sharedMap3.summarize()),
-						JSON.stringify(sharedMapFromRC.summarize()),
-						"Summaries of shared string should match and contents should be same!!",
-					);
-				},
-			);
+				await loaderContainerTracker.ensureSynchronized();
+				assert.strictEqual(
+					sharedMapFromRC.get("1"),
+					"B",
+					"Changes should be reflected in other map",
+				);
+				assert.strictEqual(
+					JSON.stringify(sharedMap3.summarize()),
+					JSON.stringify(sharedMapFromRC.summarize()),
+					"Summaries of shared string should match and contents should be same!!",
+				);
+			});
 
 			it("Container rehydration with not bounded dataStore handle stored in root of other bounded dataStore", async () => {
 				const { container, defaultDataStore } =
@@ -916,119 +910,112 @@ describeCompat(
 				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
 			});
 
-			it(
-				"Container rehydration with not bounded dds handle stored in root of bound dataStore. The not bounded dds " +
-					"also stores handle not bounded data store",
-				async () => {
-					const { container, defaultDataStore } =
-						await createDetachedContainerAndGetEntryPoint();
+			it("Container rehydration with not bounded dds handle stored in root of bound dataStore. The not bounded dds " +
+				"also stores handle not bounded data store", async () => {
+				const { container, defaultDataStore } =
+					await createDetachedContainerAndGetEntryPoint();
 
-					// Create another not bounded dataStore
-					const peerDataStore = await createPeerDataStore(
-						defaultDataStore.context.containerRuntime,
-					);
-					const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+				// Create another not bounded dataStore
+				const peerDataStore = await createPeerDataStore(
+					defaultDataStore.context.containerRuntime,
+				);
+				const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
 
-					// Create another not bounded dds
-					const ddsId = "notbounddds";
-					const dds2 = defaultDataStore.runtime.createChannel(
-						ddsId,
-						SharedMap.getFactory().type,
-					) as ISharedMap;
-					const dataStore2Key = "dataStore2";
-					dds2.set(dataStore2Key, dataStore2.handle);
+				// Create another not bounded dds
+				const ddsId = "notbounddds";
+				const dds2 = defaultDataStore.runtime.createChannel(
+					ddsId,
+					SharedMap.getFactory().type,
+				) as ISharedMap;
+				const dataStore2Key = "dataStore2";
+				dds2.set(dataStore2Key, dataStore2.handle);
 
-					const rootOfDataStore1 =
-						await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Key = "dds2";
-					rootOfDataStore1.set(dds2Key, dds2.handle);
+				const rootOfDataStore1 =
+					await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
+				const dds2Key = "dds2";
+				rootOfDataStore1.set(dds2Key, dds2.handle);
 
-					const snapshotTree = container.serialize();
-					const rehydratedContainer =
-						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const snapshotTree = container.serialize();
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
-					const rootOfDds2 =
-						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
-					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
-					const dds2FromRC = await dds2Handle.get();
+				const rehydratedEntryPoint =
+					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+				const rootOfDds2 = await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
+				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
+				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
+				const dds2FromRC = await dds2Handle.get();
 
-					assert(dds2FromRC, "dds2 should have been serialized properly");
-					assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
-					assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
+				assert(dds2FromRC, "dds2 should have been serialized properly");
+				assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
+				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
 
-					const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
-						dds2FromRC.get(dataStore2Key);
-					assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
-					const dataStore2FromRC = await dataStore2Handle.get();
-					assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
-					assert.strictEqual(
-						dataStore2FromRC.runtime.id,
-						dataStore2.runtime.id,
-						"DataStore2 id should match",
-					);
-				},
-			);
+				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
+					dds2FromRC.get(dataStore2Key);
+				assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
+				const dataStore2FromRC = await dataStore2Handle.get();
+				assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
+				assert.strictEqual(
+					dataStore2FromRC.runtime.id,
+					dataStore2.runtime.id,
+					"DataStore2 id should match",
+				);
+			});
 
-			it(
-				"Container rehydration with not bounded data store handle stored in root of bound dataStore. " +
-					"The not bounded data store also stores handle not bounded dds",
-				async () => {
-					const { container, defaultDataStore } =
-						await createDetachedContainerAndGetEntryPoint();
+			it("Container rehydration with not bounded data store handle stored in root of bound dataStore. " +
+				"The not bounded data store also stores handle not bounded dds", async () => {
+				const { container, defaultDataStore } =
+					await createDetachedContainerAndGetEntryPoint();
 
-					// Create another not bounded dataStore
-					const peerDataStore = await createPeerDataStore(
-						defaultDataStore.context.containerRuntime,
-					);
-					const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+				// Create another not bounded dataStore
+				const peerDataStore = await createPeerDataStore(
+					defaultDataStore.context.containerRuntime,
+				);
+				const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
 
-					// Create another not bounded dds
-					const ddsId = "notbounddds";
-					const dds2 = dataStore2.runtime.createChannel(
-						ddsId,
-						SharedMap.getFactory().type,
-					) as ISharedMap;
-					const rootOfDataStore2 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Key = "dds2";
-					rootOfDataStore2.set(dds2Key, dds2.handle);
+				// Create another not bounded dds
+				const ddsId = "notbounddds";
+				const dds2 = dataStore2.runtime.createChannel(
+					ddsId,
+					SharedMap.getFactory().type,
+				) as ISharedMap;
+				const rootOfDataStore2 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
+				const dds2Key = "dds2";
+				rootOfDataStore2.set(dds2Key, dds2.handle);
 
-					const rootOfDataStore1 =
-						await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
-					const dataStore2Key = "dataStore2";
-					rootOfDataStore1.set(dataStore2Key, dataStore2.handle);
+				const rootOfDataStore1 =
+					await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
+				const dataStore2Key = "dataStore2";
+				rootOfDataStore1.set(dataStore2Key, dataStore2.handle);
 
-					const snapshotTree = container.serialize();
-					const rehydratedContainer =
-						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const snapshotTree = container.serialize();
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
-					const rehydratedRootOfDataStore2 =
-						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
-					const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
-						rehydratedRootOfDataStore2.get(dataStore2Key);
-					assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
-					const dataStore2FromRC = await dataStore2Handle.get();
+				const rehydratedEntryPoint =
+					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+				const rehydratedRootOfDataStore2 =
+					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
+				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
+					rehydratedRootOfDataStore2.get(dataStore2Key);
+				assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
+				const dataStore2FromRC = await dataStore2Handle.get();
 
-					const rootOfDds2 = await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
-					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
-					const dds2FromRC = await dds2Handle.get();
-					assert(dds2FromRC, "ddd2 should have been serialized properly");
-					assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
-					assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
+				const rootOfDds2 = await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
+				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
+				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
+				const dds2FromRC = await dds2Handle.get();
+				assert(dds2FromRC, "ddd2 should have been serialized properly");
+				assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
+				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
 
-					assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
-					assert.strictEqual(
-						dataStore2FromRC.runtime.id,
-						dataStore2.runtime.id,
-						"DataStore2 id should match",
-					);
-				},
-			);
+				assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
+				assert.strictEqual(
+					dataStore2FromRC.runtime.id,
+					dataStore2.runtime.id,
+					"DataStore2 id should match",
+				);
+			});
 
 			it("Not bounded/Unreferenced data store should not get serialized on container serialization", async () => {
 				const { container, defaultDataStore } =

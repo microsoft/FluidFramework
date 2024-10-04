@@ -498,7 +498,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
-			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
+			(dataStoreRuntime.options.sharedStringPreventReentrancy ?? true)
 				? ensureNoReentrancy
 				: createReentrancyDetector((depth) => {
 						if (totalReentrancyLogs > 0) {

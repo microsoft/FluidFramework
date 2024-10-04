@@ -181,7 +181,7 @@ export function setUpTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
-			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: true } : false,
+			summarizeHistory: (summarizeHistory ?? true) ? { uploadEditChunks: true } : false,
 			attributionId,
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
@@ -330,7 +330,7 @@ export async function setUpLocalServerTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
-			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: uploadEditChunks ?? true } : false,
+			summarizeHistory: (summarizeHistory ?? true) ? { uploadEditChunks: uploadEditChunks ?? true } : false,
 			attributionId,
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
