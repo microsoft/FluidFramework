@@ -13,6 +13,6 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
 
 	public async run(): Promise<void> {
-		this.log(`deploying from main`);
+		this.log(`deploying from 1.0`);
 	}
 }
