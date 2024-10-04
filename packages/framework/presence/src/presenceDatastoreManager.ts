@@ -318,15 +318,25 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// on the position in the quorum list. It doesn't have to be a stable
 			// list across all clients. We need something to provide suggested order
 			// to prevent a flood of broadcasts.
+			let relativeResponseOrder;
 			const quorumMembers = this.runtime.getQuorum().getMembers();
-			const indexOfSelf =
-				quorumMembers.get(clientId)?.sequenceNumber ??
-				// Index past quorum members + arbitrary additional offset up to 10
-				quorumMembers.size + Math.random() * 10;
+			const self = quorumMembers.get(clientId);
+			if (self) {
+				// Compute order quorum join order (indicated by sequenceNumber)
+				relativeResponseOrder = 0;
+				for (const { sequenceNumber } of quorumMembers.values()) {
+					if (sequenceNumber < self.sequenceNumber) {
+						relativeResponseOrder++;
+					}
+				}
+			} else {
+				// Order past quorum members + arbitrary additional offset up to 10
+				relativeResponseOrder = quorumMembers.size + Math.random() * 10;
+			}
 			// These numbers have been chosen arbitrarily to start with.
 			// 20 is minimum wait time, 20 is the additional wait time per provider
 			// given an chance before us with named providers given more time.
-			const waitTime = 20 + 20 * (3 * updateProviders.length + indexOfSelf);
+			const waitTime = 20 + 20 * (3 * updateProviders.length + relativeResponseOrder);
 			setTimeout(() => {
 				// Make sure a broadcast is still needed and we are currently connected.
 				// If not connected, nothing we can do.
@@ -338,7 +348,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 							type: "broadcastAll",
 							requestor,
 							role: "secondary",
-							order: indexOfSelf,
+							order: relativeResponseOrder,
 						},
 					});
 				}
