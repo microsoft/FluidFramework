@@ -6,7 +6,6 @@
 		"outDir": "./lib",
 		"types": [
 			"react",
-			"react-dom",
 			"jest",
 			"puppeteer",
 			"jest-environment-puppeteer",
