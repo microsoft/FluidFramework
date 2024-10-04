@@ -19,7 +19,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import { ViewSchema } from "./view.js";
 
 /**
- * Dumps the "persisted" schema subset of `schema` into a deterministic JSON compatible semi-human readable but unspecified format.
+ * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
