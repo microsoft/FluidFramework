@@ -86,39 +86,19 @@ pr:
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
-variables:
-  - template: /tools/pipelines/templates/include-vars.yml@self
-    parameters:
-      publishOverride: '${{ parameters.publishOverride }}'
-      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-      buildNumberInPatch: ''
-
-extends:
-  template: /tools/pipelines/templates/build-npm-package.yml@self
-  parameters:
-    publish: ${{ variables.publish }}
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    interdependencyRange: ${{ parameters.interdependencyRange }}
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
-    testCoverage: ${{ variables.testCoverage }}
-    buildDirectory: build-tools
-    tagName: build-tools
-    isReleaseGroup: true
-    taskBuild: build
-    taskBuildDocs: false
-    tasktest:
-    - ci:test
-    - test:copyresults
-    taskLint: true
-    taskLintName: ci:eslint
-    poolBuild: NewLarge-linux-1ES
-    checkoutSubmodules: true
-    taskBundleAnalysis: false
-    checks:
-    - syncpack:deps
-    - syncpack:versions
-    - generate:packageList
-    - check:format
+stages:
+- stage: test bash
+  displayName: 'test bash'
+  pool: Small
+  jobs:
+    - job: testBash
+      displayName: 'test bash'
+      steps:
+        - task: Bash@3
+          name: test
+          displayName: 'test'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              echo test line

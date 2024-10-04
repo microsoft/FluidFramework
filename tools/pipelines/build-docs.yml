@@ -92,12 +92,18 @@ variables:
 # the release branches and main is causing the website to change unexpectedly we can
 # move the release/* trigger after separating the deploy step to another pipeline
 # no PR triggers
-trigger:
-  branches:
-    include:
-    # - release/*
-    - main
+trigger: none
 pr: none
+
+resources:
+  pipelines:
+    - pipeline: 14
+      source: build-build-tools
+      trigger: true
+      branch: test/michaelzhen-1.0
+  repositories:
+    - repository: FluidFramework
+      ref: refs/heads/test/michaelzhen
 
 stages:
 - stage: check_branch_version
@@ -107,6 +113,7 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
+        - checkout: FluidFramework
         - template: /tools/pipelines/templates/include-install-build-tools.yml
           parameters:
             buildDirectory: $(Build.SourcesDirectory)
@@ -130,7 +137,7 @@ stages:
             script: |
               echo "generated buildVersion: $(SetVersion.version)"
               # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
-              flub check latestVersions $(SetVersion.version) client
+              flub check latestVersions
 
 - stage: test_deploy
   dependsOn: check_branch_version
@@ -139,235 +146,3 @@ stages:
   - job: DeployJob
     steps:
     - script: echo "Deploying application because shouldDeploy is true."
-
-- stage: build
-  displayName: 'Build website'
-  dependsOn: [] # run in parallel
-  jobs:
-    - job: debug_variables
-      displayName: Show Variables
-      dependsOn: [] # run in parallel
-      pool: Small
-      steps:
-        - checkout: none
-        - script: |
-            echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
-            echo BASE_URL: $(BASE_URL)
-            echo RELEASE_VERSION: $(RELEASE_VERSION)
-            echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
-            echo N1_VERSION: $(N1_VERSION)
-            echo HUGO_PARAMS_APPINSIGHTKEY=$(HUGO_PARAMS_APPINSIGHTKEY)
-            echo releasePipeline ${{ variables.releasePipeline }}
-            echo latestPipeline ${{ variables.latestPipeline }}
-            echo n1Pipeline ${{ variables.n1Pipeline }}
-            echo repoToTrigger ${{ variables.repoToTrigger }}
-            echo shouldDeploy ${{ variables.shouldDeploy }}
-            echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
-            echo publishGuardianBaselines ${{ variables.publishGuardianBaselines }}
-          displayName: Show Variables
-
-    - job: component_detection
-      displayName: Component Detection
-      dependsOn: [] # run in parallel
-      pool: Small
-      steps:
-        - task: ComponentGovernanceComponentDetection@0
-          displayName: Component Detection
-          inputs:
-            sourceScanPath: docs
-            verbosity: Verbose
-            scanType: Register
-            alertWarningLevel: High
-
-    - deployment: upload_json
-      displayName: 'Combine api-extractor JSON'
-      dependsOn: [] # run in parallel
-      environment: 'fluid-docs-env'
-      pool: Large
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - template: templates/upload-json-steps.yml
-              parameters:
-                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                uploadAsLatest: ${{ variables.isMain }}
-
-    - job: build_site
-      displayName: 'Build website'
-      dependsOn: upload_json
-      pool: Large
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - template: templates/include-use-node-version.yml
-
-        - template: templates/include-install-pnpm.yml
-          parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
-
-        - task: Bash@3
-          displayName: Install dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
-            script: |
-              pnpm i --frozen-lockfile
-
-        - task: Npm@1
-          displayName: npm run build
-          inputs:
-            command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
-
-        - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
-          displayName: 'Generate SBOM'
-          inputs:
-            BuildDropPath: $(Build.SourcesDirectory)/docs/public
-            PackageName: 'fluidframework-docs'
-            PackageVersion: '$(Build.BuildId)'
-
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish site build artifact'
-          inputs:
-            targetPath: '$(Build.SourcesDirectory)/docs/public'
-            artifactName: 'fluidframework-docs'
-            publishLocation: 'pipeline'
-
-  # BEGIN Secure development tasks
-- stage: guardian
-  displayName: Guardian
-  dependsOn: [] # run in parallel
-  pool: Large
-  jobs:
-    - job: guardian_tasks
-      displayName: Guardian tasks
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - template: templates/include-use-node-version.yml
-
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core 3.x'
-          condition: succeededOrFailed()
-          inputs:
-            packageType: sdk
-            version: 3.x
-
-        - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
-          displayName: 'Run ESLint'
-          condition: succeededOrFailed()
-
-        - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
-          displayName: 'Publish Guardian Artifacts - All Tools'
-          condition: succeededOrFailed()
-          inputs:
-            ArtifactType: M365
-
-        - task: AssetRetention@5
-          displayName: Guardian Asset Retention
-          condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
-          inputs:
-            ArrowServiceConnection: 'ff-internal-arrow-sc'
-            AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
-            AssetNumber: '$(Build.BuildId)'
-            IsShipped: false # based on value of arrow.releasedtoproduction variable
-            DropsToRetain: 'CodeAnalysisLogs'
-
-        - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
-          displayName: 'Guardian Break'
-          condition: succeededOrFailed()
-          continueOnError: false
-          inputs:
-            GdnBreakPolicyMinSev: Warning
-            GdnBreakAllTools: true
-            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
-            GdnBreakGdnToolESLint: true
-            GdnBreakGdnToolESLintSeverity: Warning
-            GdnBreakPolicy: M365
-            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
-
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish Baselines'
-          condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
-            artifactName: .gdn
-# END Secure development tasks
-
-- stage: link_check
-  displayName: 'Website Link Check'
-  dependsOn: [] # run in parallel
-  pool: Large
-  jobs:
-    - job: link_check
-      displayName: 'Website Link Check'
-      continueOnError: true
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - template: templates/include-use-node-version.yml
-
-        - template: templates/include-install-pnpm.yml
-          parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
-
-        - task: Bash@3
-          displayName: Install dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
-            script: |
-              pnpm i --frozen-lockfile
-
-        - task: Npm@1
-          displayName: npm run build
-          inputs:
-            command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
-
-        - task: Npm@1
-          displayName: npm run ci:linkcheck
-          inputs:
-            command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:linkcheck'
-
-- stage: deploy
-  displayName: 'Deploy website'
-  pool: Small
-  dependsOn: ['build', 'guardian']
-  jobs:
-    - job: deploy_site
-      displayName: 'Deploy website'
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy fluidframework-docs to public folder'
-          inputs:
-            source: current
-            artifact: fluidframework-docs
-            path: '$(Build.SourcesDirectory)/docs/public'
-
-        - task: AzureStaticWebApp@0
-          displayName: 'Deploy website to ASWA'
-          condition: eq(variables.shouldDeploy, true)
-          inputs:
-            skip_app_build: true # site was built in previous stage
-            skip_api_build: true # api is written in js, no build needed
-            cwd: $(Build.SourcesDirectory)
-            app_location: 'docs/public'
-            api_location: 'docs/api'
-            output_location: ''
-            azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'
