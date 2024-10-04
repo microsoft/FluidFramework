@@ -59,21 +59,8 @@ const config: Config = {
 						}
 					}
 				},
-				blog: {
-					showReadingTime: true,
-					feedOptions: {
-						type: ["rss", "atom"],
-						xslt: true,
-					},
-					// // Please change this to your repo.
-					// // Remove this to remove the "edit this page" links.
-					// editUrl:
-					// 	"https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
-					// Useful options to enforce blogging best practices
-					onInlineTags: "warn",
-					onInlineAuthors: "warn",
-					onUntruncatedBlogPosts: "warn",
-				},
+				// We can add support for blog posts in the future.
+				blog: undefined,
 				theme: {
 					customCss: [
 						"./src/css/custom.scss",
@@ -124,7 +111,6 @@ const config: Config = {
 					position: "left",
 					label: "Docs",
 				},
-				{ to: "/blog", label: "Blog", position: "left" },
 				{ to: "/community", label: "Community", position: "left" },
 				{ to: "/support", label: "Support", position: "left" },
 				{ to: "/new-site-features", label: "New Website Features", position: "left" },
