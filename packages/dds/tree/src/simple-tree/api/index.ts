@@ -80,7 +80,7 @@ export {
 	extractPersistedSchema,
 	comparePersistedSchemaInternal,
 	comparePersistedSchema,
-} from "./getStoredSchema.js";
+} from "./storedSchema.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

@@ -51,6 +51,12 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  * Reports the same compatibility that {@link TreeView.compatibility} would report if
  * opening a document that used the `persisted` schema and provided `view` to {@link ViewableTree.viewWith}.
  *
+ * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
+ * @param view - Schema which would be used to view persisted content. Use {@link extractPersistedSchema} to convert the view schema into this format.
+ * @param options - {@link ICodecOptions} used when parsing the provided schema.
+ * @param canInitialize - Passed through to the return value unchanged and otherwise unused.
+ * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema.
+ *
  * @remarks
  * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.
  * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.

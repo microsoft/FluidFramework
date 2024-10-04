@@ -127,7 +127,7 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @beta (undocumented)
+// @beta
 export enum FluidClientVersion {
     // (undocumented)
     v2_0 = "v2_0",
@@ -824,7 +824,7 @@ export interface ViewableTree {
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ViewContent {
     readonly idCompressor: IIdCompressor;
     readonly schema: JsonCompatible;

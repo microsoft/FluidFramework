@@ -100,7 +100,7 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @beta (undocumented)
+// @beta
 export enum FluidClientVersion {
     // (undocumented)
     v2_0 = "v2_0",

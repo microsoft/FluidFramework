@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ITreeCursorSynchronous, SchemaAndPolicy } from "../../core/index.js";
-import { fail, type JsonCompatible } from "../../util/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -93,19 +91,6 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
 		return undefined as TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never;
 	}
 	return cursorForMapTreeNode(mapTree);
-}
-
-/**
- * Construct tree content compatible with a field defined by the provided `schema`.
- * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
- * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
- * @beta
- */
-export function createFromCompressed<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	data: JsonCompatible<IFluidHandle>,
-): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	fail("TODO");
 }
 
 /**
