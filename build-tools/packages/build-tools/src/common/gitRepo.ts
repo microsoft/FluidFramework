@@ -298,7 +298,12 @@ export class GitRepo {
 	 * @param error description of command line to print when error happens
 	 */
 	public async exec(command: string, error: string, pipeStdIn?: string) {
-		return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn);
+		return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn, {
+			// Some git commands, like diff can have quite large output when there are very large changes like a pending merge with main.
+			// To mitigate this, increase the maxBuffer size from its default (1 mb at time of writing).
+			// https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback
+			maxBuffer: 1024 * 1024 * 100,
+		});
 	}
 
 	/**
