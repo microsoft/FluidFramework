@@ -6,11 +6,11 @@
 "use client";
 
 import {
-	SharedTreeBranchManager,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
 } from "@fluid-experimental/fluid-llm";
+import { SharedTreeBranchManager } from "@fluid-experimental/fluid-llm/alpha";
 import { type TreeView } from "@fluidframework/tree";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";

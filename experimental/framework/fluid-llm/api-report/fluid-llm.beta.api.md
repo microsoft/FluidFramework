@@ -77,27 +77,6 @@ export interface Options {
 }
 
 // @public
-export class SharedTreeBranchManager {
-    constructor(params?: {
-        objectSchema?: z.Schema;
-        nodeIdAttributeName?: string;
-    });
-    applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): boolean;
-    checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
-        differences: Difference[];
-        newBranch: TreeView<T>;
-        newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
-    };
-    checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, differences: Difference[]): {
-        newBranch: TreeView<T>;
-        newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
-    };
-    compare(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): Difference[];
-    merge(obj: Record<string, unknown> | TreeArrayNode, llmResponse: Record<string, unknown> | unknown[]): Difference[];
-    mergeDiffs(diffs: Difference[], objectToUpdate: Record<string, unknown> | TreeArrayNode): Set<Difference>;
-}
-
-// @public
 export function sharedTreeDiff(obj: Record<string, unknown> | unknown[], newObj: Record<string, unknown> | unknown[], options?: Options, _stack?: (Record<string, unknown> | unknown[])[]): Difference[];
 
 // @public

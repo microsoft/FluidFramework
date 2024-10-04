@@ -25,7 +25,7 @@ import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
  * Manages determining the differences between two branches of a SharedTree represented as an actual tree node or a plain javascript object
  * and applies said differences to the original SharedTree branch.
  *
- * @public
+ * @alpha
  */
 export class SharedTreeBranchManager {
 	private readonly objectSchema?: z.Schema;
@@ -90,8 +90,8 @@ export class SharedTreeBranchManager {
 		llmResponse: Record<string, unknown> | unknown[],
 	): {
 		differences: Difference[];
-		originalBranch: TreeBranch,
-		forkBranch: TreeBranchFork,
+		originalBranch: TreeBranch;
+		forkBranch: TreeBranchFork;
 		forkView: TreeView<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
@@ -129,8 +129,8 @@ export class SharedTreeBranchManager {
 		absolutePathToObjectNode: ObjectPath,
 		differences: Difference[],
 	): {
-		originalBranch: TreeBranch,
-		forkBranch: TreeBranchFork,
+		originalBranch: TreeBranch;
+		forkBranch: TreeBranchFork;
 		forkView: TreeView<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {

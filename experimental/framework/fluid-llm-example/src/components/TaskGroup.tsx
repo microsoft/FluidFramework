@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { type Difference } from "@fluid-experimental/fluid-llm";
+import { SharedTreeBranchManager } from "@fluid-experimental/fluid-llm/alpha";
 import { type TreeView } from "@fluidframework/tree";
 import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";

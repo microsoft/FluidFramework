@@ -76,7 +76,7 @@ export interface Options {
     };
 }
 
-// @public
+// @alpha
 export class SharedTreeBranchManager {
     constructor(params?: {
         objectSchema?: z.Schema;
@@ -85,11 +85,15 @@ export class SharedTreeBranchManager {
     applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): boolean;
     checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
         differences: Difference[];
-        newBranch: TreeView<T>;
+        originalBranch: TreeBranch;
+        forkBranch: TreeBranchFork;
+        forkView: TreeView<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
     checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, differences: Difference[]): {
-        newBranch: TreeView<T>;
+        originalBranch: TreeBranch;
+        forkBranch: TreeBranchFork;
+        forkView: TreeView<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
     compare(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): Difference[];
