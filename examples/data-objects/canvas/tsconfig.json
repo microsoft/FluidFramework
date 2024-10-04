@@ -8,7 +8,6 @@
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
 			"react",
-			"react-dom",
 		],
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
