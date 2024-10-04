@@ -8,20 +8,20 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	rules: {
-		"unicorn/no-null": "off",
-		"import/no-internal-modules": [
-			"error",
-			{
-				allow: [
-					"@fluidframework/tree/alpha",
-
-					// Allow imports from sibling and ancestral sibling directories,
-					// but not from cousin directories. Parent is allowed but only
-					// because there isn't a known way to deny it.
-					"*/index.js",
+	rules: {},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Test files can import from submodules for testing purposes
+				"import/no-internal-modules": [
+					"error",
+					{
+						allow: ["*/index.js"],
+					},
 				],
 			},
-		],
-	},
+		},
+	],
 };

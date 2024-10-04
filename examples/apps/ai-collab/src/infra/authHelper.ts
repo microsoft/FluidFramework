@@ -10,13 +10,8 @@ import {
 	PublicClientApplication,
 	type AuthenticationResult,
 } from "@azure/msal-browser";
-import {
-	IOdspTokenProvider,
-	OdspClientProps,
-	OdspClient,
-} from "@fluidframework/odsp-client/beta";
+import { OdspClient } from "@fluidframework/odsp-client/beta";
 
-import { getClientProps } from "./clientProps";
 import { GraphHelper } from "./graphHelper";
 import { SampleOdspTokenProvider } from "./tokenProvider";
 

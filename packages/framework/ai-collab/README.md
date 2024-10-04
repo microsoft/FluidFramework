@@ -1,33 +1,34 @@
 # @fluid-experimental/ai-collab
 
-Utilities for using SharedTree with LLM's.
-This package aims to assist SharedTree based React apps using LLM's.
+Utilities for using SharedTree with LLMs.
+This package aims to assist SharedTree-based React apps that want to leverage LLMs.
 
-
-The next steps in LLM/AI based collaborative experiences with applications involves
-allowing LLM's to propose updates to application state directly.
+The next steps in LLM/AI-based collaborative experiences with applications involves allowing LLMs to propose updates
+to application state directly.
 
 ## The classic LLM developer experience & it's problems
 
-The classic LLm dev exeperience involves crafting a prompt for an an LLM with some information about your ap, then having the LLM response in a parseable format.
+The classic LLM dev experience involves crafting a prompt for an an LLM with some information about the app, then
+having the LLM response in a parseable format.
 
 From here the developer needs to:
+
 1. Translate & interpet the LLM response format so it can be applied to their application state
 2. Deal with potentially invalid responses
 3. Deal with merging LLM responses that use potentially stale state into their apps.
-    - This in particular comes into play with more dynamic application state, for example some kind of a list that users can add & remove from. You'll need to make sure the LLM isn't trying to delete something that doesn't exist or overwrite something that no longer makes sense.
-4. Try to preview LLM changes to the user before accepting them. This requires maintaining a pre change branch, merged branched and post change branch
-
-Scenario: say you want an llm to make offline changes
+    - This in particular comes into play with more dynamic application state, for example a list that users can
+      add and remove from.
+      You'll need to make sure the LLM isn't trying to delete something that doesn't exist or overwrite something that no
+      longer makes sense.
+4. Try to preview LLM changes to the user before accepting them.
+   This requires maintaining a data structure before any LLM changes are applied, and another one where they are.
 
 ### How this library fixes things
 
-Newer LLM developer tooling has solved issue #1 in a variety of ways, getting the LLM to respond with a format that you can merge into your app and ensuring that the JSON response schema is valid. However, problems 3-4 still exist and the current landscape requires bespoke, per-app solutions for dealing with this. This library simplifies these issues.
-
-
-
-
-
+Newer LLM developer tooling has solved issue #1 in a variety of ways, getting the LLM to respond with a format that you
+can merge into your application and ensuring that the JSON response schema is valid.
+However, problems 3-4 still exist and the current landscape requires bespoke, per-app solutions for dealing with this.
+This library simplifies these issues.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

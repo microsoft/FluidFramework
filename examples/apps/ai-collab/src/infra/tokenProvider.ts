@@ -12,16 +12,15 @@ import {
 } from "@azure/msal-browser";
 import { IOdspTokenProvider, TokenResponse } from "@fluidframework/odsp-client/beta";
 
-// Sample implementation of the IOdspTokenProvider interface
-// This class is used to provide the token for the Fluid container and
-// the token for the WebSocket connection used by the Fluid service
+// Sample implementation of the IOdspTokenProvider interface.
+// Provides the token that the Fluid service expects when asked for the Fluid container and for the WebSocket connection.
 export class SampleOdspTokenProvider implements IOdspTokenProvider {
 	private readonly intializedPublicClientApplication: PublicClientApplication;
 	constructor(publicClientApplication: PublicClientApplication) {
 		this.intializedPublicClientApplication = publicClientApplication;
 	}
 
-	// Fetch the token for the Fluid service
+	// Fetch the token for the orderer service
 	public async fetchWebsocketToken(): Promise<TokenResponse> {
 		const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
 		const token = await this.fetchTokens(pushScope);
@@ -31,7 +30,7 @@ export class SampleOdspTokenProvider implements IOdspTokenProvider {
 		};
 	}
 
-	// Fetch the token for Fluid container
+	// Fetch the token for the storage service
 	public async fetchStorageToken(siteUrl: string): Promise<TokenResponse> {
 		const storageScope = [`${siteUrl}/Container.Selected`];
 

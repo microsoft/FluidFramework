@@ -22,34 +22,6 @@
 			"@/*": ["./src/*"],
 		},
 	},
-	"include": ["next-env.d.ts", "new-types.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
 	"exclude": ["node_modules", ".next"],
 }
-
-// {
-//   "extends": "../../../common/build/build-common/tsconfig.node16.json",
-//   "include": [
-//     "src/**/*",
-//     ".next/types/**/*.ts"
-//   ],
-//   "exclude": [
-//     "src/test/**/*"
-//   ],
-//   "compilerOptions": {
-//     "rootDir": "./src",
-//     "outDir": "./lib",
-//     "exactOptionalPropertyTypes": false,
-//     "noUnusedLocals": false,
-//     "allowJs": true,
-//     "skipLibCheck": true,
-//     "noEmit": true,
-//     "resolveJsonModule": true,
-//     "isolatedModules": true,
-//     "jsx": "preserve",
-//     "plugins": [
-//       {
-//         "name": "next"
-//       }
-//     ]
-//   }
-// }

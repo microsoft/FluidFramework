@@ -9,7 +9,7 @@ import { SharedTree } from "fluid-framework";
 import type { Engineer, Task, TaskGroup } from "./task";
 
 // The string passed to the SchemaFactory should be unique
-const sf = new SchemaFactory("fluidHelloWorldSample");
+const sf = new SchemaFactory("ai-collab-sample-application");
 
 export class SharedTreeTask extends sf.object("Task", {
 	id: sf.identifier,

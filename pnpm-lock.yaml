@@ -10600,24 +10600,6 @@ importers:
 
   packages/framework/ai-collab:
     dependencies:
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../aqueduct
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/datastore-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../fluid-static
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../dds/shared-object-base
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
@@ -10646,9 +10628,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/tinylicious-client':
-        specifier: workspace:~
-        version: link:../../service-clients/tinylicious-client
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -10658,9 +10637,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
-      '@types/react':
-        specifier: ^17.0.44
-        version: 17.0.83
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -10688,9 +10664,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.7.3)
-      moment:
-        specifier: ^2.21.0
-        version: 2.30.1
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -24418,14 +24391,6 @@ packages:
       '@types/react': 18.3.11
     dev: false
 
-  /@types/react@17.0.83:
-    resolution: {integrity: sha512-l0m4ArKJvmFtR4e8UmKrj1pB4tUgOhJITf+mADyF/p69Ts1YAR/E+G9XEM0mHXKVRa1dQNHseyyDNzeuAXfXQw==}
-    dependencies:
-      '@types/prop-types': 15.7.13
-      '@types/scheduler': 0.16.8
-      csstype: 3.1.3
-    dev: true
-
   /@types/react@18.3.11:
     resolution: {integrity: sha512-r6QZ069rFTjrEYgFdOck1gK7FLVsgJE7tTz0pQBczlBNUhBNk0MQH4UbnFSwjpQLMkLzgqvBBa+qGpLje16eTQ==}
     dependencies:
@@ -24454,10 +24419,6 @@ packages:
 
   /@types/rewire@2.5.30:
     resolution: {integrity: sha512-CSyzr7TF1EUm85as2noToMtLaBBN/rKKlo5ZDdXedQ64cUiHT25LCNo1J1cI4QghBlGmTymElW/2h3TiWYOsZw==}
-    dev: true
-
-  /@types/scheduler@0.16.8:
-    resolution: {integrity: sha512-WZLiwShhwLRmeV6zH+GkbOFT6Z6VklCItrDioxUnv+u4Ll+8vKeFySoFyK/0ctcRpOmwAicELfmys1sDc/Rw+A==}
     dev: true
 
   /@types/semver-utils@1.1.3:
