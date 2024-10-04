@@ -126,6 +126,16 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 	}
 }
 
+/**
+ * Helper for Presence Manager setup
+ *
+ * Presence Manager is outermost layer of the presence system and has two main
+ * sub-components:
+ * 1. PresenceDatastoreManager: Manages the unified general data for states and
+ * registry for workspaces.
+ * 2. SystemWorkspace: Custom internal workspace for system states including
+ * attendee management. It is registered with the PresenceDatastoreManager.
+ */
 function setupSubComponents(
 	clientSessionId: ClientSessionId,
 	runtime: IEphemeralRuntime,

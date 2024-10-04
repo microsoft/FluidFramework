@@ -19,6 +19,8 @@ import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 import type { IEmitter } from "@fluid-experimental/presence/internal/events";
 
 /**
+ * The system workspace's datastore structure.
+ *
  * @internal
  */
 export interface SystemWorkspaceDatastore {
@@ -27,7 +29,19 @@ export interface SystemWorkspaceDatastore {
 	};
 }
 
+/**
+ * There is no implementation class for this interface.
+ * It is a simple structure. Most complicated aspect is that
+ * `currentConnectionId()` member is replaced with a new
+ * function when a more recent connection is added.
+ *
+ * See {@link SystemWorkspaceImpl.ensureAttendee}.
+ */
 interface SessionClient extends ISessionClient {
+	/**
+	 * Order is used to track the most recent client connection
+	 * during a session.
+	 */
 	order: number;
 }
 
@@ -35,12 +49,26 @@ interface SessionClient extends ISessionClient {
  * @internal
  */
 export interface SystemWorkspace
+	// Portion of IPresence that is handled by SystemWorkspace along with
+	// responsiblity for emitting "attendeeJoined" events.
 	extends Pick<IPresence, "getAttendees" | "getAttendee" | "getMyself"> {
+	/**
+	 * Must be called when the current client acquires a new connection.
+	 *
+	 * @param clientConnectionId - The new client connection id.
+	 */
 	onConnectionAdded(clientConnectionId: ClientConnectionId): void;
 }
 
 class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	private readonly selfAttendee: SessionClient;
+	/**
+	 * `attendees` is this client's understanding of the attendees in the
+	 * session. The map covers entries for both session ids and connection
+	 * ids, which are never expected to collide, but if they did for same
+	 * client that would be fine.
+	 * An entry is for session id if the value's `sessionId` matches the key.
+	 */
 	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, SessionClient>();
 
 	public constructor(
@@ -85,7 +113,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			const { attendee, isNew } = this.ensureAttendee(
 				clientSessionId,
 				clientConnectionId,
-				value.rev,
+				/* order */ value.rev,
 			);
 			if (isNew) {
 				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
@@ -125,6 +153,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			return attendee;
 		}
 
+		// TODO: Restore option to add attendee on demand to handle internal
+		// lookup cases that must come from internal data.
+		// There aren't any resiliency mechanisms in place to handle a missed
+		// ClientJoin right now.
 		throw new Error("Attendee not found");
 	}
 
@@ -132,6 +164,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		return this.selfAttendee;
 	}
 
+	/**
+	 * Make sure the given client session and connection id pair are represented
+	 * in the attendee map. If not present, SessionClient is created and added
+	 * to map. If present, make sure the current connection id is updated.
+	 */
 	private ensureAttendee(
 		clientSessionId: ClientSessionId,
 		clientConnectionId: ClientConnectionId,
@@ -141,6 +178,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
 		if (attendee === undefined) {
+			// New attendee. Create SessionClient and add session id based
+			// entry to map.
 			attendee = {
 				sessionId: clientSessionId,
 				order,
@@ -149,9 +188,12 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			this.attendees.set(clientSessionId, attendee);
 			isNew = true;
 		} else if (order > attendee.order) {
+			// The given association is newer than the one we have.
+			// Update the order and current connection id.
 			attendee.order = order;
 			attendee.currentConnectionId = currentConnectionId;
 		}
+		// Always update entry for the connection id. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
 		return { attendee, isNew };
 	}
