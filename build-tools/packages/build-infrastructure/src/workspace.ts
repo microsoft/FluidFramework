@@ -110,7 +110,8 @@ export class Workspace implements IWorkspace {
 
 		this.releaseGroups = new Map();
 		for (const [groupName, def] of rGroupDefinitions) {
-			this.releaseGroups.set(groupName, new ReleaseGroup(groupName, def, this));
+			const newGroup = new ReleaseGroup(groupName, def, this);
+			this.releaseGroups.set(groupName, newGroup);
 		}
 
 		// sanity check - make sure that all packages are in a release group.

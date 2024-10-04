@@ -82,7 +82,19 @@ export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
 	releaseGroupRoots: [],
 	directory: undefined,
 	changedSinceBranch: undefined,
-};
+} as const;
+
+/**
+ * An empty PackageSelectionCriteria that selects no packages.
+ */
+export const EmptySelectionCriteria: PackageSelectionCriteria = {
+	workspaces: [],
+	workspaceRoots: [],
+	releaseGroups: [],
+	releaseGroupRoots: [],
+	directory: undefined,
+	changedSinceBranch: undefined,
+} as const;
 
 /**
  * The criteria that should be used for filtering package-like objects from a collection.

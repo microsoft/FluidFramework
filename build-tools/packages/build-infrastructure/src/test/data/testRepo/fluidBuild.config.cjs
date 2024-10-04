@@ -18,7 +18,7 @@ const config = {
 				directory: ".",
 				releaseGroups: {
 					main: {
-						include: ["*"],
+						include: ["pkg-a", "pkg-b", "@shared", "@private"],
 						rootPackageName: "main-release-group-root",
 					},
 					group2: {
@@ -32,7 +32,6 @@ const config = {
 					"second-release-group": {
 						include: ["*"],
 						rootPackageName: "second-release-group-root",
-						// defaultInterdependencyRange: "workspace:~",
 					},
 				},
 			},

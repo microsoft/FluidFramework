@@ -37,7 +37,7 @@ describe("loadFluidRepo", () => {
 			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
 			expect(mainReleaseGroup).to.not.be.undefined;
 			expect(mainReleaseGroup?.packages.length).to.equal(
-				4,
+				5,
 				"main release group has the wrong number of packages",
 			);
 

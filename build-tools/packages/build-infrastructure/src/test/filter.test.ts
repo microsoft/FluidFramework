@@ -9,6 +9,7 @@ import assertArrays from "chai-arrays";
 
 import {
 	AllPackagesSelectionCriteria,
+	EmptySelectionCriteria,
 	PackageFilterOptions,
 	PackageSelectionCriteria,
 	filterPackages,
@@ -16,11 +17,17 @@ import {
 } from "../filter.js";
 import { loadFluidRepo } from "../fluidRepo.js";
 import { testDataPath } from "./init.js";
-import type { ReleaseGroupName } from "../types.js";
+import type { WorkspaceName } from "../types.js";
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 chai.use(assertArrays);
+
+const EmptyFilter: PackageFilterOptions = {
+	private: undefined,
+	scope: undefined,
+	skipScope: undefined,
+};
 
 async function getFluidRepo() {
 	const fluidRepo = loadFluidRepo(
@@ -30,26 +37,23 @@ async function getFluidRepo() {
 	return fluidRepo;
 }
 
-async function getMainPackages() {
+async function getMainWorkspacePackages() {
 	const fluidRepo = await getFluidRepo();
-	const packages = fluidRepo.releaseGroups
-		.get("main" as ReleaseGroupName)
-		?.packages.filter((p) => !p.isReleaseGroupRoot);
+	const packages = fluidRepo.workspaces.get("main" as WorkspaceName)?.packages;
+	// ?.packages.filter((p) => !p.isReleaseGroupRoot);
 	assert(packages !== undefined);
 	return packages;
 }
 
 describe("filterPackages", async () => {
 	it("no filters", async () => {
-		const packages = await getMainPackages();
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: undefined,
-		};
+		const packages = await getMainWorkspacePackages();
+		const filters = EmptyFilter;
+
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
 		expect(names).to.be.equalTo([
+			"main-release-group-root",
 			"@group2/pkg-d",
 			"@group2/pkg-e",
 			"pkg-a",
@@ -60,12 +64,8 @@ describe("filterPackages", async () => {
 	});
 
 	it("private=true", async () => {
-		const packages = await getMainPackages();
-		const filters: PackageFilterOptions = {
-			private: true,
-			scope: undefined,
-			skipScope: undefined,
-		};
+		const packages = await getMainWorkspacePackages();
+		const filters = { ...EmptyFilter, private: true };
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
 		expect(names).to.be.containingAllOf(["@private/pkg-c"]);
@@ -73,15 +73,12 @@ describe("filterPackages", async () => {
 	});
 
 	it("private=false", async () => {
-		const packages = await getMainPackages();
-		const filters: PackageFilterOptions = {
-			private: false,
-			scope: undefined,
-			skipScope: undefined,
-		};
+		const packages = await getMainWorkspacePackages();
+		const filters = { ...EmptyFilter, private: false };
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
 		expect(names).to.be.equalTo([
+			"main-release-group-root",
 			"@group2/pkg-d",
 			"@group2/pkg-e",
 			"pkg-a",
@@ -91,7 +88,7 @@ describe("filterPackages", async () => {
 	});
 
 	it("multiple scopes", async () => {
-		const packages = await getMainPackages();
+		const packages = await getMainWorkspacePackages();
 		const filters: PackageFilterOptions = {
 			private: undefined,
 			scope: ["@shared", "@private"],
@@ -103,21 +100,26 @@ describe("filterPackages", async () => {
 	});
 
 	it("multiple skipScopes", async () => {
-		const packages = await getMainPackages();
+		const packages = await getMainWorkspacePackages();
 		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
+			...EmptyFilter,
 			skipScope: ["@shared", "@private"],
 		};
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
-		expect(names).to.be.equalTo(["@group2/pkg-d", "@group2/pkg-e", "pkg-a", "pkg-b"]);
+		expect(names).to.be.equalTo([
+			"main-release-group-root",
+			"@group2/pkg-d",
+			"@group2/pkg-e",
+			"pkg-a",
+			"pkg-b",
+		]);
 	});
 
 	it("scope and skipScope", async () => {
-		const packages = await getMainPackages();
+		const packages = await getMainWorkspacePackages();
 		const filters: PackageFilterOptions = {
-			private: undefined,
+			...EmptyFilter,
 			scope: ["@shared", "@private"],
 			skipScope: ["@shared"],
 		};
@@ -128,28 +130,30 @@ describe("filterPackages", async () => {
 });
 
 describe("selectAndFilterPackages", async () => {
+	const fluidRepo = await getFluidRepo();
+
 	it("all, no filters", async () => {
-		const fluidRepo = await getFluidRepo();
 		const selectionOptions = AllPackagesSelectionCriteria;
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: undefined,
-		};
+		const filter = EmptyFilter;
 
-		const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = selected.map((p) => p.name);
+		const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filter);
+		const names = selected.map((p) => p.name).sort();
 
-		expect(names).to.be.containingAllOf([
+		expect(names).to.be.equalTo([
+			"@group2/pkg-d",
+			"@group2/pkg-e",
+			"@private/pkg-c",
+			"@shared/shared",
+			"main-release-group-root",
+			"other-pkg-a",
+			"other-pkg-b",
 			"pkg-a",
 			"pkg-b",
-			"@shared/shared",
-			"@private/pkg-c",
+			"second-release-group-root",
 		]);
 	});
 
 	it("select directory", async () => {
-		const fluidRepo = await getFluidRepo();
 		const selectionOptions: PackageSelectionCriteria = {
 			releaseGroups: ["main"],
 			releaseGroupRoots: [],
@@ -179,295 +183,269 @@ describe("selectAndFilterPackages", async () => {
 		expect(fluidRepo.relativeToRepo(pkg.directory)).to.equal("second/packages/other-pkg-a");
 	});
 
-	it("select release group", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: ["main"],
-			releaseGroupRoots: [],
-			workspaces: [],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: undefined,
-		};
+	describe("select release group", () => {
+		it("no filters", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				releaseGroups: ["main"],
+			};
+			const filters: PackageFilterOptions = EmptyFilter;
 
-		const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = selected.map((p) => p.name);
+			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = selected.map((p) => p.name);
 
-		expect(names).to.be.equalTo([
-			"@group2/pkg-d",
-			"@group2/pkg-e",
-			"pkg-a",
-			"pkg-b",
-			"@private/pkg-c",
-			"@shared/shared",
-		]);
+			expect(names).to.be.equalTo(["pkg-a", "pkg-b", "@private/pkg-c", "@shared/shared"]);
+		});
+
+		it("select release group root", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				releaseGroupRoots: ["main"],
+			};
+			const filters: PackageFilterOptions = EmptyFilter;
+
+			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
+
+			expect(selected.length).to.equal(1);
+			expect(dirs).to.be.containingAllOf([""]);
+		});
+
+		it("filter private", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				releaseGroups: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				...EmptyFilter,
+				private: true,
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.containingAllOf(["@private/pkg-c"]);
+		});
+
+		it("filter non-private", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				releaseGroups: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				...EmptyFilter,
+				private: false,
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.equalTo(["pkg-a", "pkg-b", "@shared/shared"]);
+		});
+
+		it("filter scopes", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				releaseGroups: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				...EmptyFilter,
+				scope: ["@shared"],
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.equalTo(["@shared/shared"]);
+		});
+
+		it("filter skipScopes", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				releaseGroups: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				...EmptyFilter,
+				skipScope: ["@shared", "@private"],
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.equalTo(["pkg-a", "pkg-b"]);
+		});
 	});
 
-	it("select release group root", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: [],
-			releaseGroupRoots: ["main"],
-			workspaces: [],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: undefined,
-		};
+	describe("select workspace", () => {
+		it("all, no filters", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaces: ["main"],
+			};
+			const filters: PackageFilterOptions = EmptyFilter;
 
-		const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
+			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = selected.map((p) => p.name);
 
-		expect(selected.length).to.equal(1);
-		expect(dirs).to.be.containingAllOf([""]);
+			expect(names).to.be.equalTo([
+				"@group2/pkg-d",
+				"@group2/pkg-e",
+				"pkg-a",
+				"pkg-b",
+				"@private/pkg-c",
+				"@shared/shared",
+			]);
+		});
+
+		it("select workspace root at repo root", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaceRoots: ["main"],
+			};
+			const filters: PackageFilterOptions = EmptyFilter;
+
+			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
+
+			expect(selected.length).to.equal(1);
+			expect(dirs).to.be.containingAllOf([""]);
+		});
+
+		it("select workspace root not at repo root", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaceRoots: ["second"],
+			};
+			const filters: PackageFilterOptions = EmptyFilter;
+
+			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
+
+			expect(selected.length).to.equal(1);
+			expect(dirs).to.be.containingAllOf(["second"]);
+		});
+
+		it("filter private", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaces: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				private: true,
+				scope: undefined,
+				skipScope: undefined,
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.containingAllOf(["@private/pkg-c"]);
+		});
+
+		it("filter non-private", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaces: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				private: false,
+				scope: undefined,
+				skipScope: undefined,
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.equalTo([
+				"@group2/pkg-d",
+				"@group2/pkg-e",
+				"pkg-a",
+				"pkg-b",
+				"@shared/shared",
+			]);
+		});
+
+		it("filter scopes", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaces: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				private: undefined,
+				scope: ["@shared"],
+				skipScope: undefined,
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.equalTo(["@shared/shared"]);
+		});
+
+		it("filter skipScopes", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaces: ["main"],
+			};
+			const filters: PackageFilterOptions = {
+				private: undefined,
+				scope: undefined,
+				skipScope: ["@shared", "@private"],
+			};
+
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.equalTo(["@group2/pkg-d", "@group2/pkg-e", "pkg-a", "pkg-b"]);
+		});
 	});
 
-	it("select release group, filter private", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: ["main"],
-			releaseGroupRoots: [],
-			workspaces: [],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: true,
-			scope: undefined,
-			skipScope: undefined,
-		};
+	describe("combination workspace and release group", () => {
+		const filters: PackageFilterOptions = EmptyFilter;
 
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
+		it("selects workspace and disjoint release group", async () => {
+			const selectionOptions: PackageSelectionCriteria = {
+				...EmptySelectionCriteria,
+				workspaces: ["second"],
+				releaseGroups: ["group2"],
+			};
 
-		expect(names).to.be.containingAllOf(["@private/pkg-c"]);
+			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const names = filtered.map((p) => p.name);
+
+			expect(names).to.be.equalTo([
+				"other-pkg-a",
+				"other-pkg-b",
+				"@group2/pkg-d",
+				"@group2/pkg-e",
+			]);
+		});
 	});
 
-	it("select release group, filter non-private", async () => {
-		const fluidRepo = await getFluidRepo();
+	it("selects all release groups", async () => {
 		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: ["main"],
-			releaseGroupRoots: [],
-			workspaces: [],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: false,
-			scope: undefined,
-			skipScope: undefined,
+			...EmptySelectionCriteria,
+			releaseGroups: ["*"],
 		};
 
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
+		const { filtered } = await selectAndFilterPackages(
+			fluidRepo,
+			selectionOptions,
+			EmptyFilter,
+		);
+		const names = filtered.map((p) => p.name).sort();
 
-		expect(names).to.be.equalTo([
-			"@group2/pkg-d",
-			"@group2/pkg-e",
-			"pkg-a",
-			"pkg-b",
-			"@shared/shared",
-		]);
-	});
-
-	it("select release group, filter scopes", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: ["main"],
-			releaseGroupRoots: [],
-			workspaces: [],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: ["@shared"],
-			skipScope: undefined,
-		};
-
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
-
-		expect(names).to.be.equalTo(["@shared/shared"]);
-	});
-
-	it("select release group, filter skipScopes", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: ["main"],
-			releaseGroupRoots: [],
-			workspaces: [],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: ["@shared", "@private"],
-		};
-
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
-
-		expect(names).to.be.equalTo(["@group2/pkg-d", "@group2/pkg-e", "pkg-a", "pkg-b"]);
-	});
-
-	it("select workspace", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: [],
-			releaseGroupRoots: [],
-			workspaces: ["main"],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: undefined,
-		};
-
-		const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = selected.map((p) => p.name);
-
-		expect(names).to.be.equalTo([
-			"@group2/pkg-d",
-			"@group2/pkg-e",
-			"pkg-a",
-			"pkg-b",
-			"@private/pkg-c",
-			"@shared/shared",
-		]);
-	});
-
-	it("select workspace root", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: [],
-			releaseGroupRoots: [],
-			workspaces: [],
-			workspaceRoots: ["main"],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: undefined,
-		};
-
-		const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
-
-		expect(selected.length).to.equal(1);
-		expect(dirs).to.be.containingAllOf([""]);
-	});
-
-	it("select workspace, filter private", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: [],
-			releaseGroupRoots: [],
-			workspaces: ["main"],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: true,
-			scope: undefined,
-			skipScope: undefined,
-		};
-
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
-
-		expect(names).to.be.containingAllOf(["@private/pkg-c"]);
-	});
-
-	it("select workspace, filter non-private", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: [],
-			releaseGroupRoots: [],
-			workspaces: ["main"],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: false,
-			scope: undefined,
-			skipScope: undefined,
-		};
-
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
-
-		expect(names).to.be.equalTo([
-			"@group2/pkg-d",
-			"@group2/pkg-e",
-			"pkg-a",
-			"pkg-b",
-			"@shared/shared",
-		]);
-	});
-
-	it("select workspace, filter scopes", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: [],
-			releaseGroupRoots: [],
-			workspaces: ["main"],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: ["@shared"],
-			skipScope: undefined,
-		};
-
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
-
-		expect(names).to.be.equalTo(["@shared/shared"]);
-	});
-
-	it("select workspace, filter skipScopes", async () => {
-		const fluidRepo = await getFluidRepo();
-		const selectionOptions: PackageSelectionCriteria = {
-			releaseGroups: [],
-			releaseGroupRoots: [],
-			workspaces: ["main"],
-			workspaceRoots: [],
-			directory: undefined,
-			changedSinceBranch: undefined,
-		};
-		const filters: PackageFilterOptions = {
-			private: undefined,
-			scope: undefined,
-			skipScope: ["@shared", "@private"],
-		};
-
-		const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
-		const names = filtered.map((p) => p.name);
-
-		expect(names).to.be.equalTo(["@group2/pkg-d", "@group2/pkg-e", "pkg-a", "pkg-b"]);
+		expect(names).to.be.equalTo(
+			[
+				"@group2/pkg-d",
+				"@group2/pkg-e",
+				"@private/pkg-c",
+				"@shared/shared",
+				"other-pkg-a",
+				"other-pkg-b",
+				"pkg-a",
+				"pkg-b",
+			].sort(),
+		);
 	});
 });
