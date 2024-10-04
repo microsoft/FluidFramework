@@ -87,12 +87,12 @@ pr:
     - scripts/*
 
 stages:
-- stage: test bash
-  displayName: 'test bash'
+- stage: testbash
+  displayName: 'testbash'
   pool: Small
   jobs:
     - job: testBash
-      displayName: 'test bash'
+      displayName: 'testbash'
       steps:
         - task: Bash@3
           name: test
