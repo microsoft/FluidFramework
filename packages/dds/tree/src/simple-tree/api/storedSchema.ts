@@ -89,21 +89,17 @@ export function comparePersistedSchema(
 	options: ICodecOptions,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
-	const stored = parseSchema(persisted, options);
-	const viewParsed = parseSchema(view, options);
+	const schemaCodec = makeSchemaCodec(options);
+	const stored = schemaCodec.decode(persisted as Format);
+	const viewParsed = schemaCodec.decode(view as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, viewParsed);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
 }
 
-export function parseSchema(
-	persisted: JsonCompatible,
-	options: ICodecOptions,
-): TreeStoredSchema {
-	const schemaCodec = makeSchemaCodec(options);
-	const schema = schemaCodec.decode(persisted as Format);
-	return schema;
-}
-
+/**
+ * Compute compatibility for viewing a document with `stored` schema using `viewSchema`.
+ * `canInitialize` is passed through to the return value unchanged and otherwise unused.
+ */
 export function comparePersistedSchemaInternal(
 	stored: TreeStoredSchema,
 	viewSchema: ViewSchema,
