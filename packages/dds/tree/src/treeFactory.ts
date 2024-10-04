@@ -244,6 +244,9 @@ function copyNodeCursor(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous 
 }
 
 /**
+ * The portion of SharedTree data typically persisted the container.
+ * Usable with {@link independentInitializedView} to create a {@link TreeView}
+ * without loading a container.
  * @alpha
  */
 export interface ViewContent {
@@ -259,7 +262,8 @@ export interface ViewContent {
 	 */
 	readonly schema: JsonCompatible;
 	/**
-	 * idCompressor
+	 * IIdCompressor which will be used to decompress any compressed identifiers in `tree`
+	 * as well as for any other identifiers added to the view.
 	 */
 	readonly idCompressor: IIdCompressor;
 }
