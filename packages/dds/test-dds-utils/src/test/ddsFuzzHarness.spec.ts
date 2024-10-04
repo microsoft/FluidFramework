@@ -1058,31 +1058,46 @@ describe("DDS Fuzz Harness", () => {
 			});
 		});
 
-		describe("generate different seeds given distinct stress modes", () => {
+		describe("generateTestSeeds", () => {
 			const testCount = 100;
 
 			it("should generate seeds for short stress mode", () => {
 				const seeds = generateTestSeeds(testCount, StressMode.Short);
 				assert.strictEqual(seeds.length, Math.ceil(testCount / 2));
-				assert.strictEqual(new Set(seeds).size, Math.ceil(testCount / 2)); // Check for uniqueness
+				assert.deepStrictEqual(
+					seeds,
+					Array.from({ length: Math.ceil(testCount / 2) }, (_, i) => i),
+				);
 			});
 
 			it("should generate seeds for normal stress mode", () => {
 				const seeds = generateTestSeeds(testCount, StressMode.Normal);
 				assert.strictEqual(seeds.length, testCount);
-				assert.strictEqual(new Set(seeds).size, testCount); // Check for uniqueness
+				assert.deepStrictEqual(
+					seeds,
+					Array.from({ length: testCount }, (_, i) => i),
+				);
 			});
 
 			it("should generate seeds for long stress mode", () => {
 				const seeds = generateTestSeeds(testCount, StressMode.Long);
-				assert.strictEqual(seeds.length, testCount * 2);
-				// No uniqueness check for long mode since seeds may repeat
+				assert.strictEqual(seeds.length, testCount * 10);
+				// Check that seeds are incrementing
+				for (let i = 1; i < seeds.length; i++) {
+					assert.strictEqual(seeds[i], seeds[i - 1] + 1);
+				}
 			});
 
-			it("should generate seeds within the range [0, testCount)", () => {
-				const seeds = generateTestSeeds(testCount, StressMode.Short);
+			it("should generate different seeds for different runs of long stress mode", () => {
+				const seeds1 = generateTestSeeds(testCount, StressMode.Long);
+				const seeds2 = generateTestSeeds(testCount, StressMode.Long);
+				assert.notDeepStrictEqual(seeds1, seeds2);
+			});
+
+			it("should have all seeds within valid range for long stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Long);
 				for (const seed of seeds) {
-					assert.ok(seed >= 0 && seed < testCount);
+					assert.ok(seed >= 0 && seed <= Number.MAX_SAFE_INTEGER);
 				}
 			});
 		});

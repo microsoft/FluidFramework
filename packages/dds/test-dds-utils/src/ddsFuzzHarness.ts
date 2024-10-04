@@ -1593,20 +1593,32 @@ export async function replayTest<
 }
 
 export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
-	const random = makeRandom();
-	const modeMultiplier: Record<StressMode, number> = {
-		[StressMode.Short]: 0.5,
-		[StressMode.Normal]: 1,
-		[StressMode.Long]: 2,
-	};
+	switch (stressMode) {
+		case StressMode.Short: {
+			// Deterministic, fixed seeds
+			return Array.from({ length: Math.ceil(testCount / 2) }, (_, i) => i);
+		}
 
-	const modeTestCount = Math.floor(testCount * modeMultiplier[stressMode]);
-	const initialSeed = random.integer(0, Number.MAX_SAFE_INTEGER);
+		case StressMode.Normal: {
+			// Deterministic, fixed seeds
+			return Array.from({ length: testCount }, (_, i) => i);
+		}
 
-	// Generate seeds and sort them
-	return Array.from({ length: modeTestCount }, (_, i) => (initialSeed + i) % testCount).sort(
-		(a, b) => a - b,
-	);
+		case StressMode.Long: {
+			// Non-deterministic, random seeds
+			const random = makeRandom();
+			const longModeFactor = 10;
+			const initialSeed = random.integer(
+				0,
+				Number.MAX_SAFE_INTEGER - longModeFactor * testCount,
+			);
+			return Array.from({ length: testCount * longModeFactor }, (_, i) => initialSeed + i);
+		}
+
+		default: {
+			throw new Error(`Unsupported stress mode: ${stressMode}`);
+		}
+	}
 }
 
 /**
