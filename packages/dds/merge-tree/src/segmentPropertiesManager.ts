@@ -135,7 +135,4 @@ export class PropertiesManager {
 		}
 		return true;
 	}
-	public hasPendingProperty(key: string): boolean {
-		return this.pending?.[key] !== undefined;
-	}
 }
