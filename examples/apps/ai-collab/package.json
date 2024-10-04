@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-experimental/fluid-llm-example",
+	"name": "@fluid-example/ai-collab",
 	"version": "2.4.0",
 	"private": true,
-	"description": "Experimental SharedTree API for React integration.",
+	"description": "Example app that showcases the experimental package for AI collaboration in Fluid-based applications.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/apps/fluid-llm-example"
+		"directory": "examples/apps/ai-collab"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

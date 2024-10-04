@@ -11,10 +11,9 @@ WIP
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
+**NOTE: This package is an example leveraging the [Fluid Framework](https://fluidframework.com).**
+**It is intended only as an example, and is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
 
 <!-- prettier-ignore-end -->
 
