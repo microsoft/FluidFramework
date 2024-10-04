@@ -64,6 +64,16 @@ export type {
 	ReadonlyMapInlined,
 } from "./typesUnsafe.js";
 
+export type {
+	VerboseTreeNode,
+	ParseOptions,
+	VerboseTree,
+} from "./verboseTree.js";
+
+export type { EncodeOptions } from "./customTree.js";
+
+export type { ConciseTree } from "./conciseTree.js";
+
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
