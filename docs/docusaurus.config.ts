@@ -12,7 +12,7 @@ const githubUrl = "https://github.com/microsoft/FluidFramework";
 const config: Config = {
 	title: "Fluid Framework Documentation",
 	// tagline: "TODO",
-	favicon: "img/logo.png",
+	favicon: "img/fluid-icon.svg",
 
 	// Set the production url of your site here
 	url: "https://fluidframework.com/",
@@ -110,7 +110,7 @@ const config: Config = {
 			title: "Fluid Framework",
 			logo: {
 				alt: "Fluid Framework Logo",
-				src: "img/logo.png",
+				src: "img/fluid-icon.svg",
 			},
 			items: [
 				{
