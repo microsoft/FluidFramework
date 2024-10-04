@@ -884,6 +884,166 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
 
+  examples/apps/fluid-llm-example:
+    dependencies:
+      '@azure/identity':
+        specifier: ^4.4.1
+        version: 4.4.1
+      '@azure/msal-browser':
+        specifier: ^3.23.0
+        version: 3.24.0
+      '@emotion/react':
+        specifier: ^11.13.3
+        version: 11.13.3(@types/react@18.3.11)(react@18.3.1)
+      '@emotion/styled':
+        specifier: ^11.13.0
+        version: 11.13.0(@emotion/react@11.13.3)(@types/react@18.3.11)(react@18.3.1)
+      '@fluid-experimental/fluid-llm':
+        specifier: workspace:~
+        version: link:../../../experimental/framework/fluid-llm
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../packages/framework/aqueduct
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../../../packages/framework/fluid-static
+      '@fluidframework/odsp-client':
+        specifier: workspace:~
+        version: link:../../../packages/service-clients/odsp-client
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../../packages/dds/shared-object-base
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:^
+        version: link:../../../packages/service-clients/tinylicious-client
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../packages/dds/tree
+      '@iconify/react':
+        specifier: ^5.0.2
+        version: 5.0.2(react@18.3.1)
+      '@microsoft/microsoft-graph-client':
+        specifier: ^3.0.7
+        version: 3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.24.0)
+      '@mui/lab':
+        specifier: 6.0.0-beta.9
+        version: 6.0.0-beta.9(@emotion/react@11.13.3)(@emotion/styled@11.13.0)(@mui/material@6.0.2)(@types/react@18.3.11)(react-dom@18.3.1)(react@18.3.1)
+      '@mui/material':
+        specifier: ^6.0.2
+        version: 6.0.2(@emotion/react@11.13.3)(@emotion/styled@11.13.0)(@types/react@18.3.11)(react-dom@18.3.1)(react@18.3.1)
+      fluid-framework:
+        specifier: workspace:^
+        version: link:../../../packages/framework/fluid-framework
+      mui:
+        specifier: ^0.0.1
+        version: 0.0.1
+      next:
+        specifier: ^14.2.8
+        version: 14.2.8(@babel/core@7.25.7)(react-dom@18.3.1)(react@18.3.1)
+      notistack:
+        specifier: ^3.0.1
+        version: 3.0.1(csstype@3.1.3)(react-dom@18.3.1)(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      tinylicious:
+        specifier: ^5.0.0
+        version: 5.0.0
+      typechat:
+        specifier: ^0.1.1
+        version: 0.1.1(typescript@5.4.5)
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.15.2
+        version: 0.15.4
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../packages/test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: ^0.46.0
+        version: 0.46.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.46.0
+        version: 0.46.0
+      '@fluidframework/devtools':
+        specifier: workspace:^
+        version: link:../../../packages/tools/devtools/devtools
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@microsoft/api-extractor':
+        specifier: 7.47.8
+        version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
+      '@microsoft/microsoft-graph-types':
+        specifier: ^2.40.0
+        version: 2.40.0
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.54
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.11
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.0
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      moment:
+        specifier: ^2.21.0
+        version: 2.30.1
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   examples/apps/presence-tracker:
     dependencies:
       '@fluid-example/example-utils':
@@ -7012,166 +7172,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.7.3)
-      moment:
-        specifier: ^2.21.0
-        version: 2.30.1
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
-  experimental/framework/fluid-llm-example:
-    dependencies:
-      '@azure/identity':
-        specifier: ^4.4.1
-        version: 4.4.1
-      '@azure/msal-browser':
-        specifier: ^3.23.0
-        version: 3.24.0
-      '@emotion/react':
-        specifier: ^11.13.3
-        version: 11.13.3(@types/react@18.3.11)(react@18.3.1)
-      '@emotion/styled':
-        specifier: ^11.13.0
-        version: 11.13.0(@emotion/react@11.13.3)(@types/react@18.3.11)(react@18.3.1)
-      '@fluid-experimental/fluid-llm':
-        specifier: workspace:~
-        version: link:../fluid-llm
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/container-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../packages/framework/fluid-static
-      '@fluidframework/odsp-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/odsp-client
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../../packages/dds/shared-object-base
-      '@fluidframework/tinylicious-client':
-        specifier: workspace:^
-        version: link:../../../packages/service-clients/tinylicious-client
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../packages/dds/tree
-      '@iconify/react':
-        specifier: ^5.0.2
-        version: 5.0.2(react@18.3.1)
-      '@microsoft/microsoft-graph-client':
-        specifier: ^3.0.7
-        version: 3.0.7(@azure/identity@4.4.1)(@azure/msal-browser@3.24.0)
-      '@mui/lab':
-        specifier: 6.0.0-beta.9
-        version: 6.0.0-beta.9(@emotion/react@11.13.3)(@emotion/styled@11.13.0)(@mui/material@6.0.2)(@types/react@18.3.11)(react-dom@18.3.1)(react@18.3.1)
-      '@mui/material':
-        specifier: ^6.0.2
-        version: 6.0.2(@emotion/react@11.13.3)(@emotion/styled@11.13.0)(@types/react@18.3.11)(react-dom@18.3.1)(react@18.3.1)
-      fluid-framework:
-        specifier: workspace:^
-        version: link:../../../packages/framework/fluid-framework
-      mui:
-        specifier: ^0.0.1
-        version: 0.0.1
-      next:
-        specifier: ^14.2.8
-        version: 14.2.8(@babel/core@7.25.7)(react-dom@18.3.1)(react@18.3.1)
-      notistack:
-        specifier: ^3.0.1
-        version: 3.0.1(csstype@3.1.3)(react-dom@18.3.1)(react@18.3.1)
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-      tinylicious:
-        specifier: ^5.0.0
-        version: 5.0.0
-      typechat:
-        specifier: ^0.1.1
-        version: 0.1.1(typescript@5.4.5)
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
-    devDependencies:
-      '@arethetypeswrong/cli':
-        specifier: ^0.15.2
-        version: 0.15.4
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../../packages/test/mocha-test-setup
-      '@fluid-tools/build-cli':
-        specifier: ^0.46.0
-        version: 0.46.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.46.0
-        version: 0.46.0
-      '@fluidframework/devtools':
-        specifier: workspace:^
-        version: link:../../../packages/tools/devtools/devtools
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
-      '@microsoft/api-extractor':
-        specifier: 7.47.8
-        version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
-      '@microsoft/microsoft-graph-types':
-        specifier: ^2.40.0
-        version: 2.40.0
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.54
-      '@types/react':
-        specifier: ^18.3.11
-        version: 18.3.11
-      '@types/react-dom':
-        specifier: ^18.3.0
-        version: 18.3.0
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
-      c8:
-        specifier: ^8.0.1
-        version: 8.0.1
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       moment:
         specifier: ^2.21.0
         version: 2.30.1
