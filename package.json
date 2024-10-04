@@ -384,12 +384,13 @@
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
 			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
 			"markdown-magic is provided by another dependency so is ignored here.",
-			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies.",
+			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18."
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {
-				"react": "17.0.2",
-				"react-dom": "17.0.2",
+				"react": "18.3.1",
+				"react-dom": "18.3.1",
 				"webpack": "^5.94.0"
 			},
 			"ignoreMissing": [

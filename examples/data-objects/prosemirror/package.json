@@ -75,7 +75,7 @@
 		"prosemirror-state": "^1.4.2",
 		"prosemirror-transform": "^1.7.1",
 		"prosemirror-view": "^1.30.0",
-		"react": "^17.0.1"
+		"react": "^18.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
@@ -88,7 +88,7 @@
 		"@types/prosemirror-model": "^1.17.0",
 		"@types/prosemirror-schema-list": "^1.2.0",
 		"@types/prosemirror-state": "^1.4.0",
-		"@types/react": "^17.0.44",
+		"@types/react": "^18.3.11",
 		"copyfiles": "^2.4.1",
 		"css-loader": "^7.1.2",
 		"eslint": "~8.55.0",

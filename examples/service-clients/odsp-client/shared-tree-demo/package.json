@@ -39,8 +39,8 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"css-loader": "^7.1.2",
 		"fluid-framework": "workspace:~",
-		"react": "^17.0.1",
-		"react-dom": "^17.0.1",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
 		"style-loader": "^4.0.0"
 	},
 	"devDependencies": {
@@ -50,8 +50,8 @@
 		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/node": "^18.19.0",
-		"@types/react": "^17.0.44",
-		"@types/react-dom": "^17.0.18",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
 		"eslint": "~8.55.0",
 		"html-webpack-plugin": "^5.6.0",
 		"prettier": "~3.0.3",
