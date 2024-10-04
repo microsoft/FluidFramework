@@ -15,13 +15,13 @@ export interface CoverageMetric {
 	branchCoverage: number;
 }
 
-interface TXmlCoverageReportSchema {
+interface XmlCoverageReportSchema {
 	coverage: {
-		packages: TXmlCoverageReportSchemaForPackage[];
+		packages: XmlCoverageReportSchemaForPackage[];
 	};
 }
 
-interface TXmlCoverageReportSchemaForPackage {
+interface XmlCoverageReportSchemaForPackage {
 	package: [
 		{
 			"$": {
@@ -34,7 +34,7 @@ interface TXmlCoverageReportSchemaForPackage {
 }
 
 const extractCoverageMetrics = (
-	xmlForCoverageReportFromArtifact: TXmlCoverageReportSchema,
+	xmlForCoverageReportFromArtifact: XmlCoverageReportSchema,
 ): Map<string, CoverageMetric> => {
 	const report: Map<string, CoverageMetric> = new Map();
 	const coverageForPackagesResult =
@@ -75,7 +75,7 @@ export const getCoverageMetricsFromArtifact = async (
 	const xmlParser = new Parser();
 
 	try {
-		logger?.info(`${coverageReportsFiles.length} coverage files found.`);
+		logger?.info(`${coverageReportsFiles.length} coverage data files found.`);
 
 		for (const coverageReportFile of coverageReportsFiles) {
 			const jsZipObject = artifactZip.file(coverageReportFile);
@@ -96,7 +96,7 @@ export const getCoverageMetricsFromArtifact = async (
 							return;
 						}
 						coverageMetricsForBaseline = extractCoverageMetrics(
-							result as TXmlCoverageReportSchema,
+							result as XmlCoverageReportSchema,
 						);
 					},
 				);
@@ -109,6 +109,6 @@ export const getCoverageMetricsFromArtifact = async (
 		logger?.warning(`Error encountered with reading files: ${error}`);
 	}
 
-	logger?.info(`${coverageMetricsForBaseline.size} coverage reports generated`);
+	logger?.info(`${coverageMetricsForBaseline.size} packages with coverage data found.`);
 	return coverageMetricsForBaseline;
 };

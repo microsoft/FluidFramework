@@ -2,11 +2,11 @@
 
 ## Overview
 
-This module contains all the utilities required to analyze code coverage data from PRs. The coverage reports generated in the PR build are compared against a baseline CI build for packages that have been updated in the PR. If the branch coverage for a package has been impacted in the PR, a comment is posted to the PR showing the diff of the code coverage between baseline and PR.
+This module contains all the utilities required to analyze code coverage data from PRs. The coverage data generated in the PR build are compared against a baseline CI build for packages that have been updated in the PR. If the branch coverage for a package has been impacted in the PR, a comment is posted to the PR showing the diff of the code coverage between baseline and PR.
 
-## Code Coverage Reports
+## Code Coverage Data
 
-Code coverage reports are only generated when tests run in the CI pipeline. You can also generate the code coverage summary for a package locally by running `npm run test:coverage` for the individual package or by running `npm run ci:test:mocha:coverage` from the root.
+Code coverage data is generated when tests run in the CI pipeline. You can also generate the code coverage data for a package locally by running `npm run test:coverage` for the individual package or by running `npm run ci:test:mocha:coverage` from the root.
 
 ## Pieces of the code coverage analysis
 
@@ -22,7 +22,7 @@ Before running coverage comparison, a baseline build needs to be determined for 
 
 ### Downloading artifacts from baseline build
 
-Once the baseline build is identified, we download the build artifacts corresponding to the `Code Coverage Report_{Build_Number}` artifact name for this build. We unzip the files and extract the coverage metrics out of the coverage reports using the helper `getCoverageMetricsFromArtifact`. Currently, we track `lineCoverage` and `branchCoverage` as our metrics for reporting but only use `branchCoverage` for success criteria. The final structure of the extracted metrics looks like the following:
+Once the baseline build is identified, we download the build artifacts corresponding to the `Code Coverage Report_{Build_Number}` artifact name for this build. We unzip the files and extract the coverage data out of the code coverage artifact using the helper `getCoverageMetricsFromArtifact`. Currently, we track `lineCoverage` and `branchCoverage` as our metrics for reporting but only use `branchCoverage` for success criteria. The final structure of the extracted metrics looks like the following:
 
 ```typescript
 /**
@@ -34,13 +34,13 @@ export interface CoverageMetric {
 }
 ```
 
-### Generating the coverage report on PR build
+### Generating the coverage data on PR build
 
 As mentioned earlier, the PR build also uploads coverage data as artifacts that can be used to run coverage analysis against a baseline build. To help with this, we use the `getCoverageMetricsFromArtifact` helper function to extract code coverage numbers of format `CoverageMetric` that contains code coverage metrics corresponding to the PR for each package.
 
 ### Comparing code coverage reports
 
-Once we have the coverage metrics for the baseline and PR build, we use the `compareCodeCoverage` utility function that returns an array of coverage comparisons for the list of packages passed into it. The array returned contains objects of type `CodeCoverageComparison`. We ignore some packages for comparing code coverage such as definition packages and packages which are not inside `packages` folder in the repo.
+Once we have the coverage metrics for the baseline and PR build, we use the `compareCodeCoverage` utility function that returns an array of coverage comparisons for the list of packages passed into it. The array returned contains objects of type `CodeCoverageComparison`. We ignore some packages for comparing code coverage such as definition packages and packages which are not inside `packages` folder in the repo. The logic is in the `compareCodeCoverage` function.
 
 ```typescript
 /**

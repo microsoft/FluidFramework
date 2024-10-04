@@ -11,7 +11,11 @@ import {
 } from "../../codeCoverage/compareCodeCoverage.js";
 import { getCommentForCodeCoverageDiff } from "../../codeCoverage/getCommentForCodeCoverage.js";
 import { type IAzureDevopsBuildCoverageConstants } from "../../library/azureDevops/constants.js";
-import { createOrUpdateCommentOnPr, getChangedFilePaths } from "../../library/githubRest.js";
+import {
+	createOrUpdateCommentOnPr,
+	getChangedFilePaths,
+	type GitHubProps,
+} from "../../library/githubRest.js";
 import { BaseCommand } from "../../library/index.js";
 
 // Unique identifier for the comment made on the PR. This is used to identify the comment
@@ -24,57 +28,57 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 	static readonly description = "Run comparison of code coverage stats";
 
 	static readonly flags = {
-		ADO_BUILD_ID: Flags.integer({
+		adoBuildId: Flags.integer({
 			description: "Azure DevOps build ID.",
 			env: "ADO_BUILD_ID",
 			required: true,
 		}),
-		ADO_API_TOKEN: Flags.string({
+		adoApiToken: Flags.string({
 			description: "Token to get auth for accessing ADO builds.",
 			env: "ADO_API_TOKEN",
 			required: true,
 		}),
-		GITHUB_API_TOKEN: Flags.string({
+		githubApiToken: Flags.string({
 			description: "Token to get auth for accessing Github PR.",
 			env: "GITHUB_API_TOKEN",
 			required: true,
 		}),
-		ADO_CI_BUILD_DEFINITION_ID_BASELINE: Flags.integer({
+		adoCIBuildDefinitionIdBaseline: Flags.integer({
 			description: "Build definition/pipeline number/id for the baseline build.",
 			env: "ADO_CI_BUILD_DEFINITION_ID_BASELINE",
 			required: true,
 		}),
-		ADO_CI_BUILD_DEFINITION_ID_PR: Flags.integer({
+		adoCIBuildDefinitionIdPR: Flags.integer({
 			description: "Build definition/pipeline number/id for the PR build.",
 			env: "ADO_CI_BUILD_DEFINITION_ID_PR",
 			required: true,
 		}),
-		CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE: Flags.string({
+		codeCoverageAnalysisArtifactNameBaseline: Flags.string({
 			description: "Code coverage artifact name for the baseline build.",
 			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE",
 			required: true,
 		}),
-		CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR: Flags.string({
+		codeCoverageAnalysisArtifactNamePR: Flags.string({
 			description: "Code coverage artifact name for the PR build.",
 			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR",
 			required: true,
 		}),
-		GITHUB_PR_NUMBER: Flags.integer({
+		githubPRNumber: Flags.integer({
 			description: "Github PR number.",
 			env: "GITHUB_PR_NUMBER",
 			required: true,
 		}),
-		GITHUB_REPOSITORY_NAME: Flags.string({
+		githubRepositoryName: Flags.string({
 			description: "Github repository name.",
 			env: "GITHUB_REPOSITORY_NAME",
 			required: true,
 		}),
-		GITHUB_REPOSITORY_OWNER: Flags.string({
+		githubRepositoryOwner: Flags.string({
 			description: "Github repository owner.",
 			env: "GITHUB_REPOSITORY_OWNER",
 			required: true,
 		}),
-		TARGET_BRANCH_NAME: Flags.string({
+		targetBranchName: Flags.string({
 			description: "Target branch name.",
 			env: "TARGET_BRANCH_NAME",
 			required: true,
@@ -88,36 +92,35 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		const codeCoverageConstantsForBaseline: IAzureDevopsBuildCoverageConstants = {
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
-			ciBuildDefinitionId: flags.ADO_CI_BUILD_DEFINITION_ID_BASELINE,
-			artifactName: flags.CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE,
-			branch: flags.TARGET_BRANCH_NAME,
+			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
+			artifactName: flags.codeCoverageAnalysisArtifactNameBaseline,
+			branch: flags.targetBranchName,
 			buildsToSearch: 50,
 		};
 
 		const codeCoverageConstantsForPR: IAzureDevopsBuildCoverageConstants = {
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
-			ciBuildDefinitionId: flags.ADO_CI_BUILD_DEFINITION_ID_PR,
-			artifactName: flags.CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR,
+			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdPR,
+			artifactName: flags.codeCoverageAnalysisArtifactNamePR,
 			buildsToSearch: 20,
-			buildId: flags.ADO_BUILD_ID,
+			buildId: flags.adoBuildId,
+		};
+
+		const githubProps: GitHubProps = {
+			owner: flags.githubRepositoryOwner,
+			repo: flags.githubRepositoryName,
+			token: flags.githubApiToken,
 		};
 
 		// Get the paths of the files that have changed in the PR relative to root of the repo.
 		// This is used to determine which packages have been affect so that we can do code coverage
 		// analysis on those packages only.
-		const changedFiles = await getChangedFilePaths(
-			{
-				owner: flags.GITHUB_REPOSITORY_OWNER,
-				repo: flags.GITHUB_REPOSITORY_NAME,
-				token: flags.GITHUB_API_TOKEN,
-			},
-			flags.GITHUB_PR_NUMBER,
-		);
+		const changedFiles = await getChangedFilePaths(githubProps, flags.githubPRNumber);
 
 		let commentMessage: string = "";
 		const report = await getCodeCoverageReport(
-			flags.ADO_API_TOKEN,
+			flags.adoApiToken,
 			codeCoverageConstantsForBaseline,
 			codeCoverageConstantsForPR,
 			changedFiles,
@@ -148,12 +151,8 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		const messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
 
 		await createOrUpdateCommentOnPr(
-			{
-				owner: flags.GITHUB_REPOSITORY_OWNER,
-				repo: flags.GITHUB_REPOSITORY_NAME,
-				token: flags.GITHUB_API_TOKEN,
-			},
-			flags.GITHUB_PR_NUMBER,
+			githubProps,
+			flags.githubPRNumber,
 			messageContentWithIdentifier,
 			commentIdentifier,
 		);
