@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { InteractiveBrowserCredential, useIdentityPlugin } from "@azure/identity";
+import {
+	InteractiveBrowserCredential,
+	useIdentityPlugin,
+	type AuthenticationRecord,
+} from "@azure/identity";
 import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
@@ -36,6 +40,17 @@ export const fetchToolClientConfig: IPublicClientConfig = {
 	},
 };
 
+// Local token cache for resolveWrapper.
+// @azure/identity-cache-persistence does not behave well in response to large numbers of parallel requests, which can happen for documents
+// with lots of blobs. We work around this for now by including a simple in-memory cache.
+// See more information here:
+// https://github.com/Azure/azure-sdk-for-js/issues/31307
+const tokensByServer = new Map<string, string>();
+
+// If the persisted cache has multiple accounts, InteractiveBrowserCredential ignores it unless it is passed an explicit authentication record.
+// We keep the auth record around for a single run in memory, so that at worst we only have to authenticate once per server/user.
+const authRecordPerServer = new Map<string, AuthenticationRecord | undefined>();
+
 export async function resolveWrapper<T>(
 	callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
 	server: string,
@@ -43,6 +58,7 @@ export async function resolveWrapper<T>(
 	forceTokenReauth = false,
 ): Promise<T> {
 	try {
+		const authenticationRecord = authRecordPerServer.get(server);
 		const credential = new InteractiveBrowserCredential({
 			clientId: fetchToolClientConfig.clientId,
 			tenantId: getAadTenant(server),
@@ -56,6 +72,7 @@ export async function resolveWrapper<T>(
 			// In that case, a simple workaround is to delete the cache that @azure/identity uses before running the tool.
 			// See docs on `tokenCachePersistenceOptions.name` for information on where this cache is stored.
 			loginHint,
+			authenticationRecord,
 			tokenCachePersistenceOptions: {
 				enabled: true,
 				name: "fetch-tool",
@@ -63,15 +80,24 @@ export async function resolveWrapper<T>(
 		});
 
 		const scope = getOdspScope(server);
-
-		const { token } = await credential.getToken(scope);
+		if (authenticationRecord === undefined) {
+			// Cache this authentication record for subsequent token requests.
+			authRecordPerServer.set(server, await credential.authenticate(scope));
+		}
+		let cachedToken = tokensByServer.get(server);
+		if (cachedToken === undefined || forceTokenReauth) {
+			const result = await credential.getToken(scope);
+			cachedToken = result.token;
+			tokensByServer.set(server, cachedToken);
+		}
 
 		return await callback({
-			accessToken: token,
+			accessToken: cachedToken,
 			refreshTokenFn: async () => {
 				await credential.authenticate(scope);
-				const result = await credential.getToken(scope);
-				return result.token;
+				const { token } = await credential.getToken(scope);
+				tokensByServer.set(server, token);
+				return token;
 			},
 		});
 	} catch (e: any) {

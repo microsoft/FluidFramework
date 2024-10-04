@@ -16,16 +16,19 @@ export interface ValueWithSnapshot {
 }
 
 export class TestPersistedCache implements IPersistedCache {
-	private readonly cache = new Map<string, ValueWithSnapshot>();
+	private readonly cache = new Map<string, unknown>();
 	private readonly versionCache = new Map<string, ValueWithSnapshot>();
 	private readonly versionToCacheKey = new Map<string, string>();
-	public async get(entry: ICacheEntry): Promise<ValueWithSnapshot | undefined> {
+	public async get(entry: ICacheEntry): Promise<any | undefined> {
 		const key = getKeyForCacheEntry(entry);
 		return this.cache.get(key);
 	}
-	public async put(entry: ICacheEntry, value: ValueWithSnapshot): Promise<void> {
+	public async put(entry: ICacheEntry, value: any): Promise<void> {
 		const key = getKeyForCacheEntry(entry);
 		this.cache.set(key, value);
+		if (value.value?.snapshotTree?.id === undefined) {
+			return;
+		}
 		const versionKey = `${value.value.snapshotTree.id}`;
 		this.versionCache.set(versionKey, value);
 		this.versionToCacheKey.set(versionKey, key);
