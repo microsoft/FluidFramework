@@ -23,7 +23,6 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-	type EmptyObject,
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable } from "./create.js";
@@ -64,6 +63,16 @@ export type {
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
 } from "./typesUnsafe.js";
+
+export type {
+	VerboseTreeNode,
+	ParseOptions,
+	VerboseTree,
+} from "./verboseTree.js";
+
+export type { EncodeOptions } from "./customTree.js";
+
+export type { ConciseTree } from "./conciseTree.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
 
