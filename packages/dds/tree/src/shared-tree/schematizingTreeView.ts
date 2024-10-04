@@ -41,6 +41,7 @@ import {
 	type TreeViewConfiguration,
 	mapTreeFromNodeData,
 	prepareContentForHydration,
+	comparePersistedSchemaInternal,
 	toStoredSchema,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
@@ -225,22 +226,12 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private update(): void {
 		this.disposeView();
 
-		const result = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
+		const compatibility = comparePersistedSchemaInternal(
+			this.checkout.storedSchema,
+			this.viewSchema,
+			canInitialize(this.checkout),
+		);
 
-		// TODO: AB#8121: Weaken this check to support viewing under additional circumstances.
-		// In the near term, this should support viewing documents with additional optional fields in their schema on object types.
-		// Longer-term (as demand arises), we could also add APIs to constructing view schema to allow for more flexibility
-		// (e.g. out-of-schema content handlers could allow support for viewing docs which have extra allowed types in a particular field)
-		const canView =
-			result.write === Compatibility.Compatible && result.read === Compatibility.Compatible;
-		const canUpgrade = result.read === Compatibility.Compatible;
-		const isEquivalent = canView && canUpgrade;
-		const compatibility: SchemaCompatibilityStatus = {
-			canView,
-			canUpgrade,
-			isEquivalent,
-			canInitialize: canInitialize(this.checkout),
-		};
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
 		this.currentCompatibility = compatibility;
