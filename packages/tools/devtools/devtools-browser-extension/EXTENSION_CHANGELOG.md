@@ -2,9 +2,7 @@
 
 # Unpublished
 
-(Enumerate unpublished changes here. They can be merged into release sections when the next release is published.)
-
-# 0.1.3
+<!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
 
 - Update icon assets with new Fluid logo.
 
