@@ -4,6 +4,15 @@
 
 ```ts
 
+// @alpha
+export function adaptEnum<TScope extends string, const TEnum extends Record<string, string | number>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => TreeNode & {
+    readonly value: TValue;
+}) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<ScopedSchemaName<TScope, TEnum[Property]>, NodeKind.Object, TreeNode & {
+        readonly value: TEnum[Property];
+    }, never, true, unknown> & (new () => TreeNode & {
+        readonly value: TEnum[Property];
+    }); };
+
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -39,11 +48,14 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 
-// @beta
-export interface EncodeOptions<TCustom> {
-    readonly useStoredKeys?: boolean;
-    valueConverter(data: IFluidHandle): TCustom;
-}
+// @alpha
+export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: readonly Members[]): (<TValue extends Members>(value: TValue) => TreeNode & {
+    readonly value: TValue;
+}) & Record<Members, TreeNodeSchemaClass<ScopedSchemaName<TScope, Members>, NodeKind.Object, TreeNode & {
+    readonly value: Members;
+}, never, true, unknown> & (new () => TreeNode & {
+    readonly value: Members;
+})>;
 
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
@@ -541,6 +553,13 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 // @alpha
 export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
+// @alpha
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
+    readonly value: TName;
+}, never, true, unknown> & (new () => TreeNode & {
+    readonly value: TName;
+});
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
@@ -756,6 +775,9 @@ export interface TreeViewEvents {
 
 // @alpha
 export const typeboxValidator: JsonValidator;
+
+// @alpha
+export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
 
 // @public @deprecated
 const typeNameSymbol: unique symbol;

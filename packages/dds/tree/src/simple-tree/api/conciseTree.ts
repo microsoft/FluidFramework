@@ -9,12 +9,12 @@ import type { ITreeCursor } from "../../core/index.js";
 import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "../core/index.js";
 import { customFromCursorInner, type EncodeOptions } from "./customTree.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
+import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Concise encoding of a {@link TreeNode} or {@link TreeLeafValue}.
  * @remarks
- * This is concise meaning that explicit type information is omitted.
+ * This is "concise" meaning that explicit type information is omitted.
  * If the schema is compatible with {@link ITreeConfigurationOptions.preventAmbiguity},
  * types will be lossless and compatible with {@link TreeBeta.create} (unless the options are used to customize it).
  *
@@ -23,7 +23,6 @@ import { walkFieldSchema } from "../walkFieldSchema.js";
  * @privateRemarks
  * This can store all possible simple trees,
  * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
- * @beta
  */
 export type ConciseTree<THandle = IFluidHandle> =
 	| Exclude<TreeLeafValue, IFluidHandle>
@@ -46,14 +45,7 @@ export function conciseFromCursor<TCustom>(
 		...options,
 	};
 
-	// TODO: get schema map from context when available
-	const schemaMap = new Map<string, TreeNodeSchema>();
-	walkFieldSchema(rootSchema, {
-		node(schema) {
-			schemaMap.set(schema.identifier, schema);
-		},
-	});
-
+	const schemaMap = getUnhydratedContext(rootSchema).schema;
 	return conciseFromCursorInner(reader, config, schemaMap);
 }
 

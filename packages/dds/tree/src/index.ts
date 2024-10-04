@@ -120,12 +120,11 @@ export {
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
-	// experimental @internal APIs:
+	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-	type EmptyObject,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,

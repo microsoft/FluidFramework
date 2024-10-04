@@ -27,12 +27,12 @@ import {
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
- * Options for how to interpret a `CustomTree<TCustom>` without relying on schema.
+ * Options for how to encode a tree.
  * @beta
  */
 export interface EncodeOptions<TCustom> {
 	/**
-	 * Fixup custom input formats.
+	 * How to encode any {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the tree.
 	 * @remarks
 	 * See note on {@link ParseOptions.valueConverter}.
 	 */
@@ -45,10 +45,24 @@ export interface EncodeOptions<TCustom> {
 	readonly useStoredKeys?: boolean;
 }
 
+/**
+ * Tree representation with fields as properties and customized handle and child representations.
+ */
 export type CustomTree<TChild, THandle> = CustomTreeNode<TChild> | CustomTreeValue<THandle>;
+
+/**
+ * TreeLeafValue except the handle type is customized.
+ */
 export type CustomTreeValue<THandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle;
+
+/**
+ * Tree node representation with fields as properties and customized child representation.
+ */
 export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
 
+/**
+ * Builds an {@link CustomTree} from a cursor in Nodes mode.
+ */
 export function customFromCursorInner<TChild, THandle>(
 	reader: ITreeCursor,
 	options: Required<EncodeOptions<THandle>>,
@@ -72,7 +86,7 @@ export function customFromCursorInner<TChild, THandle>(
 			return reader.value;
 		case handleSchema.identifier:
 			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			assert(isFluidHandle(reader.value), "out of schema: expected FluidHandle");
 			return options.valueConverter(reader.value);
 		default: {
 			assert(reader.value === undefined, "out of schema: unexpected value");
