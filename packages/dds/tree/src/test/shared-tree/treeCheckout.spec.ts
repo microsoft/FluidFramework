@@ -45,10 +45,8 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getOrCreateInnerNode } from "../../simple-tree/proxyBinding.js";
-// eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { toStoredSchema } from "../../simple-tree/index.js";
+import { getOrCreateInnerNode, toStoredSchema } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 

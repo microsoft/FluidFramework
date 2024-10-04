@@ -81,6 +81,7 @@ export const SharedTree = configuredSharedTree({});
  * });
  * ```
  * @privateRemarks
+ * This should be legacy, but has to be internal due to limitations of API tagging preventing it from being both alpha and alpha+legacy.
  * TODO:
  * Expose Ajv validator for better error message quality somehow.
  * Maybe as part of a test utils or dev-tool package?

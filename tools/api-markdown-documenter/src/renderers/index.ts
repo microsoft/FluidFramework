@@ -5,12 +5,10 @@
 
 export { DocumentWriter } from "./DocumentWriter.js";
 export {
-	type RenderConfiguration as HtmlRenderConfiguration,
-	type RenderContext as HtmlRenderContext,
 	renderDocument as renderDocumentAsHtml,
-	renderNode as renderNodeAsHtml,
-	renderNodes as renderNodesAsHtml,
-	type Renderers as HtmlRenderers,
+	type RenderDocumentConfig as RenderDocumentAsHtmlConfig,
+	renderHtml,
+	type RenderHtmlConfig,
 } from "./html-renderer/index.js";
 export {
 	type RenderConfiguration as MarkdownRenderConfiguration,
