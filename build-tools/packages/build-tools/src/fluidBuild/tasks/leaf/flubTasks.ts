@@ -29,7 +29,7 @@ export class FlubListTask extends LeafWithDoneFileTask {
 		if (resourceGroup === undefined) {
 			return undefined;
 		}
-		const packages = Array.from(this.node.buildContext.repoPackageMap.values()).filter(
+		const packages = Array.from(this.node.context.repoPackageMap.values()).filter(
 			(pkg) => pkg.monoRepo?.kind === resourceGroup,
 		);
 		if (packages.length === 0) {
@@ -59,7 +59,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 		return layerInfoFile
 			? JSON.stringify({
 					layerInfo: layerInfoFile,
-					packageJson: Array.from(this.node.buildContext.repoPackageMap.values()).map(
+					packageJson: Array.from(this.node.context.repoPackageMap.values()).map(
 						(pkg) => pkg.packageJson,
 					),
 				})

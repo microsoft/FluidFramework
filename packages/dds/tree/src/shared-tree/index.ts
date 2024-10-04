@@ -13,6 +13,9 @@ export {
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
+	buildConfiguredForest,
+	defaultSharedTreeOptions,
+	type ForestOptions,
 } from "./sharedTree.js";
 
 export {
@@ -27,14 +30,9 @@ export {
 	type TreeBranchFork,
 } from "./treeCheckout.js";
 
-export {
-	type SchematizeConfiguration,
-	type TreeContent,
-	type TreeStoredContent,
-	type InitializeAndSchematizeConfiguration,
-	type SchemaConfiguration,
-	buildTreeConfiguration,
-} from "./schematizeTree.js";
+export { type TreeStoredContent } from "./schematizeTree.js";
+
+export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
 export { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 

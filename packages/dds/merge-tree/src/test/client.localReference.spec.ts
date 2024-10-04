@@ -17,7 +17,7 @@ import {
 	setValidateRefCount,
 } from "../localReference.js";
 import { getSlideToSegoff } from "../mergeTree.js";
-import { toRemovalInfo, type ISegment } from "../mergeTreeNodes.js";
+import { toRemovalInfo, type ISegment, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { DetachedReferencePosition } from "../referencePositions.js";
@@ -35,7 +35,7 @@ function getSlideOnRemoveReferencePosition(
 	segment: ISegment | undefined;
 	offset: number | undefined;
 } {
-	let segoff = client.getContainingSegment(pos, {
+	let segoff = client.getContainingSegment<ISegmentLeaf>(pos, {
 		referenceSequenceNumber: op.referenceSequenceNumber,
 		clientId: op.clientId,
 	});
@@ -69,7 +69,7 @@ describe("MergeTree.Client", () => {
 			client2.applyMsg(insert);
 		}
 
-		const segInfo = client1.getContainingSegment(2);
+		const segInfo = client1.getContainingSegment<ISegmentLeaf>(2);
 		const c1LocalRef = client1.createLocalReferencePosition(
 			segInfo.segment!,
 			segInfo.offset,
@@ -125,7 +125,7 @@ describe("MergeTree.Client", () => {
 			client2.applyMsg(insert);
 		}
 
-		const segInfo = client1.getContainingSegment(2);
+		const segInfo = client1.getContainingSegment<ISegmentLeaf>(2);
 		const c1LocalRef = client1.createLocalReferencePosition(
 			segInfo.segment!,
 			segInfo.offset,
@@ -172,7 +172,7 @@ describe("MergeTree.Client", () => {
 			client2.applyMsg(insert);
 		}
 
-		const segInfo = client1.getContainingSegment(2);
+		const segInfo = client1.getContainingSegment<ISegmentLeaf>(2);
 		const c1LocalRef = client1.createLocalReferencePosition(
 			segInfo.segment!,
 			segInfo.offset,
@@ -205,7 +205,7 @@ describe("MergeTree.Client", () => {
 		insert.minimumSequenceNumber = seq - 1;
 		client1.applyMsg(insert);
 
-		const segInfo = client1.getContainingSegment(3);
+		const segInfo = client1.getContainingSegment<ISegmentLeaf>(3);
 		const c1LocalRef = client1.createLocalReferencePosition(
 			segInfo.segment!,
 			segInfo.offset,
@@ -317,7 +317,7 @@ describe("MergeTree.Client", () => {
 			client2.applyMsg(insert);
 		}
 
-		const segInfo = client1.getContainingSegment(2);
+		const segInfo = client1.getContainingSegment<ISegmentLeaf>(2);
 		const c1LocalRef = client1.createLocalReferencePosition(
 			segInfo.segment!,
 			segInfo.offset,
@@ -354,14 +354,14 @@ describe("MergeTree.Client", () => {
 		client1.applyMsg(insert1);
 		client2.applyMsg(insert1);
 
-		const segInfo1 = client1.getContainingSegment(1);
+		const segInfo1 = client1.getContainingSegment<ISegmentLeaf>(1);
 		const LocalRef1 = client1.createLocalReferencePosition(
 			segInfo1.segment!,
 			segInfo1.offset,
 			ReferenceType.SlideOnRemove,
 			undefined,
 		);
-		const segInfo3 = client1.getContainingSegment(3);
+		const segInfo3 = client1.getContainingSegment<ISegmentLeaf>(3);
 		const LocalRef2 = client1.createLocalReferencePosition(
 			segInfo3.segment!,
 			segInfo3.offset,
@@ -374,8 +374,8 @@ describe("MergeTree.Client", () => {
 		assert.equal(client1.localReferencePositionToPosition(LocalRef1), 1);
 		assert.equal(client1.localReferencePositionToPosition(LocalRef2), 5);
 
-		const c2SegInfo1 = client2.getContainingSegment(1);
-		const c2SegInfo3 = client2.getContainingSegment(3);
+		const c2SegInfo1 = client2.getContainingSegment<ISegmentLeaf>(1);
+		const c2SegInfo3 = client2.getContainingSegment<ISegmentLeaf>(3);
 		const remove = client2.makeOpMessage(
 			client2.removeRangeLocal(0, client2.getLength()),
 			++seq,
@@ -428,7 +428,7 @@ describe("MergeTree.Client", () => {
 		const opFromBeforeRemovePerspective = client2.makeOpMessage(
 			client2.insertTextLocal(3, "X"),
 		);
-		const { segment, offset } = client1.getContainingSegment(0, {
+		const { segment, offset } = client1.getContainingSegment<ISegmentLeaf>(0, {
 			referenceSequenceNumber: opFromBeforeRemovePerspective.referenceSequenceNumber,
 			clientId: opFromBeforeRemovePerspective.clientId,
 		});
@@ -455,7 +455,7 @@ describe("MergeTree.Client", () => {
 		client1.applyMsg(insert1);
 		client2.applyMsg(insert1);
 
-		const segInfo = client1.getContainingSegment(4);
+		const segInfo = client1.getContainingSegment<ISegmentLeaf>(4);
 		const localRef = client1.createLocalReferencePosition(
 			segInfo.segment!,
 			segInfo.offset,
@@ -512,7 +512,7 @@ describe("MergeTree.Client", () => {
 		messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "0123456789"), ++seq));
 		// initialize the local reference collection on the segment, but keep it empty
 		{
-			const segInfo = clients.A.getContainingSegment(9);
+			const segInfo = clients.A.getContainingSegment<ISegmentLeaf>(9);
 			const segment = segInfo.segment;
 			assert(segment !== undefined && TextSegment.is(segment));
 			assert.strictEqual(segment.text[segInfo.offset!], "9");
@@ -529,7 +529,7 @@ describe("MergeTree.Client", () => {
 
 		// add a local reference to the newly inserted segment that caused the split
 		{
-			const segInfo = clients.A.getContainingSegment(6);
+			const segInfo = clients.A.getContainingSegment<ISegmentLeaf>(6);
 			const segment = segInfo.segment;
 			assert(segment !== undefined && TextSegment.is(segment));
 			assert.strictEqual(segment.text[segInfo.offset!], "B");
@@ -564,13 +564,13 @@ describe("MergeTree.Client", () => {
 			client.applyMessages(2);
 			assert.equal(client.getText(), "AB");
 			localRefA = client.createLocalReferencePosition(
-				client.getContainingSegment(0).segment!,
+				client.getContainingSegment<ISegmentLeaf>(0).segment!,
 				0,
 				ReferenceType.StayOnRemove,
 				{},
 			);
 			localRefB = client.createLocalReferencePosition(
-				client.getContainingSegment(1).segment!,
+				client.getContainingSegment<ISegmentLeaf>(1).segment!,
 				0,
 				ReferenceType.StayOnRemove,
 				{},
@@ -617,7 +617,7 @@ describe("MergeTree.Client", () => {
 		client1.applyMsg(insert1);
 		client2.applyMsg(insert1);
 
-		const segInfo = client1.getContainingSegment(3);
+		const segInfo = client1.getContainingSegment<ISegmentLeaf>(3);
 
 		const localRef = client1.createLocalReferencePosition(
 			segInfo.segment!,
@@ -680,7 +680,7 @@ describe("MergeTree.Client", () => {
 				client1.applyMsg(insert1);
 				client2.applyMsg(insert1);
 
-				const segInfo = client1.getContainingSegment(3);
+				const segInfo = client1.getContainingSegment<ISegmentLeaf>(3);
 
 				assert(segInfo.segment);
 
@@ -726,7 +726,7 @@ describe("MergeTree.Client", () => {
 				client1.applyMsg(insert1);
 				client2.applyMsg(insert1);
 
-				const segInfo = client1.getContainingSegment(3);
+				const segInfo = client1.getContainingSegment<ISegmentLeaf>(3);
 
 				assert(segInfo.segment);
 
