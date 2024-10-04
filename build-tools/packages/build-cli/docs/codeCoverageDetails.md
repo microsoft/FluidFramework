@@ -22,7 +22,7 @@ Before running coverage comparison, a baseline build needs to be determined for 
 
 ### Downloading artifacts from baseline build
 
-Once the baseline build is identified, we download the build artifacts corresponding to the `Code Coverage Report_{Build_Number}` artifact name for this build. We unzip the files, and extract the coverage metrics out of the coverage reports using the helper `getCoverageMetricsFromArtifact`. Currently, we track `lineCoverage` and `branchCoverage` as our metrics for reporting but only use `branchCoverage` for success criteria. The final structure of the extracted metrics looks like
+Once the baseline build is identified, we download the build artifacts corresponding to the `Code Coverage Report_{Build_Number}` artifact name for this build. We unzip the files and extract the coverage metrics out of the coverage reports using the helper `getCoverageMetricsFromArtifact`. Currently, we track `lineCoverage` and `branchCoverage` as our metrics for reporting but only use `branchCoverage` for success criteria. The final structure of the extracted metrics looks like the following:
 
 ```typescript
 /**
