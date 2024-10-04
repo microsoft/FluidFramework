@@ -8,9 +8,8 @@ import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const tinyliciousClient = new TinyliciousClient({});
 
-const _containerId: string =
+export const containerIdFromUrl = (): string =>
 	new URL(window.location.href).searchParams.get("fluidContainerId") ?? "";
-export const containerIdFromUrl = (): string => _containerId;
 
 export async function loadContainer<T extends ContainerSchema>(
 	containerSchema: T,

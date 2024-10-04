@@ -7,12 +7,15 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { createJsonTranslator, createOpenAILanguageModel, type Result } from "typechat";
 import { createTypeScriptJsonValidator } from "typechat/ts"; // eslint-disable-line import/no-internal-modules
 import { v4 as uuidv4 } from "uuid";
 
 import type { Task, TaskGroup } from "@/types/task"; // eslint-disable-line import/no-internal-modules
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Todo: Make use of system prompts with the open ai model, this may yield better results.
 // I am unsure if this is possible using typechat as a controller of the underlying open AI API's
