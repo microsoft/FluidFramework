@@ -537,7 +537,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * The content to be written in the "done file".
 	 * @remarks
 	 * This file must have different content if the work needed to be done by this task changes.
-	 * This is typically done by listing and/or hashing the inputs to this task.
+	 * This is typically done by listing and/or hashing the inputs and outputs to this task.
 	 * This is invoked before the task is run to check if an existing done file from a previous run matches: if so, the task can be skipped.
 	 * If not, the task is run, after which this is invoked a second time to produce the contents to write to disk.
 	 */
