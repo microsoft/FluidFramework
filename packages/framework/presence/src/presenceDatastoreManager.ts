@@ -36,9 +36,9 @@ interface SystemDatastore {
 
 type InternalWorkspaceAddress = `${"s" | "n"}:${PresenceWorkspaceAddress}`;
 
-type PresenceDatastore = {
+type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
-} & SystemDatastore;
+};
 
 interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
@@ -48,7 +48,7 @@ interface GeneralDatastoreMessageContent {
 	};
 }
 
-type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
+type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
 
 const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
 interface DatastoreUpdateMessage extends IInboundSignalMessage {
@@ -57,7 +57,7 @@ interface DatastoreUpdateMessage extends IInboundSignalMessage {
 		sendTimestamp: number;
 		avgLatency: number;
 		isComplete?: true;
-		data: GeneralDatastoreMessageContent & Partial<SystemDatastore>;
+		data: DatastoreMessageContent;
 	};
 }
 
@@ -155,12 +155,26 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				return;
 			}
 
+			const clientConnectionId = this.runtime.clientId;
+			assert(clientConnectionId !== undefined, "Client connected without clientId");
+			const currentClientToSessionValueState =
+				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+
 			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
 			for (const [key, value] of Object.entries(states)) {
 				updates[key] = { [this.clientSessionId]: value };
 			}
 			this.localUpdate(
 				{
+					// Always send current connection mapping for some resiliency against
+					// lost signals. This ensures that client session id found in `updates`
+					// (which is this client's client session id) is always represented in
+					// system workspace of recipient clients.
+					"system:presence": {
+						clientToSessionId: {
+							[clientConnectionId]: { ...currentClientToSessionValueState },
+						},
+					},
 					[internalWorkspaceAddress]: updates,
 				},
 				forceBroadcast,
@@ -181,10 +195,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		return entry.public;
 	}
 
-	private localUpdate(
-		data: GeneralDatastoreMessageContent & Partial<SystemDatastore>,
-		_forceBroadcast: boolean,
-	): void {
+	private localUpdate(data: DatastoreMessageContent, _forceBroadcast: boolean): void {
 		const content = {
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
