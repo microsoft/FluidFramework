@@ -48,7 +48,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
-		"react": "^17.0.1"
+		"react": "^18.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
@@ -59,8 +59,8 @@
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
-		"@types/react": "^17.0.44",
-		"@types/react-dom": "^17.0.18",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"expect-puppeteer": "^9.0.2",
