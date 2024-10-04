@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { InteractiveBrowserCredential, useIdentityPlugin, type AuthenticationRecord } from "@azure/identity";
+import {
+	InteractiveBrowserCredential,
+	useIdentityPlugin,
+	type AuthenticationRecord,
+} from "@azure/identity";
 import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
