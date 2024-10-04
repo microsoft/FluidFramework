@@ -1,4 +1,4 @@
-# @fluid-experimental/fluid-llm
+# @fluid-experimental/ai-collab
 
 Utilities for using SharedTree with LLM's.
 This package aims to assist SharedTree based React apps using LLM's.

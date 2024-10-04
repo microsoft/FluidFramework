@@ -36,6 +36,7 @@ fluid-framework
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
+@fluid-experimental/ai-collab
 @fluidframework/agent-scheduler
 @fluidframework/tinylicious-driver
 @fluidframework/routerlicious-urlresolver
@@ -70,7 +71,6 @@ fluid-framework
 @fluid-internal/client-utils
 @fluid-experimental/tree-react-api
 @fluid-experimental/last-edited
-@fluid-experimental/fluid-llm
 @fluid-experimental/data-objects
 @fluid-experimental/tree
 @fluid-experimental/sequence-deprecated

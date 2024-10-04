@@ -1,1 +1,1 @@
-# @fluid-experimental/fluid-llm-example
+# @fluid-experimental/ai-collab-example

@@ -60,7 +60,7 @@
 		"@azure/msal-browser": "^3.23.0",
 		"@emotion/react": "^11.13.3",
 		"@emotion/styled": "^11.13.0",
-		"@fluid-experimental/fluid-llm": "workspace:~",
+		"@fluid-experimental/ai-collab": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
