@@ -10,7 +10,11 @@ import {
 	PublicClientApplication,
 	type AuthenticationResult,
 } from "@azure/msal-browser";
-import { OdspClient } from "@fluidframework/odsp-client/beta";
+import {
+	IOdspTokenProvider,
+	OdspClientProps,
+	OdspClient,
+} from "@fluidframework/odsp-client/beta";
 
 import { getClientProps } from "./clientProps";
 import { GraphHelper } from "./graphHelper";
@@ -162,11 +166,14 @@ async function signedInStart(
 	// Create the client properties required to initialize
 	// the Fluid client instance. The Fluid client instance is used to
 	// interact with the Fluid service.
-	const clientProps = getClientProps(
-		await graphHelper.getSiteUrl(),
-		fileStorageContainerId,
-		new SampleOdspTokenProvider(msalInstance),
-	);
+	const clientProps = {
+		connection: {
+			siteUrl: await graphHelper.getSiteUrl(),
+			tokenProvider: new SampleOdspTokenProvider(msalInstance),
+			driveId: fileStorageContainerId,
+			filePath: "",
+		},
+	};
 
 	// Create the Fluid client instance
 	const client = new OdspClient(clientProps);
