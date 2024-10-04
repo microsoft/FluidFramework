@@ -5,9 +5,13 @@
 
 import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
-import type * as Preset from "@docusaurus/preset-classic";
+import * as Preset from "@docusaurus/preset-classic";
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
+
+// TODO: set back to main before merging
+const githubMainBranchUrl = `${githubUrl}/tree/dev/docs/docusaurus`;
+const githubDocsUrl = `${githubMainBranchUrl}/docs`;
 
 const config: Config = {
 	title: "Fluid Framework Documentation",
@@ -57,7 +61,16 @@ const config: Config = {
 							noIndex: true,
 							banner: "unmaintained",
 						}
-					}
+					},
+					// Determines whether or not to display an "Edit this page" link at
+					// the bottom of each page.
+					editUrl: ({version, versionDocsDirPath, docPath, permalink, locale})=> {
+						// If the doc is a generated API document, don't display edit link.
+						if (docPath.startsWith("api/")) {
+							return undefined;
+						}
+						return `${githubDocsUrl}/${versionDocsDirPath}${docPath}`;
+					},
 				},
 				// We can add support for blog posts in the future.
 				blog: undefined,
