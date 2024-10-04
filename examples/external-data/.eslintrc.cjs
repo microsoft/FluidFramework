@@ -13,6 +13,8 @@ module.exports = {
 	],
 	rules: {
 		"import/no-nodejs-modules": ["error", { allow: ["node:http"] }],
+		// AB#18875
+		"react/no-deprecated": "off",
 	},
 	overrides: [
 		{

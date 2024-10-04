@@ -5,5 +5,8 @@
 
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
-	rules: {},
+	rules: {
+		// AB#18875
+		"react/no-deprecated": "off",
+	},
 };

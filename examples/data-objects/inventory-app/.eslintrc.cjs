@@ -12,5 +12,7 @@ module.exports = {
 				allow: ["/view/**"],
 			},
 		],
+		// AB#18875
+		"react/no-deprecated": "off",
 	},
 };

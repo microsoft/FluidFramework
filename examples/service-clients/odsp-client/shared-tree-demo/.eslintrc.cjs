@@ -27,5 +27,7 @@ module.exports = {
 				],
 			},
 		],
+		// AB#18875
+		"react/no-deprecated": "off",
 	},
 };

@@ -8,4 +8,8 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
+	rules: {
+		// AB#18875
+		"react/no-deprecated": "off",
+	},
 };

@@ -8,5 +8,8 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
 	],
-	rules: {},
+	rules: {
+		// AB#18875
+		"react/no-deprecated": "off",
+	},
 };
