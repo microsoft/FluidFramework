@@ -73,8 +73,8 @@
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
-		"react": "^17.0.1",
-		"react-dom": "^17.0.1",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -85,8 +85,8 @@
 		"@fluidframework/build-tools": "^0.46.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@microsoft/api-extractor": "7.47.8",
-		"@types/react": "^17.0.44",
-		"@types/react-dom": "^17.0.18",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
 		"@types/uuid": "^9.0.2",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
