@@ -16,8 +16,8 @@ import {
 	selectAndFilterPackages,
 } from "../filter.js";
 import { loadFluidRepo } from "../fluidRepo.js";
-import { testDataPath } from "./init.js";
 import type { WorkspaceName } from "../types.js";
+import { testDataPath } from "./init.js";
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
