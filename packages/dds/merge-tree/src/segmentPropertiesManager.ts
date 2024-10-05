@@ -53,10 +53,12 @@ export class PropertiesManager {
 
 				if (collaborating) {
 					assert(pending !== undefined, "pending must exist for rollback");
-					pending?.changes.pop();
-					delete this.pending?.[key];
-					if (Object.keys(this.pending ?? {}).length === 0) {
-						this.pending = undefined;
+					pending.changes.pop();
+					if (pending.changes.length === 0) {
+						delete this.pending?.[key];
+						if (Object.keys(this.pending ?? {}).length === 0) {
+							this.pending = undefined;
+						}
 					}
 					properties[key] = computeValue(
 						pending.consensus,
