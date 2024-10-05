@@ -488,7 +488,7 @@ export class PendingStateManager implements IDisposable {
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
 
-		// If this batch became empty on resubmit, batch.messages will be empty (so firstMessage undefined)
+		// If this batch became empty on resubmit, batch.messages will be empty
 		// and the next pending message should be an empty batch marker.
 		// More Info: We must submit empty batches and track them in case a different fork
 		// of this container also submitted the same batch (and it may not be empty for that fork).
