@@ -46,6 +46,11 @@ export interface CommitMetadata {
 // @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: JsonCompatible, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
 
+// @beta
+export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
+    [key: string]: ConciseTree<THandle>;
+};
+
 // @alpha
 export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
 
@@ -166,7 +171,7 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @beta (undocumented)
+// @beta
 export enum FluidClientVersion {
     // (undocumented)
     v2_0 = "v2_0",
@@ -617,12 +622,12 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, 
     readonly items: JsonFieldSchema;
 }
 
-// @alpha
-export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+// @beta
+export type JsonCompatible<TExtra = never> = string | number | boolean | null | JsonCompatible<TExtra>[] | JsonCompatibleObject<TExtra> | TExtra;
 
-// @alpha
-export type JsonCompatibleObject = {
-    [P in string]?: JsonCompatible;
+// @beta
+export type JsonCompatibleObject<TExtra = never> = {
+    [P in string]?: JsonCompatible<TExtra>;
 };
 
 // @alpha @sealed
@@ -1194,7 +1199,7 @@ export interface ViewableTree {
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ViewContent {
     readonly idCompressor: IIdCompressor;
     readonly schema: JsonCompatible;
