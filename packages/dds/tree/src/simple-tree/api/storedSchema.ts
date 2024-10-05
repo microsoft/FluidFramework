@@ -19,7 +19,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import { ViewSchema } from "./view.js";
 
 /**
- * Dumps the "persisted" schema subset of `schema` into a deterministic JSON compatible semi-human readable but unspecified format.
+ * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
@@ -33,6 +33,13 @@ import { ViewSchema } from "./view.js";
  * If two schema have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
  *
  * See also {@link comparePersistedSchema}.
+ *
+ * @example
+ * An application could use this API to generate a `schema.json` file when it first releases,
+ * then test that the schema is sill compatible with documents from that version with a test like :
+ * ```typescript
+ * assert.deepEqual(extractPersistedSchema(MySchema), require("./schema.json"));
+ * ```
  *
  * @privateRemarks
  * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
@@ -61,6 +68,19 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.
  * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
  *
+ * @example
+ * An application could use {@link extractPersistedSchema} to generate a `schema.json` file for various versions of the app,
+ * then test that documents using those schema can be upgraded to work with the current schema using a test like:
+ * ```typescript
+ * assert(
+ * 	comparePersistedSchema(
+ * 		require("./schema.json"),
+ * 		extractPersistedSchema(MySchema),
+ * 		{ jsonValidator: typeboxValidator },
+ * 		false,
+ * 	).canUpgrade,
+ * );
+ * ```
  * @alpha
  */
 export function comparePersistedSchema(
@@ -69,21 +89,17 @@ export function comparePersistedSchema(
 	options: ICodecOptions,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
-	const stored = parseSchema(persisted, options);
-	const viewParsed = parseSchema(view, options);
+	const schemaCodec = makeSchemaCodec(options);
+	const stored = schemaCodec.decode(persisted as Format);
+	const viewParsed = schemaCodec.decode(view as Format);
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, viewParsed);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
 }
 
-export function parseSchema(
-	persisted: JsonCompatible,
-	options: ICodecOptions,
-): TreeStoredSchema {
-	const schemaCodec = makeSchemaCodec(options);
-	const schema = schemaCodec.decode(persisted as Format);
-	return schema;
-}
-
+/**
+ * Compute compatibility for viewing a document with `stored` schema using `viewSchema`.
+ * `canInitialize` is passed through to the return value unchanged and otherwise unused.
+ */
 export function comparePersistedSchemaInternal(
 	stored: TreeStoredSchema,
 	viewSchema: ViewSchema,

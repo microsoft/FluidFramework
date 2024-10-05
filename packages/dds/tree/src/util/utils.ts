@@ -219,8 +219,8 @@ export function count(iterable: Iterable<unknown>): number {
 
 /**
  * Use for Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  * @beta
  */
@@ -236,8 +236,8 @@ export type JsonCompatible<TExtra = never> =
 
 /**
  * Use for Json object compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  * @beta
  */
@@ -245,8 +245,8 @@ export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompati
 
 /**
  * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
 export type JsonCompatibleReadOnly =
@@ -260,8 +260,8 @@ export type JsonCompatibleReadOnly =
 
 /**
  * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
 export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };

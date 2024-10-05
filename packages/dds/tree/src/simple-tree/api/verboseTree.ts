@@ -37,7 +37,6 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
 import {
 	customFromCursorInner,
 	type CustomTreeNode,
@@ -335,13 +334,7 @@ export function verboseFromCursor<TCustom>(
 		...options,
 	};
 
-	// TODO: get schema map from context when available
-	const schemaMap = new Map<string, TreeNodeSchema>();
-	walkFieldSchema(rootSchema, {
-		node(schema) {
-			schemaMap.set(schema.identifier, schema);
-		},
-	});
+	const schemaMap = getUnhydratedContext(rootSchema).schema;
 
 	return verboseFromCursorInner(reader, config, schemaMap);
 }

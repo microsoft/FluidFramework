@@ -46,11 +46,6 @@ export interface CommitMetadata {
 // @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: JsonCompatible, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
 
-// @beta
-export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
-    [key: string]: ConciseTree<THandle>;
-};
-
 // @alpha
 export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
 
@@ -622,12 +617,12 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, 
     readonly items: JsonFieldSchema;
 }
 
-// @beta
-export type JsonCompatible<TExtra = never> = string | number | boolean | null | JsonCompatible<TExtra>[] | JsonCompatibleObject<TExtra> | TExtra;
+// @alpha
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
 
-// @beta
-export type JsonCompatibleObject<TExtra = never> = {
-    [P in string]?: JsonCompatible<TExtra>;
+// @alpha
+export type JsonCompatibleObject = {
+    [P in string]?: JsonCompatible;
 };
 
 // @alpha @sealed
