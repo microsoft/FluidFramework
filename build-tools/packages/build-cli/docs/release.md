@@ -175,7 +175,8 @@ Generates a report of Fluid Framework releases.
 ```
 USAGE
   $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
-    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName <value>]
+    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName <value>] [--compatVersionInterval
+    <value>]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -205,6 +206,9 @@ FLAGS
       If provided, the output files will be named using this base name followed by the report kind (caret, simple, full,
       tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
       'foo.caret.json', 'foo.simple.json', etc.
+
+  --compatVersionInterval=<value>
+      [default: 10] The multiple of minor versions to use for calculating the next version in the range.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

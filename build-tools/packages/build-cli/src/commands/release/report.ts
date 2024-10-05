@@ -391,6 +391,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
 		}),
+		compatVersionInterval: Flags.integer({
+			description:
+				"The multiple of minor versions to use for calculating the next version in the range.",
+			default: 10,
+		}),
 		...ReleaseReportBaseCommand.flags,
 	};
 
@@ -427,7 +432,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		if (this.releaseData === undefined) {
 			this.error(`No releases found for ${flags.releaseGroup}`);
 		}
-		const report = await this.generateReleaseReport(this.releaseData);
+		const report = await this.generateReleaseReport(
+			this.releaseData,
+			flags.compatVersionInterval,
+		);
 
 		const tableData = this.generateReleaseTable(report, flags.releaseGroup);
 
@@ -553,7 +561,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}
 	}
 
-	private async generateReleaseReport(reportData: PackageReleaseData): Promise<ReleaseReport> {
+	private async generateReleaseReport(
+		reportData: PackageReleaseData,
+		compatVersionInterval: number,
+	): Promise<ReleaseReport> {
 		const context = await this.getContext();
 		const report: ReleaseReport = {};
 
@@ -576,7 +587,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
-			const ranges = getRanges(latestVer);
+			const ranges = getRanges(latestVer, compatVersionInterval);
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {

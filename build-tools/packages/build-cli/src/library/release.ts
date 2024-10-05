@@ -78,11 +78,16 @@ export interface ReleaseRanges {
  * Get the release ranges for a version string.
  *
  * @param version - The version.
+ * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.
  * @returns The {@link ReleaseRanges} for a version string
  */
-export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): ReleaseRanges => {
+export const getRanges = (
+	version: ReleaseVersion,
+	compatVersionInterval: number,
+	scheme?: VersionScheme,
+): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
 	return schemeToUse === "internal"
 		? {
@@ -90,14 +95,20 @@ export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): Rele
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getVersionRange(version, "legacyCompat"),
+				legacyCompat: getVersionRange(version, {
+					type: "legacyCompat",
+					compatVersionInterval,
+				}),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: getVersionRange(version, "legacyCompat"),
+				legacyCompat: getVersionRange(version, {
+					type: "legacyCompat",
+					compatVersionInterval,
+				}),
 			};
 };
 

@@ -390,122 +390,203 @@ describe("internalScheme", () => {
 	});
 
 	describe("legacy compat ranges", () => {
-		it("legacy compat: 2.0.9", () => {
+		it("legacy compat: 2.0.9 and compat version interval 10", () => {
 			const input = `2.0.9`;
 			const expected = `>=2.0.9 <2.10.0`;
-			const range = getVersionRange(input, "legacyCompat");
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 10,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.1.9", () => {
-			const input = `2.1.9`;
-			const expected = `>=2.1.9 <2.10.0`;
-			const range = getVersionRange(input, "legacyCompat");
+		it("legacy compat: 2.8.10 and compat version interval 10", () => {
+			const input = `2.8.10`;
+			const expected = `>=2.8.10 <2.10.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 10,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.11.1", () => {
-			const input = `2.11.1`;
-			const expected = `>=2.11.1 <2.20.0`;
-			const range = getVersionRange(input, "legacyCompat");
+		it("legacy compat: 2.0.9 and compat version interval 20", () => {
+			const input = `2.0.9`;
+			const expected = `>=2.0.9 <2.20.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 20,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.15.1", () => {
-			const input = `2.15.1`;
-			const expected = `>=2.15.1 <2.20.0`;
-			const range = getVersionRange(input, "legacyCompat");
+		it("legacy compat: 2.8.10 and compat version interval 20", () => {
+			const input = `2.8.10`;
+			const expected = `>=2.8.10 <2.20.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 20,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.21.9", () => {
-			const input = `2.21.9`;
-			const expected = `>=2.21.9 <2.30.0`;
-			const range = getVersionRange(input, "legacyCompat");
+		it("legacy compat: 2.18.10 and compat version interval 20", () => {
+			const input = `2.18.10`;
+			const expected = `>=2.18.10 <2.20.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 20,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.29.9", () => {
-			const input = `2.29.9`;
-			const expected = `>=2.29.9 <2.30.0`;
-			const range = getVersionRange(input, "legacyCompat");
-			assert.strictEqual(range, expected);
-		});
-
-		it("legacy compat: 2.10.0", () => {
-			const input = `2.10.0`;
-			const expected = `>=2.10.0 <2.20.0`;
-			const range = getVersionRange(input, "legacyCompat");
-			assert.strictEqual(range, expected);
-		});
-
-		it("legacy compat: 2.20.0", () => {
-			const input = `2.20.0`;
-			const expected = `>=2.20.0 <2.30.0`;
-			const range = getVersionRange(input, "legacyCompat");
-			assert.strictEqual(range, expected);
-		});
-
-		it("legacy compat: 2.30.0", () => {
-			const input = `2.30.0`;
-			const expected = `>=2.30.0 <2.40.0`;
-			const range = getVersionRange(input, "legacyCompat");
-			assert.strictEqual(range, expected);
-		});
-
-		it("legacy compat: 2.0.10 and default range 20", () => {
+		it("legacy compat: 2.0.10 and compat version interval 20", () => {
 			const input = `2.0.10`;
 			const expected = `>=2.0.10 <2.20.0`;
-			const range = getVersionRange(input, "legacyCompat", 20);
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 20,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.10.0 and default range 20", () => {
+		it("legacy compat: 2.10.0 and compat version interval 20", () => {
 			const input = `2.10.0`;
-			const expected = `>=2.10.0 <2.30.0`;
-			const range = getVersionRange(input, "legacyCompat", 20);
+			const expected = `>=2.10.0 <2.20.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 20,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.0.10 and default range 30", () => {
+		it("legacy compat: 2.0.10 and compat version interval 25", () => {
 			const input = `2.0.10`;
-			const expected = `>=2.0.10 <2.30.0`;
-			const range = getVersionRange(input, "legacyCompat", 30);
+			const expected = `>=2.0.10 <2.25.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 25,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.10.0 and default range 30", () => {
+		it("legacy compat: 2.10.0 and compat version interval 25", () => {
+			const input = `2.10.0`;
+			const expected = `>=2.10.0 <2.25.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 25,
+			});
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.25.0 and compat version interval 25", () => {
+			const input = `2.25.0`;
+			const expected = `>=2.25.0 <2.50.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 25,
+			});
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.0.10 and compat version interval 40", () => {
+			const input = `2.0.10`;
+			const expected = `>=2.0.10 <2.40.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 40,
+			});
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.10.0 and compat version interval 40", () => {
 			const input = `2.10.0`;
 			const expected = `>=2.10.0 <2.40.0`;
-			const range = getVersionRange(input, "legacyCompat", 30);
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 40,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.0.10 and default range 50", () => {
+		it("legacy compat: 2.39.10 and compat version interval 40", () => {
+			const input = `2.39.10`;
+			const expected = `>=2.39.10 <2.40.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 40,
+			});
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.40.10 and compat version interval 40", () => {
+			const input = `2.40.10`;
+			const expected = `>=2.40.10 <2.80.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 40,
+			});
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.0.10 and compat version interval 30", () => {
+			const input = `2.0.10`;
+			const expected = `>=2.0.10 <2.30.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 30,
+			});
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.10.0 and compat version interval 30", () => {
+			const input = `2.10.0`;
+			const expected = `>=2.10.0 <2.30.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 30,
+			});
+			assert.strictEqual(range, expected);
+		});
+
+		it("legacy compat: 2.0.10 and compat version interval 50", () => {
 			const input = `2.0.10`;
 			const expected = `>=2.0.10 <2.50.0`;
-			const range = getVersionRange(input, "legacyCompat", 50);
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 50,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.10.0 and default range 50", () => {
+		it("legacy compat: 2.10.0 and compat version interval 50", () => {
 			const input = `2.10.0`;
-			const expected = `>=2.10.0 <2.60.0`;
-			const range = getVersionRange(input, "legacyCompat", 50);
+			const expected = `>=2.10.0 <2.50.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 50,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.0.10 and default range 200", () => {
+		it("legacy compat: 2.0.10 and compat version interval 200", () => {
 			const input = `2.0.10`;
 			const expected = `>=2.0.10 <2.200.0`;
-			const range = getVersionRange(input, "legacyCompat", 200);
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 200,
+			});
 			assert.strictEqual(range, expected);
 		});
 
-		it("legacy compat: 2.10.0 and default range 200", () => {
+		it("legacy compat: 2.10.0 and compat version interval 200", () => {
 			const input = `2.10.0`;
-			const expected = `>=2.10.0 <2.210.0`;
-			const range = getVersionRange(input, "legacyCompat", 200);
+			const expected = `>=2.10.0 <2.200.0`;
+			const range = getVersionRange(input, {
+				type: "legacyCompat",
+				compatVersionInterval: 200,
+			});
 			assert.strictEqual(range, expected);
 		});
 	});
