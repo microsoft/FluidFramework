@@ -37,7 +37,6 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
 import {
 	customFromCursorInner,
 	type CustomTreeNode,
@@ -47,12 +46,13 @@ import {
 import { getUnhydratedContext } from "../createContext.js";
 
 /**
- * Verbose encoding of a {@link TreeNode} or {@link TreeValue}.
+ * Verbose encoding of a {@link TreeNode} or {@link TreeLeafValue}.
  * @remarks
  * This is verbose meaning that every {@link TreeNode} is a {@link VerboseTreeNode}.
  * Any IFluidHandle values have been replaced by `THandle`.
  * @privateRemarks
- * This can store all possible simple trees, but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
+ * This can store all possible simple trees,
+ * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
  */
 export type VerboseTree<THandle = IFluidHandle> =
 	| VerboseTreeNode<THandle>
@@ -80,7 +80,8 @@ export type VerboseTree<THandle = IFluidHandle> =
  * This format allows for all simple-tree compatible trees to be represented.
  *
  * Unlike `JsonableTree`, leaf nodes are not boxed into node objects, and instead have their schema inferred from the value.
- * Additionally, sequence fields can only occur on a node that has a single sequence field (with the empty key) replicating the behavior of simple-tree ArrayNodes.
+ * Additionally, sequence fields can only occur on a node that has a single sequence field (with the empty key)
+ * replicating the behavior of simple-tree ArrayNodes.
  */
 export interface VerboseTreeNode<THandle = IFluidHandle> {
 	/**
@@ -330,12 +331,7 @@ export function verboseFromCursor<TCustom>(
 		...options,
 	};
 
-	const schemaMap = new Map<string, TreeNodeSchema>();
-	walkFieldSchema(rootSchema, {
-		node(schema) {
-			schemaMap.set(schema.identifier, schema);
-		},
-	});
+	const schemaMap = getUnhydratedContext(rootSchema).schema;
 
 	return verboseFromCursorInner(reader, config, schemaMap);
 }
