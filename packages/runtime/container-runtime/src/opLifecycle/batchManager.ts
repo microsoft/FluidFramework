@@ -20,6 +20,8 @@ export interface IBatchManagerOptions {
 	 * If true, the outbox is allowed to rebase the batch during flushing.
 	 */
 	readonly canRebase: boolean;
+
+	readonly ignoreBatchId?: boolean;
 }
 
 export interface BatchSequenceNumbers {

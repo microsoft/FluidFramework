@@ -123,7 +123,11 @@ export class Outbox {
 
 		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
-		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
+		this.idAllocationBatch = new BatchManager({
+			hardLimit,
+			canRebase: false,
+			ignoreBatchId: true,
+		});
 	}
 
 	public get messageCount(): number {
@@ -332,7 +336,11 @@ export class Outbox {
 			);
 		}
 
-		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);
+		this.params.pendingStateManager.onFlushBatch(
+			rawBatch.messages,
+			clientSequenceNumber,
+			batchManager.options.ignoreBatchId,
+		);
 	}
 
 	/**

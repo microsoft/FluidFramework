@@ -55,6 +55,8 @@ export interface IPendingMessage {
 		batchStartCsn: number;
 		/** length of the batch (how many runtime messages here) */
 		length: number;
+		//* Comment
+		ignoreBatchId?: boolean;
 	};
 }
 
@@ -239,8 +241,13 @@ export class PendingStateManager implements IDisposable {
 	 * @param batch - The batch that was flushed
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
+	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
-	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+	public onFlushBatch(
+		batch: BatchMessage[],
+		clientSequenceNumber: number | undefined,
+		ignoreBatchId?: boolean,
+	) {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
 		// In the typical case where the batch was actually sent, use the clientId and clientSequenceNumber.
@@ -269,7 +276,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length },
+				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -328,15 +335,18 @@ export class PendingStateManager implements IDisposable {
 	 * @returns whether the batch IDs match
 	 */
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
-		// We may have no pending changes - if so, no match, no problem.
-		const pendingMessage = this.pendingMessages.peekFront();
-		if (pendingMessage === undefined) {
+		// Find the first pending message that uses Batch ID, to compare to the incoming remote batch.
+		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
+		const pendingMessageUsingBatchId = this.pendingMessages
+			.toArray()
+			.find((pendingMessage) => pendingMessage.batchInfo.ignoreBatchId !== true);
+		if (pendingMessageUsingBatchId === undefined) {
 			return false;
 		}
 
 		// We must compare the effective batch IDs, since one of these ops
 		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
-		const pendingBatchId = getEffectiveBatchId(pendingMessage);
+		const pendingBatchId = getEffectiveBatchId(pendingMessageUsingBatchId);
 		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
 		return pendingBatchId === inboundBatchId;
