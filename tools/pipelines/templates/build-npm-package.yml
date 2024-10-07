@@ -431,7 +431,11 @@ extends:
                             ls ${{ parameters.buildDirectory }}/nyc/report
                             echo "Now in directory: $(pwd)"
                             echo "TARGET_BRANCH_NAME: $(targetBranchName)"
-
+                            echo "Env variables"
+                            echo "GITHUB_REPOSITORY_NAME: $(Build)"
+                            echo "GITHUB_REPOSITORY_NAME: $(Build.Repository)"
+                            echo "check GITHUB_PR_NUMBER: $(System.PullRequest)"
+                            echo "check GITHUB_PR_NUMBER: $(System)"
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self

@@ -20,7 +20,7 @@ export {
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities/index.js";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
-export { codeCoverageTesting, tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils.js";
+export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils.js";
 export {
 	IBaseProtocolHandler,
 	IScribeProtocolState,
