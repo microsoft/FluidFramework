@@ -78,7 +78,6 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 				name: "with obliterate",
 				config: {
 					...opts,
-					generateSidedObliterates: true,
 					operations: [...opts.operations, obliterateRange],
 				},
 			},
@@ -89,7 +88,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 				const clients: TestClient[] = [
 					new TestClient({
 						mergeTreeEnableObliterate: true,
-						mergeTreeEnableSidedObliterate: config.generateSidedObliterates ?? false,
+						mergeTreeEnableSidedObliterate: true,
 					}),
 				];
 				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);

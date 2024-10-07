@@ -40,22 +40,26 @@ export const obliterateRange: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	let startSide: Side;
-	let endSide: Side;
-
-	const oblEnd = random.integer(opStart, client.getLength() - 1);
-
-	if (oblEnd - opStart <= 1) {
-		startSide = Side.Before;
-		endSide = Side.After;
+	if (random.bool()) {
+		return client.obliterateRangeLocal(opStart, opEnd);
 	} else {
-		startSide = random.pick([Side.Before, Side.After]);
-		endSide = random.pick([Side.Before, Side.After]);
-	}
+		let startSide: Side;
+		let endSide: Side;
 
-	const start = { pos: opStart, side: startSide };
-	const end = { pos: oblEnd, side: endSide };
-	return client.obliterateRangeLocal(start, end);
+		const oblEnd = random.integer(opStart, client.getLength() - 1);
+
+		if (oblEnd - opStart <= 1) {
+			startSide = Side.Before;
+			endSide = Side.After;
+		} else {
+			startSide = random.pick([Side.Before, Side.After]);
+			endSide = random.pick([Side.Before, Side.After]);
+		}
+
+		const start = { pos: opStart, side: startSide };
+		const end = { pos: oblEnd, side: endSide };
+		return client.obliterateRangeLocal(start, end);
+	}
 };
 
 export const annotateRange: TestOperation = (
@@ -235,7 +239,6 @@ export interface IMergeTreeOperationRunnerConfig {
 	readonly incrementalLog?: boolean;
 	readonly operations: readonly TestOperation[];
 	readonly applyOpDuringGeneration?: boolean;
-	readonly generateSidedObliterates?: boolean;
 	growthFunc(input: number): number;
 	resultsFilePostfix?: string;
 }
