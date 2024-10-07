@@ -153,6 +153,9 @@ interface PackageLegacyRange {
  *
  * "tilde" corresponds to the {@link PackageTildeRange} interface. It contains a map of package names to
  * tilde-equivalent version range strings.
+ *
+ * "legacy-compat" corresponds to the {@link PackageLegacyRange} interface. It contains a map of package names to
+ * legacy compat equivalent version range strings
  */
 export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
 
