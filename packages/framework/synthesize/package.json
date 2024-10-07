@@ -120,14 +120,14 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.46.0",
+		"@fluid-tools/build-cli": "^0.47.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.46.0",
+		"@fluidframework/build-tools": "^0.47.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@2.3.0",
+		"@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@~2.3.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -146,6 +146,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"entrypoint": "internal"
+		"entrypoint": "legacy"
 	}
 }

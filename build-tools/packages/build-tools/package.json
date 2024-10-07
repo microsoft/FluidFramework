@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.47.0",
+	"version": "0.48.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,6 +39,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.0",
 		"async": "^3.2.4",
 		"chalk": "^2.4.2",

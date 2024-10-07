@@ -12,6 +12,11 @@ export enum InternalErrorCode {
 	 * The cluster is under draining.
 	 */
 	ClusterDraining = "ClusterDraining",
+
+	/**
+	 * The token has been revoked.
+	 */
+	TokenRevoked = "TokenRevoked",
 }
 
 /**
