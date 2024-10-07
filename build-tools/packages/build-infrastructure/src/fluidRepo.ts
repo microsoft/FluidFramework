@@ -34,7 +34,6 @@ export class FluidRepo implements IFluidRepo {
 	 */
 	public constructor(
 		searchPath: string,
-		private readonly gitRepository: SimpleGit | false = false,
 		public readonly upstreamRemotePartialUrl?: string,
 	) {
 		const { config, configFile } = getFluidRepoLayout(searchPath);
@@ -113,11 +112,23 @@ export class FluidRepo implements IFluidRepo {
 		this.workspaces.forEach((ws) => ws.reload());
 	}
 
+	private gitRepository: SimpleGit | undefined;
+	private _checkedForGitRepo = false;
+
 	public async getGitRepository(): Promise<Readonly<SimpleGit>> {
-		if (this.gitRepository === false) {
-			throw new NotInGitRepository(this.root);
+		if (this.gitRepository !== undefined) {
+			return this.gitRepository;
 		}
-		return this.gitRepository;
+
+		if (this._checkedForGitRepo === false) {
+			this._checkedForGitRepo = true;
+			// Check if the path is within a Git repo by trying to find the path to the Git repo root
+			const gitRoot = findGitRootSync(this.root);
+			this.gitRepository = simpleGit(gitRoot);
+			return this.gitRepository;
+		}
+
+		throw new NotInGitRepository(this.root);
 	}
 
 	public getPackageReleaseGroup(pkg: Readonly<IPackage>): Readonly<IReleaseGroup> {
@@ -140,24 +151,14 @@ export class FluidRepo implements IFluidRepo {
  * Searches for a Fluid repo config file and loads the repo layout from the config if found.
  *
  * @param searchPath - The path to start searching for a Fluid repo config.
+ * @param upstreamRemotePartialUrl - A partial URL to the upstream repo. This is used to find the local git remote that
+ * corresponds to the upstream repo.
  * @returns The loaded Fluid repo.
  */
 export function loadFluidRepo(
 	searchPath: string,
 	upstreamRemotePartialUrl?: string,
 ): IFluidRepo {
-	let repo: IFluidRepo;
-	try {
-		// Check if the path is within a Git repo by trying to find the path to the Git repo root
-		const gitRoot = findGitRootSync(searchPath);
-		repo = new FluidRepo(searchPath, simpleGit(gitRoot), upstreamRemotePartialUrl);
-	} catch (error) {
-		if (error instanceof NotInGitRepository) {
-			// Not in a git repo, so initialize the repo accordingly
-			repo = new FluidRepo(searchPath, false, undefined);
-		}
-		throw error;
-	}
-
+	const repo: IFluidRepo = new FluidRepo(searchPath, upstreamRemotePartialUrl);
 	return repo;
 }

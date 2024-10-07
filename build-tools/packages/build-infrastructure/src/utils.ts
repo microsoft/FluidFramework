@@ -14,6 +14,8 @@ import { NotInGitRepository } from "./errors.js";
  * @param cwd - The working directory to use to start searching for Git repositories. Defaults to `process.cwd()` if not
  * provided.
  *
+ * @throws A `NotInGitRepository` error if no git repo is found.
+ *
  * @privateRemarks
  * This function is helpful because it is synchronous. The SimpleGit wrapper is async-only.
  */

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
 import { existsSync } from "node:fs";
+import path from "node:path";
 import colors from "ansi-colors";
 
 // Imports are written this way for CJS/ESM compat
