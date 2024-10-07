@@ -433,23 +433,15 @@ export function getVersionRange(
 }
 
 /**
- * Generates a new semantic version representing the next version
- * in a legacy compatibility range based on a specified multiple of minor versions.
+ * Generates a new semantic version representing the next version in a legacy compatibility range based on a specified multiple of minor versions.
  *
- * This function aligns the minor version of the given version to the nearest
- * multiple of `compatVersionInterval` and bumps it by the `compatVersionInterval` to generate
+ * This function returns the minor version of the given version to the nearest  multiple of `compatVersionInterval` and bumps it by the `compatVersionInterval` to generate
  * a new semantic version.
  *
  * @param version - A semver-compatible string or `semver.SemVer` object representing the current version.
  * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
  *
  * @returns A new `semver.SemVer` object representing the next version in the legacy compatibility range.
- *
- * @throws Will throw an error if the version string is invalid or cannot be parsed.
- *
- * Note: Ensure that there are no overlaps with previous legacy compatibility ranges.
- * Add checks in your release tooling to validate that the prior version's range is shorter
- * than the new one being generated to avoid inconsistencies.
  */
 function generateLegacyCompatRange(
 	version: semver.SemVer | string,
