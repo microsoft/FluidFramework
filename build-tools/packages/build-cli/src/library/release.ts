@@ -12,7 +12,8 @@ import {
 	getVersionRange,
 } from "@fluid-tools/version-tools";
 
-import { ReleaseGroup } from "../releaseGroups.js";
+import { ReleaseGroup, isReleaseGroup } from "../releaseGroups.js";
+import type { Context } from "./context.js";
 
 /**
  * A map of package names to their versions. This is the format of the "simple" release report.
@@ -72,6 +73,9 @@ export interface ReleaseRanges {
 	 */
 	tilde: string;
 
+	/**
+	 * A legacy compat range
+	 */
 	legacyCompat: string;
 }
 
@@ -79,6 +83,8 @@ export interface ReleaseRanges {
  * Get the release ranges for a version string.
  *
  * @param version - The version.
+ * @param releaseGroup - The release group to filter by
+ * @param context - The repo {@link Context}. The context is retrieved and cached the first time this method is called.
  * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.
@@ -86,10 +92,20 @@ export interface ReleaseRanges {
  */
 export const getRanges = (
 	version: ReleaseVersion,
+	releaseGroup: string,
+	context: Context,
 	compatVersionInterval: number,
 	scheme?: VersionScheme,
 ): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
+	let isClientReleaseGroup = false;
+
+	if (isReleaseGroup(releaseGroup)) {
+		const pkg = context.packagesInReleaseGroup(releaseGroup)[0];
+		if (pkg !== undefined) {
+			isClientReleaseGroup = pkg.monoRepo?.releaseGroup === "client";
+		}
+	}
 
 	return schemeToUse === "internal"
 		? {
@@ -97,14 +113,18 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: generateLegacyCompatRange(version, compatVersionInterval),
+				legacyCompat: isClientReleaseGroup
+					? generateLegacyCompatRange(version, compatVersionInterval)
+					: getVersionRange(version, "^"),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: generateLegacyCompatRange(version, compatVersionInterval),
+				legacyCompat: isClientReleaseGroup
+					? generateLegacyCompatRange(version, compatVersionInterval)
+					: `^${version}`,
 			};
 };
 

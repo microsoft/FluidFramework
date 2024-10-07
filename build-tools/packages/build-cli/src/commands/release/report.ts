@@ -587,14 +587,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
-			const ranges = getRanges(latestVer, compatVersionInterval);
+			const ranges = getRanges(latestVer, pkgName, context, compatVersionInterval);
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
-					if (pkg.monoRepo?.releaseGroup !== "client") {
-						ranges.legacyCompat = ranges.caret;
-					}
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -607,7 +604,6 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
-				ranges.legacyCompat = ranges.caret;
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,
