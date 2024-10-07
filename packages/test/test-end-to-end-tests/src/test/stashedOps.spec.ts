@@ -1515,6 +1515,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 
 	it("blob upload before loading", async function () {
+		// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/19035
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
