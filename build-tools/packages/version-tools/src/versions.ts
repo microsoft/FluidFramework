@@ -189,3 +189,43 @@ function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[] {
 	semver.sort(versions);
 	return versions;
 }
+
+/**
+ * Generates a new semantic version representing the next version in a legacy compatibility range based on a specified multiple of minor versions.
+ *
+ * This function returns the minor version of the given version to the nearest  multiple of `compatVersionInterval` and bumps it by the `compatVersionInterval` to generate
+ * a new semantic version.
+ *
+ * @param version - A semver-compatible string or `semver.SemVer` object representing the current version.
+ * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
+ *
+ * @returns A new `semver.SemVer` object representing the next version in the legacy compatibility range.
+ */
+export function generateLegacyCompatRange(
+	version: semver.SemVer | string,
+	compatVersionInterval: number,
+): string {
+	const semVersion = semver.parse(version);
+	if (!semVersion) {
+		throw new Error("Invalid version string");
+	}
+
+	// Calculate the next compatible minor version using the compatVersionInterval
+	const baseMinor =
+		Math.floor(semVersion.minor / compatVersionInterval) * compatVersionInterval;
+	const newSemVerString = `${semVersion.major}.${baseMinor + compatVersionInterval}.0`;
+
+	const higherVersion = semver.parse(newSemVerString);
+	if (higherVersion === null) {
+		throw new Error(
+			`Couldn't convert ${version} to the legacy version scheme. Tried parsing: '${newSemVerString}'`,
+		);
+	}
+
+	const rangeString = `>=${version} <${higherVersion}`;
+	const range = semver.validRange(rangeString);
+	if (range === null) {
+		throw new Error(`The generated range string was invalid: "${rangeString}"`);
+	}
+	return range;
+}

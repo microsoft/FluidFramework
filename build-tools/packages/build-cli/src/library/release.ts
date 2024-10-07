@@ -8,6 +8,7 @@ import {
 	VersionBumpType,
 	VersionScheme,
 	detectVersionScheme,
+	generateLegacyCompatRange,
 	getVersionRange,
 } from "@fluid-tools/version-tools";
 
@@ -89,26 +90,21 @@ export const getRanges = (
 	scheme?: VersionScheme,
 ): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
+
 	return schemeToUse === "internal"
 		? {
 				patch: getVersionRange(version, "patch"),
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getVersionRange(version, {
-					type: "legacyCompat",
-					compatVersionInterval,
-				}),
+				legacyCompat: generateLegacyCompatRange(version, compatVersionInterval),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: getVersionRange(version, {
-					type: "legacyCompat",
-					compatVersionInterval,
-				}),
+				legacyCompat: generateLegacyCompatRange(version, compatVersionInterval),
 			};
 };
 

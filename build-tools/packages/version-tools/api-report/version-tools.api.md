@@ -37,6 +37,9 @@ prereleaseIndentifier: string
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
 
+// @public
+export function generateLegacyCompatRange(version: semver.SemVer | string, compatVersionInterval: number): string;
+
 // Warning: (ae-forgotten-export) The symbol "TagPrefix" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -52,10 +55,7 @@ export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | 
 export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, simplePatchVersioning: boolean): string;
 
 // @public
-export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^" | {
-    type: "legacyCompat";
-    compatVersionInterval: number;
-}): string;
+export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
 export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperatorWithVersion | semver.SemVer;

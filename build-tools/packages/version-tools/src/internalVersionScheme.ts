@@ -374,97 +374,35 @@ export function bumpInternalVersion(
  */
 export function getVersionRange(
 	version: semver.SemVer | string,
-	maxAutomaticBump:
-		| "minor"
-		| "patch"
-		| "~"
-		| "^"
-		| { type: "legacyCompat"; compatVersionInterval: number },
+	maxAutomaticBump: "minor" | "patch" | "~" | "^",
 ): string {
 	validateVersionScheme(version, true, undefined);
+
 	const lowVersion = version;
 	let highVersion: semver.SemVer;
-
-	switch (typeof maxAutomaticBump) {
-		case "string": {
-			switch (maxAutomaticBump) {
-				case "patch":
-				case "~": {
-					highVersion = bumpInternalVersion(version, "minor");
-					break;
-				}
-
-				case "minor":
-				case "^": {
-					highVersion = bumpInternalVersion(version, "major");
-					break;
-				}
-
-				default: {
-					throw new Error("Can't generate a version range for unknown string type.");
-				}
-			}
+	switch (maxAutomaticBump) {
+		case "patch":
+		case "~": {
+			highVersion = bumpInternalVersion(version, "minor");
 			break;
 		}
 
-		case "object": {
-			if (maxAutomaticBump.type === "legacyCompat") {
-				highVersion = generateLegacyCompatRange(
-					version,
-					maxAutomaticBump.compatVersionInterval,
-				);
-			} else {
-				throw new Error("Can't generate a version range for unknown object type.");
-			}
+		case "minor":
+		case "^": {
+			highVersion = bumpInternalVersion(version, "major");
 			break;
 		}
 
 		default: {
-			throw new Error("Invalid semver bump type.");
+			throw new Error("Can't generate a version range.");
 		}
 	}
-
 	const rangeString = `>=${lowVersion} <${highVersion}`;
 	const range = semver.validRange(rangeString);
 	if (range === null) {
 		throw new Error(`The generated range string was invalid: "${rangeString}"`);
 	}
 	return range;
-}
-
-/**
- * Generates a new semantic version representing the next version in a legacy compatibility range based on a specified multiple of minor versions.
- *
- * This function returns the minor version of the given version to the nearest  multiple of `compatVersionInterval` and bumps it by the `compatVersionInterval` to generate
- * a new semantic version.
- *
- * @param version - A semver-compatible string or `semver.SemVer` object representing the current version.
- * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
- *
- * @returns A new `semver.SemVer` object representing the next version in the legacy compatibility range.
- */
-function generateLegacyCompatRange(
-	version: semver.SemVer | string,
-	compatVersionInterval: number,
-): semver.SemVer {
-	const semVersion = semver.parse(version);
-	if (!semVersion) {
-		throw new Error("Invalid version string");
-	}
-
-	// Calculate the next compatible minor version using the compatVersionInterval
-	const baseMinor =
-		Math.floor(semVersion.minor / compatVersionInterval) * compatVersionInterval;
-	const newSemVerString = `${semVersion.major}.${baseMinor + compatVersionInterval}.0`;
-
-	const higherVersion = semver.parse(newSemVerString);
-	if (higherVersion === null) {
-		throw new Error(
-			`Couldn't convert ${version} to the legacy version scheme. Tried parsing: '${newSemVerString}'`,
-		);
-	}
-
-	return higherVersion;
 }
 
 /**
