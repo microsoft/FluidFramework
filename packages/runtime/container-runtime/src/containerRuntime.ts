@@ -43,7 +43,6 @@ import {
 	LazyPromise,
 	PromiseCache,
 	delay,
-	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import {
 	IClientDetails,
@@ -257,7 +256,7 @@ function getUnknownMessageTypeError(
 	sequencedMessage?: ISequencedDocumentMessage,
 ): IFluidErrorBase {
 	return DataProcessingError.create(
-		"Found a ContainerRuntime message of unexpected type",
+		"Runtime message of unknown type",
 		codePath,
 		sequencedMessage,
 		{
@@ -2976,11 +2975,14 @@ export class ContainerRuntime
 					message.sequenceNumber,
 				);
 				break;
-			default:
-				unreachableCase(
-					message.type as never,
-					`Unknown ContainerMessageType [type: ${message.type}]`,
+			default: {
+				const error = getUnknownMessageTypeError(
+					message.type,
+					"applyStashedOp" /* codePath */,
 				);
+				this.closeFn(error);
+				throw error;
+			}
 		}
 
 		this.emit("op", message, true /* runtimeMessage */);
@@ -4425,11 +4427,14 @@ export class ContainerRuntime
 				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
 				// send any ops, as some other client already changed schema.
 				break;
-			default:
-				unreachableCase(
-					message.type as never,
-					`Unknown ContainerMessageType [type: ${message.type}]`,
+			default: {
+				const error = getUnknownMessageTypeError(
+					message.type,
+					"applyStashedOp" /* codePath */,
 				);
+				this.closeFn(error);
+				throw error;
+			}
 		}
 	}
 
