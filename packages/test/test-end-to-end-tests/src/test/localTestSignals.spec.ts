@@ -260,9 +260,18 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 
 	beforeEach("setup containers", async function () {
 		provider = getTestObjectProvider();
+
+		/**
+		 * Skip targeted signal test for ODSP driver as targeting signals for clients
+		 * that share the same websocket connection is not yet supported.
+		 * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/18261}
+		 *
+		 * TODO: Re-enable tests once {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/19030} is completed.
+		 */
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
+
 		clients = [];
 		for (let i = 0; i < numberOfClients; i++) {
 			const container = await (i === 0
