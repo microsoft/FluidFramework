@@ -37,6 +37,7 @@ interface SignalClient {
 	containerRuntime: IContainerRuntimeBaseWithClientId;
 	signalReceivedCount: number;
 	clientId: string | undefined;
+	index: number;
 }
 
 const testContainerConfig: ITestContainerConfig = {
@@ -68,8 +69,8 @@ async function waitForSignal(...signallers: { once(e: "signal", l: () => void): 
 
 async function waitForTargetedSignal(
 	targetedSignaller: { once(e: "signal", l: () => void): void },
-	otherSignallers: { once(e: "signal", l: () => void): void }[],
-): Promise<[void, ...string[]]> {
+	otherSignallers: { runtime: { once(e: "signal", l: () => void): void }; index: number }[],
+): Promise<[void, ..."No Signal Received"[]]> {
 	return Promise.all([
 		timeoutPromise(({ resolve }) => targetedSignaller.once("signal", () => resolve()), {
 			durationMs: 2000,
@@ -78,12 +79,14 @@ async function waitForTargetedSignal(
 		...otherSignallers.map(async (signaller, index) =>
 			timeoutPromise(
 				({ reject }) =>
-					signaller.once("signal", () =>
-						reject(`Signaller[${index}] should not have received a signal`),
+					signaller.runtime.once("signal", () =>
+						reject(
+							new Error(`Signaller[${signaller.index}] should not have received a signal`),
+						),
 					),
 				{
 					durationMs: 100,
-					value: "No Signal Received",
+					value: "No Signal Received" as const,
 					reject: false,
 				},
 			),
@@ -258,8 +261,14 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 	let clients: SignalClient[];
 	let provider: ITestObjectProvider;
 
-	beforeEach("setup containers", async () => {
+	beforeEach("setup containers", async function () {
 		provider = getTestObjectProvider();
+
+		// Disable targeted signal tests for ODSP driver
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
+
 		clients = [];
 		for (let i = 0; i < numberOfClients; i++) {
 			const container = await (i === 0
@@ -276,20 +285,40 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 				containerRuntime: dataObject.context.containerRuntime,
 				signalReceivedCount: 0,
 				clientId: container.clientId,
+				index: i,
 			});
 		}
 	});
-	async function sendAndVerifySignalToRemoteClient(runtime: RuntimeLayer) {
+
+	async function sendAndVerifySignalToTargetClient(
+		runtime: RuntimeLayer,
+		targetOffset: 0 | 1,
+	) {
+		const accumulatedFailures: unknown[] = [];
 		clients.forEach((client) => {
 			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				assert.equal(local, false, "Signal should be remote");
-				assertSignalProperties(message, client.clientId);
 				client.signalReceivedCount += 1;
+				// If there are any errors during signal processing, they will be raised later.
+				// Errors thrown during signal processing will cause a connection to close.
+				// More importantly an error will be reported via telemetry and that would
+				// just be noise compared to the test results.
+				try {
+					if (targetOffset === 0) {
+						assert.equal(local, true, "Signal should be local");
+					} else {
+						assert.equal(local, false, "Signal should be remote");
+					}
+					assertSignalProperties(message, client.clientId);
+				} catch (error) {
+					accumulatedFailures.push(error);
+				}
 			});
 		});
 
 		for (let i = 0; i < clients.length; i++) {
-			const targetClient = clients[(i + 1) % clients.length];
+			// Reset accumulated failures for each client iteration
+			accumulatedFailures.length = 0;
+			const targetClient = clients[(i + targetOffset) % clients.length];
 			clients[i][runtime].submitSignal(
 				"Test Signal Type",
 				"Test Signal Content",
@@ -297,7 +326,12 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			);
 			const targetedSignalPromise = await waitForTargetedSignal(
 				targetClient[runtime],
-				clients.filter((c) => c !== targetClient).map((c) => c[runtime]),
+				clients
+					.filter((c) => c !== targetClient)
+					.map((c) => ({
+						runtime: c[runtime],
+						index: c.index,
+					})),
 			);
 
 			const [targetedSignalResult, ...otherResults] = targetedSignalPromise;
@@ -308,6 +342,10 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 					"Non-targeted client should not receive signal",
 				);
 			});
+			// Raise any during signal processing errors now
+			for (const error of accumulatedFailures) {
+				throw error;
+			}
 		}
 
 		clients.forEach((client, index) => {
@@ -319,39 +357,11 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		});
 	}
 
+	async function sendAndVerifySignalToRemoteClient(runtime: RuntimeLayer) {
+		return sendAndVerifySignalToTargetClient(runtime, 1);
+	}
 	async function sendAndVerifySignalToSelf(runtime: RuntimeLayer) {
-		clients.forEach((client) => {
-			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				assert.equal(local, true, "Signal should be local");
-				assertSignalProperties(message, client.clientId);
-				client.signalReceivedCount += 1;
-			});
-		});
-
-		for (const client of clients) {
-			client[runtime].submitSignal("Test Signal Type", "Test Signal Content", client.clientId);
-			const targetedSignalPromise = await waitForTargetedSignal(
-				client[runtime],
-				clients.filter((c) => c !== client).map((c) => c[runtime]),
-			);
-
-			const [targetedSignalResult, ...otherResults] = targetedSignalPromise;
-			otherResults.forEach((result) => {
-				assert.equal(
-					result,
-					"No Signal Received",
-					"Non-targeted client should not receive signal",
-				);
-			});
-		}
-
-		clients.forEach((client, index) => {
-			assert.equal(
-				client.signalReceivedCount,
-				1,
-				`client ${index + 1} did not receive signal`,
-			);
-		});
+		return sendAndVerifySignalToTargetClient(runtime, 0);
 	}
 
 	function assertSignalProperties(
