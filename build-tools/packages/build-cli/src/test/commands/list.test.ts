@@ -6,19 +6,19 @@
 import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
 
-import { type PackageNamePolicyConfig } from "../../src/config.js";
-import { Context } from "../../src/library/index.js";
+import { type PackageNamePolicyConfig } from "../../config.js";
+import { Context } from "../../library/index.js";
 import {
 	type Feed,
 	feeds,
 	packagePublishesToFeed,
-} from "../../src/library/repoPolicyCheck/npmPackages.js";
+} from "../../library/repoPolicyCheck/npmPackages.js";
 
 /**
  * Calculates the packages that should be published to a feed and returns a map of Feed to the packages that should be
  * published there.
  */
-function FeedsForPackages(
+function feedsForPackages(
 	packages: Package[],
 	config: PackageNamePolicyConfig,
 ): Map<Feed, Package[]> {
@@ -42,16 +42,19 @@ function FeedsForPackages(
 	return mapping;
 }
 
-describe("feeds", async () => {
-	const resolvedRoot = await getResolvedFluidRoot();
-	const gitRepo = new GitRepo(resolvedRoot);
-	const branch = await gitRepo.getCurrentBranchName();
+describe("feeds", () => {
+	it("dev and build feed are mutually exclusive", async () => {
+		const resolvedRoot = await getResolvedFluidRoot();
+		const gitRepo = new GitRepo(resolvedRoot);
+		const branch = await gitRepo.getCurrentBranchName();
 
-	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
-	const config = context.flubConfig.policy?.packageNames!;
-	const packages = FeedsForPackages(context.packages, config);
+		const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+		const config = context.flubConfig.policy?.packageNames;
+		if (config === undefined || config === null) {
+			throw new Error(`config is undefined or null`);
+		}
+		const packages = feedsForPackages(context.packages, config);
 
-	it("dev and build feed are mutually exclusive", () => {
 		const dev = packages.get("internal-dev")?.map((p) => p.name);
 		const build = packages.get("internal-build")?.map((p) => p.name);
 
@@ -59,6 +62,7 @@ describe("feeds", async () => {
 			return dev?.includes(name);
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(hasDupes).to.be.false;
 	});
 });
