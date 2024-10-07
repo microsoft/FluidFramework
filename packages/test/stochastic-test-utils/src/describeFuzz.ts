@@ -46,10 +46,7 @@ export interface StressSuiteArguments {
  */
 export enum StressMode {
 	/**
-	 * Different modes are planned for use in specific scenarios:
-	 * - Short Mode: Runs when stress is turned off, as part of the PR gate.
 	 * - Normal Mode: Runs when stress is turned on, also as part of the PR gate.
-	 * - Long Mode: Runs periodically in a separate pipeline for extensive and random testing.
 	 *
 	 * Current configuration for each mode:
 	 * - Short/Normal Mode: Both run all test seeds with the configured test count, but apply different configurations.
