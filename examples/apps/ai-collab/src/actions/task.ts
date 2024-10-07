@@ -27,7 +27,7 @@ export async function editTask(workItem: Task, specificAsk: string): Promise<Res
 	}
 	const model = createOpenAILanguageModel(OPEN_AI_KEY, "gpt-4o");
 	const typesFile = fs.readFileSync(
-		path.join(__dirname, "../../../../src/types/task.ts"),
+		path.join(__dirname, "../../src/types/task.ts"),
 		"utf8",
 	);
 	const validator = createTypeScriptJsonValidator<Task>(typesFile, "Task");
@@ -59,7 +59,7 @@ export async function editTaskGroup(
 
 	const model = createOpenAILanguageModel(OPEN_AI_KEY, "gpt-4o");
 	const typesFile = fs.readFileSync(
-		path.join(__dirname, "../../../../src/types/task.ts"),
+		path.join(__dirname, "../../src/types/task.ts"),
 		"utf8",
 	);
 	const validator = createTypeScriptJsonValidator<TaskGroup>(typesFile, "TaskGroup");
