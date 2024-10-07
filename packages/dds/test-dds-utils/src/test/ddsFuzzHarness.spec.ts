@@ -1063,10 +1063,10 @@ describe("DDS Fuzz Harness", () => {
 
 			it("should generate seeds for short stress mode", () => {
 				const seeds = generateTestSeeds(testCount, StressMode.Short);
-				assert.strictEqual(seeds.length, Math.ceil(testCount / 2));
+				assert.strictEqual(seeds.length, testCount);
 				assert.deepStrictEqual(
 					seeds,
-					Array.from({ length: Math.ceil(testCount / 2) }, (_, i) => i),
+					Array.from({ length: testCount }, (_, i) => i),
 				);
 			});
 

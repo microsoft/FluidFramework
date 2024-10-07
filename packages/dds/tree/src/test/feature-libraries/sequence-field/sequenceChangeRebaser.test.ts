@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { strict } from "assert";
 
@@ -727,7 +727,7 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 
 export function testStateBasedRebaserAxioms() {
 	describeStress("State-based Rebaser Axioms", function ({ stressMode }) {
-		this.timeout(stressMode !== undefined ? 80_000 : 5000);
+		this.timeout(stressMode !== StressMode.Short ? 80_000 : 5000);
 		const allocator = idAllocatorFromMaxId();
 		const startingLength = 2;
 		const startingState: NodeState[] = makeArray(startingLength, () => ({

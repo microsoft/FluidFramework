@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	type ChangeAtomId,
@@ -574,8 +574,8 @@ export function testRebaserAxioms() {
 				},
 				{
 					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: stressMode !== undefined ? 5 : 3,
-					numberOfEditsToVerifyAssociativity: stressMode !== undefined ? 6 : 3,
+					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
+					numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 6 : 3,
 				},
 			);
 		});

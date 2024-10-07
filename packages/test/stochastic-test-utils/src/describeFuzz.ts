@@ -13,18 +13,19 @@ function createSuite<TArgs extends StressSuiteArguments>(
 		// Stress runs may have tests which are expected to take longer amounts of time.
 		// Don't override the timeout if it's already set to a higher value, though.
 		switch (args.stressMode) {
-			case StressMode.Normal: {
-				this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
+			// case StressMode.Normal: {
+			// 	this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
 
-				break;
-			}
+			// 	break;
+			// }
 			case StressMode.Long: {
 				this.timeout(this.timeout() === 0 ? 0 : Math.max(20_000, this.timeout()));
 
 				break;
 			}
+			case StressMode.Normal:
 			case StressMode.Short: {
-				this.timeout(this.timeout() === 0 ? 0 : Math.max(5_000, this.timeout()));
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
 
 				break;
 			}
@@ -129,12 +130,12 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 	const testCount = testCountFromEnv ?? options.defaultTestCount;
 
 	const stressMode = (() => {
-		switch (process.env?.FUZZ_TEST_RUN) {
-			case "short":
-				return StressMode.Short;
+		switch (process.env?.FUZZ_STRESS_RUN) {
+			case "normal":
+				return StressMode.Normal;
 			case "long":
 				return StressMode.Long;
-			case "normal":
+			case "short":
 			default:
 				return StressMode.Normal;
 		}

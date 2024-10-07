@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
 
 import {
 	IConfigRange,
@@ -112,7 +112,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 }
 
 describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
-	const opts = stressMode ? stressOptions : defaultOptions;
+	const opts = stressMode === StressMode.Short ? defaultOptions : stressOptions;
 	// defaultOptions;
 	// debugOptions;
 	// longOptions;

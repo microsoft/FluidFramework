@@ -1594,11 +1594,11 @@ export async function replayTest<
 
 export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
 	switch (stressMode) {
-		case StressMode.Short: {
-			// Deterministic, fixed seeds
-			return Array.from({ length: Math.ceil(testCount / 2) }, (_, i) => i);
-		}
-
+		// case StressMode.Short: {
+		// 	// Deterministic, fixed seeds
+		// 	return Array.from({ length: Math.ceil(testCount / 2) }, (_, i) => i);
+		// }
+		case StressMode.Short:
 		case StressMode.Normal: {
 			// Deterministic, fixed seeds
 			return Array.from({ length: testCount }, (_, i) => i);
