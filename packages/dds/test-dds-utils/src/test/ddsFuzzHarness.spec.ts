@@ -1091,6 +1091,7 @@ describe("DDS Fuzz Harness", () => {
 			it("should generate different seeds for different runs of long stress mode", () => {
 				const seeds1 = generateTestSeeds(testCount, StressMode.Long);
 				const seeds2 = generateTestSeeds(testCount, StressMode.Long);
+				// If this test is ever flaky, consider running multiple trials (as the starting seed is random, sometimes they could be legitimately the same)
 				assert.notDeepStrictEqual(seeds1, seeds2);
 			});
 
