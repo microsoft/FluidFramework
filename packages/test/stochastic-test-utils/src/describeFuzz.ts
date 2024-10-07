@@ -130,7 +130,7 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 				return StressMode.Long;
 			case "short":
 			default:
-				return StressMode.Normal;
+				return StressMode.Short;
 		}
 	})();
 
