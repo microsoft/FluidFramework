@@ -266,7 +266,6 @@ module.exports = {
 				"packages/test/mocha-test-setup/mocharc-common.js",
 				"packages/test/test-service-load/scripts/usePrereleaseDeps.js",
 				"packages/tools/devtools/devtools-browser-extension/test-setup.js",
-				"scripts/report-parser.js",
 				"tools/changelog-generator-wrapper/src/getDependencyReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/index.js",
