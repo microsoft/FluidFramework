@@ -26,10 +26,7 @@ export async function editTask(workItem: Task, specificAsk: string): Promise<Res
 		throw new Error("OPEN_AI_KEY environment variable is not set");
 	}
 	const model = createOpenAILanguageModel(OPEN_AI_KEY, "gpt-4o");
-	const typesFile = fs.readFileSync(
-		path.join(__dirname, "../../src/types/task.ts"),
-		"utf8",
-	);
+	const typesFile = fs.readFileSync(path.join(__dirname, "../../src/types/task.ts"), "utf8");
 	const validator = createTypeScriptJsonValidator<Task>(typesFile, "Task");
 	const translator = createJsonTranslator(model, validator);
 
@@ -58,10 +55,7 @@ export async function editTaskGroup(
 	}
 
 	const model = createOpenAILanguageModel(OPEN_AI_KEY, "gpt-4o");
-	const typesFile = fs.readFileSync(
-		path.join(__dirname, "../../src/types/task.ts"),
-		"utf8",
-	);
+	const typesFile = fs.readFileSync(path.join(__dirname, "../../src/types/task.ts"), "utf8");
 	const validator = createTypeScriptJsonValidator<TaskGroup>(typesFile, "TaskGroup");
 	const translator = createJsonTranslator(model, validator);
 
