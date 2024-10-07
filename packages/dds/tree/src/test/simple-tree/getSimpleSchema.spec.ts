@@ -14,6 +14,31 @@ import {
 import { ValueSchema } from "../../core/index.js";
 
 describe("getSimpleSchema", () => {
+	it("Field Schema", async () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = schemaFactory.optional(schemaFactory.string, {
+			metadata: { description: "An optional string." },
+		});
+
+		const actual = getSimpleSchema(Schema);
+
+		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Optional,
+			definitions: new Map([
+				[
+					"com.fluidframework.leaf.string",
+					{
+						leafKind: ValueSchema.String,
+						kind: NodeKind.Leaf,
+					},
+				],
+			]),
+			allowedTypes: new Set(["com.fluidframework.leaf.string"]),
+			description: "An optional string.",
+		};
+		assert.deepEqual(actual, expected);
+	});
+
 	it("Leaf node", async () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.string;
@@ -21,6 +46,7 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"com.fluidframework.leaf.string",
@@ -42,6 +68,7 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"com.fluidframework.leaf.number",
@@ -73,6 +100,7 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"test.array",
@@ -100,6 +128,7 @@ describe("getSimpleSchema", () => {
 
 		const actual = getSimpleSchema(Schema);
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"test.map",
@@ -131,6 +160,7 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"test.object",
@@ -177,6 +207,7 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"test.object",
@@ -212,6 +243,7 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"test.object",
@@ -257,6 +289,7 @@ describe("getSimpleSchema", () => {
 		const actual = getSimpleSchema(Schema);
 
 		const expected: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map([
 				[
 					"test.recursive-object",

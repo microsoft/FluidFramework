@@ -23,7 +23,6 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-	type EmptyObject,
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable } from "./create.js";
@@ -45,8 +44,43 @@ export {
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
+export { ViewSchema } from "./view.js";
+export type {
+	Unenforced,
+	FieldHasDefaultUnsafe,
+	ObjectFromSchemaRecordUnsafe,
+	TreeObjectNodeUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
+	ReadonlyMapInlined,
+} from "./typesUnsafe.js";
+
+export type {
+	VerboseTreeNode,
+	ParseOptions,
+	VerboseTree,
+} from "./verboseTree.js";
+
+export type { EncodeOptions } from "./customTree.js";
+
+export type { ConciseTree } from "./conciseTree.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
+
+export {
+	extractPersistedSchema,
+	comparePersistedSchemaInternal,
+	comparePersistedSchema,
+} from "./storedSchema.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

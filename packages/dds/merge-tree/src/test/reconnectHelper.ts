@@ -18,6 +18,7 @@ import {
 	IMergeTreeDeltaOp,
 	type IMergeTreeInsertMsg,
 	type IMergeTreeObliterateMsg,
+	type IMergeTreeObliterateSidedMsg,
 	type IMergeTreeRemoveMsg,
 } from "../ops.js";
 
@@ -121,7 +122,7 @@ export class ReconnectTestHelper {
 		start: SequencePlace,
 		end: SequencePlace,
 	): {
-		op: IMergeTreeObliterateMsg;
+		op: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 		seg: SegmentGroup;
 		refSeq: number;
 	} {

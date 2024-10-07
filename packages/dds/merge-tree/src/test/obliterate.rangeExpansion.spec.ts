@@ -22,8 +22,7 @@ function itCorrectlyObliterates({
 		const events: number[] = [];
 
 		const helper = new ReconnectTestHelper({
-			// TODO: uncomment this once the flag is checked in
-			/* mergeTreeEnableSidedObliterate: true */
+			mergeTreeEnableSidedObliterate: true,
 		});
 		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
 			events.push(deltaArgs.operation);
@@ -34,6 +33,13 @@ function itCorrectlyObliterates({
 		helper.logger.validate({ baseText: expectedText });
 	});
 }
+itCorrectlyObliterates.skip = ({
+	title,
+}: {
+	title: string;
+	action: (helper: ReconnectTestHelper) => void;
+	expectedText: string;
+}) => it.skip(title, () => {});
 
 describe("obliterate", () => {
 	itCorrectlyObliterates({
@@ -62,15 +68,34 @@ describe("obliterate", () => {
 		expectedText: "XYZhe world",
 	});
 	itCorrectlyObliterates({
-		title: "zero length obliterate in the middle of the string",
+		title: "obliterate, then insert at the end of the string",
 		action: (helper) => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 
-			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.Before });
-			helper.insertText("B", 0, "more ");
+			helper.obliterateRange(
+				"A",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+			helper.insertText("B", 10, "123");
 		},
-		expectedText: "hello world",
+		expectedText: "hello",
+	});
+	itCorrectlyObliterates({
+		title: "insert, then obliterate at the end of the string",
+		action: (helper) => {
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			helper.insertText("A", 10, "123");
+			helper.obliterateRange(
+				"B",
+				{ pos: 5, side: Side.Before },
+				{ pos: 10, side: Side.After },
+			);
+		},
+		expectedText: "hello",
 	});
 	itCorrectlyObliterates({
 		title: "obliterate, then insert at the end of the string",
@@ -102,50 +127,58 @@ describe("obliterate", () => {
 		},
 		expectedText: "hello",
 	});
-	itCorrectlyObliterates({
-		title: "zero length obliterate in the middle of the string",
-		action: (helper) => {
-			helper.insertText("A", 0, "hello world");
-			helper.processAllOps();
+	describe("zero length", () => {
+		// TODO: #17785: Allow start and end to be used as obliteration range endpoints.
+		itCorrectlyObliterates.skip({
+			title: "zero length obliterate at the start of the string",
+			action: (helper) => {
+				helper.insertText("A", 0, "hello world");
+				helper.processAllOps();
 
-			helper.obliterateRange("A", { pos: 0, side: Side.After }, { pos: 1, side: Side.Before });
-			helper.insertText("B", 0, "more ");
-		},
-		expectedText: "hello world",
-	});
-	itCorrectlyObliterates({
-		title: "obliterate, then insert at the end of the string",
-		action: (helper) => {
-			helper.insertText("A", 0, "hello world");
-			helper.processAllOps();
+				helper.obliterateRange(
+					"A",
+					{ pos: -1, side: Side.After },
+					{ pos: 0, side: Side.Before },
+				);
+				helper.insertText("B", 0, "more ");
+			},
+			expectedText: "hello world",
+		});
+		itCorrectlyObliterates({
+			title: "zero length obliterate in the middle of the string",
+			action: (helper) => {
+				helper.insertText("A", 0, "hello world");
+				helper.processAllOps();
 
-			helper.obliterateRange(
-				"A",
-				{ pos: 5, side: Side.Before },
-				{ pos: 10, side: Side.After },
-			);
-			helper.insertText("B", 10, "123");
-		},
-		expectedText: "hello",
-	});
-	itCorrectlyObliterates({
-		title: "insert, then obliterate at the end of the string",
-		action: (helper) => {
-			helper.insertText("A", 0, "hello world");
-			helper.processAllOps();
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.After },
+					{ pos: 1, side: Side.Before },
+				);
+				helper.insertText("B", 1, "more ");
+			},
+			expectedText: "hello world",
+		});
+		// TODO: #17785: Allow start and end to be used as obliteration range endpoints.
+		itCorrectlyObliterates.skip({
+			title: "zero length obliterate at the end of the string",
+			action: (helper) => {
+				helper.insertText("A", 0, "hello world");
+				helper.processAllOps();
 
-			helper.insertText("A", 10, "123");
-			helper.obliterateRange(
-				"B",
-				{ pos: 5, side: Side.Before },
-				{ pos: 10, side: Side.After },
-			);
-		},
-		expectedText: "hello",
+				helper.obliterateRange(
+					"A",
+					{ pos: helper.clients.A.getLength() - 1, side: Side.After },
+					{ pos: -1, side: Side.Before },
+				);
+				helper.insertText("B", helper.clients.B.getLength(), " more");
+			},
+			expectedText: "hello world",
+		});
 	});
 });
 
-describe.skip("overlapping edits", () => {
+describe("overlapping edits", () => {
 	itCorrectlyObliterates({
 		title: "overlapping obliterate and obliterate",
 		action: (helper) => {
@@ -268,7 +301,7 @@ describe.skip("reconnect", () => {
 	});
 });
 
-describe.skip("sided obliterates", () => {
+describe("sided obliterates", () => {
 	/**
 	 * All test cases will operate on the same numerical positions, but differ on their sidedness:
 	 * 1. A expand both endpoints, B expand neither endpoint = expand range on both endpoints

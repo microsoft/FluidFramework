@@ -303,7 +303,14 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		content: TSchemaAdditional,
 	): PresenceStates<TSchema & TSchemaAdditional> {
 		for (const [key, nodeFactory] of Object.entries(content)) {
-			this.add(key, nodeFactory);
+			if (key in this.nodes) {
+				const node = unbrandIVM(this.nodes[key]);
+				if (!(node instanceof nodeFactory.instanceBase)) {
+					throw new TypeError(`State "${key}" previously created by different value manager.`);
+				}
+			} else {
+				this.add(key, nodeFactory);
+			}
 		}
 		return this as PresenceStates<TSchema & TSchemaAdditional>;
 	}

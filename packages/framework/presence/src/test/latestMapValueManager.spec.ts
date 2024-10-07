@@ -7,11 +7,13 @@ import type { LatestMapItemValueClientData } from "../index.js";
 import { LatestMap } from "../index.js";
 import type { IPresence } from "../presence.js";
 
-describe("LatestMapValueManager", () => {
-	/**
-	 * See {@link checkCompiles} below
-	 */
-	it("API use compiles", () => {});
+describe("Presence", () => {
+	describe("LatestMapValueManager", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
 });
 
 // ---- test (example) code ----
