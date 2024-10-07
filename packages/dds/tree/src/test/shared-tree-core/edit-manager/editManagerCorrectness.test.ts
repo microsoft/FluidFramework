@@ -568,9 +568,14 @@ export function testCorrectness() {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
-					manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
-					manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+					manager.localBranch.apply({
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+					});
+					const revision1 = mintRevisionTag();
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
+					const revision2 = mintRevisionTag();
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision2 });
 					manager.addSequencedChange(
 						{
 							change: TestChange.emptyChange,
@@ -596,8 +601,12 @@ export function testCorrectness() {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
-					manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+					manager.localBranch.apply({
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+					});
+					const revision1 = mintRevisionTag();
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
 					manager.addSequencedChange(
 						{
 							change: TestChange.emptyChange,
@@ -683,10 +692,11 @@ function applyLocalCommit(
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
-	const [_, commit] = manager.localBranch.apply(
-		TestChange.mint(inputContext, intention),
-		mintRevisionTag(),
-	);
+	const revision = mintRevisionTag();
+	const [_, commit] = manager.localBranch.apply({
+		change: TestChange.mint(inputContext, intention),
+		revision,
+	});
 	return {
 		change: commit.change,
 		revision: commit.revision,

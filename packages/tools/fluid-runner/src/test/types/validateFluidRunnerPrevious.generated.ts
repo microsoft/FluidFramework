@@ -34,96 +34,6 @@ declare type old_as_current_for_Enum_OutputFormat = requireAssignableTo<TypeOnly
 declare type current_as_old_for_Enum_OutputFormat = requireAssignableTo<TypeOnly<current.OutputFormat>, TypeOnly<old.OutputFormat>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_createContainerAndExecute": {"backCompat": false}
- */
-declare type current_as_old_for_Function_createContainerAndExecute = requireAssignableTo<TypeOnly<typeof current.createContainerAndExecute>, TypeOnly<typeof old.createContainerAndExecute>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_createLogger": {"backCompat": false}
- */
-declare type current_as_old_for_Function_createLogger = requireAssignableTo<TypeOnly<typeof current.createLogger>, TypeOnly<typeof old.createLogger>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_exportFile": {"backCompat": false}
- */
-declare type current_as_old_for_Function_exportFile = requireAssignableTo<TypeOnly<typeof current.exportFile>, TypeOnly<typeof old.exportFile>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_fluidRunner": {"backCompat": false}
- */
-declare type current_as_old_for_Function_fluidRunner = requireAssignableTo<TypeOnly<typeof current.fluidRunner>, TypeOnly<typeof old.fluidRunner>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getSnapshotFileContent": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getSnapshotFileContent = requireAssignableTo<TypeOnly<typeof current.getSnapshotFileContent>, TypeOnly<typeof old.getSnapshotFileContent>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getTelemetryFileValidationError": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getTelemetryFileValidationError = requireAssignableTo<TypeOnly<typeof current.getTelemetryFileValidationError>, TypeOnly<typeof old.getTelemetryFileValidationError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_parseBundleAndExportFile": {"backCompat": false}
- */
-declare type current_as_old_for_Function_parseBundleAndExportFile = requireAssignableTo<TypeOnly<typeof current.parseBundleAndExportFile>, TypeOnly<typeof old.parseBundleAndExportFile>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_validateAndParseTelemetryOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Function_validateAndParseTelemetryOptions = requireAssignableTo<TypeOnly<typeof current.validateAndParseTelemetryOptions>, TypeOnly<typeof old.validateAndParseTelemetryOptions>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ICodeLoaderBundle": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ICodeLoaderBundle = requireAssignableTo<TypeOnly<old.ICodeLoaderBundle>, TypeOnly<current.ICodeLoaderBundle>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ICodeLoaderBundle": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ICodeLoaderBundle = requireAssignableTo<TypeOnly<current.ICodeLoaderBundle>, TypeOnly<old.ICodeLoaderBundle>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -164,24 +74,6 @@ declare type current_as_old_for_Interface_IExportFileResponseSuccess = requireAs
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_IFileLogger": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IFileLogger = requireAssignableTo<TypeOnly<old.IFileLogger>, TypeOnly<current.IFileLogger>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFileLogger": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IFileLogger = requireAssignableTo<TypeOnly<current.IFileLogger>, TypeOnly<old.IFileLogger>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IFluidFileConverter": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IFluidFileConverter = requireAssignableTo<TypeOnly<old.IFluidFileConverter>, TypeOnly<current.IFluidFileConverter>>
@@ -194,24 +86,6 @@ declare type old_as_current_for_Interface_IFluidFileConverter = requireAssignabl
  * "Interface_IFluidFileConverter": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IFluidFileConverter = requireAssignableTo<TypeOnly<current.IFluidFileConverter>, TypeOnly<old.IFluidFileConverter>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ITelemetryOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ITelemetryOptions = requireAssignableTo<TypeOnly<old.ITelemetryOptions>, TypeOnly<current.ITelemetryOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ITelemetryOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ITelemetryOptions = requireAssignableTo<TypeOnly<current.ITelemetryOptions>, TypeOnly<old.ITelemetryOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

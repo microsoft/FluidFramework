@@ -17,6 +17,7 @@ import {
 	type EncodingTestData,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
+	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
@@ -173,6 +174,7 @@ describe("GenericField", () => {
 			forward,
 			true,
 			idAllocatorFromMaxId(),
+			mintRevisionTag(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([]),
 		);

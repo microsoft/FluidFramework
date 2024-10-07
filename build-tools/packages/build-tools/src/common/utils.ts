@@ -174,8 +174,14 @@ export function isSameFileOrDir(f1: string, f2: string) {
  * @param error - description of command line to print when error happens
  * @param pipeStdIn - optional string to pipe to stdin
  */
-export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
-	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+export async function exec(
+	cmd: string,
+	dir: string,
+	error: string,
+	pipeStdIn?: string,
+	options?: Omit<child_process.ExecOptions, "cwd">,
+) {
+	const result = await execAsync(cmd, { ...options, cwd: dir }, pipeStdIn);
 	if (result.error) {
 		throw new Error(
 			`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
