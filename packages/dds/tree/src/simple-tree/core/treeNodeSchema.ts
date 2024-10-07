@@ -128,7 +128,6 @@ export type TreeNodeSchemaBoth<
  * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
  * @sealed @public
  */
-
 export interface TreeNodeSchemaCore<
 	out Name extends string,
 	out Kind extends NodeKind,
@@ -168,6 +167,27 @@ export interface TreeNodeSchemaCore<
 	 * Setting this to false adjusts the insertable types to disallow cases which could be impacted by these inconsistencies.
 	 */
 	readonly implicitlyConstructable: ImplicitlyConstructable;
+
+	/**
+	 * All possible schema that a direct child of a node with this schema could have.
+	 *
+	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
+	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
+	 * This property is simply re-exposing that information in an easier to traverse format consistent across all node kinds.
+	 * @remarks
+	 * Some kinds of nodes may have additional restrictions on children:
+	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this set.
+	 * @privateRemarks
+	 * Currently there isn't much use for this in the public API,
+	 * and it's possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
+	 * To keep options option, this is marked `@system` for now.
+	 * @system
+	 */
+	readonly childTypes: ReadonlySet<TreeNodeSchema>;
 }
 
 /**

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { InterdependencyRange } from "@fluid-tools/version-tools";
 import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
 
 /**
@@ -50,6 +51,15 @@ export interface IFluidBuildDir {
 	 * An array of paths under `directory` that should be ignored.
 	 */
 	ignoredDirs?: string[];
+
+	/**
+	 * For backwards compatibility, the defaultInterdependencyRange for a release group can be configured here in the
+	 * fluid-build config. This property should no longer be used and will be removed in a future release.
+	 *
+	 * @deprecated This property is now configured in the bump.defaultInterdependencyRange setting in the flub config.
+	 * This property will be removed in a future release.
+	 */
+	defaultInterdependencyRange?: InterdependencyRange;
 }
 
 export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
