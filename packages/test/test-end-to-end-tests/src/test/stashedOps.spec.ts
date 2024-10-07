@@ -1657,7 +1657,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container.disconnect();
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		// container.connect();
+		container.connect();
 		const handle = await timeoutAwait(handleP, {
 			errorMsg: "Timeout on waiting for ",
 		});
