@@ -2978,7 +2978,7 @@ export class ContainerRuntime
 			default: {
 				const error = getUnknownMessageTypeError(
 					message.type,
-					"applyStashedOp" /* codePath */,
+					"validateAndProcessRuntimeMessage" /* codePath */,
 				);
 				this.closeFn(error);
 				throw error;
@@ -4428,10 +4428,7 @@ export class ContainerRuntime
 				// send any ops, as some other client already changed schema.
 				break;
 			default: {
-				const error = getUnknownMessageTypeError(
-					message.type,
-					"applyStashedOp" /* codePath */,
-				);
+				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
 				throw error;
 			}
