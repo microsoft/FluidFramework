@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "nodes": {
+    "test.recursiveType": {
+      "object": {
+        "field": {
+          "kind": "Optional",
+          "types": [
+            "test.recursiveType"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.recursiveType"
+    ]
+  }
+}
