@@ -70,9 +70,10 @@ export class SharedTreeBranchManager {
 	}
 
 	/**
-	 * produces a diff between two objects and merges the differences.
+	 * Produces a set of differences based on two versions of an object, applies the changes to the first one,
+	 * and returns the set of differences.
 	 */
-	public merge(
+	public mergeObject(
 		obj: Record<string, unknown> | TreeArrayNode,
 		llmResponse: Record<string, unknown> | unknown[],
 	): Difference[] {
@@ -122,13 +123,13 @@ export class SharedTreeBranchManager {
 	}
 
 	/**
-	 * produces a diff between two objects and merges the differences.
+	 * Creates a forked branch of a tree view.
 	 */
 	public checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(
 		treeView: TreeView<T>,
 		treeViewConfiguration: TreeViewConfiguration<T>,
 		absolutePathToObjectNode: ObjectPath,
-		differences: Difference[],
+		// differences: Difference[],
 	): {
 		originalBranch: TreeBranch;
 		forkBranch: TreeBranchFork;
@@ -142,7 +143,7 @@ export class SharedTreeBranchManager {
 			forkView.root as Record<string, unknown> | unknown[],
 			absolutePathToObjectNode,
 		) as Record<string, unknown> | TreeArrayNode;
-		this.mergeDiffs(differences, newBranchTargetNode);
+		// this.mergeDiffs(differences, newBranchTargetNode);
 		return { originalBranch, forkBranch, forkView, newBranchTargetNode };
 	}
 

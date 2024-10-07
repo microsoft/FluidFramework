@@ -90,7 +90,10 @@ describe("SharedTreeBranchManager", () => {
 			objectSchema: zodSchema,
 			nodeIdAttributeName: "id",
 		});
-		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponseObject);
+		branchManager.mergeObject(
+			treeNode as unknown as Record<string, unknown>,
+			llmResponseObject,
+		);
 		const jsonifiedTreeNode = { ...treeNode };
 		assert.deepStrictEqual(jsonifiedTreeNode, llmResponseObject);
 	});
@@ -119,7 +122,10 @@ describe("SharedTreeBranchManager", () => {
 			objectSchema: zodSchema,
 			nodeIdAttributeName: "id",
 		});
-		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponseObject);
+		branchManager.mergeObject(
+			treeNode as unknown as Record<string, unknown>,
+			llmResponseObject,
+		);
 		const jsonifiedTreeNode = {
 			...treeNode,
 			relatedLinks: treeNode.relatedLinks?.map((link) => link),
@@ -193,7 +199,10 @@ describe("SharedTreeBranchManager", () => {
 		};
 
 		const branchManager = new SharedTreeBranchManager({ objectSchema: zodSchema });
-		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponseObject);
+		branchManager.mergeObject(
+			treeNode as unknown as Record<string, unknown>,
+			llmResponseObject,
+		);
 		const jsonifiedTreeNode = {
 			...treeNode,
 			relatedLinks: treeNode.relatedLinks?.map((link) => link),
@@ -221,7 +230,7 @@ describe("SharedTreeBranchManager", () => {
 		];
 
 		const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
-		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponse);
+		branchManager.mergeObject(treeNode as unknown as Record<string, unknown>, llmResponse);
 
 		const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
 		assert.deepStrictEqual(jsonifiedTreeNode, llmResponse);
@@ -246,7 +255,7 @@ describe("SharedTreeBranchManager", () => {
 		];
 
 		const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
-		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponse);
+		branchManager.mergeObject(treeNode as unknown as Record<string, unknown>, llmResponse);
 
 		const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
 		assert.deepStrictEqual(jsonifiedTreeNode, llmResponse);

@@ -207,7 +207,7 @@ export function TaskCard(props: {
 											const branchManager = new SharedTreeBranchManager({
 												nodeIdAttributeName: "id",
 											});
-											branchManager.merge(
+											branchManager.mergeObject(
 												props.sharedTreeTask as unknown as Record<string, unknown>,
 												response.data as unknown as Record<string, unknown>,
 											);

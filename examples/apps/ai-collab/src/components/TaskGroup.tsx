@@ -303,8 +303,9 @@ export function TaskGroup(props: {
 											props.sharedTreeBranch,
 											TREE_CONFIGURATION,
 											["taskGroups", indexOfTaskGroup],
-											differences,
 										);
+
+									branchManager.mergeDiffs(differences, newBranchTargetNode);
 
 									console.log("forkBranch:", forkBranch);
 									console.log("newBranchTargetNode:", { ...newBranchTargetNode });

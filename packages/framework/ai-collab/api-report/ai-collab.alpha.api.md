@@ -90,15 +90,15 @@ export class SharedTreeBranchManager {
         forkView: TreeView<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
-    checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, differences: Difference[]): {
+    checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath): {
         originalBranch: TreeBranch;
         forkBranch: TreeBranchFork;
         forkView: TreeView<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
     compare(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): Difference[];
-    merge(obj: Record<string, unknown> | TreeArrayNode, llmResponse: Record<string, unknown> | unknown[]): Difference[];
     mergeDiffs(diffs: Difference[], objectToUpdate: Record<string, unknown> | TreeArrayNode): Set<Difference>;
+    mergeObject(obj: Record<string, unknown> | TreeArrayNode, llmResponse: Record<string, unknown> | unknown[]): Difference[];
 }
 
 // @public
