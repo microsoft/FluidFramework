@@ -1655,7 +1655,7 @@ export function createDDSFuzzSuite<
 			}
 		});
 
-		const seeds = generateTestSeeds(testCount, stressMode ?? StressMode.Normal);
+		const seeds = generateTestSeeds(testCount, stressMode);
 		for (const seed of seeds) {
 			runTest(model, options, seed, getSaveInfo(model, options, seed));
 		}
