@@ -27,11 +27,11 @@ import {
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
- * Options for how to interpret a `CustomTree<TCustom>` without relying on schema.
+ * Options for how to encode a tree.
  */
 export interface EncodeOptions<TCustom> {
 	/**
-	 * Fixup custom input formats.
+	 * How to encode any {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the tree.
 	 * @remarks
 	 * See note on {@link ParseOptions.valueConverter}.
 	 */
