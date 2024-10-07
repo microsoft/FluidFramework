@@ -692,7 +692,7 @@ describe("client.applyMsg", () => {
 		logger.validate({ baseText: "DDDDDDcbD" });
 	});
 
-	describe.only("obliterate", () => {
+	describe("obliterate", () => {
 		// 	op types: 0) insert 1) remove 2) annotate
 		// Clients: 3 Ops: 3 Round: 86
 		// op         | client A | op         | client B | op           | client C
@@ -710,7 +710,10 @@ describe("client.applyMsg", () => {
 		// 3:0:C4@1,2 | B-----   | 3:0:C4@1,2 | B-----   | 3:0:C4@1,2   | B--BB-
 		it("sided obliterate regression test", () => {
 			const clients = createClientsAtInitialState(
-				{ initialState: "0123", options: { mergeTreeEnableObliterate: true } },
+				{
+					initialState: "0123",
+					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+				},
 				"A",
 				"B",
 				"C",
@@ -731,14 +734,14 @@ describe("client.applyMsg", () => {
 				clients.C.makeOpMessage(
 					clients.C.obliterateRangeLocal(
 						{ pos: 2, side: Side.Before },
-						{ pos: 4, side: Side.Before },
+						{ pos: 3, side: Side.After },
 					),
 					++seq,
 				),
 				clients.C.makeOpMessage(
 					clients.C.obliterateRangeLocal(
 						{ pos: 1, side: Side.Before },
-						{ pos: 2, side: Side.Before },
+						{ pos: 1, side: Side.After },
 					),
 					++seq,
 				),
@@ -777,7 +780,10 @@ describe("client.applyMsg", () => {
 		//              |            |              |   B  BB-- B
 		it("obliterate with mergeTree insert fails", () => {
 			const clients = createClientsAtInitialState(
-				{ initialState: "BBBBB BBB", options: { mergeTreeEnableObliterate: true } },
+				{
+					initialState: "BBBBB BBB",
+					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+				},
 				"A",
 				"B",
 			);
@@ -804,7 +810,7 @@ describe("client.applyMsg", () => {
 					c.applyMsg(op);
 				}
 
-			logger.validate({ baseText: "B" });
+			logger.validate({ baseText: "BBBBBB B" });
 		});
 	});
 
