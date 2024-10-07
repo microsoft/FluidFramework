@@ -258,8 +258,11 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 	let clients: SignalClient[];
 	let provider: ITestObjectProvider;
 
-	beforeEach("setup containers", async () => {
+	beforeEach("setup containers", async function () {
 		provider = getTestObjectProvider();
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		clients = [];
 		for (let i = 0; i < numberOfClients; i++) {
 			const container = await (i === 0
