@@ -372,30 +372,12 @@ importers:
       '@fluid-experimental/ai-collab':
         specifier: workspace:~
         version: link:../../../packages/framework/ai-collab
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/container-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/odsp-client
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-client':
         specifier: workspace:^
         version: link:../../../packages/service-clients/tinylicious-client
@@ -432,9 +414,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      tinylicious:
-        specifier: ^5.0.0
-        version: 5.0.0
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)
@@ -511,6 +490,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      tinylicious:
+        specifier: ^5.0.0
+        version: 5.0.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
