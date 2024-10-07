@@ -41,19 +41,24 @@ export interface StressSuiteArguments {
 	/**
 	 * Indicates the "stress level" of the tests. The number of test seeds and the timeout threshold
 	 * will be adjusted according to the selected mode.
-	 *
-	 * - Short: Runs only half of the test seeds randomly, with a timeout set to half of the default value.
-	 * - Normal: Runs all test seeds with the default timeout.
-	 * - Long: Runs all test seeds twice, with the timeout threshold doubled.
-	 * - undefined: Indicates that no stress mode is applied, and no tests will be run in stress mode.
 	 */
-	stressMode: StressMode | undefined;
+	stressMode: StressMode;
 }
 
 /**
  * @internal
  */
 export enum StressMode {
+	/**
+	 * Different modes are be planned to use for specific scenarios:
+	 * - Short/Normal Modes: These will be run as part of the PR gate to test the DDS stress tests for all commits.
+	 * - Long Mode: This will be run periodically to perform extensive and random testing.
+	 *
+	 * The current configuration for each mode is as follows:
+	 * - Short Mode: Runs half of the test seeds randomly, with a timeout set to half the default value.
+	 * - Normal Mode: Runs all test seeds with the default timeout.
+	 * - Long Mode: Runs the test seeds randomly but with double the original test count, with the timeout threshold doubled.
+	 */
 	Short = "short",
 	Normal = "normal",
 	Long = "long",
@@ -125,14 +130,13 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 
 	const stressMode = (() => {
 		switch (process.env?.FUZZ_TEST_RUN) {
-			case "short":
-				return StressMode.Short;
 			case "normal":
 				return StressMode.Normal;
 			case "long":
 				return StressMode.Long;
+			case "short":
 			default:
-				return undefined;
+				return StressMode.Short;
 		}
 	})();
 

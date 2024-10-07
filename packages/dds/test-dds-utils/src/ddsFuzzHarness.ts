@@ -1607,7 +1607,7 @@ export function generateTestSeeds(testCount: number, stressMode: StressMode): nu
 		case StressMode.Long: {
 			// Non-deterministic, random seeds
 			const random = makeRandom();
-			const longModeFactor = 10;
+			const longModeFactor = 2;
 			const initialSeed = random.integer(
 				0,
 				Number.MAX_SAFE_INTEGER - longModeFactor * testCount,
