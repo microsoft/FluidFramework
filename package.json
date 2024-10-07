@@ -156,10 +156,10 @@
 		"@biomejs/biome": "~1.8.3",
 		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "^0.46.0",
+		"@fluid-tools/build-cli": "^0.47.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.46.0",
+		"@fluidframework/build-tools": "^0.47.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
@@ -384,12 +384,13 @@
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
 			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
 			"markdown-magic is provided by another dependency so is ignored here.",
-			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies.",
+			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876"
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {
-				"react": "17.0.2",
-				"react-dom": "17.0.2",
+				"react": "18.3.1",
+				"react-dom": "18.3.1",
 				"webpack": "^5.94.0"
 			},
 			"ignoreMissing": [

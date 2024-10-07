@@ -20,9 +20,6 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-// TODO: once flex schema is gone, this code can move into simple-tree
-// eslint-disable-next-line import/no-internal-modules
-import { normalizeFlexListEager } from "../feature-libraries/typed-schema/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "./core/index.js";
 import {
@@ -34,6 +31,7 @@ import {
 import { walkFieldSchema } from "./walkFieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
+import { normalizeFlexListEager } from "./flexList.js";
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
