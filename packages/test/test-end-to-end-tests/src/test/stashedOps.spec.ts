@@ -30,7 +30,9 @@ import {
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	ISharedDirectory,
 	SharedDirectory,
@@ -99,7 +101,7 @@ type SharedObjCallback = (
 const getPendingOps = async (
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
-	send: boolean,
+	send: false | true | "afterReconnect",
 	cb: SharedObjCallback = () => undefined,
 ) => {
 	const container: IContainerExperimental =
@@ -118,8 +120,14 @@ const getPendingOps = async (
 	await cb(container, dataStore);
 
 	let pendingState: string | undefined;
-	if (send) {
+	if (send === true) {
 		pendingState = await container.getPendingLocalState?.();
+		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
+		container.close();
+	} else if (send === "afterReconnect") {
+		pendingState = await container.getPendingLocalState?.();
+		container.disconnect();
+		container.connect();
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
 		container.close();
 	} else {
@@ -2032,6 +2040,10 @@ describeCompat(
 		const { SharedCounter } = apis.dds;
 		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
 
+		function getIdCompressor(dds: IChannel): IIdCompressor {
+			return (dds as any).runtime.idCompressor as IIdCompressor;
+		}
+
 		// We disable summarization (so no summarizer container is loaded) due to challenges specifying the exact
 		// expected behavior of the summarizer container in these tests, in the presence of race conditions.
 		// We aren't testing anything about summmarization anyway, so no need for it.
@@ -2093,7 +2105,6 @@ describeCompat(
 				// Second container, attempted to load from pendingLocalState
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					//* category: "generic", // We downgrade this log if the container was still loading (which is the case for this test)
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2102,30 +2113,21 @@ describeCompat(
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
 					provider,
-					true, // Do send ops from first container instance before closing
+					"afterReconnect", // Send ops after reconnecting, to ensure a different clientId
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
 
-				// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
-				// 1. first container - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
-				// 2. second container - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
-				//
-				// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
-				const obj = JSON.parse(pendingLocalState);
-				obj.clientId = "2356461c-85d2-4002-b699-5e8a0defa60b"; // Different GUID to simulate reconnect after getPendingLocalState
-				const pendingLocalStateAdjusted = JSON.stringify(obj);
-
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
 				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
-				const containerLoadError = await loader
-					.resolve({ url }, pendingLocalStateAdjusted)
-					.then(
-						(c) => (c as { fatalError?: ICriticalContainerError }).fatalError,
-						(e: unknown) => e as ICriticalContainerError,
-					);
+				const containerLoadError = await loader.resolve({ url }, pendingLocalState).then(
+					(c) => (c as { fatalError?: ICriticalContainerError }).fatalError,
+					(e: unknown) => e as ICriticalContainerError,
+				);
 
 				assert.strictEqual(
 					containerLoadError?.message,
@@ -2166,6 +2168,8 @@ describeCompat(
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
@@ -2267,6 +2271,8 @@ describeCompat(
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
