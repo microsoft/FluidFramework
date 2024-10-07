@@ -7,12 +7,7 @@ import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type LazyItem,
-	type NodeKeyManager,
-	isLazy,
-	type FlexListToUnion,
-} from "../feature-libraries/index.js";
+import type { NodeKeyManager } from "../feature-libraries/index.js";
 import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -22,6 +17,7 @@ import type {
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
+import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
