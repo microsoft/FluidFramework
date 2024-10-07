@@ -8,6 +8,7 @@
 .docusaurus
 .cache-loader
 .doc-models
+versions.json
 
 # Generated API docs.
 # Note: keep `mdx` files that are handwritten

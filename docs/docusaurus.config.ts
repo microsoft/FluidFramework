@@ -65,9 +65,9 @@ const config: Config = {
 							banner: "unmaintained",
 						},
 						// Only generate / display "local" mode
-						"local": devMode ? {
-							label: "local",
-							path: "local",
+						"local-api": devMode ? {
+							label: "Local API Docs",
+							path: "local-api",
 							banner: "unreleased",
 							badge: true,
 						} : undefined,

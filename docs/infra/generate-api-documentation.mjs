@@ -3,61 +3,26 @@
  * Licensed under the MIT License.
  */
 
-/*
- * This index script runs `render-api-documentation.js` using the version configurations described
- * in data/versions.json.
- */
-
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import chalk from "chalk";
-import fs from "fs-extra";
 
+import ApiDocsVersions from "../api-docs-versions.mjs";
 import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
 
-const devMode = process.env.NODE_ENV === "development";
-
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const versions = ["1", "2"];
-
-const downloadedDocModelsDirectoryPath = path.resolve(dirname, "..", ".doc-models");
-
-const docModelDirectoryPaths = {
-	"1": path.resolve(downloadedDocModelsDirectoryPath, "v1"),
-	"2": path.resolve(downloadedDocModelsDirectoryPath, "v2"),
-};
-
-const outputDirectories = {
-	"1": path.resolve(dirname, "..", "versioned_docs", "version-1", "api"),
-	"2": path.resolve(dirname, "..", "docs", "api"),
-};
-
-if (devMode) {
-	const localDocModelPath = path.resolve(dirname, "..", "..", "_api-extractor-temp", "doc-models");
-	await fs.readdir(localDocModelPath);
-}
+/*
+ * This index script Generates API documentation for all API versions specified in
+ * `api-docs-versions.mjs`.
+ */
 
 try {
-	await Promise.all(versions.map(async (version) => {
-		const docModelDirectoryPath = docModelDirectoryPaths[version];
-		const apiDocsDirectoryPath = outputDirectories[version];
-
-		// Note: the leading slash in the URI root is important.
-		// It tells Docusaurus to interpret the links as relative to the site root, rather than
-		// relative to the document containing the link.
-		// See documentation here: https://docusaurus.io/docs/markdown-features/links
-		const uriRootDirectoryPath = `/docs/api`;
-
+	await Promise.all(Object.entries(ApiDocsVersions).map(async ([version, config]) => {
 		await renderApiDocumentation(
-			docModelDirectoryPath,
-			apiDocsDirectoryPath,
-			uriRootDirectoryPath,
+			config.inputPath,
+			config.outputPath,
+			config.uriRoot,
 			version,
 		);
 
-		console.log(chalk.green(`Version "${version}" API docs written!`));
+		console.log(chalk.green(`Version "${version}" API docs written to "${config.outputPath}"!`));
 	}));
 } catch (error) {
 	console.error(chalk.red("API docs generation failed due to one or more errors:"));

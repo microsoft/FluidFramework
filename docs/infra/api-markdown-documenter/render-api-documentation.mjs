@@ -59,7 +59,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	// Delete existing documentation output
 	logProgress("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
-	await fs.emptyDir(outputDir);
+	// await fs.emptyDir(outputDir); // TODO: respect gitignore here
 
 	// Process API reports
 	logProgress("Loading API model...");

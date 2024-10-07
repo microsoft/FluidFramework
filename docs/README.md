@@ -231,3 +231,12 @@ An offline solution comes with some downsides (slower build, larger bundle), and
 That said, it is much better than what our current website has (no search whatsoever).
 
 We should come back to this after v1 of our new website.
+
+
+# Local API docs build
+
+`versions.json` cannot contain "local" when building prod.
+- Need to gen versions based on env mode.
+
+Need explicit sidebar for local mode - otherwise it gets none.
+We can probably check one in, whose API docs section mirrors current.
