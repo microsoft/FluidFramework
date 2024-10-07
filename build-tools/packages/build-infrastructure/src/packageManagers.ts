@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IPackageManager, PackageManagerName } from "./types";
+import type { IPackageManager, PackageManagerName } from "./types.js";
 
 export class PackageManager implements IPackageManager {
 	private constructor(public readonly name: PackageManagerName) {}

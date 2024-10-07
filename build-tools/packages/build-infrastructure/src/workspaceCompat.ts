@@ -12,9 +12,9 @@ import type {
 	IFluidBuildDirs,
 	ReleaseGroupDefinition,
 	WorkspaceDefinition,
-} from "./config";
-import type { IWorkspace, WorkspaceName } from "./types";
-import { Workspace } from "./workspace";
+} from "./config.js";
+import type { IWorkspace, WorkspaceName } from "./types.js";
+import { Workspace } from "./workspace.js";
 
 /**
  * Loads workspaces based on the "legacy" config -- the former repoPackages section of the fluid-build config.

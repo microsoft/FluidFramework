@@ -6,7 +6,7 @@
 import path from "node:path";
 import execa from "execa";
 
-import { NotInGitRepository } from "./errors";
+import { NotInGitRepository } from "./errors.js";
 
 /**
  * Returns the absolute path to the nearest Git repository root found starting at `cwd`.

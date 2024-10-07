@@ -4,8 +4,11 @@
  */
 
 import path from "node:path";
-import * as chalk from "chalk";
 import { existsSync, readJsonSync } from "fs-extra";
+
+// this version of chalk is CJS-only, and using import fails to compile for CJS. This works for both.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const chalk = require("chalk");
 
 import { type WorkspaceDefinition, findReleaseGroupForPackage } from "./config.js";
 import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.js";

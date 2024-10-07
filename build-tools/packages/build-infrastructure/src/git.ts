@@ -7,7 +7,7 @@ import path from "node:path";
 import readPkgUp from "read-pkg-up";
 import type { SimpleGit } from "simple-git";
 
-import type { IFluidRepo, IPackage, IReleaseGroup, IWorkspace, PackageName } from "./types";
+import type { IFluidRepo, IPackage, IReleaseGroup, IWorkspace, PackageName } from "./types.js";
 
 /**
  * Get the merge base between the current HEAD and the remote branch.

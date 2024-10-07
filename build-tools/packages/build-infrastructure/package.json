@@ -11,23 +11,29 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"type": "commonjs",
+	"type": "module",
 	"exports": {
 		".": {
-			"default": {
+			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		}
 	},
 	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "fluid-build . --task build",
 		"build:commonjs": "npm run tsc && npm run build:test",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:compile": "npm run build:commonjs",
 		"build:docs": "api-extractor run --local",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
@@ -41,7 +47,7 @@
 		"list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --recursive lib/test",
-		"tsc": "tsc"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-tools/version-tools": "workspace:^",
@@ -74,11 +80,9 @@
 		"chai": "^4.3.7",
 		"chai-arrays": "^2.2.0",
 		"concurrently": "^8.2.1",
+		"copyfiles": "^2.4.1",
 		"eslint": "~8.57.0",
 		"mocha": "^10.2.0",
 		"rimraf": "^4.4.1"
-	},
-	"engines": {
-		"node": ">=18.17.1"
 	}
 }
