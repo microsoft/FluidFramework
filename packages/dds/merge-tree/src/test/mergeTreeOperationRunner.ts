@@ -42,7 +42,10 @@ export const obliterateRange: TestOperation = (
 ) => {
 	let startSide: Side;
 	let endSide: Side;
-	if (opEnd - opStart <= 1) {
+
+	const oblEnd = random.integer(opStart, client.getLength() - 1);
+
+	if (oblEnd - opStart <= 1) {
 		startSide = Side.Before;
 		endSide = Side.After;
 	} else {
@@ -51,7 +54,7 @@ export const obliterateRange: TestOperation = (
 	}
 
 	const start = { pos: opStart, side: startSide };
-	const end = { pos: opEnd, side: endSide };
+	const end = { pos: oblEnd, side: endSide };
 	return client.obliterateRangeLocal(start, end);
 };
 
@@ -232,6 +235,7 @@ export interface IMergeTreeOperationRunnerConfig {
 	readonly incrementalLog?: boolean;
 	readonly operations: readonly TestOperation[];
 	readonly applyOpDuringGeneration?: boolean;
+	readonly generateSidedObliterates?: boolean;
 	growthFunc(input: number): number;
 	resultsFilePostfix?: string;
 }
