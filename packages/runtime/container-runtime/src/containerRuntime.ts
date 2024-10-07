@@ -953,52 +953,20 @@ export class ContainerRuntime
 			}
 		}
 
-		let desiredIdCompressorMode: IdCompressorMode;
+		// Allow 'IdCompressorEnabled' config to override the application's desired IdCompressor mode.
+		// Note that the overriden value will still be coerced by DocumentSchemaController to ensure
+		// a legal transition.
+		let idCompressorMode: IdCompressorMode;
 		switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
 			case true:
-				desiredIdCompressorMode = "on";
+				idCompressorMode = "on";
 				break;
 			case false:
-				desiredIdCompressorMode = undefined;
+				idCompressorMode = undefined;
 				break;
 			default:
-				desiredIdCompressorMode = enableRuntimeIdCompressor;
+				idCompressorMode = enableRuntimeIdCompressor;
 				break;
-		}
-
-		// Enabling the IdCompressor is a one-way operation and we only want to
-		// allow new containers to turn it on.
-		let idCompressorMode: IdCompressorMode;
-		if (existing) {
-			// This setting has to be sticky for correctness:
-			// 1) if compressior is OFF, it can't be enabled, as already running clients (in given document session) do not know
-			//    how to process compressor ops
-			// 2) if it's ON, then all sessions should load compressor right away
-			// 3) Same logic applies for "delayed" mode
-			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
-			// We could do "off" -> "on" transition too, if all clients start loading compressor (but not using it initially) and
-			// do so for a while - this will allow clients to eventually disregard "off" setting (when it's safe so) and start
-			// using compressor in future sessions.
-			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
-			idCompressorMode = metadata?.documentSchema?.runtime
-				?.idCompressorMode as IdCompressorMode;
-
-			// This is the only exception to the rule above - we have proper plumbing to load ID compressor on schema change
-			// event. It is loaded async (relative to op processing), so this conversion is only safe for off -> delayed conversion!
-			// Clients do not expect ID compressor ops unless ID compressor is On for them, and that could be achieved only through
-			// explicit schema change, i.e. only if explicitSchemaControl is on.
-			// Note: it would be better if we throw on combination of options (explicitSchemaControl = off, desiredIdCompressorMode === "delayed")
-			// that is not supported. But our service tests are oblivious to these problems and throwing here will cause a ton of failures
-			// We ignored incompatible ID compressor changes from the start (they were sticky), so that's not a new problem being introduced...
-			if (
-				idCompressorMode === undefined &&
-				desiredIdCompressorMode === "delayed" &&
-				explicitSchemaControl
-			) {
-				idCompressorMode = desiredIdCompressorMode;
-			}
-		} else {
-			idCompressorMode = desiredIdCompressorMode;
 		}
 
 		const createIdCompressorFn = async () => {
