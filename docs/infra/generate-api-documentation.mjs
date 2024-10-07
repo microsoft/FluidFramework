@@ -12,11 +12,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import chalk from "chalk";
+import fs from "fs-extra";
+
 import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
+const devMode = process.env.NODE_ENV === "development";
 
-// TODO: support generating "next" API docs
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const versions = ["1", "2"];
 
@@ -31,6 +33,11 @@ const outputDirectories = {
 	"1": path.resolve(dirname, "..", "versioned_docs", "version-1", "api"),
 	"2": path.resolve(dirname, "..", "docs", "api"),
 };
+
+if (devMode) {
+	const localDocModelPath = path.resolve(dirname, "..", "..", "_api-extractor-temp", "doc-models");
+	await fs.readdir(localDocModelPath);
+}
 
 try {
 	await Promise.all(versions.map(async (version) => {

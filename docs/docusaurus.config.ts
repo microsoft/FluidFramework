@@ -7,6 +7,8 @@ import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import * as Preset from "@docusaurus/preset-classic";
 
+const devMode = process.env.NODE_ENV === "development";
+
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 
 // TODO: set back to main before merging
@@ -53,6 +55,7 @@ const config: Config = {
 						current: {
 							label: "v2",
 							// path: "v2"
+							badge: false,
 						},
 						"1": {
 							label: "v1",
@@ -60,7 +63,14 @@ const config: Config = {
 							// Prevent indexing of legacy docs
 							noIndex: true,
 							banner: "unmaintained",
-						}
+						},
+						// Only generate / display "local" mode
+						"local": devMode ? {
+							label: "local",
+							path: "local",
+							banner: "unreleased",
+							badge: true,
+						} : undefined,
 					},
 					// Determines whether or not to display an "Edit this page" link at
 					// the bottom of each page.
