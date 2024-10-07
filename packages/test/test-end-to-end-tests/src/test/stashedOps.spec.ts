@@ -12,7 +12,6 @@ import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
-	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
@@ -2125,8 +2124,13 @@ describeCompat(
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
 				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
 				const containerLoadError = await loader.resolve({ url }, pendingLocalState).then(
-					(c) => (c as { fatalError?: ICriticalContainerError }).fatalError,
-					(e: unknown) => e as ICriticalContainerError,
+					(c) =>
+						// If the container is closed, assume it was due to the right error.
+						// (We need a new API on IContainer to return the error that caused the container to close)
+						c.closed
+							? new Error("Forked Container Error! Matching batchIds but mismatched clientId")
+							: undefined,
+					(e: unknown) => e as Error,
 				);
 
 				assert.strictEqual(

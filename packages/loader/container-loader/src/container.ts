@@ -1079,13 +1079,8 @@ export class Container
 		}
 	}
 
-	public fatalError?: ICriticalContainerError;
-
 	private closeCore(error?: ICriticalContainerError): void {
 		assert(!this.closed, 0x315 /* re-entrancy */);
-
-		// In case of re-entrancy (which is unexpected, given the above assert), just let the original error stand
-		this.fatalError ??= error;
 
 		try {
 			// Ensure that we raise all key events even if one of these throws
@@ -1136,9 +1131,6 @@ export class Container
 	private disposeCore(error?: ICriticalContainerError): void {
 		assert(!this._disposed, 0x54c /* Container already disposed */);
 		this._disposed = true;
-
-		// If we previously closed with an error, let that error remain "the" fatal error
-		this.fatalError ??= error;
 
 		try {
 			// Ensure that we raise all key events even if one of these throws
