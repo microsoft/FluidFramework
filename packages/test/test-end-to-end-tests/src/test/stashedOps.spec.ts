@@ -1514,7 +1514,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	it("offline blob upload", async function () {
+	it("blob upload before loading", async function () {
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1522,6 +1525,23 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		container.connect();
 		await timeoutAwait(waitForContainerConnection(container.container), {
+			errorMsg: "Timeout on waiting for container connection",
+		});
+		const handle = await timeoutAwait(handleP, {
+			errorMsg: "Timeout on waiting for handleP",
+		});
+	});
+
+	it("offline blob upload", async function () {
+		const container = await loader.resolve({ url });
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+		container.disconnect();
+		// sending ops when we have never been connected does not work because our requests won't
+		// have epoch which is been set after connecting to delta connection (connectToDeltaStream)
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		container.connect();
+		await timeoutAwait(waitForContainerConnection(container), {
 			errorMsg: "Timeout on waiting for container connection",
 		});
 		const handle = await timeoutAwait(handleP, {
@@ -1630,13 +1650,13 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
-		// upload blob offline so an entry is added to redirect table
-		const container = await loadOffline(testContainerConfig, provider, { url });
-		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		const container = await loader.resolve({ url });
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+		container.disconnect();
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		container.connect();
+		// container.connect();
 		const handle = await timeoutAwait(handleP, {
 			errorMsg: "Timeout on waiting for ",
 		});
