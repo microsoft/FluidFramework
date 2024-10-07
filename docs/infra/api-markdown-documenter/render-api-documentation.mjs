@@ -59,7 +59,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	// Delete existing documentation output
 	logProgress("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
-	// await fs.emptyDir(outputDir); // TODO: is this okay?
+	await fs.emptyDir(outputDir);
 
 	// Process API reports
 	logProgress("Loading API model...");
