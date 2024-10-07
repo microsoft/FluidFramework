@@ -1515,7 +1515,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 
 	it("blob upload before loading", async function () {
-		// TODO: AB#19035: Blob upload from an offline state does not currently work before establishing a connection on ODSP due to epoch mismatch.
+		// TODO: AB#19035: Blob upload from an offline state does not currently work before establishing a connection on ODSP due to epoch not provided.
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
