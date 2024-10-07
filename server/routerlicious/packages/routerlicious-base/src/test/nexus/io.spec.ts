@@ -53,9 +53,8 @@ import {
 import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
-import { isNetworkError, type NetworkError } from "@fluidframework/server-services-client";
+import { isNetworkError, type NetworkError, InternalErrorCode } from "@fluidframework/server-services-client";
 import {
-	isTokenRevokedError,
 	type IRevokedTokenChecker,
 } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
 
@@ -376,7 +375,7 @@ describe("Routerlicious", () => {
 									"Error should be a NetworkError",
 								);
 								assert.strictEqual(
-									isTokenRevokedError(err),
+									(err as NetworkError).internalErrorCode === InternalErrorCode.TokenRevoked,
 									true,
 									"Error should be a TokenRevokedError",
 								);
