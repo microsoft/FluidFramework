@@ -12,6 +12,7 @@ import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
@@ -2092,7 +2093,7 @@ describeCompat(
 				// Second container, attempted to load from pendingLocalState
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "generic", // We downgrade this log if the container was still loading (which is the case for this test)
+					//* category: "generic", // We downgrade this log if the container was still loading (which is the case for this test)
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2119,9 +2120,16 @@ describeCompat(
 
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
 				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
-				await assert.rejects(
-					async () => loader.resolve({ url }, pendingLocalStateAdjusted),
-					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
+				const containerLoadError = await loader
+					.resolve({ url }, pendingLocalStateAdjusted)
+					.then(
+						(c) => (c as { fatalError?: ICriticalContainerError }).fatalError,
+						(e: unknown) => e as ICriticalContainerError,
+					);
+
+				assert.strictEqual(
+					containerLoadError?.message,
+					"Forked Container Error! Matching batchIds but mismatched clientId",
 					"Container should have closed due to ForkedContainerError",
 				);
 
