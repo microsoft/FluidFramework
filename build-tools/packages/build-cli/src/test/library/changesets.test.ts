@@ -13,14 +13,14 @@ import {
 	groupByMainPackage,
 	groupByPackage,
 	loadChangesets,
-} from "../../src/library/changesets.js";
+} from "../../library/changesets.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const changesetsPath = path.resolve(__dirname, "../data");
+const changesetsPath = path.resolve(__dirname, "../../../src/test/data");
 assert.isTrue(existsSync(changesetsPath));
 
-describe("changesets", async () => {
+describe("changesets", () => {
 	it("loadChangesets", async () => {
 		const changesets = await loadChangesets(changesetsPath);
 		expect(changesets.length).to.equal(3);

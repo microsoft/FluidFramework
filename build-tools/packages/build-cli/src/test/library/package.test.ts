@@ -7,16 +7,16 @@ import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
 
-import { VersionDetails } from "../../src/library/index.js";
+import { VersionDetails } from "../../library/index.js";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
 	sortVersions,
-} from "../../src/library/package.js";
+} from "../../library/package.js";
 
-describe("VersionDetails sorting", async () => {
+describe("VersionDetails sorting", () => {
 	const versions: VersionDetails[] = [
 		{ version: "0.1.38773", date: parseJSON("2021-09-28T17:03:10.000Z") },
 		{ version: "0.59.3000", date: parseJSON("2022-06-06T21:35:27.000Z") },
@@ -28,15 +28,15 @@ describe("VersionDetails sorting", async () => {
 
 	it("sortedByVersion", async () => {
 		const sortedByVersion = sortVersions(versions, "version");
-		assert.equal(sortedByVersion[0].version, "1.0.2");
-		assert.equal(sortedByVersion[3].version, "0.59.3001");
+		assert.equal(sortedByVersion[0]?.version, "1.0.2");
+		assert.equal(sortedByVersion[3]?.version, "0.59.3001");
 	});
 
 	it("sortedByDate", async () => {
 		const sortedByDate = sortVersions(versions, "date");
-		assert.equal(sortedByDate[0].version, "0.59.3001");
-		assert.equal(sortedByDate[1].version, "1.0.2");
-		assert.equal(sortedByDate[4].version, "0.59.3000");
+		assert.equal(sortedByDate[0]?.version, "0.59.3001");
+		assert.equal(sortedByDate[1]?.version, "1.0.2");
+		assert.equal(sortedByDate[4]?.version, "0.59.3000");
 	});
 });
 
