@@ -18,7 +18,7 @@ import {
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { ISignalEnvelope, type IErrorBase } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -67,8 +67,10 @@ import {
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
+	type ContainerRuntimeGCMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
+	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
 import {
@@ -1119,6 +1121,98 @@ describe("Runtime", () => {
 					]);
 				},
 			);
+		});
+
+		describe("[DEPRECATED] Future op type compatibility", () => {
+			let containerRuntime: ContainerRuntime;
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+			});
+
+			it("can submit op compat behavior (temporarily still available for GC op)", async () => {
+				// Create a container runtime type where the submit method is public. This makes it easier to test
+				// submission and processing of ops. The other option is to send data store or alias ops whose
+				// processing requires creation of data store context and runtime as well.
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: OutboundContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+				const containerRuntimeWithSubmit =
+					containerRuntime as unknown as ContainerRuntimeWithSubmit;
+
+				const gcMessageWithDeprecatedCompatDetails: ContainerRuntimeGCMessage = {
+					type: ContainerMessageType.GC,
+					contents: { type: "Sweep", deletedNodeIds: [] },
+					compatDetails: { behavior: "Ignore" },
+				};
+
+				assert.doesNotThrow(
+					() =>
+						containerRuntimeWithSubmit.submit(
+							gcMessageWithDeprecatedCompatDetails,
+							undefined,
+							undefined,
+						),
+					"Cannot submit container runtime message with compatDetails",
+				);
+			});
+
+			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
+				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+					Record<string, unknown> = {
+					type: "FROM_THE_FUTURE",
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" },
+				};
+
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
+				> = {
+					contents: JSON.stringify(futureRuntimeMessage),
+					type: MessageType.Operation,
+					sequenceNumber: 123,
+					clientId: "someClientId",
+					minimumSequenceNumber: 0,
+				};
+				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
+			});
+
+			it("process remote op with unrecognized type and no compat behavior", async () => {
+				const futureRuntimeMessage = {
+					type: "FROM_THE_FUTURE",
+					contents: "Hello",
+				};
+
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
+				> = {
+					contents: JSON.stringify(futureRuntimeMessage),
+					type: MessageType.Operation,
+					sequenceNumber: 123,
+					clientId: "someClientId",
+					minimumSequenceNumber: 0,
+				};
+				assert.throws(
+					() =>
+						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type and no specified compat behavior should fail to process",
+				);
+			});
 		});
 
 		describe("Supports mixin classes", () => {

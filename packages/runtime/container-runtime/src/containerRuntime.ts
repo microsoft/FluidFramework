@@ -2982,6 +2982,7 @@ export class ContainerRuntime
 				const error = getUnknownMessageTypeError(
 					message.type,
 					"validateAndProcessRuntimeMessage" /* codePath */,
+					message,
 				);
 				this.closeFn(error);
 				throw error;
