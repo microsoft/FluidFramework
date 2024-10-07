@@ -1081,7 +1081,7 @@ describe("DDS Fuzz Harness", () => {
 
 			it("should generate seeds for long stress mode", () => {
 				const seeds = generateTestSeeds(testCount, StressMode.Long);
-				assert.strictEqual(seeds.length, testCount * 10);
+				assert.strictEqual(seeds.length, testCount * 2);
 				// Check that seeds are incrementing
 				for (let i = 1; i < seeds.length; i++) {
 					assert.strictEqual(seeds[i], seeds[i - 1] + 1);

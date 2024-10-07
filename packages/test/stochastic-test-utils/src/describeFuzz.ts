@@ -130,13 +130,13 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 
 	const stressMode = (() => {
 		switch (process.env?.FUZZ_TEST_RUN) {
-			case "normal":
-				return StressMode.Normal;
+			case "short":
+				return StressMode.Short;
 			case "long":
 				return StressMode.Long;
-			case "short":
+			case "normal":
 			default:
-				return StressMode.Short;
+				return StressMode.Normal;
 		}
 	})();
 
