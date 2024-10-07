@@ -6,7 +6,7 @@
 import { type Difference } from "@fluid-experimental/ai-collab";
 import { SharedTreeBranchManager } from "@fluid-experimental/ai-collab/alpha";
 import { type TreeView } from "@fluidframework/tree";
-import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
+import { type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -271,21 +271,13 @@ export function TaskGroup(props: {
 									autoHideDuration: 5000,
 								});
 
-								const llmChangeBranch = getBranch(props.sharedTreeBranch);
-								const llmChangeView = llmChangeBranch.viewWith(TREE_CONFIGURATION);
+								// TODO: is this redundant? We already have props.sharedTreeTaskGroup
 								const indexOfTaskGroup = props.sharedTreeBranch.root.taskGroups.indexOf(
 									props.sharedTreeTaskGroup,
 								);
-								const targetTaskGroup = llmChangeView.root.taskGroups[indexOfTaskGroup];
-
-								if (targetTaskGroup === undefined) {
-									throw new Error(
-										`Target Task Group not found (index: '${indexOfTaskGroup}')`,
-									);
-								}
 
 								const resp = await editTaskGroup(
-									sharedTreeTaskGroupToJson(targetTaskGroup),
+									sharedTreeTaskGroupToJson(props.sharedTreeTaskGroup),
 									query,
 								);
 								if (resp.success) {
@@ -295,7 +287,7 @@ export function TaskGroup(props: {
 									});
 
 									const differences = branchManager.compare(
-										targetTaskGroup as unknown as Record<string, unknown>,
+										props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
 										resp.data as unknown as Record<string, unknown>,
 									);
 									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
