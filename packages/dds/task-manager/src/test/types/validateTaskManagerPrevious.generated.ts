@@ -70,15 +70,6 @@ declare type old_as_current_for_TypeAlias_TaskEventListener = requireAssignableT
 declare type current_as_old_for_TypeAlias_TaskEventListener = requireAssignableTo<TypeOnly<current.TaskEventListener>, TypeOnly<old.TaskEventListener>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_TaskManager": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_TaskManager = requireAssignableTo<TypeOnly<typeof current.TaskManager>, TypeOnly<typeof old.TaskManager>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -95,3 +86,12 @@ declare type old_as_current_for_TypeAlias_TaskManager = requireAssignableTo<Type
  * "TypeAlias_TaskManager": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_TaskManager = requireAssignableTo<TypeOnly<current.TaskManager>, TypeOnly<old.TaskManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_TaskManager": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_TaskManager = requireAssignableTo<TypeOnly<typeof current.TaskManager>, TypeOnly<typeof old.TaskManager>>

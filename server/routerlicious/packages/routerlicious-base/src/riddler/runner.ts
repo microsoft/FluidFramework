@@ -11,6 +11,7 @@ import {
 	IWebServerFactory,
 	IWebServer,
 	ICache,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
@@ -42,6 +43,7 @@ export class RiddlerRunner implements IRunner {
 		private readonly tenantKeyGenerator: ITenantKeyGenerator,
 		private readonly cache?: ICache,
 		private readonly config?: Provider,
+		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -65,6 +67,7 @@ export class RiddlerRunner implements IRunner {
 				this.riddlerStorageRequestMetricInterval,
 				this.tenantKeyGenerator,
 				this.cache,
+				this.readinessCheck,
 			);
 			riddler.set("port", this.port);
 

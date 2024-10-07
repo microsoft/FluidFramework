@@ -633,10 +633,8 @@ const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * Checks whether a message.type is one of the values in ContainerMessageType
- * @deprecated please use version in driver-utils
- * @internal
  */
-export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(ContainerMessageType) as string[]).includes(message.type);
 }
 
@@ -1318,16 +1316,18 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
+	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
+		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
-		signalSequenceNumber: 0,
+		signalsSentSinceLastLatencyMeasurement: 0,
+		broadcastSignalSequenceNumber: 0,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
-		baseSignalTrackingGroupSequenceNumber: undefined,
 		minimumTrackingSignalSequenceNumber: undefined,
 	};
 
@@ -1621,8 +1621,8 @@ export class ContainerRuntime
 		);
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-		const useDeltaManagerOpsProxy =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
+		this.useDeltaManagerOpsProxy =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
 		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
 			this.innerDeltaManager,
@@ -1631,7 +1631,7 @@ export class ContainerRuntime
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
-		if (useDeltaManagerOpsProxy) {
+		if (this.useDeltaManagerOpsProxy) {
 			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
 				summarizerDeltaManagerProxy,
 				this.pendingStateManager,
@@ -1711,6 +1711,13 @@ export class ContainerRuntime
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
+		// If the base snapshot was generated when isolated channels were disabled, set the summary reference
+		// sequence to undefined so that this snapshot will not be used for incremental summaries. This is for
+		// back-compat and will rarely happen so its okay to re-summarize everything in the first summary.
+		const summaryReferenceSequenceNumber =
+			baseSnapshot === undefined || metadata?.disableIsolatedChannels === true
+				? undefined
+				: loadedFromSequenceNumber;
 		this.summarizerNode = createRootSummarizerNodeWithGC(
 			createChildLogger({ logger: this.logger, namespace: "SummarizerNode" }),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
@@ -1718,8 +1725,7 @@ export class ContainerRuntime
 				this.summarizeInternal(fullTree, trackState, telemetryContext),
 			// Latest change sequence number, no changes since summary applied yet
 			loadedFromSequenceNumber,
-			// Summary reference sequence number, undefined if no summary yet
-			baseSnapshot !== undefined ? loadedFromSequenceNumber : undefined,
+			summaryReferenceSequenceNumber,
 			{
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
@@ -1732,10 +1738,6 @@ export class ContainerRuntime
 			// Function to get the GC details from the base snapshot we loaded from.
 			async () => this.garbageCollector.getBaseGCDetails(),
 		);
-
-		if (baseSnapshot) {
-			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
-		}
 
 		const parentContext = wrapContext(this);
 
@@ -2639,10 +2641,11 @@ export class ContainerRuntime
 			this._signalTracking.signalsLost = 0;
 			this._signalTracking.signalsOutOfOrder = 0;
 			this._signalTracking.signalTimestamp = 0;
+			this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+			this._signalTracking.totalSignalsSentInLatencyWindow = 0;
 			this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
 			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
-			this._signalTracking.baseSignalTrackingGroupSequenceNumber = undefined;
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -2715,29 +2718,31 @@ export class ContainerRuntime
 				return;
 			}
 
-			const batchStart: BatchStartInfo = inboundResult.batchStart;
-			const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
-			if (result?.duplicate) {
-				const error = new DataCorruptionError(
-					"Duplicate batch - The same batch was sequenced twice",
-					{ batchId: batchStart.batchId },
-				);
+			if ("batchStart" in inboundResult) {
+				const batchStart: BatchStartInfo = inboundResult.batchStart;
+				const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
+				if (result?.duplicate) {
+					const error = new DataCorruptionError(
+						"Duplicate batch - The same batch was sequenced twice",
+						{ batchId: batchStart.batchId },
+					);
 
-				this.mc.logger.sendTelemetryEvent(
-					{
-						eventName: "DuplicateBatch",
-						details: {
-							batchId: batchStart.batchId,
-							clientId: batchStart.clientId,
-							batchStartCsn: batchStart.batchStartCsn,
-							size: inboundResult.length,
-							duplicateBatchSequenceNumber: result.otherSequenceNumber,
-							...extractSafePropertiesFromMessage(batchStart.keyMessage),
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: "DuplicateBatch",
+							details: {
+								batchId: batchStart.batchId,
+								clientId: batchStart.clientId,
+								batchStartCsn: batchStart.batchStartCsn,
+								size: inboundResult.length,
+								duplicateBatchSequenceNumber: result.otherSequenceNumber,
+								...extractSafePropertiesFromMessage(batchStart.keyMessage),
+							},
 						},
-					},
-					error,
-				);
-				throw error;
+						error,
+					);
+					throw error;
+				}
 			}
 
 			let runtimeBatch: boolean = true;
@@ -2749,7 +2754,18 @@ export class ContainerRuntime
 				localOpMetadata?: unknown;
 			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
 
-			if (inboundResult.length === 0) {
+			if (inboundResult.type !== "fullBatch") {
+				assert(
+					messagesWithPendingState.length === 1,
+					0xa3d /* Partial batch should have exactly one message */,
+				);
+			}
+
+			if (messagesWithPendingState.length === 0) {
+				assert(
+					inboundResult.type === "fullBatch",
+					0xa3e /* Empty batch is always considered a full batch */,
+				);
 				/**
 				 * We need to process an empty batch, which will execute expected actions while processing even if there
 				 * are no inner runtime messages.
@@ -2772,11 +2788,12 @@ export class ContainerRuntime
 				runtimeBatch = false;
 			}
 
-			// This is trivial today, but when support for other types is added, we can quickly update this.
-			const locationInBatch: { batchStart: boolean; batchEnd: boolean } = {
-				batchStart: true,
-				batchEnd: true,
-			};
+			const locationInBatch: { batchStart: boolean; batchEnd: boolean } =
+				inboundResult.type === "fullBatch"
+					? { batchStart: true, batchEnd: true }
+					: inboundResult.type === "batchStartingMessage"
+						? { batchStart: true, batchEnd: false }
+						: { batchStart: false, batchEnd: inboundResult.batchEnd === true };
 
 			this.processInboundMessages(
 				messagesWithPendingState,
@@ -2791,7 +2808,7 @@ export class ContainerRuntime
 				{ batchStart: true, batchEnd: true }, // Single message
 				local,
 				savedOp,
-				isRuntimeMessage(messageCopy) /* runtimeBatch */,
+				isUnpackedRuntimeMessage(messageCopy) /* runtimeBatch */,
 			);
 		}
 
@@ -2806,7 +2823,7 @@ export class ContainerRuntime
 	private _processedClientSequenceNumber: number | undefined;
 
 	/**
-	 * Processes inbound batch message(s). It calls schedule manager according to the location in the batch of the message(s).
+	 * Processes inbound message(s). It calls schedule manager according to the messages' location in the batch.
 	 * @param messages - messages to process.
 	 * @param locationInBatch - Are we processing the start and/or end of a batch?
 	 * @param local - true if the messages were originally generated by the client receiving it.
@@ -2893,7 +2910,10 @@ export class ContainerRuntime
 		const { local, message, savedOp, localOpMetadata } = messageWithContext;
 
 		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
-		if (this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber) {
+		if (
+			this.useDeltaManagerOpsProxy &&
+			this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber
+		) {
 			message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 		}
 
@@ -2984,30 +3004,21 @@ export class ContainerRuntime
 
 	/**
 	 * Emits the Signal event and update the perf signal data.
-	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
 	 */
-	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
+	private sendSignalTelemetryEvent() {
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
-		const signalsSent =
-			this._signalTracking.baseSignalTrackingGroupSequenceNumber !== undefined
-				? clientSignalSequenceNumber -
-					this._signalTracking.baseSignalTrackingGroupSequenceNumber +
-					1
-				: -1;
-
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration, // Roundtrip duration of the tracked signal in milliseconds.
-			signalsSent, // Signals sent since the last logged SignalLatency event.
+			signalsSent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
 			signalsLost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
 			outOfOrderSignals: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
 			reconnectCount: this.consecutiveReconnects, // Container reconnect count.
 		});
-		this._signalTracking.baseSignalTrackingGroupSequenceNumber =
-			clientSignalSequenceNumber + 1;
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalsOutOfOrder = 0;
 		this._signalTracking.signalTimestamp = 0;
+		this._signalTracking.totalSignalsSentInLatencyWindow = 0;
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -3016,21 +3027,26 @@ export class ContainerRuntime
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
+			targetClientId: message.targetClientId,
 		};
 
-		// Only collect signal telemetry for messages sent by the current client.
-		if (message.clientId === this.clientId && this.connected) {
+		// Only collect signal telemetry for broadcast messages sent by the current client.
+		if (
+			message.clientId === this.clientId &&
+			this.connected &&
+			envelope.clientBroadcastSignalSequenceNumber !== undefined
+		) {
 			if (
 				this._signalTracking.trackingSignalSequenceNumber !== undefined &&
 				this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined
 			) {
 				if (
-					envelope.clientSignalSequenceNumber >=
+					envelope.clientBroadcastSignalSequenceNumber >=
 					this._signalTracking.trackingSignalSequenceNumber
 				) {
 					// Calculate the number of signals lost and log the event.
 					const signalsLost =
-						envelope.clientSignalSequenceNumber -
+						envelope.clientBroadcastSignalSequenceNumber -
 						this._signalTracking.trackingSignalSequenceNumber;
 					if (signalsLost > 0) {
 						this._signalTracking.signalsLost += signalsLost;
@@ -3038,14 +3054,15 @@ export class ContainerRuntime
 							eventName: "SignalLost",
 							signalsLost, // Number of lost signals detected.
 							trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-							clientSignalSequenceNumber: envelope.clientSignalSequenceNumber, // Actual signal sequence number received.
+							clientBroadcastSignalSequenceNumber:
+								envelope.clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
 						});
 					}
 					// Update the tracking signal sequence number to the next expected signal in the sequence.
 					this._signalTracking.trackingSignalSequenceNumber =
-						envelope.clientSignalSequenceNumber + 1;
+						envelope.clientBroadcastSignalSequenceNumber + 1;
 				} else if (
-					envelope.clientSignalSequenceNumber >=
+					envelope.clientBroadcastSignalSequenceNumber >=
 					this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
 					this._signalTracking.signalsOutOfOrder++;
@@ -3053,23 +3070,23 @@ export class ContainerRuntime
 						eventName: "SignalOutOfOrder",
 						type: envelope.contents.type, // Type of signal that was received out of order.
 						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber, // Sequence number of the out of order signal.
+						clientBroadcastSignalSequenceNumber: envelope.clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
 					});
 				}
 				if (
 					this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
-					envelope.clientSignalSequenceNumber >=
+					envelope.clientBroadcastSignalSequenceNumber >=
 						this._signalTracking.roundTripSignalSequenceNumber
 				) {
 					if (
-						envelope.clientSignalSequenceNumber ===
+						envelope.clientBroadcastSignalSequenceNumber ===
 						this._signalTracking.roundTripSignalSequenceNumber
 					) {
 						// Latency tracked signal has been received.
 						// We now log the roundtrip duration of the tracked signal.
 						// This telemetry event also logs metrics for signals sent, signals lost, and out of order signals received.
 						// These metrics are reset after logging the telemetry event.
-						this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+						this.sendSignalTelemetryEvent();
 					}
 					this._signalTracking.roundTripSignalSequenceNumber = undefined;
 				}
@@ -3320,32 +3337,45 @@ export class ContainerRuntime
 		address: string | undefined,
 		type: string,
 		content: any,
+		targetClientId?: string,
 	): ISignalEnvelope {
-		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
-
-		// Initialize tracking to expect the first signal sent by the connected client.
-		if (
-			this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
-			this._signalTracking.trackingSignalSequenceNumber === undefined
-		) {
-			this._signalTracking.minimumTrackingSignalSequenceNumber = newSequenceNumber;
-			this._signalTracking.trackingSignalSequenceNumber = newSequenceNumber;
-			this._signalTracking.baseSignalTrackingGroupSequenceNumber = newSequenceNumber;
-		}
-
 		const newEnvelope: ISignalEnvelope = {
 			address,
-			clientSignalSequenceNumber: newSequenceNumber,
 			contents: { type, content },
 		};
 
-		// We should not track the round trip of a new signal in the case we are already tracking one.
-		if (
-			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._signalTracking.roundTripSignalSequenceNumber === undefined
-		) {
-			this._signalTracking.signalTimestamp = Date.now();
-			this._signalTracking.roundTripSignalSequenceNumber = newSequenceNumber;
+		const isBroadcastSignal = targetClientId === undefined;
+
+		if (isBroadcastSignal) {
+			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
+				.broadcastSignalSequenceNumber;
+			newEnvelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
+			this._signalTracking.signalsSentSinceLastLatencyMeasurement++;
+
+			if (
+				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
+				this._signalTracking.trackingSignalSequenceNumber === undefined
+			) {
+				// Signal monitoring window is undefined
+				// Initialize tracking to expect the next signal sent by the connected client.
+				this._signalTracking.minimumTrackingSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+				this._signalTracking.trackingSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+			}
+
+			// We should not track the round trip of a new signal in the case we are already tracking one.
+			if (
+				clientBroadcastSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+				this._signalTracking.roundTripSignalSequenceNumber === undefined
+			) {
+				this._signalTracking.signalTimestamp = Date.now();
+				this._signalTracking.roundTripSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+				this._signalTracking.totalSignalsSentInLatencyWindow +=
+					this._signalTracking.signalsSentSinceLastLatencyMeasurement;
+				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+			}
 		}
 
 		return newEnvelope;
@@ -3356,10 +3386,21 @@ export class ContainerRuntime
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 *
+	 * @remarks
+	 *
+	 * The `targetClientId` parameter here is currently intended for internal testing purposes only.
+	 * Support for this option at container runtime is planned to be deprecated in the future.
+	 *
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed();
-		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
+		const envelope = this.createNewSignalEnvelope(
+			undefined /* address */,
+			type,
+			content,
+			targetClientId,
+		);
 		return this.submitSignalFn(envelope, targetClientId);
 	}
 

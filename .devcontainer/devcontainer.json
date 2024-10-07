@@ -18,6 +18,7 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
+				"biomejs.biome",
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
 				"ms-azure-devops.azure-pipelines",

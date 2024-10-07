@@ -4,6 +4,7 @@
  */
 
 import type { ValueManager } from "./internalTypes.js";
+import { brandedObjectEntries } from "./internalTypes.js";
 import type { LatestValueControls } from "./latestValueControls.js";
 import { LatestValueControl } from "./latestValueControls.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
@@ -78,7 +79,9 @@ export interface LatestValueManager<T> {
 }
 
 class LatestValueManagerImpl<T, Key extends string>
-	implements LatestValueManager<T>, ValueManager<T, InternalTypes.ValueRequiredState<T>>
+	implements
+		LatestValueManager<T>,
+		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
 	public readonly controls: LatestValueControl;
@@ -103,8 +106,17 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.datastore.localUpdate(this.key, this.value, /* forceUpdate */ false);
 	}
 
-	public clientValues(): IterableIterator<LatestValueClientData<T>> {
-		throw new Error("Method not implemented.");
+	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
+		const allKnownStates = this.datastore.knownValues(this.key);
+		for (const [clientSessionId, value] of brandedObjectEntries(allKnownStates.states)) {
+			if (clientSessionId !== allKnownStates.self) {
+				yield {
+					client: this.datastore.lookupClient(clientSessionId),
+					value: value.value,
+					metadata: { revision: value.rev, timestamp: value.timestamp },
+				};
+			}
+		}
 	}
 
 	public clients(): ISessionClient[] {
@@ -151,7 +163,7 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @alpha
  */
-export function Latest<T extends object, Key extends string>(
+export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
 	controls?: LatestValueControls,
 ): InternalTypes.ManagerFactory<
@@ -172,13 +184,16 @@ export function Latest<T extends object, Key extends string>(
 				allowableUpdateLatency: 60,
 				forcedRefreshInterval: 0,
 			};
-	return (
+	const factory = (
 		key: Key,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
 			Key,
 			InternalTypes.ValueRequiredState<T>
 		>,
-	) => ({
+	): {
+		value: typeof value;
+		manager: InternalTypes.StateValue<LatestValueManager<T>>;
+	} => ({
 		value,
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
 			new LatestValueManagerImpl(
@@ -189,4 +204,5 @@ export function Latest<T extends object, Key extends string>(
 			),
 		),
 	});
+	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }

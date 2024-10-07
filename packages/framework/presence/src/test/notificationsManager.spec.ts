@@ -7,11 +7,13 @@ import type { ISessionClient } from "../index.js";
 import { Notifications } from "../index.js";
 import type { IPresence } from "../presence.js";
 
-describe("NotificationsManager", () => {
-	/**
-	 * See {@link checkCompiles} below
-	 */
-	it("API use compiles", () => {});
+describe("Presence", () => {
+	describe("NotificationsManager", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
 });
 
 // ---- test (example) code ----
@@ -23,12 +25,9 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
 	const notificationsWorkspace = presence.getNotifications("name:testNotificationWorkspace", {
-		chat: Notifications<
-			{
-				msg: (message: string) => void;
-			},
-			string
-		>({
+		chat: Notifications<{
+			msg: (message: string) => void;
+		}>({
 			msg: (client: ISessionClient, message: string) => {
 				console.log(`${client.sessionId} says, "${message}"`);
 			},

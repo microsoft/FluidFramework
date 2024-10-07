@@ -17,7 +17,6 @@ import {
 } from "../../../core/index.js";
 import {
 	type FullSchemaPolicy,
-	ViewSchema,
 	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
@@ -30,6 +29,7 @@ import {
 	getStoredSchema,
 	SchemaFactory,
 	toStoredSchema,
+	ViewSchema,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";

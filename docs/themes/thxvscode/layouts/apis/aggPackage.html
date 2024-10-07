@@ -40,14 +40,16 @@
                             {{ range $children }}
                             <!-- Find and iterate over the actual corresponding package documents of matching version
                                 (we should only find 1 match)-->
-                            {{ range where $packagesWithMatchingVersion "Params.package" . }} 
+                            {{ range where $packagesWithMatchingVersion "Params.package" . }}
                                 <tr>
                                     <td><a href="{{ .RelPermalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></td>
                                     <td>{{ truncate 170 (.Params.Summary | markdownify) }}</td>
                                 </tr>
                             {{ else }}
                                 <!-- Log an error if no matching document is found -->
-                                {{ errorf "Could not find API docs for package %s for version %s" . $.Params.version }}
+                                {{ if ne $.Params.version "local" }}
+                                    {{ errorf "Could not find API docs for package %s for version %s" . $.Params.version }}
+                                {{ end }}
                             {{ end }}
                         {{ end }}
                     </tbody>

@@ -12,7 +12,6 @@ export type {
 	ApplyKind,
 	NodeBuilderData,
 	FieldHasDefault,
-	TreeNodeSchemaNonClass,
 	TreeArrayNodeBase,
 	ScopedSchemaName,
 	DefaultProvider,
@@ -35,6 +34,6 @@ export type {
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
 } from "./simple-tree/index.js";
-export type { FlexList, FlexListToUnion, ExtractItemType } from "./feature-libraries/index.js";
+export type { FlexList, FlexListToUnion, ExtractItemType } from "./simple-tree/index.js";
 
 export type { TreeApi } from "./shared-tree/index.js";
