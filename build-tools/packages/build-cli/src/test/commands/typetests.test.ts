@@ -10,12 +10,12 @@ import {
 	previousVersion,
 	resetBrokenTests,
 	updateTypeTestDependency,
-} from "../../src/commands/typetests.js";
+} from "../../commands/typetests.js";
 import {
 	type ITypeValidationConfig,
 	type PackageWithTypeTestSettings,
 	defaultTypeValidationConfig,
-} from "../../src/typeValidator/typeValidatorConfig.js";
+} from "../../typeValidator/typeValidatorConfig.js";
 
 /**
  * A minimal test package.json. It defines only the required fields according to the type definition.
@@ -71,15 +71,19 @@ describe("typetests tests", () => {
 		describe("VersionOptions.Clear", () => {
 			it("removes previous test package dependency", () => {
 				const pkg = packageWithTypeValidation();
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.Clear);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 
 			it("removes previous test package dependency when type tests are disabled", () => {
 				const pkg = packageWithTypeValidation(/* enabled */ false);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.Clear);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
@@ -88,6 +92,7 @@ describe("typetests tests", () => {
 			it("leaves previous test package dependency when type tests are enabled", () => {
 				const pkg = packageWithTypeValidation();
 				const expected = packageWithTypeValidation();
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.typeValidation?.disabled).is.false;
 				updateTypeTestDependency(pkg, VersionOptions.ClearIfDisabled);
 				expect(pkg).to.deep.equal(expected);
@@ -95,8 +100,10 @@ describe("typetests tests", () => {
 
 			it("removes previous test package dependency when type tests are disabled", () => {
 				const pkg = packageWithTypeValidation(/* enabled */ false);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.ClearIfDisabled);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
@@ -120,8 +127,10 @@ describe("typetests tests", () => {
 
 			it("removes previous test package dependency when type tests are disabled", () => {
 				const pkg = packageWithTypeValidation(/* enabled */ false);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.Previous);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
@@ -156,6 +165,7 @@ describe("typetests tests", () => {
 			const pkg = packageMinimal();
 			const expected = packageMinimal();
 
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			expect(pkg.typeValidation).to.not.exist;
 			resetBrokenTests(pkg);
 			expect(pkg).to.deep.equal(expected);

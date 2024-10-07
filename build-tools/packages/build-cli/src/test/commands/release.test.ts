@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { FluidReleaseMachine } from "../../src/machines/index.js";
+import { FluidReleaseMachine } from "../../machines/index.js";
 import { initializeCommandTestFunction } from "../init.js";
 
 const test = initializeCommandTestFunction(import.meta.url);
-const knownUnhandledStates: string[] = [
+const knownUnhandledStates: Set<string> = new Set([
 	// Known unhandled states can be added here temporarily during development.
-];
+]);
 
 const machineStates = FluidReleaseMachine.states()
-	.filter((s) => !knownUnhandledStates.includes(s))
+	.filter((s) => !knownUnhandledStates.has(s))
 	.sort();
 
 describe("release command handles all states", () => {
