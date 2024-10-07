@@ -18,7 +18,7 @@ import {
  * Calculates the packages that should be published to a feed and returns a map of Feed to the packages that should be
  * published there.
  */
-function FeedsForPackages(
+function feedsForPackages(
 	packages: Package[],
 	config: PackageNamePolicyConfig,
 ): Map<Feed, Package[]> {
@@ -50,8 +50,10 @@ describe("feeds", () => {
 
 		const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
 		const config = context.flubConfig.policy?.packageNames;
-		// eslint-disable-next-line new-cap, @typescript-eslint/no-non-null-assertion
-		const packages = FeedsForPackages(context.packages, config!);
+		if (config === undefined || config === null) {
+			throw new Error(`config is undefined or null`);
+		}
+		const packages = feedsForPackages(context.packages, config);
 
 		const dev = packages.get("internal-dev")?.map((p) => p.name);
 		const build = packages.get("internal-build")?.map((p) => p.name);

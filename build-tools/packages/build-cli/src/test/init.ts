@@ -14,8 +14,9 @@ import { test as oclifTest } from "@oclif/test";
  *
  * @returns A test function that can be used to test oclif commands.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
-export function initializeCommandTestFunction(moduleUrl: string) {
+export function initializeCommandTestFunction(
+	moduleUrl: string,
+): ReturnType<typeof oclifTest.loadConfig> {
 	// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
 	return oclifTest.loadConfig({ root: moduleUrl });
 }

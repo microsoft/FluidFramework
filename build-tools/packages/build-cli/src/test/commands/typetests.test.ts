@@ -68,19 +68,22 @@ describe("typetests tests", () => {
 			});
 		});
 
-		/* eslint-disable @typescript-eslint/no-unused-expressions */
 		describe("VersionOptions.Clear", () => {
 			it("removes previous test package dependency", () => {
 				const pkg = packageWithTypeValidation();
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.Clear);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 
 			it("removes previous test package dependency when type tests are disabled", () => {
 				const pkg = packageWithTypeValidation(/* enabled */ false);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.Clear);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
@@ -89,6 +92,7 @@ describe("typetests tests", () => {
 			it("leaves previous test package dependency when type tests are enabled", () => {
 				const pkg = packageWithTypeValidation();
 				const expected = packageWithTypeValidation();
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.typeValidation?.disabled).is.false;
 				updateTypeTestDependency(pkg, VersionOptions.ClearIfDisabled);
 				expect(pkg).to.deep.equal(expected);
@@ -96,8 +100,10 @@ describe("typetests tests", () => {
 
 			it("removes previous test package dependency when type tests are disabled", () => {
 				const pkg = packageWithTypeValidation(/* enabled */ false);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.ClearIfDisabled);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
@@ -121,13 +127,14 @@ describe("typetests tests", () => {
 
 			it("removes previous test package dependency when type tests are disabled", () => {
 				const pkg = packageWithTypeValidation(/* enabled */ false);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
 				updateTypeTestDependency(pkg, VersionOptions.Previous);
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
 	});
-	/* eslint-enable @typescript-eslint/no-unused-expressions */
 
 	describe("resetBrokenTests", () => {
 		it("empty", () => {

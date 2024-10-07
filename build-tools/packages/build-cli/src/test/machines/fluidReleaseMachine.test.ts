@@ -160,7 +160,6 @@ function walkExits(state: string, collector: Set<string>, step = 0): void {
 
 	const transitions = machine.list_transitions(state);
 	for (const next of transitions.exits) {
-		// eslint-disable-next-line no-param-reassign
-		walkExits(next, collector, step++);
+		walkExits(next, collector, step + 1);
 	}
 }
