@@ -136,7 +136,7 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 
 	const args = { testCount, stressMode };
 	const d: DescribeFuzz = (name, tests) =>
-		(stressMode != null ? describe.only : describe)(name, createSuite(tests, args));
+		(stressMode != StressMode.Short ? describe.only : describe)(name, createSuite(tests, args));
 	d.skip = (name, tests) => describe.skip(name, createSuite(tests, args));
 	d.only = (name, tests) => describe.only(name, createSuite(tests, args));
 	return d;
