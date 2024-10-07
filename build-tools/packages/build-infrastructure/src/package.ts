@@ -4,11 +4,12 @@
  */
 
 import path from "node:path";
-import { existsSync, readJsonSync } from "fs-extra";
+import { existsSync } from "node:fs";
+import colors from "ansi-colors";
 
-// this version of chalk is CJS-only, and using import fails to compile for CJS. This works for both.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const chalk = require("chalk");
+// Imports are written this way for CJS/ESM compat
+import fsePkg from "fs-extra";
+const { readJsonSync } = fsePkg;
 
 import { type WorkspaceDefinition, findReleaseGroupForPackage } from "./config.js";
 import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.js";
@@ -30,21 +31,21 @@ export abstract class PackageBase<
 {
 	private static packageCount: number = 0;
 	private static readonly chalkColor = [
-		chalk.default.red,
-		chalk.default.green,
-		chalk.default.yellow,
-		chalk.default.blue,
-		chalk.default.magenta,
-		chalk.default.cyan,
-		chalk.default.white,
-		chalk.default.grey,
-		chalk.default.redBright,
-		chalk.default.greenBright,
-		chalk.default.yellowBright,
-		chalk.default.blueBright,
-		chalk.default.magentaBright,
-		chalk.default.cyanBright,
-		chalk.default.whiteBright,
+		colors.red,
+		colors.green,
+		colors.yellow,
+		colors.blue,
+		colors.magenta,
+		colors.cyan,
+		colors.white,
+		colors.grey,
+		colors.redBright,
+		colors.greenBright,
+		colors.yellowBright,
+		colors.blueBright,
+		colors.magentaBright,
+		colors.cyanBright,
+		colors.whiteBright,
 	];
 
 	private readonly _indent: string;

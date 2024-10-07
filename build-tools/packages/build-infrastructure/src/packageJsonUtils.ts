@@ -7,8 +7,11 @@ import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import detectIndent from "detect-indent";
-import { writeJson, writeJsonSync } from "fs-extra";
 import sortPackageJson from "sort-package-json";
+
+// Imports are written this way for CJS/ESM compat
+import fsePkg from "fs-extra";
+const { writeJson, writeJsonSync } = fsePkg;
 
 import type { PackageJson } from "./types.js";
 

@@ -4,13 +4,11 @@
  */
 
 import path from "node:path";
-// import { fileURLToPath } from "node:url";
+import { _dirname } from "./dirname.cjs";
 
-// const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export const packageRootPath = path.resolve(__dirname, "../..");
+export const packageRootPath = path.resolve(_dirname, "../..");
 
 /**
  * Path to the test data. It's rooted two directories up because the tests get executed from lib/.
  */
-export const testDataPath = path.resolve(__dirname, packageRootPath, "src/test/data");
+export const testDataPath = path.resolve(_dirname, packageRootPath, "src/test/data");
