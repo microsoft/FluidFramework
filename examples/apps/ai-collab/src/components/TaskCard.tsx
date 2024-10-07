@@ -197,18 +197,24 @@ export function TaskCard(props: {
 										const response = await editTask(task, query);
 
 										setIsAiTaskRunning(false);
-										enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
-											variant: "success",
-											autoHideDuration: 5000,
-										});
 
 										if (response.success) {
+											enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
+												variant: "success",
+												autoHideDuration: 5000,
+											});
+
 											const branchManager = new SharedTreeBranchManager({
 												nodeIdAttributeName: "id",
 											});
 											branchManager.merge(
 												props.sharedTreeTask as unknown as Record<string, unknown>,
 												response.data as unknown as Record<string, unknown>,
+											);
+										} else {
+											enqueueSnackbar(
+												`Copilot: Something went wrong processing your request - "${query}"`,
+												{ variant: "error", autoHideDuration: 5000 },
 											);
 										}
 									}}
