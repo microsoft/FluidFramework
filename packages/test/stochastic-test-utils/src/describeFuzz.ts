@@ -13,11 +13,6 @@ function createSuite<TArgs extends StressSuiteArguments>(
 		// Stress runs may have tests which are expected to take longer amounts of time.
 		// Don't override the timeout if it's already set to a higher value, though.
 		switch (args.stressMode) {
-			// case StressMode.Normal: {
-			// 	this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
-
-			// 	break;
-			// }
 			case StressMode.Long: {
 				this.timeout(this.timeout() === 0 ? 0 : Math.max(20_000, this.timeout()));
 
@@ -51,14 +46,15 @@ export interface StressSuiteArguments {
  */
 export enum StressMode {
 	/**
-	 * Different modes are be planned to use for specific scenarios:
-	 * - Short/Normal Modes: These will be run as part of the PR gate to test the DDS stress tests for all commits.
-	 * - Long Mode: This will be run periodically to perform extensive and random testing.
+	 * Different modes are planned for use in specific scenarios:
+	 * - Short Mode: Runs when stress is turned off, as part of the PR gate.
+	 * - Normal Mode: Runs when stress is turned on, also as part of the PR gate.
+	 * - Long Mode: Runs periodically in a separate pipeline for extensive and random testing.
 	 *
-	 * The current configuration for each mode is as follows:
-	 * - Short Mode: Runs half of the test seeds randomly, with a timeout set to half the default value.
-	 * - Normal Mode: Runs all test seeds with the default timeout.
-	 * - Long Mode: Runs the test seeds randomly but with double the original test count, with the timeout threshold doubled.
+	 * Current configuration for each mode:
+	 * - Short/Normal Mode: Both run all test seeds with the configured test count, but apply different configurations.
+	 * Short mode uses "default" options, while Normal mode uses "stress" options.
+	 * - Long Mode: Runs test seeds randomly, with double the original test count and a doubled timeout threshold.
 	 */
 	Short = "short",
 	Normal = "normal",
