@@ -27,6 +27,7 @@ import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
 import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -75,6 +76,7 @@ export class NexusResources implements core.IResources {
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
+		public readinessCheck?: IReadinessCheck,
 	) {}
 
 	public async dispose(): Promise<void> {
@@ -561,6 +563,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			collaborationSessionTracker,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -592,6 +595,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.collaborationSessionEvents,
 			resources.clusterDrainingChecker,
 			resources.collaborationSessionTracker,
+			resources.readinessCheck,
 		);
 	}
 }

@@ -7,7 +7,7 @@ import { versionToComparisonNumber } from "@fluid-private/test-version-utils";
 import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../../packageVersion.js";
-import type { TestSnapshotCache } from "../../testSnapshotCache.js";
+import type { TestPersistedCache } from "../../testPersistedCache.js";
 
 export function supportsDataVirtualization(provider: ITestObjectProvider) {
 	return provider.driver.type === "local" || provider.driver.type === "odsp";
@@ -15,7 +15,7 @@ export function supportsDataVirtualization(provider: ITestObjectProvider) {
 
 export function clearCacheIfOdsp(
 	provider: ITestObjectProvider,
-	persistedCache: TestSnapshotCache,
+	persistedCache: TestPersistedCache,
 ) {
 	if (provider.driver.type === "odsp") {
 		persistedCache.clearCache();
