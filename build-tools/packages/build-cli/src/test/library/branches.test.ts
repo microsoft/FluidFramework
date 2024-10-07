@@ -5,14 +5,14 @@
 
 import { assert } from "chai";
 
-import { MonoRepoKind } from "../../src/library/index.js";
+import { MonoRepoKind } from "../../library/index.js";
 
 import {
 	generateBumpDepsBranchName,
 	generateBumpVersionBranchName,
 	generateReleaseBranchName,
 	getDefaultBumpTypeForBranch,
-} from "../../src/library/branches.js";
+} from "../../library/branches.js";
 
 describe("generateBumpVersionBranchName", () => {
 	it("semver versions", () => {

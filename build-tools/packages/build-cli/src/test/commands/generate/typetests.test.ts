@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	loadTypesSourceFile,
 	typeDataFromFile,
-} from "../../../src/commands/generate/typetests.js";
-import type { TypeData } from "../../../src/typeValidator/typeData.js";
+} from "../../../commands/generate/typetests.js";
+import type { TypeData } from "../../../typeValidator/typeData.js";
 
 describe("generate:typetests", () => {
 	const logger = {
+		/* eslint-disable @typescript-eslint/explicit-function-return-type */
 		log: () => assert.fail(),
 		info: () => assert.fail(),
 		warning: () => assert.fail(),
@@ -20,6 +22,7 @@ describe("generate:typetests", () => {
 		logHr: () => assert.fail(),
 		logIndent: () => assert.fail(),
 	};
+	/* eslint-enable @typescript-eslint/explicit-function-return-type */
 
 	function forCompare(data: Map<string, TypeData>, includeTypeOf?: true): unknown[] {
 		return [...data.entries()].map(([k, v]) => ({
@@ -32,7 +35,7 @@ describe("generate:typetests", () => {
 
 	// Test a file which looks like a rollup: a file that reexports content from other files.
 	it("rollup", () => {
-		const currentFile = loadTypesSourceFile("./test/data/exports/exports-rollup.d.ts");
+		const currentFile = loadTypesSourceFile("./src/test/data/exports/exports-rollup.d.ts");
 
 		const types = forCompare(typeDataFromFile(currentFile, logger));
 		assert.deepEqual(types, [
@@ -56,7 +59,7 @@ describe("generate:typetests", () => {
 
 	// Test a file which directly includes several kinds of exports to ensure that various export types work correctly.
 	it("direct", () => {
-		const currentFile = loadTypesSourceFile("./test/data/exports/exports.d.ts");
+		const currentFile = loadTypesSourceFile("./src/test/data/exports/exports.d.ts");
 
 		const types = forCompare(typeDataFromFile(currentFile, logger));
 		assert.deepEqual(types, [
@@ -79,7 +82,7 @@ describe("generate:typetests", () => {
 
 	// Test classes generate both cases correctly
 	it("class", () => {
-		const currentFile = loadTypesSourceFile("./test/data/exports/class.d.ts");
+		const currentFile = loadTypesSourceFile("./src/test/data/exports/class.d.ts");
 
 		const types = forCompare(typeDataFromFile(currentFile, logger), true);
 		assert.deepEqual(types, [
