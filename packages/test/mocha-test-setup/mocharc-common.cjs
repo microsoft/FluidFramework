@@ -76,7 +76,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		`configFile=${path.join(
 			__dirname,
 			"test-config.json",
-		)},cmrOutput=xunit+suiteName+${suiteName}`,
+		)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
 	];
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {
