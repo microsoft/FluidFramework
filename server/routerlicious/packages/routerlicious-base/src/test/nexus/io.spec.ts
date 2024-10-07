@@ -37,6 +37,7 @@ import {
 	RawOperationType,
 	signalUsageStorageId,
 	type IClusterDrainingChecker,
+	clusterDrainingRetryTimeInMs,
 } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -358,6 +359,16 @@ describe("Routerlicious", () => {
 							(err) => {
 								assert.strictEqual(isNetworkError(err), true);
 								assert.strictEqual((err as NetworkError).code, 503);
+								assert.strictEqual(
+									(err as NetworkError).internalErrorCode,
+									InternalErrorCode.ClusterDraining,
+									"Error should be a have internalErrorCode set to ClusterDraining",
+								);
+								assert.strictEqual(
+									(err as NetworkError).retryAfterMs,
+									clusterDrainingRetryTimeInMs,
+									"Error should have retryAfterMs set",
+								);
 								return true;
 							},
 						);
@@ -375,9 +386,9 @@ describe("Routerlicious", () => {
 									"Error should be a NetworkError",
 								);
 								assert.strictEqual(
-									(err as NetworkError).internalErrorCode === InternalErrorCode.TokenRevoked,
-									true,
-									"Error should be a TokenRevokedError",
+									(err as NetworkError).internalErrorCode,
+									InternalErrorCode.TokenRevoked,
+									"Error should be a have internalErrorCode set to TokenRevoked",
 								);
 								assert.strictEqual((err as NetworkError).code, 403);
 								return true;
