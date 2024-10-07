@@ -127,7 +127,7 @@ const getPendingOps = async (
 		pendingState = await container.getPendingLocalState?.();
 		container.disconnect();
 		container.connect();
-		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
+		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
 		pendingState = await container.closeAndGetPendingLocalState?.();

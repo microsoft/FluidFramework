@@ -41,7 +41,10 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	/** Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect */
+	/**
+	 * Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect
+	 * We don't include batchId itself to avoid redundancy, because that's stamped on opMetadata above
+	 */
 	batchInfo: {
 		/**
 		 * The Batch's original clientId, from when it was first flushed to be submitted.
@@ -55,7 +58,7 @@ export interface IPendingMessage {
 		batchStartCsn: number;
 		/** length of the batch (how many runtime messages here) */
 		length: number;
-		//* Comment
+		/** If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored */
 		ignoreBatchId?: boolean;
 	};
 }
@@ -498,7 +501,7 @@ export class PendingStateManager implements IDisposable {
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
 
-		// If this batch became empty on resubmit, batch.messages will be empty
+		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.
 		// More Info: We must submit empty batches and track them in case a different fork
 		// of this container also submitted the same batch (and it may not be empty for that fork).

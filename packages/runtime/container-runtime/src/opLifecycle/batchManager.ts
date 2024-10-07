@@ -21,6 +21,7 @@ export interface IBatchManagerOptions {
 	 */
 	readonly canRebase: boolean;
 
+	/** If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored */
 	readonly ignoreBatchId?: boolean;
 }
 
