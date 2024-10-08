@@ -47,8 +47,7 @@ export async function createAndInitializeContainer(): Promise<
 // eslint-disable-next-line import/no-default-export -- NextJS uses default exports
 export default function TasksListPage(): JSX.Element {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
-	const [sharedTreeBranch, setSharedTreeBranch] =
-		useState<TreeView<typeof SharedTreeAppState>>();
+	const [treeView, setTreeView] = useState<TreeView<typeof SharedTreeAppState>>();
 
 	const { container, isFluidInitialized, data } = useFluidContainerNextJs(
 		containerIdFromUrl(),
@@ -57,9 +56,9 @@ export default function TasksListPage(): JSX.Element {
 		async (id) => loadContainer(CONTAINER_SCHEMA, id),
 		// Get data from existing container
 		(fluidContainer) => {
-			const treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
-			setSharedTreeBranch(treeView);
-			return { sharedTree: treeView };
+			const _treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+			setTreeView(_treeView);
+			return { sharedTree: _treeView };
 		},
 	);
 
@@ -88,7 +87,7 @@ export default function TasksListPage(): JSX.Element {
 			{isFluidInitialized === false && <CircularProgress />}
 
 			{isFluidInitialized === true &&
-				sharedTreeBranch !== undefined &&
+				treeView !== undefined &&
 				taskGroups !== undefined &&
 				selectedTaskGroup !== undefined && (
 					<React.Fragment>
@@ -121,10 +120,7 @@ export default function TasksListPage(): JSX.Element {
 							</Button>
 						</Stack>
 
-						<TaskGroup
-							sharedTreeBranch={sharedTreeBranch}
-							sharedTreeTaskGroup={selectedTaskGroup}
-						/>
+						<TaskGroup treeView={treeView} sharedTreeTaskGroup={selectedTaskGroup} />
 					</React.Fragment>
 				)}
 		</Container>

@@ -35,7 +35,7 @@ import {
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 export function TaskGroup(props: {
-	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
+	treeView: TreeView<typeof SharedTreeAppState>;
 	branchDifferences?: Difference[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 }): JSX.Element {
@@ -103,128 +103,27 @@ export function TaskGroup(props: {
 
 				<Box sx={{ flexGrow: 1 }}></Box>
 
-				<Dialog
-					open={isDiffModalOpen}
-					onClose={() => setIsDiffModalOpen(false)}
-					aria-labelledby="modal-modal-title"
-					aria-describedby="modal-modal-description"
-					sx={{ overflow: "auto" }}
-					maxWidth={"xl"}
-					fullWidth={true}
-					PaperProps={{
-						sx: { background: "none" },
-					}}
-				>
-					{props.sharedTreeBranch !== undefined && llmBranchData && (
-						<Box
-							sx={{
-								maxWidth: "100%",
-								background: "rgba(255, 255, 255, 0.38)",
-								borderRadius: "16px",
-								boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
-								backdropFilter: "blur(12px);",
-								"-webkit-backdrop-filter": "blur(12px)",
-								border: "1px solid rgba(255, 255, 255, 0.3)",
-								p: 2,
-							}}
-						>
-							<Stack sx={{ my: 2 }} spacing={2}>
-								<Typography variant="h2" textAlign={"center"}>
-									Preview Of Copilot Changes
-								</Typography>
-								<Stack
-									direction="row"
-									spacing={2}
-									justifyContent={"center"}
-									sx={{ alignItems: "center" }}
-								>
-									<Typography variant="h6">Differences Color Key:</Typography>
-									<Stack direction="row" alignItems="center" spacing={1}>
-										<Box
-											sx={{
-												borderRadius: "50%",
-												backgroundColor: "#f7c3c3",
-												width: 20,
-												height: 20,
-											}}
-										/>
-										<Typography variant="body1">Deleted</Typography>
-									</Stack>
-
-									<Stack direction="row" alignItems="center" spacing={1}>
-										<Box
-											sx={{
-												borderRadius: "50%",
-												backgroundColor: "#cbf7d4",
-												width: 20,
-												height: 20,
-											}}
-										/>
-										<Typography variant="body1">New</Typography>
-									</Stack>
-
-									<Stack direction="row" alignItems="center" spacing={1}>
-										<Box
-											sx={{
-												borderRadius: "50%",
-												backgroundColor: "#a4dbfc",
-												width: 20,
-												height: 20,
-											}}
-										/>
-										<Typography variant="body1">Changed</Typography>
-									</Stack>
-
-									<Stack direction="row" alignItems="center" spacing={1}>
-										<Box
-											sx={{
-												borderRadius: "50%",
-												backgroundColor: "#e5c5fa",
-												width: 20,
-												height: 20,
-											}}
-										/>
-										<Typography variant="body1">Moved</Typography>
-									</Stack>
-								</Stack>
-								<Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
-									<Button
-										variant="contained"
-										color="success"
-										sx={{ textTransform: "none" }}
-										onClick={() => {
-											llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
-											setIsDiffModalOpen(false);
-										}}
-									>
-										{" "}
-										Accept Changes{" "}
-									</Button>
-
-									<Button
-										variant="contained"
-										color="error"
-										sx={{ textTransform: "none" }}
-										onClick={() => setIsDiffModalOpen(false)}
-									>
-										{" "}
-										Decline Changes{" "}
-									</Button>
-
-									<Button variant="contained" color="info" sx={{ textTransform: "none" }}>
-										{" "}
-										Rerun changes{" "}
-									</Button>
-								</Stack>
-							</Stack>
-							<TaskGroup
-								sharedTreeBranch={llmBranchData?.forkView}
-								sharedTreeTaskGroup={llmBranchData?.newBranchTargetNode}
-								branchDifferences={llmBranchData?.differences}
-							/>
-						</Box>
-					)}
-				</Dialog>
+				{isDiffModalOpen && props.treeView !== undefined && llmBranchData && (
+					<TaskGroupDiffModal
+						isOpen={isDiffModalOpen}
+						onClose={() => {
+							setIsDiffModalOpen(false);
+							setLlmBranchData(undefined);
+						}}
+						onAccept={() => {
+							llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
+							setIsDiffModalOpen(false);
+							setLlmBranchData(undefined);
+						}}
+						onDecline={() => {
+							setIsDiffModalOpen(false);
+							setLlmBranchData(undefined);
+						}}
+						treeView={llmBranchData.forkView}
+						differences={llmBranchData.differences}
+						newBranchTargetNode={llmBranchData.newBranchTargetNode}
+					></TaskGroupDiffModal>
+				)}
 
 				<Button
 					variant="contained"
@@ -272,7 +171,7 @@ export function TaskGroup(props: {
 								});
 
 								// TODO: is this redundant? We already have props.sharedTreeTaskGroup
-								const indexOfTaskGroup = props.sharedTreeBranch.root.taskGroups.indexOf(
+								const indexOfTaskGroup = props.treeView.root.taskGroups.indexOf(
 									props.sharedTreeTaskGroup,
 								);
 
@@ -292,7 +191,7 @@ export function TaskGroup(props: {
 									);
 									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
 										branchManager.checkoutNewMergedBranchV2(
-											props.sharedTreeBranch,
+											props.treeView,
 											TREE_CONFIGURATION,
 											["taskGroups", indexOfTaskGroup],
 										);
@@ -460,5 +359,138 @@ export function TaskGroup(props: {
 				})}
 			</Stack>
 		</Card>
+	);
+}
+
+function TaskGroupDiffModal(props: {
+	isOpen: boolean;
+	onClose: () => void;
+	onAccept: () => void;
+	onDecline: () => void;
+	treeView: TreeView<typeof SharedTreeAppState>;
+	differences: Difference[];
+	newBranchTargetNode: SharedTreeTaskGroup;
+}): JSX.Element {
+	const { isOpen, onClose, onAccept, onDecline, treeView, differences, newBranchTargetNode } =
+		props;
+
+	return (
+		<Dialog
+			open={isOpen}
+			onClose={onClose}
+			aria-labelledby="modal-modal-title"
+			aria-describedby="modal-modal-description"
+			sx={{ overflow: "auto" }}
+			maxWidth={"xl"}
+			fullWidth={true}
+			PaperProps={{
+				sx: { background: "none" },
+			}}
+		>
+			<Box
+				sx={{
+					maxWidth: "100%",
+					background: "rgba(255, 255, 255, 0.38)",
+					borderRadius: "16px",
+					boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
+					backdropFilter: "blur(12px);",
+					"-webkit-backdrop-filter": "blur(12px)",
+					border: "1px solid rgba(255, 255, 255, 0.3)",
+					p: 2,
+				}}
+			>
+				<Stack sx={{ my: 2 }} spacing={2}>
+					<Typography variant="h2" textAlign={"center"}>
+						Preview Of Copilot Changes
+					</Typography>
+					<Stack
+						direction="row"
+						spacing={2}
+						justifyContent={"center"}
+						sx={{ alignItems: "center" }}
+					>
+						<Typography variant="h6">Differences Color Key:</Typography>
+						<Stack direction="row" alignItems="center" spacing={1}>
+							<Box
+								sx={{
+									borderRadius: "50%",
+									backgroundColor: "#f7c3c3",
+									width: 20,
+									height: 20,
+								}}
+							/>
+							<Typography variant="body1">Deleted</Typography>
+						</Stack>
+
+						<Stack direction="row" alignItems="center" spacing={1}>
+							<Box
+								sx={{
+									borderRadius: "50%",
+									backgroundColor: "#cbf7d4",
+									width: 20,
+									height: 20,
+								}}
+							/>
+							<Typography variant="body1">New</Typography>
+						</Stack>
+
+						<Stack direction="row" alignItems="center" spacing={1}>
+							<Box
+								sx={{
+									borderRadius: "50%",
+									backgroundColor: "#a4dbfc",
+									width: 20,
+									height: 20,
+								}}
+							/>
+							<Typography variant="body1">Changed</Typography>
+						</Stack>
+
+						<Stack direction="row" alignItems="center" spacing={1}>
+							<Box
+								sx={{
+									borderRadius: "50%",
+									backgroundColor: "#e5c5fa",
+									width: 20,
+									height: 20,
+								}}
+							/>
+							<Typography variant="body1">Moved</Typography>
+						</Stack>
+					</Stack>
+					<Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
+						<Button
+							variant="contained"
+							color="success"
+							sx={{ textTransform: "none" }}
+							onClick={onAccept}
+						>
+							{" "}
+							Accept Changes{" "}
+						</Button>
+
+						<Button
+							variant="contained"
+							color="error"
+							sx={{ textTransform: "none" }}
+							onClick={onDecline}
+						>
+							{" "}
+							Decline Changes{" "}
+						</Button>
+
+						<Button variant="contained" color="info" sx={{ textTransform: "none" }}>
+							{" "}
+							Rerun changes{" "}
+						</Button>
+					</Stack>
+				</Stack>
+				<TaskGroup
+					treeView={treeView}
+					sharedTreeTaskGroup={newBranchTargetNode}
+					branchDifferences={differences}
+				/>
+			</Box>
+		</Dialog>
 	);
 }
