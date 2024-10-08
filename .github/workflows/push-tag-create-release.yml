@@ -125,7 +125,7 @@ jobs:
         # changesets, so it is excluded.
         if: fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server')
         run: |
-          flub publish releaseNotes \
+          flub transform releaseNotes \
           --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md
           --outFile auto-changelog.md
 
