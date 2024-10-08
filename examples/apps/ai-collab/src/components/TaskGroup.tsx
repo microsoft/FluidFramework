@@ -478,11 +478,6 @@ function TaskGroupDiffModal(props: {
 							{" "}
 							Decline Changes{" "}
 						</Button>
-
-						<Button variant="contained" color="info" sx={{ textTransform: "none" }}>
-							{" "}
-							Rerun changes{" "}
-						</Button>
 					</Stack>
 				</Stack>
 				<TaskGroup
