@@ -339,9 +339,7 @@ extends:
                   ADO_API_TOKEN: $(System.AccessToken)
                   GITHUB_API_TOKEN: $(githubPublicRepoSecret)
                   TARGET_BRANCH_NAME: '$(targetBranchName)'
-                  GITHUB_PR_NUMBER: '$(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)'
                   ADO_BUILD_ID: $(Build.BuildId)
-                  CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE: Code Coverage Report
                 inputs:
                   targetType: inline
                   workingDirectory: '${{ parameters.buildDirectory }}'
@@ -357,8 +355,9 @@ extends:
                     echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_OWNER]=$REPO_OWNER"
                     echo "Repository Owner: $GITHUB_REPOSITORY_OWNER"
                     echo "Repository Name: $GITHUB_REPOSITORY_NAME"
+                    echo "##vso[task.setvariable variable=GITHUB_PR_NUMBER]=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
                     echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
-                    echo "check: $GITHUB_PR_NUMBER $ADO_BUILD_ID $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE"
+                    echo "check: $GITHUB_PR_NUMBER $ADO_BUILD_ID $Coverage_Report_Artifact_Name Coverage_Report_Artifact_Name"
                     npm run
 
               # Build and Lint
