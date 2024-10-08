@@ -414,7 +414,7 @@ extends:
                           ADO_API_TOKEN: $(System.AccessToken)
                           GITHUB_API_TOKEN: $(githubPublicRepoSecret)
                           TARGET_BRANCH_NAME: '$(targetBranchName)'
-                          GITHUB_PR_NUMBER: $(System.PullRequest.PullRequestId)
+                          GITHUB_PR_NUMBER: $(SYSTEM_PULLREQUEST_PULLREQUESTID)
                           ADO_BUILD_ID: ${$(Build.BuildId)}
                           GITHUB_REPOSITORY_OWNER: $(Build.Repository.Name)
                           GITHUB_REPOSITORY_NAME: $(Build.Repository.Name)
@@ -439,14 +439,17 @@ extends:
                             ls ${{ parameters.buildDirectory }}/nyc/report
                             echo "Now in directory: $(pwd)"
                             echo "TARGET_BRANCH_NAME: $(targetBranchName)"
-                            GITHUB_REPOSITORY_OWNER= $(Build.Repository.Name)
-                            GITHUB_REPOSITORY_NAME= $(Build.Repository.Owner)
-                            GITHUB_REPOSITORY_OWNER1= ${Build.Repository.Name}
-                            GITHUB_REPOSITORY_NAME2= ${Build.Repository.Owner}
-                            GITHUB_PR_NUMBER: $(System.PullRequest.PullRequestId)
+                            GITHUB_REPOSITORY_OWNER= $(Build.Repository.Provider)
+                            GITHUB_REPOSITORY_NAME= $(Build.Repository.Name)
                             echo "${GITHUB_REPOSITORY_OWNER} ${GITHUB_REPOSITORY_NAME}"
-                            echo "$(GITHUB_REPOSITORY_OWNER) $(GITHUB_REPOSITORY_NAME)"
-                            echo "${GITHUB_PR_NUMBER} $(GITHUB_PR_NUMBER)"
+                            REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
+                            REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
+                            echo "##vso[task.setvariable variable=REPO_NAME]$REPO_NAME"
+                            echo "##vso[task.setvariable variable=REPO_OWNER]$REPO_OWNER"
+                            echo "Repository Owner: $REPO_OWNER"
+                            echo "Repository Name: $REPO_NAME"
+                            echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTID"
+                            echo "check: ${env.SYSTEM_PULLREQUEST_PULLREQUESTID}"
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
