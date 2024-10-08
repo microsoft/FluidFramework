@@ -67,9 +67,6 @@ export abstract class SequenceEventClass<
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 */
 	constructor(
 		/**
 		 * Arguments reflecting the type of change that caused this event.
@@ -165,9 +162,6 @@ export class SequenceDeltaEventClass extends SequenceEventClass<MergeTreeDeltaOp
 	 */
 	public readonly isLocal: boolean;
 
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 */
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
