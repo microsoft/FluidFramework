@@ -341,26 +341,23 @@ extends:
                   TARGET_BRANCH_NAME: '$(targetBranchName)'
                   GITHUB_PR_NUMBER: $(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)
                   ADO_BUILD_ID: ${$(Build.BuildId)}
-                  GITHUB_REPOSITORY_OWNER: $(Build.Repository.Name)
-                  GITHUB_REPOSITORY_NAME: $(Build.Repository.Name)
+                  CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE: Code Coverage Report
                 inputs:
                   targetType: inline
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
-                    echo "Now in directory: $(pwd)"
-                    echo "TARGET_BRANCH_NAME: $(targetBranchName)"
-                    GITHUB_REPOSITORY_OWNER= $(Build.Repository.Provider)
-                    GITHUB_REPOSITORY_NAME= $(Build.Repository.Name)
-                    echo "${GITHUB_REPOSITORY_OWNER} ${GITHUB_REPOSITORY_NAME}"
+                    Coverage_Report_Artifact_Name="Code Coverage Report"
+                    echo "##vso[task.setvariable CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE=Coverage_Report_Artifact_Name]$Coverage_Report_Artifact_Name"
+                    echo "##vso[task.setvariable CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR=Coverage_Report_Artifact_Name]$CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
                     REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
                     REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
-                    echo "##vso[task.setvariable variable=REPO_NAME]$REPO_NAME"
-                    echo "##vso[task.setvariable variable=REPO_OWNER]$REPO_OWNER"
-                    echo "Repository Owner: $REPO_OWNER"
-                    echo "Repository Name: $REPO_NAME"
+                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_NAME]$REPO_NAME"
+                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_OWNER]$REPO_OWNER"
+                    echo "Repository Owner: $GITHUB_REPOSITORY_OWNER"
+                    echo "Repository Name: $GITHUB_REPOSITORY_NAME"
                     echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
-                    echo "check: $(env.SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)"
-                    echo "check: $(env.GITHUB_PR_NUMBER) $(env.ADO_BUILD_ID)"
+                    echo "check: $(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)"
+                    echo "check: $(GITHUB_PR_NUMBER) $(ADO_BUILD_ID) $(CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE)"
                     npm run
 
               # Build and Lint
