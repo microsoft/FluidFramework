@@ -339,16 +339,16 @@ extends:
                   ADO_API_TOKEN: $(System.AccessToken)
                   GITHUB_API_TOKEN: $(githubPublicRepoSecret)
                   TARGET_BRANCH_NAME: '$(targetBranchName)'
-                  GITHUB_PR_NUMBER: $(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)
-                  ADO_BUILD_ID: ${$(Build.BuildId)}
+                  GITHUB_PR_NUMBER: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+                  ADO_BUILD_ID: $(Build.BuildId)
                   CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE: Code Coverage Report
                 inputs:
                   targetType: inline
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
                     Coverage_Report_Artifact_Name="Code Coverage Report"
-                    echo "##vso[task.setvariable variable=Coverage_Report_Artifact_Name]$CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE"
-                    echo "##vso[task.setvariable variable=Coverage_Report_Artifact_Name]$CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
+                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE]$Coverage_Report_Artifact_Name"
+                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR]$Coverage_Report_Artifact_Name"
                     REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
                     REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
                     echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_NAME]$REPO_NAME"
@@ -356,7 +356,6 @@ extends:
                     echo "Repository Owner: $GITHUB_REPOSITORY_OWNER"
                     echo "Repository Name: $GITHUB_REPOSITORY_NAME"
                     echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
-                    echo "check: $(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)"
                     echo "check: $GITHUB_PR_NUMBER $ADO_BUILD_ID $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE"
                     npm run
 
