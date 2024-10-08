@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -95,12 +95,12 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@fluid-tools/build-cli": "^0.47.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.2.0",
+		"@fluidframework/build-tools": "^0.47.0",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@~2.3.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -110,6 +110,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }

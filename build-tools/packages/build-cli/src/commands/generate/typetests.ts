@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { realpathSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -515,7 +516,11 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
 			module: ModuleKind.Node16,
 		},
 	});
-	const sourceFile = project.addSourceFileAtPath(typesPath);
+
+	// The typesPath may be a symlink or junction, so resolve the real path
+	// before adding it to the project to ensure correct module resolutions.
+	const realTypesPath = realpathSync(typesPath);
+	const sourceFile = project.addSourceFileAtPath(realTypesPath);
 	return sourceFile;
 }
 

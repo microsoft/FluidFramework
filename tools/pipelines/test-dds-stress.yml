@@ -66,6 +66,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       packages: ${{ parameters.packages }}
       testWorkspace: ${{ variables.testWorkspace }}
+      stressMode: ${{ parameters.stressMode }}
 
   # Capture telemetry about pipeline stages
   - stage: upload_run_telemetry

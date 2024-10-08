@@ -15,8 +15,8 @@ import {
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
 import {
 	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
 	FieldKinds,
-	intoStoredSchema,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import {
@@ -504,11 +504,11 @@ describe("schema validation", () => {
 				const mapTrees = testTree
 					.treeFactory(testIdCompressor)
 					.map((j) => mapTreeFromCursor(cursorForJsonableTreeNode(j)));
-				const schema = intoStoredSchema(testTree.schemaData);
+				const schema = testTree.schemaData;
 				assert.equal(
 					isFieldInSchema(mapTrees, schema.rootFieldSchema, {
 						schema,
-						policy: testTree.schemaData.policy,
+						policy: defaultSchemaPolicy,
 					}),
 					SchemaValidationErrors.NoError,
 				);

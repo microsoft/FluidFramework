@@ -426,7 +426,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor?: IIdCompressor & IIdCompressorCore;
+    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)

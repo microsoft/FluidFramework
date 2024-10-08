@@ -81,6 +81,17 @@ export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean
 	return a.localId === b.localId && a.revision === b.revision;
 }
 
+export function areEqualChangeAtomIdOpts(
+	a: ChangeAtomId | undefined,
+	b: ChangeAtomId | undefined,
+): boolean {
+	if (a === undefined || b === undefined) {
+		return a === b;
+	}
+
+	return areEqualChangeAtomIds(a, b);
+}
+
 /**
  * @returns a ChangeAtomId with the given revision and local ID.
  */

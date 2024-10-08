@@ -32,12 +32,3 @@ declare type old_as_current_for_TypeAlias_RuntimeRequestHandler = requireAssigna
  * "TypeAlias_RuntimeRequestHandler": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_RuntimeRequestHandler = requireAssignableTo<TypeOnly<current.RuntimeRequestHandler>, TypeOnly<old.RuntimeRequestHandler>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_buildRuntimeRequestHandler": {"backCompat": false}
- */
-declare type current_as_old_for_Function_buildRuntimeRequestHandler = requireAssignableTo<TypeOnly<typeof current.buildRuntimeRequestHandler>, TypeOnly<typeof old.buildRuntimeRequestHandler>>

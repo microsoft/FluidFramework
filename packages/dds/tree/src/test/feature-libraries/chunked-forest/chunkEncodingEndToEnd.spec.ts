@@ -14,6 +14,7 @@ import {
 	mapCursorField,
 	RevisionTagCodec,
 	rootFieldKey,
+	type TaggedChange,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
@@ -50,15 +51,24 @@ import {
 	ForestType,
 	type TreeStoredContent,
 	type ISharedTreeEditor,
+	SharedTreeFactory,
+	Tree,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
 	cursorFromInsertableTreeField,
 	forestWithContent,
+	mintRevisionTag,
 	testIdCompressor,
+	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
-import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	TreeViewConfiguration,
+} from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -70,6 +80,9 @@ import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { JsonObject } from "../../json/jsonDomainSchema.js";
 import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -135,10 +148,10 @@ describe("End to end chunked encoding", () => {
 		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
-		const changeLog: ModularChangeset[] = [];
+		const changeLog: TaggedChange<ModularChangeset>[] = [];
 
-		const changeReceiver = (change: ModularChangeset) => {
-			changeLog.push(change);
+		const changeReceiver = (taggedChange: TaggedChange<ModularChangeset>) => {
+			changeLog.push(taggedChange);
 		};
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -146,15 +159,21 @@ describe("End to end chunked encoding", () => {
 			fieldBatchCodec,
 			{ jsonValidator: typeboxValidator },
 		);
-		const dummyEditor = new DefaultEditBuilder(new DefaultChangeFamily(codec), changeReceiver);
-		const checkout = new MockTreeCheckout(forest, dummyEditor as unknown as ISharedTreeEditor);
+		const dummyEditor = new DefaultEditBuilder(
+			new DefaultChangeFamily(codec),
+			mintRevisionTag,
+			changeReceiver,
+		);
+		const checkout = new MockTreeCheckout(forest, {
+			editor: dummyEditor as unknown as ISharedTreeEditor,
+		});
 		checkout.editor
 			.sequenceField({ field: rootFieldKey, parent: undefined })
 			.insert(0, chunk.cursor());
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
-		const insertedChange = changeLog[0];
+		const { change: insertedChange, revision } = changeLog[0];
 		assert(insertedChange.builds !== undefined);
-		const insertedChunk = insertedChange.builds.get([undefined, 0 as ChangesetLocalId]);
+		const insertedChunk = insertedChange.builds.get([revision, 0 as ChangesetLocalId]);
 		assert.equal(insertedChunk, chunk);
 		assert(chunk.isShared());
 	});
@@ -373,6 +392,60 @@ describe("End to end chunked encoding", () => {
 
 			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);
 			assert.deepEqual([initialTree], jsonableTree);
+		});
+
+		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
+			const factory = new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				forest: ForestType.Optimized,
+			});
+
+			const runtime = new MockFluidDataStoreRuntime({
+				clientId: `test-client`,
+				id: "test",
+				idCompressor: testIdCompressor,
+			});
+			const tree = factory.create(
+				runtime,
+				"TestSharedTree",
+			) as SharedTreeWithConnectionStateSetter;
+
+			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+
+			class TreeWithIdentifier extends schemaFactory.object("treeWithIdentifier", {
+				identifier: schemaFactory.identifier,
+			}) {}
+			const view = tree.viewWith(
+				new TreeViewConfiguration({
+					schema: TreeWithIdentifier,
+				}),
+			);
+			view.initialize({ identifier: stableId });
+
+			const forest = view.checkout.forest;
+			assert(forest instanceof ChunkedForest);
+			const uniformChunk = forest.roots.fields.get(rootFieldKey)?.at(0);
+			assert(uniformChunk instanceof UniformChunk);
+			const chunkValues = uniformChunk.values;
+			assert.deepEqual(chunkValues, [testIdCompressor.recompress(stableId)]);
+			assert.deepEqual(view.root.identifier, stableId);
+			assert.deepEqual(Tree.shortId(view.root), testIdCompressor.recompress(stableId));
+
+			// When getting the value from the cursor, check that the value is unencoded string
+			const jsonableTree = mapCursorField(uniformChunk.cursor(), jsonableTreeFromCursor);
+			assert.deepEqual(jsonableTree, [
+				{
+					fields: {
+						identifier: [
+							{
+								type: "com.fluidframework.leaf.string",
+								value: stableId,
+							},
+						],
+					},
+					type: "com.example.treeWithIdentifier",
+				},
+			]);
 		});
 	});
 });

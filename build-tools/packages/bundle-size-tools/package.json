@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/bundle-size-tools",
-	"version": "0.45.0",
+	"version": "0.48.0",
 	"description": "Utility for analyzing bundle size regressions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -45,7 +45,7 @@
 		"msgpack-lite": "^0.1.26",
 		"pako": "^2.1.0",
 		"typescript": "~5.4.5",
-		"webpack": "^5.88.1"
+		"webpack": "^5.94.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",

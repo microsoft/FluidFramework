@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/app-insights-logger",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -94,10 +94,10 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@fluid-tools/build-cli": "^0.47.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@fluidframework/build-tools": "^0.47.0",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
@@ -129,13 +129,19 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:esnext": [
+				"...",
+				"typetests:gen"
+			],
 			"tsc": [
+				"...",
 				"typetests:gen"
 			]
 		}
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

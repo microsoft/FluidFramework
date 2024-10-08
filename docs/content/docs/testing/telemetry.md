@@ -130,8 +130,7 @@ either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPrope
 
 ### Understanding Tags
 
-Tags are strings used to classify the properties on telemetry events. By default, telemetry properties are untagged
-and untagged properties can be considered safe for general logging. However,
+Tags are strings used to classify the properties on telemetry events. By default, telemetry properties are untagged. However,
 the Fluid Framework may emit events with some properties tagged, so implementations of `ITelemetryBaseLogger` must be
 prepared to check for and interpret any tags.  Generally speaking, when logging to the user's console, tags can
 be ignored and tagged values logged plainly, but when transmitting tagged properties to a telemetry service,
@@ -261,7 +260,7 @@ async function start(): Promise<void> {
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
 event object.
 
-<img src="https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png" alt="The
+<img src="https://storage.fluidframework.com/static/images/consoleLogger_telemetry_in_action.png" alt="The
   ConsoleLogger sends telemetry events to the browser console for display.">
 
 {{% callout warning %}}
