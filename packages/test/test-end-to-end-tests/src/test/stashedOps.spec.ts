@@ -2043,6 +2043,38 @@ describeCompat(
 			return (dds as any).runtime.idCompressor as IIdCompressor;
 		}
 
+		/**
+		 * Load the container with the given pendingLocalState, and wait for it to close,
+		 * checking that it closed with the given error message (if possible).
+		 *
+		 * Note: There is a race condition for when the closure happens so we check a few ways the error could propagate.
+		 */
+		async function waitForExpectedContainerErrorOnLoad(
+			pendingLocalState: string,
+			expectedErrorMessage: string,
+		): Promise<boolean> {
+			try {
+				// We expect either loader.resolve to throw or else the container to close right after load
+				const container = await loader.resolve({ url }, pendingLocalState);
+
+				// This is to workaround a race condition in Container.load where the container might close between microtasks
+				// such that it resolves to the closed container rather than rejecting as it's supposed to.
+				if (container.closed) {
+					// We can't access the error that closed the container due to a gap in the API,
+					// so we must assume it is the expected error.
+					return true;
+				}
+
+				await timeoutPromise((_resolve, reject) => {
+					container.once("closed", reject);
+				});
+			} catch (error) {
+				return (error as Error).message === expectedErrorMessage;
+			}
+			// Unreachable (the timeoutPromise will throw)
+			return false;
+		}
+
 		// We disable summarization (so no summarizer container is loaded) due to challenges specifying the exact
 		// expected behavior of the summarizer container in these tests, in the presence of race conditions.
 		// We aren't testing anything about summmarization anyway, so no need for it.
@@ -2123,19 +2155,12 @@ describeCompat(
 
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
 				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
-				const containerLoadError = await loader.resolve({ url }, pendingLocalState).then(
-					(c) =>
-						// If the container is closed, assume it was due to the right error.
-						// (We need a new API on IContainer to return the error that caused the container to close)
-						c.closed
-							? new Error("Forked Container Error! Matching batchIds but mismatched clientId")
-							: undefined,
-					(e: unknown) => e as Error,
+				const closedWithExpectedError = await waitForExpectedContainerErrorOnLoad(
+					pendingLocalState,
+					"Forked Container Error! Matching batchIds but mismatched clientId" /* expectedError */,
 				);
-
-				assert.strictEqual(
-					containerLoadError?.message,
-					"Forked Container Error! Matching batchIds but mismatched clientId",
+				assert(
+					closedWithExpectedError,
 					"Container should have closed due to ForkedContainerError",
 				);
 
@@ -2263,7 +2288,6 @@ describeCompat(
 				// Container 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2292,26 +2316,12 @@ describeCompat(
 
 				// Rehydrate the second time - when we are catching up, we'll recognize the incoming op (from container2),
 				// and since it's coming from a different clientID we'll realize the container is forked and we'll close
-				// NOTE: there is a race condition for when the closure happens so we check a few ways the error could propagate.
-				await assert.rejects(
-					async () => {
-						// We expect either loader.resolve to throw or else the container to close right after load
-						const container3 = await loader.resolve({ url }, pendingLocalState);
-
-						// This is to workaround a race condition in Container.load where the container might close between microtasks
-						// such that it resolves to the closed container rather than rejecting as it's supposed to.
-						if (container3.closed) {
-							// If the container is closed, assume it was due to the right error until the bug mentioned above is fixed
-							throw new Error(
-								"Forked Container Error! Matching batchIds but mismatched clientId",
-							);
-						}
-
-						await timeoutPromise((_resolve, reject) => {
-							container3.once("closed", reject);
-						});
-					},
-					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
+				const closedWithExpectedError = await waitForExpectedContainerErrorOnLoad(
+					pendingLocalState,
+					"Forked Container Error! Matching batchIds but mismatched clientId" /* expectedError */,
+				);
+				assert(
+					closedWithExpectedError,
 					"Container should have closed due to ForkedContainerError",
 				);
 
