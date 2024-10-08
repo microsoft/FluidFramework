@@ -85,18 +85,20 @@ const executableToLeafTask: {
  * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
 function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
-	const found: TaskHandler | undefined = executableToLeafTask[executable];
-	if (found === undefined) {
-		const config = context.fluidBuildConfig;
-		const declarativeTasks = config?.declarativeTasks;
-		const taskMatch = declarativeTasks?.[executable];
-		if (taskMatch !== undefined) {
-			return createDeclarativeTaskHandler(taskMatch);
-		}
+	const config = context.fluidBuildConfig;
+	const declarativeTasks = config?.declarativeTasks;
+	const taskMatch = declarativeTasks?.[executable];
+
+	if (taskMatch !== undefined) {
+		return createDeclarativeTaskHandler(taskMatch);
 	}
 
-	// If no handler is found, return the UnknownLeafTask as the default handler.
-	return found ?? UnknownLeafTask;
+	// No declarative task found matching the executable, so look it up in the built-in list.
+	const builtInHandler: TaskHandler | undefined = executableToLeafTask[executable];
+
+	// If no handler is found, return the UnknownLeafTask as the default handler. The task won't support incremental
+	// builds.
+	return builtInHandler ?? UnknownLeafTask;
 }
 
 /**
