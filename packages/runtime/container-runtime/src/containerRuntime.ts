@@ -3100,16 +3100,7 @@ export class ContainerRuntime
 		};
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
-		if (
-			message.clientId === this.clientId &&
-			// jason-ha: This `connected` check seems incorrect. Signals that come through
-			// here must have been received while connected to service and there is no need
-			// to avoid processing when connection has dropped. Because container runtime's
-			// `connected` (and `_connected`) state also reflects some ops state, it may
-			//  easily be false when newly connected and signal tracking may very well
-			// complain lost signals (that were simply skipped per this check).
-			this.connected
-		) {
+		if (message.clientId === this.clientId) {
 			this.processSignalForTelemetry(envelope);
 		}
 
@@ -3369,7 +3360,7 @@ export class ContainerRuntime
 	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string) {
 		const isBroadcastSignal = targetClientId === undefined;
 
-		if (isBroadcastSignal) {
+		if (isBroadcastSignal && this.connected) {
 			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
 				.broadcastSignalSequenceNumber;
 			// Stamp with the broadcast signal sequence number.
