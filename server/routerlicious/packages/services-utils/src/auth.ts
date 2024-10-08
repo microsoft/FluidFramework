@@ -228,6 +228,14 @@ export async function verifyToken(
 		// Update token cache
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			Lumberjack.verbose("Token cache miss", logProperties);
+
+			// Only cache tokens if it has more than 5 minutes left before expiration
+			const expirationBufferInMs = 5 * 60 * 1000; // 5 minutes
+			if (tokenLifetimeMs !== undefined && tokenLifetimeMs <= expirationBufferInMs) {
+				Lumberjack.verbose(`Token near expiration: ${tokenLifetimeMs}, skip cache tokens`, logProperties);
+				return;
+			}
+
 			const tokenCacheKey = token;
 			options.tokenCache
 				.set(
