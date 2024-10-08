@@ -38,6 +38,14 @@ If you don't need to test search, it is recommended to run `npm start` instead.
 This is faster, and will watch for content changes and update automatically.
 You will still need to build the API documentation first.
 
+#### Local API docs build
+
+To include the repo-local API docs in the build, first build the code from the root of the repo, then run `build:dev` or `build:api-documentation:dev` from this directory.
+This will generate a "local" docs version (in addition to the production versions), which strictly includes API documentation generated from the local build artifacts.
+So long as the API documentation was generated in this manner, those docs will be viewable regardless of how to run Docusaurus (`npm start` or `npm run serve`).
+
+To remove the local docs view, simply run `npm run clean` and re-run the build without the `:dev` postfix.
+
 ## Docusaurus
 
 ### Notes
@@ -231,12 +239,3 @@ An offline solution comes with some downsides (slower build, larger bundle), and
 That said, it is much better than what our current website has (no search whatsoever).
 
 We should come back to this after v1 of our new website.
-
-
-# Local API docs build
-
-`versions.json` cannot contain "local" when building prod.
-- Need to gen versions based on env mode.
-
-Need explicit sidebar for local mode - otherwise it gets none.
-We can probably check one in, whose API docs section mirrors current.
