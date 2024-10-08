@@ -340,7 +340,6 @@ extends:
 
               - task: Bash@3
                 displayName: Testing code coverage directory
-                parameters: ${{ parameters.reportCodeCoverageComparison }}
                 condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true))
                 env:
                   ADO_API_TOKEN: $(System.AccessToken)
