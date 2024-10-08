@@ -29,7 +29,6 @@ import type { Provider } from "nconf";
 import {
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
-	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";

@@ -50,6 +50,7 @@ import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
+import type { RequestHandler } from "express-serve-static-core";
 
 export function create(
 	storage: IDocumentStorage,
@@ -272,7 +273,8 @@ export function create(
 		},
 	);
 
-	function verifyStorageTokenForGetSession(...args: Parameters<typeof verifyStorageToken>) {
+	function verifyStorageTokenForGetSession(...args: Parameters<typeof verifyStorageToken>): RequestHandler {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		return async (request, res, next) => {
 			const VerifyStorageTokenMetric = Lumberjack.newLumberMetric(
 				LumberEventName.VerifyStorageToken,
@@ -287,7 +289,7 @@ export function create(
 				VerifyStorageTokenMetric.error("Failed to verify token.", error);
 				throw error;
 			}
-		}
+		};
 	}
 
 	/**
