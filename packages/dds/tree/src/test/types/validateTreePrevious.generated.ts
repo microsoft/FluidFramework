@@ -430,6 +430,7 @@ declare type current_as_old_for_Interface_SchemaCompatibilityStatus = requireAss
  * typeValidation.broken:
  * "Interface_TreeArrayNode": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_TreeArrayNode = requireAssignableTo<TypeOnly<current.TreeArrayNode>, TypeOnly<old.TreeArrayNode>>
 
 /*
@@ -612,6 +613,7 @@ declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField =
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitField": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.InsertableTreeFieldFromImplicitField>, TypeOnly<old.InsertableTreeFieldFromImplicitField>>
 
 /*
@@ -648,6 +650,7 @@ declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedT
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes>, TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes>>
 
 /*
@@ -1162,6 +1165,7 @@ declare type old_as_current_for_TypeAlias_NodeFromSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_NodeFromSchema": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_NodeFromSchema = requireAssignableTo<TypeOnly<current.NodeFromSchema<any>>, TypeOnly<old.NodeFromSchema<any>>>
 
 /*
@@ -1243,6 +1247,7 @@ declare type old_as_current_for_TypeAlias_TreeFieldFromImplicitField = requireAs
  * typeValidation.broken:
  * "TypeAlias_TreeFieldFromImplicitField": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_TreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.TreeFieldFromImplicitField>, TypeOnly<old.TreeFieldFromImplicitField>>
 
 /*
@@ -1279,6 +1284,7 @@ declare type old_as_current_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = req
  * typeValidation.broken:
  * "TypeAlias_TreeNodeFromImplicitAllowedTypes": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.TreeNodeFromImplicitAllowedTypes>, TypeOnly<old.TreeNodeFromImplicitAllowedTypes>>
 
 /*

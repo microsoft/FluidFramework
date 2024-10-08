@@ -114,6 +114,7 @@ export {
 	type InsertableObjectFromSchemaRecordUnsafe,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
+	type TreeNodeSchemaClassUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -125,6 +126,10 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	type UnsafeUnknownSchema,
+	type TreeViewAlpha,
+	type InsertableField,
+	type Insertable,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -151,6 +156,7 @@ export {
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
+	type ReadonlyArrayNode,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
