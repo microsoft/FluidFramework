@@ -75,8 +75,6 @@ export interface ReleaseRanges {
  * Get the release ranges for a version string.
  *
  * @param version - The version.
- * @param releaseGroup - The release group to filter by
- * @param context - The repo {@link Context}. The context is retrieved and cached the first time this method is called.
  * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.

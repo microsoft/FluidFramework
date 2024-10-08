@@ -208,7 +208,8 @@ FLAGS
       'foo.caret.json', 'foo.simple.json', etc.
 
   --compatVersionInterval=<value>
-      [default: 10] The multiple of minor versions to use for calculating the next version in the range.
+      [default: 10] The multiple of minor versions to use for calculating the next version in the legacy compatibility
+      range.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

@@ -393,7 +393,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}),
 		compatVersionInterval: Flags.integer({
 			description:
-				"The multiple of minor versions to use for calculating the next version in the range.",
+				"The multiple of minor versions to use for calculating the next version in the legacy compatibility range.",
 			default: 10,
 		}),
 		...ReleaseReportBaseCommand.flags,
