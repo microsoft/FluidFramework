@@ -12,6 +12,9 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
 		"prettier",
 	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
 	rules: {
 		// This rule is often triggered when using custom Flags, so disabling.
 		"object-shorthand": "off",
@@ -90,4 +93,14 @@ module.exports = {
 		"perfectionist/sort-union-types": "off",
 		"perfectionist/sort-vue-attributes": "off",
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Test files can import from anywhere
+				"import/no-internal-modules": "off",
+			},
+		},
+	],
 };

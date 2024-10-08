@@ -22,6 +22,7 @@ describe("flub test-only-filter", () => {
 		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all"])
 		.it(`--all selector`, (ctx) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { selected, filtered } = output;
 			expect(selected.length).to.equal(filtered.length);
@@ -31,6 +32,7 @@ describe("flub test-only-filter", () => {
 		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--dir", "."])
 		.it(`--dir selector`, (ctx) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { selected, filtered } = output;
 			expect(selected).to.be.ofSize(1);
@@ -38,8 +40,8 @@ describe("flub test-only-filter", () => {
 
 			const pkg = filtered[0];
 
-			expect(pkg.name).to.equal("@fluid-tools/build-cli");
-			expect(pkg.directory).to.equal("build-tools/packages/build-cli");
+			expect(pkg?.name).to.equal("@fluid-tools/build-cli");
+			expect(pkg?.directory).to.equal("build-tools/packages/build-cli");
 
 			expect(selected.length).to.equal(1);
 			expect(filtered.length).to.equal(1);
@@ -49,6 +51,7 @@ describe("flub test-only-filter", () => {
 		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"])
 		.it(`--releaseGroup selector`, (ctx) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { selected, filtered } = output;
 			expect(selected).to.be.ofSize(4);
@@ -59,6 +62,7 @@ describe("flub test-only-filter", () => {
 		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all", "--private"])
 		.it(`--private filter`, (ctx) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { filtered } = output;
 
@@ -73,6 +77,7 @@ describe("flub test-only-filter", () => {
 		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all", "--no-private"])
 		.it(`--no-private filter`, (ctx) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { filtered } = output;
 
@@ -91,6 +96,7 @@ describe("flub test-only-filter", () => {
 			"@fluidframework",
 		])
 		.it(`--scope filter`, (ctx) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { filtered } = output;
 

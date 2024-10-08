@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-nested-callbacks */
+
 import { assert } from "chai";
 
-import type { ExportData, Node10CompatExportData } from "../../src/library/packageExports.js";
-import { queryTypesResolutionPathsFromPackageExports } from "../../src/library/packageExports.js";
+import type { ExportData, Node10CompatExportData } from "../../library/packageExports.js";
+import { queryTypesResolutionPathsFromPackageExports } from "../../library/packageExports.js";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
@@ -119,7 +121,16 @@ const doubleReferencingExportsPackage: PackageJson = {
 	},
 };
 
-function genTestData(path: string, condition: string) {
+function genTestData(
+	path: string,
+	condition: string,
+): {
+	query: Map<string | RegExp, string | undefined>;
+	commonExportResults: Map<string, ExportData>;
+	commonNode10CompatExportResults: Map<string, Pick<ExportData, "relPath" | "isTypeOnly">>;
+	typeOnlyExportResults: Map<string, ExportData>;
+	doubleReferenceExportResults: Map<string, ExportData>;
+} {
 	return {
 		query: new Map<string | RegExp, string | undefined>([
 			[`./${path}/public.d.ts`, "Public"],
@@ -179,7 +190,7 @@ function genTestData(path: string, condition: string) {
 				{
 					relPath: `./${path}/alpha.d.ts`,
 					// "./alpha" is setup with a "default" instead of normal "import" condition
-					conditions: condition !== "import" ? ["types", condition] : ["types"],
+					conditions: condition === "import" ? ["types"] : ["types", condition],
 					isTypeOnly: true,
 				},
 			],
@@ -216,21 +227,25 @@ function genTestData(path: string, condition: string) {
 }
 
 class MockLogger implements Logger {
-	public calls: [string | Error | undefined, ...any[]][] = [];
+	public calls: [string | Error | undefined, ...unknown[]][] = [];
 
-	log(message?: string, ...args: any[]): void {
+	log(message?: string, ...args: unknown[]): void {
 		this.calls.push([message, ...args]);
 	}
-	info(msg: string | Error | undefined, ...args: any[]): void {
+
+	info(msg: string | Error | undefined, ...args: unknown[]): void {
 		this.calls.push([msg, ...args]);
 	}
-	warning(msg: string | Error | undefined, ...args: any[]): void {
+
+	warning(msg: string | Error | undefined, ...args: unknown[]): void {
 		this.calls.push([msg, ...args]);
 	}
-	errorLog(msg: string | Error | undefined, ...args: any[]): void {
+
+	errorLog(msg: string | Error | undefined, ...args: unknown[]): void {
 		this.calls.push([msg, ...args]);
 	}
-	verbose(msg: string | Error | undefined, ...args: any[]): void {
+
+	verbose(msg: string | Error | undefined, ...args: unknown[]): void {
 		this.calls.push([msg, ...args]);
 	}
 }
@@ -250,6 +265,7 @@ describe("library/packageExports", () => {
 		[
 			["commonjs (dist path)", "dist", "require"] as const,
 			["esm (lib path)", "lib", "import"] as const,
+			// eslint-disable-next-line unicorn/no-array-for-each
 		].forEach(([desc, path, condition]) =>
 			describe(`using ${desc}`, () => {
 				const logger = new MockLogger();
@@ -301,7 +317,7 @@ describe("library/packageExports", () => {
 
 					// Verify
 					assert(logger.calls.length === 1, "logs one warning");
-					const message = logger.calls[0][0];
+					const message = logger.calls[0]?.[0];
 					assert(typeof message === "string");
 					assert(
 						message.endsWith(" found in exports multiple times."),
