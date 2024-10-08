@@ -664,16 +664,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(
 					event,
 					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
-						const targetClientId = Array.isArray(msg)
-							? msg[0].targetClientId
-							: msg.targetClientId;
-						if (
-							!this.enableMultiplexing ||
-							!documentId ||
-							(!targetClientId && this.documentId === documentId) ||
-							(targetClientId && this.clientId === targetClientId)
-						) {
+						if (!this.enableMultiplexing || !documentId) {
 							listener(msg, documentId);
+							return;
+						}
+
+						const msgs = Array.isArray(msg) ? msg : [msg];
+						const filteredMsgs = msgs.filter(
+							(m) =>
+								(!m.targetClientId && documentId === this.documentId) ||
+								(m.targetClientId && m.targetClientId === this.clientId),
+						);
+
+						if (filteredMsgs.length > 0) {
+							listener(filteredMsgs, documentId);
 						}
 					},
 				);
