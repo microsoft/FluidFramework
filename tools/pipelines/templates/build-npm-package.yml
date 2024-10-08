@@ -345,17 +345,17 @@ extends:
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
                     Coverage_Report_Artifact_Name="Code Coverage Report"
-                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE]$Coverage_Report_Artifact_Name"
-                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR]$Coverage_Report_Artifact_Name"
+                    export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE=$Coverage_Report_Artifact_Name
+                    export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR=$Coverage_Report_Artifact_Name
                     echo "Artifact Name: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE"
                     echo "Artifact Name: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
                     REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
                     REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
-                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_NAME]$REPO_NAME"
-                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_OWNER]$REPO_OWNER"
+                    export GITHUB_REPOSITORY_NAME=$REPO_NAME
+                    export GITHUB_REPOSITORY_OWNER=$REPO_OWNER
                     echo "Repository Owner: $GITHUB_REPOSITORY_OWNER"
                     echo "Repository Name: $GITHUB_REPOSITORY_NAME"
-                    echo "##vso[task.setvariable variable=GITHUB_PR_NUMBER]$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
+                    export GITHUB_PR_NUMBER=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
                     echo "check: $GITHUB_PR_NUMBER $ADO_BUILD_ID $Coverage_Report_Artifact_Name"
                     npm run
 
