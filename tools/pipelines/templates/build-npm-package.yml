@@ -347,8 +347,8 @@ extends:
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
                     Coverage_Report_Artifact_Name="Code Coverage Report"
-                    echo "##vso[task.setvariable CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE=Coverage_Report_Artifact_Name]$Coverage_Report_Artifact_Name"
-                    echo "##vso[task.setvariable CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR=Coverage_Report_Artifact_Name]$CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
+                    echo "##vso[task.setvariable variable=Coverage_Report_Artifact_Name]$CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE"
+                    echo "##vso[task.setvariable variable=Coverage_Report_Artifact_Name]$CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
                     REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
                     REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
                     echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_NAME]$REPO_NAME"
@@ -357,7 +357,7 @@ extends:
                     echo "Repository Name: $GITHUB_REPOSITORY_NAME"
                     echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
                     echo "check: $(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)"
-                    echo "check: $(GITHUB_PR_NUMBER) $(ADO_BUILD_ID) $(CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE)"
+                    echo "check: $GITHUB_PR_NUMBER $ADO_BUILD_ID $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE"
                     npm run
 
               # Build and Lint
