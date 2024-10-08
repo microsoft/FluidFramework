@@ -46,7 +46,8 @@ export class PropertiesManager {
 				.filter(([_, v]) => v.raw !== undefined),
 			...Object.entries<AdjustParams & { raw?: never }>(op.adjust ?? {}),
 		]) {
-			const previousValue = properties[key];
+			// eslint-disable-next-line unicorn/no-null
+			const previousValue = properties[key] ?? null;
 
 			if (rollback === PropertiesRollback.Rollback) {
 				const pending = this.pending.get(key);
@@ -65,6 +66,7 @@ export class PropertiesManager {
 					assert(pending === undefined, "must not have pending when not collaborating");
 					properties[key] = computeValue(previousValue, [value]);
 				}
+				deltas[key] = previousValue;
 			} else {
 				let pending: PendingChanges | undefined = this.pending.get(key);
 				if (seq === UnassignedSequenceNumber && collaborating) {
@@ -80,26 +82,31 @@ export class PropertiesManager {
 						pending.consensus,
 						pending.changes.map((n) => n.data),
 					);
+					deltas[key] = previousValue;
 				} else {
 					if (pending === undefined) {
 						// no pending changes, so no need to update the adjustments
 						properties[key] = computeValue(previousValue, [value]);
+						deltas[key] = previousValue;
 					} else {
 						// there are pending changes, so update the baseline remote value
 						// and then compute the current value
 						pending.consensus = computeValue(pending.consensus, [value]);
-						properties[key] = computeValue(
-							pending.consensus,
-							pending.changes.map((n) => n.data),
-						);
+						if (pending.changes.empty) {
+							deltas[key] = previousValue;
+						} else {
+							properties[key] = computeValue(
+								pending.consensus,
+								pending.changes.map((n) => n.data),
+							);
+							if (properties[key] !== previousValue) {
+								deltas[key] = previousValue;
+							}
+						}
 					}
 				}
 			}
-			// if the value changed, it should be expressed in the delta
-			if (properties[key] !== previousValue) {
-				// eslint-disable-next-line unicorn/no-null
-				deltas[key] = previousValue ?? null;
-			}
+
 			if (properties[key] === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete properties[key];
