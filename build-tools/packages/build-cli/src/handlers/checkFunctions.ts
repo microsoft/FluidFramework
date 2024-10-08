@@ -349,17 +349,7 @@ export const checkNoPrereleaseDependencies: StateHandlerFunction = async (
 
 	const { context, releaseGroup } = data;
 
-	const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
-		context,
-		releaseGroup,
-	);
-
-	const packagesToBump = new Set(packages.keys());
-	for (const rg of releaseGroups.keys()) {
-		for (const p of context.packagesInReleaseGroup(rg)) {
-			packagesToBump.add(p.name);
-		}
-	}
+	const { isEmpty } = await getPreReleaseDependencies(context, releaseGroup);
 
 	if (isEmpty) {
 		BaseStateHandler.signalSuccess(machine, state);
