@@ -14,6 +14,7 @@ import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, ISegmentLeaf, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -689,6 +690,128 @@ describe("client.applyMsg", () => {
 			}
 
 		logger.validate({ baseText: "DDDDDDcbD" });
+	});
+
+	describe("obliterate", () => {
+		// 	op types: 0) insert 1) remove 2) annotate
+		// Clients: 3 Ops: 3 Round: 86
+		// op         | client A | op         | client B | op           | client C
+		//            | BBB-C-   |            | BBB-C-   |              | BBB-C-
+		//            | BBB-C-   | L:558:B0@3 | BBB__-C- |              | BBB-C-
+		//            |          |            |    BB    |              |
+		//            | BBB-C-   |            | BBB__-C- | L:558:C4@2,4 | BB_-_-
+		//            |          |            |    BB    |              |   - -
+		//            | BBB-C-   |            | BBB__-C- | L:558:C4@1,2 | B__-_-
+		//            |          |            |    BB    |              |  -- -
+		// 1:0:B0@3   | BBBBB-C- | 1:0:B0@3   | BBBBB-C- | 1:0:B0@3     | B__BB-_-
+		//            |          |            |          |              |  --   -
+		// 2:0:C4@2,4 | BB----   | 2:0:C4@2,4 | BB----   | 2:0:C4@2,4   | B_-BB-
+		//            |          |            |          |              |  -
+		// 3:0:C4@1,2 | B-----   | 3:0:C4@1,2 | B-----   | 3:0:C4@1,2   | B--BB-
+		it("sided obliterate regression test", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123",
+					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+				},
+				"A",
+				"B",
+				"C",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.B.makeOpMessage(clients.B.removeRangeLocal(0, clients.B.getLength()), ++seq),
+				clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BBB"), ++seq),
+				clients.C.makeOpMessage(clients.C.insertTextLocal(2, "C"), ++seq),
+			);
+			for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+
+			ops.push(
+				clients.B.makeOpMessage(clients.B.insertTextLocal(3, "BB"), ++seq),
+				clients.C.makeOpMessage(
+					clients.C.obliterateRangeLocal(
+						{ pos: 2, side: Side.Before },
+						{ pos: 3, side: Side.After },
+					),
+					++seq,
+				),
+				clients.C.makeOpMessage(
+					clients.C.obliterateRangeLocal(
+						{ pos: 1, side: Side.Before },
+						{ pos: 1, side: Side.After },
+					),
+					++seq,
+				),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+
+			logger.validate({ baseText: "B" });
+		});
+
+		// MergeTree insert failed:
+		// 		Clients: 2 Ops: 8 Round: 4
+		// op           | client A   | op           | client B
+		//              | BBBBB BBB- |              | BBBBB BBB-
+		//              | BBBBB BBB- | L:88:B2@1,7  | BBBBB BBB-
+		//              | BBBBB BBB- | L:88:B4@6,8  | BBBBB B__-
+		//              |            |              |        --
+		//              | BBBBB BBB- | L:88:B0@5    | BBBBB _B__-
+		//              |            |              |       B --
+		//              | BBBBB BBB- | L:88:B0@2    | BB_BBB _B__-
+		//              |            |              |   B    B --
+		//              | BBBBB BBB- | L:88:B1@4,6  | BB_B__ _B__-
+		//              |            |              |   B -- B --
+		//              | BBBBB BBB- | L:88:B0@4    | BB_B___ _B__-
+		//              |            |              |   B B-- B --
+		//              | BBBBB BBB- | L:88:B0@4    | BB_B ____ _B__-
+		//              |            |              |   B  BB-- B --
+		//              | BBBBB BBB- | L:88:B2@0,7  | BB_B ____ _B__-
+		//              |            |              |   B  BB-- B --
+		// 89:88:B2@1,7 | BBBBB BBB- | 89:88:B2@1,7 | BB_B ____ _B__-
+		//              |            |              |   B  BB-- B --
+		// 90:88:B4@6,8 | B-------   | 90:88:B4@6,8 | BB_B ____ _B--
+		//              |            |              |   B  BB-- B
+		it("obliterate with mergeTree insert fails", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "BBBBB BBB",
+					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+				},
+				"A",
+				"B",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+			const b = clients.B;
+
+			ops.push(
+				b.makeOpMessage(b.annotateRangeLocal(1, 7, { foo: 1 }), ++seq),
+				b.makeOpMessage(
+					b.obliterateRangeLocal({ pos: 6, side: Side.Before }, { pos: 8, side: Side.Before }),
+					++seq,
+				),
+				b.makeOpMessage(b.insertTextLocal(5, "B"), ++seq),
+				b.makeOpMessage(b.insertTextLocal(2, "B"), ++seq),
+				b.makeOpMessage(b.removeRangeLocal(4, 6), ++seq),
+				b.makeOpMessage(b.insertTextLocal(4, "B"), ++seq),
+				b.makeOpMessage(b.annotateRangeLocal(0, 7, { bar: 2 }), ++seq),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+
+			logger.validate({ baseText: "BBBBBB B" });
+		});
 	});
 
 	describe("updates minSeq", () => {
