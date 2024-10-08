@@ -22,6 +22,11 @@ parameters:
   type: object
   default: Small
 
+# The supported values are: short, normal, long
+- name: stressMode
+  type: string
+  default: normal
+
 # Id of the run of the 'Build - client packages' pipeline which contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
 # incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
@@ -81,4 +86,4 @@ stages:
         testFileTarName: ${{ package.testFileTarName }}
         testCommand: ${{ package.testCommand }}
         env:
-          FUZZ_STRESS_RUN: true
+          FUZZ_STRESS_RUN: ${{ parameters.stressMode }}  # The value in package.json passed via cross-env will override this one.

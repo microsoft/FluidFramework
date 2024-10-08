@@ -7,7 +7,7 @@ import { expect } from "chai";
 import {
 	errorMessage,
 	lookForTabs,
-} from "../../../src/library/repoPolicyCheck/spacesOverTabsInYaml.js";
+} from "../../../library/repoPolicyCheck/spacesOverTabsInYaml.js";
 
 describe("indent-with-spaces-in-yaml", () => {
 	it("does not fail when no tabs are present", () => {
