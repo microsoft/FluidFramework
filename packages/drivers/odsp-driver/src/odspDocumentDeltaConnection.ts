@@ -668,7 +668,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 							? msg[0].targetClientId
 							: msg.targetClientId;
 						if (
-							!this.enableMultiplexing || !documentId || targetClientId
+							!this.enableMultiplexing || !documentId || targetClientId !== undefined
 								? targetClientId === this.clientId
 								: documentId === this.documentId
 						) {
