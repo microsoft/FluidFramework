@@ -273,7 +273,9 @@ export function create(
 		},
 	);
 
-	function verifyStorageTokenForGetSession(...args: Parameters<typeof verifyStorageToken>): RequestHandler {
+	function verifyStorageTokenForGetSession(
+		...args: Parameters<typeof verifyStorageToken>
+	): RequestHandler {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		return async (request, res, next) => {
 			const VerifyStorageTokenMetric = Lumberjack.newLumberMetric(
