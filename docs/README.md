@@ -198,20 +198,32 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Other TODOs
 
+#### Before merging into main
+
 -   Add component-level unit testing (with accessibility tests)
 -   Add end-to-end testing
 -   Verify specific browser support
 -   Remove "new website features" demo page
--   Add prettier (wait until after merge to reduce diff noise)
--   Add markdown-lint (same as above)
 -   Add eslint for components
-
 -   Preserve existing redirects that are still needed
     -   TODO
 -   Add new redirects to accommodate changes:
     -   `docs/api/v*` => `docs/v*/api`
     -   `docs/data-structures/counter` => `docs/v1/data-structures/counter`
     -   etc.
+-   Review content changes with tech writer
+    -   Structural changes (contents added/removed by version)
+        -   \- Tree.md for v1
+        -   \- Counter.md for v2
+        -   TODO: what else?
+    -   Content changes:
+        -   `/docs/api/index.mdx`
+        -   `/versioned_docs/api/index.mdx`
+
+#### After merging into main
+
+-   Add prettier (wait until after merge to reduce diff noise)
+-   Add markdown-lint (same as above)
 
 ## Site changes relative to current website
 
