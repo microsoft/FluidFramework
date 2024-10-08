@@ -73,6 +73,7 @@ const getCodeCoverageSummary = (
 	const summary = codeCoverageComparisonReport
 		.sort(
 			(report1, report2) =>
+				// Sort the diff summary of packages based on the total coverage diff(line coverage + branch coverage)
 				report1.branchCoverageDiff +
 				report1.lineCoverageDiff -
 				(report2.branchCoverageDiff + report2.lineCoverageDiff),
@@ -102,7 +103,7 @@ const getColorGlyph = (codeCoverageDiff: number): string => {
 		return "⯅";
 	}
 
-	return "<b>⯅</b>";
+	return "⯅⯅";
 };
 
 const formatDiff = (coverageDiff: number): string => {
