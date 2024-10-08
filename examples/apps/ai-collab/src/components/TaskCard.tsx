@@ -211,6 +211,7 @@ export function TaskCard(props: {
 												props.sharedTreeTask as unknown as Record<string, unknown>,
 												response.data as unknown as Record<string, unknown>,
 											);
+											setAiPromptPopoverAnchor(undefined)
 										} else {
 											enqueueSnackbar(
 												`Copilot: Something went wrong processing your request - "${query}"`,
