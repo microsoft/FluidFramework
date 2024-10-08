@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.47.0",
+	"version": "0.48.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -104,7 +104,7 @@
 		"eslint-config-oclif-typescript": "^3.1.8",
 		"eslint-config-prettier": "~9.1.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.1.0",
+
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
 		"oclif": "^4.14.9",

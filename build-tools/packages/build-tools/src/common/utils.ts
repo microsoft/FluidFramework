@@ -9,14 +9,19 @@ import * as path from "path";
 import isEqual from "lodash.isequal";
 
 /**
- *	An array of commands that are known to have subcommands and should be parsed as such
+ *	An array of commands that are known to have subcommands and should be parsed as such. These will be combined with
+ *	any additional commands provided in the Fluid build config.
  */
-const multiCommandExecutables = ["flub", "biome"];
+const defaultMultiCommandExecutables = ["flub", "biome"] as const;
 
-export function getExecutableFromCommand(command: string) {
+export function getExecutableFromCommand(command: string, multiCommandExecutables: string[]) {
 	let toReturn: string;
 	const commands = command.split(" ");
-	if (multiCommandExecutables.includes(commands[0])) {
+	const multiExecutables: Set<string> = new Set([
+		...defaultMultiCommandExecutables,
+		...multiCommandExecutables,
+	]);
+	if (multiExecutables.has(commands[0])) {
 		// For multi-commands (e.g., "flub bump ...") our heuristic is to scan for the first argument that cannot
 		// be the name of a sub-command, such as '.' or an argument that starts with '-'.
 		//
@@ -174,8 +179,14 @@ export function isSameFileOrDir(f1: string, f2: string) {
  * @param error - description of command line to print when error happens
  * @param pipeStdIn - optional string to pipe to stdin
  */
-export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
-	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+export async function exec(
+	cmd: string,
+	dir: string,
+	error: string,
+	pipeStdIn?: string,
+	options?: Omit<child_process.ExecOptions, "cwd">,
+) {
+	const result = await execAsync(cmd, { ...options, cwd: dir }, pipeStdIn);
 	if (result.error) {
 		throw new Error(
 			`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,

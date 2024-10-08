@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.47.0",
+	"version": "0.48.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,7 +39,7 @@
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
 		"build:readme": "oclif readme --version 0.0.0 --multi --no-aliases",
-		"build:test": "tsc --project ./test/tsconfig.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
@@ -55,7 +55,7 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
+		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\"",
 		"tsc": "tsc"
 	},
 	"c8": {
@@ -93,6 +93,7 @@
 		"@octokit/rest": "^21.0.2",
 		"@rushstack/node-core-library": "^3.59.5",
 		"async": "^3.2.4",
+		"azure-devops-node-api": "^11.2.0",
 		"chalk": "^5.3.0",
 		"change-case": "^3.1.0",
 		"cosmiconfig": "^8.3.6",
@@ -110,6 +111,7 @@
 		"issue-parser": "^7.0.1",
 		"json5": "^2.2.3",
 		"jssm": "5.98.2",
+		"jszip": "^3.10.1",
 		"latest-version": "^5.1.0",
 		"mdast": "^3.0.0",
 		"mdast-util-heading-range": "^4.0.0",
@@ -137,7 +139,8 @@
 		"table": "^6.8.1",
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
-		"unist-util-visit": "^5.0.0"
+		"unist-util-visit": "^5.0.0",
+		"xml2js": "^0.5.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
@@ -161,6 +164,7 @@
 		"@types/semver-utils": "^1.1.1",
 		"@types/sort-json": "^2.0.1",
 		"@types/unist": "^3.0.3",
+		"@types/xml2js": "^0.4.11",
 		"c8": "^7.14.0",
 		"chai": "^4.3.7",
 		"chai-arrays": "^2.2.0",
@@ -172,7 +176,7 @@
 		"eslint-config-prettier": "~9.1.0",
 		"jssm-viz-cli": "5.97.1",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.1.0",
+
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
 		"rimraf": "^4.4.1",
@@ -243,6 +247,9 @@
 			},
 			"transform": {
 				"description": "Transform commands are used to transform code, docs, etc. into alternative forms."
+			},
+			"report": {
+				"description": "Report analysis about the codebase, like code coverage and bundle size measurements."
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.47.0",
+	"version": "0.48.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -50,6 +50,7 @@
 		"find-up": "^7.0.0",
 		"fs-extra": "^11.2.0",
 		"glob": "^7.2.3",
+		"globby": "^11.1.0",
 		"ignore": "^5.2.4",
 		"json5": "^2.2.3",
 		"lodash": "^4.17.21",
