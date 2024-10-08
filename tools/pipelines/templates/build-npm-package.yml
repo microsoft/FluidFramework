@@ -333,26 +333,19 @@ extends:
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
-              # Build and Lint
-              - template: /tools/pipelines/templates/include-build-lint.yml@self
-                parameters:
-                  taskBuild: '${{ parameters.taskBuild }}'
-                  taskLint: '${{ parameters.taskLint }}'
-                  taskLintName: '${{ parameters.taskLintName }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-
-              - task: Npm@1
+              - task: Bash@3
                 displayName: Testing code coverage directory
                 env:
                   ADO_API_TOKEN: $(System.AccessToken)
                   GITHUB_API_TOKEN: $(githubPublicRepoSecret)
                   TARGET_BRANCH_NAME: '$(targetBranchName)'
-                  GITHUB_PR_NUMBER: $(SYSTEM_PULLREQUEST_PULLREQUESTID)
+                  GITHUB_PR_NUMBER: $(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)
                   ADO_BUILD_ID: ${$(Build.BuildId)}
                   GITHUB_REPOSITORY_OWNER: $(Build.Repository.Name)
                   GITHUB_REPOSITORY_NAME: $(Build.Repository.Name)
                 inputs:
                   targetType: inline
+                  workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
                     echo "Now in directory: $(pwd)"
                     echo "TARGET_BRANCH_NAME: $(targetBranchName)"
@@ -367,6 +360,16 @@ extends:
                     echo "Repository Name: $REPO_NAME"
                     echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
                     echo "check: $(env.SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)"
+                    echo "check: $(env.GITHUB_PR_NUMBER) $(env.ADO_BUILD_ID)"
+                    npm run
+
+              # Build and Lint
+              - template: /tools/pipelines/templates/include-build-lint.yml@self
+                parameters:
+                  taskBuild: '${{ parameters.taskBuild }}'
+                  taskLint: '${{ parameters.taskLint }}'
+                  taskLintName: '${{ parameters.taskLintName }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}'
 
               # Test
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
