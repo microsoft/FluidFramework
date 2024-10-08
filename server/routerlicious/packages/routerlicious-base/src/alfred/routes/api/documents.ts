@@ -272,6 +272,24 @@ export function create(
 		},
 	);
 
+	function verifyStorageTokenForGetSession(...args: Parameters<typeof verifyStorageToken>) {
+		return async (request, res, next) => {
+			const VerifyStorageTokenMetric = Lumberjack.newLumberMetric(
+				LumberEventName.VerifyStorageToken,
+				undefined,
+			);
+
+			try {
+				const result = verifyStorageToken(...args)(request, res, next);
+				VerifyStorageTokenMetric.success("Token verified successfully.");
+				return result;
+			} catch (error) {
+				VerifyStorageTokenMetric.error("Failed to verify token.", error);
+				throw error;
+			}
+		}
+	}
+
 	/**
 	 * Get the session information.
 	 */
@@ -287,7 +305,7 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
