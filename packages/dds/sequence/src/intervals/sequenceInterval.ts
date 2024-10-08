@@ -140,9 +140,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 		);
 	}
 
-	/**
-	 * @deprecated  This functionality was not meant to be exported and will be removed in a future release
-	 */
 	constructor(
 		private readonly client: Client,
 		/**
