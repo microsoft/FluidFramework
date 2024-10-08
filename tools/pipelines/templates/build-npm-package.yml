@@ -134,6 +134,11 @@ parameters:
 - name: testCoverage
   type: boolean
 
+# Indicates if we should report the code coverage comparison and report metrics on the PR.
+- name: reportCodeCoverageComparison
+  type: boolean
+  default: false
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -335,6 +340,8 @@ extends:
 
               - task: Bash@3
                 displayName: Testing code coverage directory
+                parameters: ${{ parameters.reportCodeCoverageComparison }}
+                condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true))
                 env:
                   ADO_API_TOKEN: $(System.AccessToken)
                   GITHUB_API_TOKEN: $(githubPublicRepoSecret)

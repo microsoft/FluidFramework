@@ -101,5 +101,5 @@ variables:
 # Indicates if tests should be run with code coverage analysis.
 # We don't do it for PRs to make those runs faster.
 - name: testCoverage
-  value: true
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   readonly: true
