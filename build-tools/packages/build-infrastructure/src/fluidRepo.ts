@@ -122,7 +122,8 @@ export class FluidRepo implements IFluidRepo {
 
 		if (this._checkedForGitRepo === false) {
 			this._checkedForGitRepo = true;
-			// Check if the path is within a Git repo by trying to find the path to the Git repo root
+			// Check if the path is within a Git repo by trying to find the path to the Git repo root. If not within a git
+			// repo, this call will throw a `NotInGitRepository` error.
 			const gitRoot = findGitRootSync(this.root);
 			this.gitRepository = simpleGit(gitRoot);
 			return this.gitRepository;
