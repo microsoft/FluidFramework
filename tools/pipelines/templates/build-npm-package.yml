@@ -339,7 +339,7 @@ extends:
                   ADO_API_TOKEN: $(System.AccessToken)
                   GITHUB_API_TOKEN: $(githubPublicRepoSecret)
                   TARGET_BRANCH_NAME: '$(targetBranchName)'
-                  GITHUB_PR_NUMBER: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+                  GITHUB_PR_NUMBER: $(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)
                   ADO_BUILD_ID: $(Build.BuildId)
                   CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASE: Code Coverage Report
                 inputs:
@@ -347,12 +347,14 @@ extends:
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
                     Coverage_Report_Artifact_Name="Code Coverage Report"
-                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE]$Coverage_Report_Artifact_Name"
-                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR]$Coverage_Report_Artifact_Name"
+                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE]=$(Coverage_Report_Artifact_Name)"
+                    echo "##vso[task.setvariable variable=CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR]=$(Coverage_Report_Artifact_Name)"
+                    echo "Artifact Name: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE"
+                    echo "Artifact Name: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
                     REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
                     REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
-                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_NAME]$REPO_NAME"
-                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_OWNER]$REPO_OWNER"
+                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_NAME]=$(REPO_NAME)"
+                    echo "##vso[task.setvariable variable=GITHUB_REPOSITORY_OWNER]=$(REPO_OWNER)"
                     echo "Repository Owner: $GITHUB_REPOSITORY_OWNER"
                     echo "Repository Name: $GITHUB_REPOSITORY_NAME"
                     echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTNUMBER"
