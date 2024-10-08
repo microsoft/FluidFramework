@@ -7,7 +7,7 @@ import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
-import { ReleaseGroup, ReleasePackage } from "../../../src/releaseGroups.js";
+import { ReleaseGroup, ReleasePackage } from "../../../releaseGroups.js";
 import { initializeCommandTestFunction } from "../../init.js";
 
 const test = initializeCommandTestFunction(import.meta.url);
@@ -40,8 +40,8 @@ describe("flub release fromTag", () => {
 		.stdout()
 		.command(["release:fromTag", "build-tools_v0.26.1", "--json"])
 		.it(`--json`, (ctx) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
-			// const { title, tag, version } = output;
 			expect(output).to.deep.equal(expected);
 		});
 });
