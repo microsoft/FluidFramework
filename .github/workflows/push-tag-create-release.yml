@@ -5,7 +5,9 @@ name: "push-tag-create-release"
 # checks out the tagged commit and runs flub release report to generate release reports. It also uses auto-changelog to
 # create a changelog for patch releases, and uses the in-repo release notes for minor and major releases.
 
-# Once the artifacts are created, the workflow creates a GitHub release and attaches the release reports to it.
+# Once the artifacts are created, the workflow creates a GitHub release and attaches the release reports to it. Client
+# and server releases are published automatically, but all others are published as a draft and must be manually
+# published using the GitHub UI.
 
 on:
   push:
@@ -102,6 +104,16 @@ jobs:
           path: reports
           retention-days: 7
 
+      - name: Generate minor/major release notes
+        # This content is the "default" release notes - this should be used for minor and major releases of client and
+        # server release groups. To use this, a release group needs to be using changesets. Build-tools does not use
+        # changesets, so it is excluded.
+        if: fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server')
+        run: |
+          flub transform releaseNotes \
+          --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md \
+          --outFile release-notes.md
+
       # Generate release notes
       - name: Generate patch release notes
         # This condition is the logical inverse of the condition for the "Generate minor/major release notes" step.
@@ -118,16 +130,6 @@ jobs:
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
           --output release-notes.md \
           --template .github/workflows/data/patch-changelog.hbs
-
-      - name: Generate minor/major release notes
-        # This content is the "default" release notes - this should be used for minor and major releases of client and
-        # server release groups. To use this, a release group needs to be using changesets. Build-tools does not use
-        # changesets, so it is excluded.
-        if: fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server')
-        run: |
-          flub transform releaseNotes \
-          --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md \
-          --outFile release-notes.md
 
       # Only creates GH releases for client, server, and build-tools releases.
       - name: Create GH release
