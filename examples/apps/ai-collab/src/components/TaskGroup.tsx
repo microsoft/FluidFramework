@@ -362,6 +362,12 @@ export function TaskGroup(props: {
 	);
 }
 
+/**
+ * A modal that displays the differences between two branches of a shared tree, and allows the user to accept or decline
+ * the changes.
+ *
+ * @param props - Properties for the component
+ */
 function TaskGroupDiffModal(props: {
 	isOpen: boolean;
 	onClose: () => void;
@@ -410,53 +416,10 @@ function TaskGroupDiffModal(props: {
 						sx={{ alignItems: "center" }}
 					>
 						<Typography variant="h6">Differences Color Key:</Typography>
-						<Stack direction="row" alignItems="center" spacing={1}>
-							<Box
-								sx={{
-									borderRadius: "50%",
-									backgroundColor: "#f7c3c3",
-									width: 20,
-									height: 20,
-								}}
-							/>
-							<Typography variant="body1">Deleted</Typography>
-						</Stack>
-
-						<Stack direction="row" alignItems="center" spacing={1}>
-							<Box
-								sx={{
-									borderRadius: "50%",
-									backgroundColor: "#cbf7d4",
-									width: 20,
-									height: 20,
-								}}
-							/>
-							<Typography variant="body1">New</Typography>
-						</Stack>
-
-						<Stack direction="row" alignItems="center" spacing={1}>
-							<Box
-								sx={{
-									borderRadius: "50%",
-									backgroundColor: "#a4dbfc",
-									width: 20,
-									height: 20,
-								}}
-							/>
-							<Typography variant="body1">Changed</Typography>
-						</Stack>
-
-						<Stack direction="row" alignItems="center" spacing={1}>
-							<Box
-								sx={{
-									borderRadius: "50%",
-									backgroundColor: "#e5c5fa",
-									width: 20,
-									height: 20,
-								}}
-							/>
-							<Typography variant="body1">Moved</Typography>
-						</Stack>
+						<DifferenceColorKeyEntry backgroundColor="#f7c3c3" text="Deleted" />
+						<DifferenceColorKeyEntry backgroundColor="#cbf7d4" text="New" />
+						<DifferenceColorKeyEntry backgroundColor="#a4dbfc" text="Changed" />
+						<DifferenceColorKeyEntry backgroundColor="#e5c5fa" text="Moved" />
 					</Stack>
 					<Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
 						<Button
@@ -465,8 +428,7 @@ function TaskGroupDiffModal(props: {
 							sx={{ textTransform: "none" }}
 							onClick={onAccept}
 						>
-							{" "}
-							Accept Changes{" "}
+							Accept Changes
 						</Button>
 
 						<Button
@@ -475,8 +437,7 @@ function TaskGroupDiffModal(props: {
 							sx={{ textTransform: "none" }}
 							onClick={onDecline}
 						>
-							{" "}
-							Decline Changes{" "}
+							Decline Changes
 						</Button>
 					</Stack>
 				</Stack>
@@ -487,5 +448,31 @@ function TaskGroupDiffModal(props: {
 				/>
 			</Box>
 		</Dialog>
+	);
+}
+
+/**
+ * Component that renders an entry describing what a given color key means, in the context of displaying
+ * differences between two branches of a shared tree (different kinds of changes are rendered in different colors).
+ *
+ * @param props - Properties for the component
+ */
+function DifferenceColorKeyEntry(props: {
+	backgroundColor: string;
+	text: string;
+}): JSX.Element {
+	const { backgroundColor, text } = props;
+	return (
+		<Stack direction="row" alignItems="center" spacing={1}>
+			<Box
+				sx={{
+					borderRadius: "50%",
+					backgroundColor: { backgroundColor },
+					width: 20,
+					height: 20,
+				}}
+			/>
+			<Typography variant="body1">{text}</Typography>
+		</Stack>
 	);
 }
