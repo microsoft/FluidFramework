@@ -126,7 +126,7 @@ jobs:
         if: fromJson(env.RELEASE_JSON).releaseType != 'patch' && (fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server')
         run: |
           flub transform releaseNotes \
-          --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md
+          --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md \
           --outFile auto-changelog.md
 
       # Only creates GH releases for client, server, and build-tools releases.
