@@ -48,7 +48,7 @@ if (GeneratedApiVersions.apiDocsVersions.includes("local")) {
 const config: Config = {
 	title: "Fluid Framework Documentation",
 	// tagline: "TODO",
-	favicon: "img/fluid-icon.svg",
+	favicon: "assets/fluid-icon.svg",
 
 	// Set the production url of your site here
 	url: "https://fluidframework.com/",
@@ -130,7 +130,7 @@ const config: Config = {
 			title: "Fluid Framework",
 			logo: {
 				alt: "Fluid Framework Logo",
-				src: "img/fluid-icon.svg",
+				src: "assets/fluid-icon.svg",
 			},
 			items: [
 				{
