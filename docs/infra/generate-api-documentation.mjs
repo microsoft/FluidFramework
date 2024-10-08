@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import fs from "fs-extra";
 
-import ApiDocsVersions from "../api-docs-versions.mjs";
+import DocsVersions from "../config/docs-versions.mjs";
 import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
 
 /*
@@ -19,9 +19,21 @@ import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Get versions from config
+const versionConfigs = {};
+versionConfigs[DocsVersions.currentVersion.version] = DocsVersions.currentVersion.apiDocs;
+for (const versionConfig of DocsVersions.otherVersions) {
+	versionConfigs[versionConfig.version] = versionConfig.apiDocs;
+}
+
+// Only include the local API docs version in dev mode
+if (process.env.NODE_ENV === "development") {
+	versionConfigs[DocsVersions.local.version] = DocsVersions.local.apiDocs;
+}
+
 try {
 	// Generate API documentation for each version
-	await Promise.all(Object.entries(ApiDocsVersions).map(async ([version, config]) => {
+	await Promise.all(Object.entries(versionConfigs).map(async ([version, config]) => {
 		await renderApiDocumentation(
 			config.inputPath,
 			config.outputPath,
@@ -33,7 +45,7 @@ try {
 	}));
 
 	// Write build manifest file
-	const versions = Object.keys(ApiDocsVersions);
+	const versions = Object.keys(versionConfigs);
 	const manifest = {
 		apiDocsVersions: versions,
 	}
