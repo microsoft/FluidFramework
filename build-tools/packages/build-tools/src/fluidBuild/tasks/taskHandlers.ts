@@ -40,5 +40,8 @@ export type TaskHandler = TaskHandlerConstructor | TaskHandlerFunction;
 export function isConstructorFunction(
 	handler: TaskHandler,
 ): handler is TaskHandlerConstructor {
+	// The prototype property is present on all functions that can be used as constructors.
+	// Non-constructor functions (like arrow functions or methods) do not have a prototype property.
+	// The double negation (!!) converts the prototype to a boolean value.
 	return typeof handler === "function" && !!handler.prototype;
 }

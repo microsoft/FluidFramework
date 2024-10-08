@@ -75,14 +75,14 @@ const executableToLeafTask: {
 } as const;
 
 /**
- * Given a command executable, attempts to find a matching TaskHandler that will handle the task. If one is found, it is
- * returned; otherwise, it returns `UnknownLeafTask` as the default handler.
+ * Given a command executable, attempts to find a matching `TaskHandler` that will handle the task. If one is found, it
+ * is returned; otherwise, it returns `UnknownLeafTask` as the default handler.
  *
- * The built-in executableToLeafTask constant is checked first, followed by any DeclarativeTasks that are defined in the
- * fluid-build config.
+ * Any DeclarativeTasks that are defined in the fluid-build config are checked first, followed by the built-in
+ * executableToLeafTask constant.
  *
  * @param executable The command executable to find a matching task handler for.
- * @returns A TaskHandler for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
+ * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
 function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
 	const found: TaskHandler | undefined = executableToLeafTask[executable];

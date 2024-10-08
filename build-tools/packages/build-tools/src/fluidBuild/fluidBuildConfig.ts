@@ -84,19 +84,27 @@ export interface IFluidBuildDirs {
 /**
  * Declarative tasks allow fluid-build to support incremental builds for tasks it doesn't natively identify. A
  * DeclarativeTask defines a set of input and output globs, and files matching those globs will be included in the
- * donefiles for the task. Note that gitignored files are treated differently for input globs vs. output globs. See the
- * property documentation for details.
+ * donefiles (the cached data we check to see if tasks need to be run) for the task.
+ *
+ * Note that by default, gitignored files are treated differently for input globs vs. output globs. This can be
+ * changed using the `gitignore` property on the task. See the documentation for that property for details.
  */
 export interface DeclarativeTask {
 	/**
-	 * An array of globs that will be used to identify input files for the task. Globs are interpreted relative to the
-	 * package. **Files ignored by git are never included.**
+	 * An array of globs that will be used to identify input files for the task. The globs are interpreted relative to the
+	 * package the task belongs to.
+	 *
+	 * By default, inputGlobs **will not** match files ignored by git. This can be changed using the `gitignore` property
+	 * on the task. See the documentation for that property for details.
 	 */
 	inputGlobs: string[];
 
 	/**
-	 * An array of globs that will be used to identify input files for the task. Unlike the inputGlobs, outputGlobs
-	 * **will** match files ignored by git, because build output is often gitignored.
+	 * An array of globs that will be used to identify output files for the task. The globs are interpreted relative to
+	 * the package the task belongs to.
+	 *
+	 * By default, outputGlobs **will** match files ignored by git, because build output is often gitignored. This can be
+	 *   changed using the `gitignore` property on the task. See the documentation for that property for details.
 	 */
 	outputGlobs: string[];
 
@@ -110,8 +118,20 @@ export interface DeclarativeTask {
 	 *
 	 * @defaultValue `["input"]`
 	 */
-	gitignore?: ("input" | "output")[];
+	gitignore?: GitIgnoreSetting;
 }
+
+export type GitIgnoreSetting = ("input" | "output")[];
+
+/**
+ * Valid values that can be used in the `gitignore` array setting of a DeclarativeTask.
+ */
+export type GitIgnoreSettingValue = GitIgnoreSetting[number];
+
+/**
+ * The default gitignore setting for a DeclarativeTask.
+ */
+export const gitignoreDefaultValue: GitIgnoreSetting = ["input"];
 
 /**
  * This mapping of executable/command name to DeclarativeTask is used to connect the task to the correct executable(s).

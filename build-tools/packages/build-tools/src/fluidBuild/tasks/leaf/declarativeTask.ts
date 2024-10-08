@@ -7,7 +7,11 @@ import globby from "globby";
 
 import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
-import type { DeclarativeTask } from "../../fluidBuildConfig";
+import {
+	type DeclarativeTask,
+	type GitIgnoreSettingValue,
+	gitignoreDefaultValue,
+} from "../../fluidBuildConfig";
 import type { TaskHandlerFunction } from "../taskHandlers";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
@@ -29,33 +33,33 @@ class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
 		return true;
 	}
 
-	protected async getInputFiles(): Promise<string[]> {
-		const { inputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
+	/**
+	 * Gets all the input or output files for the task based on the globs configured for that task.
+	 *
+	 * @param mode - Whether to use the input or output globs.
+	 * @returns An array of absolute paths to all files that match the globs.
+	 */
+	private async getFiles(mode: GitIgnoreSettingValue): Promise<string[]> {
+		const { inputGlobs, outputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
+		const globs = mode === "input" ? inputGlobs : outputGlobs;
+		const gitignoreSettingRealized = gitignoreSetting ?? gitignoreDefaultValue;
+		const excludeGitIgnoredFiles: boolean = gitignoreSettingRealized.includes(mode);
 
-		// Ignore gitignored files if the setting is undefined, since the default is ["input"]. Otherwise check that it
-		// includes "input".
-		const gitignore: boolean =
-			gitignoreSetting === undefined || gitignoreSetting.indexOf("input") !== -1;
-		const inputFiles = await globby(inputGlobs, {
+		const files = await globby(globs, {
 			cwd: this.node.pkg.directory,
 			// file paths returned from getInputFiles and getOutputFiles should always be absolute
 			absolute: true,
-			gitignore,
+			gitignore: excludeGitIgnoredFiles,
 		});
-		return inputFiles;
+		return files;
+	}
+
+	protected async getInputFiles(): Promise<string[]> {
+		return this.getFiles("input");
 	}
 
 	protected async getOutputFiles(): Promise<string[]> {
-		const { outputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
-
-		const gitignore: boolean = gitignoreSetting?.indexOf("output") !== -1;
-		const outputFiles = await globby(outputGlobs, {
-			cwd: this.node.pkg.directory,
-			// file paths returned from getInputFiles and getOutputFiles should always be absolute
-			absolute: true,
-			gitignore,
-		});
-		return outputFiles;
+		return this.getFiles("output");
 	}
 }
 
