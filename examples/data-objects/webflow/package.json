@@ -113,7 +113,6 @@
 		"jsdom": "^16.7.0",
 		"jsdom-global": "^3.0.2",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
