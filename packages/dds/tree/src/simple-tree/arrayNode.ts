@@ -18,6 +18,7 @@ import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -46,16 +47,25 @@ import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 
 /**
+ * A covariant base type for {@link (TreeArrayNode:interface)}.
+ *
+ * This provides the readonly subset of TreeArrayNode functionality, and is used as the source interface form moves since that needs to be covariant.
+ * @system @sealed @public
+ */
+export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
+	extends ReadonlyArray<T>,
+		TreeNode {}
+
+/**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
  *
  * @privateRemarks
- * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
+ * extends TreeNode | TreeLeafValue
  *
  * @system @sealed @public
  */
-export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
-	extends ReadonlyArray<T>,
-		TreeNode {
+export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom = ReadonlyArrayNode>
+	extends ReadonlyArrayNode<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -366,8 +376,7 @@ export interface TreeArrayNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-		TreeArrayNode
+		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 	> {}
 
 /**
@@ -417,9 +426,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-function getSequenceField<TSimpleType extends ImplicitAllowedTypes>(
-	arrayNode: TreeArrayNode<TSimpleType>,
-): FlexTreeSequenceField {
+function getSequenceField(arrayNode: ReadonlyArrayNode): FlexTreeSequenceField {
 	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
@@ -901,13 +908,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
-	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
+	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, sourceField, "moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
+	public moveToEnd(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, sourceField, "moveToEnd");
@@ -916,7 +923,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public moveToIndex(
 		destinationGap: number,
 		sourceIndex: number,
-		source?: TreeArrayNode,
+		source?: ReadonlyArrayNode,
 	): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
@@ -928,7 +935,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: TreeArrayNode,
+		source?: ReadonlyArrayNode,
 	): void {
 		validateIndexRange(
 			sourceStart,
@@ -938,7 +945,11 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		);
 		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
-	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+	public moveRangeToEnd(
+		sourceStart: number,
+		sourceEnd: number,
+		source?: ReadonlyArrayNode,
+	): void {
 		validateIndexRange(
 			sourceStart,
 			sourceEnd,
@@ -951,7 +962,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		destinationGap: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: TreeArrayNode,
+		source?: ReadonlyArrayNode,
 	): void {
 		const destinationField = getSequenceField(this);
 		const destinationSchema = this.allowedTypes;

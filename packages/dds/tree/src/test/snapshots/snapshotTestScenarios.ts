@@ -127,7 +127,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "optional-field-scenarios",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("optional-field-scenarios");
-				const MapNode = sf.map("Map", [sf.string, sf.number]);
+				class MapNode extends sf.map("Map", [sf.string, sf.number]) {}
 
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = provider.trees[0];

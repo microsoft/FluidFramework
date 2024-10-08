@@ -70,6 +70,8 @@ import type {
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
 	Unenforced,
+	TreeNodeSchemaClassUnsafe,
+	WithTypeUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
@@ -724,10 +726,10 @@ export class SchemaFactory<
 			false,
 		);
 
-		return RecursiveArray as TreeNodeSchemaClass<
+		return RecursiveArray as TreeNodeSchemaClassUnsafe<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
-			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
+			TreeArrayNodeUnsafe<T> & WithTypeUnsafe<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 			{
 				/**
 				 * Iterator for the iterable of content for this node.
@@ -841,3 +843,6 @@ export function markSchemaMostDerived(schema: TreeNodeSchema): void {
 
 	(schema as typeof TreeNodeValid & TreeNodeSchema).markMostDerived();
 }
+
+const sf = new SchemaFactory("");
+export class Test extends sf.arrayRecursive("Test", [() => Test]) {}

@@ -21,6 +21,10 @@ import {
 	type InternalTreeNode,
 	type ApplyKind,
 	type FlexListToUnion,
+	type ExtractItemType,
+	type TreeNode,
+	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
@@ -406,6 +410,9 @@ describe("SchemaFactory Recursive methods", () => {
 			{
 				class Test extends sf.arrayRecursive("Test", [() => Test]) {}
 				type _check = ValidateRecursiveSchema<typeof Test>;
+
+				type Info = NodeFromSchema<ExtractItemType<(typeof Test.info)[number]>>;
+				type X = typeof Test extends TreeNodeSchemaClass ? 1 : 2;
 			}
 
 			{

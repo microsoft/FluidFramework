@@ -363,7 +363,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  * @sealed @public
  */
-export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
+export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *

@@ -6,24 +6,28 @@
 import type { RestrictiveStringRecord, _InlineTrick } from "../../util/index.js";
 
 import type {
-	AllowedTypes,
 	ApplyKind,
 	FieldKind,
 	FieldSchema,
-	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
-	NodeFromSchema,
-	TreeNodeFromImplicitAllowedTypes,
+	TreeLeafValue,
 } from "../schemaTypes.js";
+import {
+	typeSchemaSymbol,
+	// eslint-disable-next-line import/no-deprecated
+	typeNameSymbol,
+} from "../core/index.js";
 import type {
 	NodeKind,
-	TreeNodeSchema,
 	WithType,
 	TreeNode,
 	Unhydrated,
+	InternalTreeNode,
+	TreeNodeSchema,
+	TreeNodeSchemaCore,
 } from "../core/index.js";
-import type { TreeArrayNodeBase, TreeArrayNode } from "../arrayNode.js";
-import type { FlexListToUnion } from "../flexList.js";
+import type { TreeArrayNodeBase } from "../arrayNode.js";
+import type { FlexListToUnion, LazyItem } from "../flexList.js";
 
 /*
  * TODO:
@@ -59,6 +63,77 @@ export type ObjectFromSchemaRecordUnsafe<
 	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
+export interface WithTypeUnsafe<
+	out TName extends string = string,
+	out TKind extends NodeKind = NodeKind,
+	out TInfo = unknown,
+> {
+	/**
+	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
+	 * @deprecated Use {@link typeSchemaSymbol} instead.
+	 */
+	get [typeNameSymbol](): TName;
+
+	/**
+	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
+	 */
+	get [typeSchemaSymbol](): TreeNodeSchemaClassUnsafe<
+		TName,
+		TKind,
+		TreeNode | TreeLeafValue,
+		never,
+		boolean,
+		TInfo
+	>;
+}
+
+/**
+ * {@link Unenforced} version of {@link TreeNodeSchema}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @public
+ */
+export type TreeNodeSchemaUnsafe<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TNode extends Unenforced<TreeNode | TreeLeafValue> = unknown,
+	TBuild = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+> =
+	| TreeNodeSchemaClassUnsafe<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
+
+export interface TreeNodeSchemaClassUnsafe<
+	out Name extends string,
+	out Kind extends NodeKind,
+	// TODO: maybe this can be more specific (exclude leaves)
+	out TNode extends Unenforced<TreeNode | TreeLeafValue>,
+	in TInsertable = never,
+	out ImplicitlyConstructable extends boolean = boolean,
+	out Info = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+	/**
+	 * Constructs an {@link Unhydrated} node with this schema.
+	 * @remarks
+	 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
+	 * Therefore, overriding this constructor with different argument types is not type-safe and is not supported.
+	 * @sealed
+	 */
+	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
+}
+
+export interface TreeNodeSchemaNonClass<
+	out Name extends string,
+	out Kind extends NodeKind,
+	out TNode extends Unenforced<TreeNode | TreeLeafValue>,
+	in TInsertable = never,
+	out ImplicitlyConstructable extends boolean = boolean,
+	out Info = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+	create(data: TInsertable): TNode;
+}
+
 /**
  * {@link Unenforced} version of {@link TreeObjectNode}.
  * @remarks
@@ -79,9 +154,13 @@ export type TreeObjectNodeUnsafe<
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false>
-		: TSchema extends ImplicitAllowedTypes
+		: TSchema extends ImplicitAllowedTypesUnsafe
 			? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
 			: unknown;
+
+export type ImplicitAllowedTypesUnsafe = AllowedTypes | TreeNodeSchemaUnsafe;
+
+export type AllowedTypes = readonly LazyItem<TreeNodeSchemaUnsafe>[];
 
 /**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
@@ -90,14 +169,12 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
  * @system @public
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypes>,
-> = TSchema extends ImplicitAllowedTypes
-	? TreeNodeFromImplicitAllowedTypes<TSchema>
-	: TSchema extends TreeNodeSchema
-		? NodeFromSchema<TSchema>
-		: TSchema extends AllowedTypes
-			? NodeFromSchema<FlexListToUnion<TSchema>>
-			: unknown;
+	TSchema extends Unenforced<ImplicitAllowedTypesUnsafe>,
+> = TSchema extends TreeNodeSchemaUnsafe
+	? NodeFromSchemaUnsafe<TSchema>
+	: TSchema extends AllowedTypes
+		? NodeFromSchemaUnsafe<FlexListToUnion<TSchema>>
+		: unknown;
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
@@ -106,7 +183,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
  * @system @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypes>,
+	TSchema extends Unenforced<ImplicitAllowedTypesUnsafe>,
 > = TSchema extends AllowedTypes
 	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>>
 	: InsertableTypedNodeUnsafe<TSchema>;
@@ -129,7 +206,7 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = [
  * @system @public
  */
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> =
-	T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
+	T extends TreeNodeSchemaUnsafe<string, NodeKind, infer TNode> ? TNode : never;
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
@@ -138,7 +215,7 @@ export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * @system @public
  */
 export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
-	T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
+	T extends TreeNodeSchemaUnsafe<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 /**
  * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
@@ -146,11 +223,11 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @public
  */
-export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
-	extends TreeArrayNodeBase<
+export interface TreeArrayNodeUnsafe<
+	TAllowedTypes extends Unenforced<ImplicitAllowedTypesUnsafe>,
+> extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
-		InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
-		TreeArrayNode
+		InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
 	> {}
 
 /**
@@ -159,7 +236,7 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
  * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @public
  */
-export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
+export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypesUnsafe>>
 	extends ReadonlyMapInlined<string, T>,
 		TreeNode {
 	/**
@@ -187,7 +264,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
  * Authored by manually inlining ReadonlyMap from from the TypeScript lib which can be found by navigating to the definition of `ReadonlyMap`.
  * @system @sealed @public
  */
-export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
+export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypesUnsafe>> {
 	/** Returns an iterable of entries in the map. */
 	[Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
 
@@ -228,7 +305,7 @@ export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes
 export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
 	T extends FieldSchemaUnsafe<
 		FieldKind.Optional | FieldKind.Identifier,
-		Unenforced<ImplicitAllowedTypes>
+		Unenforced<ImplicitAllowedTypesUnsafe>
 	>
 		? true
 		: false;
@@ -274,7 +351,7 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
  */
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
-	out Types extends Unenforced<ImplicitAllowedTypes>,
+	out Types extends Unenforced<ImplicitAllowedTypesUnsafe>,
 > extends FieldSchema<Kind, any> {
 	/**
 	 * {@inheritDoc FieldSchema.kind}

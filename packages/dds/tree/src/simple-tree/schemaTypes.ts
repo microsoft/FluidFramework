@@ -14,6 +14,7 @@ import type {
 	NodeKind,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNode,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
@@ -25,7 +26,7 @@ import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 export function isTreeNodeSchemaClass<
 	Name extends string,
 	Kind extends NodeKind,
-	TNode,
+	TNode extends TreeNode | TreeLeafValue,
 	TBuild,
 	ImplicitlyConstructable extends boolean,
 	Info,
@@ -382,6 +383,9 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
  * Converts ImplicitFieldSchema to the corresponding tree node's field type.
+ * @remarks
+ * When non-exact schema are provided, this errors on the side of returning too general of a type.
+ * This makes this type computation is primarily suited for output APIs where this covariant approach is valid.
  * @public
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
@@ -389,10 +393,15 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
 			? TreeNodeFromImplicitAllowedTypes<TSchema>
-			: unknown;
+			: TreeNode | TreeLeafValue | undefined;
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
+ * @remarks
+ * When non-exact schema are provided (for example `ImplicitFieldSchema`), this errors on the side of returning too restrictive of a type.
+ * Since this is mainly used for input and should thus behave contravariantly, this is is needed to preserve soundness.
+ * TODO:
+ * How this behaves when provided with other forms on inexact schema such as TypeScript unions (not AllowedTypes unions) needs to be investigated.
  * @public
  */
 export type InsertableTreeFieldFromImplicitField<
@@ -401,7 +410,7 @@ export type InsertableTreeFieldFromImplicitField<
 	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: TSchema extends ImplicitAllowedTypes
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-		: unknown;
+		: never;
 
 /**
  * Suitable for output.
@@ -453,6 +462,10 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 /**
  * Data which can be used as a node to be inserted.
  * Either an unhydrated node, or content to build a new node.
+ * @privateRemarks
+ * TODO:
+ * This should behave contravariantly, but it uses NodeFromSchema which behaves covariantly.
+ * This results in unsoundness where when the schema is less specific, more types are allowed instead of less.
  * @public
  */
 export type InsertableTypedNode<T extends TreeNodeSchema> =
@@ -471,7 +484,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,
 	NodeKind,
-	unknown,
+	TreeNode | TreeLeafValue,
 	infer TBuild
 >
 	? TBuild

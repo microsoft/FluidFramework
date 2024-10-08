@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import { SchemaFactory, type TreeNodeSchema } from "../../simple-tree/index.js";
+import { SchemaFactory, type TreeNode, type TreeNodeSchema } from "../../simple-tree/index.js";
 import {
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
@@ -20,7 +20,6 @@ import {
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
-import { TreeFactory } from "../../treeFactory.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -29,9 +28,33 @@ import type {
 
 const schema = new SchemaFactory("com.example");
 
-const factory = new TreeFactory({});
-
 describe("schemaTypes", () => {
+	// Unconstrained
+	{
+		// Input
+		type I1 = InsertableTreeFieldFromImplicitField;
+		type I2 = InsertableTypedNode<TreeNodeSchema>;
+		type I3 = NodeBuilderData<TreeNodeSchema>;
+
+		// TODO: these types should behave contravariantly, but they do not.
+		// When fixed, these checks should pass (with the expected error indicators removed):
+		// @ts-expect-error - incorrect variance
+		type _check1 = requireTrue<areSafelyAssignable<I1, never>>;
+		// @ts-expect-error - incorrect variance
+		type _check2 = requireTrue<areSafelyAssignable<I2, never>>;
+
+		type _check3 = requireTrue<areSafelyAssignable<I3, never>>;
+
+		// Output
+		type N1 = NodeFromSchema<TreeNodeSchema>;
+		type N2 = TreeNodeFromImplicitAllowedTypes;
+		type N3 = TreeFieldFromImplicitField;
+
+		type _check4 = requireTrue<areSafelyAssignable<N1, TreeNode | TreeLeafValue>>;
+		type _check5 = requireTrue<areSafelyAssignable<N2, TreeNode | TreeLeafValue>>;
+		type _check6 = requireTrue<areSafelyAssignable<N3, TreeNode | TreeLeafValue | undefined>>;
+	}
+
 	describe("insertable", () => {
 		it("Lists", () => {
 			const List = schema.array(schema.number);
