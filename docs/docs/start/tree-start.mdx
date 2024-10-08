@@ -3,6 +3,8 @@ title: SharedTree Quick Start
 sidebar_position: 2
 ---
 
+import { ApiLink } from "@site/src/components/shortLinks";
+
 `SharedTree` is a [distributed data structure](../data-structures/overview) that looks and feels like simple JavaScript objects with a type safe wrapper.
 This guide will walk you through the basics of creating, configuring, and interacting with a `SharedTree` in your application.
 
@@ -11,7 +13,7 @@ This guide will walk you through the basics of creating, configuring, and intera
 A `SharedTree` can be created by defining a `ContainerSchema` with an initial object of type `SharedTree` and using this schema to create and load your container.
 This example creates a container using an Azure specific client.
 
-**note**: `enableRuntimeIdCompressor` must be enabled in the [container runtime options](../api/v2/container-runtime/icontainerruntimeoptions-interface) in order to use `SharedTree`
+**note**: `enableRuntimeIdCompressor` must be enabled in the <ApiLink packageName="container-runtime" apiName="IContainerRuntimeOptions" apiType="interface">container runtime options</ApiLink> in order to use `SharedTree`
 
 See more info on creating and loading containers [here](../build/containers#creating-a-container).
 
@@ -85,7 +87,7 @@ This creates a `TodoList` class that is an object schema with two fields, `title
 
 Schemas can also be defined using plain old JavaScript object (POJO) mode.
 Generally, you should prefer customizable mode.
-See [the API docs](../api/v2/tree/schemafactory-class) for more info on the differences between the two modes.
+See <ApiLink packageName="tree" apiName="SchemaFactory" apiType="class">the API docs</ApiLink> for more info on the differences between the two modes.
 
 ## Initializing the Tree
 
@@ -143,7 +145,7 @@ useEffect(() => {
 ```
 
 `nodeChanged` fires whenever one or more properties of the specified node change while `treeChanged` also fires whenever any node in its subtree changes.
-See [the API](../api/v2/tree/treechangeevents-interface) docs for more details.
+<ApiLink packageName="tree" apiName="TreeChangeEvents" apiType="interface">the API</ApiLink> docs for more details.
 
 ## Editing Tree Data
 
