@@ -1188,7 +1188,12 @@ describe("Runtime", () => {
 					clientId: "someClientId",
 					minimumSequenceNumber: 0,
 				};
-				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
+				assert.throws(
+					() =>
+						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type and no specified compat behavior should fail to process",
+				);
 			});
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
@@ -1263,12 +1268,10 @@ describe("Runtime", () => {
 				);
 
 				// Connect, which will trigger resubmit
-				changeConnectionState(patchedContainerRuntime, true, mockClientId);
-
-				assert.strictEqual(
-					submittedOps.length,
-					3,
-					"Only 3 messages should be sent - Do not resubmit the future/unknown op",
+				assert.throws(
+					() => changeConnectionState(patchedContainerRuntime, true, mockClientId),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type and no specified compat behavior should fail to resubmit",
 				);
 			});
 		});
