@@ -14,6 +14,7 @@ import {
 	generateClientNames,
 	insertAtRefPos,
 	obliterateRange,
+	obliterateRangeSided,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
@@ -75,10 +76,17 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 				config: { ...opts, applyOpDuringGeneration: true },
 			},
 			{
-				name: "with obliterate",
+				name: "obliterate with number endpoints",
 				config: {
 					...opts,
 					operations: [...opts.operations, obliterateRange],
+				},
+			},
+			{
+				name: "obliterate with sided endpoints",
+				config: {
+					...opts,
+					operations: [...opts.operations, obliterateRange, obliterateRangeSided],
 				},
 			},
 		])

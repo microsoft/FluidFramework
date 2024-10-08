@@ -38,28 +38,30 @@ export const obliterateRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
+) => client.obliterateRangeLocal(opStart, opEnd);
+
+export const obliterateRangeSided: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
 	random: IRandom,
 ) => {
-	if (random.bool()) {
-		return client.obliterateRangeLocal(opStart, opEnd);
+	let startSide: Side;
+	let endSide: Side;
+
+	const oblEnd = random.integer(opStart, client.getLength() - 1);
+
+	if (oblEnd - opStart <= 1) {
+		startSide = Side.Before;
+		endSide = Side.After;
 	} else {
-		let startSide: Side;
-		let endSide: Side;
-
-		const oblEnd = random.integer(opStart, client.getLength() - 1);
-
-		if (oblEnd - opStart <= 1) {
-			startSide = Side.Before;
-			endSide = Side.After;
-		} else {
-			startSide = random.pick([Side.Before, Side.After]);
-			endSide = random.pick([Side.Before, Side.After]);
-		}
-
-		const start = { pos: opStart, side: startSide };
-		const end = { pos: oblEnd, side: endSide };
-		return client.obliterateRangeLocal(start, end);
+		startSide = random.pick([Side.Before, Side.After]);
+		endSide = random.pick([Side.Before, Side.After]);
 	}
+
+	const start = { pos: opStart, side: startSide };
+	const end = { pos: oblEnd, side: endSide };
+	return client.obliterateRangeLocal(start, end);
 };
 
 export const annotateRange: TestOperation = (
