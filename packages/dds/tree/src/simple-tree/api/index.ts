@@ -62,6 +62,12 @@ export type {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
+	TreeNodeSchemaClassUnsafe,
+	WithTypeUnsafe,
+	ImplicitAllowedTypesUnsafe,
+	TreeNodeSchemaUnsafe,
+	AllowedTypesUnsafe,
+	TreeNodeSchemaNonClassUnsafe,
 } from "./typesUnsafe.js";
 
 export type {

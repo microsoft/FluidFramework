@@ -22,8 +22,6 @@ import {
 	type ApplyKind,
 	type FlexListToUnion,
 	type ExtractItemType,
-	type TreeNode,
-	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 } from "../../../simple-tree/index.js";
 import type {

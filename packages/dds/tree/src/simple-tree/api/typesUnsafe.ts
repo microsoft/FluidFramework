@@ -9,6 +9,7 @@ import type {
 	ApplyKind,
 	FieldKind,
 	FieldSchema,
+	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	TreeLeafValue,
 } from "../schemaTypes.js";
@@ -63,6 +64,12 @@ export type ObjectFromSchemaRecordUnsafe<
 	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
+/**
+ * {@link Unenforced} version of {@link WithType}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @public
+ */
 export interface WithTypeUnsafe<
 	out TName extends string = string,
 	out TKind extends NodeKind = NodeKind,
@@ -102,8 +109,14 @@ export type TreeNodeSchemaUnsafe<
 	Info = unknown,
 > =
 	| TreeNodeSchemaClassUnsafe<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
+	| TreeNodeSchemaNonClassUnsafe<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
 
+/**
+ * {@link Unenforced} version of {@link TreeNodeSchemaClass}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @public
+ */
 export interface TreeNodeSchemaClassUnsafe<
 	out Name extends string,
 	out Kind extends NodeKind,
@@ -123,7 +136,13 @@ export interface TreeNodeSchemaClassUnsafe<
 	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
-export interface TreeNodeSchemaNonClass<
+/**
+ * {@link Unenforced} version of {@link TreeNodeSchemaNonClass}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @public
+ */
+export interface TreeNodeSchemaNonClassUnsafe<
 	out Name extends string,
 	out Kind extends NodeKind,
 	out TNode extends Unenforced<TreeNode | TreeLeafValue>,
@@ -158,9 +177,21 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 			? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
 			: unknown;
 
-export type ImplicitAllowedTypesUnsafe = AllowedTypes | TreeNodeSchemaUnsafe;
+/**
+ * {@link Unenforced} version of {@link ImplicitAllowedTypes}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @public
+ */
+export type ImplicitAllowedTypesUnsafe = AllowedTypesUnsafe | TreeNodeSchemaUnsafe;
 
-export type AllowedTypes = readonly LazyItem<TreeNodeSchemaUnsafe>[];
+/**
+ * {@link Unenforced} version of {@link AllowedTypes}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @public
+ */
+export type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
 
 /**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
@@ -169,10 +200,10 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchemaUnsafe>[];
  * @system @public
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypesUnsafe>,
+	TSchema extends Unenforced<ImplicitAllowedTypes>,
 > = TSchema extends TreeNodeSchemaUnsafe
 	? NodeFromSchemaUnsafe<TSchema>
-	: TSchema extends AllowedTypes
+	: TSchema extends AllowedTypesUnsafe
 		? NodeFromSchemaUnsafe<FlexListToUnion<TSchema>>
 		: unknown;
 
@@ -183,8 +214,8 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
  * @system @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypesUnsafe>,
-> = TSchema extends AllowedTypes
+	TSchema extends Unenforced<ImplicitAllowedTypes>,
+> = TSchema extends AllowedTypesUnsafe
 	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>>
 	: InsertableTypedNodeUnsafe<TSchema>;
 
@@ -223,9 +254,8 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @public
  */
-export interface TreeArrayNodeUnsafe<
-	TAllowedTypes extends Unenforced<ImplicitAllowedTypesUnsafe>,
-> extends TreeArrayNodeBase<
+export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
+	extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
 	> {}
@@ -236,7 +266,7 @@ export interface TreeArrayNodeUnsafe<
  * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @public
  */
-export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypesUnsafe>>
+export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 	extends ReadonlyMapInlined<string, T>,
 		TreeNode {
 	/**
@@ -264,7 +294,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypesUnsa
  * Authored by manually inlining ReadonlyMap from from the TypeScript lib which can be found by navigating to the definition of `ReadonlyMap`.
  * @system @sealed @public
  */
-export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypesUnsafe>> {
+export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
 	/** Returns an iterable of entries in the map. */
 	[Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
 
@@ -305,7 +335,7 @@ export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes
 export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
 	T extends FieldSchemaUnsafe<
 		FieldKind.Optional | FieldKind.Identifier,
-		Unenforced<ImplicitAllowedTypesUnsafe>
+		Unenforced<ImplicitAllowedTypes>
 	>
 		? true
 		: false;
@@ -351,7 +381,7 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
  */
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
-	out Types extends Unenforced<ImplicitAllowedTypesUnsafe>,
+	out Types extends Unenforced<ImplicitAllowedTypes>,
 > extends FieldSchema<Kind, any> {
 	/**
 	 * {@inheritDoc FieldSchema.kind}

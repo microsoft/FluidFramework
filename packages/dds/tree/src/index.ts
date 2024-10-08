@@ -114,6 +114,8 @@ export {
 	type InsertableObjectFromSchemaRecordUnsafe,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
+	type TreeNodeSchemaClassUnsafe,
+	type WithTypeUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -151,6 +153,7 @@ export {
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
+	type ReadonlyArrayNode,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

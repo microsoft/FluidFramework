@@ -92,6 +92,12 @@ export {
 	type NodeBuilderDataUnsafe,
 	type NodeFromSchemaUnsafe,
 	type ReadonlyMapInlined,
+	type TreeNodeSchemaClassUnsafe,
+	type WithTypeUnsafe,
+	type ImplicitAllowedTypesUnsafe,
+	type TreeNodeSchemaUnsafe,
+	type AllowedTypesUnsafe,
+	type TreeNodeSchemaNonClassUnsafe,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -122,6 +128,7 @@ export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
 	type TreeArrayNodeBase,
+	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {
 	type FieldHasDefault,
