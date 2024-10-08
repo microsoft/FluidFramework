@@ -147,8 +147,8 @@ export interface IMergeTreeDeltaOpArgs {
  */
 export interface IMergeTreeClientSequenceArgs {
 	readonly clientId: number;
-	readonly refSeq: number;
-	readonly seq: number;
+	readonly referenceSequenceNumber: number;
+	readonly sequenceNumber: number;
 }
 
 /**

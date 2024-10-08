@@ -36,14 +36,24 @@ export function oldAnnotateParamsToObject(
 	start: number,
 	end: number,
 	props: PropertySet,
-	refSeq: number,
+	referenceSequenceNumber: number,
 	clientId: number,
-	seq: number,
+	sequenceNumber: number,
 	opArgs: IMergeTreeDeltaOpArgs,
 
 	rollback: PropertiesRollback = PropertiesRollback.None,
 ): Parameters<MergeTree["annotateRange"]>[0] {
-	return { start, end, props, refSeq, clientId, seq, opArgs, rollback, adjust: undefined };
+	return {
+		start,
+		end,
+		props,
+		referenceSequenceNumber,
+		clientId,
+		sequenceNumber,
+		opArgs,
+		rollback,
+		adjust: undefined,
+	};
 }
 
 export function loadTextFromFile(

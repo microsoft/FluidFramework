@@ -1909,9 +1909,9 @@ export class MergeTree {
 		end,
 		props,
 		adjust,
-		refSeq,
+		referenceSequenceNumber,
 		clientId,
-		seq,
+		sequenceNumber,
 		opArgs,
 		rollback,
 	}: {
@@ -1935,7 +1935,7 @@ export class MergeTree {
 		/**
 		 * The reference sequence number to use to apply the annotate
 		 */
-		refSeq: number;
+		referenceSequenceNumber: number;
 		/**
 		 * The id of the client making the annotate
 		 */
@@ -1943,7 +1943,7 @@ export class MergeTree {
 		/**
 		 * The sequence number of the annotate operation
 		 */
-		seq: number;
+		sequenceNumber: number;
 		/**
 		 * The op args for the annotate op. this is passed to the merge tree callback if there is one
 		 */
@@ -1953,11 +1953,11 @@ export class MergeTree {
 		 */
 		rollback?: PropertiesRollback;
 	}): void {
-		this.ensureIntervalBoundary(start, refSeq, clientId);
-		this.ensureIntervalBoundary(end, refSeq, clientId);
+		this.ensureIntervalBoundary(start, referenceSequenceNumber, clientId);
+		this.ensureIntervalBoundary(end, referenceSequenceNumber, clientId);
 		const deltaSegments: IMergeTreeSegmentDelta[] = [];
 		const localSeq =
-			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+			sequenceNumber === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup | undefined;
 		const annotateSegment = (segment: ISegmentLeaf): boolean => {
@@ -1973,7 +1973,7 @@ export class MergeTree {
 			const propertyDeltas = propertyManager.handleProperties(
 				{ props, adjust },
 				segment,
-				seq,
+				sequenceNumber,
 				this.collabWindow.collaborating,
 				rollback,
 			);
@@ -1982,7 +1982,7 @@ export class MergeTree {
 				deltaSegments.push({ segment, propertyDeltas });
 			}
 			if (this.collabWindow.collaborating) {
-				if (seq === UnassignedSequenceNumber) {
+				if (sequenceNumber === UnassignedSequenceNumber) {
 					segmentGroup = this.addToPendingList(
 						segment,
 						segmentGroup,
@@ -1991,14 +1991,22 @@ export class MergeTree {
 					);
 				} else {
 					if (MergeTree.options.zamboniSegments) {
-						this.addToLRUSet(segment, seq);
+						this.addToLRUSet(segment, sequenceNumber);
 					}
 				}
 			}
 			return true;
 		};
 
-		this.nodeMap(refSeq, clientId, annotateSegment, undefined, undefined, start, end);
+		this.nodeMap(
+			referenceSequenceNumber,
+			clientId,
+			annotateSegment,
+			undefined,
+			undefined,
+			start,
+			end,
+		);
 
 		// OpArgs == undefined => test code
 		if (deltaSegments.length > 0) {
@@ -2009,7 +2017,7 @@ export class MergeTree {
 		}
 		if (
 			this.collabWindow.collaborating &&
-			seq !== UnassignedSequenceNumber &&
+			sequenceNumber !== UnassignedSequenceNumber &&
 			MergeTree.options.zamboniSegments
 		) {
 			zamboniSegments(this);
@@ -2455,9 +2463,9 @@ export class MergeTree {
 						end: start + segment.cachedLength,
 						props,
 						adjust: undefined,
-						seq: UniversalSequenceNumber,
+						sequenceNumber: UniversalSequenceNumber,
 						clientId: this.collabWindow.clientId,
-						refSeq: UniversalSequenceNumber,
+						referenceSequenceNumber: UniversalSequenceNumber,
 						opArgs: { op: annotateOp },
 						rollback: PropertiesRollback.Rollback,
 					});
