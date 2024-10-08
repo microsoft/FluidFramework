@@ -216,7 +216,7 @@ But we can do better by leveraging an index of the obliterate local references.
 By storing the obliterates in sequence order, as well as storing the obliterate "starts" in a sorted set, we can quickly compare the ordinals of the segment being inserted and those of the stored obliterates.
 This tells us whether or not the segment falls in the range of an obliterate, and we can then find the overlapping obliterate with the smallest movedSeq (i.e. the first obliterate operation that affected this segment) that the applying client has not already seen to apply to the new segment.
 
-This approach takes care of removed segments as well, since the ordinal of the removed segment will fall in between those of the segments containing the position of the start and end local references.
+This approach takes care of removed segments as well, since the ordinal of the removed segment will fall in between those of the segments containing the position of the start and end local references. This approach also handles obliterates that should expand - internally, the endpoints are modified based on their `Side` value to be inclusive or exclusive of the adjacent segments.
 
 All-in-all, the insert logic modification might look something like this:
 
