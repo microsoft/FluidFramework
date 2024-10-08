@@ -130,7 +130,7 @@ export function TaskGroup(props: {
 						>
 							<Stack sx={{ my: 2 }} spacing={2}>
 								<Typography variant="h2" textAlign={"center"}>
-									Preview Of Copliot Changes
+									Preview Of Copilot Changes
 								</Typography>
 								<Stack
 									direction="row"
