@@ -388,7 +388,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}),
 		baseFileName: Flags.string({
 			description:
-				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
+				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
 		}),
 		compatVersionInterval: Flags.integer({
@@ -587,7 +587,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
-			const ranges = getRanges(latestVer, pkgName, context, compatVersionInterval);
+			const ranges = getRanges(latestVer, compatVersionInterval);
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {

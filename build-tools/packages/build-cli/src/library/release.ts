@@ -8,19 +8,11 @@ import {
 	VersionBumpType,
 	VersionScheme,
 	detectVersionScheme,
-	generateLegacyCompatRange,
 	getVersionRange,
 } from "@fluid-tools/version-tools";
+import * as semver from "semver";
 
-import { ReleaseGroup, isReleaseGroup } from "../releaseGroups.js";
-import type { Context } from "./context.js";
-
-/**
- * A map of package names to their versions. This is the format of the "simple" release report.
- */
-export interface PackageVersionList {
-	[packageName: string]: ReleaseVersion;
-}
+import { ReleaseGroup } from "../releaseGroups.js";
 
 /**
  * A map of package names to full release reports. This is the format of the "full" release report.
@@ -92,20 +84,10 @@ export interface ReleaseRanges {
  */
 export const getRanges = (
 	version: ReleaseVersion,
-	releaseGroup: string,
-	context: Context,
 	compatVersionInterval: number,
 	scheme?: VersionScheme,
 ): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
-	let isClientReleaseGroup = false;
-
-	if (isReleaseGroup(releaseGroup)) {
-		const pkg = context.packagesInReleaseGroup(releaseGroup)[0];
-		if (pkg !== undefined) {
-			isClientReleaseGroup = pkg.monoRepo?.releaseGroup === "client";
-		}
-	}
 
 	return schemeToUse === "internal"
 		? {
@@ -113,30 +95,21 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: isClientReleaseGroup
-					? generateLegacyCompatRange(version, compatVersionInterval)
-					: getVersionRange(version, "^"),
+				legacyCompat: getInternalVersionRange(version, compatVersionInterval),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: isClientReleaseGroup
-					? generateLegacyCompatRange(version, compatVersionInterval)
-					: `^${version}`,
+				legacyCompat: getInternalVersionRange(version, compatVersionInterval),
 			};
 };
 
-interface PackageCaretRange {
-	[packageName: string]: string;
-}
-
-interface PackageTildeRange {
-	[packageName: string]: string;
-}
-
-interface PackageLegacyRange {
+/**
+ * An interface representing a mapping of package names to their corresponding version strings.
+ */
+interface PackageRange {
 	[packageName: string]: string;
 }
 
@@ -146,15 +119,15 @@ interface PackageLegacyRange {
  * "full" corresponds to the {@link ReleaseReport} interface. It contains a lot of package metadata indexed by package
  * name.
  *
- * "simple" corresponds to the {@link PackageVersionList} interface. It contains a map of package names to versions.
+ * "simple" corresponds to the {@link PackageRange} interface. It contains a map of package names to versions.
  *
- * "caret" corresponds to the {@link PackageCaretRange} interface. It contains a map of package names to
+ * "caret" corresponds to the {@link PackageRange} interface. It contains a map of package names to
  * caret-equivalent version range strings.
  *
- * "tilde" corresponds to the {@link PackageTildeRange} interface. It contains a map of package names to
+ * "tilde" corresponds to the {@link PackageRange} interface. It contains a map of package names to
  * tilde-equivalent version range strings.
  *
- * "legacy-compat" corresponds to the {@link PackageLegacyRange} interface. It contains a map of package names to
+ * "legacy-compat" corresponds to the {@link PackageRange} interface. It contains a map of package names to
  * legacy compat equivalent version range strings
  */
 export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
@@ -165,20 +138,16 @@ export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat"
 export function toReportKind(
 	report: ReleaseReport,
 	kind: ReportKind,
-):
-	| ReleaseReport
-	| PackageVersionList
-	| PackageTildeRange
-	| PackageCaretRange
-	| PackageLegacyRange {
-	const toReturn:
-		| PackageVersionList
-		| PackageTildeRange
-		| PackageCaretRange
-		| PackageLegacyRange = {};
+): ReleaseReport | PackageRange {
+	const toReturn: PackageRange = {};
 
 	switch (kind) {
 		case "full": {
+			for (const [, details] of Object.entries(report)) {
+				if (details.releaseGroup !== "client") {
+					details.ranges.legacyCompat = details.ranges.caret;
+				}
+			}
 			return report;
 		}
 
@@ -208,7 +177,10 @@ export function toReportKind(
 
 		case "legacy-compat": {
 			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = details.ranges.legacyCompat;
+				toReturn[pkg] =
+					details.releaseGroup === "client"
+						? details.ranges.legacyCompat
+						: details.ranges.caret;
 			}
 			break;
 		}
@@ -219,4 +191,46 @@ export function toReportKind(
 	}
 
 	return toReturn;
+}
+
+/**
+ * Generates a new semantic version representing the next version in a legacy compatibility range based on a specified multiple of minor versions.
+ *
+ * This function returns the minor version of the given version to the nearest  multiple of `compatVersionInterval` and bumps it by the `compatVersionInterval` to generate
+ * a new semantic version.
+ *
+ * @param version - A semver-compatible string or `semver.SemVer` object representing the current version.
+ * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
+ *
+ * @returns A new `semver.SemVer` object representing the next version in the legacy compatibility range.
+ */
+export function getInternalVersionRange(
+	version: semver.SemVer | string,
+	compatVersionInterval: number,
+): string {
+	const semVersion = semver.parse(version);
+	if (!semVersion) {
+		throw new Error("Invalid version string");
+	}
+
+	// Calculate the next compatible minor version using the compatVersionInterval
+	const baseMinor =
+		Math.floor(semVersion.minor / compatVersionInterval) * compatVersionInterval;
+	const newSemVerString = `${semVersion.major}.${baseMinor + compatVersionInterval}.0`;
+
+	const higherVersion = semver.parse(newSemVerString);
+	if (higherVersion === null) {
+		throw new Error(
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
+			`Couldn't convert ${version} to the legacy version scheme. Tried parsing: '${newSemVerString}'`,
+		);
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-base-to-string
+	const rangeString = `>=${version} <${higherVersion}`;
+	const range = semver.validRange(rangeString);
+	if (range === null) {
+		throw new Error(`The generated range string was invalid: "${rangeString}"`);
+	}
+	return range;
 }

@@ -37,9 +37,6 @@ prereleaseIndentifier: string
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
 
-// @public
-export function generateLegacyCompatRange(version: semver.SemVer | string, compatVersionInterval: number): string;
-
 // Warning: (ae-forgotten-export) The symbol "TagPrefix" needs to be exported by the entry point index.d.ts
 //
 // @public
