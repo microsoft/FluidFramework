@@ -109,15 +109,18 @@ export function TaskGroup(props: {
 						onClose={() => {
 							setIsDiffModalOpen(false);
 							setLlmBranchData(undefined);
+							setPopoverAnchor(undefined);
 						}}
 						onAccept={() => {
 							llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
 							setIsDiffModalOpen(false);
 							setLlmBranchData(undefined);
+							setPopoverAnchor(undefined);
 						}}
 						onDecline={() => {
 							setIsDiffModalOpen(false);
 							setLlmBranchData(undefined);
+							setPopoverAnchor(undefined);
 						}}
 						treeView={llmBranchData.forkView}
 						differences={llmBranchData.differences}
