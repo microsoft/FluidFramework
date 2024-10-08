@@ -134,17 +134,8 @@ export class DataStoreContexts
 	 * @param id - The id of the context to get
 	 * @param wait - If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
 	 */
-	public async getBoundOrRemoted(
-		id: string,
-		wait: boolean,
-	): Promise<FluidDataStoreContext | undefined> {
-		const deferredContext = this.ensureDeferred(id);
-
-		if (!wait && !deferredContext.isCompleted) {
-			return undefined;
-		}
-
-		return deferredContext.promise;
+	public async getBoundOrRemoted(id: string): Promise<FluidDataStoreContext | undefined> {
+		return this.deferredContexts.get(id)?.promise;
 	}
 
 	private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {

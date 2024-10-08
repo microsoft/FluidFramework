@@ -535,17 +535,9 @@ export const InactiveResponseHeaderKey = "isInactive";
  * @internal
  */
 export interface RuntimeHeaderData {
-	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
 }
-
-/** Default values for Runtime Headers */
-export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
-	wait: true,
-	viaHandle: false,
-	allowTombstone: false,
-};
 
 /**
  * Available compression algorithms for op compression.
@@ -3225,9 +3217,7 @@ export class ContainerRuntime
 		// Please also see note on name collisions in DataStores.createDataStoreId()
 		await this.channelCollection.waitIfPendingAlias(alias);
 		const internalId = this.internalId(alias);
-		const context = await this.channelCollection.getDataStoreIfAvailable(internalId, {
-			wait: false,
-		});
+		const context = await this.channelCollection.getDataStoreIfAvailable(internalId);
 		// If the data store is not available or not an alias, return undefined.
 		if (context === undefined || !(await context.isRoot())) {
 			return undefined;
