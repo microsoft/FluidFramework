@@ -43,7 +43,7 @@ export function TaskGroup(props: {
 
 	const [isTitleEditing, setIsTitleEditing] = useState(false);
 	const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
-	const [isDiffModalOpen, setIsDiffModelOpen] = useState(false);
+	const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
 
 	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | undefined>(undefined);
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
@@ -105,7 +105,7 @@ export function TaskGroup(props: {
 
 				<Dialog
 					open={isDiffModalOpen}
-					onClose={() => setIsDiffModelOpen(false)}
+					onClose={() => setIsDiffModalOpen(false)}
 					aria-labelledby="modal-modal-title"
 					aria-describedby="modal-modal-description"
 					sx={{ overflow: "auto" }}
@@ -194,7 +194,7 @@ export function TaskGroup(props: {
 										sx={{ textTransform: "none" }}
 										onClick={() => {
 											llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
-											setIsDiffModelOpen(false);
+											setIsDiffModalOpen(false);
 										}}
 									>
 										{" "}
@@ -205,7 +205,7 @@ export function TaskGroup(props: {
 										variant="contained"
 										color="error"
 										sx={{ textTransform: "none" }}
-										onClick={() => setIsDiffModelOpen(false)}
+										onClick={() => setIsDiffModalOpen(false)}
 									>
 										{" "}
 										Decline Changes{" "}
@@ -309,7 +309,7 @@ export function TaskGroup(props: {
 										forkView,
 										newBranchTargetNode: newBranchTargetNode as unknown as SharedTreeTaskGroup,
 									});
-									setIsDiffModelOpen(true);
+									setIsDiffModalOpen(true);
 									enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
 										variant: "success",
 										autoHideDuration: 5000,
