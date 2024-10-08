@@ -917,7 +917,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			);
 		}
 
-		const context = await this.contexts.getBoundOrRemoted(id);
+		const context = this.contexts.get(id);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
 			const request: IRequest = { url: id };
@@ -943,7 +943,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		) {
 			return undefined;
 		}
-		const context = await this.contexts.getBoundOrRemoted(id);
+		const context = this.contexts.get(id);
 		if (context === undefined) {
 			return undefined;
 		}
