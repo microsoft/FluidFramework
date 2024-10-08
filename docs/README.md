@@ -200,9 +200,6 @@ The replacement syntax to use in `.mdx` files would be:
 
 -   Add component-level unit testing (with accessibility tests)
 -   Add end-to-end testing
--   "Local" API docs mode
-    -   See https://github.com/microsoft/FluidFramework/pull/20203 for reference
--   Add button for users to report docs issues / edit pages on github
 -   Verify specific browser support
 -   Remove "new website features" demo page
 -   Add prettier (wait until after merge to reduce diff noise)
