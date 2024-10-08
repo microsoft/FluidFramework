@@ -67,7 +67,7 @@
 		"exclude": [
 			"src/test/**/*.*ts",
 			"dist/test/**/*.*js",
-			"dist/test/**/*.*js"
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
