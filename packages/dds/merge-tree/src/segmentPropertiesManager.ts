@@ -44,21 +44,18 @@ export class PropertiesManager {
 			...Object.entries(op.props ?? {})
 				.map<[string, { raw: unknown }]>(([k, raw]) => [k, { raw }])
 				.filter(([_, v]) => v.raw !== undefined),
-			...Object.entries(op.adjust ?? {}),
+			...Object.entries<AdjustParams & { raw?: never }>(op.adjust ?? {}),
 		]) {
 			const previousValue = properties[key];
 
 			if (rollback === PropertiesRollback.Rollback) {
-				const pending = this.pending?.[key];
+				const pending = this.pending.get(key);
 
 				if (collaborating) {
 					assert(pending !== undefined, "pending must exist for rollback");
 					pending.changes.pop();
-					if (pending.changes.length === 0) {
-						delete this.pending?.[key];
-						if (Object.keys(this.pending ?? {}).length === 0) {
-							this.pending = undefined;
-						}
+					if (pending.changes.empty) {
+						this.pending.delete(key);
 					}
 					properties[key] = computeValue(
 						pending.consensus,
@@ -69,19 +66,21 @@ export class PropertiesManager {
 					properties[key] = computeValue(previousValue, [value]);
 				}
 			} else {
+				let pending: PendingChanges | undefined = this.pending.get(key);
 				if (seq === UnassignedSequenceNumber && collaborating) {
-					const adjustments = (this.pending ??= {});
-					const pending: PendingChanges = (adjustments[key] ??= {
-						consensus: previousValue,
-						changes: new DoublyLinkedList(),
-					});
+					if (pending === undefined) {
+						pending = {
+							consensus: previousValue,
+							changes: new DoublyLinkedList(),
+						};
+						this.pending.set(key, pending);
+					}
 					pending.changes.push(value);
 					properties[key] = computeValue(
 						pending.consensus,
 						pending.changes.map((n) => n.data),
 					);
 				} else {
-					const pending = this.pending?.[key];
 					if (pending === undefined) {
 						// no pending changes, so no need to update the adjustments
 						properties[key] = computeValue(previousValue, [value]);
@@ -109,7 +108,7 @@ export class PropertiesManager {
 		return deltas;
 	}
 
-	private pending: MapLike<PendingChanges | undefined> | undefined;
+	private readonly pending = new Map<string, PendingChanges>();
 
 	public ack(op: { props?: MapLike<unknown>; adjust?: MapLike<AdjustParams> }): void {
 		for (const [key, value] of [
@@ -118,17 +117,13 @@ export class PropertiesManager {
 				.filter(([_, v]) => v.raw !== undefined),
 			...Object.entries(op.adjust ?? {}),
 		]) {
-			const pending = this.pending?.[key];
-			assert(pending !== undefined, "must have pending to ack");
+			const pending = this.pending.get(key);
+			assert(this.pending !== undefined && pending !== undefined, "must have pending to ack");
 			pending.changes.shift();
-			if (pending.changes.length === 0) {
-				delete this.pending?.[key];
-				if (Object.keys(this.pending ?? {}).length === 0) {
-					this.pending = undefined;
-				}
-			} else {
-				pending.consensus = computeValue(pending.consensus, [value]);
+			if (pending.changes.empty) {
+				this.pending.delete(key);
 			}
+			pending.consensus = computeValue(pending.consensus, [value]);
 		}
 	}
 
@@ -141,23 +136,17 @@ export class PropertiesManager {
 	): void {
 		const newManager = (dest.propertyManager ??= new PropertiesManager());
 		dest.properties = clone(oldProps);
-		if (this.pending !== undefined) {
-			for (const [key, value] of Object.entries(this.pending)) {
-				if (value !== undefined) {
-					const { consensus, changes } = value;
-					const pending = (newManager.pending ??= {});
-					pending[key] = {
-						consensus,
-						changes: new DoublyLinkedList(changes.map((n) => n.data)),
-					};
-				}
-			}
+		for (const [key, { consensus, changes }] of this.pending.entries()) {
+			newManager.pending.set(key, {
+				consensus,
+				changes: new DoublyLinkedList(changes.map((c) => c.data)),
+			});
 		}
 	}
 
 	public hasPendingProperties(props: PropertySet): boolean {
 		for (const [key, value] of Object.entries(props)) {
-			if (value !== undefined && this.pending?.[key] === undefined) {
+			if (value !== undefined && !this.pending.has(key)) {
 				return false;
 			}
 		}
