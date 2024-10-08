@@ -70,7 +70,7 @@ export class DataStoreContexts
 	}
 
 	public get(id: string): FluidDataStoreContext | undefined {
-		return this._contexts.get(id);
+		return this.notBoundContexts.has(id) ? undefined : this._contexts.get(id);
 	}
 
 	public delete(id: string): boolean {
