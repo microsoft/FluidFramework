@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable spaced-comment */
+// Necessary so this file can reference 'process' for 'process.env', which NextJS handles automatically.
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+/* eslint-enable spaced-comment */
+
 "use client";
 
 import { PublicClientApplication, InteractionType, AccountInfo } from "@azure/msal-browser";
