@@ -6,17 +6,14 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	type FieldKey,
 	type ForestEvents,
 	type SchemaPolicy,
-	type TreeFieldStoredSchema,
 	type TreeStoredSchema,
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
 import type { Listenable } from "../../events/index.js";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
-import type { FieldGenerator } from "../fieldGenerator.js";
 import type { NodeKeyManager } from "../node-key/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
@@ -169,15 +166,6 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	): () => void {
 		return this.checkout.forest.on(eventName, listener);
 	}
-
-	/**
-	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
-	 */
-	// TODO: Use this to automatically provide node keys where required.
-	public fieldSource?(
-		key: FieldKey,
-		schema: TreeFieldStoredSchema,
-	): undefined | FieldGenerator;
 }
 
 /**

@@ -114,7 +114,6 @@ import {
 	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
 	type TreeCheckout,
-	type TreeContent,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITransaction,
@@ -748,7 +747,7 @@ export function flexTreeViewWithContent(
 	);
 }
 
-export function forestWithContent(content: TreeStoredContent | TreeContent): IEditableForest {
+export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
@@ -950,11 +949,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 export function testChangeReceiver<TChange>(
 	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
 ): [
-	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[0],
+	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[1],
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
-	const changeReceiver = (change: TChange): number => changes.push(change);
+	const changeReceiver = (taggedChange: TaggedChange<TChange>): number =>
+		changes.push(taggedChange.change);
 	return [changeReceiver, () => [...changes]];
 }
 

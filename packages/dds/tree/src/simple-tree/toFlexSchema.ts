@@ -20,9 +20,6 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-// TODO: once flex schema is gone, this code can move into simple-tree
-// eslint-disable-next-line import/no-internal-modules
-import { normalizeFlexListEager } from "../feature-libraries/typed-schema/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "./core/index.js";
 import {
@@ -34,6 +31,7 @@ import {
 import { walkFieldSchema } from "./walkFieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
+import { normalizeFlexListEager } from "./flexList.js";
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
@@ -50,7 +48,7 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 					)}. Remove or rename them to avoid the collision.`,
 				);
 			}
-			nodeSchema.set(brand(schema.identifier), convertNodeSchema(schema));
+			nodeSchema.set(brand(schema.identifier), getStoredSchema(schema));
 		},
 	});
 
@@ -58,16 +56,6 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 		nodeSchema,
 		rootFieldSchema: convertField(root),
 	};
-}
-
-/**
- * Return a stored schema for the provided class schema.
- *
- * This also has the side effect of populating the cached view schema on the class based schema.
- */
-export function getStoredSchema(root: TreeNodeSchema): TreeNodeStoredSchema {
-	const stored = toStoredSchema(root);
-	return stored.nodeSchema.get(brand(root.identifier)) ?? fail("Missing schema");
 }
 
 /**
@@ -94,7 +82,7 @@ const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 ]);
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into an {@link AllowedTypes}.
+ * Normalizes an {@link ImplicitAllowedTypes} into an {@link TreeTypeSet}.
  */
 export function convertAllowedTypes(schema: ImplicitAllowedTypes): TreeTypeSet {
 	if (isReadonlyArray(schema)) {
@@ -104,14 +92,9 @@ export function convertAllowedTypes(schema: ImplicitAllowedTypes): TreeTypeSet {
 }
 
 /**
- * Converts a {@link TreeNodeSchema} into a {@link FlexTreeNodeSchema}.
- * Ensures all types reachable from `schema` are included in `schemaMap`.
- *
- * Return value (and entries in map) are lazy to allow recursive types to work.
- * This laziness does NOT extend to adding entries to `schemaMap`:
- * all referenced types are added to it before this function returns.
+ * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
  */
-export function convertNodeSchema(schema: TreeNodeSchema): TreeNodeStoredSchema {
+export function getStoredSchema(schema: TreeNodeSchema): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {

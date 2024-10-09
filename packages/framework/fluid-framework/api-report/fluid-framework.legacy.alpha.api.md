@@ -764,7 +764,7 @@ export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObjec
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     localReferencePositionToPosition(lref: ReferencePosition): number;
-    obliterateRange(start: number, end: number): void;
+    obliterateRange(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): void;
     posFromRelativePos(relativePos: IRelativePosition): number;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
@@ -1025,6 +1025,7 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+    // @deprecated
     constructor(opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client);
     readonly isLocal: boolean;
     // (undocumented)
@@ -1033,6 +1034,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 
 // @alpha
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    // @deprecated
     constructor(
     deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
     get clientId(): string | undefined;
@@ -1046,6 +1048,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 
 // @alpha
 export class SequenceInterval implements ISerializableInterval {
+    // @deprecated
     constructor(client: Client,
     start: LocalReferencePosition,
     end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, startSide?: Side, endSide?: Side);
@@ -1084,6 +1087,7 @@ export class SequenceInterval implements ISerializableInterval {
 
 // @alpha
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+    // @deprecated
     constructor(
     opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
