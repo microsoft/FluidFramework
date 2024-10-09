@@ -16,7 +16,7 @@ export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange 
 // @alpha
 export interface DifferenceChange {
     // (undocumented)
-    objectId?: string | number;
+    objectId?: string | number | undefined;
     // (undocumented)
     oldValue: unknown;
     // (undocumented)
@@ -42,7 +42,7 @@ export interface DifferenceMove {
     // (undocumented)
     newIndex: number;
     // (undocumented)
-    objectId?: string | number;
+    objectId?: string | number | undefined;
     // (undocumented)
     path: ObjectPath;
     // (undocumented)
@@ -54,7 +54,7 @@ export interface DifferenceMove {
 // @alpha
 export interface DifferenceRemove {
     // (undocumented)
-    objectId?: string | number;
+    objectId?: string | number | undefined;
     // (undocumented)
     oldValue: unknown;
     // (undocumented)
@@ -73,7 +73,7 @@ export interface Options {
     // (undocumented)
     useObjectIds?: {
         idAttributeName: string;
-    };
+    } | undefined;
 }
 
 // @alpha
