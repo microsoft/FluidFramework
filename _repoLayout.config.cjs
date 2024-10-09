@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This file will be renamed to repoLayout.config.cjs in a future change. Right now it is an example of what the
+ * IFluidRepoLayout config would look like for our main FluidFramework repo.
+ */
+
 // Enable TypeScript type-checking for this file.
 // See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
 // @ts-check
