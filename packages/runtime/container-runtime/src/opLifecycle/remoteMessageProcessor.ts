@@ -236,32 +236,15 @@ export class RemoteMessageProcessor {
 }
 
 /**
- * Takes an incoming message and if the contents is a string, JSON.parse's it in place
+ * Takes an incoming runtime message and if the contents is a string, JSON.parse's it in place.
+ * Not to be used for non-runtine messages.
  * @param mutableMessage - op message received
- * @param hasModernRuntimeMessageEnvelope - false if the message does not contain the modern op envelop where message.type is MessageType.Operation
- * @param logLegacyCase - callback to log when legacy op is encountered
  */
-export function ensureContentsDeserialized(
-	mutableMessage: ISequencedDocumentMessage,
-	hasModernRuntimeMessageEnvelope: boolean,
-	logLegacyCase: (codePath: string) => void,
-): void {
-	// This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
-	// Note: Until that change is made in the loader, this case will never be hit.
-	// Then there will be a long time of needing both cases, until LTS catches up to the change.
-	let didParseJsonContents: boolean;
+export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+	// This should become unconditional once (Loader LTS) reaches 2.4 or later.
+	// There will be a long time of needing both cases, until LTS catches advances to that point.
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
-		didParseJsonContents = true;
-	} else {
-		didParseJsonContents = false;
-	}
-
-	// The DeltaManager parses the contents of the message as JSON if it is a string,
-	// so we should never end up parsing it here.
-	// Let's observe if we are wrong about this to learn about these cases.
-	if (didParseJsonContents) {
-		logLegacyCase("ensureContentsDeserialized_foundJsonContents");
 	}
 }
 

@@ -2709,9 +2709,10 @@ export class ContainerRuntime
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
 
-		// We expect runtime messages to have JSON contents - deserialize it in place.
-		ensureContentsDeserialized(messageCopy, hasModernRuntimeMessageEnvelope, logLegacyCase);
 		if (hasModernRuntimeMessageEnvelope) {
+			// We expect runtime messages to have JSON contents - deserialize it in place.
+			ensureContentsDeserialized(messageCopy);
+
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
 			const inboundResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
@@ -2806,12 +2807,17 @@ export class ContainerRuntime
 				runtimeBatch,
 			);
 		} else {
+			const runtimeBatch = isUnpackedRuntimeMessage(messageCopy);
+			if (runtimeBatch) {
+				// We expect runtime messages to have JSON contents (even old ones like what will come here) - deserialize it in place.
+				ensureContentsDeserialized(messageCopy);
+			}
 			this.processInboundMessages(
 				[{ message: messageCopy, localOpMetadata: undefined }],
 				{ batchStart: true, batchEnd: true }, // Single message
 				local,
 				savedOp,
-				isUnpackedRuntimeMessage(messageCopy) /* runtimeBatch */,
+				runtimeBatch,
 			);
 		}
 
@@ -2893,6 +2899,16 @@ export class ContainerRuntime
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
+		}
+
+		// The DeltaManager used to do this, but doesn't anymore as of v2.4
+		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
+		if (
+			typeof message.contents === "string" &&
+			message.contents !== "" &&
+			message.type !== MessageType.ClientLeave
+		) {
+			message.contents = JSON.parse(message.contents);
 		}
 
 		this.emit("op", message, false /* runtimeMessage */);
