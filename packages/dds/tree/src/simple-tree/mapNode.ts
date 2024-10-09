@@ -11,7 +11,6 @@ import {
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -35,6 +34,7 @@ import {
 	typeSchemaSymbol,
 	type Context,
 	UnhydratedFlexTreeNode,
+	getOrCreateInnerNode,
 } from "./core/index.js";
 import {
 	mapTreeFromNodeData,

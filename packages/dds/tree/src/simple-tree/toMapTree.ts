@@ -262,14 +262,14 @@ function mapValueWithFallbacks(
 				// Our serialized data format does not support -0.
 				// Map such input to +0.
 				return 0;
-			} else if (Number.isNaN(value) || !Number.isFinite(value)) {
+			} else if (!Number.isFinite(value)) {
 				// Our serialized data format does not support NaN nor +/-∞.
 				// If the schema supports `null`, fall back to that. Otherwise, throw.
 				// This is intended to match JSON's behavior for such values.
 				if (allowedTypes.has(nullSchema)) {
 					return null;
 				} else {
-					throw new TypeError(`Received unsupported numeric value: ${value}.`);
+					throw new UsageError(`Received unsupported numeric value: ${value}.`);
 				}
 			} else {
 				return value;
@@ -287,7 +287,7 @@ function mapValueWithFallbacks(
 			}
 		}
 		default:
-			throw new TypeError(`Received unsupported leaf value: ${value}.`);
+			throw new UsageError(`Received unsupported leaf value: ${value}.`);
 	}
 }
 

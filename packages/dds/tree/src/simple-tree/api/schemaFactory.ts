@@ -12,11 +12,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import {
-	type NodeKeyManager,
-	type Unenforced,
-	isLazy,
-} from "../../feature-libraries/index.js";
+import type { NodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	type RestrictiveStringRecord,
 	getOrCreate,
@@ -74,9 +70,11 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
-} from "../typesUnsafe.js";
+	Unenforced,
+} from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
+import { isLazy } from "../flexList.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */

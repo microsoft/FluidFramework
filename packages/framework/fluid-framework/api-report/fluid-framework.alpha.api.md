@@ -4,6 +4,15 @@
 
 ```ts
 
+// @alpha
+export function adaptEnum<TScope extends string, const TEnum extends Record<string, string | number>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => TreeNode & {
+    readonly value: TValue;
+}) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<ScopedSchemaName<TScope, TEnum[Property]>, NodeKind.Object, TreeNode & {
+        readonly value: TEnum[Property];
+    }, never, true, unknown, unknown> & (new () => TreeNode & {
+        readonly value: TEnum[Property];
+    }); };
+
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -33,6 +42,12 @@ export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
 }
+
+// @alpha
+export function comparePersistedSchema(persisted: JsonCompatible, view: JsonCompatible, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
+
+// @alpha
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree>;
 
 // @public
 export enum ConnectionState {
@@ -66,6 +81,15 @@ export interface ContainerSchema {
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 
+// @alpha
+export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: readonly Members[]): (<TValue extends Members>(value: TValue) => TreeNode & {
+    readonly value: TValue;
+}) & Record<Members, TreeNodeSchemaClass<ScopedSchemaName<TScope, Members>, NodeKind.Object, TreeNode & {
+    readonly value: Members;
+}, never, true, unknown, unknown> & (new () => TreeNode & {
+    readonly value: Members;
+})>;
+
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
@@ -74,6 +98,9 @@ export abstract class ErasedType<out Name = unknown> {
 
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+
+// @alpha
+export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible;
 
 // @public
 type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
@@ -142,6 +169,18 @@ export type FluidObject<T = unknown> = {
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @alpha
+export interface ForestOptions {
+    readonly forest?: ForestType;
+}
+
+// @alpha
+export enum ForestType {
+    Expensive = 2,
+    Optimized = 1,
+    Reference = 0
+}
+
+// @alpha
 export function getBranch(tree: ITree): TreeBranch;
 
 // @alpha
@@ -149,6 +188,11 @@ export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
+
+// @alpha
+export interface ICodecOptions {
+    readonly jsonValidator: JsonValidator;
+}
 
 // @public
 export interface IConnection {
@@ -552,6 +596,14 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, 
     readonly items: JsonFieldSchema;
 }
 
+// @alpha
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+
+// @alpha
+export type JsonCompatibleObject = {
+    [P in string]?: JsonCompatible;
+};
+
 // @alpha @sealed
 export type JsonFieldSchema = {
     readonly description?: string | undefined;
@@ -609,6 +661,11 @@ export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 };
+
+// @alpha
+export interface JsonValidator {
+    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
+}
 
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
@@ -681,6 +738,9 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 export interface NodeSchemaProps<out TCustomMetadata = unknown> {
     readonly metadata?: NodeSchemaMetadata<TCustomMetadata>;
 }
+
+// @alpha
+export const noopValidator: JsonValidator;
 
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
@@ -805,6 +865,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @alpha
+export interface SchemaValidationFunction<Schema extends TSchema> {
+    check(data: unknown): data is Static<Schema>;
+}
+
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
@@ -815,6 +880,32 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+// @alpha
+export interface SharedTreeFormatOptions {
+    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+    treeEncodeType: TreeCompressionStrategy;
+}
+
+// @alpha
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+    readonly v2: 2;
+    readonly v3: 3;
+};
+
+// @alpha
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @alpha
+export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
+
+// @alpha
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
+    readonly value: TName;
+}, never, true, unknown, unknown> & (new () => TreeNode & {
+    readonly value: TName;
+});
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -904,6 +995,12 @@ export interface TreeChangeEvents {
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+}
+
+// @alpha
+export enum TreeCompressionStrategy {
+    Compressed = 0,
+    Uncompressed = 1
 }
 
 // @public
@@ -1025,6 +1122,12 @@ export interface TreeViewEvents {
     rootChanged(): void;
     schemaChanged(): void;
 }
+
+// @alpha
+export const typeboxValidator: JsonValidator;
+
+// @alpha
+export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
 
 // @public @deprecated
 const typeNameSymbol: unique symbol;

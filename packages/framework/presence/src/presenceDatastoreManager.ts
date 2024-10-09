@@ -5,18 +5,23 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { IEphemeralRuntime, PresenceManagerInternal } from "./internalTypes.js";
-import type { ClientSessionId } from "./presence.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
+import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
 import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
-import type { PresenceStates, PresenceStatesSchema } from "./types.js";
+import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import type {
+	PresenceStates,
+	PresenceStatesSchema,
+	PresenceWorkspaceAddress,
+} from "./types.js";
 
 import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
 
@@ -26,18 +31,14 @@ interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 }
 
 interface SystemDatastore {
-	"system:presence": {
-		clientToSessionId: {
-			[
-				ClientConnectionId: ClientConnectionId
-			]: InternalTypes.ValueRequiredState<ClientSessionId>;
-		};
-	};
+	"system:presence": SystemWorkspaceDatastore;
 }
 
-type PresenceDatastore = {
+type InternalWorkspaceAddress = `${"s" | "n"}:${PresenceWorkspaceAddress}`;
+
+type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
-} & SystemDatastore;
+};
 
 interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
@@ -47,7 +48,7 @@ interface GeneralDatastoreMessageContent {
 	};
 }
 
-type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
+type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
 
 const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
 interface DatastoreUpdateMessage extends IInboundSignalMessage {
@@ -56,7 +57,7 @@ interface DatastoreUpdateMessage extends IInboundSignalMessage {
 		sendTimestamp: number;
 		avgLatency: number;
 		isComplete?: true;
-		data: GeneralDatastoreMessageContent & Partial<SystemDatastore>;
+		data: DatastoreMessageContent;
 	};
 }
 
@@ -81,8 +82,9 @@ function isPresenceMessage(
  * @internal
  */
 export interface PresenceDatastoreManager {
+	joinSession(clientId: ClientConnectionId): void;
 	getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: string,
+		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
@@ -92,9 +94,7 @@ export interface PresenceDatastoreManager {
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastore = {
-		"system:presence": { clientToSessionId: {} },
-	};
+	private readonly datastore: PresenceDatastore;
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -104,29 +104,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public constructor(
 		private readonly clientSessionId: ClientSessionId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly presence: PresenceManagerInternal,
+		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
+		private readonly logger: ITelemetryLoggerExt | undefined,
+		systemWorkspaceDatastore: SystemWorkspaceDatastore,
+		systemWorkspace: PresenceStatesEntry<PresenceStatesSchema>,
 	) {
-		runtime.on("connected", this.onConnect.bind(this));
-
-		// Check if already connected at the time of construction.
-		// If constructed during data store load, the runtime may already be connected
-		// and the "connected" event will be raised during completion. With construction
-		// delayed we expect that "connected" event has passed.
-		// Note: In some manual testing, this does not appear to be enough to
-		// always trigger an initial connect.
-		const clientId = runtime.clientId;
-		if (clientId !== undefined && runtime.connected) {
-			this.onConnect(clientId);
-		}
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
+		this.workspaces.set("system:presence", systemWorkspace);
 	}
 
-	private onConnect(clientId: ClientConnectionId): void {
-		this.datastore["system:presence"].clientToSessionId[clientId] = {
-			rev: 0,
-			timestamp: Date.now(),
-			value: this.clientSessionId,
-		};
-
+	public joinSession(clientId: ClientConnectionId): void {
 		// Broadcast join message to all clients
 		const updateProviders = [...this.runtime.getQuorum().getMembers().keys()].filter(
 			(quorumClientId) => quorumClientId !== clientId,
@@ -145,7 +133,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: string,
+		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
@@ -167,12 +155,26 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				return;
 			}
 
-			const updates: GeneralDatastoreMessageContent[string] = {};
+			const clientConnectionId = this.runtime.clientId;
+			assert(clientConnectionId !== undefined, "Client connected without clientId");
+			const currentClientToSessionValueState =
+				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+
+			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
 			for (const [key, value] of Object.entries(states)) {
 				updates[key] = { [this.clientSessionId]: value };
 			}
 			this.localUpdate(
 				{
+					// Always send current connection mapping for some resiliency against
+					// lost signals. This ensures that client session id found in `updates`
+					// (which is this client's client session id) is always represented in
+					// system workspace of recipient clients.
+					"system:presence": {
+						clientToSessionId: {
+							[clientConnectionId]: { ...currentClientToSessionValueState },
+						},
+					},
 					[internalWorkspaceAddress]: updates,
 				},
 				forceBroadcast,
@@ -182,7 +184,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const entry = createPresenceStates(
 			{
 				clientSessionId: this.clientSessionId,
-				lookupClient: this.presence.getAttendee.bind(this.presence),
+				lookupClient: this.lookupClient,
 				localUpdate,
 			},
 			workspaceDatastore,
@@ -193,10 +195,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		return entry.public;
 	}
 
-	private localUpdate(
-		data: GeneralDatastoreMessageContent & Partial<SystemDatastore>,
-		_forceBroadcast: boolean,
-	): void {
+	private localUpdate(data: DatastoreMessageContent, _forceBroadcast: boolean): void {
 		const content = {
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
@@ -250,39 +249,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		if (message.type === joinMessageType) {
 			assert(this.runtime.connected, "Received presence join signal while not connected");
-			const updateProviders = message.content.updateProviders;
-			this.refreshBroadcastRequested = true;
-			// We must be connected to receive this message, so clientId should be defined.
-			// If it isn't then, not really a problem; just won't be in provider or quorum list.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const clientId = this.runtime.clientId!;
-			if (updateProviders.includes(clientId)) {
-				// Send all current state to the new client
-				this.broadcastAllKnownState();
-			} else {
-				// Schedule a broadcast to the new client after a delay only to send if
-				// another broadcast hasn't been seen in the meantime. The delay is based
-				// on the position in the quorum list. It doesn't have to be a stable
-				// list across all clients. We need something to provide suggested order
-				// to prevent a flood of broadcasts.
-				const quorumMembers = this.runtime.getQuorum().getMembers();
-				const indexOfSelf =
-					quorumMembers.get(clientId)?.sequenceNumber ??
-					// Index past quorum members + arbitrary additional offset up to 10
-					quorumMembers.size + Math.random() * 10;
-				// These numbers have been chosen arbitrarily to start with.
-				// 20 is minimum wait time, 20 is the additional wait time per provider
-				// given an chance before us with named providers given more time.
-				const waitTime = 20 + 20 * (3 * updateProviders.length + indexOfSelf);
-				setTimeout(() => {
-					// Make sure a broadcast is still needed and we are currently connected.
-					// If not connected, nothing we can do.
-					if (this.refreshBroadcastRequested && this.runtime.connected) {
-						// TODO: Add telemetry for this attempt to satisfy join
-						this.broadcastAllKnownState();
-					}
-				}, waitTime);
-			}
+			this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 		} else {
 			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
@@ -309,6 +276,82 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Handles responding to another client joining the session.
+	 *
+	 * @param updateProviders - list of client connection id's that requestor selected
+	 * to provide response
+	 * @param requestor - `requestor` is only used in telemetry. While it is the requestor's
+	 * client connection id, that is not most important. It is important that this is a
+	 * unique shared id across all clients that might respond as we want to monitor the
+	 * response patterns. The convenience of being client connection id will allow
+	 * correlation with other telemetry where it is often called just `clientId`.
+	 */
+	private prepareJoinResponse(
+		updateProviders: ClientConnectionId[],
+		requestor: ClientConnectionId,
+	): void {
+		this.refreshBroadcastRequested = true;
+		// We must be connected to receive this message, so clientId should be defined.
+		// If it isn't then, not really a problem; just won't be in provider or quorum list.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const clientId = this.runtime.clientId!;
+		// const requestor = message.clientId;
+		if (updateProviders.includes(clientId)) {
+			// Send all current state to the new client
+			this.broadcastAllKnownState();
+			this.logger?.sendTelemetryEvent({
+				eventName: "JoinResponse",
+				details: {
+					type: "broadcastAll",
+					requestor,
+					role: "primary",
+				},
+			});
+		} else {
+			// Schedule a broadcast to the new client after a delay only to send if
+			// another broadcast hasn't been seen in the meantime. The delay is based
+			// on the position in the quorum list. It doesn't have to be a stable
+			// list across all clients. We need something to provide suggested order
+			// to prevent a flood of broadcasts.
+			let relativeResponseOrder;
+			const quorumMembers = this.runtime.getQuorum().getMembers();
+			const self = quorumMembers.get(clientId);
+			if (self) {
+				// Compute order quorum join order (indicated by sequenceNumber)
+				relativeResponseOrder = 0;
+				for (const { sequenceNumber } of quorumMembers.values()) {
+					if (sequenceNumber < self.sequenceNumber) {
+						relativeResponseOrder++;
+					}
+				}
+			} else {
+				// Order past quorum members + arbitrary additional offset up to 10
+				relativeResponseOrder = quorumMembers.size + Math.random() * 10;
+			}
+			// These numbers have been chosen arbitrarily to start with.
+			// 20 is minimum wait time, 20 is the additional wait time per provider
+			// given an chance before us with named providers given more time.
+			const waitTime = 20 + 20 * (3 * updateProviders.length + relativeResponseOrder);
+			setTimeout(() => {
+				// Make sure a broadcast is still needed and we are currently connected.
+				// If not connected, nothing we can do.
+				if (this.refreshBroadcastRequested && this.runtime.connected) {
+					this.broadcastAllKnownState();
+					this.logger?.sendTelemetryEvent({
+						eventName: "JoinResponse",
+						details: {
+							type: "broadcastAll",
+							requestor,
+							role: "secondary",
+							order: relativeResponseOrder,
+						},
+					});
+				}
+			}, waitTime);
 		}
 	}
 }

@@ -16,7 +16,6 @@ import {
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -41,6 +40,7 @@ import {
 	type TreeNode,
 	type Context,
 	UnhydratedFlexTreeNode,
+	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";

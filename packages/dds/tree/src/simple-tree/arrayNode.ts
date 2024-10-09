@@ -14,7 +14,6 @@ import {
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import { prepareContentForHydration } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
@@ -36,6 +35,7 @@ import {
 	getOrCreateNodeFromInnerNode,
 	type TreeNodeSchemaBoth,
 	getSimpleNodeSchemaFromInnerNode,
+	getOrCreateInnerNode,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";

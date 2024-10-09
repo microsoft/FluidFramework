@@ -5,6 +5,7 @@ Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
 * [`flub check changeset`](#flub-check-changeset)
+* [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
 * [`flub check prApproval`](#flub-check-prapproval)
@@ -96,6 +97,33 @@ EXAMPLES
 ```
 
 _See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/changeset.ts)_
+
+## `flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
+
+Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
+
+```
+USAGE
+  $ flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+
+ARGUMENTS
+  VERSION                   The version to check. When running in CI, this value corresponds to the pipeline trigger
+                            branch.
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI
+  pipeline only.
+
+  This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version
+  of a major version.
+```
+
+_See code: [src/commands/check/latestVersions.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/latestVersions.ts)_
 
 ## `flub check layers`
 
