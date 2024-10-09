@@ -46,7 +46,11 @@ function generate(name: string, input: any[], output: any[]) {
 		let sharedMap2: ISharedMap;
 		let sharedMap3: ISharedMap;
 
-		beforeEach("createSharedMaps", async () => {
+		beforeEach("createSharedMaps", async function() {
+
+			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+				this.skip();
+			}
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);

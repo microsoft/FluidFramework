@@ -137,6 +137,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		);
 	});
 
+	// failed for the yesterday's run but was green for previous runs. not skipping this: https://dev.azure.com/fluidframework/internal/_build/results?buildId=298969&view=ms.vss-test-web.build-test-results-tab&runId=6153801&resultId=100061&paneView=debug
 	it("should add clients in audience as expected in write mode", async function () {
 		// Create a client - client1.
 		const client1Container = await createContainer();
