@@ -75,17 +75,30 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 				config: { ...opts, applyOpDuringGeneration: true },
 			},
 			{
-				name: "with obliterate",
+				name: "obliterate with number endpoints",
 				config: {
 					...opts,
 					operations: [...opts.operations, obliterateRange],
 				},
 			},
+			// TODO: AB#15630
+			// {
+			// 	name: "obliterate with sided endpoints",
+			// 	config: {
+			// 		...opts,
+			// 		operations: [...opts.operations, obliterateRange, obliterateRangeSided],
+			// 	},
+			// },
 		])
 			it(`${name}: ConflictFarm_${minLength}`, async () => {
 				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
 
-				const clients: TestClient[] = [new TestClient({ mergeTreeEnableObliterate: true })];
+				const clients: TestClient[] = [
+					new TestClient({
+						mergeTreeEnableObliterate: true,
+						mergeTreeEnableSidedObliterate: true,
+					}),
+				];
 				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 				let seq = 0;
