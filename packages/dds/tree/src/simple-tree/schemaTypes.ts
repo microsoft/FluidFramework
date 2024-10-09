@@ -419,12 +419,13 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
  * When used this means the TypeScript typing should error on the side of completeness (allow all inputs that could be valid).
  * This introduces the risk that out of schema data could be allowed at compile time, and only error at runtime.
  *
+ * @privateRemarks
  * This only applies to APIs which input data which is expected to be in schema, since APIs outputting have easy mechanisms to do so in a type safe way even when the schema is unknown.
  * In most cases that amounts to returning `TreeNode | TreeLeafValue`.
  *
  * This can be contrasted with the default behavior of TypeScript, which is to require the intersection of the possible types for input APIs,
  * which for unknown schema defining input trees results in the `never` type.
- * @privateRemarks
+ *
  * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
  * or silently accept invalid data.
  * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
