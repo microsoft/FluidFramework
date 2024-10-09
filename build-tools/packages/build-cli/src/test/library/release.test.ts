@@ -103,9 +103,10 @@ describe("Legacy compatibility ranges", () => {
 
 	for (const { inputVersion, subCases } of testMatrix) {
 		for (const [interval, upperBound] of Object.entries(subCases)) {
+			const expected = `>=${inputVersion} <${upperBound}`;
 			it(`legacy compat: ${inputVersion} and compat version interval ${interval} yields ">=${inputVersion} <${upperBound}"`, () => {
 				const range = getInternalVersionRange(inputVersion, Number.parseInt(interval, 10));
-				assert.strictEqual(range, `>=${inputVersion} <${upperBound}`);
+				assert.strictEqual(range, expected);
 			});
 		}
 	}
