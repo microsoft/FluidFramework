@@ -60,7 +60,7 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
  *
  * @privateRemarks
- * extends TreeNode | TreeLeafValue
+ * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
  * @system @sealed @public
  */

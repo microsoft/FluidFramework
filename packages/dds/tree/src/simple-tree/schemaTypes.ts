@@ -421,6 +421,7 @@ export type InsertableTreeFieldFromImplicitField<
  * @privateRemarks
  * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
  * or silently accept invalid data.
+ * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
  * @alpha
  */
 export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
