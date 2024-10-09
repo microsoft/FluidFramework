@@ -153,7 +153,10 @@ export abstract class LeafTask extends Task {
 	}
 
 	public get executable() {
-		return getExecutableFromCommand(this.command);
+		return getExecutableFromCommand(
+			this.command,
+			this.context.fluidBuildConfig?.multiCommandExecutables ?? [],
+		);
 	}
 
 	protected get useWorker() {
