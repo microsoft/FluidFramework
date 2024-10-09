@@ -232,7 +232,10 @@ export async function verifyToken(
 			// Only cache tokens if it has more than 5 minutes left before expiration
 			const expirationBufferInMs = 5 * 60 * 1000; // 5 minutes
 			if (tokenLifetimeMs !== undefined && tokenLifetimeMs <= expirationBufferInMs) {
-				Lumberjack.verbose(`Token near expiration: ${tokenLifetimeMs}, skip cache tokens`, logProperties);
+				Lumberjack.verbose(
+					`Token near expiration: ${tokenLifetimeMs}, skip cache tokens`,
+					logProperties,
+				);
 				return;
 			}
 
