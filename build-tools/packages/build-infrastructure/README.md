@@ -25,7 +25,7 @@ function are different.
 
 ### Workspaces
 
-Workspaces are a generally a feature provided by the package manager (npm, yarn, pnpm, etc.). A workspace defines the
+Workspaces are generally a feature provided by the package manager (npm, yarn, pnpm, etc.). A workspace defines the
 _physical layout_ of the packages within it. A workspace is rooted in a particular folder, and uses the configuration
 within that folder to determine what packages it contains. The config used is specific to the package manager.
 
