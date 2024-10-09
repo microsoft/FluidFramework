@@ -15,13 +15,13 @@ module.exports = function handler(fileData, logger): void {
 		const marginOfError = testData.customData["Margin of Error"];
 		if (Number.isNaN(Number.parseFloat(arithmeticMean))) {
 			throw new TypeError(
-				`'${testData.benchmarkName}' with value '${arithmeticMean}' is not a number`,
+				`'${arithmeticMean}' is not a number ('Period (ns/op)')`,
 			);
 		}
 
 		if (Number.isNaN(Number.parseFloat(marginOfError))) {
 			throw new TypeError(
-				`'${testData.benchmarkName}' with value '${marginOfError}' is not a number`,
+				`'${marginOfError}' is not a number ('Margin of Error')`,
 			);
 		}
 
