@@ -38,7 +38,7 @@ Importantly, this package does not attempt to re-implement any features provided
 expected to configure their package managers' workspace features in addition to the Fluid repo configuration.
 
 A Fluid repo will only load packages identified by the package manager's workspace feature. That is, any package in the
-repo that is not configured as part of a workspace is invisible to the
+repo that is not configured as part of a workspace is invisible to tools using the Fluid repo.
 
 ### Release groups
 
@@ -70,18 +70,13 @@ another larger workspace, contained within a single-package release group.
 
 ## Features
 
-In addition to loading and
-
 ### Git repo capabilities
 
 A Fluid repo is often contained within a Git repository, and some functionality expects to be used within a Git
-repository. To support this, the Fluid repo will check if it is within aGit repository upon initialization, and if it
-is, it will instantiate a SimpleGit instance rooted at the root of the Git repo (which may not match the root of the
-Fluid repo).
-
-Features that need to execute Git operations can asynchronously retrieve the SimpleGit instance using the
-`IFluidRepo.getGitRepository` API. If the Fluid repo is not within a Git repo, then that call will throw an exception
-that callers should handle appropriately. If they don't, though, the exception makes it clear what has happened.
+repository. Features that need to execute Git operations can asynchronously retrieve the SimpleGit instance using the
+`IFluidRepo.getGitRepository` API. If the Fluid repo is not within a Git repo, then that call will throw a
+`NotInGitRepository` exception that callers should handle appropriately. If they don't, though, the exception makes it
+clear what has happened.
 
 > [!NOTE]
 >
@@ -102,7 +97,8 @@ using `Array.prototype.filter` on the results of package selection.
 ### Loading old config formats
 
 The `repoPackages` configuration currently used by fluid-build will be loaded if the newer `repoLayout` config can't be
-found. This is for back-compat only and will not be maintained indefinitely. Users should convert to `repoLayout` when possible.
+found. This is for back-compat only and will not be maintained indefinitely. Users should convert to `repoLayout` when
+possible.
 
 ## Configuration
 
