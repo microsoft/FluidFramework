@@ -8,7 +8,7 @@
 // @ts-check
 
 /**
- * @type {import("@fluid-tools/build-infrastructure").IFluidRepoLayout}
+ * @type {import("@fluid-tools/build-infrastructure").IFluidRepoLayout & import("@fluid-tools/build-cli").FlubConfig}
  */
 const config = {
 	version: 1,
@@ -23,6 +23,9 @@ const config = {
 					},
 					group2: {
 						include: ["@group2"],
+					},
+					group3: {
+						include: ["@group3"],
 					},
 				},
 			},

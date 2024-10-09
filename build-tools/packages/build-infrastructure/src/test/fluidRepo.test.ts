@@ -26,11 +26,11 @@ describe("loadFluidRepo", () => {
 			const main = repo.workspaces.get("main" as WorkspaceName);
 			expect(main).to.not.be.undefined;
 			expect(main?.packages.length).to.equal(
-				7,
+				9,
 				"main workspace has the wrong number of packages",
 			);
 			expect(main?.releaseGroups.size).to.equal(
-				2,
+				3,
 				"main workspace has the wrong number of release groups",
 			);
 

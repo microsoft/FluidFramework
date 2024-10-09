@@ -40,7 +40,6 @@ async function getFluidRepo() {
 async function getMainWorkspacePackages() {
 	const fluidRepo = await getFluidRepo();
 	const packages = fluidRepo.workspaces.get("main" as WorkspaceName)?.packages;
-	// ?.packages.filter((p) => !p.isReleaseGroupRoot);
 	assert(packages !== undefined);
 	return packages;
 }
@@ -52,10 +51,13 @@ describe("filterPackages", async () => {
 
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
+		console.debug(names);
 		expect(names).to.be.equalTo([
 			"main-release-group-root",
 			"@group2/pkg-d",
 			"@group2/pkg-e",
+			"@group3/pkg-f",
+			"@group3/pkg-g",
 			"pkg-a",
 			"pkg-b",
 			"@private/pkg-c",
@@ -81,6 +83,8 @@ describe("filterPackages", async () => {
 			"main-release-group-root",
 			"@group2/pkg-d",
 			"@group2/pkg-e",
+			"@group3/pkg-f",
+			"@group3/pkg-g",
 			"pkg-a",
 			"pkg-b",
 			"@shared/shared",
@@ -103,7 +107,7 @@ describe("filterPackages", async () => {
 		const packages = await getMainWorkspacePackages();
 		const filters: PackageFilterOptions = {
 			...EmptyFilter,
-			skipScope: ["@shared", "@private"],
+			skipScope: ["@shared", "@private", "@group3"],
 		};
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
@@ -142,6 +146,8 @@ describe("selectAndFilterPackages", async () => {
 		expect(names).to.be.equalTo([
 			"@group2/pkg-d",
 			"@group2/pkg-e",
+			"@group3/pkg-f",
+			"@group3/pkg-g",
 			"@private/pkg-c",
 			"@shared/shared",
 			"main-release-group-root",
@@ -290,6 +296,8 @@ describe("selectAndFilterPackages", async () => {
 			expect(names).to.be.equalTo([
 				"@group2/pkg-d",
 				"@group2/pkg-e",
+				"@group3/pkg-f",
+				"@group3/pkg-g",
 				"pkg-a",
 				"pkg-b",
 				"@private/pkg-c",
@@ -359,6 +367,8 @@ describe("selectAndFilterPackages", async () => {
 			expect(names).to.be.equalTo([
 				"@group2/pkg-d",
 				"@group2/pkg-e",
+				"@group3/pkg-f",
+				"@group3/pkg-g",
 				"pkg-a",
 				"pkg-b",
 				"@shared/shared",
@@ -390,7 +400,7 @@ describe("selectAndFilterPackages", async () => {
 			const filters: PackageFilterOptions = {
 				private: undefined,
 				scope: undefined,
-				skipScope: ["@shared", "@private"],
+				skipScope: ["@shared", "@private", "@group3"],
 			};
 
 			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
@@ -439,6 +449,8 @@ describe("selectAndFilterPackages", async () => {
 			[
 				"@group2/pkg-d",
 				"@group2/pkg-e",
+				"@group3/pkg-f",
+				"@group3/pkg-g",
 				"@private/pkg-c",
 				"@shared/shared",
 				"other-pkg-a",
