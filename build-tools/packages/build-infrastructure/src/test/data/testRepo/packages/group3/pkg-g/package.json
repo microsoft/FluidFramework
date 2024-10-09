@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepo/packages/group2/pkg-d"
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepo/packages/group3/pkg-g"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors"
