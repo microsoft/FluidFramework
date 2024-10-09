@@ -15,12 +15,12 @@ module.exports = function handler(fileData, logger): void {
 		const heapUsedStdDev = testData.customData["Heap Used StdDev"];
 		if (Number.isNaN(Number.parseFloat(heapUsedAvg))) {
 			throw new TypeError(
-				`${testData.benchmarkName} with value ${heapUsedAvg} is not a number`,
+				`'${heapUsedAvg}' is not a number ('Heap Used Avg')`,
 			);
 		}
 		if (Number.isNaN(Number.parseFloat(heapUsedStdDev))) {
 			throw new TypeError(
-				`${testData.benchmarkName} with value ${heapUsedStdDev} is not a number`,
+				`'${heapUsedStdDev}' is not a number ('Heap Used StdDev')`,
 			);
 		}
 		logger.send({
