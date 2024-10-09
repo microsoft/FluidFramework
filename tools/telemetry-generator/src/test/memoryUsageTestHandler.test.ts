@@ -26,8 +26,8 @@ describe("memoryUsageTestHandler", () => {
 				{
 					benchmarkName: "Benchmark1",
 					customData: {
-						"Heap Used Avg": "123.45",
-						"Heap Used StdDev": "67.89",
+						"Heap Used Avg": 123.45,
+						"Heap Used StdDev": 67.89,
 					},
 				},
 			],
@@ -44,8 +44,8 @@ describe("memoryUsageTestHandler", () => {
 				driverEndpointName: "",
 				suiteName: "TestSuite",
 				testName: "Benchmark1",
-				heapUsedAvg: "123.45",
-				heapUsedStdDev: "67.89",
+				heapUsedAvg: 123.45,
+				heapUsedStdDev: 67.89,
 			}),
 			true,
 		);
@@ -59,7 +59,7 @@ describe("memoryUsageTestHandler", () => {
 					benchmarkName: "Benchmark1",
 					customData: {
 						"Heap Used Avg": "invalid",
-						"Heap Used StdDev": "67.89",
+						"Heap Used StdDev": 67.89,
 					},
 				},
 			],
@@ -75,7 +75,7 @@ describe("memoryUsageTestHandler", () => {
 				{
 					benchmarkName: "Benchmark1",
 					customData: {
-						"Heap Used Avg": "123.45",
+						"Heap Used Avg": 123.45,
 						"Heap Used StdDev": "invalid",
 					},
 				},

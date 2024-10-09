@@ -27,8 +27,8 @@ describe("appInsightsMemoryUsageTestHandler", () => {
 				{
 					benchmarkName: "Benchmark1",
 					customData: {
-						"Heap Used Avg": "123.45",
-						"Heap Used StdDev": "67.89",
+						"Heap Used Avg": 123.45,
+						"Heap Used StdDev": 67.89,
 					},
 				},
 			],
@@ -41,7 +41,7 @@ describe("appInsightsMemoryUsageTestHandler", () => {
 		assert.strictEqual(
 			trackMetricSpy.calledWith({
 				name: "TestSuite_Benchmark1_heapUsedAvg",
-				value: sinon.match("123.45"),
+				value: 123.45,
 				namespace: "performance_benchmark_memoryUsage",
 				properties: {
 					buildId: process.env.BUILD_ID,
@@ -59,7 +59,7 @@ describe("appInsightsMemoryUsageTestHandler", () => {
 		assert.strictEqual(
 			trackMetricSpy.calledWith({
 				name: "TestSuite_Benchmark1_heapUsedStdDev",
-				value: sinon.match("67.89"),
+				value: 67.89,
 				namespace: "performance_benchmark_memoryUsage",
 				properties: {
 					buildId: process.env.BUILD_ID,

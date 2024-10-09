@@ -19,8 +19,7 @@ module.exports = function handler(fileData, logger): void {
 			);
 		}
 
-		const parsedMarginOfError = Number.parseFloat(marginOfError.replace(/[%±]/g, ""));
-		if (Number.isNaN(parsedMarginOfError)) {
+		if (Number.isNaN(Number.parseFloat(marginOfError))) {
 			throw new TypeError(
 				`'${testData.benchmarkName}' with value '${marginOfError}' is not a number`,
 			);

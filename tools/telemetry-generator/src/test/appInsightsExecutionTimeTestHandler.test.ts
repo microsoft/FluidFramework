@@ -26,8 +26,8 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 				{
 					benchmarkName: "Benchmark1",
 					customData: {
-						"Period (ns/op)": "21265156.70",
-						"Margin of Error": "±0.99%",
+						"Period (ns/op)": 21265156.7,
+						"Margin of Error": 0.99,
 					},
 				},
 			],
@@ -40,7 +40,7 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 		assert.strictEqual(
 			trackMetricSpy.calledWith({
 				name: "TestSuite_Benchmark1_arithmeticMean",
-				value: sinon.match("21265156.70"),
+				value: 21265156.7,
 				namespace: "performance_benchmark_executionTime",
 				properties: {
 					buildId: undefined,
@@ -59,7 +59,7 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 		assert.strictEqual(
 			trackMetricSpy.calledWith({
 				name: "TestSuite_Benchmark1_marginOfError",
-				value: sinon.match("±0.99%"),
+				value: 0.99,
 				namespace: "performance_benchmark_executionTime",
 				properties: {
 					buildId: undefined,
@@ -85,7 +85,7 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 					benchmarkName: "Benchmark1",
 					customData: {
 						"Period (ns/op)": "invalid",
-						"Margin of Error": "±0.99%",
+						"Margin of Error": 0.99,
 					},
 				},
 			],

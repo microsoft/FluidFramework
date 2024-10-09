@@ -47,10 +47,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 			if (value === undefined) {
 				console.error(`skipping metric '${marginOfErrorMetricName}' as it is undefined`);
 			} else {
-				// Remove ± and % characters
-				const parsedValue = Number.parseFloat(value.replace(/[%±]/g, ""));
-
-				if (Number.isNaN(parsedValue)) {
+				if (Number.isNaN(Number.parseFloat(value))) {
 					console.error(
 						`skipping metric '${marginOfErrorMetricName}' with value '${value}' as it is not a number`,
 					);

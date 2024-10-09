@@ -19,15 +19,15 @@ describe("executionTimeTestHandler", () => {
 		};
 	});
 
-	it("should emit execution time avg and std dev metrics to logger", () => {
+	it("should emit execution time avg and Margin of Error metrics to logger", () => {
 		mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
 					benchmarkName: "Benchmark1",
 					customData: {
-						"Period (ns/op)": "123.45",
-						"Margin of Error": "±0.99%",
+						"Period (ns/op)": 123.45,
+						"Margin of Error": 0.99,
 					},
 				},
 			],
@@ -43,8 +43,8 @@ describe("executionTimeTestHandler", () => {
 				benchmarkType: "ExecutionTime",
 				suiteName: "TestSuite",
 				benchmarkName: "Benchmark1",
-				arithmeticMean: "123.45",
-				marginOfError: "±0.99%",
+				arithmeticMean: 123.45,
+				marginOfError: 0.99,
 				driverEndpointName: "",
 			}),
 			true,
@@ -59,7 +59,7 @@ describe("executionTimeTestHandler", () => {
 					benchmarkName: "Benchmark1",
 					customData: {
 						"Period (ns/op)": "invalid",
-						"Margin of Error": "±0.99%",
+						"Margin of Error": 0.99,
 					},
 				},
 			],
@@ -68,14 +68,14 @@ describe("executionTimeTestHandler", () => {
 		assert.throws(() => executionTimeHandler(mockFileData, mockLogger));
 	});
 
-	it("should throw an error for invalid heap used std dev metric", () => {
+	it("should throw an error for invalid Margin of Error metric", () => {
 		mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
 					benchmarkName: "Benchmark1",
 					customData: {
-						"Period (ns/op)": "123.45",
+						"Period (ns/op)": 123.45,
 						"Margin of Error": "invalid",
 					},
 				},
