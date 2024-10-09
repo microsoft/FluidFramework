@@ -382,10 +382,17 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
- * Converts ImplicitFieldSchema to the corresponding tree node's field type.
- * @remarks
- * When non-exact schema are provided, this errors on the side of returning too general of a type.
+ * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.
+ *
+ * @typeparam TSchema - When non-exact schema are provided this errors on the side of returning too general of a type (a conservative union of all possibilities).
  * This is ideal for "output APIs" - i.e. it converts the schema type to the runtime type that a user will _read_ from the tree.
+ * Examples of such "non-exact" schema include `ImplicitFieldSchema`, `ImplicitAllowedTypes`, and  TypeScript unions of schema types.
+ * @privateRemarks
+ * TODO:
+ * There are two known problematic usages of this type (which produce invalid/unsound results when given non-specific schema):
+ * 1. setters for fields (on object nodes the Tree.view.root).
+ * 2. Indirectly in InsertableTreeFieldFromImplicitField via InsertableTypedNode including NodeFromSchema.
+ * These cases should be mitigated by introducing a way to detect inexact schema and special casing them in these two places.
  * @public
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
