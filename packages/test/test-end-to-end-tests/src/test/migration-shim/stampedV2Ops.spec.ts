@@ -337,7 +337,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Check if the shim2 received the op
 		const op2 = await opSent;
-		const env = op2.contents as any;
+		const env = typeof op2.contents === "string" ? JSON.parse(op2.contents) : undefined;
 		assert.equal(
 			env.contents.address,
 			testObj2.id,
