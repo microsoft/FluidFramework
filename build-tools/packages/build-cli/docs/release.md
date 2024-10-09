@@ -209,7 +209,8 @@ FLAGS
 
   --compatVersionInterval=<value>
       [default: 10] The multiple of minor versions to use for calculating the next version in the legacy compatibility
-      range.
+      range. This interval applies exclusively to the client release group; for all other release groups, the caret
+      versions are used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
