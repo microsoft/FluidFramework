@@ -48,6 +48,17 @@ export interface Logger {
 function noop(): void {}
 
 /**
+ * Silent logger - logs nothing.
+ */
+export const silentLogger: Logger = {
+	info: noop,
+	warning: noop,
+	error: noop,
+	success: noop,
+	verbose: noop,
+};
+
+/**
  * Default logger, configured to log to the console.
  *
  * @public

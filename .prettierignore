@@ -20,6 +20,7 @@ build-tools/packages/*/docs/*.md
 build-tools/packages/build-cli/README.md
 build-tools/packages/readme-command/README.md
 build-tools/packages/version-tools/README.md
+tools/api-markdown-documenter/docs/*.md
 **/src/**/test/types/*.generated.ts
 **/src/packageVersion.ts
 **/build-tools/CHANGELOG.md

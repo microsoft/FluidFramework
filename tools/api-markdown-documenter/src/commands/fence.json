@@ -1,0 +1,6 @@
+{
+	"tags": ["commands"],
+	// Nothing should be importing from this directory
+	"exports": [],
+	"imports": ["common", "utilities"]
+}

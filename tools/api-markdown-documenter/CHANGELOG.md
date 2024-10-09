@@ -2,6 +2,9 @@
 
 ## 0.17.1
 
+-   Adds new (beta) command line script for invoking API linting.
+    This can be invoked via `api-markdown-documenter lint-api-model ...`.
+    For more details, refer to the command documentation [here](https://github.com/microsoft/FluidFramework/tree/main/tools/api-markdown-documenter/docs/lint-api-model.md).
 -   Updates `TSDoc` node handling to emit a _warning_ in place of an _error_ when an embedded `HTML` tag is encountered.
     Also updates the logged notice to include the tag that was encountered.
 

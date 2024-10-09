@@ -32,18 +32,20 @@ describe("lintApiModel", () => {
 			referenceErrors: new Set([
 				{
 					tagName: "@link",
-					sourceItem: "", // link appears in package documentation
+					sourceItem: undefined,
 					packageName: "test-suite-a",
 					referenceTarget: "InvalidItem",
 					linkText: undefined,
+					innerErrorMessage: 'The member reference "InvalidItem" was not found',
 				},
 				{
 					tagName: "@link",
-					sourceItem: "", // link appears in package documentation
+					sourceItem: undefined,
 					packageName: "test-suite-a",
 					referenceTarget: "InvalidItem",
 					linkText:
 						"even though I link to an invalid item, I would still like this text to be rendered",
+					innerErrorMessage: 'The member reference "InvalidItem" was not found',
 				},
 				{
 					tagName: "@inheritDoc",
@@ -51,6 +53,7 @@ describe("lintApiModel", () => {
 					packageName: "test-suite-a",
 					referenceTarget: "BadInheritDocTarget",
 					linkText: undefined,
+					innerErrorMessage: 'The member reference "BadInheritDocTarget" was not found',
 				},
 			]),
 		};
