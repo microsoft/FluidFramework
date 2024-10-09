@@ -12,7 +12,7 @@ import {
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
-import { ReleaseGroup } from "../releaseGroups.js";
+import { DEFAULT_LEGACY_COMPAT_INTERVAL, ReleaseGroup } from "../releaseGroups.js";
 
 /**
  * A map of package names to full release reports. This is the format of the "full" release report.
@@ -66,7 +66,7 @@ export interface ReleaseRanges {
 	tilde: string;
 
 	/**
-	 * A legacy compat range
+	 * A legacy compat range. It exists only for the "client" release group.
 	 */
 	legacyCompat: string;
 }
@@ -80,11 +80,7 @@ export interface ReleaseRanges {
  * version.
  * @returns The {@link ReleaseRanges} for a version string
  */
-export const getRanges = (
-	version: ReleaseVersion,
-	compatVersionInterval: number,
-	scheme?: VersionScheme,
-): ReleaseRanges => {
+export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
 
 	return schemeToUse === "internal"
@@ -93,14 +89,14 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getInternalVersionRange(version, compatVersionInterval),
+				legacyCompat: getLegacyCompatVersionRange(version),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: getInternalVersionRange(version, compatVersionInterval),
+				legacyCompat: getLegacyCompatVersionRange(version),
 			};
 };
 
@@ -117,18 +113,28 @@ interface PackageRange {
  * "full" corresponds to the {@link ReleaseReport} interface. It contains a lot of package metadata indexed by package
  * name.
  *
- * "simple" corresponds to the {@link PackageRange} interface. It contains a map of package names to versions.
- *
- * "caret" corresponds to the {@link PackageRange} interface. It contains a map of package names to
- * caret-equivalent version range strings.
- *
- * "tilde" corresponds to the {@link PackageRange} interface. It contains a map of package names to
- * tilde-equivalent version range strings.
- *
- * "legacy-compat" corresponds to the {@link PackageRange} interface. It contains a map of package names to
- * legacy compat equivalent version range strings
+ * The "caret", "tilde", and "legacy-compat" correspond to the {@link PackageRange} interface.
+ * Each of these compatibility classes contains a map of package names to their respective
+ * equivalent version range strings:
+ * "caret": caret-equivalent version ranges.
+ * "tilde": tilde-equivalent version ranges.
+ * "legacy-compat": legacy compat equivalent version ranges.
  */
 export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
+
+/**
+ * Determines the appropriate legacy compatible range based on the release group.
+ *
+ * @param details - Full details about a release.
+ * @returns - The version to use.
+ * `legacyCompat` if the release group is "client".
+ * `caret` for all other release groups.
+ */
+function fixLegacyCompatVersions(details: ReleaseDetails): string {
+	return details.releaseGroup === "client"
+		? details.ranges.legacyCompat
+		: details.ranges.caret;
+}
 
 /**
  * Converts a {@link ReleaseReport} into different formats based on the kind.
@@ -142,9 +148,7 @@ export function toReportKind(
 	switch (kind) {
 		case "full": {
 			for (const [, details] of Object.entries(report)) {
-				if (details.releaseGroup !== "client") {
-					details.ranges.legacyCompat = details.ranges.caret;
-				}
+				fixLegacyCompatVersions(details);
 			}
 			return report;
 		}
@@ -175,10 +179,7 @@ export function toReportKind(
 
 		case "legacy-compat": {
 			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] =
-					details.releaseGroup === "client"
-						? details.ranges.legacyCompat
-						: details.ranges.caret;
+				toReturn[pkg] = fixLegacyCompatVersions(details);
 			}
 			break;
 		}
@@ -200,21 +201,22 @@ export function toReportKind(
  * @param version - A semver-compatible string or `semver.SemVer` object representing the current version.
  * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
  *
- * @returns A new `semver.SemVer` object representing the next version in the legacy compatibility range.
+ * @returns A string representing the next version in the legacy compatibility range.
  */
-export function getInternalVersionRange(
+export function getLegacyCompatVersionRange(
 	version: semver.SemVer | string,
-	compatVersionInterval: number,
+	compatVersionInterval?: number,
 ): string {
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");
 	}
 
+	const interval = compatVersionInterval ?? DEFAULT_LEGACY_COMPAT_INTERVAL;
+
 	// Calculate the next compatible minor version using the compatVersionInterval
-	const baseMinor =
-		Math.floor(semVersion.minor / compatVersionInterval) * compatVersionInterval;
-	const newSemVerString = `${semVersion.major}.${baseMinor + compatVersionInterval}.0`;
+	const baseMinor = Math.floor(semVersion.minor / interval) * interval;
+	const newSemVerString = `${semVersion.major}.${baseMinor + interval}.0`;
 
 	const higherVersion = semver.parse(newSemVerString);
 	if (higherVersion === null) {

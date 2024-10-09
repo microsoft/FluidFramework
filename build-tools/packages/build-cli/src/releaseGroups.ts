@@ -27,6 +27,12 @@ export const knownReleaseGroups = [
 ] as const;
 
 /**
+ * The multiple of minor versions to use for calculating the next version in the legacy compatibility range.
+ * This interval applies exclusively to the client release group; for all other release groups, the caret versions are used.
+ */
+export const DEFAULT_LEGACY_COMPAT_INTERVAL = 10;
+
+/**
  * A type that represents release groups.
  */
 export type ReleaseGroup = (typeof knownReleaseGroups)[number];

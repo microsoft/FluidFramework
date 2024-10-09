@@ -4,7 +4,7 @@
  */
 
 import { assert } from "chai";
-import { getInternalVersionRange } from "../../library/release.js";
+import { getLegacyCompatVersionRange } from "../../library/release.js";
 
 interface TestMatrix {
 	inputVersion: string;
@@ -17,6 +17,9 @@ describe("Legacy compatibility ranges", () => {
 	const testMatrix: TestMatrix[] = [
 		{
 			inputVersion: "2.0.9",
+			// For version 2.0.9 with intervals:
+			// 10 => ">=2.0.9 <2.10.0"
+			// 20 => ">=2.0.9 <2.20.0"
 			subCases: {
 				10: "2.10.0",
 				20: "2.20.0",
@@ -29,6 +32,9 @@ describe("Legacy compatibility ranges", () => {
 		},
 		{
 			inputVersion: "2.8.10",
+			// For version 2.8.10 with intervals:
+			// 10 => ">=2.8.10 <2.10.0"
+			// 20 => ">=2.8.10 <2.20.0"
 			subCases: {
 				10: "2.10.0",
 				20: "2.20.0",
@@ -41,6 +47,9 @@ describe("Legacy compatibility ranges", () => {
 		},
 		{
 			inputVersion: "2.18.10",
+			// For version 2.18.10 with intervals:
+			// 10 => ">=2.18.10 <2.20.0"
+			// 20 => ">=2.18.10 <2.20.0"
 			subCases: {
 				10: "2.20.0",
 				20: "2.20.0",
@@ -53,6 +62,9 @@ describe("Legacy compatibility ranges", () => {
 		},
 		{
 			inputVersion: "2.0.10",
+			// For version 2.0.10 with intervals:
+			// 10 => ">=2.0.10 <2.20.0"
+			// 20 => ">=2.18.10 <2.20.0"
 			subCases: {
 				10: "2.10.0",
 				20: "2.20.0",
@@ -105,7 +117,7 @@ describe("Legacy compatibility ranges", () => {
 		for (const [interval, upperBound] of Object.entries(subCases)) {
 			const expected = `>=${inputVersion} <${upperBound}`;
 			it(`legacy compat: ${inputVersion} and compat version interval ${interval} yields ">=${inputVersion} <${upperBound}"`, () => {
-				const range = getInternalVersionRange(inputVersion, Number.parseInt(interval, 10));
+				const range = getLegacyCompatVersionRange(inputVersion, Number.parseInt(interval, 10));
 				assert.strictEqual(range, expected);
 			});
 		}
