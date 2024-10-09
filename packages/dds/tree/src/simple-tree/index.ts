@@ -140,7 +140,12 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
+export {
+	mapTreeFromNodeData,
+	type InsertableContent,
+	type FactoryContent,
+	type FactoryContentObject,
+} from "./toMapTree.js";
 export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
 export {
 	numberSchema,

@@ -130,6 +130,9 @@ export {
 	type TreeViewAlpha,
 	type InsertableField,
 	type Insertable,
+	type InsertableContent,
+	type FactoryContent,
+	type FactoryContentObject,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,

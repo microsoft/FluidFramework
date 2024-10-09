@@ -408,6 +408,12 @@ export type InsertableTreeFieldFromImplicitField<
 		: never;
 
 /**
+ * {@inheritdoc (UnsafeUnknownSchema:type)}
+ * @alpha
+ */
+export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
+
+/**
  * A special value which some APIs accept as an alternative to a schema to indicate the schema can not easily be provided at compile time.
  * @remarks
  * When used this means the TypeScript typing should error on the side of completeness (allow all inputs that could be valid).
@@ -424,13 +430,12 @@ export type InsertableTreeFieldFromImplicitField<
  * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
  * @alpha
  */
-export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 /**
  * Content which could be inserted into a tree.
  * @remarks
- * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link UnsafeUnknownSchema}.
+ * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
  */
 export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> =
@@ -441,7 +446,7 @@ export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchem
 /**
  * Content which could be inserted into a field within a tree.
  * @remarks
- * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link UnsafeUnknownSchema}.
+ * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
  */
 export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =

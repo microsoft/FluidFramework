@@ -745,8 +745,9 @@ export type FactoryContent =
  * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
  *
  * Supports object and map nodes.
+ * @system @alpha
  */
-type FactoryContentObject = {
+export type FactoryContentObject = {
 	readonly [P in string]?: InsertableContent;
 };
 

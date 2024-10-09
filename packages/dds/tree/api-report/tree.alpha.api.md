@@ -61,6 +61,14 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 // @alpha
 export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible;
 
+// @alpha
+export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
+
+// @alpha
+export type FactoryContentObject = {
+    readonly [P in string]?: InsertableContent;
+};
+
 // @public
 type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
 
@@ -156,6 +164,9 @@ type _InlineTrick = 0;
 
 // @alpha
 export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> = TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : InsertableContent;
+
+// @alpha
+export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
 
 // @alpha
 export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TSchema extends ImplicitFieldSchema ? InsertableTreeFieldFromImplicitField<TSchema> : InsertableContent | undefined;
@@ -796,7 +807,7 @@ export type Unhydrated<T> = T;
 // @alpha
 export const UnsafeUnknownSchema: unique symbol;
 
-// @public (undocumented)
+// @alpha
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 // @public
