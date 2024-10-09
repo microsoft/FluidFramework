@@ -242,14 +242,14 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		from: IdCompressorMode,
 		to: IdCompressorMode,
 	) {
-		const container1 = await provider.makeTestContainer({
+		const container = await provider.makeTestContainer({
 			runtimeOptions: {
 				explicitSchemaControl: false,
 				enableRuntimeIdCompressor: from,
 			},
 		});
-		const entry1 = await getEntryPoint(container1);
-		entry1._root.set("someKey1a", "someValue");
+		const entry = await getEntryPoint(container);
+		entry._root.set("someKey1a", "someValue");
 
 		// ensure that old container is fully loaded (connected)
 		await provider.ensureSynchronized();
@@ -270,27 +270,27 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		// In order for ID compressor to produce short IDs, the following needs to happen:
 		// 1. Request unique ID (will initially get long ID)
 		// 2. Send any op (will trigger ID compressor to reserve short IDs)
-		entry1._context.containerRuntime.generateDocumentUniqueId();
-		entry1._root.set("someKey1b", "someValue");
+		entry._context.containerRuntime.generateDocumentUniqueId();
+		entry._root.set("someKey1b", "someValue");
 		entry2._context.containerRuntime.generateDocumentUniqueId();
 		entry2._root.set("someKey2b", "someValue");
 		await provider.ensureSynchronized();
 
-		const id1 = entry1._context.containerRuntime.generateDocumentUniqueId();
+		const id = entry._context.containerRuntime.generateDocumentUniqueId();
 		const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
 
 		if (to === "on") {
-			assert(Number.isInteger(id1));
+			assert(Number.isInteger(id));
 			assert(Number.isInteger(id2));
 		} else {
 			// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
 			// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
 			// generateDocumentUniqueId() works, but gives long IDs
-			assert(!Number.isInteger(id1));
+			assert(!Number.isInteger(id));
 			assert(!Number.isInteger(id2));
 		}
 
-		assert(!container1.closed);
+		assert(!container.closed);
 		assert(!container2.closed);
 	}
 });

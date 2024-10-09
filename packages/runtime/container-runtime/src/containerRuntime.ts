@@ -954,13 +954,18 @@ export class ContainerRuntime
 
 		let idCompressorMode: IdCompressorMode;
 
-		if (existing && !explicitSchemaControl) {
+		if (!explicitSchemaControl && existing) {
+			// If 'explicitSchemaControl' is not enabled, the value of 'idCompressorMode' is fixed
+			// to whatever value the container was created with.
 			idCompressorMode = metadata?.documentSchema?.runtime
 				?.idCompressorMode as IdCompressorMode;
 		} else {
-			// Allow 'IdCompressorEnabled' config to override the application's desired IdCompressor mode.
-			// Note that the overriden value will still be coerced by DocumentSchemaController to ensure
-			// a legal transition.
+			// Otherwise, we consult 'mc.config' and 'IRuntimeOptions' (in that order) to determine
+			// the desired 'idCompressorMode'.
+			//
+			// If loading a pre-existing container, the desired 'idCompressorMode' will be coerced
+			// to ensure a legal transition.  (Specifically, once we enable IdCompression, we can
+			// not disable it.)
 			switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
 				case true:
 					idCompressorMode = "on";
@@ -1170,13 +1175,13 @@ export class ContainerRuntime
 	public get idCompressorMode() {
 		return this.sessionSchema.idCompressorMode;
 	}
-
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
 	 */
 	public get idCompressor() {
-		// During a schema migration, the idCompressor is eagerly loaded but should not be exposed until
-		// the document schema change is committed.
+		// During rollout of Id compression, the 'idCompressorMode' is initially set to "delayed".
+		// In the "delayed" state, the runtime fetches the IdCompression chunk during container load,
+		// but does enabled IdCompression until the migration op flips the 'idCompressorMode' to "on".
 		if (this.idCompressorMode !== "on") {
 			return undefined;
 		}
@@ -2002,9 +2007,19 @@ export class ContainerRuntime
 			sessionRuntimeSchema: JSON.stringify(schema),
 		});
 
-		// If IdCompressor has migrated to "on", but we did not load/create the IdCompressor during initialization,
-		// we stop processing operations and throw/log an error.
 		if (schema.runtime.idCompressorMode === "on" && this._idCompressor === undefined) {
+			// Normally, rollout of IdCompression will happen in two phases:
+			//
+			//   1) In phase 1, clients transition from "off" -> "delayed".  The "delayed" phase indicates
+			//      the clients should fetch the IdCompressor chunk the next time the container is loaded
+			//      (so that the container is prepared to transition into the "on" phase.)
+			//
+			//   2) Once enough time has elapsed that 99.99% of old sessions have naturally terminated and
+			//      most active sessions have loaded in the "delayed" state, we finally then transition to "on".
+			//
+			// For the 0.01% of clients that managed to stay connected to the same session through the full
+			// "off" -> "delayed" -> "on" transition, we throw a 'DataProcessingError' to force the container
+			// to reload.
 			throw DataProcessingError.create(
 				"Illegal IdCompressorMode transition",
 				"onSchemaChange",
@@ -2048,8 +2063,7 @@ export class ContainerRuntime
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
 	private async initializeBaseState(): Promise<void> {
-		// If IdCompressor is currently enabled, or a schema migration is desires to enable it,
-		// then we need to ensure that the IdCompressor is created before we start processing ops.
+		// Load/create the IdCompressor unless the 'idCompressorMode' is "off" (undefined).
 		if (this.idCompressorMode !== undefined) {
 			this._idCompressor = await this.createIdCompressor();
 		}
