@@ -955,7 +955,8 @@ export class ContainerRuntime
 		let idCompressorMode: IdCompressorMode;
 
 		if (existing && !explicitSchemaControl) {
-			idCompressorMode = metadata?.documentSchema?.runtime?.idCompressorMode as IdCompressorMode;
+			idCompressorMode = metadata?.documentSchema?.runtime
+				?.idCompressorMode as IdCompressorMode;
 		} else {
 			// Allow 'IdCompressorEnabled' config to override the application's desired IdCompressor mode.
 			// Note that the overriden value will still be coerced by DocumentSchemaController to ensure
