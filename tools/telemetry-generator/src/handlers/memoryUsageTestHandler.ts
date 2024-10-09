@@ -14,14 +14,10 @@ module.exports = function handler(fileData, logger): void {
 		const heapUsedAvg = testData.customData["Heap Used Avg"];
 		const heapUsedStdDev = testData.customData["Heap Used StdDev"];
 		if (Number.isNaN(Number.parseFloat(heapUsedAvg))) {
-			throw new TypeError(
-				`'${heapUsedAvg}' is not a number ('Heap Used Avg')`,
-			);
+			throw new TypeError(`'${heapUsedAvg}' is not a number ('Heap Used Avg')`);
 		}
 		if (Number.isNaN(Number.parseFloat(heapUsedStdDev))) {
-			throw new TypeError(
-				`'${heapUsedStdDev}' is not a number ('Heap Used StdDev')`,
-			);
+			throw new TypeError(`'${heapUsedStdDev}' is not a number ('Heap Used StdDev')`);
 		}
 		logger.send({
 			namespace: "FFEngineering", // Transfer the telemetry associated with tests performance measurement to namespace "FFEngineering"

@@ -76,7 +76,7 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 		trackMetricSpy.restore();
 	});
 
-	it("should skip logging for invalid metrics", () => {
+	it("should skip track metrics for invalid value", () => {
 		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
@@ -93,7 +93,26 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 		const trackMetricSpy = sinon.spy(mockTelemetryClient, "trackMetric");
 		handler(mockFileData, mockTelemetryClient);
 
-		assert.strictEqual(trackMetricSpy.notCalled, true);
+		assert.strictEqual(trackMetricSpy.calledOnce, true);
+
+		assert.strictEqual(
+			trackMetricSpy.calledWith({
+				name: "TestSuite_Benchmark1_marginOfError",
+				value: 0.99,
+				namespace: "performance_benchmark_executionTime",
+				properties: {
+					buildId: process.env.BUILD_ID,
+					branchName: process.env.BRANCH_NAME,
+					category: "performance",
+					eventName: "Benchmark",
+					benchmarkType: "ExecutionTime",
+					suiteName: "TestSuite",
+					benchmarkName: "Benchmark1",
+				},
+			}),
+			true,
+		);
+
 		trackMetricSpy.restore();
 	});
 });

@@ -64,8 +64,10 @@ describe("executionTimeTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => executionTimeHandler(mockFileData, mockLogger), /'invalid' is not a number \('Period \(ns\/op\)'\)/);
-
+		assert.throws(
+			() => executionTimeHandler(mockFileData, mockLogger),
+			/'invalid' is not a number \('Period \(ns\/op\)'\)/,
+		);
 	});
 
 	it("should throw an error for invalid Margin of Error metric", () => {
@@ -82,7 +84,9 @@ describe("executionTimeTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => executionTimeHandler(mockFileData, mockLogger), /'invalid' is not a number \('Margin of Error'\)/);
-
+		assert.throws(
+			() => executionTimeHandler(mockFileData, mockLogger),
+			/'invalid' is not a number \('Margin of Error'\)/,
+		);
 	});
 });

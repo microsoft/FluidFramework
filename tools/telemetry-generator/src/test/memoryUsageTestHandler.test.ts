@@ -64,7 +64,10 @@ describe("memoryUsageTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => memoryUsageHandler(mockFileData, mockLogger), /'invalid' is not a number \('Heap Used Avg'\)/);
+		assert.throws(
+			() => memoryUsageHandler(mockFileData, mockLogger),
+			/'invalid' is not a number \('Heap Used Avg'\)/,
+		);
 	});
 
 	it("should throw an error for invalid heap used std dev metric", () => {
@@ -81,6 +84,9 @@ describe("memoryUsageTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => memoryUsageHandler(mockFileData, mockLogger), /'invalid' is not a number \('Heap Used StdDev'\)/);
+		assert.throws(
+			() => memoryUsageHandler(mockFileData, mockLogger),
+			/'invalid' is not a number \('Heap Used StdDev'\)/,
+		);
 	});
 });

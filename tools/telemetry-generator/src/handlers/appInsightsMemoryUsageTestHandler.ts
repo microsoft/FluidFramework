@@ -19,23 +19,23 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 				console.error(
 					`skipping metric '${heapUsedAvgMetricName}' with value '${value}' as it is not a number`,
 				);
-				continue;
+			} else {
+				console.log(`emitting metric '${heapUsedAvgMetricName}' with value '${value}'`);
+				telemetryClient.trackMetric({
+					name: heapUsedAvgMetricName,
+					value,
+					namespace: "performance_benchmark_memoryUsage",
+					properties: {
+						buildId: process.env.BUILD_ID,
+						branchName: process.env.BRANCH_NAME,
+						category: "performance",
+						eventName: "Benchmark",
+						benchmarkType: "MemoryUsage",
+						suiteName: fileData.suiteName,
+						testName: testData.benchmarkName,
+					},
+				});
 			}
-			console.log(`emitting metric '${heapUsedAvgMetricName}' with value '${value}'`);
-			telemetryClient.trackMetric({
-				name: heapUsedAvgMetricName,
-				value,
-				namespace: "performance_benchmark_memoryUsage",
-				properties: {
-					buildId: process.env.BUILD_ID,
-					branchName: process.env.BRANCH_NAME,
-					category: "performance",
-					eventName: "Benchmark",
-					benchmarkType: "MemoryUsage",
-					suiteName: fileData.suiteName,
-					testName: testData.benchmarkName,
-				},
-			});
 		} catch (error) {
 			console.error(`failed to emit metric '${heapUsedAvgMetricName}'`, error);
 		}
@@ -47,23 +47,23 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 				console.error(
 					`skipping metric '${heapUsedStdDevMetricName}' with value '${value}' as it is not a number`,
 				);
-				continue;
+			} else {
+				console.log(`emitting metric '${heapUsedStdDevMetricName}' with value '${value}'`);
+				telemetryClient.trackMetric({
+					name: heapUsedStdDevMetricName,
+					value,
+					namespace: "performance_benchmark_memoryUsage",
+					properties: {
+						buildId: process.env.BUILD_ID,
+						branchName: process.env.BRANCH_NAME,
+						category: "performance",
+						eventName: "Benchmark",
+						benchmarkType: "MemoryUsage",
+						suiteName: fileData.suiteName,
+						testName: testData.benchmarkName,
+					},
+				});
 			}
-			console.log(`emitting metric '${heapUsedStdDevMetricName}' with value '${value}'`);
-			telemetryClient.trackMetric({
-				name: heapUsedStdDevMetricName,
-				value,
-				namespace: "performance_benchmark_memoryUsage",
-				properties: {
-					buildId: process.env.BUILD_ID,
-					branchName: process.env.BRANCH_NAME,
-					category: "performance",
-					eventName: "Benchmark",
-					benchmarkType: "MemoryUsage",
-					suiteName: fileData.suiteName,
-					testName: testData.benchmarkName,
-				},
-			});
 		} catch (error) {
 			console.error(`failed to emit metric '${heapUsedStdDevMetricName}'`, error);
 		}

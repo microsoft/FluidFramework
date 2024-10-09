@@ -19,24 +19,24 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 				console.error(
 					`skipping metric '${arithmeticMeanMetricName}' with value '${value}' as it is not a number`,
 				);
-				continue;
+			} else {
+				console.log(`emitting metric '${arithmeticMeanMetricName}' with value '${value}'`);
+				telemetryClient.trackMetric({
+					name: arithmeticMeanMetricName,
+					value,
+					namespace: "performance_benchmark_executionTime",
+					properties: {
+						buildId: process.env.BUILD_ID,
+						branchName: process.env.BRANCH_NAME,
+						category: "performance",
+						eventName: "Benchmark",
+						benchmarkType: "ExecutionTime",
+						suiteName: fileData.suiteName,
+						benchmarkName: testData.benchmarkName,
+						driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
+					},
+				});
 			}
-			console.log(`emitting metric '${arithmeticMeanMetricName}' with value '${value}'`);
-			telemetryClient.trackMetric({
-				name: arithmeticMeanMetricName,
-				value,
-				namespace: "performance_benchmark_executionTime",
-				properties: {
-					buildId: process.env.BUILD_ID,
-					branchName: process.env.BRANCH_NAME,
-					category: "performance",
-					eventName: "Benchmark",
-					benchmarkType: "ExecutionTime",
-					suiteName: fileData.suiteName,
-					benchmarkName: testData.benchmarkName,
-					driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
-				},
-			});
 		} catch (error) {
 			console.error(`failed to emit metric '${arithmeticMeanMetricName}'`, error);
 		}
@@ -51,24 +51,25 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 					console.error(
 						`skipping metric '${marginOfErrorMetricName}' with value '${value}' as it is not a number`,
 					);
-					return;
+				} else {
+					console.log(
+						`emitting metric '${marginOfErrorMetricName}' with value '${value}'`,
+					);
+					telemetryClient.trackMetric({
+						name: marginOfErrorMetricName,
+						value,
+						namespace: "performance_benchmark_executionTime",
+						properties: {
+							buildId: process.env.BUILD_ID,
+							branchName: process.env.BRANCH_NAME,
+							category: "performance",
+							eventName: "Benchmark",
+							benchmarkType: "ExecutionTime",
+							suiteName: fileData.suiteName,
+							benchmarkName: testData.benchmarkName,
+						},
+					});
 				}
-
-				console.log(`emitting metric '${marginOfErrorMetricName}' with value '${value}'`);
-				telemetryClient.trackMetric({
-					name: marginOfErrorMetricName,
-					value,
-					namespace: "performance_benchmark_executionTime",
-					properties: {
-						buildId: process.env.BUILD_ID,
-						branchName: process.env.BRANCH_NAME,
-						category: "performance",
-						eventName: "Benchmark",
-						benchmarkType: "ExecutionTime",
-						suiteName: fileData.suiteName,
-						benchmarkName: testData.benchmarkName,
-					},
-				});
 			}
 		} catch (error) {
 			console.error(`failed to emit metric '${marginOfErrorMetricName}'`, error);

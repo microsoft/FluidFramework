@@ -83,7 +83,7 @@ describe("appInsightsMemoryUsageTestHandler", () => {
 				{
 					benchmarkName: "Benchmark1",
 					customData: {
-						"Heap Used Avg": "NaN",
+						"Heap Used Avg": 123.45,
 						"Heap Used StdDev": "NaN",
 					},
 				},
@@ -93,7 +93,25 @@ describe("appInsightsMemoryUsageTestHandler", () => {
 		const trackMetricSpy = sinon.spy(mockTelemetryClient, "trackMetric");
 		handler(mockFileData, mockTelemetryClient);
 
-		assert.strictEqual(trackMetricSpy.notCalled, true);
+		assert.strictEqual(trackMetricSpy.calledOnce, true);
+
+		assert.strictEqual(
+			trackMetricSpy.calledWith({
+				name: "TestSuite_Benchmark1_heapUsedAvg",
+				value: 123.45,
+				namespace: "performance_benchmark_memoryUsage",
+				properties: {
+					buildId: process.env.BUILD_ID,
+					branchName: process.env.BRANCH_NAME,
+					category: "performance",
+					eventName: "Benchmark",
+					benchmarkType: "MemoryUsage",
+					suiteName: "TestSuite",
+					testName: "Benchmark1",
+				},
+			}),
+			true,
+		);
 
 		trackMetricSpy.restore();
 	});
