@@ -12,7 +12,6 @@ const handler = require("../handlers/appInsightsMemoryUsageTestHandler");
 
 describe("appInsightsMemoryUsageTestHandler", () => {
 	let mockTelemetryClient: TelemetryClient;
-	let mockFileData;
 
 	beforeEach(() => {
 		mockTelemetryClient = {
@@ -21,7 +20,7 @@ describe("appInsightsMemoryUsageTestHandler", () => {
 	});
 
 	it("should emit heap used avg and std dev metrics to Azure App Insights", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -78,7 +77,7 @@ describe("appInsightsMemoryUsageTestHandler", () => {
 	});
 
 	it("should skip metrics if values are not numbers", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{

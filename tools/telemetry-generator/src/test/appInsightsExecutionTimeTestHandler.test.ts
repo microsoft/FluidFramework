@@ -11,7 +11,6 @@ import sinon from "sinon";
 const handler = require("../handlers/appInsightsExecutionTimeTestHandler");
 describe("appInsightsExecutionTimeTestHandler", () => {
 	let mockTelemetryClient: TelemetryClient;
-	let mockFileData;
 
 	beforeEach(() => {
 		mockTelemetryClient = {
@@ -20,7 +19,7 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 	});
 
 	it("should emit valid metrics to Azure App Insights", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -78,7 +77,7 @@ describe("appInsightsExecutionTimeTestHandler", () => {
 	});
 
 	it("should skip logging for invalid metrics", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{

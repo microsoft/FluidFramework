@@ -11,7 +11,6 @@ const memoryUsageHandler = require("../handlers/memoryUsageTestHandler");
 
 describe("memoryUsageTestHandler", () => {
 	let mockLogger;
-	let mockFileData;
 
 	beforeEach(() => {
 		mockLogger = {
@@ -20,7 +19,7 @@ describe("memoryUsageTestHandler", () => {
 	});
 
 	it("should emit heap used avg and std dev metrics to logger", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -52,7 +51,7 @@ describe("memoryUsageTestHandler", () => {
 	});
 
 	it("should throw an error for invalid heap used avg metric", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -65,11 +64,11 @@ describe("memoryUsageTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => memoryUsageHandler(mockFileData, mockLogger));
+		assert.throws(() => memoryUsageHandler(mockFileData, mockLogger), /'invalid' is not a number \('Heap Used Avg'\)/);
 	});
 
 	it("should throw an error for invalid heap used std dev metric", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -82,6 +81,6 @@ describe("memoryUsageTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => memoryUsageHandler(mockFileData, mockLogger));
+		assert.throws(() => memoryUsageHandler(mockFileData, mockLogger), /'invalid' is not a number \('Heap Used StdDev'\)/);
 	});
 });

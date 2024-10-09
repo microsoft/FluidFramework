@@ -12,14 +12,15 @@ const handler = require("../handlers/appInsightsCustomBenchmarkHandler");
 
 describe("appInsightsCustomBenchmarkHandler", () => {
 	let mockTelemetryClient: TelemetryClient;
-	let mockFileData;
 
 	beforeEach(() => {
 		mockTelemetryClient = {
 			trackMetric: () => {},
 		} as unknown as TelemetryClient;
+	});
 
-		mockFileData = {
+	it("should emit metrics to Azure App Insights", () => {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -37,9 +38,6 @@ describe("appInsightsCustomBenchmarkHandler", () => {
 				},
 			],
 		};
-	});
-
-	it("should emit metrics to Azure App Insights", () => {
 		const trackMetricSpy = sinon.spy(mockTelemetryClient, "trackMetric");
 		handler(mockFileData, mockTelemetryClient);
 

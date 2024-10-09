@@ -11,7 +11,6 @@ const executionTimeHandler = require("../handlers/executionTimeTestHandler");
 
 describe("executionTimeTestHandler", () => {
 	let mockLogger;
-	let mockFileData;
 
 	beforeEach(() => {
 		mockLogger = {
@@ -20,7 +19,7 @@ describe("executionTimeTestHandler", () => {
 	});
 
 	it("should emit execution time avg and Margin of Error metrics to logger", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -52,7 +51,7 @@ describe("executionTimeTestHandler", () => {
 	});
 
 	it("should throw an error for invalid Period (ns/op) metric", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -65,11 +64,12 @@ describe("executionTimeTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => executionTimeHandler(mockFileData, mockLogger));
+		assert.throws(() => executionTimeHandler(mockFileData, mockLogger), /'invalid' is not a number \('Period \(ns\/op\)'\)/);
+
 	});
 
 	it("should throw an error for invalid Margin of Error metric", () => {
-		mockFileData = {
+		const mockFileData = {
 			suiteName: "TestSuite",
 			benchmarks: [
 				{
@@ -82,6 +82,7 @@ describe("executionTimeTestHandler", () => {
 			],
 		};
 
-		assert.throws(() => executionTimeHandler(mockFileData, mockLogger));
+		assert.throws(() => executionTimeHandler(mockFileData, mockLogger), /'invalid' is not a number \('Margin of Error'\)/);
+
 	});
 });
