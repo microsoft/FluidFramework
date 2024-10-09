@@ -5,7 +5,7 @@
 
 import { existsSync } from "node:fs";
 import path from "node:path";
-import colors from "ansi-colors";
+import colors from "picocolors";
 
 // Imports are written this way for CJS/ESM compat
 import fsePkg from "fs-extra";
@@ -38,7 +38,7 @@ export abstract class PackageBase<
 		colors.magenta,
 		colors.cyan,
 		colors.white,
-		colors.grey,
+		colors.gray,
 		colors.redBright,
 		colors.greenBright,
 		colors.yellowBright,
