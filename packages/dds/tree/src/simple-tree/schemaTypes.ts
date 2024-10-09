@@ -421,7 +421,7 @@ export type InsertableTreeFieldFromImplicitField<
 export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
 
 /**
- * A special value which some APIs accept as an alternative to a schema to indicate the schema can not easily be provided at compile time.
+ * A special type which can be provided to some APIs as the schema type parameter when schema cannot easily be provided at compile time and an unsafe (instead of disabled) editing API is desired.
  * @remarks
  * When used this means the TypeScript typing should error on the side of completeness (allow all inputs that could be valid).
  * This introduces the risk that out of schema data could be allowed at compile time, and only error at runtime.
