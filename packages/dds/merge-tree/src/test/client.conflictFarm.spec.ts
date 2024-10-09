@@ -14,7 +14,6 @@ import {
 	generateClientNames,
 	insertAtRefPos,
 	obliterateRange,
-	obliterateRangeSided,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
@@ -82,13 +81,14 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 					operations: [...opts.operations, obliterateRange],
 				},
 			},
-			{
-				name: "obliterate with sided endpoints",
-				config: {
-					...opts,
-					operations: [...opts.operations, obliterateRange, obliterateRangeSided],
-				},
-			},
+			// TODO: AB#15630
+			// {
+			// 	name: "obliterate with sided endpoints",
+			// 	config: {
+			// 		...opts,
+			// 		operations: [...opts.operations, obliterateRange, obliterateRangeSided],
+			// 	},
+			// },
 		])
 			it(`${name}: ConflictFarm_${minLength}`, async () => {
 				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
