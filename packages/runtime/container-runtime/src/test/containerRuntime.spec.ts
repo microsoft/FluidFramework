@@ -1170,6 +1170,62 @@ describe("Runtime", () => {
 				);
 			});
 
+			/** Overwrites channelCollection property and exposes private submit function with modified typing */
+			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
+				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+			} {
+				const patched = containerRuntime as unknown as Omit<
+					ContainerRuntime,
+					"submit" | "channelCollection"
+				> & {
+					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					channelCollection: Partial<ChannelCollection>;
+				};
+
+				patched.channelCollection = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+						submitDataStoreOp(
+							containerRuntime,
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} satisfies Partial<ChannelCollection>;
+
+				return patched;
+			}
+
+			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
+				const patchedContainerRuntime = patchContainerRuntime();
+
+				changeConnectionState(patchedContainerRuntime, false, mockClientId);
+
+				submitDataStoreOp(patchedContainerRuntime, "1", "test");
+				submitDataStoreOp(patchedContainerRuntime, "2", "test");
+				patchedContainerRuntime.submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
+				});
+				submitDataStoreOp(patchedContainerRuntime, "4", "test");
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Connect, which will trigger resubmit
+				assert.throws(
+					() => changeConnectionState(patchedContainerRuntime, true, mockClientId),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type and no specified compat behavior should fail to resubmit",
+				);
+			});
+
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
 				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
 					Record<string, unknown> = {
@@ -1217,61 +1273,6 @@ describe("Runtime", () => {
 						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
 					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and no specified compat behavior should fail to process",
-				);
-			});
-
-			/** Overwrites channelCollection property and exposes private submit function with modified typing */
-			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
-				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-			} {
-				const patched = containerRuntime as unknown as Omit<
-					ContainerRuntime,
-					"submit" | "channelCollection"
-				> & {
-					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-					channelCollection: Partial<ChannelCollection>;
-				};
-
-				patched.channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} satisfies Partial<ChannelCollection>;
-
-				return patched;
-			}
-			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
-				const patchedContainerRuntime = patchContainerRuntime();
-
-				changeConnectionState(patchedContainerRuntime, false, mockClientId);
-
-				submitDataStoreOp(patchedContainerRuntime, "1", "test");
-				submitDataStoreOp(patchedContainerRuntime, "2", "test");
-				patchedContainerRuntime.submit({
-					type: "FUTURE_TYPE" as any,
-					contents: "3",
-					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
-				});
-				submitDataStoreOp(patchedContainerRuntime, "4", "test");
-
-				assert.strictEqual(
-					submittedOps.length,
-					0,
-					"no messages should be sent while disconnected",
-				);
-
-				// Connect, which will trigger resubmit
-				assert.throws(
-					() => changeConnectionState(patchedContainerRuntime, true, mockClientId),
-					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and no specified compat behavior should fail to resubmit",
 				);
 			});
 		});
