@@ -113,7 +113,7 @@ export {
 	normalizeFieldSchema,
 	type ApplyKind,
 	type FieldSchemaMetadata,
-	type NodeSchemaProps,
+	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 export {

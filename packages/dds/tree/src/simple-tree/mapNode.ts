@@ -18,7 +18,7 @@ import {
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
-	type NodeSchemaProps,
+	type NodeSchemaOptions,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -235,7 +235,7 @@ export function mapSchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
-	props?: NodeSchemaProps<TCustomMetadata>,
+	props?: NodeSchemaOptions<TCustomMetadata>,
 ) {
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 

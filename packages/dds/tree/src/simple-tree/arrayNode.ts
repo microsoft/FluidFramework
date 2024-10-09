@@ -19,7 +19,7 @@ import {
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
-	type NodeSchemaProps,
+	type NodeSchemaOptions,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -1053,7 +1053,7 @@ export function arraySchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-	props?: NodeSchemaProps<TCustomMetadata>,
+	props?: NodeSchemaOptions<TCustomMetadata>,
 ) {
 	type Output = TreeNodeSchemaBoth<
 		TName,

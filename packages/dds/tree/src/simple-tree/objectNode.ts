@@ -26,7 +26,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	FieldKind,
-	type NodeSchemaProps,
+	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 import {
@@ -324,7 +324,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-	props?: NodeSchemaProps<TCustomMetadata>,
+	props?: NodeSchemaOptions<TCustomMetadata>,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those

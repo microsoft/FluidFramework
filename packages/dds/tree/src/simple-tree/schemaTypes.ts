@@ -52,7 +52,7 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
  *
  * @public
  */
-export interface NodeSchemaProps<out TCustomMetadata = unknown> {
+export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 	/**
 	 * Optional metadata to associate with the Node Schema.
 	 * @remarks Note: this metadata is not persisted in the document.
@@ -63,7 +63,7 @@ export interface NodeSchemaProps<out TCustomMetadata = unknown> {
 /**
  * Metadata associated with a Node Schema.
  *
- * @remarks Specified via {@link NodeSchemaProps.metadata}.
+ * @remarks Specified via {@link NodeSchemaOptions.metadata}.
  *
  * @sealed
  * @public
