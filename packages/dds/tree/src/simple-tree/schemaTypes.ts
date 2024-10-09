@@ -385,7 +385,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
  * Converts ImplicitFieldSchema to the corresponding tree node's field type.
  * @remarks
  * When non-exact schema are provided, this errors on the side of returning too general of a type.
- * This makes this type computation is primarily suited for output APIs where this covariant approach is valid.
+ * This is ideal for "output APIs" - i.e. it converts the schema type to the runtime type that a user will _read_ from the tree.
  * @public
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
