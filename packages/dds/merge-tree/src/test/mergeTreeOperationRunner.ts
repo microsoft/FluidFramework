@@ -50,10 +50,10 @@ export const obliterateRangeSided: TestOperation = (
 	let endSide: Side;
 
 	const oblEnd = random.integer(opStart, client.getLength() - 1);
-	// TODO: this should allow creation of zero length obliterate ops.
-	// These ops do not work in all cases, but it is unclear how/why due to the
-	// other existing bugs.
-	if (oblEnd - opStart < 1) {
+	// TODO: to create zero length obliterate ops, change '<=' to '<'.
+	// Doing so may cause different failures than those without zero length.
+	// AB#19930
+	if (oblEnd - opStart <= 1) {
 		startSide = Side.Before;
 		endSide = Side.After;
 	} else {
