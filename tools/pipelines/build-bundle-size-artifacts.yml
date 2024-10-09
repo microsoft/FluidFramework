@@ -23,6 +23,8 @@ extends:
       - ci:test:mocha
       - ci:test:jest
       - ci:test:realsvc:local
+      - ci:test:realsvc:tinylicious
+      - ci:test:stress:tinylicious
       - test:copyresults
     testResultDirs:
       - nyc/examples
