@@ -209,13 +209,25 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 			const from = modes[i];
 			const to = modes[j];
 
-			it(`upgrade from ${from} to ${to} with explicitSchemaControl = false`, async () => {
-				await testUpgrade(false, from, to);
-			});
+			// We currently must skip testing illegal transitions because the 'describeCompat' wrapper registers
+			// an 'afterEach()' hook that fails the suite when a DataProcessingError is logged.
+			//
+			// Ideally, these illegal transitions would be covered and the expected DataProcessingError verified.
+			//
+			// The illegal transitions that throw a DataProcessingError are:
+			//   * 'undefined' -> 'on' (because container1 is initialized with explicitSchemaControl = false, container2 correctly coerces 'undefined' -> 'delayed')
+			//   * 'delayed' -> 'on' with explicitSchemaControl = false
+			if (from !== undefined || to !== "on") {
+				if (from !== "delayed" || to !== "on") {
+					it(`upgrade from '${from}' to '${to}' with explicitSchemaControl = false`, async () => {
+						await testUpgrade(false, from, to);
+					});
+				}
 
-			it(`upgrade from ${from} to ${to} with explicitSchemaControl = true`, async () => {
-				await testUpgrade(true, from, to);
-			});
+				it(`upgrade from '${from}' to '${to}' with explicitSchemaControl = true`, async () => {
+					await testUpgrade(true, from, to);
+				});
+			}
 		}
 	}
 
@@ -248,18 +260,6 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		entry2._root.set("someKey2a", "someValue");
 		await provider.ensureSynchronized();
 
-		const container3 = await loadContainer({
-			runtimeOptions: {
-				explicitSchemaControl,
-				enableRuntimeIdCompressor: to,
-			},
-		});
-		const entry3 = await getEntryPoint(container3);
-
-		// Send some ops, it will trigger schema change ops
-		entry3._root.set("someKey3a", "someValue");
-		await provider.ensureSynchronized();
-
 		// Now we should have new schema, ID compressor loaded, and be able to allocate ID range
 		// In order for ID compressor to produce short IDs, the following needs to happen:
 		// 1. Request unique ID (will initially get long ID)
@@ -268,30 +268,23 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		entry1._root.set("someKey1b", "someValue");
 		entry2._context.containerRuntime.generateDocumentUniqueId();
 		entry2._root.set("someKey2b", "someValue");
-		entry3._context.containerRuntime.generateDocumentUniqueId();
-		entry3._root.set("someKey3b", "someValue");
 		await provider.ensureSynchronized();
 
 		const id1 = entry1._context.containerRuntime.generateDocumentUniqueId();
 		const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
-		const id3 = entry3._context.containerRuntime.generateDocumentUniqueId();
 
 		if (to === "on") {
-			// Now ID compressor should give us short IDs!
-			// assert(Number.isInteger(id1));
+			assert(Number.isInteger(id1));
 			assert(Number.isInteger(id2));
-			assert(Number.isInteger(id3));
 		} else {
 			// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
 			// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
 			// generateDocumentUniqueId() works, but gives long IDs
-			// assert(!Number.isInteger(id1));
+			assert(!Number.isInteger(id1));
 			assert(!Number.isInteger(id2));
-			assert(!Number.isInteger(id3));
 		}
 
 		assert(!container1.closed);
 		assert(!container2.closed);
-		assert(!container3.closed);
 	}
 });
