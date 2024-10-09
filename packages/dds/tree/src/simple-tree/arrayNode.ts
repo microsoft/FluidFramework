@@ -50,6 +50,8 @@ import { getUnhydratedContext } from "./createContext.js";
  * A covariant base type for {@link (TreeArrayNode:interface)}.
  *
  * This provides the readonly subset of TreeArrayNode functionality, and is used as the source interface form moves since that needs to be covariant.
+ * @privateRemarks
+ * Ideally this would also extend `WithType<string, NodeKind.Array>`, but https://github.com/microsoft/TypeScript/issues/16936 prevents that from compiling.
  * @system @sealed @public
  */
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
