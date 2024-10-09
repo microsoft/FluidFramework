@@ -29,8 +29,8 @@ import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
  * @alpha
  */
 export class SharedTreeBranchManager {
-	private readonly objectSchema?: z.Schema;
-	private readonly nodeIdAttributeName?: string;
+	private readonly objectSchema?: z.Schema | undefined;
+	private readonly nodeIdAttributeName?: string | undefined;
 
 	public constructor(params?: { objectSchema?: z.Schema; nodeIdAttributeName?: string }) {
 		this.objectSchema = params?.objectSchema;

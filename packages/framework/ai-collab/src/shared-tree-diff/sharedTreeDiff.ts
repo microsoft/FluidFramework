@@ -38,7 +38,7 @@ export interface DifferenceRemove {
 	type: "REMOVE";
 	path: ObjectPath;
 	oldValue: unknown;
-	objectId?: string | number;
+	objectId?: string | number | undefined;
 }
 
 /**
@@ -52,7 +52,7 @@ export interface DifferenceChange {
 	path: ObjectPath;
 	value: unknown;
 	oldValue: unknown;
-	objectId?: string | number;
+	objectId?: string | number | undefined;
 }
 
 /**
@@ -66,7 +66,7 @@ export interface DifferenceMove {
 	path: ObjectPath;
 	newIndex: number;
 	value: unknown;
-	objectId?: string | number;
+	objectId?: string | number | undefined;
 }
 
 /**
@@ -86,9 +86,11 @@ export type Difference =
  */
 export interface Options {
 	cyclesFix: boolean;
-	useObjectIds?: {
-		idAttributeName: string;
-	};
+	useObjectIds?:
+		| {
+				idAttributeName: string;
+		  }
+		| undefined;
 }
 
 const richTypes = { Date: true, RegExp: true, String: true, Number: true };
