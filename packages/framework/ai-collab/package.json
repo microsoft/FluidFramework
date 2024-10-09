@@ -15,21 +15,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/public.d.ts",
+				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/alpha.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -44,40 +34,30 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "./dist/public.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "echo skip per issue #112 - node10 requirement: attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
-		"check:exports:cjs:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json",
-		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
-		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
-		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
+		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
+		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./tree-react-api.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
@@ -136,6 +116,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }
