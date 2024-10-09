@@ -13,7 +13,7 @@ import { createJsonTranslator, createOpenAILanguageModel, type Result } from "ty
 import { createTypeScriptJsonValidator } from "typechat/ts"; // eslint-disable-line import/no-internal-modules
 import { v4 as uuidv4 } from "uuid";
 
-import type { Task, TaskGroup } from "@/types/task"; // eslint-disable-line import/no-internal-modules
+import type { Task, TaskGroup } from "@/types/task";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
