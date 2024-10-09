@@ -136,7 +136,7 @@ export class DataStoreContexts
 	 */
 	public async getBoundOrRemoted(
 		id: string,
-		wait: boolean,
+		wait: boolean = false,
 	): Promise<FluidDataStoreContext | undefined> {
 		const deferredContext = this.ensureDeferred(id);
 

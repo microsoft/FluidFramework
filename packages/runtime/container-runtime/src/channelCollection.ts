@@ -69,15 +69,12 @@ import {
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
+	type IConfigProvider,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	DeletedResponseHeaderKey,
-	RuntimeHeaderData,
-	defaultRuntimeHeaderData,
-} from "./containerRuntime.js";
+import { DeletedResponseHeaderKey, RuntimeHeaderData } from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,
 	channelToDataStore,
@@ -125,6 +122,18 @@ type PendingAliasResolve = (success: boolean) => void;
 interface FluidDataStoreMessage {
 	content: any;
 	type: string;
+}
+
+function computeRuntimeHeaderData(
+	config: IConfigProvider,
+	data: RuntimeHeaderData,
+): Required<RuntimeHeaderData> {
+	return {
+		wait: config.getBoolean("Fluid.ContainerRuntime.WaitHeaderDefault") ?? false,
+		viaHandle: false,
+		allowTombstone: false,
+		...data,
+	};
 }
 
 /**
@@ -904,7 +913,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 		originalRequest: IRequest,
 	): Promise<IFluidDataStoreContextInternal> {
-		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
 		if (
 			this.checkAndLogIfDeleted(
 				id,
@@ -952,7 +961,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		) {
 			return undefined;
 		}
-		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			return undefined;
