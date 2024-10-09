@@ -421,7 +421,7 @@ async function checkClusterDraining(
 		const error = createFluidServiceNetworkError(503, {
 			message: "Cluster is not available. Please retry later.",
 			internalErrorCode: InternalErrorCode.ClusterDraining,
-			retryAfterMs: clusterDrainingRetryTimeInMs
+			retryAfterMs: clusterDrainingRetryTimeInMs,
 		});
 		throw error;
 	}

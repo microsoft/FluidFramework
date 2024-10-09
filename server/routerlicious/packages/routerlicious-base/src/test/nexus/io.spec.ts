@@ -54,10 +54,12 @@ import {
 import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
-import { isNetworkError, type NetworkError, InternalErrorCode } from "@fluidframework/server-services-client";
 import {
-	type IRevokedTokenChecker,
-} from "@fluidframework/server-services-core/dist/tokenRevocationManager";
+	isNetworkError,
+	type NetworkError,
+	InternalErrorCode,
+} from "@fluidframework/server-services-client";
+import { type IRevokedTokenChecker } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
