@@ -46,7 +46,6 @@ While workspaces manage dependencies and physical layout of packages, release gr
 that are _versioned and released together_. Release groups are always a subset of a workspace, and must contain at least
 one package. **Release groups cannot span multiple workspaces.**
 
-Importantly, release groups are the unit of packages that are released and versions together.
 
 > [!IMPORTANT]
 > A workspace _must_ have at least one release group, and all packages must be a part of a release group.
