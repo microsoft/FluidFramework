@@ -175,12 +175,14 @@ export class ScribeLambdaFactory
 				}
 			}
 
+			const isEphemeralContainer = document.isEphemeralContainer;
+
 			scribeSessionMetric = createSessionMetric(
 				tenantId,
 				documentId,
 				LumberEventName.ScribeSessionResult,
 				this.serviceConfiguration,
-				document?.isEphemeralContainer ?? false,
+				isEphemeralContainer ?? false,
 			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
@@ -189,6 +191,7 @@ export class ScribeLambdaFactory
 				documentId,
 				gitManager,
 				this.enableWholeSummaryUpload,
+				isEphemeralContainer,
 			);
 			latestSummary = await summaryReader.readLastSummary();
 			latestSummaryCheckpoint = latestSummary.scribe
