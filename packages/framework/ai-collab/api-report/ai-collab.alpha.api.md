@@ -107,6 +107,4 @@ export function sharedTreeDiff(obj: Record<string, unknown> | unknown[], newObj:
 // @alpha
 export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[], path: ObjectPath): T | undefined;
 
-// (No @packageDocumentation comment for this package)
-
 ```
