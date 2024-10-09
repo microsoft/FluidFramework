@@ -53,7 +53,6 @@ describe("DeltaConnectionMetadata update tests", () => {
 		tenantId: "tenantId",
 		snapshotStorageUrl: "https://fake/snapshotStorageUrl",
 		refreshSessionDurationSeconds: 100,
-		sensitivityLabelsInfo: "sensitivityLabel",
 	};
 	let odspDocumentServiceFactory: OdspDocumentServiceFactory;
 

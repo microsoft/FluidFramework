@@ -45,7 +45,7 @@ export interface ISocketStorageDiscovery {
 	 * response will contain empty labels when the file has no labels, so this field will be there
 	 * even if file has no labels when the service will implement this contract.
 	 */
-	sensitivityLabelsInfo: string;
+	sensitivityLabelsInfo?: string;
 }
 
 /**

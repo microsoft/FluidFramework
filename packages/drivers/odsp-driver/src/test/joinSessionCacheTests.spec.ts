@@ -49,7 +49,6 @@ describe("expose joinSessionInfo Tests", () => {
 		snapshotStorageUrl: "https://fake/snapshotStorageUrl",
 		socketToken: "token", // providing socket token here so that the tests can bypass the need for token fetcher callback
 		refreshSessionDurationSeconds: 5,
-		sensitivityLabelsInfo: "sensitivityLabel",
 	};
 	const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
 		async (_options) => "token",
