@@ -1222,7 +1222,7 @@ describe("Runtime", () => {
 				assert.throws(
 					() => changeConnectionState(patchedContainerRuntime, true, mockClientId),
 					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and no specified compat behavior should fail to resubmit",
+					"Ops with unrecognized type and 'Ignore' compat behavior should fail to resubmit",
 				);
 			});
 
@@ -1248,7 +1248,7 @@ describe("Runtime", () => {
 					() =>
 						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
 					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and no specified compat behavior should fail to process",
+					"Ops with unrecognized type and 'Ignore' compat behavior should fail to process",
 				);
 			});
 
