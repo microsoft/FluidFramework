@@ -25,7 +25,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"start": "node bin/run",
-		"test": "mocha --recursive \"dist/test/**/*.test.*js\" --exit",
+		"test": "mocha --recursive \"dist/test/**/*.test.*js\"",
 		"tsc": "tsc"
 	},
 	"dependencies": {
