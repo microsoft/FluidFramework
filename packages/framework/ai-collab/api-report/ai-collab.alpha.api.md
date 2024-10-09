@@ -4,16 +4,16 @@
 
 ```ts
 
-// @public
+// @alpha
 export function createMergableDiffSeries(diffs: Difference[]): Difference[];
 
-// @public
+// @alpha
 export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference[], idAttributeName: string | number): Difference[];
 
-// @public
+// @alpha
 export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
 
-// @public
+// @alpha
 export interface DifferenceChange {
     // (undocumented)
     objectId?: string | number;
@@ -27,7 +27,7 @@ export interface DifferenceChange {
     value: unknown;
 }
 
-// @public
+// @alpha
 export interface DifferenceCreate {
     // (undocumented)
     path: ObjectPath;
@@ -37,7 +37,7 @@ export interface DifferenceCreate {
     value: unknown;
 }
 
-// @public
+// @alpha
 export interface DifferenceMove {
     // (undocumented)
     newIndex: number;
@@ -51,7 +51,7 @@ export interface DifferenceMove {
     value: unknown;
 }
 
-// @public
+// @alpha
 export interface DifferenceRemove {
     // (undocumented)
     objectId?: string | number;
@@ -63,10 +63,10 @@ export interface DifferenceRemove {
     type: "REMOVE";
 }
 
-// @public
+// @alpha
 export type ObjectPath = (string | number)[];
 
-// @public
+// @alpha
 export interface Options {
     // (undocumented)
     cyclesFix: boolean;
@@ -101,10 +101,10 @@ export class SharedTreeBranchManager {
     mergeObject(obj: Record<string, unknown> | TreeArrayNode, llmResponse: Record<string, unknown> | unknown[]): Difference[];
 }
 
-// @public
+// @alpha
 export function sharedTreeDiff(obj: Record<string, unknown> | unknown[], newObj: Record<string, unknown> | unknown[], options?: Options, _stack?: (Record<string, unknown> | unknown[])[]): Difference[];
 
-// @public
+// @alpha
 export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[], path: ObjectPath): T | undefined;
 
 // (No @packageDocumentation comment for this package)
