@@ -56,9 +56,10 @@ const config: Config = {
 	// For GitHub pages deployment, it is often '/<projectName>/'
 	baseUrl: "/",
 
-	onBrokenAnchors: "ignore", // TODO: plugin that supports our anchor syntax
+	// Reports many false positives for API documentation
+	onBrokenAnchors: "ignore",
 	onBrokenLinks: "warn",
-	onBrokenMarkdownLinks: "warn",
+	onBrokenMarkdownLinks: "throw",
 	onDuplicateRoutes: "throw",
 
 	// Even if you don't use internationalization, you can use this field to set
