@@ -352,9 +352,10 @@ export interface IGarbageCollector {
 		timestampMs: number,
 		autorecovery?: true,
 	): void;
-	/** Called to process a garbage collection message. */
-	processMessage(
-		message: ContainerRuntimeGCMessage,
+	/** Called to process garbage collection message.s */
+	processMessages(
+		message: Omit<ContainerRuntimeGCMessage, "contents">,
+		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,
 	): void;

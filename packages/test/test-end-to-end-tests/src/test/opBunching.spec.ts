@@ -8,8 +8,11 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import type {
+	IRuntimeMessageContents,
+	ISequencedRuntimeMessageCore,
+} from "@fluidframework/runtime-definitions/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import { createSandbox } from "sinon";
@@ -47,10 +50,8 @@ describeCompat(
 
 		type SharedObjectWithProcess = Omit<SharedObject, "processMessages"> & {
 			processMessages(
-				messagesWithMetadata: {
-					message: ISequencedDocumentMessage;
-					localOpMetadata: unknown;
-				}[],
+				message: ISequencedRuntimeMessageCore,
+				messageContents: IRuntimeMessageContents[],
 				local: boolean,
 			): void;
 		};
@@ -121,9 +122,9 @@ describeCompat(
 
 			// Validate that processMessages is called once with all ops.
 			assert(dds2Container2Stub.calledOnce, "processMessages should be called once");
-			const messagesWithMetadata = dds2Container2Stub.args[0][0];
+			const contentsWithMetadata = dds2Container2Stub.args[0][1];
 			assert.strictEqual(
-				messagesWithMetadata.length,
+				contentsWithMetadata.length,
 				2 * bunchCount,
 				"All the ops for dds2 should be processed together",
 			);
@@ -153,23 +154,23 @@ describeCompat(
 			assert(dds1Container2Stub.calledOnce, "processMessages should be called once on dds1");
 			assert(dds2Container2Stub.calledTwice, "processMessages should be called twice on dds2");
 
-			const messagesWithMetadata1 = dds2Container2Stub.args[0][0];
+			const contentsWithMetadata1 = dds2Container2Stub.args[0][1];
 			assert.strictEqual(
-				messagesWithMetadata1.length,
+				contentsWithMetadata1.length,
 				bunch1dds2Count,
 				"First bunch of ops for dds2 should be processed together",
 			);
 
-			const messagesWithMetadata2 = dds1Container2Stub.args[0][0];
+			const contentsWithMetadata2 = dds1Container2Stub.args[0][1];
 			assert.strictEqual(
-				messagesWithMetadata2.length,
+				contentsWithMetadata2.length,
 				bunch2dds1Count,
 				"First bunch of ops for dds1 should be processed together",
 			);
 
-			const messagesWithMetadata3 = dds2Container2Stub.args[1][0];
+			const contentsWithMetadata3 = dds2Container2Stub.args[1][1];
 			assert.strictEqual(
-				messagesWithMetadata3.length,
+				contentsWithMetadata3.length,
 				bunch3dds2Count,
 				"Second bunch of ops for dds2 should be processed together",
 			);
@@ -203,23 +204,23 @@ describeCompat(
 				"processMessages should be called once on ds2's dds1",
 			);
 
-			const messagesWithMetadata1 = dds1Container2Stub.args[0][0];
+			const contentsWithMetadata1 = dds1Container2Stub.args[0][1];
 			assert.strictEqual(
-				messagesWithMetadata1.length,
+				contentsWithMetadata1.length,
 				bunch1dds1Count,
 				"First bunch of ops for dds2 should be processed together",
 			);
 
-			const messagesWithMetadata2 = ds2dds1Container2Stub.args[0][0];
+			const contentsWithMetadata2 = ds2dds1Container2Stub.args[0][1];
 			assert.strictEqual(
-				messagesWithMetadata2.length,
+				contentsWithMetadata2.length,
 				bunch2ds2dds1Count,
 				"First bunch of ops for dds1 should be processed together",
 			);
 
-			const messagesWithMetadata3 = dds2Container2Stub.args[0][0];
+			const contentsWithMetadata3 = dds2Container2Stub.args[0][1];
 			assert.strictEqual(
-				messagesWithMetadata3.length,
+				contentsWithMetadata3.length,
 				bunch3dds2Count,
 				"Second bunch of ops for dds2 should be processed together",
 			);
@@ -268,23 +269,23 @@ describeCompat(
 				"processMessages should be called thrice on dds1",
 			);
 
-			const messagesWithMetadata1 = dds1Container2Stub.args[0][0];
+			const contentsWithMetadata1 = dds1Container2Stub.args[0][1];
 			assert.strictEqual(
-				messagesWithMetadata1.length,
+				contentsWithMetadata1.length,
 				bunch1dds1Count,
 				"First bunch of ops for dds1 should be processed together",
 			);
 
-			const messagesWithMetadata2 = dds1Container2Stub.args[1][0];
+			const contentsWithMetadata2 = dds1Container2Stub.args[1][1];
 			assert.strictEqual(
-				messagesWithMetadata2.length,
+				contentsWithMetadata2.length,
 				bunch2dds1Count,
 				"Second bunch of ops for dds1 should be processed together",
 			);
 
-			const messagesWithMetadata3 = dds1Container2Stub.args[2][0];
+			const contentsWithMetadata3 = dds1Container2Stub.args[2][1];
 			assert.strictEqual(
-				messagesWithMetadata3.length,
+				contentsWithMetadata3.length,
 				bunch3dds1Count,
 				"Second bunch of ops for dds1 should be processed together",
 			);

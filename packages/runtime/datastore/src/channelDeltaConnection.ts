@@ -8,7 +8,10 @@ import {
 	IDeltaConnection,
 	IDeltaHandler,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
+	IRuntimeMessageContents,
+	ISequencedRuntimeMessageCore,
+} from "@fluidframework/runtime-definitions/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 const stashedOpMetadataMark = Symbol();
@@ -46,29 +49,22 @@ function processWithStashedOpMetadataHandling(
 	}
 }
 
-function getMessagesWithStashedOpHandling(
-	messagesWithMetadata: {
-		message: ISequencedDocumentMessage;
-		localOpMetadata: unknown;
-	}[],
-) {
-	const mewMessagesWithMetadata: {
-		message: ISequencedDocumentMessage;
-		localOpMetadata: unknown;
-	}[] = [];
-	for (const messageWithMetadata of messagesWithMetadata) {
-		if (isStashedOpMetadata(messageWithMetadata.localOpMetadata)) {
-			messageWithMetadata.localOpMetadata.forEach(({ contents, metadata }) => {
-				mewMessagesWithMetadata.push({
-					message: { ...messageWithMetadata.message, contents },
+function getMessagesWithStashedOpHandling(messageContents: IRuntimeMessageContents[]) {
+	const newMessageContents: IRuntimeMessageContents[] = [];
+	for (const messageContent of messageContents) {
+		if (isStashedOpMetadata(messageContent.localOpMetadata)) {
+			messageContent.localOpMetadata.forEach(({ contents, metadata }) => {
+				newMessageContents.push({
+					contents,
 					localOpMetadata: metadata,
+					clientSequenceNumber: messageContent.clientSequenceNumber,
 				});
 			});
 		} else {
-			mewMessagesWithMetadata.push(messageWithMetadata);
+			newMessageContents.push(messageContent);
 		}
 	}
-	return mewMessagesWithMetadata;
+	return newMessageContents;
 }
 
 export class ChannelDeltaConnection implements IDeltaConnection {
@@ -101,17 +97,15 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	}
 
 	public processMessages(
-		messagesWithMetadata: {
-			message: ISequencedDocumentMessage;
-			localOpMetadata: unknown;
-		}[],
+		message: ISequencedRuntimeMessageCore,
+		messageContents: IRuntimeMessageContents[],
 		local: boolean,
 	): void {
-		const messagesWithMetadata2 = getMessagesWithStashedOpHandling(messagesWithMetadata);
+		const newMessageContents = getMessagesWithStashedOpHandling(messageContents);
 		if (this.handler.processMessages !== undefined) {
 			try {
 				// catches as data processing error whether or not they come from async pending queues
-				return this.handler.processMessages(messagesWithMetadata2, local);
+				return this.handler.processMessages(message, newMessageContents, local);
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(
 					error,
@@ -120,19 +114,19 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 			}
 		}
 
-		for (const messageWithMetadata of messagesWithMetadata2) {
+		for (const { contents, localOpMetadata, clientSequenceNumber } of messageContents) {
 			try {
 				// catches as data processing error whether or not they come from async pending queues
 				this.handler.process(
-					messageWithMetadata.message,
+					{ ...message, contents, clientSequenceNumber },
 					local,
-					messageWithMetadata.localOpMetadata,
+					localOpMetadata,
 				);
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(
 					error,
 					"channelDeltaConnectionFailedToProcessMessage",
-					messageWithMetadata.message,
+					message,
 				);
 			}
 		}

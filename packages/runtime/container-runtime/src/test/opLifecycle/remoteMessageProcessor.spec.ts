@@ -351,6 +351,7 @@ describe("RemoteMessageProcessor", () => {
 					batchStartCsn: 4,
 					keyMessage: messagesB[0] as ISequencedDocumentMessage,
 				},
+				groupedBatch: false,
 				length: 1,
 			},
 			// C
@@ -373,6 +374,7 @@ describe("RemoteMessageProcessor", () => {
 					batchStartCsn: 7,
 					keyMessage: messagesD[0] as ISequencedDocumentMessage,
 				},
+				groupedBatch: false,
 				length: 1,
 			},
 		];
@@ -598,6 +600,7 @@ describe("RemoteMessageProcessor", () => {
 					batchId: "BATCH_ID",
 					keyMessage: expected[0],
 				},
+				groupedBatch: true,
 				length: 2,
 			},
 			"unexpected processing of groupedBatch",
@@ -634,6 +637,7 @@ describe("RemoteMessageProcessor", () => {
 					batchId: "BATCH_ID",
 					keyMessage: groupedBatch,
 				},
+				groupedBatch: true,
 				length: 0,
 			},
 			"unexpected processing of empty groupedBatch",

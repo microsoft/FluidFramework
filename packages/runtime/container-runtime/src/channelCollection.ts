@@ -39,11 +39,12 @@ import {
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
 	ISummarizeResult,
-	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
 	IInboundSignalMessage,
 	gcDataBlobKey,
+	type ISequencedRuntimeMessageCore,
+	type IRuntimeMessageContents,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -391,115 +392,125 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.parentContext.makeLocallyVisible();
 	}
 
-	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
-		const attachMessage = message.contents as InboundAttachMessage;
-
-		// We need to process the GC Data for both local and remote attach messages
-		const foundGCData = processAttachMessageGCData(
-			attachMessage.snapshot,
-			(nodeId, toPath) => {
-				// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
-				const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-				this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
-			},
-		);
-
-		// Only log once per container to avoid noise/cost.
-		// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
-		if (this.shouldSendAttachLog) {
-			this.shouldSendAttachLog = false;
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "dataStoreAttachMessage_sampled",
-				...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
-				details: {
-					local,
-					snapshot: !!attachMessage.snapshot,
-					foundGCData,
-				},
-				...extractSafePropertiesFromMessage(message),
-			});
-		}
-
-		// The local object has already been attached
-		if (local) {
-			assert(
-				this.pendingAttach.has(attachMessage.id),
-				0x15e /* "Local object does not have matching attach message id" */,
-			);
-			this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
-			this.pendingAttach.delete(attachMessage.id);
-			return;
-		}
-
-		// If a non-local operation then go and create the object, otherwise mark it as officially attached.
-		if (this.alreadyProcessed(attachMessage.id)) {
-			// TODO: dataStoreId may require a different tag from PackageData #7488
-			const error = new DataCorruptionError(
-				// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
-				"Duplicate DataStore created with existing id",
-				{
-					...extractSafePropertiesFromMessage(message),
-					...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
+	private processAttachMessages(
+		message: ISequencedRuntimeMessageCore,
+		messageContents: IRuntimeMessageContents[],
+		local: boolean,
+	) {
+		for (const { contents } of messageContents) {
+			const attachMessage = contents as IAttachMessage;
+			// We need to process the GC Data for both local and remote attach messages
+			const foundGCData = processAttachMessageGCData(
+				attachMessage.snapshot,
+				(nodeId, toPath) => {
+					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
+					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
+					this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
 				},
 			);
-			throw error;
-		}
 
-		const flatAttachBlobs = new Map<string, ArrayBufferLike>();
-		let snapshot: ISnapshotTree | ISnapshot | undefined;
-		if (attachMessage.snapshot) {
-			snapshot = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
-			if (isInstanceOfISnapshot(this.baseSnapshot)) {
-				snapshot = { ...this.baseSnapshot, snapshotTree: snapshot };
-			}
-		}
-
-		// Include the type of attach message which is the pkg of the store to be
-		// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
-		const pkg = [attachMessage.type];
-		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
-			id: attachMessage.id,
-			snapshot,
-			parentContext: this.wrapContextForInnerChannel(attachMessage.id),
-			storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, flatAttachBlobs),
-			scope: this.parentContext.scope,
-			loadingGroupId: attachMessage.snapshot?.groupId,
-			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(
-				attachMessage.id,
-				{
-					type: CreateSummarizerNodeSource.FromAttach,
-					sequenceNumber: message.sequenceNumber,
-					snapshot: attachMessage.snapshot ?? {
-						entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+			// Only log once per container to avoid noise/cost.
+			// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
+			if (this.shouldSendAttachLog) {
+				this.shouldSendAttachLog = false;
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "dataStoreAttachMessage_sampled",
+					...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
+					details: {
+						local,
+						snapshot: !!attachMessage.snapshot,
+						foundGCData,
 					},
-				},
-			),
-			pkg,
-		});
+					...extractSafePropertiesFromMessage(message),
+				});
+			}
 
-		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
+			// The local object has already been attached
+			if (local) {
+				assert(
+					this.pendingAttach.has(attachMessage.id),
+					0x15e /* "Local object does not have matching attach message id" */,
+				);
+				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
+				this.pendingAttach.delete(attachMessage.id);
+				continue;
+			}
+
+			// If a non-local operation then go and create the object, otherwise mark it as officially attached.
+			if (this.alreadyProcessed(attachMessage.id)) {
+				// TODO: dataStoreId may require a different tag from PackageData #7488
+				const error = new DataCorruptionError(
+					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
+					"Duplicate DataStore created with existing id",
+					{
+						...extractSafePropertiesFromMessage(message),
+						...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
+					},
+				);
+				throw error;
+			}
+
+			const flatAttachBlobs = new Map<string, ArrayBufferLike>();
+			let snapshot: ISnapshotTree | ISnapshot | undefined;
+			if (attachMessage.snapshot) {
+				snapshot = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
+				if (isInstanceOfISnapshot(this.baseSnapshot)) {
+					snapshot = { ...this.baseSnapshot, snapshotTree: snapshot };
+				}
+			}
+
+			// Include the type of attach message which is the pkg of the store to be
+			// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
+			const pkg = [attachMessage.type];
+			const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
+				id: attachMessage.id,
+				snapshot,
+				parentContext: this.wrapContextForInnerChannel(attachMessage.id),
+				storage: new StorageServiceWithAttachBlobs(
+					this.parentContext.storage,
+					flatAttachBlobs,
+				),
+				scope: this.parentContext.scope,
+				loadingGroupId: attachMessage.snapshot?.groupId,
+				createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(
+					attachMessage.id,
+					{
+						type: CreateSummarizerNodeSource.FromAttach,
+						sequenceNumber: message.sequenceNumber,
+						snapshot: attachMessage.snapshot ?? {
+							entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+						},
+					},
+				),
+				pkg,
+			});
+
+			this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
+		}
 	}
 
-	public processAliasMessage(
-		message: ISequencedDocumentMessage,
-		localOpMetadata: unknown,
+	private processAliasMessages(
+		message: ISequencedRuntimeMessageCore,
+		messageContents: IRuntimeMessageContents[],
 		local: boolean,
 	): void {
-		const aliasMessage = message.contents as IDataStoreAliasMessage;
-		if (!isDataStoreAliasMessage(aliasMessage)) {
-			throw new DataCorruptionError("malformedDataStoreAliasMessage", {
-				...extractSafePropertiesFromMessage(message),
-			});
-		}
+		for (const { contents, localOpMetadata } of messageContents) {
+			const aliasMessage = contents as IDataStoreAliasMessage;
+			if (!isDataStoreAliasMessage(aliasMessage)) {
+				throw new DataCorruptionError("malformedDataStoreAliasMessage", {
+					...extractSafePropertiesFromMessage(message),
+				});
+			}
 
-		const resolve = localOpMetadata as PendingAliasResolve;
-		const aliasResult = this.processAliasMessageCore(
-			aliasMessage.internalId,
-			aliasMessage.alias,
-			message.timestamp,
-		);
-		if (local) {
-			resolve(aliasResult);
+			const resolve = localOpMetadata as PendingAliasResolve;
+			const aliasResult = this.processAliasMessageCore(
+				aliasMessage.internalId,
+				aliasMessage.alias,
+				message.timestamp,
+			);
+			if (local) {
+				resolve(aliasResult);
+			}
 		}
 	}
 
@@ -820,6 +831,32 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/**
+	 * Process messages for this data store. The messages here are contiguous messages in a batch.
+	 * @param message - The core message with common properties for all the messages.
+	 * @param messageContents - The contents, local metadata and clientSequenceNumbers of the messages.
+	 * @param local - true if the messages were originally generated by the client receiving it.
+	 */
+	public processMessages(
+		message: ISequencedRuntimeMessageCore,
+		messageContents: IRuntimeMessageContents[],
+		local: boolean,
+	): void {
+		switch (message.type) {
+			case ContainerMessageType.FluidDataStoreOp:
+				this.processChannelMessages(message, messageContents, local);
+				break;
+			case ContainerMessageType.Attach:
+				this.processAttachMessages(message, messageContents, local);
+				break;
+			case ContainerMessageType.Alias:
+				this.processAliasMessages(message, messageContents, local);
+				break;
+			default:
+				assert(false, 0x8e9 /* unreached */);
+		}
+	}
+
+	/**
 	 * Not used anymore. This is still here for back-compat purposes.
 	 */
 	public process(
@@ -833,41 +870,51 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	/**
 	 * Process channel type messages. The messages here are contiguous channel type messages in a batch. Bunch
 	 * of contiguous messages for a data store should be sent to it together.
-	 * @param messagesWithMetadata - A bunch of contiguous channel type messages and their metadata.
+	 * @param message - The core message with common properties for all the messages.
+	 * @param messageContents - The contents, local metadata and clientSequenceNumbers of the messages.
 	 * @param local - true if the messages were originally generated by the client receiving it.
 	 */
-	public processChannelMessages(
-		messagesWithMetadata: {
-			message: ISequencedDocumentMessage;
-			localOpMetadata: unknown;
-		}[],
+	private processChannelMessages(
+		message: ISequencedRuntimeMessageCore,
+		messageContents: IRuntimeMessageContents[],
 		local: boolean,
 	): void {
-		if (messagesWithMetadata.length === 0) {
-			return;
-		}
+		let previousMessageState: { address: string; type: string } | undefined;
+		let contextMessageContents: IRuntimeMessageContents[] = [];
+
+		// Helper that sends the previous bunch of messages to the data store. It validates that the data stores exists.
+		const sendPreviousBunch = () => {
+			if (contextMessageContents.length > 0) {
+				assert(
+					previousMessageState !== undefined,
+					"previous state must exist for send messages",
+				);
+				const previousContext = this.contexts.get(previousMessageState.address);
+				assert(!!previousContext, "Context not found");
+
+				previousContext.processMessages(
+					{ ...message, type: previousMessageState.type },
+					contextMessageContents,
+					local,
+				);
+				contextMessageContents = [];
+			}
+		};
 
 		/**
 		 * Bunch contiguous messages for the same data store and send them together.
 		 * This is an optimization mainly for DDSes, where it can process a bunch of ops together. DDSes
 		 * like merge tree or shared tree can process ops more efficiently when they are bunched together.
 		 */
-		let previousAddress: string | undefined;
-		let contextMessages: {
-			message: ISequencedDocumentMessage;
-			localOpMetadata: unknown;
-		}[] = [];
-
-		messagesWithMetadata.forEach((messageWithMetadata) => {
-			const { message, localOpMetadata } = messageWithMetadata;
-			const envelope = message.contents as IEnvelope;
+		for (const { contents, ...restOfMessageContents } of messageContents) {
+			const envelope = contents as IEnvelope;
 			const address = envelope.address;
 			const context = this.contexts.get(address);
 
 			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 			// corruption in case a deleted data store accidentally submitted an op.
 			if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
-				return;
+				continue;
 			}
 
 			if (context === undefined) {
@@ -875,36 +922,32 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				throw DataProcessingError.create(
 					"No context for op",
 					"processFluidDataStoreOp",
-					message,
+					message as ISequencedDocumentMessage,
 					{
 						local,
 						messageDetails: JSON.stringify({
 							type: message.type,
-							contentType: typeof message.contents,
+							contentType: typeof contents,
 						}),
 						...tagCodeArtifacts({ address }),
 					},
 				);
 			}
 
-			const innerContents = envelope.contents as FluidDataStoreMessage;
-			const contextMessage: ISequencedDocumentMessage = {
-				...message,
-				type: innerContents.type,
-				contents: innerContents.content,
-			};
-
-			// If the address of the message changes while processing the batch, process the previous bunch.
-			if (previousAddress !== undefined && previousAddress !== address) {
-				if (contextMessages.length > 0) {
-					const previousContext = this.contexts.get(previousAddress);
-					assert(!!previousContext, "Context not found");
-					previousContext.processMessages(contextMessages, local);
-					contextMessages = [];
-				}
+			const { type: contextType, content: contextContents } =
+				envelope.contents as FluidDataStoreMessage;
+			// If the address or type of the message changes while processing the message, send the previous bunch.
+			if (
+				previousMessageState !== undefined &&
+				(previousMessageState.address !== address || previousMessageState.type !== contextType)
+			) {
+				sendPreviousBunch();
 			}
-			contextMessages.push({ message: contextMessage, localOpMetadata });
-			previousAddress = address;
+			contextMessageContents.push({
+				contents: contextContents,
+				...restOfMessageContents,
+			});
+			previousMessageState = { address, type: contextType };
 
 			// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 			// being used.
@@ -917,23 +960,14 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 			detectOutboundReferences(
 				envelope.address,
-				contextMessage.contents,
+				contextContents,
 				(fromPath: string, toPath: string) =>
 					this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp),
 			);
-		});
+		}
 
 		// Process the last bunch of messages.
-		if (contextMessages.length > 0) {
-			assert(
-				previousAddress !== undefined,
-				"previous address must exist if there are messages to process",
-			);
-			// process the last set of channel ops
-			const previousContext = this.contexts.get(previousAddress);
-			assert(!!previousContext, "Context not found");
-			previousContext.processMessages(contextMessages, local);
-		}
+		sendPreviousBunch();
 	}
 
 	private async getDataStore(

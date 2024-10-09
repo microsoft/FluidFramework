@@ -508,7 +508,12 @@ describe("Garbage Collection Tests", () => {
 			const autoRecoveryTimestampMs = Date.now();
 			// Plumb the message to processMessage fn to trigger autorecovery
 			// Autorecovery: addedOutboundReference should be called with the tombstoned node, which should transition to "Active" state
-			gc.processMessage(gcTombstoneLoadedMessage, autoRecoveryTimestampMs, true /* local */);
+			gc.processMessages(
+				gcTombstoneLoadedMessage,
+				[gcTombstoneLoadedMessage.contents],
+				autoRecoveryTimestampMs,
+				true /* local */,
+			);
 			assert.deepEqual(
 				spies.gc.addedOutboundReference.args[0],
 				["/", nodes[0], autoRecoveryTimestampMs, /* autorecovery: */ true],
@@ -2214,8 +2219,9 @@ describe("Garbage Collection Tests", () => {
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
 				compatDetails: { behavior: "Ignore" },
 			};
-			garbageCollector.processMessage(
+			garbageCollector.processMessages(
 				containerRuntimeGCMessage,
+				[containerRuntimeGCMessage.contents],
 				Date.now(),
 				false /* local */,
 			);
@@ -2229,8 +2235,9 @@ describe("Garbage Collection Tests", () => {
 			};
 			assert.throws(
 				() =>
-					garbageCollector.processMessage(
+					garbageCollector.processMessages(
 						containerRuntimeGCMessage,
+						[containerRuntimeGCMessage.contents],
 						Date.now(),
 						false /* local */,
 					),
@@ -2246,8 +2253,9 @@ describe("Garbage Collection Tests", () => {
 			};
 			assert.throws(
 				() =>
-					garbageCollector.processMessage(
+					garbageCollector.processMessages(
 						containerRuntimeGCMessage,
+						[containerRuntimeGCMessage.contents],
 						Date.now(),
 						false /* local */,
 					),

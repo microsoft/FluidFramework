@@ -41,6 +41,7 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
+	type ISequencedRuntimeMessageCore,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -875,7 +876,7 @@ describe("Runtime", () => {
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processChannelMessages: (..._args) => {},
+					processMessages: (..._args) => {},
 					setConnectionState: (..._args) => {},
 				} as ChannelCollection;
 			};
@@ -2565,27 +2566,20 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
-				missingDataStoreContext.processMessages(
-					[
-						{
-							message: { sequenceNumber: 1 } as unknown as ISequencedDocumentMessage,
-							localOpMetadata: undefined,
-						},
-						{
-							message: { sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
-							localOpMetadata: undefined,
-						},
-						{
-							message: { sequenceNumber: 3 } as unknown as ISequencedDocumentMessage,
-							localOpMetadata: undefined,
-						},
-						{
-							message: { sequenceNumber: 4 } as unknown as ISequencedDocumentMessage,
-							localOpMetadata: undefined,
-						},
-					],
-					false,
-				);
+
+				const messages: ISequencedRuntimeMessageCore[] = [
+					{ sequenceNumber: 1 },
+					{ sequenceNumber: 2 },
+					{ sequenceNumber: 3 },
+					{ sequenceNumber: 4 },
+				] as unknown as ISequencedRuntimeMessageCore[];
+				messages.forEach((message) => {
+					missingDataStoreContext.processMessages(
+						message,
+						[{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 }],
+						false,
+					);
+				});
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				(containerContext.deltaManager as any).lastSequenceNumber = 2;
@@ -2593,16 +2587,17 @@ describe("Runtime", () => {
 				let opsProcessed = 0;
 				let opsStart: number | undefined;
 				const processMessagesStub = (
-					messagesWithMetadata: {
-						message: ISequencedDocumentMessage;
+					message: ISequencedRuntimeMessageCore,
+					messageContents: {
+						contents: unknown;
 						localOpMetadata: unknown;
 					}[],
 					local: boolean,
 				) => {
 					if (opsProcessed === 0) {
-						opsStart = messagesWithMetadata[0].message.sequenceNumber;
+						opsStart = message.sequenceNumber;
 					}
-					opsProcessed += messagesWithMetadata.length;
+					opsProcessed += messageContents.length;
 				};
 				const stub = sandbox
 					.stub(missingDataStoreRuntime, "processMessages")
