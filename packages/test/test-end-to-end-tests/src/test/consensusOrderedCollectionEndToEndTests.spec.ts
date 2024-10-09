@@ -46,8 +46,7 @@ function generate(name: string, input: any[], output: any[]) {
 		let sharedMap2: ISharedMap;
 		let sharedMap3: ISharedMap;
 
-		beforeEach("createSharedMaps", async function() {
-
+		beforeEach("createSharedMaps", async function () {
 			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 				this.skip();
 			}

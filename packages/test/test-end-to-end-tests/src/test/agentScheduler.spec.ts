@@ -153,7 +153,7 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 			assert.deepStrictEqual(scheduler2.pickedTasks(), []);
 		});
 
-		it("Clients agree on picking tasks sequentially", async function() {
+		it("Clients agree on picking tasks sequentially", async function () {
 			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 				this.skip();
 			}
