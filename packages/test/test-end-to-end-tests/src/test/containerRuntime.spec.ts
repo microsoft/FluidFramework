@@ -215,8 +215,14 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 			// Ideally, these illegal transitions would be covered and the expected DataProcessingError verified.
 			//
 			// The illegal transitions that throw a DataProcessingError are:
-			//   * 'undefined' -> 'on' (because container1 is initialized with explicitSchemaControl = false, container2 correctly coerces 'undefined' -> 'delayed')
-			//   * 'delayed' -> 'on' with explicitSchemaControl = false
+			//   1.  'undefined' -> 'on'
+			//   2.  'delayed' -> 'on' with explicitSchemaControl = false
+			//
+			// [1] fails because 'container1' is *always* created with explicitSchemaControl=false, and therefore
+			// won't have IdCompressor loaded.
+			//
+			// [2] fails because with explicitSchemaControl=false, the session will never migrate.
+			//
 			if (from !== undefined || to !== "on") {
 				if (from !== "delayed" || to !== "on") {
 					it(`upgrade from '${from}' to '${to}' with explicitSchemaControl = false`, async () => {
