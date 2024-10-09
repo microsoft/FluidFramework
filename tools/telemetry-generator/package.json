@@ -35,7 +35,7 @@
 		"applicationinsights": "^2.4.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/mocha-test-setup": "~2.0.5",
+		"@fluid-internal/mocha-test-setup": "^2.3.1",
 		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@types/mocha": "^9.1.1",
