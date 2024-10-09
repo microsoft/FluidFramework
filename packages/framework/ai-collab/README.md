@@ -1,7 +1,7 @@
 # @fluid-experimental/ai-collab
 
 Utilities for using SharedTree with LLMs.
-This package aims to assist SharedTree-based React apps that want to leverage LLMs.
+This package aims to assist SharedTree-based apps that want to leverage LLMs.
 
 The next steps in LLM/AI-based collaborative experiences with applications involves allowing LLMs to propose updates
 to application state directly.
