@@ -6,8 +6,12 @@
 "use client";
 
 import { Box } from "@mui/material";
-import { Inter } from "next/font/google"; // eslint-disable-line import/no-internal-modules
-import Image from "next/image"; // eslint-disable-line import/no-internal-modules
+// NextJS is declared as a dev dependency so a lot of its transitive dependencies aren't marked as production dependencies
+// in the lockfile, so no-extraneous-dependencies doesn't apply. And it requires reaching out to internal modules.
+/* eslint-disable import/no-extraneous-dependencies, import/no-internal-modules */
+import { Inter } from "next/font/google";
+import Image from "next/image";
+/* eslint-enable import/no-extraneous-dependencies, import/no-internal-modules */
 import { SnackbarProvider } from "notistack";
 
 import bgImg from "/public/msft-bg.webp"; // eslint-disable-line import/no-unresolved
