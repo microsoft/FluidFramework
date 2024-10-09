@@ -87,7 +87,7 @@ clear what has happened.
 
 ### Package selection and filtering APIs
 
-The IFluidRepo object provides access to workspaces, release groups, and their constiuent packages, but often one wants
+The `IFluidRepo` object provides access to workspaces, release groups, and their constituent packages, but often one wants
 to operate on a subset of all packages in the repo. To support this, build-infrastructure provides a selection and
 filtering API. Packages can be selected based on criteria like workspace and release group, and the lists can be further
 filtered by scope or private/not private. Advanced filtering not covered by the built-in filters can be implemented
