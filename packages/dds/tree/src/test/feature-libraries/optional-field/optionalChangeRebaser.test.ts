@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	type ChangeAtomId,
@@ -557,7 +557,7 @@ export function testRebaserAxioms() {
 			runSingleEditRebaseAxiomSuite({ content: "A" });
 		});
 
-		describeStress("Exhaustive", ({ isStress }) => {
+		describeStress("Exhaustive", ({ stressMode }) => {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
@@ -574,8 +574,8 @@ export function testRebaserAxioms() {
 				},
 				{
 					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: isStress ? 5 : 3,
-					numberOfEditsToVerifyAssociativity: isStress ? 6 : 3,
+					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
+					numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 6 : 3,
 				},
 			);
 		});

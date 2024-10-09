@@ -14,7 +14,7 @@ This keeps the contents of the removed subtree in the forest instead of erasing 
 
 Keeping all detached trees forever would lead to unbounded memory growth in clients,
 and would run the risk of seriously bloating the document's snapshot size.
-In order to avoid that, detached trees will be garbage collected (though this is not yet implemented as of April 2024).
+In order to avoid that, detached trees are garbage collected.
 How this happens is covered further down,
 but the key idea is that most of our systems are allowed to ignore the existence of this garbage collection scheme,
 thereby making those systems' contracts and implementations simpler.
@@ -42,7 +42,7 @@ See the [V1 Undo](./v1-undo.md) for more details.
 When a client needs to edit the document, it can do so in a transaction.
 Transactions are allowed to return a special value to communicate that the transaction should be aborted.
 When that happens, any edits that the transaction had already applied to the document state need to be rolled back.
-If some of those edits removed nodes, then those nodes need to be reintroduced into the document tree.
+If some of those edits happened to remove some nodes, then those nodes need to be reintroduced into the document tree.
 
 ### After Rebasing a Local Branch
 
@@ -103,10 +103,10 @@ This seems bad from a performance point of view because it adds a cost common op
 Another alternative would be to keep all detached trees forever
 (i.e., without garbage-collecting them).
 As mentioned above, this would be bad for memory usage.
-This memory concern could be addressed for client by using local disk storage,
+This memory concern could be alleviated for clients by allowing them to use local disk storage,
 but it would still affect the size of snapshots.
 
-This approach seems like a decent tradeoff between these two.
+Our current approach seems like a decent tradeoff between these two.
 More importantly, it paves the way to allowing us to more precisely control that tradeoff though the concept of [undo window](undo.md).
 
 See also [Collecting Usage Data](#collecting-usage-data).
@@ -166,7 +166,7 @@ What scheme we use varies depending on the layer.
 One key requirement for identifying detached trees in changesets
 is that peers need to use a globally consistent identification scheme:
 if there are multiple detached trees,
-we need to ensure that one peer can communicate to the other precisely which of them it needs to edit.
+we need to ensure that one peer can communicate to the other peers precisely which of the detached trees it intends to edit.
 Additionally, if multiple peers attempt to concurrently detach the same tree,
 then we need to ensure that all peers eventually end up with a consistent way of referring to the tree.
 
@@ -363,7 +363,7 @@ a refresher is a copy of a detached tree that is included by a peer on a commit 
 to the sequencing service.
 Note that this excludes commits that are internal to the peer, i.e., commits on its branches.
 This means the inclusion of refresher can be confined to the logic that (re)submits commits to the sequencing service.
-(See `SharedTeeCore`'s usage of its `CommitEnricher`.)
+(See `SharedTeeCore`'s usage of its `BranchCommitEnricher`.)
 
 ##### Including Refreshers
 
@@ -374,7 +374,7 @@ and whose detach operation was known to the peer\*.
 We make this happen by adding refreshers to commits as needed immediately before they are submitted to the sequencing service.
 Note that commits sometimes need to go through a resubmission phase,
 so we need to ensure that the set of refreshers on such commits is updated before these commits are resubmitted.
-(See the logic in `SharedTeeCore` and `DefaultCommitEnricher`).
+(See the logic in `SharedTeeCore` and `ResubmitMachine`).
 
 \* Strictly speaking,
 a client could omit the refresher for trees for which _both_ of the following are true:
@@ -477,4 +477,4 @@ This last option should enable us to assess the value of implementing the undo w
 and if so, what might be a good K value for it.
 
 We should also measure how those costs would change
-if we omitted them refreshers in the scenario described at the bottom of the [Including Refreshers](#including-refreshers) section.
+if we omitted the refreshers in the scenario described at the bottom of the [Including Refreshers](#including-refreshers) section.

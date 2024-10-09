@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { strict } from "assert";
 
@@ -726,8 +726,8 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 };
 
 export function testStateBasedRebaserAxioms() {
-	describeStress("State-based Rebaser Axioms", function ({ isStress }) {
-		this.timeout(isStress ? 80_000 : 5000);
+	describeStress("State-based Rebaser Axioms", function ({ stressMode }) {
+		this.timeout(stressMode !== StressMode.Short ? 80_000 : 5000);
 		const allocator = idAllocatorFromMaxId();
 		const startingLength = 2;
 		const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -747,7 +747,7 @@ export function testStateBasedRebaserAxioms() {
 			fieldRebaser,
 			{
 				groupSubSuites: true,
-				numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
+				numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 4 : 3,
 				skipRebaseOverCompose: false,
 			},
 		);
