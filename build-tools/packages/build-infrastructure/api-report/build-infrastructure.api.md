@@ -12,7 +12,7 @@ import { SimpleGit } from 'simple-git';
 // @public (undocumented)
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
-// @public (undocumented)
+// @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
 
 // @public

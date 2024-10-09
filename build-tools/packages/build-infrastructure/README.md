@@ -8,14 +8,14 @@ groups, and leverages workspaces functionality provided by package managers like
 interdependencies between packages across a Fluid repo. It then provides APIs to select, filter, and work with those
 package groups.
 
-Conceptually, a **Fluid repo** is a way to organize npm packages into groups for versioning, release, and dependency
-management. A Fluid repo can contain multiple **workspaces**, each of which may contain one or more **release groups**.
-
 ## API Overview
 
 The API is built around four key types which form a hierarchy: `IFluidRepo`, `IWorkspace`, `IReleaseGroup`, and
 `IPackage`. For the purposes of this documentation, the terms "Fluid repo," "workspace," "release group," and "package"
 generally refer to these types.
+
+Conceptually, a **Fluid repo** is a way to organize npm packages into groups for versioning, release, and dependency
+management. A Fluid repo can contain multiple **workspaces**, each of which may contain one or more **release groups**.
 
 ### The Fluid repo
 
@@ -114,13 +114,13 @@ group that contains a single package.
 ```js
 repoLayout: {
   workspaces: {
-    // This is the name of the workspace which is how it's referenced in the API.
+    // This is the name of the workspace which is how it's referenced in the API. All workspaces in a Fluid repo must
+    // have a unique name.
     "client": {
       // This workspace is rooted at the root of the Git repo.
       directory: ".",
       releaseGroups: {
-        // This key is the name of the release group. It must be unique across all
-        // release groups.
+        // This key is the name of the release group. All release groups in a Fluid repo must have a unique name.
         client: {
           // The include property can contain package names OR package scopes. If
           // a scope is provided, all packages with that scope will be a part of
@@ -133,15 +133,15 @@ repoLayout: {
             "@fluid-internal",
             "@fluid-private",
             "@fluid-tools",
+            // This private package is part of the client release group
             "@types/jest-environment-puppeteer"
             "fluid-framework",
           ],
           // A release group can have an OPTIONAL root package. This package
           // is typically private and is similar to the root package for a workspace.
           // This release group root package may be useful to store scripts or other
-          // configuration only applies on the release group,
+          // configuration that only applies on the release group,
           rootPackageName: "client-release-group-root",
-          defaultInterdependencyRange: "workspace:~",
 
           // A release group may have an ADO pipeline URL associated with it. This
           // URL is used to provide direct links to the pipeline when running releases.
@@ -151,8 +151,9 @@ repoLayout: {
         examples: {
           // This release group contains only the @fluid-example packages.
           include: ["@fluid-example"],
+          // Release group root packages are optional but can be useful to store scripts that are tuned to
+          // apply to only that release group.
           rootPackageName: "examples-release-group-root",
-          defaultInterdependencyRange: "workspace:~",
         },
         // If any packages in the workspace don't match a release group, loading the
         // repo layout config will throw an error.
@@ -178,7 +179,6 @@ repoLayout: {
             "@fluid-tools",
           ],
           rootPackageName: "build-tools-release-group-root",
-          defaultInterdependencyRange: "workspace:~",
           adoPipelineUrl:
             "https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
         },

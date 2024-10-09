@@ -85,13 +85,6 @@ export interface ReleaseGroupDefinition {
 	rootPackageName?: string;
 
 	/**
-	 * The interdependencyRange controls the type of semver range to use between packages in the same release
-	 * group. This setting controls the default range that will be used when updating the version of a release
-	 * group. The default can be overridden using the `--interdependencyRange` flag in the `flub bump` command.
-	 */
-	// defaultInterdependencyRange: InterdependencyRange;
-
-	/**
 	 * A URL to the ADO CI pipeline that builds the release group.
 	 */
 	adoPipelineUrl?: string;

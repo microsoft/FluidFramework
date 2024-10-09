@@ -1,6 +1,3 @@
-# This is the workspace definition for the build-tools release group. See https://pnpm.io/pnpm-workspace_yaml for more
-# information about the format.
-#
 # Guidelines for updating this file:
 #
 # 1. Keep the entries alphabetical wherever possible.

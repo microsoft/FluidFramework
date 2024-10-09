@@ -10,7 +10,7 @@ import execa from "execa";
 
 import type { ReleaseGroupDefinition, WorkspaceDefinition } from "./config.js";
 import { loadPackageFromWorkspaceDefinition } from "./package.js";
-import { PackageManager } from "./packageManagers.js";
+import { createPackageManager } from "./packageManagers.js";
 import { ReleaseGroup } from "./releaseGroup.js";
 import type {
 	IPackage,
@@ -65,7 +65,7 @@ export class Workspace implements IWorkspace {
 			case "npm":
 			case "pnpm":
 			case "yarn": {
-				this.packageManager = PackageManager.load(tool.type);
+				this.packageManager = createPackageManager(tool.type);
 				break;
 			}
 			default: {

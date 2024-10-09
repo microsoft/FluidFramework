@@ -6,7 +6,11 @@
 import type { IPackageManager, PackageManagerName } from "./types.js";
 
 export class PackageManager implements IPackageManager {
-	private constructor(public readonly name: PackageManagerName) {}
+	/**
+	 * Instantiates a new package manager object. Prefer the createPackageManager function to calling the constructor
+	 * directly.
+	 */
+	public constructor(public readonly name: PackageManagerName) {}
 
 	public installCommand(updateLockfile: boolean): string {
 		switch (this.name) {
@@ -31,12 +35,11 @@ export class PackageManager implements IPackageManager {
 			}
 		}
 	}
-
-	public static load(name: PackageManagerName): IPackageManager {
-		return new PackageManager(name);
-	}
 }
 
+/**
+ * Create a new package manager instance.
+ */
 export function createPackageManager(name: PackageManagerName): IPackageManager {
-	return PackageManager.load(name);
+	return new PackageManager(name);
 }
