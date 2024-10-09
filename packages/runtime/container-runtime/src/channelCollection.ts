@@ -857,7 +857,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/**
-	 * Not used anymore. This is still here for back-compat purposes.
+	 * Not used anymore. This is still here for back-compat purposes because channel collection implements
+	 * IFluidDataStoreChannel. Once it is removed from the interface, this method can be removed.
+	 * Container runtime calls `processMessages` instead. For the experimental nested data stores feature,
+	 * the data store context will call `processMessages` as well.
 	 */
 	public process(
 		message: ISequencedDocumentMessage,
@@ -880,25 +883,23 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		local: boolean,
 	): void {
 		let previousMessageState: { address: string; type: string } | undefined;
-		let contextMessageContents: IRuntimeMessageContents[] = [];
+		let previousMessageContents: IRuntimeMessageContents[] = [];
 
 		// Helper that sends the previous bunch of messages to the data store. It validates that the data stores exists.
 		const sendPreviousBunch = () => {
-			if (contextMessageContents.length > 0) {
-				assert(
-					previousMessageState !== undefined,
-					"previous state must exist for send messages",
-				);
-				const previousContext = this.contexts.get(previousMessageState.address);
-				assert(!!previousContext, "Context not found");
+			assert(
+				previousMessageState !== undefined,
+				"previous state must exist for send messages",
+			);
+			const previousContext = this.contexts.get(previousMessageState.address);
+			assert(!!previousContext, "Context not found");
 
-				previousContext.processMessages(
-					{ ...message, type: previousMessageState.type },
-					contextMessageContents,
-					local,
-				);
-				contextMessageContents = [];
-			}
+			previousContext.processMessages(
+				{ ...message, type: previousMessageState.type },
+				previousMessageContents,
+				local,
+			);
+			previousMessageContents = [];
 		};
 
 		/**
@@ -943,7 +944,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			) {
 				sendPreviousBunch();
 			}
-			contextMessageContents.push({
+			previousMessageContents.push({
 				contents: contextContents,
 				...restOfMessageContents,
 			});

@@ -782,6 +782,10 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	/**
+	 * This is still here for back-compat purposes because it exists on IFluidDataStoreChannel. Once it is removed from
+	 * the interface, this method can be removed.
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,

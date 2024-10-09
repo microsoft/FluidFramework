@@ -2904,17 +2904,15 @@ export class ContainerRuntime
 			const sendPreviousBunch = () => {
 				assert(previousMessage !== undefined, "previous message must exist");
 				const runtimeMessage = previousMessage;
-				if (bunchedMessageContents.length > 0) {
-					this.ensureNoDataModelChanges(() => {
-						this.validateAndProcessRuntimeMessages(
-							runtimeMessage,
-							bunchedMessageContents,
-							local,
-							savedOp,
-						);
-					});
-					bunchedMessageContents = [];
-				}
+				this.ensureNoDataModelChanges(() => {
+					this.validateAndProcessRuntimeMessages(
+						runtimeMessage,
+						bunchedMessageContents,
+						local,
+						savedOp,
+					);
+				});
+				bunchedMessageContents = [];
 			};
 
 			/**
@@ -2977,8 +2975,8 @@ export class ContainerRuntime
 
 	/**
 	 * Process runtime messages. The messages here are contiguous runtime messages in a batch.
-	 * Assuming the messages in the given bunch are also a TypedContainerRuntimeMessage, checks its type and dispatches
-	 * the message to the appropriate handler in the runtime.
+	 * Assuming the messages in the given bunch are also a TypedContainerRuntimeMessage, checks its type and dispatch
+	 * the messages to the appropriate handler in the runtime.
 	 * Throws a DataProcessingError if the message looks like but doesn't conform to a known TypedContainerRuntimeMessage type.
 	 * @param message - The core message with common properties for all the messages.
 	 * @param messageContents - The contents, local metadata and clientSequenceNumbers of the messages.
