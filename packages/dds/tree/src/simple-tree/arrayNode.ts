@@ -49,7 +49,7 @@ import { getUnhydratedContext } from "./createContext.js";
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
  *
- * This provides the readonly subset of TreeArrayNode functionality, and is used as the source interface form moves since that needs to be covariant.
+ * This provides the readonly subset of TreeArrayNode functionality, and is used as the source interface for moves since that needs to be covariant.
  * @system @sealed @public
  */
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
