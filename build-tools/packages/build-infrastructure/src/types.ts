@@ -9,14 +9,14 @@ import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "ty
 /**
  * A type representing fluid-build-specific config that may be in package.json.
  */
-export type FluidPackageJsonFields = {
+export interface FluidPackageJsonFields {
 	/**
 	 * pnpm config
 	 */
 	pnpm?: {
 		overrides?: Record<string, string>;
 	};
-};
+}
 
 export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJsonFields,
@@ -295,7 +295,7 @@ export interface IPackage<J extends PackageJson = PackageJson>
 	/**
 	 * The package manager used to manage this package.
 	 *
-	 * @internalRemarks
+	 * @privateRemarks
 	 *
 	 * If this is needed at the package level, perhaps it should instead be retrieved from the package's workspace,
 	 * since the package manager is defined at the workspace level.
@@ -356,7 +356,7 @@ export interface IPackage<J extends PackageJson = PackageJson>
 /**
  * A type guard that returns `true` if the item is an {@link IPackage}.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- this is a type guard
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types -- this is a type guard
 export function isIPackage(pkg: any): pkg is IPackage {
 	if (typeof pkg === "object") {
 		return "getScript" in pkg;

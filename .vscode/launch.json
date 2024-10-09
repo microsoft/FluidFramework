@@ -30,15 +30,6 @@
 			"type": "node",
 		},
 		{
-			"name": "npm test build-infrastructure",
-			"cwd": "${workspaceFolder}/build-tools/packages/build-infrastructure",
-			"request": "launch",
-			"runtimeArgs": ["run-script", "test"],
-			"runtimeExecutable": "npm",
-			"skipFiles": ["<node_internals>/**"],
-			"type": "node",
-		},
-		{
 			"name": "npm test version-tools",
 			"cwd": "${workspaceFolder}/build-tools/packages/version-tools",
 			"request": "launch",

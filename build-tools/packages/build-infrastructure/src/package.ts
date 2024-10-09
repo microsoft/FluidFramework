@@ -5,11 +5,11 @@
 
 import { existsSync } from "node:fs";
 import path from "node:path";
-import colors from "picocolors";
 
 // Imports are written this way for CJS/ESM compat
 import fsePkg from "fs-extra";
 const { readJsonSync } = fsePkg;
+import colors from "picocolors";
 
 import { type WorkspaceDefinition, findReleaseGroupForPackage } from "./config.js";
 import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.js";
@@ -29,8 +29,9 @@ export abstract class PackageBase<
 	J extends PackageJson = PackageJson,
 > implements IPackage
 {
+	// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive; this value is changed
 	private static packageCount: number = 0;
-	private static readonly chalkColor = [
+	private static readonly colorFunction = [
 		colors.red,
 		colors.green,
 		colors.yellow,
@@ -52,9 +53,10 @@ export abstract class PackageBase<
 	private _packageJson: J;
 	private readonly packageId = Package.packageCount++;
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	private get color() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return Package.chalkColor[this.packageId % Package.chalkColor.length]!;
+		return Package.colorFunction[this.packageId % Package.colorFunction.length]!;
 	}
 
 	/**
@@ -82,33 +84,7 @@ export abstract class PackageBase<
 	}
 
 	public get combinedDependencies(): Generator<PackageDependency, void> {
-		const it = function* (packageJson: PackageJson) {
-			for (const item in packageJson.dependencies) {
-				yield {
-					name: item as PackageName,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					version: packageJson.dependencies[item]!,
-					depClass: "prod",
-				} as const;
-			}
-			for (const item in packageJson.devDependencies) {
-				yield {
-					name: item as PackageName,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					version: packageJson.devDependencies[item]!,
-					depClass: "dev",
-				} as const;
-			}
-			for (const item in packageJson.peerDependencies) {
-				yield {
-					name: item as PackageName,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					version: packageJson.peerDependencies[item]!,
-					depClass: "peer",
-				} as const;
-			}
-		};
-		return it(this.packageJson);
+		return iterateDependencies(this.packageJson);
 	}
 
 	public get directory(): string {
@@ -141,24 +117,24 @@ export abstract class PackageBase<
 		return this.packageJson.version;
 	}
 
-	public async savePackageJson() {
+	public async savePackageJson(): Promise<void> {
 		writePackageJson(this.packageJsonFilePath, this.packageJson, this._indent);
 	}
 
-	public reload() {
-		this._packageJson = readJsonSync(this.packageJsonFilePath);
+	public reload(): void {
+		this._packageJson = readJsonSync(this.packageJsonFilePath) as J;
 	}
 
-	public toString() {
+	public toString(): string {
 		return `${this.name} (${this.directory})`;
 	}
 
 	public getScript(name: string): string | undefined {
-		return this.packageJson.scripts ? this.packageJson.scripts[name] : undefined;
+		return this.packageJson.scripts === undefined ? undefined : this.packageJson.scripts[name];
 	}
 
-	public async checkInstall(print: boolean = true) {
-		if (this.combinedDependencies.next().done) {
+	public async checkInstall(print: boolean = true): Promise<boolean> {
+		if (this.combinedDependencies.next().done === true) {
 			// No dependencies
 			return true;
 		}
@@ -171,12 +147,12 @@ export abstract class PackageBase<
 		}
 		let succeeded = true;
 		for (const dep of this.combinedDependencies) {
-			if (
-				!lookUpDirSync(this.directory, (currentDir) => {
-					// TODO: check semver as well
-					return existsSync(path.join(currentDir, "node_modules", dep.name));
-				})
-			) {
+			const found = lookUpDirSync(this.directory, (currentDir) => {
+				// TODO: check semver as well
+				return existsSync(path.join(currentDir, "node_modules", dep.name));
+			});
+
+			if (found === undefined) {
 				succeeded = false;
 				if (print) {
 					console.error(`${this.nameColored}: dependency ${dep.name} not found`);
@@ -202,7 +178,8 @@ export class Package<
 		workspaceDefinition: WorkspaceDefinition,
 		additionalProperties?: TAddProps,
 	): IPackage {
-		const packageName: PackageName = readJsonSync(packageJsonFilePath).name;
+		const packageName: PackageName = (readJsonSync(packageJsonFilePath) as PackageJson)
+			.name as PackageName;
 		const releaseGroupName = findReleaseGroupForPackage(
 			packageName,
 			workspaceDefinition.releaseGroups,
@@ -265,11 +242,51 @@ export function loadPackageFromWorkspaceDefinition(
 	packageManager: IPackageManager,
 	isWorkspaceRoot: boolean,
 	workspaceDefinition: WorkspaceDefinition,
-) {
+): IPackage {
 	return Package.loadFromWorkspaceDefinition(
 		packageJsonFilePath,
 		packageManager,
 		isWorkspaceRoot,
 		workspaceDefinition,
 	);
+}
+
+function* iterateDependencies<T extends PackageJson>(
+	packageJson: T,
+): Generator<PackageDependency, void> {
+	for (const [pkgName, version] of Object.entries(packageJson.dependencies ?? {})) {
+		const name = pkgName as PackageName;
+		if (version === undefined) {
+			throw new Error(`Dependency found without a version specifier: ${name}`);
+		}
+		yield {
+			name,
+			version,
+			depClass: "prod",
+		} as const;
+	}
+
+	for (const [pkgName, version] of Object.entries(packageJson.devDependencies ?? {})) {
+		const name = pkgName as PackageName;
+		if (version === undefined) {
+			throw new Error(`Dependency found without a version specifier: ${name}`);
+		}
+		yield {
+			name,
+			version,
+			depClass: "dev",
+		} as const;
+	}
+
+	for (const [pkgName, version] of Object.entries(packageJson.devDependencies ?? {})) {
+		const name = pkgName as PackageName;
+		if (version === undefined) {
+			throw new Error(`Dependency found without a version specifier: ${name}`);
+		}
+		yield {
+			name,
+			version,
+			depClass: "peer",
+		} as const;
+	}
 }

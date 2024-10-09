@@ -4,6 +4,7 @@
  */
 
 import path from "node:path";
+
 import readPkgUp from "read-pkg-up";
 import type { SimpleGit } from "simple-git";
 

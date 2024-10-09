@@ -54,6 +54,8 @@ export class ReleaseGroup implements IReleaseGroup {
 	}
 
 	public reload(): void {
-		this.packages.forEach((pkg) => pkg.reload());
+		for (const pkg of this.packages) {
+			pkg.reload();
+		}
 	}
 }

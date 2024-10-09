@@ -4,6 +4,7 @@
  */
 
 import path from "node:path";
+
 import mm from "micromatch";
 
 import { getChangedSinceRef, getRemote } from "./git.js";
@@ -25,7 +26,7 @@ export interface PackageSelectionCriteria {
 	 * will be selected. To include workspace roots, use the `workspaceRoots` property.
 	 *
 	 * Values should either be complete workspace names or micromatch glob strings. To select all workspaces, use `"*"`.
-	 * See <https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing> for more details.
+	 * See https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing for more details.
 	 *
 	 * Workspace names will be compared against all globs - if any match, the workspace will be selected.
 	 */
@@ -35,7 +36,7 @@ export interface PackageSelectionCriteria {
 	 * An array of workspaces whose root packages are selected. Only the roots of each workspace will be included.
 	 *
 	 * Values should either be complete workspace names or micromatch glob strings. To select all workspaces, use `"*"`.
-	 * See <https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing> for more details.
+	 * See https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing for more details.
 	 *
 	 * Workspace names will be compared against all globs - if any match, the workspace will be selected.
 	 */
@@ -46,7 +47,7 @@ export interface PackageSelectionCriteria {
 	 * will be selected. To include release group roots, use the `releaseGroupRoots` property.
 	 *
 	 * Values should either be complete release group names or micromatch glob strings. To select all release groups, use
-	 * `"*"`. See <https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing> for more details.
+	 * `"*"`. See https://www.npmjs.com/package/micromatch?activeTab=readme#extended-globbing for more details.
 	 *
 	 * Workspace names will be compared against all globs - if any match, the workspace will be selected.
 	 */

@@ -4,17 +4,33 @@
  */
 
 module.exports = {
-	extends: ["eslint:recommended", "plugin:@typescript-eslint/strict", "prettier"],
-	plugins: ["@typescript-eslint"],
-	parser: "@typescript-eslint/parser",
+	plugins: ["@typescript-eslint", "chai-friendly"],
+	extends: [
+		// eslint-disable-next-line node/no-extraneous-require
+		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
+		"prettier",
+	],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"@typescript-eslint/no-unused-vars": "error",
-		"@typescript-eslint/switch-exhaustiveness-check": "error",
-
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Test files can import from anywhere
+				"import/no-internal-modules": "off",
+
+				// Superseded by chai-friendly/no-unused-expressions
+				"no-unused-expressions": "off",
+				"@typescript-eslint/no-unused-expressions": "off",
+
+				"chai-friendly/no-unused-expressions": "error",
+			},
+		},
+	],
 };

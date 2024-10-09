@@ -491,6 +491,9 @@ importers:
       eslint:
         specifier: ~8.57.0
         version: 8.57.0
+      eslint-plugin-chai-friendly:
+        specifier: ~1.0.1
+        version: 1.0.1(eslint@8.57.0)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -5640,6 +5643,15 @@ packages:
       eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5)(eslint-plugin-i@2.29.0)(eslint@8.57.0)
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /eslint-plugin-chai-friendly@1.0.1(eslint@8.57.0):
+    resolution: {integrity: sha512-dxD/uz1YKJ8U4yah1i+V/p/u+kHRy3YxTPe2nJGqb5lCR+ucan/KIexfZ5+q4X+tkllyMe86EBbAkdlwxNy3oQ==}
+    engines: {node: '>=0.10.0'}
+    peerDependencies:
+      eslint: '>=3.0.0 || 8.51.0'
+    dependencies:
+      eslint: 8.57.0
     dev: true
 
   /eslint-plugin-es@4.1.0(eslint@8.57.0):

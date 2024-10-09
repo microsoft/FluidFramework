@@ -4,6 +4,7 @@
  */
 
 import path from "node:path";
+
 import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 
@@ -16,7 +17,8 @@ import {
 	selectAndFilterPackages,
 } from "../filter.js";
 import { loadFluidRepo } from "../fluidRepo.js";
-import type { WorkspaceName } from "../types.js";
+import type { IFluidRepo, IPackage, WorkspaceName } from "../types.js";
+
 import { testDataPath } from "./init.js";
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,7 +31,7 @@ const EmptyFilter: PackageFilterOptions = {
 	skipScope: undefined,
 };
 
-async function getFluidRepo() {
+async function getFluidRepo(): Promise<IFluidRepo> {
 	const fluidRepo = loadFluidRepo(
 		path.join(testDataPath, "./testRepo"),
 		"microsoft/FluidFramework",
@@ -37,14 +39,14 @@ async function getFluidRepo() {
 	return fluidRepo;
 }
 
-async function getMainWorkspacePackages() {
+async function getMainWorkspacePackages(): Promise<IPackage[]> {
 	const fluidRepo = await getFluidRepo();
 	const packages = fluidRepo.workspaces.get("main" as WorkspaceName)?.packages;
 	assert(packages !== undefined);
 	return packages;
 }
 
-describe("filterPackages", async () => {
+describe("filterPackages", () => {
 	it("no filters", async () => {
 		const packages = await getMainWorkspacePackages();
 		const filters = EmptyFilter;
@@ -133,10 +135,11 @@ describe("filterPackages", async () => {
 	});
 });
 
-describe("selectAndFilterPackages", async () => {
-	const fluidRepo = await getFluidRepo();
+describe("selectAndFilterPackages", () => {
+	const _fluidRepo = getFluidRepo();
 
 	it("all, no filters", async () => {
+		const fluidRepo = await _fluidRepo;
 		const selectionOptions = AllPackagesSelectionCriteria;
 		const filter = EmptyFilter;
 
@@ -160,6 +163,7 @@ describe("selectAndFilterPackages", async () => {
 	});
 
 	it("select directory", async () => {
+		const fluidRepo = await _fluidRepo;
 		const selectionOptions: PackageSelectionCriteria = {
 			releaseGroups: ["main"],
 			releaseGroupRoots: [],
@@ -191,6 +195,7 @@ describe("selectAndFilterPackages", async () => {
 
 	describe("select release group", () => {
 		it("no filters", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				releaseGroups: ["main"],
@@ -204,6 +209,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("select release group root", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				releaseGroupRoots: ["main"],
@@ -218,6 +224,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter private", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				releaseGroups: ["main"],
@@ -234,6 +241,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter non-private", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				releaseGroups: ["main"],
@@ -250,6 +258,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter scopes", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				releaseGroups: ["main"],
@@ -266,6 +275,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter skipScopes", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				releaseGroups: ["main"],
@@ -284,6 +294,7 @@ describe("selectAndFilterPackages", async () => {
 
 	describe("select workspace", () => {
 		it("all, no filters", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaces: ["main"],
@@ -306,6 +317,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("select workspace root at repo root", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaceRoots: ["main"],
@@ -320,6 +332,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("select workspace root not at repo root", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaceRoots: ["second"],
@@ -334,6 +347,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter private", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaces: ["main"],
@@ -351,6 +365,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter non-private", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaces: ["main"],
@@ -376,6 +391,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter scopes", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaces: ["main"],
@@ -393,6 +409,7 @@ describe("selectAndFilterPackages", async () => {
 		});
 
 		it("filter skipScopes", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaces: ["main"],
@@ -414,6 +431,7 @@ describe("selectAndFilterPackages", async () => {
 		const filters: PackageFilterOptions = EmptyFilter;
 
 		it("selects workspace and disjoint release group", async () => {
+			const fluidRepo = await _fluidRepo;
 			const selectionOptions: PackageSelectionCriteria = {
 				...EmptySelectionCriteria,
 				workspaces: ["second"],
@@ -433,6 +451,7 @@ describe("selectAndFilterPackages", async () => {
 	});
 
 	it("selects all release groups", async () => {
+		const fluidRepo = await _fluidRepo;
 		const selectionOptions: PackageSelectionCriteria = {
 			...EmptySelectionCriteria,
 			releaseGroups: ["*"],

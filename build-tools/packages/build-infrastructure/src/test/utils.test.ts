@@ -6,10 +6,12 @@
 import { strict as assert } from "node:assert";
 import * as os from "node:os";
 import * as path from "node:path";
+
 import { describe, it } from "mocha";
 
 import { NotInGitRepository } from "../errors.js";
 import { findGitRootSync, isInGitRepositorySync } from "../utils.js";
+
 import { packageRootPath } from "./init.js";
 
 describe("findGitRootSync", () => {

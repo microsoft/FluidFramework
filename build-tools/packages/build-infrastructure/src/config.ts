@@ -149,8 +149,9 @@ export function matchesReleaseGroupDefinition(
 		shouldInclude = true;
 	}
 
+	const shouldExclude = exclude?.includes(name) ?? false;
 	return (
-		(shouldInclude && !exclude?.includes(name)) ||
+		(shouldInclude && !shouldExclude) ||
 		// If the package name matches the root name, it's definitely part of the release group.
 		name === rootPackageName
 	);

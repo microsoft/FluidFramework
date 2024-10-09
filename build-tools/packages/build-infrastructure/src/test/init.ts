@@ -4,6 +4,7 @@
  */
 
 import path from "node:path";
+
 import { _dirname } from "./dirname.cjs";
 
 export const packageRootPath = path.resolve(_dirname, "../..");

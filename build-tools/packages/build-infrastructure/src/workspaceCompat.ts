@@ -5,10 +5,13 @@
 
 import { existsSync } from "node:fs";
 import path from "node:path";
+
 import globby from "globby";
 
 import type {
+	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	IFluidBuildDir,
+	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	IFluidBuildDirs,
 	ReleaseGroupDefinition,
 	WorkspaceDefinition,
@@ -25,6 +28,7 @@ import { Workspace } from "./workspace.js";
  * @param fluidRepoRoot - The path to the root of the FluidRepo.
  */
 export function loadWorkspacesFromLegacyConfig(
+	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	config: IFluidBuildDirs,
 	fluidRepoRoot: string,
 ): Map<WorkspaceName, IWorkspace> {
@@ -67,6 +71,7 @@ export function loadWorkspacesFromLegacyConfig(
  * from the directory name.
  */
 function loadWorkspacesFromLegacyConfigEntry(
+	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	entry: string | IFluidBuildDir,
 	fluidRepoRoot: string,
 	name?: string,

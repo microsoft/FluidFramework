@@ -5,17 +5,18 @@
 
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
+
 import { describe, it } from "mocha";
 
 import { readPackageJsonAndIndent, updatePackageJsonFile } from "../packageJsonUtils.js";
 import { type PackageJson } from "../types.js";
+
 import { testDataPath } from "./init.js";
 
 /**
  * A transformer function that does nothing.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testTransformer = (json: PackageJson) => {
+const testTransformer = (json: PackageJson): void => {
 	// do nothing
 	return;
 };

@@ -4,6 +4,7 @@
  */
 
 import path from "node:path";
+
 import { type SimpleGit, simpleGit } from "simple-git";
 
 import { getFluidRepoLayout } from "./config.js";
@@ -73,12 +74,12 @@ export class FluidRepo implements IFluidRepo {
 		this._releaseGroups = releaseGroups;
 	}
 	private readonly _workspaces: Map<WorkspaceName, IWorkspace>;
-	public get workspaces() {
+	public get workspaces(): Map<WorkspaceName, IWorkspace> {
 		return this._workspaces;
 	}
 
 	private readonly _releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
-	public get releaseGroups() {
+	public get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup> {
 		return this._releaseGroups;
 	}
 
@@ -109,7 +110,9 @@ export class FluidRepo implements IFluidRepo {
 	}
 
 	public reload(): void {
-		this.workspaces.forEach((ws) => ws.reload());
+		for (const ws of this.workspaces.values()) {
+			ws.reload();
+		}
 	}
 
 	private gitRepository: SimpleGit | undefined;
