@@ -35,6 +35,7 @@ import {
 	type TreeNodeSchemaBoth,
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
+	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
@@ -51,12 +52,13 @@ import { getUnhydratedContext } from "./createContext.js";
  *
  * This provides the readonly subset of TreeArrayNode functionality, and is used as the source interface for moves since that needs to be covariant.
  * @privateRemarks
- * Ideally this would also extend `WithType<string, NodeKind.Array>`, but https://github.com/microsoft/TypeScript/issues/16936 prevents that from compiling.
+ * Ideally this would just include `TreeNode, WithType<string, NodeKind.Array>` in the extends list but https://github.com/microsoft/TypeScript/issues/16936 prevents that from compiling.
+ * As a workaround around for this TypeScript limitation, the conflicting type intersection is wrapped in `Awaited` (which has no effect on the type in this case) which allows it to compile.
  * @system @sealed @public
  */
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
 	extends ReadonlyArray<T>,
-		TreeNode {}
+		Awaited<TreeNode & WithType<string, NodeKind.Array>> {}
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -807,6 +809,11 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	protected abstract get simpleSchema(): T;
 	protected abstract get allowedTypes(): ReadonlySet<TreeNodeSchema>;
+
+	public abstract override get [typeSchemaSymbol](): TreeNodeSchemaClass<
+		string,
+		NodeKind.Array
+	>;
 
 	public constructor(
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,

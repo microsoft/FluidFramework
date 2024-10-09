@@ -428,12 +428,15 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
- * A few methods from TreeView, with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
+ * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
  * @alpha
  */
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> {
+> extends Omit<
+		TreeView<TSchema extends ImplicitFieldSchema ? TSchema : ImplicitFieldSchema>,
+		"root" | "initialize"
+	> {
 	get root(): TSchema extends ImplicitFieldSchema
 		? TreeFieldFromImplicitField<TSchema>
 		: TreeLeafValue | TreeNode;
