@@ -466,9 +466,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       moment:
         specifier: ^2.21.0
         version: 2.30.1
