@@ -44,15 +44,11 @@ export interface IFluidRepo extends Reloadable {
     getGitRepository(): Promise<Readonly<SimpleGit>>;
     getPackageReleaseGroup(pkg: Readonly<IPackage>): Readonly<IReleaseGroup>;
     getPackageWorkspace(pkg: Readonly<IPackage>): Readonly<IWorkspace>;
-    // (undocumented)
     packages: Map<PackageName, IPackage>;
     relativeToRepo(p: string): string;
-    // (undocumented)
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
     root: string;
-    // (undocumented)
     upstreamRemotePartialUrl?: string;
-    // (undocumented)
     workspaces: Map<WorkspaceName, IWorkspace>;
 }
 
@@ -74,43 +70,27 @@ export interface Installable {
     install(updateLockfile: boolean): Promise<boolean>;
 }
 
-// @public (undocumented)
+// @public
 export interface IPackage<J extends PackageJson = PackageJson> extends Pick<Installable, "checkInstall">, Reloadable {
-    // (undocumented)
     combinedDependencies: Generator<PackageDependency, void>;
-    // (undocumented)
-    readonly dependencies: PackageName[];
-    // (undocumented)
     readonly directory: string;
-    // (undocumented)
     getScript(name: string): string | undefined;
-    // (undocumented)
     isReleaseGroupRoot: boolean;
-    // (undocumented)
     readonly isWorkspaceRoot: boolean;
-    // (undocumented)
     readonly name: PackageName;
-    // (undocumented)
     readonly nameColored: string;
-    // (undocumented)
     packageJson: J;
-    // (undocumented)
     readonly packageJsonFilePath: string;
-    // (undocumented)
     readonly packageManager: IPackageManager;
-    // (undocumented)
     readonly private: boolean;
-    // (undocumented)
     releaseGroup: ReleaseGroupName;
-    // (undocumented)
     savePackageJson(): Promise<void>;
     // (undocumented)
     toString(): string;
-    // (undocumented)
     readonly version: string;
 }
 
-// @public (undocumented)
+// @public
 export interface IPackageManager {
     // (undocumented)
     installCommand(updateLockfile: boolean): string;
@@ -118,41 +98,30 @@ export interface IPackageManager {
     readonly name: PackageManagerName;
 }
 
-// @public (undocumented)
+// @public
 export interface IReleaseGroup extends Reloadable {
-    // (undocumented)
     readonly adoPipelineUrl?: string;
-    // (undocumented)
     readonly name: ReleaseGroupName;
-    // (undocumented)
     readonly packages: IPackage[];
-    // (undocumented)
     readonly rootPackage?: IPackage;
     // (undocumented)
     toString(): string;
-    // (undocumented)
     readonly version: string;
-    // (undocumented)
     readonly workspace: IWorkspace;
 }
 
-// @public (undocumented)
+// @public
 export function isIPackage(pkg: any): pkg is IPackage;
 
-// @public (undocumented)
+// @public
 export function isIReleaseGroup(toCheck: Exclude<any, string | number | ReleaseGroupName | PackageName>): toCheck is IReleaseGroup;
 
-// @public (undocumented)
+// @public
 export interface IWorkspace extends Installable, Reloadable {
-    // (undocumented)
     directory: string;
-    // (undocumented)
     name: WorkspaceName;
-    // (undocumented)
     packages: IPackage[];
-    // (undocumented)
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
-    // (undocumented)
     rootPackage: IPackage;
     // (undocumented)
     toString(): string;
@@ -175,8 +144,6 @@ export abstract class PackageBase<TAddProps extends AdditionalPackageProps = und
     checkInstall(print?: boolean): Promise<boolean>;
     // (undocumented)
     get combinedDependencies(): Generator<PackageDependency, void>;
-    // (undocumented)
-    get dependencies(): PackageName[];
     // (undocumented)
     get directory(): string;
     // (undocumented)
@@ -220,10 +187,10 @@ export interface PackageDependency {
 // @public (undocumented)
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
-// @public (undocumented)
+// @public
 export type PackageManagerName = "npm" | "pnpm" | "yarn";
 
-// @public (undocumented)
+// @public
 export type PackageName = Opaque<string, "PackageName">;
 
 // @public (undocumented)
@@ -234,10 +201,10 @@ export interface ReleaseGroupDefinition {
     rootPackageName?: string;
 }
 
-// @public (undocumented)
+// @public
 export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 
-// @public (undocumented)
+// @public
 export interface Reloadable {
     // (undocumented)
     reload(): void;
@@ -253,7 +220,7 @@ export interface WorkspaceDefinition {
     };
 }
 
-// @public (undocumented)
+// @public
 export type WorkspaceName = Opaque<string, "WorkspaceName">;
 
 // (No @packageDocumentation comment for this package)

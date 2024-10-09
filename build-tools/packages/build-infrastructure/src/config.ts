@@ -126,6 +126,11 @@ export interface IFluidBuildDir {
 	// ignoredDirs?: string[];
 }
 
+/**
+ * Checks if a package matches a given release group definition.
+ *
+ * @returns `true` if the package matches the release group definition; `flase` otherwise.
+ */
 export function matchesReleaseGroupDefinition(
 	pkg: IPackage | PackageName,
 	{ include, exclude, rootPackageName }: ReleaseGroupDefinition,
@@ -151,6 +156,13 @@ export function matchesReleaseGroupDefinition(
 	);
 }
 
+/**
+ * Finds the name of the release group that a package belongs to.
+ *
+ * @param pkg - The package for which to fina a release group.
+ * @param definition - The "releaseGroups" config from the RepoLayout config/
+ * @returns The name of the package's release group.
+ */
 export function findReleaseGroupForPackage(
 	pkg: IPackage | PackageName,
 	definition: Exclude<WorkspaceDefinition["releaseGroups"], undefined>,

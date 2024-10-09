@@ -115,10 +115,6 @@ export abstract class PackageBase<
 		return path.dirname(this.packageJsonFilePath);
 	}
 
-	public get dependencies(): PackageName[] {
-		return Object.keys(this.packageJson.dependencies ?? {}).map((dep) => dep as PackageName);
-	}
-
 	/**
 	 * The name of the package including the scope.
 	 */
