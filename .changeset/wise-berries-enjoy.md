@@ -19,5 +19,5 @@ The default behavior of the wait header is changing from true to false. This mea
 }
 ```
 
-If this behavior change causes issue contact Fluid to let us know. Temporarily the change can be reverted by setting the following config in the provided config provider:
+If this behavior change causes issues, contact Fluid to let us know. Temporarily the change can be reverted by setting the following config in the provided config provider:
 `"Fluid.ContainerRuntime.WaitHeaderDefault": true`
