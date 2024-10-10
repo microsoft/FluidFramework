@@ -40,9 +40,7 @@ export interface FlubConfig {
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
 // @public
-export type LegacyCompatInterval = {
-    [releaseGroup in ReleaseGroup]: number;
-};
+export type LegacyCompatInterval = Partial<Record<ReleaseGroup, number>>;
 
 // @public
 export interface PackageNamePolicyConfig {

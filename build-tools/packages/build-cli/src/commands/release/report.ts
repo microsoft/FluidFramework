@@ -586,10 +586,6 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			// Legacy APi contracts only exists for the client release group
 			context.flubConfig.legacyCompatInterval = {
 				"client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL,
-				"build-tools": 0,
-				"server": 0,
-				"gitrest": 0,
-				"historian": 0,
 			};
 
 			// Expand the release group to its constituent packages.

@@ -201,15 +201,15 @@ export function getLegacyCompatVersionRange(
 	interval: LegacyCompatInterval,
 ): string {
 	if (
-		interval.server !== 0 ||
-		interval["build-tools"] !== 0 ||
-		interval.historian !== 0 ||
-		interval.gitrest !== 0
+		interval.server !== undefined ||
+		interval["build-tools"] !== undefined ||
+		interval.historian !== undefined ||
+		interval.gitrest !== undefined
 	) {
 		throw new Error(`Legacy API contract only exists for the client release group`);
 	}
 
-	if (interval.client === 0) {
+	if (interval.client === undefined) {
 		throw new Error(`Legacy compat interval not found for client release group`);
 	}
 

@@ -74,9 +74,7 @@ export interface FlubConfig {
 /**
  * Represents legacy compat interval per release groups.
  */
-export type LegacyCompatInterval = {
-	[releaseGroup in ReleaseGroup]: number;
-};
+export type LegacyCompatInterval = Partial<Record<ReleaseGroup, number>>;
 
 /**
  * A type representing the different version constraint styles we use when determining the previous version for type
