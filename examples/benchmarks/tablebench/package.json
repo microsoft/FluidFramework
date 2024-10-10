@@ -50,7 +50,8 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"dependencies": {},
+	"devDependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
@@ -58,9 +59,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~"
-	},
-	"devDependencies": {
+		"@fluidframework/tree": "workspace:~",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",

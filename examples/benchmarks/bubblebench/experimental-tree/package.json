@@ -40,7 +40,8 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"dependencies": {},
+	"devDependencies": {
 		"@fluid-example/bubblebench-common": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",
@@ -49,9 +50,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"react": "^18.3.1"
-	},
-	"devDependencies": {
+		"react": "^18.3.1",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",

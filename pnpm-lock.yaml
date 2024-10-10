@@ -1412,16 +1412,28 @@ importers:
         version: 6.0.1
 
   examples/benchmarks/bubblebench/baseline:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-example/bubblebench-common':
         specifier: workspace:~
         version: link:../common
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
+      '@fluid-example/webpack-fluid-loader':
+        specifier: workspace:~
+        version: link:../../../utils/webpack-fluid-loader
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../../packages/framework/aqueduct
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.48.0
+        version: 0.48.0
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -1431,28 +1443,12 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-example/webpack-fluid-loader':
-        specifier: workspace:~
-        version: link:../../../utils/webpack-fluid-loader
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.48.0
-        version: 0.48.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/map
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1492,6 +1488,9 @@ importers:
       puppeteer:
         specifier: ^22.2.0
         version: 22.15.0(typescript@5.4.5)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1588,19 +1587,31 @@ importers:
         version: 5.4.5
 
   examples/benchmarks/bubblebench/experimental-tree:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-example/bubblebench-common':
         specifier: workspace:~
         version: link:../common
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
+      '@fluid-example/webpack-fluid-loader':
+        specifier: workspace:~
+        version: link:../../../utils/webpack-fluid-loader
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../../experimental/dds/tree
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../../packages/framework/aqueduct
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.48.0
+        version: 0.48.0
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -1610,28 +1621,12 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-example/webpack-fluid-loader':
-        specifier: workspace:~
-        version: link:../../../utils/webpack-fluid-loader
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.48.0
-        version: 0.48.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/map
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1674,6 +1669,9 @@ importers:
       puppeteer:
         specifier: ^22.2.0
         version: 22.15.0(typescript@5.4.5)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1700,19 +1698,31 @@ importers:
         version: 6.0.1
 
   examples/benchmarks/bubblebench/ot:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-example/bubblebench-common':
         specifier: workspace:~
         version: link:../common
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
+      '@fluid-example/webpack-fluid-loader':
+        specifier: workspace:~
+        version: link:../../../utils/webpack-fluid-loader
       '@fluid-experimental/sharejs-json1':
         specifier: workspace:~
         version: link:../../../../experimental/dds/ot/sharejs/json1
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../../packages/framework/aqueduct
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.48.0
+        version: 0.48.0
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -1722,31 +1732,12 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
-      ot-json1:
-        specifier: ^1.0.1
-        version: 1.0.2
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-example/webpack-fluid-loader':
-        specifier: workspace:~
-        version: link:../../../utils/webpack-fluid-loader
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.48.0
-        version: 0.48.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/map
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1783,12 +1774,18 @@ importers:
       jest-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+      ot-json1:
+        specifier: ^1.0.1
+        version: 1.0.2
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
         specifier: ^22.2.0
         version: 22.15.0(typescript@5.4.5)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1815,47 +1812,43 @@ importers:
         version: 6.0.1
 
   examples/benchmarks/bubblebench/shared-tree:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-example/bubblebench-common':
         specifier: workspace:~
         version: link:../common
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../../packages/framework/aqueduct
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../../packages/common/core-interfaces
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/tree
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../../packages/framework/aqueduct
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.48.0
         version: 0.48.0
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../../packages/common/core-interfaces
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/map
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/tree
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1895,6 +1888,9 @@ importers:
       puppeteer:
         specifier: ^22.2.0
         version: 22.15.0(typescript@5.4.5)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1924,10 +1920,25 @@ importers:
         version: 6.0.1
 
   examples/benchmarks/odspsnapshotfetch-perftestapp:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
+      '@fluid-tools/build-cli':
+        specifier: ^0.48.0
+        version: 0.48.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.48.0
+        version: 0.48.0
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/odsp-doclib-utils
@@ -1946,28 +1957,6 @@ importers:
       '@fluidframework/tool-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/tool-utils
-      express:
-        specifier: ^4.19.2
-        version: 4.21.0
-      webpack-dev-server:
-        specifier: ~4.15.2
-        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.95.0)
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-tools/build-cli':
-        specifier: ^0.48.0
-        version: 0.48.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.48.0
-        version: 0.48.0
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.21
@@ -1992,6 +1981,9 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      express:
+        specifier: ^4.19.2
+        version: 4.21.0
       fs-extra:
         specifier: ^9.1.0
         version: 9.1.0
@@ -2022,6 +2014,9 @@ importers:
       webpack-dev-middleware:
         specifier: ^7.1.1
         version: 7.4.2(webpack@5.95.0)
+      webpack-dev-server:
+        specifier: ~4.15.2
+        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.95.0)
       webpack-hot-middleware:
         specifier: ^2.25.3
         version: 2.26.1
@@ -2030,22 +2025,43 @@ importers:
         version: 6.0.1
 
   examples/benchmarks/tablebench:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../packages/test/mocha-test-setup
       '@fluid-private/stochastic-test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/stochastic-test-utils
+      '@fluid-tools/benchmark':
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/azure-client
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.48.0
+        version: 0.48.0
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/id-compressor':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/id-compressor
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../packages/dds/matrix
@@ -2055,28 +2071,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../../packages/test/mocha-test-setup
-      '@fluid-tools/benchmark':
-        specifier: ^0.50.0
-        version: 0.50.0
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.48.0
-        version: 0.48.0
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/id-compressor':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/id-compressor
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -34148,13 +34142,11 @@ packages:
     resolution: {integrity: sha512-IhxkqVWQqlkWULoi/Q2AdzKk0N5vQRbUMUwubFXFCPcY4TsOZjmp2YKrk0/z1TeiECPadWEK060sdFdQ3Grokg==}
     dependencies:
       ot-text-unicode: 4.0.0
-    dev: false
 
   /ot-text-unicode@4.0.0:
     resolution: {integrity: sha512-W7ZLU8QXesY2wagYFv47zErXud3E93FGImmSGJsQnBzE+idcPPyo2u2KMilIrTwBh4pbCizy71qRjmmV6aDhcQ==}
     dependencies:
       unicount: 1.1.0
-    dev: false
 
   /outdent@0.5.0:
     resolution: {integrity: sha512-/jHxFIzoMXdqPzTaCpFzAAWhpkSjZPF4Vsn6jAfNpmbH/ymsmd7Qc6VE9BGn0L6YMj6uwpQLxCECpus4ukKS9Q==}
@@ -38454,7 +38446,6 @@ packages:
 
   /unicount@1.1.0:
     resolution: {integrity: sha512-RlwWt1ywVW4WErPGAVHw/rIuJ2+MxvTME0siJ6lk9zBhpDfExDbspe6SRlWT3qU6AucNjotPl9qAJRVjP7guCQ==}
-    dev: false
 
   /unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
