@@ -53,6 +53,7 @@
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"clean:r11s": "fluid-build -g server --task clean",
 		"clean:root": "rimraf --glob \"*.done.build.log\"",
+		"code-coverage-analysis:report": "flub report codeCoverage",
 		"eslint": "fluid-build --task eslint",
 		"eslint:fix": "fluid-build --task eslint:fix",
 		"format": "fluid-build --task format",

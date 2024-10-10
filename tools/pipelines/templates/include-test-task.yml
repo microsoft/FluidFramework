@@ -16,7 +16,7 @@ parameters:
 
 steps:
 # Test - With coverage
-- ${{ if and(parameters.testCoverage, startsWith(parameters.taskTestStep, 'ci:test')) }}:
+- ${{ if and(parameters.testCoverage, startsWith(parameters.taskTestStep, 'ci:test'), not(contains(parameters.taskTestStep, 'tinylicious'))) }}:
   - task: Npm@1
     displayName: npm run ${{ parameters.taskTestStep }}:coverage
     inputs:
