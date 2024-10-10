@@ -99,7 +99,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
         contents: unknown;
     }>) => void): any;
     // (undocumented)
-    (event: "batchBegin", listener: (error: any, op: Patch<ISequencedDocumentMessage, {
+    (event: "batchEnd", listener: (error: any, op: Patch<ISequencedDocumentMessage, {
         contents: unknown;
     }>) => void): any;
     // (undocumented)
