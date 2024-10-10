@@ -73,7 +73,7 @@ export class FluidRepo implements IFluidRepo {
 		}
 		this._releaseGroups = releaseGroups;
 	}
-	
+
 	private readonly _workspaces: Map<WorkspaceName, IWorkspace>;
 	public get workspaces(): Map<WorkspaceName, IWorkspace> {
 		return this._workspaces;
