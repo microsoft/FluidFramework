@@ -10463,8 +10463,8 @@ importers:
         version: 3.23.8
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.15.2
-        version: 0.15.4
+        specifier: ^0.16.4
+        version: 0.16.4
       '@biomejs/biome':
         specifier: ~1.8.3
         version: 1.8.3
