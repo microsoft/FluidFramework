@@ -142,7 +142,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 		) => void,
 	);
 	(
-		event: "batchBegin",
+		event: "batchEnd",
 		listener: (
 			error: any,
 			op: Patch<
