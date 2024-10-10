@@ -180,7 +180,7 @@ export interface ISocketStorageDiscovery {
     refreshSessionDurationSeconds?: number;
     // (undocumented)
     runtimeTenantId?: string;
-    sensitivityLabelsInfo: string;
+    sensitivityLabelsInfo?: string;
     // (undocumented)
     snapshotStorageUrl: string;
     socketToken?: string;
