@@ -140,19 +140,19 @@ export class DataStoreContexts
 	 */
 	public async getBoundOrRemoted(
 		id: string,
-		wait: boolean = false,
+		wait: boolean,
 	): Promise<FluidDataStoreContext | undefined> {
 		const deferredContext = this.ensureDeferred(id);
 
-		const exists = deferredContext.isCompleted;
+		const existing = deferredContext.isCompleted;
 		return PerformanceEvent.timedExecAsync(
 			this._logger,
 			{
 				eventName: "GetBoundOrRemoted",
 				wait,
-				exists,
+				existing,
 			},
-			async () => (!wait && !exists ? undefined : deferredContext.promise),
+			async () => (!wait && !existing ? undefined : deferredContext.promise),
 		);
 	}
 

@@ -126,10 +126,10 @@ interface FluidDataStoreMessage {
 
 function computeRuntimeHeaderData(
 	config: IConfigProvider,
-	data: RuntimeHeaderData,
+	data: Partial<RuntimeHeaderData>,
 ): Required<RuntimeHeaderData> {
 	return {
-		wait: config.getBoolean("Fluid.ContainerRuntime.WaitHeaderDefault") ?? false,
+		wait: config.getBoolean("Fluid.ContainerRuntime.WaitHeaderDefault") ?? true,
 		viaHandle: false,
 		allowTombstone: false,
 		...data,
