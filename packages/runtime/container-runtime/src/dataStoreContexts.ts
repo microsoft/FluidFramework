@@ -7,6 +7,7 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	ITelemetryLoggerExt,
+	PerformanceEvent,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -40,7 +41,7 @@ export class DataStoreContexts
 				.catch((contextError) => {
 					this._logger.sendErrorEvent(
 						{
-							eventName: "FluidDataStoreContextDisposeError",
+							eventName: "DisposeError",
 							fluidDataStoreId,
 						},
 						contextError,
@@ -52,7 +53,10 @@ export class DataStoreContexts
 	private readonly _logger: ITelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
-		this._logger = createChildLogger({ logger: baseLogger });
+		this._logger = createChildLogger({
+			namespace: "FluidDataStoreContexts",
+			logger: baseLogger,
+		});
 	}
 
 	[Symbol.iterator](): Iterator<[string, FluidDataStoreContext]> {
@@ -140,11 +144,16 @@ export class DataStoreContexts
 	): Promise<FluidDataStoreContext | undefined> {
 		const deferredContext = this.ensureDeferred(id);
 
-		if (!wait && !deferredContext.isCompleted) {
-			return undefined;
-		}
-
-		return deferredContext.promise;
+		const exists = deferredContext.isCompleted;
+		return PerformanceEvent.timedExecAsync(
+			this._logger,
+			{
+				eventName: "GetBoundOrRemoted",
+				wait,
+				exists,
+			},
+			async () => (!wait && !exists ? undefined : deferredContext.promise),
+		);
 	}
 
 	private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
