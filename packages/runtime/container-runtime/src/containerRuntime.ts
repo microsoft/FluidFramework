@@ -747,7 +747,7 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
  * to understand if/when it is hit.
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
-let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
 	return (codePath: string) => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
