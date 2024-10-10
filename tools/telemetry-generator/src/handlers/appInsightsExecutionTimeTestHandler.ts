@@ -44,32 +44,26 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 		const marginOfErrorMetricName = `${fileData.suiteName}_${testData.benchmarkName}_marginOfError`;
 		try {
 			const value = testData.customData["Margin of Error"];
-			if (value === undefined) {
-				console.error(`skipping metric '${marginOfErrorMetricName}' as it is undefined`);
+			if (Number.isNaN(Number.parseFloat(value))) {
+				console.error(
+					`skipping metric '${marginOfErrorMetricName}' with value '${value}' as it is not a number`,
+				);
 			} else {
-				if (Number.isNaN(Number.parseFloat(value))) {
-					console.error(
-						`skipping metric '${marginOfErrorMetricName}' with value '${value}' as it is not a number`,
-					);
-				} else {
-					console.log(
-						`emitting metric '${marginOfErrorMetricName}' with value '${value}'`,
-					);
-					telemetryClient.trackMetric({
-						name: marginOfErrorMetricName,
-						value,
-						namespace: "performance_benchmark_executionTime",
-						properties: {
-							buildId: process.env.BUILD_ID,
-							branchName: process.env.BRANCH_NAME,
-							category: "performance",
-							eventName: "Benchmark",
-							benchmarkType: "ExecutionTime",
-							suiteName: fileData.suiteName,
-							benchmarkName: testData.benchmarkName,
-						},
-					});
-				}
+				console.log(`emitting metric '${marginOfErrorMetricName}' with value '${value}'`);
+				telemetryClient.trackMetric({
+					name: marginOfErrorMetricName,
+					value,
+					namespace: "performance_benchmark_executionTime",
+					properties: {
+						buildId: process.env.BUILD_ID,
+						branchName: process.env.BRANCH_NAME,
+						category: "performance",
+						eventName: "Benchmark",
+						benchmarkType: "ExecutionTime",
+						suiteName: fileData.suiteName,
+						benchmarkName: testData.benchmarkName,
+					},
+				});
 			}
 		} catch (error) {
 			console.error(`failed to emit metric '${marginOfErrorMetricName}'`, error);
