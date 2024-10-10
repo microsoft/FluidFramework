@@ -227,6 +227,7 @@ import {
 	SummaryManager,
 	aliasBlobName,
 	chunksBlobName,
+	recentBatchInfoBlobName,
 	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
@@ -923,14 +924,23 @@ export class ContainerRuntime
 			}
 		};
 
-		const [chunks, metadata, electedSummarizerData, aliases, serializedIdCompressor] =
-			await Promise.all([
-				tryFetchBlob<[string, string[]][]>(chunksBlobName),
-				tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
-				tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
-				tryFetchBlob<[string, string][]>(aliasBlobName),
-				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
-			]);
+		const [
+			chunks,
+			recentBatchInfo,
+			metadata,
+			electedSummarizerData,
+			aliases,
+			serializedIdCompressor,
+		] = await Promise.all([
+			tryFetchBlob<[string, string[]][]>(chunksBlobName),
+			tryFetchBlob<ReturnType<DuplicateBatchDetector["getRecentBatchInfoForSummary"]>>(
+				recentBatchInfoBlobName,
+			),
+			tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
+			tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
+			tryFetchBlob<[string, string][]>(aliasBlobName),
+			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
+		]);
 
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await loadBlobManagerLoadInfo(context);
@@ -1082,6 +1092,7 @@ export class ContainerRuntime
 			metadata,
 			electedSummarizerData,
 			chunks ?? [],
+			recentBatchInfo,
 			aliases ?? [],
 			{
 				summaryOptions,
@@ -1461,6 +1472,7 @@ export class ContainerRuntime
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
+		recentBatchInfo: [number, string][] | undefined,
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
@@ -1697,7 +1709,7 @@ export class ContainerRuntime
 		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
 		// Don't waste resources doing so if not needed.
 		if (this.offlineEnabled) {
-			this.duplicateBatchDetector = new DuplicateBatchDetector();
+			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
 		if (context.attachState === AttachState.Attached) {
@@ -2402,6 +2414,12 @@ export class ContainerRuntime
 		if (this.remoteMessageProcessor.partialMessages.size > 0) {
 			const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
 			addBlobToSummary(summaryTree, chunksBlobName, content);
+		}
+
+		const recentBatchInfo =
+			this.duplicateBatchDetector?.getRecentBatchInfoForSummary(telemetryContext);
+		if (recentBatchInfo !== undefined) {
+			addBlobToSummary(summaryTree, recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
 		}
 
 		const dataStoreAliases = this.channelCollection.aliases;
