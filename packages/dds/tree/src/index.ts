@@ -132,8 +132,13 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type VerboseTreeNode,
+	type EncodeOptions,
+	type ParseOptions,
+	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
+	type ConciseTree,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
@@ -155,12 +160,15 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
+	independentInitializedView,
+	type ViewContent,
 } from "./treeFactory.js";
 
-export type {
-	ICodecOptions,
-	JsonValidator,
-	SchemaValidationFunction,
+export {
+	type ICodecOptions,
+	type JsonValidator,
+	type SchemaValidationFunction,
+	FluidClientVersion,
 } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";

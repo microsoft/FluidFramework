@@ -1,0 +1,5 @@
+# @fluid-example/tree-cli-app
+
+Example application using Shared-Tree to create a non-collaborative file editing CLI application.
+
+Note that its perfectly possible to write a collaborative online CLI app using tree as well: this simply is not an example of that.
