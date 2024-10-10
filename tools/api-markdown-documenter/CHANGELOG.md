@@ -4,6 +4,7 @@
 
 -   Updates `TSDoc` node handling to emit a _warning_ in place of an _error_ when an embedded `HTML` tag is encountered.
     Also updates the logged notice to include the tag that was encountered.
+-   Fixes a bug where the default transformation for the `API Model` page did not correctly account for the `skipPackage` configuration, and would list packages that were not intended for inclusion in the generated docs suite.
 
 ## 0.17.0
 
