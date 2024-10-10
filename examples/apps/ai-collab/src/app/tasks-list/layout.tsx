@@ -6,11 +6,8 @@
 "use client";
 
 import { Box } from "@mui/material";
-// NextJS requires reaching out to internal modules.
-/* eslint-disable import/no-internal-modules */
 import { Inter } from "next/font/google";
 import Image from "next/image";
-/* eslint-enable import/no-internal-modules */
 import { SnackbarProvider } from "notistack";
 
 import bgImg from "/public/msft-bg.webp"; // eslint-disable-line import/no-unresolved

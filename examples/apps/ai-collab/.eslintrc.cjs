@@ -16,7 +16,10 @@ module.exports = {
 					"@fluidframework/odsp-client/beta",
 					"@fluidframework/tree/alpha",
 
-					// NextJS shenanigans
+					// NextJS requires reaching to its internal modules
+					"next/**",
+
+					// Path aliases
 					"@/actions/**",
 					"@/types/**",
 					"@/components/**",
