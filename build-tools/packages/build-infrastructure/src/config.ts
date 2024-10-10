@@ -122,7 +122,7 @@ export interface IFluidBuildDir {
 /**
  * Checks if a package matches a given release group definition.
  *
- * @returns `true` if the package matches the release group definition; `flase` otherwise.
+ * @returns `true` if the package matches the release group definition; `false` otherwise.
  */
 export function matchesReleaseGroupDefinition(
 	pkg: IPackage | PackageName,
@@ -172,7 +172,7 @@ const configName = "repoLayout";
 
 /**
  * A cosmiconfig explorer to find the repoLayout config. First looks for JavaScript config files and falls back to the
- * `fluidBuild` property in package.json. We create a single explorer here because cosmiconfig internally caches configs
+ * `repoLayout` property in package.json. We create a single explorer here because cosmiconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
 const configExplorer = cosmiconfigSync(configName, {
@@ -191,11 +191,11 @@ const configExplorer = cosmiconfigSync(configName, {
 });
 
 /**
- * Search a path for a repo layout config file, and return the parsed config and the path to the file, if found.
+ * Search a path for a repo layout config file, and return the parsed config and the path to the config file.
  *
  * @param searchPath - The path to start searching for config files in.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
- * @returns The fluidBuild section of the package.json, or undefined if not found
+ * @returns The loaded repoLayout config and the path to the config file.
  *
  * @throws If a config is not found or if the config version is not supported.
  */

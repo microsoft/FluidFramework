@@ -105,6 +105,7 @@ export interface PackageFilterOptions {
 	 * If set, filters IN packages whose scope matches the strings provided.
 	 */
 	scope?: string[] | undefined;
+
 	/**
 	 * If set, filters OUT packages whose scope matches the strings provided.
 	 */
@@ -121,7 +122,7 @@ export interface PackageFilterOptions {
  *
  * @param fluidRepo - The Fluid repo.
  * @param selection - The selection criteria to use to select packages.
- * @returns An array containing the selected packages.
+ * @returns A `Set` containing the selected packages.
  */
 const selectPackagesFromRepo = async (
 	fluidRepo: IFluidRepo,

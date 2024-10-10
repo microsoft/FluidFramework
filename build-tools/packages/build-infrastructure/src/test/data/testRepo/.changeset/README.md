@@ -9,8 +9,3 @@ This folder contains changesets, which are markdown files that hold two key bits
 There is also a list of [frequently asked questions](https://github.com/microsoft/FluidFramework/wiki/Changesets-FAQ) in
 the wiki.
 
-## Updating changelogs from changesets
-
-See
-[flub generate changelog](../build-tools/packages/build-cli/docs/generate.md#flub-generate-changelog), which is built on
-top of [@fluid-private/changelog-generator](../build-tools/packages/changelog-generator/README.md).

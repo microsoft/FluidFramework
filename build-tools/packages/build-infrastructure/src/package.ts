@@ -208,33 +208,6 @@ export class Package<
 			additionalProperties,
 		) as InstanceType<T> & TAddProps;
 	}
-
-	// /**
-	//  * Load a package from a package.json file. Prefer this to calling the contructor directly.
-	//  *
-	//  * @param packageJsonFilePath - The path to a package.json file.
-	//  * @param group - A group that this package is a part of.
-	//  * @param monoRepo - Set this if the package is part of a release group (monorepo).
-	//  * @param additionalProperties - An object with additional properties that should be added to the class. This is
-	//  * useful to augment the package class with additional properties.
-	//  */
-	// public static load<T extends typeof Package, TAddProps>(
-	// 	this: T,
-	// 	packageJsonFilePath: string,
-	// 	// packageManager: IPackageManager,
-	// 	// isWorkspaceRoot: boolean,
-	// 	// workspaceDefinition: WorkspaceDefinition,
-	// 	additionalProperties?: TAddProps,
-	// ) {
-	// 	return new this(
-	// 		packageJsonFilePath,
-	// 		packageManager,
-	// 		isWorkspaceRoot,
-	// 		releaseGroupName,
-	// 		isReleaseGroupRoot,
-	// 		additionalProperties,
-	// 	) as InstanceType<T> & TAddProps;
-	// }
 }
 
 export function loadPackageFromWorkspaceDefinition(

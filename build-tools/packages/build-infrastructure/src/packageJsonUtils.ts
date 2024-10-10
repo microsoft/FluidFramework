@@ -48,8 +48,6 @@ export function updatePackageJsonFile<J extends PackageJson = PackageJson>(
 /**
  * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
  * indentation.
- *
- * @internal
  */
 export function readPackageJsonAndIndent<J extends PackageJson = PackageJson>(
 	pathToJson: string,
@@ -82,8 +80,6 @@ export function writePackageJson<J extends PackageJson = PackageJson>(
  *
  * @remarks
  * The package.json is always sorted using sort-package-json.
- *
- * @internal
  */
 export async function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(
 	packagePath: string,
