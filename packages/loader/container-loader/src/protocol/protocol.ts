@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedClient } from "@fluidframework/driver-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -126,9 +125,12 @@ export class ProtocolOpHandler implements IProtocolHandler {
 			}
 
 			case MessageType.Propose: {
-				assert(typeof message.contents === "string", "Expected JSON contents");
-				message.contents = JSON.parse(message.contents);
-
+				// DeltaManager is no longer parsing the contents, so we expect this to be a string here
+				// (However, switching this to an assert caused some tests to fail, apparently due to the same
+				// message object being processed multiple times - So we will retain the typeof check for now)
+				if (typeof message.contents === "string") {
+					message.contents = JSON.parse(message.contents);
+				}
 				const proposal = message.contents as IProposal;
 				this._quorum.addProposal(
 					proposal.key,
