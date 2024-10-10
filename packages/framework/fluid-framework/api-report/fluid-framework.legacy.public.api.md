@@ -904,7 +904,7 @@ export interface TreeNodeSchemaClass<out Name extends string = string, out Kind 
 }
 
 // @public
-export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode | TreeLeafValue>, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+export interface TreeNodeSchemaClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode | TreeLeafValue>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // @sealed
     new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
@@ -926,7 +926,7 @@ export interface TreeNodeSchemaNonClass<out Name extends string = string, out Ki
 }
 
 // @public
-interface TreeNodeSchemaNonClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode | TreeLeafValue>, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+interface TreeNodeSchemaNonClassUnsafe<out Name extends string, out Kind extends NodeKind, out TNode extends Unenforced<TreeNode | TreeLeafValue>, in TInsertable, out ImplicitlyConstructable extends boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // (undocumented)
     create(data: TInsertable): TNode;
 }

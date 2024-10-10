@@ -87,9 +87,9 @@ export interface TreeNodeSchemaClassUnsafe<
 	out Kind extends NodeKind,
 	// TODO: maybe this can be more specific (exclude leaves)
 	out TNode extends Unenforced<TreeNode | TreeLeafValue>,
-	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-	out Info = unknown,
+	in TInsertable,
+	out ImplicitlyConstructable extends boolean,
+	out Info,
 > extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
@@ -111,8 +111,8 @@ export interface TreeNodeSchemaNonClassUnsafe<
 	out Name extends string,
 	out Kind extends NodeKind,
 	out TNode extends Unenforced<TreeNode | TreeLeafValue>,
-	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
+	in TInsertable,
+	out ImplicitlyConstructable extends boolean,
 	out Info = unknown,
 > extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
 	create(data: TInsertable): TNode;

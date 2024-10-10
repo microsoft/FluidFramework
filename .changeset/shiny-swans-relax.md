@@ -78,3 +78,46 @@ const viewAlpha = view as TreeViewAlpha<UnsafeUnknownSchema>;
 viewAlpha.initialize([]);
 viewAlpha.root = [];
 ```
+
+Additionally this seems to have negatively impacted co recursive schema which declare an corecursive array as the first schema in the co-recursive cycle.
+Like the TypeScript language our schema system is built on, we don't guarantee exactly which recursive type will compile, but will do our best to ensure useful recursive schema can be created easily.
+In this case a slight change may be required to some recursive schema to get them to compile again:
+
+For example this schema used to compile:
+
+
+```typescript
+class A extends sf.arrayRecursive("A", [() => B]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof A>;
+}
+// Used to work, but breaks in this update.
+class B extends sf.object("B", { x: A }) {}
+```
+
+But now you must use the recursive functions like `objectRecursive` for types which are co-recursive with an array in some cases.
+In our example, it can be fixed as follows:
+
+```typescript
+class A extends sf.arrayRecursive("A", [() => B]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof A>;
+}
+// Fixed corecursive type, using "Recursive" method variant to declare schema.
+class B extends sf.objectRecursive("B", { x: A }) {}
+{
+	type _check = ValidateRecursiveSchema<typeof B>;
+}
+```
+
+Reversing which type is using the recursive utility also works (shown below).
+We do not recommend relying on this: using the recursive variances for all co-recursive types will help ensure your schema are less likely to be impacted by changes like this in the future.
+
+```typescript
+class B extends sf.objectRecursive("B", { x: [() => A] }) {}
+{
+	type _check = ValidateRecursiveSchema<typeof B>;
+}
+// Works, for now, but not recommended.
+class A extends sf.array("A", B) {}
+```

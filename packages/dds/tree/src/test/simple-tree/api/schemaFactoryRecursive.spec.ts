@@ -531,6 +531,51 @@ describe("SchemaFactory Recursive methods", () => {
 				data[0].insertAtEnd(new ArrayRecursive([]));
 			}
 		});
+
+		it("co-recursive", () => {
+			class A extends sf.arrayRecursive("A", [() => B]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof A>;
+			}
+			class B extends sf.arrayRecursive("B", A) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof B>;
+			}
+			// Explicit constructor call
+			{
+				const data: A = hydrate(A, new A([]));
+				assert.deepEqual([...data], []);
+			}
+		});
+
+		it("co-recursive with object", () => {
+			class A extends sf.arrayRecursive("A", [() => B]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof A>;
+			}
+			class B extends sf.objectRecursive("B", { x: A }) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof B>;
+			}
+			// Explicit constructor call
+			{
+				const data: A = hydrate(A, new A([]));
+				assert.deepEqual([...data], []);
+			}
+		});
+
+		it("co-recursive with object first", () => {
+			class B extends sf.objectRecursive("B", { x: [() => A] }) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof B>;
+			}
+			class A extends sf.array("A", B) {}
+			// Explicit constructor call
+			{
+				const data: A = hydrate(A, new A([]));
+				assert.deepEqual([...data], []);
+			}
+		});
 	});
 
 	describe("mapRecursive", () => {
