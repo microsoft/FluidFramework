@@ -4173,41 +4173,16 @@ importers:
         version: 6.0.1
 
   examples/service-clients/azure-client/external-controller:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-experimental/presence':
         specifier: workspace:~
         version: link:../../../../packages/framework/presence
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../../packages/drivers/routerlicious-driver
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/utils/telemetry-utils
-      assert:
-        specifier: ^2.0.0
-        version: 2.1.0
-      axios:
-        specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.7)
-      events_pkg:
-        specifier: npm:events@^3.1.0
-        version: /events@3.3.0
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../../packages/framework/fluid-framework
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4232,9 +4207,18 @@ importers:
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../../packages/drivers/local-driver
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/map
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/server-local-server':
         specifier: ^5.0.0
         version: 5.0.0
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../../../packages/utils/telemetry-utils
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -4256,15 +4240,27 @@ importers:
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.8
+      assert:
+        specifier: ^2.0.0
+        version: 2.1.0
+      axios:
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.7)
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      events_pkg:
+        specifier: npm:events@^3.1.0
+        version: /events@3.3.0
       expect-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../../packages/framework/fluid-framework
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.0(webpack@5.95.0)
@@ -4310,6 +4306,9 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
       webpack:
         specifier: ^5.94.0
         version: 5.95.0(webpack-cli@5.1.4)
@@ -4324,32 +4323,10 @@ importers:
         version: 6.0.1
 
   examples/service-clients/odsp-client/shared-tree-demo:
-    dependencies:
+    devDependencies:
       '@azure/msal-browser':
         specifier: ^3.25.0
         version: 3.25.0
-      '@fluidframework/odsp-client':
-        specifier: workspace:~
-        version: link:../../../../packages/service-clients/odsp-client
-      '@fluidframework/odsp-doclib-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/utils/odsp-doclib-utils
-      css-loader:
-        specifier: ^7.1.2
-        version: 7.1.2(webpack@5.95.0)
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../../packages/framework/fluid-framework
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-      style-loader:
-        specifier: ^4.0.0
-        version: 4.0.0(webpack@5.95.0)
-    devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
         version: 1.8.3
@@ -4365,6 +4342,12 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/odsp-client':
+        specifier: workspace:~
+        version: link:../../../../packages/service-clients/odsp-client
+      '@fluidframework/odsp-doclib-utils':
+        specifier: workspace:~
+        version: link:../../../../packages/utils/odsp-doclib-utils
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
@@ -4374,9 +4357,15 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.0
+      css-loader:
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.95.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../../packages/framework/fluid-framework
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.0(webpack@5.95.0)
@@ -4386,9 +4375,18 @@ importers:
       process:
         specifier: ^0.11.10
         version: 0.11.10
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      style-loader:
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.95.0)
       tailwindcss:
         specifier: ^3.3.2
         version: 3.4.13
@@ -26395,6 +26393,7 @@ packages:
   /clsx@1.2.1:
     resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
     engines: {node: '>=6'}
+    dev: true
 
   /clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}

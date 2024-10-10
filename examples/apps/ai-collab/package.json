@@ -51,7 +51,6 @@
 		],
 		"temp-directory": "nyc/.nyc_output"
 	},
-	"dependencies": {},
 	"devDependencies": {
 		"@azure/identity": "^4.4.1",
 		"@azure/msal-browser": "^3.25.0",
