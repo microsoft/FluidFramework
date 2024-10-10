@@ -2710,10 +2710,14 @@ export class ContainerRuntime
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
 
-		if (hasModernRuntimeMessageEnvelope) {
+		let runtimeBatch: boolean =
+			hasModernRuntimeMessageEnvelope || isUnpackedRuntimeMessage(messageCopy);
+		if (runtimeBatch) {
 			// We expect runtime messages to have JSON contents - deserialize it in place.
 			ensureContentsDeserialized(messageCopy);
+		}
 
+		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
 			const inboundResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
@@ -2750,7 +2754,6 @@ export class ContainerRuntime
 				}
 			}
 
-			let runtimeBatch: boolean = true;
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
 			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
@@ -2808,11 +2811,6 @@ export class ContainerRuntime
 				runtimeBatch,
 			);
 		} else {
-			const runtimeBatch = isUnpackedRuntimeMessage(messageCopy);
-			if (runtimeBatch) {
-				// We expect runtime messages to have JSON contents (even old ones like what will come here) - deserialize it in place.
-				ensureContentsDeserialized(messageCopy);
-			}
 			this.processInboundMessages(
 				[{ message: messageCopy, localOpMetadata: undefined }],
 				{ batchStart: true, batchEnd: true }, // Single message
