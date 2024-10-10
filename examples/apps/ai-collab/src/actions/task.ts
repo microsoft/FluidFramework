@@ -97,8 +97,8 @@ export async function editTaskGroup(
 		}
 		modifiedTaskGroup.id = tmp;
 		for (const task of modifiedTaskGroup.tasks) {
-			// If the LLM created a task with a new id using our prompt of a monotnically increasing integer
-			// then we need to replace it with an actual hash so we don't have duplicate id's
+			// If the LLM created a task with a new id using our prompt of a monotonically increasing integer
+			// then we need to replace it with an actual hash so we don't have duplicate ids
 			task.id = newToOldTaskIds[task.id] ?? uuidv4();
 		}
 		for (const engineer of modifiedTaskGroup.engineers) {
