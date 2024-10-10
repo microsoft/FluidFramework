@@ -26,6 +26,9 @@ module.exports = {
 				],
 			},
 		],
+		// This is an example/test app; all its dependencies are dev dependencies so as not to pollute the lockfile
+		// with prod dependencies that aren't actually shipped. So don't complain when importing from dev dependencies.
+		"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
 	},
 	overrides: [
 		{
