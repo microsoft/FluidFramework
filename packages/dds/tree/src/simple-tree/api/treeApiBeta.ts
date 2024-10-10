@@ -111,8 +111,8 @@ export const TreeBeta: {
 	/**
 	 * Clones the persisted data associated with a node. Some key things to note:
 	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
-	 * initialized to the state after running the constructor, just like if a remote client had inserted the same node.
-	 * - Primitive node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
+	 * initialized to their default state just as if the node had been created via its constructor.
+	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 *
 	 * @param node - The node to clone.
@@ -132,25 +132,24 @@ export const TreeBeta: {
 	clone<TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		/** The only non-TreeNode cases are {@link Value} (for an empty optional field) which can be returned as is. */
+		/* The only non-TreeNode cases are {@link Value} (for an empty optional field) which can be returned as is. */
 		if (!isTreeNode(node)) {
 			return node;
 		}
 
 		const kernel = getKernel(node);
-		/**
+		/*
 		 * For unhydrated nodes, we can create a cursor by calling `cursorFromInsertable` because the node
 		 * hasn't been inserted yet. We can then create a new node from the cursor.
 		 */
-		if (!kernel.context.flexContext.isHydrated()) {
+		if (!kernel.isHydrated()) {
 			return createFromCursor(
 				kernel.schema,
 				cursorFromInsertable(kernel.schema, node),
 			) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
 
-		// For hydrated nodes, we need to create a new cursor in the forest and then create a new node from
-		// the cursor.
+		// For hydrated nodes, create a new cursor in the forest and then create a new node from the cursor.
 		const forest = kernel.context.flexContext.checkout.forest;
 		const cursor = forest.allocateCursor("tree.clone");
 		forest.moveCursorToPath(kernel.anchorNode, cursor);
