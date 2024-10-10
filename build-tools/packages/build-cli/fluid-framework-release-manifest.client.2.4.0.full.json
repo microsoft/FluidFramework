@@ -1,0 +1,2878 @@
+{
+  "@fluid-example/app-insights-logger": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/app-integration-container-views": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/app-integration-external-controller": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/app-integration-external-data": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/app-integration-external-views": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/app-integration-live-schema-upgrade": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/attributable-map": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/bubblebench-baseline": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/bubblebench-common": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/bubblebench-experimental-tree": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/bubblebench-ot": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/bubblebench-shared-tree": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/bundle-size-tests": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/canvas": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/clicker": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/codemirror": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/collaborative-textarea": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/contact-collection": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/data-object-grid": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/devtools-example": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/diceroller": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/example-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/inventory-app": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/migration-tools": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/monaco": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-constellation-model": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-constellation-view": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-container": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-coordinate-interface": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-coordinate-model": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-plot-coordinate-view": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-slider-coordinate-view": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/multiview-triangle-view": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/odspsnapshotfetch-perftestapp": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/presence-tracker": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/prosemirror": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/shared-tree-demo": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/smde": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/table-document": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/task-selection": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/todo": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/tree-comparison": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/tree-shim": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/version-migration-same-container": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/version-migration-separate-container": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/view-framework-sampler": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/webflow": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-example/webpack-fluid-loader": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/attributable-map": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/attributor": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/azure-scenario-runner": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/data-object-base": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/data-objects": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/dds-interceptions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/ink": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/last-edited": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/odsp-end-to-end-tests": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/oldest-client-observer": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/ot": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/pact-map": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/presence": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/property-changeset": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/property-common": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/property-dds": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/property-properties": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/sequence-deprecated": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/sharejs-json1": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/tree": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-experimental/tree-react-api": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/client-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/devtools-browser-extension": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/devtools-view": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/functional-tests": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/local-server-tests": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/mocha-test-setup": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/platform-dependent": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/replay-tool": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/tablebench": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/test-driver-definitions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/test-service-load": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-internal/test-snapshots": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/changelog-generator-wrapper": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/stochastic-test-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/test-dds-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/test-drivers": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/test-end-to-end-tests": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/test-loader-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/test-pairwise-generator": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-private/test-version-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-tools/benchmark": {
+    "date": "2024-08-02T20:14:18.000Z",
+    "isNewRelease": true,
+    "previousVersion": "0.49.0",
+    "ranges": {
+      "caret": "^0.50.0",
+      "legacyCompat": "^0.50.0",
+      "minor": "^0.50.0",
+      "patch": "~0.50.0",
+      "tilde": "~0.50.0"
+    },
+    "releaseType": "minor",
+    "version": "0.50.0",
+    "versionScheme": "semver"
+  },
+  "@fluid-tools/build-cli": {
+    "date": "2024-10-04T20:23:36.000Z",
+    "isNewRelease": true,
+    "previousVersion": "0.46.0",
+    "ranges": {
+      "caret": "^0.47.0",
+      "legacyCompat": "^0.47.0",
+      "minor": "^0.47.0",
+      "patch": "~0.47.0",
+      "tilde": "~0.47.0"
+    },
+    "releaseGroup": "build-tools",
+    "releaseType": "minor",
+    "version": "0.47.0",
+    "versionScheme": "semver"
+  },
+  "@fluid-tools/fetch-tool": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-tools/markdown-magic": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluid-tools/version-tools": {
+    "date": "2024-10-04T20:23:36.000Z",
+    "isNewRelease": true,
+    "previousVersion": "0.46.0",
+    "ranges": {
+      "caret": "^0.47.0",
+      "legacyCompat": "^0.47.0",
+      "minor": "^0.47.0",
+      "patch": "~0.47.0",
+      "tilde": "~0.47.0"
+    },
+    "releaseGroup": "build-tools",
+    "releaseType": "minor",
+    "version": "0.47.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/agent-scheduler": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/app-insights-logger": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/aqueduct": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/azure-client": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/azure-end-to-end-tests": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/azure-local-service": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/azure-service-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/build-common": {
+    "date": "2023-10-25T15:31:02.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.0.2",
+    "ranges": {
+      "caret": "^2.0.3",
+      "legacyCompat": "^2.0.3",
+      "minor": "^2.0.3",
+      "patch": "~2.0.3",
+      "tilde": "~2.0.3"
+    },
+    "releaseType": "patch",
+    "version": "2.0.3",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/build-tools": {
+    "date": "2024-10-04T20:23:36.000Z",
+    "isNewRelease": true,
+    "previousVersion": "0.46.0",
+    "ranges": {
+      "caret": "^0.47.0",
+      "legacyCompat": "^0.47.0",
+      "minor": "^0.47.0",
+      "patch": "~0.47.0",
+      "tilde": "~0.47.0"
+    },
+    "releaseGroup": "build-tools",
+    "releaseType": "minor",
+    "version": "0.47.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/bundle-size-tools": {
+    "date": "2024-10-04T20:23:36.000Z",
+    "isNewRelease": true,
+    "previousVersion": "0.46.0",
+    "ranges": {
+      "caret": "^0.47.0",
+      "legacyCompat": "^0.47.0",
+      "minor": "^0.47.0",
+      "patch": "~0.47.0",
+      "tilde": "~0.47.0"
+    },
+    "releaseGroup": "build-tools",
+    "releaseType": "minor",
+    "version": "0.47.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/cell": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/container-definitions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/container-loader": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/container-runtime": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/container-runtime-definitions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/core-interfaces": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/core-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/counter": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/datastore": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/datastore-definitions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/debugger": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/devtools": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/devtools-core": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/driver-base": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/driver-definitions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/driver-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/driver-web-cache": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/eslint-config-fluid": {
+    "date": "2024-08-27T23:15:13.000Z",
+    "isNewRelease": true,
+    "previousVersion": "5.3.0",
+    "ranges": {
+      "caret": "^5.4.0",
+      "legacyCompat": "^5.4.0",
+      "minor": "^5.4.0",
+      "patch": "~5.4.0",
+      "tilde": "~5.4.0"
+    },
+    "releaseType": "minor",
+    "version": "5.4.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/file-driver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/fluid-runner": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/fluid-static": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/fluid-telemetry": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/gitresources": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/id-compressor": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/local-driver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/map": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/matrix": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/merge-tree": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/odsp-client": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/odsp-doclib-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/odsp-driver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/odsp-driver-definitions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/odsp-urlresolver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/ordered-collection": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/protocol-base": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/protocol-definitions": {
+    "date": "2024-03-08T21:44:09.000Z",
+    "isNewRelease": true,
+    "previousVersion": "3.1.0",
+    "ranges": {
+      "caret": "^3.2.0",
+      "legacyCompat": "^3.2.0",
+      "minor": "^3.2.0",
+      "patch": "~3.2.0",
+      "tilde": "~3.2.0"
+    },
+    "releaseType": "minor",
+    "version": "3.2.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/register-collection": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/replay-driver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/request-handler": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/routerlicious-driver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/routerlicious-urlresolver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/runtime-definitions": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/runtime-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/sequence": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-kafka-orderer": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-lambdas": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-lambdas-driver": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-local-server": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-memory-orderer": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-routerlicious": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-routerlicious-base": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-client": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-core": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-ordering-kafkanode": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-ordering-rdkafka": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-ordering-zookeeper": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-shared": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-telemetry": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-services-utils": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/server-test-utils": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/shared-object-base": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/shared-summary-block": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/synthesize": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/task-manager": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/telemetry-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/test-runtime-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/test-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/tinylicious-client": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/tinylicious-driver": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/tool-utils": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/tree": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@fluidframework/undo-redo": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "@types/jest-environment-puppeteer": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "fluid-framework": {
+    "date": "2024-10-01T20:52:14.000Z",
+    "isNewRelease": true,
+    "previousVersion": "2.3.0",
+    "ranges": {
+      "caret": "^2.3.1",
+      "legacyCompat": ">=2.3.1 <2.10.0",
+      "minor": "^2.3.1",
+      "patch": "~2.3.1",
+      "tilde": "~2.3.1"
+    },
+    "releaseGroup": "client",
+    "releaseType": "patch",
+    "version": "2.3.1",
+    "versionScheme": "semver"
+  },
+  "tinylicious": {
+    "date": "2024-06-18T23:57:47.000Z",
+    "isNewRelease": true,
+    "previousVersion": "4.0.1",
+    "ranges": {
+      "caret": "^5.0.0",
+      "legacyCompat": "^5.0.0",
+      "minor": "^5.0.0",
+      "patch": "~5.0.0",
+      "tilde": "~5.0.0"
+    },
+    "releaseGroup": "server",
+    "releaseType": "major",
+    "version": "5.0.0",
+    "versionScheme": "semver"
+  }
+}

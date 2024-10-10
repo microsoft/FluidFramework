@@ -12,7 +12,7 @@ import {
 import { MonoRepo } from "@fluidframework/build-tools";
 import { cosmiconfigSync } from "cosmiconfig";
 import { Context } from "./library/index.js";
-import type { ReleaseGroup } from "./releaseGroups.js";
+import { type ReleaseGroup } from "./releaseGroups.js";
 
 /**
  * Flub configuration that is expected in the flub config file or package.json.
@@ -63,6 +63,14 @@ export interface FlubConfig {
 	 * Configuration for the `generate:releaseNotes` command.
 	 */
 	releaseNotes?: ReleaseNotesConfig;
+
+	/**
+	 * The multiple of minor versions to use for calculating the next version in the legacy compatibility range.
+	 * This interval applies exclusively to the client release group; for all other release groups, the caret versions are used.
+	 */
+	legacyCompatVersionInterval?: {
+		[releaseGroup in ReleaseGroup]: number;
+	};
 }
 
 /**

@@ -43,6 +43,12 @@ import { CommandLogger } from "../../logging.js";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
 
 /**
+ * The multiple of minor versions to use for calculating the next version in the legacy compatibility range.
+ * This interval applies exclusively to the client release group; for all other release groups, the caret versions are used.
+ */
+const DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL = 10;
+
+/**
  * Controls behavior when there is a list of releases and one needs to be selected.
  */
 export type ReleaseSelectionMode =
@@ -576,11 +582,23 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
-			const ranges = getRanges(latestVer);
+
+			context.flubConfig.legacyCompatVersionInterval = {
+				"client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL,
+				"build-tools": 0,
+				"server": 0,
+				"gitrest": 0,
+				"historian": 0,
+			};
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
+					const ranges = getRanges(
+						latestVer,
+						context.flubConfig.legacyCompatVersionInterval,
+						pkg,
+					);
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -593,6 +611,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
+				const ranges = getRanges(
+					latestVer,
+					context.flubConfig.legacyCompatVersionInterval,
+					pkgName,
+				);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,

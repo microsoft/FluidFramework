@@ -30,6 +30,9 @@ export interface FlubConfig {
         [name: string]: VersionBumpType | PreviousVersionStyle;
     };
     bump?: BumpConfig;
+    legacyCompatVersionInterval?: {
+        [releaseGroup in ReleaseGroup]: number;
+    };
     policy?: PolicyConfig;
     releaseNotes?: ReleaseNotesConfig;
     version?: 1;

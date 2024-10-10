@@ -12,7 +12,8 @@ import {
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
-import { DEFAULT_LEGACY_COMPAT_INTERVAL, ReleaseGroup } from "../releaseGroups.js";
+import type { Package } from "@fluidframework/build-tools";
+import { ReleaseGroup } from "../releaseGroups.js";
 
 /**
  * A map of package names to full release reports. This is the format of the "full" release report.
@@ -75,12 +76,17 @@ export interface ReleaseRanges {
  * Get the release ranges for a version string.
  *
  * @param version - The version.
- * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param legacyCompatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.
  * @returns The {@link ReleaseRanges} for a version string
  */
-export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): ReleaseRanges => {
+export const getRanges = (
+	version: ReleaseVersion,
+	legacyCompatVersionInterval: { [releaseGroup in ReleaseGroup]: number },
+	pkg: Package | string,
+	scheme?: VersionScheme,
+): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
 
 	return schemeToUse === "internal"
@@ -89,14 +95,24 @@ export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): Rele
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getLegacyCompatVersionRange(version),
+				legacyCompat: getLegacyCompatVersionRange(
+					version,
+					schemeToUse,
+					pkg,
+					legacyCompatVersionInterval,
+				),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: getLegacyCompatVersionRange(version),
+				legacyCompat: getLegacyCompatVersionRange(
+					version,
+					schemeToUse,
+					pkg,
+					legacyCompatVersionInterval,
+				),
 			};
 };
 
@@ -123,20 +139,6 @@ interface PackageRange {
 export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
 
 /**
- * Determines the appropriate legacy compatible range based on the release group.
- *
- * @param details - Full details about a release.
- * @returns - The version to use.
- * `legacyCompat` if the release group is "client".
- * `caret` for all other release groups.
- */
-function fixLegacyCompatVersions(details: ReleaseDetails): string {
-	return details.releaseGroup === "client"
-		? details.ranges.legacyCompat
-		: details.ranges.caret;
-}
-
-/**
  * Converts a {@link ReleaseReport} into different formats based on the kind.
  */
 export function toReportKind(
@@ -147,9 +149,6 @@ export function toReportKind(
 
 	switch (kind) {
 		case "full": {
-			for (const [, details] of Object.entries(report)) {
-				fixLegacyCompatVersions(details);
-			}
 			return report;
 		}
 
@@ -179,7 +178,7 @@ export function toReportKind(
 
 		case "legacy-compat": {
 			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = fixLegacyCompatVersions(details);
+				toReturn[pkg] = details.ranges.legacyCompat;
 			}
 			break;
 		}
@@ -199,21 +198,41 @@ export function toReportKind(
  * a new semantic version.
  *
  * @param version - A semver-compatible string or `semver.SemVer` object representing the current version.
- * @param compatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param legacyCompatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
  *
  * @returns A string representing the next version in the legacy compatibility range.
  */
 export function getLegacyCompatVersionRange(
-	version: semver.SemVer | string,
-	compatVersionInterval?: number,
+	version: string,
+	schemeToUse: VersionScheme,
+	pkg: Package | string,
+	legacyCompatVersionInterval: { [releaseGroup in ReleaseGroup]: number },
 ): string {
+	if (
+		typeof pkg !== "string" &&
+		pkg.monoRepo?.releaseGroup === "client" &&
+		(legacyCompatVersionInterval.client !== undefined ||
+			legacyCompatVersionInterval.client !== 0)
+	) {
+		const range = getLegacyRangeClientReleaseGroup(
+			version,
+			legacyCompatVersionInterval.client,
+		);
+		return range;
+	}
+
+	if (schemeToUse === "internal") {
+		return getVersionRange(version, "^");
+	}
+
+	return `^${version}`;
+}
+
+function getLegacyRangeClientReleaseGroup(version: string, interval: number): string {
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");
 	}
-
-	const interval = compatVersionInterval ?? DEFAULT_LEGACY_COMPAT_INTERVAL;
-
 	// Calculate the next compatible minor version using the compatVersionInterval
 	const baseMinor = Math.floor(semVersion.minor / interval) * interval;
 	const newSemVerString = `${semVersion.major}.${baseMinor + interval}.0`;
@@ -221,7 +240,6 @@ export function getLegacyCompatVersionRange(
 	const higherVersion = semver.parse(newSemVerString);
 	if (higherVersion === null) {
 		throw new Error(
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			`Couldn't convert ${version} to the legacy version scheme. Tried parsing: '${newSemVerString}'`,
 		);
 	}
@@ -232,5 +250,6 @@ export function getLegacyCompatVersionRange(
 	if (range === null) {
 		throw new Error(`The generated range string was invalid: "${rangeString}"`);
 	}
+
 	return range;
 }
