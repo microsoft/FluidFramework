@@ -29,7 +29,7 @@ import { fail } from "../../util/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
-import { SimpleContextSlot, type Context } from "./context.js";
+import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
@@ -265,6 +265,14 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 			}
 		}
 		// TODO: go to the context and remove myself from withAnchors
+	}
+
+	public isHydrated(): this is { anchorNode: AnchorNode; context: HydratedContext } {
+		return isHydrated(this.#hydrationState);
+	}
+
+	public get anchorNode(): AnchorNode | undefined {
+		return isHydrated(this.#hydrationState) ? this.#hydrationState.anchorNode : undefined;
 	}
 
 	/**
