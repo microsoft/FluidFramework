@@ -134,6 +134,11 @@ parameters:
 - name: testCoverage
   type: boolean
 
+# Indicates if we should report the code coverage comparison and report metrics on the PR.
+- name: reportCodeCoverageComparison
+  type: boolean
+  default: false
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -333,6 +338,39 @@ extends:
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
+              - task: Bash@3
+                displayName: Testing code coverage directory
+                condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true))
+                env:
+                  ADO_API_TOKEN: $(System.AccessToken)
+                  GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+                  TARGET_BRANCH_NAME: '$(targetBranchName)'
+                  ADO_BUILD_ID: $(Build.BuildId)
+                inputs:
+                  targetType: inline
+                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  script: |
+                    Coverage_Report_Artifact_Name="Code Coverage Report"
+                    export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE=$Coverage_Report_Artifact_Name
+                    export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR=$Coverage_Report_Artifact_Name
+                    echo "Code Coverage Artifact Name Prefix for Baseline: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE"
+                    echo "Code Coverage Artifact Name Prefix for PR: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
+                    REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
+                    REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
+                    export GITHUB_REPOSITORY_NAME=$REPO_NAME
+                    export GITHUB_REPOSITORY_OWNER=$REPO_OWNER
+                    echo "Github Repository Owner: $GITHUB_REPOSITORY_OWNER"
+                    echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
+                    export GITHUB_PR_NUMBER=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+                    echo "Github PR number: $GITHUB_PR_NUMBER"
+                    echo "ADO Build Number: $ADO_BUILD_ID"
+                    echo "Target Branch Name: $TARGET_BRANCH_NAME"
+                    export ADO_CI_BUILD_DEFINITION_ID_BASELINE=48
+                    export ADO_CI_BUILD_DEFINITION_ID_PR=11
+                    echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
+                    echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
+                    npm run
+
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
                 parameters:
@@ -407,6 +445,49 @@ extends:
                         inputs:
                           sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                      - task: Bash@3
+                        displayName: Testing code coverage directory
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        env:
+                          ADO_API_TOKEN: $(System.AccessToken)
+                          GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+                          TARGET_BRANCH_NAME: '$(targetBranchName)'
+                          GITHUB_PR_NUMBER: $(SYSTEM_PULLREQUEST_PULLREQUESTID)
+                          ADO_BUILD_ID: ${$(Build.BuildId)}
+                          GITHUB_REPOSITORY_OWNER: $(Build.Repository.Name)
+                          GITHUB_REPOSITORY_NAME: $(Build.Repository.Name)
+                        inputs:
+                          targetType: inline
+                          script: |
+                            echo "Checking for code coverage files in : ${{ parameters.buildDirectory }}/nyc/report"
+                            echo "Checking for code coverage files in : $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis"
+                            echo "List files 1"
+                            ls ${{ parameters.buildDirectory }}/nyc/report/*.xml
+                            echo "List files 2"
+                            ls $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis/*.xml
+                            echo "List files 3"
+                            ls ${{ parameters.buildDirectory }}
+                            echo "List files 4"
+                            ls $(Build.ArtifactStagingDirectory)
+                            echo "List files 5"
+                            ls ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                            echo "List files 6"
+                            ls ${{ parameters.buildDirectory }}/nyc/report/*/*.xml
+                            echo "List files 7"
+                            ls ${{ parameters.buildDirectory }}/nyc/report
+                            echo "Now in directory: $(pwd)"
+                            echo "TARGET_BRANCH_NAME: $(targetBranchName)"
+                            GITHUB_REPOSITORY_OWNER= $(Build.Repository.Provider)
+                            GITHUB_REPOSITORY_NAME= $(Build.Repository.Name)
+                            echo "${GITHUB_REPOSITORY_OWNER} ${GITHUB_REPOSITORY_NAME}"
+                            REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
+                            REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
+                            echo "##vso[task.setvariable variable=REPO_NAME]$REPO_NAME"
+                            echo "##vso[task.setvariable variable=REPO_OWNER]$REPO_OWNER"
+                            echo "Repository Owner: $REPO_OWNER"
+                            echo "Repository Name: $REPO_NAME"
+                            echo "check: $SYSTEM_PULLREQUEST_PULLREQUESTID"
+                            echo "check: ${env.SYSTEM_PULLREQUEST_PULLREQUESTID}"
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
@@ -579,7 +660,7 @@ extends:
                 - ${{ if eq(parameters.testCoverage, true) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifacts - code-coverage
-                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'), ne(variables['Build.Reason'], 'PullRequest'))
+                    condition: and( succeeded(), eq(variables['ReportDirExists'], 'true'), eq(variables['Build.Reason'], 'PullRequest'))
                     targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
                     artifactName: codeCoverageAnalysis
                     sbomEnabled: false
