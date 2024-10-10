@@ -131,7 +131,7 @@
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
+		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@~2.3.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
