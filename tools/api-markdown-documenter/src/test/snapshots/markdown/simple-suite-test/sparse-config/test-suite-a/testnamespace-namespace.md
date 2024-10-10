@@ -17,13 +17,19 @@ Here are some remarks about the namespace
 #### Example: TypeScript Example {#testnamespace-example1}
 
 ```typescript
-const foo = bar;
+const foo: Foo = {
+	bar: "Hello world!";
+	baz = 42;
+};
 ```
 
 #### Example: JavaScript Example {#testnamespace-example2}
 
 ```javascript
-const bar = foo
+const foo = {
+	bar: "Hello world!";
+	baz = 42;
+};
 ```
 
 ### Classes

@@ -49,7 +49,6 @@ import {
 	IMergeNode,
 	IMoveInfo,
 	IRemovalInfo,
-	ISegment,
 	ISegmentAction,
 	ISegmentChanges,
 	ISegmentLeaf,
@@ -63,6 +62,7 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
+	type ISegmentInternal,
 	// eslint-disable-next-line import/no-deprecated
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
@@ -80,7 +80,7 @@ import {
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
-import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
+import { PropertySet, clone, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
 	ReferencePosition,
@@ -89,11 +89,14 @@ import {
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
 // eslint-disable-next-line import/no-deprecated
-import { PropertiesRollback } from "./segmentPropertiesManager.js";
+import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+// eslint-disable-next-line import/no-deprecated
+import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
 
-function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
+function markSegmentMoved(seg: ISegmentLeaf, moveInfo: IMoveInfo): void {
 	seg.moveDst = moveInfo.moveDst;
 	seg.movedClientIds = [...moveInfo.movedClientIds];
 	seg.movedSeqs = [moveInfo.movedSeq];
@@ -102,29 +105,29 @@ function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.wasMovedOnInsert = moveInfo.wasMovedOnInsert;
 }
 
-function isMoved(segment: ISegment): segment is ISegment & IMoveInfo {
+function isMoved(segment: ISegmentLeaf): segment is ISegmentLeaf & IMoveInfo {
 	return toMoveInfo(segment) !== undefined;
 }
 
-function isRemoved(segment: ISegment): segment is ISegment & IRemovalInfo {
+function isRemoved(segment: ISegmentLeaf): segment is ISegmentLeaf & IRemovalInfo {
 	return toRemovalInfo(segment) !== undefined;
 }
 
-function isRemovedAndAcked(segment: ISegment): segment is ISegment & IRemovalInfo {
+function isRemovedAndAcked(segment: ISegmentLeaf): segment is ISegmentLeaf & IRemovalInfo {
 	const removalInfo = toRemovalInfo(segment);
 	return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
 
-function isMovedAndAcked(segment: ISegment): segment is ISegment & IMoveInfo {
+function isMovedAndAcked(segment: ISegmentLeaf): segment is ISegmentLeaf & IMoveInfo {
 	const moveInfo = toMoveInfo(segment);
 	return moveInfo !== undefined && moveInfo.movedSeq !== UnassignedSequenceNumber;
 }
 
-function isRemovedAndAckedOrMovedAndAcked(segment: ISegment): boolean {
+function isRemovedAndAckedOrMovedAndAcked(segment: ISegmentLeaf): boolean {
 	return isRemovedAndAcked(segment) || isMovedAndAcked(segment);
 }
 
-function isRemovedOrMoved(segment: ISegment): boolean {
+function isRemovedOrMoved(segment: ISegmentLeaf): boolean {
 	return isRemoved(segment) || isMoved(segment);
 }
 
@@ -221,6 +224,7 @@ export function errorIfOptionNotTrue(
 /**
  * @legacy
  * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export interface IMergeTreeAttributionOptions {
 	/**
@@ -248,6 +252,7 @@ export interface IMergeTreeAttributionOptions {
  * @sealed
  * @legacy
  * @alpha
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  */
 export interface AttributionPolicy {
 	/**
@@ -312,11 +317,11 @@ export function findRootMergeBlock(
  * @internal
  */
 function getSlideToSegment(
-	segment: ISegment | undefined,
+	segment: ISegmentLeaf | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
-	cache?: Map<ISegment, { seg?: ISegment }>,
+	cache?: Map<ISegmentLeaf, { seg?: ISegmentLeaf }>,
 	useNewSlidingBehavior: boolean = false,
-): [ISegment | undefined, "start" | "end" | undefined] {
+): [ISegmentLeaf | undefined, "start" | "end" | undefined] {
 	if (
 		!segment ||
 		!isRemovedAndAckedOrMovedAndAcked(segment) ||
@@ -329,9 +334,9 @@ function getSlideToSegment(
 	if (cachedSegment !== undefined) {
 		return [cachedSegment.seg, undefined];
 	}
-	const result: { seg?: ISegment } = {};
+	const result: { seg?: ISegmentLeaf } = {};
 	cache?.set(segment, result);
-	const goFurtherToFindSlideToSegment = (seg: ISegment): boolean => {
+	const goFurtherToFindSlideToSegment = (seg: ISegmentLeaf): boolean => {
 		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAckedOrMovedAndAcked(seg)) {
 			result.seg = seg;
 			return false;
@@ -389,11 +394,11 @@ function getSlideToSegment(
  * @internal
  */
 export function getSlideToSegoff(
-	segoff: { segment: ISegment | undefined; offset: number | undefined },
+	segoff: { segment: ISegmentInternal | undefined; offset: number | undefined },
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	useNewSlidingBehavior: boolean = false,
 ): {
-	segment: ISegment | undefined;
+	segment: ISegmentInternal | undefined;
 	offset: number | undefined;
 } {
 	if (segoff.segment === undefined) {
@@ -467,7 +472,7 @@ class Obliterates {
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	public findOverlapping(seg: ISegment): Iterable<ObliterateInfo> {
+	public findOverlapping(seg: ISegmentLeaf): Iterable<ObliterateInfo> {
 		// eslint-disable-next-line import/no-deprecated
 		const overlapping: ObliterateInfo[] = [];
 		for (const start of this.startOrdered.items) {
@@ -552,7 +557,7 @@ export class MergeTree {
 	 * numbers corresponding to un-acked operations give valid results.
 	 */
 	public localNetLength(
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		refSeq?: number,
 		localSeq?: number,
 	): number | undefined {
@@ -628,7 +633,7 @@ export class MergeTree {
 		return index;
 	}
 
-	public reloadFromSegments(segments: ISegment[]): void {
+	public reloadFromSegments(segments: ISegmentLeaf[]): void {
 		// This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
 		assert(
 			!this.collabWindow.collaborating,
@@ -739,7 +744,7 @@ export class MergeTree {
 		return totalOffset;
 	}
 
-	public getContainingSegment<T extends ISegment>(
+	public getContainingSegment<T extends ISegmentLeaf>(
 		pos: number,
 		refSeq: number,
 		clientId: number,
@@ -756,7 +761,7 @@ export class MergeTree {
 		let offset: number | undefined;
 
 		const leaf = (
-			leafSeg: ISegment,
+			leafSeg: ISegmentLeaf,
 			segpos: number,
 			_refSeq: number,
 			_clientId: number,
@@ -790,17 +795,17 @@ export class MergeTree {
 	 *
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
 	 */
-	private slideAckedRemovedSegmentReferences(segments: ISegment[]): void {
+	private slideAckedRemovedSegmentReferences(segments: ISegmentLeaf[]): void {
 		// References are slid in groups to preserve their order.
 		let currentForwardSlideGroup: LocalReferenceCollection[] = [];
 		let currentBackwardSlideGroup: LocalReferenceCollection[] = [];
 
 		let currentForwardMaybeEndpoint: "start" | "end" | undefined;
-		let currentForwardSlideDestination: ISegment | undefined;
+		let currentForwardSlideDestination: ISegmentLeaf | undefined;
 		let currentForwardSlideIsForward: boolean | undefined;
 
 		let currentBackwardMaybeEndpoint: "start" | "end" | undefined;
-		let currentBackwardSlideDestination: ISegment | undefined;
+		let currentBackwardSlideDestination: ISegmentLeaf | undefined;
 		let currentBackwardSlideIsForward: boolean | undefined;
 
 		const slideGroup = (
@@ -859,8 +864,8 @@ export class MergeTree {
 		};
 
 		const trySlideSegment = (
-			segment: ISegment,
-			currentSlideDestination: ISegment | undefined,
+			segment: ISegmentLeaf,
+			currentSlideDestination: ISegmentLeaf | undefined,
 			currentSlideIsForward: boolean | undefined,
 			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
@@ -868,7 +873,7 @@ export class MergeTree {
 			currentMaybeEndpoint: "start" | "end" | undefined,
 			reassign: (
 				localRefs: LocalReferenceCollection,
-				slideToSegment: ISegment | undefined,
+				slideToSegment: ISegmentLeaf | undefined,
 				slideIsForward: boolean,
 				maybeEndpoint: "start" | "end" | undefined,
 			) => void,
@@ -913,8 +918,8 @@ export class MergeTree {
 			}
 		};
 
-		const forwardSegmentCache = new Map<ISegment, { seg?: ISegment }>();
-		const backwardSegmentCache = new Map<ISegment, { seg?: ISegment }>();
+		const forwardSegmentCache = new Map<ISegmentLeaf, { seg?: ISegmentLeaf }>();
+		const backwardSegmentCache = new Map<ISegmentLeaf, { seg?: ISegmentLeaf }>();
 		for (const segment of segments) {
 			assert(
 				isRemovedAndAckedOrMovedAndAcked(segment),
@@ -1245,7 +1250,10 @@ export class MergeTree {
 				});
 			});
 
-			if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+			if (
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
+			) {
 				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo!);
 			}
 
@@ -1253,7 +1261,8 @@ export class MergeTree {
 			// positions after slide are final
 			if (
 				opArgs.op.type === MergeTreeDeltaType.REMOVE ||
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
 			) {
 				this.slideAckedRemovedSegmentReferences(pendingSegmentGroup.segments);
 			}
@@ -1276,7 +1285,7 @@ export class MergeTree {
 	}
 
 	private addToPendingList(
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		// eslint-disable-next-line import/no-deprecated
 		segmentGroup?: SegmentGroup,
 		localSeq?: number,
@@ -1305,8 +1314,9 @@ export class MergeTree {
 		if (previousProps) {
 			_segmentGroup.previousProps!.push(previousProps);
 		}
-
-		segment.segmentGroups.enqueue(_segmentGroup);
+		// eslint-disable-next-line import/no-deprecated
+		const segmentGroups = (segment.segmentGroups ??= new SegmentGroupCollection(segment));
+		segmentGroups.enqueue(_segmentGroup);
 		return _segmentGroup;
 	}
 
@@ -1355,7 +1365,7 @@ export class MergeTree {
 
 	public insertSegments(
 		pos: number,
-		segments: ISegment[],
+		segments: ISegmentLeaf[],
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -1452,7 +1462,7 @@ export class MergeTree {
 		};
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
-		const saveIfLocal = (locSegment: ISegment): void => {
+		const saveIfLocal = (locSegment: ISegmentLeaf): void => {
 			// Save segment so we can assign sequence number when acked by server
 			if (this.collabWindow.collaborating) {
 				if (
@@ -1473,11 +1483,10 @@ export class MergeTree {
 			}
 		};
 		const onLeaf = (
-			segment: ISegment | undefined,
+			segment: ISegmentLeaf | undefined,
 			_pos: number,
 			context: InsertContext,
 			// Keeping this function within the scope of blockInsert for readability.
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 		): ISegmentChanges => {
 			const segmentChanges: ISegmentChanges = {};
 			if (segment) {
@@ -1553,12 +1562,12 @@ export class MergeTree {
 							movedClientIds.unshift(ob.clientId);
 							movedSeqs.unshift(ob.seq);
 						} else {
-							if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
-								normalizedNewestSeq = normalizedObSeq;
-								newest = ob;
-							}
 							movedClientIds.push(ob.clientId);
 							movedSeqs.push(ob.seq);
+						}
+						if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
+							normalizedNewestSeq = normalizedObSeq;
+							newest = ob;
 						}
 					}
 				}
@@ -1586,21 +1595,52 @@ export class MergeTree {
 					if (newSegment.parent) {
 						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 					}
+				} else if (oldest && newest?.clientId === clientId) {
+					newSegment.prevObliterateByInserter = newest;
 				}
+
 				saveIfLocal(newSegment);
 			}
 		}
 	}
 
 	private readonly splitLeafSegment = (
-		segment: ISegment | undefined,
+		segment: ISegmentLeaf | undefined,
 		pos: number,
 	): ISegmentChanges => {
 		if (!(pos > 0 && segment)) {
 			return {};
 		}
 
-		const next = segment.splitAt(pos)!;
+		const next: ISegmentLeaf = segment.splitAt(pos)!;
+
+		if (segment?.segmentGroups) {
+			// eslint-disable-next-line import/no-deprecated
+			next.segmentGroups ??= new SegmentGroupCollection(next);
+			segment.segmentGroups.copyTo(next);
+		}
+
+		if (segment.prevObliterateByInserter) {
+			next.prevObliterateByInserter = segment.prevObliterateByInserter;
+		}
+
+		if (segment.properties) {
+			if (segment.propertyManager === undefined) {
+				next.properties = clone(segment.properties);
+			} else {
+				// eslint-disable-next-line import/no-deprecated
+				next.propertyManager ??= new PropertiesManager();
+				next.properties = segment.propertyManager.copyTo(
+					segment.properties,
+					next.properties,
+					next.propertyManager,
+				);
+			}
+		}
+		if (segment.localRefs) {
+			segment.localRefs.split(pos, next);
+		}
+
 		this.mergeTreeMaintenanceCallback?.(
 			{
 				operation: MergeTreeMaintenanceType.SPLIT,
@@ -1817,6 +1857,7 @@ export class MergeTree {
 		clientId: number,
 		seq: number,
 		opArgs: IMergeTreeDeltaOpArgs,
+
 		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
@@ -1827,19 +1868,25 @@ export class MergeTree {
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup | undefined;
-		const annotateSegment = (segment: ISegment): boolean => {
+		const annotateSegment = (segment: ISegmentLeaf): boolean => {
 			assert(
 				!Marker.is(segment) ||
 					!(reservedMarkerIdKey in props) ||
 					props.markerId === segment.properties?.markerId,
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
-			const propertyDeltas = segment.addProperties(
+
+			// eslint-disable-next-line import/no-deprecated
+			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
+			const properties = (segment.properties ??= createMap());
+			const propertyDeltas = propertyManager.addProperties(
+				properties,
 				props,
 				seq,
 				this.collabWindow.collaborating,
 				rollback,
 			);
+
 			if (!isRemovedOrMoved(segment)) {
 				deltaSegments.push({ segment, propertyDeltas });
 			}
@@ -1878,22 +1925,22 @@ export class MergeTree {
 		}
 	}
 
-	public obliterateRange(
-		start: number,
-		end: number,
+	private obliterateRangeSided(
+		start: InteriorSequencePlace,
+		end: InteriorSequencePlace,
 		refSeq: number,
 		clientId: number,
 		seq: number,
-		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
-		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
+		const startPos = start.side === Side.Before ? start.pos : start.pos + 1;
+		const endPos = end.side === Side.Before ? end.pos : end.pos + 1;
 
-		this.ensureIntervalBoundary(start, refSeq, clientId);
-		this.ensureIntervalBoundary(end, refSeq, clientId);
+		this.ensureIntervalBoundary(startPos, refSeq, clientId);
+		this.ensureIntervalBoundary(endPos, refSeq, clientId);
 
-		let _overwrite = overwrite;
-		const localOverlapWithRefs: ISegment[] = [];
+		let _overwrite = false;
+		const localOverlapWithRefs: ISegmentLeaf[] = [];
 		const movedSegments: IMergeTreeSegmentDelta[] = [];
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
@@ -1908,8 +1955,8 @@ export class MergeTree {
 			segmentGroup: undefined,
 		};
 
-		const { segment: startSeg } = this.getContainingSegment(start, refSeq, clientId);
-		const { segment: endSeg } = this.getContainingSegment(end - 1, refSeq, clientId);
+		const { segment: startSeg } = this.getContainingSegment(start.pos, refSeq, clientId);
+		const { segment: endSeg } = this.getContainingSegment(end.pos, refSeq, clientId);
 		assert(
 			startSeg !== undefined && endSeg !== undefined,
 			0xa3f /* segments cannot be undefined */,
@@ -1917,7 +1964,7 @@ export class MergeTree {
 
 		obliterate.start = this.createLocalReferencePosition(
 			startSeg,
-			0,
+			start.side === Side.Before ? 0 : Math.max(startSeg.cachedLength - 1, 0),
 			ReferenceType.StayOnRemove,
 			{
 				obliterate,
@@ -1926,20 +1973,53 @@ export class MergeTree {
 
 		obliterate.end = this.createLocalReferencePosition(
 			endSeg,
-			endSeg.cachedLength - 1,
+			end.side === Side.Before ? 0 : Math.max(endSeg.cachedLength - 1, 0),
 			ReferenceType.StayOnRemove,
 			{
 				obliterate,
 			},
 		);
 
+		// Always create a segment group for obliterate,
+		// even if there are no segments currently in the obliteration range.
+		// Segments may be concurrently inserted into the obliteration range,
+		// at which point they are added to the segment group.
+		obliterate.segmentGroup = {
+			segments: [],
+			localSeq,
+			refSeq: this.collabWindow.currentSeq,
+			obliterateInfo: obliterate,
+		};
+		if (this.collabWindow.collaborating && clientId === this.collabWindow.clientId) {
+			this.pendingSegments.push(obliterate.segmentGroup);
+		}
+		this.obliterates.addOrUpdate(obliterate);
+
 		const markMoved = (
-			segment: ISegment,
+			segment: ISegmentLeaf,
 			pos: number,
 			_start: number,
 			_end: number,
 		): boolean => {
+			if (
+				(start.side === Side.After && startPos === pos + segment.cachedLength) || // exclusive start segment
+				(end.side === Side.Before &&
+					endPos === pos &&
+					isSegmentPresent(segment, { refSeq, localSeq })) // exclusive end segment
+			) {
+				// We walk these segments because we want to also walk any concurrently inserted segments between here and the obliterated segments.
+				// These segments are outside of the obliteration range though, so return true to keep walking.
+				return true;
+			}
 			const existingMoveInfo = toMoveInfo(segment);
+
+			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
+				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
+				// The local obliterate has not been sequenced yet, so it is still the newest obliterate we are aware of.
+				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
+				return true;
+			}
+
 			if (
 				clientId !== segment.clientId &&
 				segment.seq !== undefined &&
@@ -1990,7 +2070,6 @@ export class MergeTree {
 						obliterate.segmentGroup,
 						localSeq,
 					);
-					obliterate.segmentGroup.obliterateInfo ??= obliterate;
 				} else {
 					if (MergeTree.options.zamboniSegments) {
 						this.addToLRUSet(segment, seq);
@@ -2020,13 +2099,11 @@ export class MergeTree {
 			markMoved,
 			undefined,
 			afterMarkMoved,
-			start,
-			end,
+			start.pos,
+			end.pos + 1, // include the segment containing the end reference
 			undefined,
 			seq === UnassignedSequenceNumber ? undefined : seq,
 		);
-
-		this.obliterates.addOrUpdate(obliterate);
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code
@@ -2053,26 +2130,56 @@ export class MergeTree {
 		}
 	}
 
+	public obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+		refSeq: number,
+		clientId: number,
+		seq: number,
+		opArgs: IMergeTreeDeltaOpArgs,
+	): void {
+		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
+		if (this.options?.mergeTreeEnableSidedObliterate) {
+			assert(
+				typeof start === "object" && typeof end === "object",
+				"Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled.",
+			);
+			this.obliterateRangeSided(start, end, refSeq, clientId, seq, opArgs);
+		} else {
+			assert(
+				typeof start === "number" && typeof end === "number",
+				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+			);
+			this.obliterateRangeSided(
+				{ pos: start, side: Side.Before },
+				{ pos: end - 1, side: Side.After },
+				refSeq,
+				clientId,
+				seq,
+				opArgs,
+			);
+		}
+	}
+
 	public markRangeRemoved(
 		start: number,
 		end: number,
 		refSeq: number,
 		clientId: number,
 		seq: number,
-		overwrite = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
-		let _overwrite = overwrite;
+		let _overwrite = false;
 		this.ensureIntervalBoundary(start, refSeq, clientId);
 		this.ensureIntervalBoundary(end, refSeq, clientId);
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
 		const removedSegments: IMergeTreeSegmentDelta[] = [];
-		const localOverlapWithRefs: ISegment[] = [];
+		const localOverlapWithRefs: ISegmentLeaf[] = [];
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		const markRemoved = (
-			segment: ISegment,
+			segment: ISegmentLeaf,
 			pos: number,
 			_start: number,
 			_end: number,
@@ -2171,10 +2278,10 @@ export class MergeTree {
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
-			// Disabling because a for of loop causes the type of segment to be ISegment, which does not have parent information stored
+			// Disabling because a for of loop causes the type of segment to be ISegmentLeaf, which does not have parent information stored
 			// eslint-disable-next-line unicorn/no-array-for-each
 			pendingSegmentGroup.segments.forEach((segment: ISegmentLeaf) => {
-				const segmentSegmentGroup = segment.segmentGroups?.pop?.();
+				const segmentSegmentGroup = segment?.segmentGroups?.pop?.();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ee /* Unexpected segmentGroup in segment */,
@@ -2224,8 +2331,8 @@ export class MergeTree {
 				throw new Error("Rollback op doesn't match last edit");
 			}
 			let i = 0;
-			for (const segment of pendingSegmentGroup.segments) {
-				const segmentSegmentGroup = segment.segmentGroups.pop?.();
+			for (const segment of pendingSegmentGroup.segments as ISegmentLeaf[]) {
+				const segmentSegmentGroup = segment?.segmentGroups?.pop?.();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ef /* Unexpected segmentGroup in segment */,
@@ -2242,7 +2349,6 @@ export class MergeTree {
 						UniversalSequenceNumber,
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
-						false,
 						{ op: removeOp },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
@@ -2256,6 +2362,7 @@ export class MergeTree {
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
 						{ op: annotateOp },
+
 						// eslint-disable-next-line import/no-deprecated
 						PropertiesRollback.Rollback,
 					);
@@ -2270,7 +2377,7 @@ export class MergeTree {
 	/**
 	 * Walk the segments up to the current segment and calculate its position
 	 */
-	private findRollbackPosition(segment: ISegment): number {
+	private findRollbackPosition(segment: ISegmentLeaf): number {
 		let segmentPosition = 0;
 		walkAllChildSegments(this.root, (seg) => {
 			// If we've found the desired segment, terminate the walk and return 'segmentPosition'.
@@ -2373,7 +2480,7 @@ export class MergeTree {
 		}
 
 		for (
-			let segmentToSlide: ListNode<ISegment> | undefined = lastLocalSegment,
+			let segmentToSlide: ListNode<ISegmentLeaf> | undefined = lastLocalSegment,
 				nearerSegment = lastLocalSegment?.prev;
 			segmentToSlide !== undefined;
 			segmentToSlide = nearerSegment, nearerSegment = nearerSegment?.prev
@@ -2411,7 +2518,7 @@ export class MergeTree {
 		const newOrder = Array.from(affectedSegments, ({ data }) => data);
 		for (const seg of newOrder)
 			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref));
-		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
+		const perSegmentTrackingGroups = new Map<ISegmentLeaf, TrackingGroup[]>();
 		for (const segment of newOrder) {
 			const { trackingCollection } = segment;
 			const trackingGroups = [...trackingCollection.trackingGroups];
@@ -2476,7 +2583,7 @@ export class MergeTree {
 	 * it can fix up its local state to align with what would be expected of the op it resubmits.
 	 */
 	public normalizeSegmentsOnRebase(): void {
-		let currentRangeToNormalize = new DoublyLinkedList<ISegment>();
+		let currentRangeToNormalize = new DoublyLinkedList<ISegmentLeaf>();
 		let rangeContainsLocalSegs = false;
 		let rangeContainsRemoteRemovedSegs = false;
 		const normalize = (): void => {
@@ -2499,7 +2606,7 @@ export class MergeTree {
 				currentRangeToNormalize.push(seg);
 			} else {
 				normalize();
-				currentRangeToNormalize = new DoublyLinkedList<ISegment>();
+				currentRangeToNormalize = new DoublyLinkedList<ISegmentLeaf>();
 				rangeContainsLocalSegs = false;
 				rangeContainsRemoteRemovedSegs = false;
 			}

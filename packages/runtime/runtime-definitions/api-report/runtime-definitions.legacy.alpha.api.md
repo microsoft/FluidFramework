@@ -120,9 +120,9 @@ export interface IEnvelope {
 
 // @alpha
 export interface IExperimentalIncrementalSummaryContext {
-    latestSummarySequenceNumber: number;
-    summaryPath: string;
-    summarySequenceNumber: number;
+    readonly latestSummarySequenceNumber: number;
+    readonly summaryPath: string;
+    readonly summarySequenceNumber: number;
 }
 
 // @alpha
@@ -134,6 +134,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
+    // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processMessages?(message: ISequencedRuntimeMessageCore, messageContents: IRuntimeMessageContents[], local: boolean): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
@@ -311,6 +312,7 @@ export interface ISummarizerNode {
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    // @deprecated
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 

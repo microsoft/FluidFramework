@@ -48,13 +48,10 @@ const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1))
 const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {
 	successes: [
 		["with child change", inlineRevision(Change.modify(1, changes), tag1), context],
-		["without child change", inlineRevision(Change.remove(2, 2), tag1), context],
+		["without child change", inlineRevision(Change.remove(2, 2, tag1), tag1), context],
 		[
 			"with a revive",
-			inlineRevision(
-				Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
-				tag1,
-			),
+			inlineRevision(Change.revive(0, 1, { revision: tag2, localId: brand(10) }, tag1), tag1),
 			context,
 		],
 		...Object.entries(cases).map<TestCase>(([name, change]) => [

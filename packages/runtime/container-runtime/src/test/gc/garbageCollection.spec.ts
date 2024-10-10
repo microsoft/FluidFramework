@@ -2219,20 +2219,6 @@ describe("Garbage Collection Tests", () => {
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
 				compatDetails: { behavior: "Ignore" },
 			};
-			garbageCollector.processMessages(
-				containerRuntimeGCMessage,
-				[containerRuntimeGCMessage.contents],
-				Date.now(),
-				false /* local */,
-			);
-		});
-
-		it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-				compatDetails: { behavior: "FailToProcess" },
-			};
 			assert.throws(
 				() =>
 					garbageCollector.processMessages(

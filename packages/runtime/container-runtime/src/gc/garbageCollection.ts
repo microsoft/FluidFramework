@@ -51,7 +51,6 @@ import {
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,
-	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
 	dataStoreNodePathOnly,
 	getGCDataFromSnapshot,
@@ -898,18 +897,11 @@ export class GarbageCollector implements IGarbageCollector {
 
 					break;
 				}
-				default: {
-					if (
-						!compatBehaviorAllowsGCMessageType(gcMessageType, message.compatDetails?.behavior)
-					) {
-						const error = DataProcessingError.create(
-							`Garbage collection message of unknown type ${gcMessageType}`,
-							"processMessage",
-						);
-						throw error;
-					}
-					break;
-				}
+				default:
+					throw DataProcessingError.create(
+						`Garbage collection message of unknown type ${gcMessageType}`,
+						"processMessage",
+					);
 			}
 		}
 	}
@@ -1038,7 +1030,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
 	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
-	 * before runnint GC next.
+	 * before running GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
 		// If sweep isn't enabled, auto-recovery isn't needed since its purpose is to prevent this object from being

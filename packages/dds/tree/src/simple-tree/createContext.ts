@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { getOrCreate } from "../util/index.js";
 import { Context, UnhydratedContext } from "./core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
-import { toFlexSchema } from "./toFlexSchema.js";
+import { toStoredSchema } from "./toFlexSchema.js";
 
 const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
 
@@ -17,7 +18,7 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 	return getOrCreate(contextCache, schema, (s) => {
 		const normalized = normalizeFieldSchema(schema);
 
-		const flexContext = new UnhydratedContext(toFlexSchema(normalized));
+		const flexContext = new UnhydratedContext(defaultSchemaPolicy, toStoredSchema(schema));
 		return new Context(normalized.allowedTypeSet, flexContext);
 	});
 }

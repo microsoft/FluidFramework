@@ -1080,9 +1080,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			this._baseSnapshot = props.snapshot;
 			this.isSnapshotInISnapshotFormat = false;
 		}
-		if (this._baseSnapshot !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
-		}
 	}
 
 	/*

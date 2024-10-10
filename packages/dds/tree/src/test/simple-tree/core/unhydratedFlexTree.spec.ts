@@ -17,7 +17,7 @@ import {
 	UnhydratedFlexTreeNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
-import { getFlexSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
+import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 
@@ -34,9 +34,6 @@ describe("unhydratedFlexTree", () => {
 		[objectFieldNodeKey]: arrayNodeSchemaSimple,
 	});
 
-	const mapSchema = getFlexSchema(mapSchemaSimple);
-	const arrayNodeSchema = getFlexSchema(arrayNodeSchemaSimple);
-	const objectSchema = getFlexSchema(objectSchemaSimple);
 	// #endregion
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s
@@ -48,7 +45,7 @@ describe("unhydratedFlexTree", () => {
 	};
 	const mapKey = "key" as FieldKey;
 	const mapMapTree: ExclusiveMapTree = {
-		type: mapSchema.name,
+		type: brand(mapSchemaSimple.identifier),
 		fields: new Map([[mapKey, [mapChildMapTree]]]),
 	};
 	const fieldNodeChildMapTree: ExclusiveMapTree = {
@@ -57,11 +54,11 @@ describe("unhydratedFlexTree", () => {
 		fields: new Map(),
 	};
 	const fieldNodeMapTree: ExclusiveMapTree = {
-		type: arrayNodeSchema.name,
+		type: brand(arrayNodeSchemaSimple.identifier),
 		fields: new Map([[EmptyKey, [fieldNodeChildMapTree]]]),
 	};
 	const objectMapTree: ExclusiveMapTree = {
-		type: objectSchema.name,
+		type: brand(objectSchemaSimple.identifier),
 		fields: new Map([
 			[objectMapKey, [mapMapTree]],
 			[objectFieldNodeKey, [fieldNodeMapTree]],
@@ -100,9 +97,9 @@ describe("unhydratedFlexTree", () => {
 	});
 
 	it("can get their schema", () => {
-		assert.equal(map.schema, mapSchema.name);
-		assert.equal(arrayNode.schema, arrayNodeSchema.name);
-		assert.equal(object.schema, objectSchema.name);
+		assert.equal(map.schema, mapSchemaSimple.identifier);
+		assert.equal(arrayNode.schema, arrayNodeSchemaSimple.identifier);
+		assert.equal(object.schema, objectSchemaSimple.identifier);
 		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.schema, schemaFactory.string.identifier);
 		assert.equal(
 			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema,
@@ -181,16 +178,6 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(map.parentField.parent.parent, object);
 		assert.equal(arrayNode.parentField.parent.parent, object);
 		assert.equal(object.parentField.parent.parent, undefined);
-	});
-
-	it("can downcast", () => {
-		assert.equal(map.is(mapSchema), true);
-		assert.equal(arrayNode.is(arrayNodeSchema), true);
-		assert.equal(object.is(objectSchema), true);
-
-		assert.equal(map.is(arrayNodeSchema), false);
-		assert.equal(arrayNode.is(objectSchema), false);
-		assert.equal(object.is(mapSchema), false);
 	});
 
 	describe("cannot", () => {

@@ -16,7 +16,7 @@ import {
 	FieldKind,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import { toFlexSchema } from "../toFlexSchema.js";
+import { toStoredSchema } from "../toFlexSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
@@ -242,7 +242,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
-		toFlexSchema(config.schema);
+		toStoredSchema(config.schema);
 	}
 }
 

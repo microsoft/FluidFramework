@@ -70,7 +70,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get objectsRoutingContext(): this;
     // (undocumented)
     readonly options: Record<string | number, any>;
-    // (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processMessages(message: ISequencedRuntimeMessageCore, messageContents: IRuntimeMessageContents[], local: boolean): void;
     // (undocumented)

@@ -20,11 +20,7 @@ import {
 	EmptyKey,
 	type RevertibleFactory,
 } from "../../core/index.js";
-import {
-	FieldKinds,
-	cursorForJsonableTreeField,
-	intoStoredSchema,
-} from "../../feature-libraries/index.js";
+import { FieldKinds, cursorForJsonableTreeField } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -49,10 +45,8 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getOrCreateInnerNode } from "../../simple-tree/proxyBinding.js";
-// eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { toFlexSchema } from "../../simple-tree/index.js";
+import { getOrCreateInnerNode, toStoredSchema } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
@@ -166,7 +160,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 0);
 
-				checkout.updateSchema(intoStoredSchema(toFlexSchema(mixedSchema)));
+				checkout.updateSchema(toStoredSchema(mixedSchema));
 
 				assert.equal(log.length, 1);
 
@@ -179,7 +173,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 2);
 
-				checkout.updateSchema(intoStoredSchema(toFlexSchema(OptionalString)));
+				checkout.updateSchema(toStoredSchema(OptionalString));
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -196,14 +190,14 @@ describe("sharedTreeView", () => {
 
 				assert.deepEqual(log, []);
 
-				checkout.updateSchema(intoStoredSchema(toFlexSchema(mixedSchema)));
+				checkout.updateSchema(toStoredSchema(mixedSchema));
 				checkout.editor
 					.optionalField(rootField)
 					.set(
 						cursorForJsonableTreeField([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
-				checkout.updateSchema(intoStoredSchema(toFlexSchema(OptionalString)));
+				checkout.updateSchema(toStoredSchema(OptionalString));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
@@ -864,7 +858,7 @@ describe("sharedTreeView", () => {
 		);
 
 		view1.initialize(["A", 1, "B", 2]);
-		const storedSchema1 = intoStoredSchema(toFlexSchema(schema1));
+		const storedSchema1 = toStoredSchema(schema1);
 		provider.processMessages();
 
 		const checkout1Revertibles = createTestUndoRedoStacks(view1.checkout.events);
@@ -894,9 +888,7 @@ describe("sharedTreeView", () => {
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
 		const sf2 = new SchemaFactory("schema2");
-		provider.trees[0].checkout.updateSchema(
-			intoStoredSchema(toFlexSchema(sf2.array(sf1.number))),
-		);
+		provider.trees[0].checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
@@ -945,10 +937,7 @@ describe("sharedTreeView", () => {
 			view2.root.removeAt(2);
 
 			assert(view2 instanceof SchematizingSimpleTreeView);
-			expectSchemaEqual(
-				intoStoredSchema(toFlexSchema(newSchema)),
-				view2.checkout.storedSchema,
-			);
+			expectSchemaEqual(toStoredSchema(newSchema), view2.checkout.storedSchema);
 			assert.deepEqual(view2.root, ["A", "B"]);
 
 			// Rebase the child branch onto the parent branch.
@@ -956,10 +945,7 @@ describe("sharedTreeView", () => {
 
 			// The schema change and any changes after that should be dropped,
 			// but the changes before the schema change should be preserved
-			expectSchemaEqual(
-				intoStoredSchema(toFlexSchema(oldSchema)),
-				view1.checkout.storedSchema,
-			);
+			expectSchemaEqual(toStoredSchema(oldSchema), view1.checkout.storedSchema);
 			assert.deepEqual(view1.root, ["B", "C"]);
 		});
 
@@ -1009,14 +995,14 @@ describe("sharedTreeView", () => {
 			view3.upgradeSchema();
 			view3.root.removeAt(0);
 
-			expectSchemaEqual(intoStoredSchema(toFlexSchema(schema2)), view2.checkout.storedSchema);
-			expectSchemaEqual(intoStoredSchema(toFlexSchema(schema3)), view3.checkout.storedSchema);
+			expectSchemaEqual(toStoredSchema(schema2), view2.checkout.storedSchema);
+			expectSchemaEqual(toStoredSchema(schema3), view3.checkout.storedSchema);
 
 			// Rebase view3 onto view2.
 			(view3.checkout as ITreeCheckoutFork).rebaseOnto(view2.checkout);
 
 			// All changes on view3 should be dropped but the schema change and edit in view2 should be preserved.
-			expectSchemaEqual(intoStoredSchema(toFlexSchema(schema2)), view2.checkout.storedSchema);
+			expectSchemaEqual(toStoredSchema(schema2), view2.checkout.storedSchema);
 			assert.deepEqual(view2.root, ["B"]);
 		});
 	});

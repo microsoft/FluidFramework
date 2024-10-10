@@ -6,15 +6,8 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import {
-	type LazyItem,
-	type TreeStatus,
-	isLazy,
-	isTreeValue,
-	FieldKinds,
-} from "../../feature-libraries/index.js";
+import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
@@ -43,8 +36,10 @@ import {
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
 	typeSchemaSymbol,
+	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { isLazy, type LazyItem } from "../flexList.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -305,7 +300,7 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind === FieldKinds.sequence.identifier) {
+	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(
 			parentField.parent.key === EmptyKey,
