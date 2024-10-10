@@ -214,15 +214,11 @@ export function getLegacyCompatVersionRange(
 	}
 
 	if (typeof pkg !== "string" && pkg.monoRepo?.releaseGroup === "client") {
-		const range = getLegacyRangeClientReleaseGroup(version, interval.client);
+		const range = getLegacyRangeForClient(version, interval.client);
 		return range;
 	}
 
-	if (schemeToUse === "internal") {
-		return getVersionRange(version, "^");
-	}
-
-	return `^${version}`;
+	return schemeToUse === "internal" ? getVersionRange(version, "^") : `^${version}`;
 }
 
 /**
@@ -233,7 +229,7 @@ export function getLegacyCompatVersionRange(
  *
  * @returns A string representing the next version in the legacy compatibility range for "client" release group.
  */
-export function getLegacyRangeClientReleaseGroup(version: string, interval: number): string {
+export function getLegacyRangeForClient(version: string, interval: number): string {
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");
