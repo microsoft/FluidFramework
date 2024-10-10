@@ -47,31 +47,6 @@ export function findGitRootSync(cwd = process.cwd()): string {
 }
 
 /**
- * Returns the absolute path to the nearest Git repository found starting at `cwd`.
- *
- * @param cwd - The working directory to use to start searching for Git repositories. Defaults to `process.cwd()` if not
- * provided.
- *
- * @privateRemarks
- * This function is helpful because it is synchronous. The SimpleGit wrapper is async-only.
- */
-export function isInGitRepositorySync(cwd = process.cwd()): boolean {
-	try {
-		const result = execa.sync("git", ["rev-parse", "--is-inside-work-tree"], {
-			cwd,
-			encoding: "utf8",
-			// Ignore stdin, pipe (capture) stdout, and ignore stderr
-			stdio: ["ignore", "pipe", "pipe"],
-		});
-
-		const isInWorktree = result.stdout.trim() === "true";
-		return isInWorktree;
-	} catch {
-		return false;
-	}
-}
-
-/**
  * Traverses up the directory tree from the given starting directory, applying the callback function to each directory.
  * If the callback returns `true` for any directory, that directory path is returned. If the root directory is reached
  * without the callback returning true, the function returns `undefined`.
