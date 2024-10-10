@@ -248,6 +248,7 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
 			}
 
+			// Explicit construction under recursive type
 			const tree2 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({
@@ -257,6 +258,60 @@ describe("SchemaFactory Recursive methods", () => {
 					c: new Other({ y: 5 }),
 					d: new Other({ y: 5 }),
 					e: new Other({ y: 5 }),
+				}),
+			);
+
+			// implicit construction under recursive type
+			const tree3 = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({
+					x: undefined,
+					a: { y: 5 },
+					b: { y: 5 },
+					c: { y: 5 },
+					d: { y: 5 },
+					e: { y: 5 },
+				}),
+			);
+		});
+
+		it("array under recursive object", () => {
+			class Other extends sf.array("Other", sf.number) {}
+			class ObjectRecursive extends sf.objectRecursive("Object", {
+				x: sf.optionalRecursive([() => ObjectRecursive]),
+				a: Other,
+				b: [Other],
+				c: [() => Other],
+				d: sf.optional(Other),
+				e: sf.optional([() => Other]),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
+			}
+
+			// Explicit construction under recursive type
+			const tree2 = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({
+					x: undefined,
+					a: new Other([5]),
+					b: new Other([5]),
+					c: new Other([5]),
+					d: new Other([5]),
+					e: new Other([5]),
+				}),
+			);
+
+			// implicit construction under recursive type
+			const tree3 = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({
+					x: undefined,
+					a: [5],
+					b: [5],
+					c: [5],
+					d: [5],
+					e: [5],
 				}),
 			);
 		});

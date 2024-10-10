@@ -11,11 +11,14 @@ import type { Listenable } from "../../events/index.js";
 
 import {
 	type ImplicitFieldSchema,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
+	type TreeLeafValue,
+	type UnsafeUnknownSchema,
 	FieldKind,
 } from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { NodeKind, type TreeNode, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toFlexSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -363,7 +366,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  * @sealed @public
  */
-export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
+export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *
@@ -422,6 +425,25 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	 * The view schema used by this TreeView.
 	 */
 	readonly schema: TSchema;
+}
+
+/**
+ * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
+ * @alpha
+ */
+export interface TreeViewAlpha<
+	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> extends Omit<
+		TreeView<TSchema extends ImplicitFieldSchema ? TSchema : ImplicitFieldSchema>,
+		"root" | "initialize"
+	> {
+	get root(): TSchema extends ImplicitFieldSchema
+		? TreeFieldFromImplicitField<TSchema>
+		: TreeLeafValue | TreeNode;
+
+	set root(newRoot: InsertableField<TSchema>);
+
+	initialize(content: InsertableField<TSchema>): void;
 }
 
 /**

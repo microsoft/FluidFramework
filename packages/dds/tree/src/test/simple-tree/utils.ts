@@ -24,6 +24,8 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
+	type TreeLeafValue,
+	type TreeNode,
 	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 import {
@@ -51,7 +53,7 @@ import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/inde
  */
 export function initNode<
 	TInsertable,
-	TSchema extends TreeNodeSchema<string, NodeKind, unknown, TInsertable>,
+	TSchema extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, TInsertable>,
 >(
 	schema: TSchema,
 	content: TInsertable,
@@ -85,7 +87,7 @@ export function describeHydration(
 	runBoth: (
 		init: <
 			TInsertable,
-			TSchema extends TreeNodeSchema<string, NodeKind, unknown, TInsertable>,
+			TSchema extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, TInsertable>,
 		>(
 			schema: TSchema,
 			tree: TInsertable,
