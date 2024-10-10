@@ -10,7 +10,7 @@ Behavior Changes to Legacy IContainerRuntimeWithResolveHandle_Deprecated.resolve
 
 This change only affects users of the Legacy and deprecated feature who directly call IContainerRuntimeWithResolveHandle_Deprecated.resolveHandle.
 
-The default behavior of the wait header is changing from true to false. This means that if a request is made for a datastore that does not yet exist the response returned will be a 404 error specifying the datastore does not exist:
+The default behavior of the wait header is changing from true to false. This means that if a request is made for a datastore that does not yet exist, the response returned will be a 404 error specifying the datastore does not exist:
 ```
 {
   "mimeType": "text/plain",
