@@ -497,7 +497,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				clientArgs.referenceSequenceNumber,
 				clientArgs.clientId,
 				clientArgs.sequenceNumber,
-				false,
 				opArgs,
 			);
 		} else {
@@ -512,7 +511,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				clientArgs.referenceSequenceNumber,
 				clientArgs.clientId,
 				clientArgs.sequenceNumber,
-				false,
 				opArgs,
 			);
 		}
@@ -537,7 +535,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.referenceSequenceNumber,
 			clientArgs.clientId,
 			clientArgs.sequenceNumber,
-			false,
 			opArgs,
 		);
 	}
