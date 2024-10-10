@@ -811,6 +811,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
+							if (!entry.opsent) {
+								this.sendBlobAttachOp(id, entry.storageId);
+							}
 							// Resolving the blob handle to let hosts continue with their operations (it will resolve
 							// original createBlob call) and let them attach the blob. This is a lie we told since the upload
 							// hasn't finished yet, but it's fine since we will retry on rehydration.
@@ -843,7 +846,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					}
 					// Wait for all blobs to be attached. This is important, otherwise serialized container
 					// could send the blobAttach op without any op that references the blob, making it useless.
-					await Promise.allSettled(attachBlobsP).catch(() => {});
+					await Promise.allSettled(attachBlobsP).catch(() => { return undefined});
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
@@ -855,9 +858,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						continue;
 					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
-					if (!entry.opsent) {
-						this.sendBlobAttachOp(id, entry.storageId);
-					}
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
