@@ -182,6 +182,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	serializeOpContents,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -1571,10 +1572,10 @@ export class ContainerRuntime
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
-			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
-			inputs: JSON.stringify({
+			metadataValue: metadata?.gcFeatureMatrix,
+			inputs: {
 				gcOptions_gcGeneration: this.runtimeOptions.gcOptions[gcGenerationOptionName],
-			}),
+			},
 		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
@@ -2001,13 +2002,13 @@ export class ContainerRuntime
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.idCompressorMode,
-			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
-			featureGates: JSON.stringify({
+			sessionRuntimeSchema: this.sessionSchema,
+			featureGates: {
 				...featureGatesForTelemetry,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				closeSummarizerDelayOverride,
-			}),
+			},
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
@@ -2162,10 +2163,10 @@ export class ContainerRuntime
 
 		this.logger.sendTelemetryEvent({
 			eventName: "GroupIdSnapshotFetched",
-			details: JSON.stringify({
+			details: {
 				fromCache: loadedFromCache,
 				loadingGroupIds: loadingGroupIds.join(","),
-			}),
+			},
 		});
 		// Find the snapshotTree inside the returned snapshot based on the path as given in the request.
 		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
@@ -2537,10 +2538,10 @@ export class ContainerRuntime
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
-							messageDetails: JSON.stringify({
+							messageDetails: {
 								type: opContents.type,
 								compatBehavior,
-							}),
+							},
 						},
 					);
 					this.closeFn(error);
@@ -3003,13 +3004,13 @@ export class ContainerRuntime
 						message,
 						{
 							local,
-							messageDetails: JSON.stringify({
+							messageDetails: {
 								type: message.type,
 								contentType: typeof message.contents,
 								compatBehavior,
 								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
 								compression: message.compression,
-							}),
+							},
 						},
 					);
 					this.closeFn(error);
@@ -4241,7 +4242,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: BatchMessage = {
-					contents: JSON.stringify(idAllocationMessage),
+					contents: serializeOpContents(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4295,22 +4296,22 @@ export class ContainerRuntime
 					eventName: "SchemaChangeProposal",
 					refSeq: schemaChangeMessage.refSeq,
 					version: schemaChangeMessage.version,
-					newRuntimeSchema: JSON.stringify(schemaChangeMessage.runtime),
-					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
-					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+					newRuntimeSchema: schemaChangeMessage.runtime,
+					sessionRuntimeSchema: this.sessionSchema,
+					oldRuntimeSchema: this.metadata?.documentSchema?.runtime,
 				});
 				const msg: ContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: JSON.stringify(msg),
+					contents: serializeOpContents(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
 			const message: BatchMessage = {
-				contents: JSON.stringify(containerRuntimeMessage) /* serialized content */,
+				contents: serializeOpContents(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -4493,10 +4494,10 @@ export class ContainerRuntime
 						"reSubmitCore",
 						undefined /* sequencedMessage */,
 						{
-							messageDetails: JSON.stringify({
+							messageDetails: {
 								type: message.type,
 								compatBehavior,
-							}),
+							},
 						},
 					);
 					this.closeFn(error);
