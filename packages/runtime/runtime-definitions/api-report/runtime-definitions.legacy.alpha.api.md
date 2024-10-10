@@ -95,11 +95,15 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 // @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
-    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
+    (event: "batchBegin", listener: (op: Patch<ISequencedDocumentMessage, {
+        contents: unknown;
+    }>) => void): any;
+    // (undocumented)
+    (event: "batchBegin", listener: (error: any, op: Patch<ISequencedDocumentMessage, {
+        contents: unknown;
+    }>) => void): any;
     // (undocumented)
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
-    // (undocumented)
-    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
@@ -371,6 +375,9 @@ export interface OpAttributionKey {
     seq: number;
     type: "op";
 }
+
+// @alpha
+export type Patch<T, U> = Omit<T, keyof U> & U;
 
 // @alpha (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

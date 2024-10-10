@@ -29,7 +29,7 @@ import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
-// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@see" comment annotation below
+// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
 import { ensureContentsDeserialized } from "./remoteMessageProcessor.js";
 
 export interface IOutboxConfig {
@@ -59,7 +59,7 @@ export interface IOutboxParameters {
 
 /**
  * Before submitting an op to the Outbox, its contents must be serialized using this function.
- * @remarks - The deserialization on process happens via the function @see {@link ensureContentsDeserialized}.
+ * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
  */
 export function serializeOpContents(contents: OutboundContainerRuntimeMessage): string {
 	return JSON.stringify(contents);

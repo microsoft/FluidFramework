@@ -20,7 +20,7 @@ import { asBatchMetadata } from "../metadata.js";
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
-// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@see" comment annotation below
+// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
 import { serializeOpContents } from "./outbox.js";
 
 /** Info about the batch we learn when we process the first message */
@@ -240,7 +240,7 @@ export class RemoteMessageProcessor {
 /**
  * Takes an incoming runtime message JSON.parse's its contents in place, if needed (old Loader does this for us).
  * Only to be used for runtine messages.
- * @remarks - Serialization during submit happens via @see {@link serializeOpContents}
+ * @remarks - Serialization during submit happens via {@link serializeOpContents}
  * @param mutableMessage - op message received
  */
 export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
