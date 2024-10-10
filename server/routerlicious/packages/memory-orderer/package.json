@@ -101,6 +101,15 @@
 			},
 			"ClassDeclaration_LocalOrderer": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IKafkaSubscriber": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalContext": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalLambdaController": {
+				"forwardCompat": false
 			}
 		}
 	}

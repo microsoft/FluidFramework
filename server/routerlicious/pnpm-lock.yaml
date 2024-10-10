@@ -205,9 +205,15 @@ importers:
       nconf:
         specifier: ^0.12.0
         version: 0.12.0
+      opossum:
+        specifier: ^8.1.4
+        version: 8.1.4
       semver:
         specifier: ^7.5.3
         version: 7.5.3
+      serialize-error:
+        specifier: ^8.1.0
+        version: 8.1.0
       sha.js:
         specifier: ^2.4.11
         version: 2.4.11
@@ -12478,6 +12484,11 @@ packages:
     dependencies:
       mimic-fn: 2.1.0
     dev: true
+
+  /opossum@8.1.4:
+    resolution: {integrity: sha512-ktDDCD2MKX7yx8ZLtt57JrUE0IyYJthmTyXtaF4dEdPYHvX0kkWRiKkQkhEjtZnTNN5y1ErMriKNqOLqgpYXtQ==}
+    engines: {node: ^22 || ^21 || ^20 || ^18 || ^16}
+    dev: false
 
   /optional@0.1.4:
     resolution: {integrity: sha512-gtvrrCfkE08wKcgXaVwQVgwEQ8vel2dc5DDBn9RLQZ3YtmtkBss6A2HY6BnJH4N/4Ku97Ri/SF8sNWE2225WJw==}

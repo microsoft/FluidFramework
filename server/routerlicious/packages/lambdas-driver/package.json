@@ -83,6 +83,16 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DocumentContext": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_KafkaRunner": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_PartitionManager": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

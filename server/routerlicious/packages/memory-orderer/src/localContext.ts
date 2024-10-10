@@ -23,4 +23,12 @@ export class LocalContext implements IContext {
 	public error(error: any, errorData: IContextErrorData) {
 		return;
 	}
+
+	public pause(offset: number, reason?: any) {
+		return;
+	}
+
+	public resume() {
+		return;
+	}
 }

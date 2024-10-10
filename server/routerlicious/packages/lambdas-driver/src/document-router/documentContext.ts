@@ -109,4 +109,12 @@ export class DocumentContext extends EventEmitter implements IContext {
 	public getContextError() {
 		return this.contextError;
 	}
+
+	public pause(offset: number, reason?: any) {
+		this.emit("pause", offset, reason); // TODO add listeners to pause the partition for circuit breaker functionality
+	}
+
+	public resume() {
+		this.emit("resume"); // TODO add listeners to pause the partition for circuit breaker functionality
+	}
 }

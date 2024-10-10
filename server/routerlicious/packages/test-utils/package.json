@@ -93,6 +93,9 @@
 		"broken": {
 			"ClassDeclaration_TestProducer": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_TestContext": {
+				"forwardCompat": false
 			}
 		}
 	}

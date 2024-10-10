@@ -291,6 +291,12 @@ export interface IDb {
 	 * The method also removes any indexes associated with the dropped collection.
 	 */
 	dropCollection?(name: string): Promise<boolean>;
+
+	/**
+	 * Send a ping command to the database to check its health.
+	 * @param dbName - database name
+	 */
+	healthCheck?(dbName?: string): Promise<void>;
 }
 
 /**

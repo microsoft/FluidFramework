@@ -33,6 +33,7 @@ declare function get_old_ClassDeclaration_DocumentContext():
 declare function use_current_ClassDeclaration_DocumentContext(
     use: TypeOnly<current.DocumentContext>): void;
 use_current_ClassDeclaration_DocumentContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DocumentContext());
 
 /*
@@ -105,6 +106,7 @@ declare function get_old_ClassDeclaration_KafkaRunner():
 declare function use_current_ClassDeclaration_KafkaRunner(
     use: TypeOnly<current.KafkaRunner>): void;
 use_current_ClassDeclaration_KafkaRunner(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_KafkaRunner());
 
 /*
@@ -153,6 +155,7 @@ declare function get_old_ClassDeclaration_PartitionManager():
 declare function use_current_ClassDeclaration_PartitionManager(
     use: TypeOnly<current.PartitionManager>): void;
 use_current_ClassDeclaration_PartitionManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PartitionManager());
 
 /*

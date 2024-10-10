@@ -369,6 +369,7 @@ declare function get_old_ClassDeclaration_MongoDb():
 declare function use_current_ClassDeclaration_MongoDb(
     use: TypeOnly<current.MongoDb>): void;
 use_current_ClassDeclaration_MongoDb(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MongoDb());
 
 /*

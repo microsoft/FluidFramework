@@ -73,6 +73,12 @@
 			},
 			"InterfaceDeclaration_IOrdererConnection": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContext": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MongoManager": {
+				"forwardCompat": false
 			}
 		}
 	}

@@ -68,4 +68,12 @@ export class TestContext extends EventEmitter implements IContext {
 	public getContextError() {
 		return;
 	}
+
+	public pause(offset: number, reason?: any): void {
+		this.emit("pause", offset, reason);
+	}
+
+	public resume(): void {
+		this.emit("resume");
+	}
 }

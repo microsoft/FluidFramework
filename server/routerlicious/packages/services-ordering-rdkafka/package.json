@@ -65,6 +65,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_RdkafkaConsumer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
