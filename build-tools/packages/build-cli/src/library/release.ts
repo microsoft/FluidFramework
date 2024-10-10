@@ -13,6 +13,7 @@ import {
 import * as semver from "semver";
 
 import type { Package } from "@fluidframework/build-tools";
+import type { LegacyCompatInterval } from "../config.js";
 import { ReleaseGroup } from "../releaseGroups.js";
 
 /**
@@ -76,14 +77,15 @@ export interface ReleaseRanges {
  * Get the release ranges for a version string.
  *
  * @param version - The version.
- * @param legacyCompatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param interval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param pkg - Package name or package details such as release group, etc
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.
  * @returns The {@link ReleaseRanges} for a version string
  */
 export const getRanges = (
 	version: ReleaseVersion,
-	legacyCompatVersionInterval: { [releaseGroup in ReleaseGroup]: number },
+	interval: LegacyCompatInterval,
 	pkg: Package | string,
 	scheme?: VersionScheme,
 ): ReleaseRanges => {
@@ -95,24 +97,14 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getLegacyCompatVersionRange(
-					version,
-					schemeToUse,
-					pkg,
-					legacyCompatVersionInterval,
-				),
+				legacyCompat: getLegacyCompatVersionRange(version, schemeToUse, pkg, interval),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: getLegacyCompatVersionRange(
-					version,
-					schemeToUse,
-					pkg,
-					legacyCompatVersionInterval,
-				),
+				legacyCompat: getLegacyCompatVersionRange(version, schemeToUse, pkg, interval),
 			};
 };
 
@@ -192,13 +184,13 @@ export function toReportKind(
 }
 
 /**
- * Generates a new semantic version representing the next version in a legacy compatibility range based on a specified multiple of minor versions.
+ * Generates a new version representing the next version in a legacy compatibility range based on a specified multiple of minor versions.
  *
- * This function returns the minor version of the given version to the nearest  multiple of `compatVersionInterval` and bumps it by the `compatVersionInterval` to generate
- * a new semantic version.
- *
- * @param version - A semver-compatible string or `semver.SemVer` object representing the current version.
- * @param legacyCompatVersionInterval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param version - A string representing the current version.
+ * @param schemeToUse - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
+ * version.
+ * @param pkg - Package name or package details such as release group, etc
+ * @param interval - The multiple of minor versions to use for calculating the next version in the range.
  *
  * @returns A string representing the next version in the legacy compatibility range.
  */
@@ -206,18 +198,23 @@ export function getLegacyCompatVersionRange(
 	version: string,
 	schemeToUse: VersionScheme,
 	pkg: Package | string,
-	legacyCompatVersionInterval: { [releaseGroup in ReleaseGroup]: number },
+	interval: LegacyCompatInterval,
 ): string {
 	if (
-		typeof pkg !== "string" &&
-		pkg.monoRepo?.releaseGroup === "client" &&
-		(legacyCompatVersionInterval.client !== undefined ||
-			legacyCompatVersionInterval.client !== 0)
+		interval.server !== 0 ||
+		interval["build-tools"] !== 0 ||
+		interval.historian !== 0 ||
+		interval.gitrest !== 0
 	) {
-		const range = getLegacyRangeClientReleaseGroup(
-			version,
-			legacyCompatVersionInterval.client,
-		);
+		throw new Error(`Legacy API contract only exists for the client release group`);
+	}
+
+	if (interval.client === 0) {
+		throw new Error(`Legacy compat interval not found for client release group`);
+	}
+
+	if (typeof pkg !== "string" && pkg.monoRepo?.releaseGroup === "client") {
+		const range = getLegacyRangeClientReleaseGroup(version, interval.client);
 		return range;
 	}
 
@@ -228,7 +225,15 @@ export function getLegacyCompatVersionRange(
 	return `^${version}`;
 }
 
-function getLegacyRangeClientReleaseGroup(version: string, interval: number): string {
+/**
+ * Generates a new version representing the next version in a legacy compatibility range for "client" release group.
+ *
+ * @param version - A string representing the current version.
+ * @param interval - The multiple of minor versions to use for calculating the next version in the range for "client" release group.
+ *
+ * @returns A string representing the next version in the legacy compatibility range for "client" release group.
+ */
+export function getLegacyRangeClientReleaseGroup(version: string, interval: number): string {
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");

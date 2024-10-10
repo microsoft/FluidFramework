@@ -583,7 +583,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
 
-			context.flubConfig.legacyCompatVersionInterval = {
+			// Legacy APi contracts only exists for the client release group
+			context.flubConfig.legacyCompatInterval = {
 				"client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL,
 				"build-tools": 0,
 				"server": 0,
@@ -594,11 +595,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
-					const ranges = getRanges(
-						latestVer,
-						context.flubConfig.legacyCompatVersionInterval,
-						pkg,
-					);
+					const ranges = getRanges(latestVer, context.flubConfig.legacyCompatInterval, pkg);
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -611,11 +608,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
-				const ranges = getRanges(
-					latestVer,
-					context.flubConfig.legacyCompatVersionInterval,
-					pkgName,
-				);
+				const ranges = getRanges(latestVer, context.flubConfig.legacyCompatInterval, pkgName);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,
