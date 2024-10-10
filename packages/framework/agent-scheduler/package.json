@@ -102,7 +102,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
+		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-tools/build-cli": "^0.48.0",
 		"@fluidframework/agent-scheduler-previous": "npm:@fluidframework/agent-scheduler@~2.3.0",
