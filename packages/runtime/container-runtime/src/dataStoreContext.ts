@@ -55,6 +55,7 @@ import {
 	IInboundSignalMessage,
 	type ISequencedRuntimeMessageCore,
 	type IRuntimeMessageContents,
+	type IPendingMessagesState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -178,14 +179,6 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 /** @internal */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
-}
-
-export interface IPendingMessagesState {
-	messages: {
-		message: ISequencedRuntimeMessageCore;
-		messageContents: IRuntimeMessageContents[];
-	}[];
-	pendingCount: number;
 }
 
 /**

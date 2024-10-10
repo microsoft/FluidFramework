@@ -509,7 +509,6 @@ describe("Garbage Collection Tests", () => {
 			// Plumb the message to processMessage fn to trigger autorecovery
 			// Autorecovery: addedOutboundReference should be called with the tombstoned node, which should transition to "Active" state
 			gc.processMessages(
-				gcTombstoneLoadedMessage,
 				[gcTombstoneLoadedMessage.contents],
 				autoRecoveryTimestampMs,
 				true /* local */,
@@ -2214,16 +2213,10 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-				compatDetails: { behavior: "Ignore" },
-			};
 			assert.throws(
 				() =>
 					garbageCollector.processMessages(
-						containerRuntimeGCMessage,
-						[containerRuntimeGCMessage.contents],
+						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
 						Date.now(),
 						false /* local */,
 					),
@@ -2233,15 +2226,10 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		it("process remote op with unrecognized type and no compat behavior", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-			};
 			assert.throws(
 				() =>
 					garbageCollector.processMessages(
-						containerRuntimeGCMessage,
-						[containerRuntimeGCMessage.contents],
+						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
 						Date.now(),
 						false /* local */,
 					),

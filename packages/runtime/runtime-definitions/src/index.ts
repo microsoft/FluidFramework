@@ -20,8 +20,13 @@ export type {
 	IFluidDataStoreContext,
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,
+	IPendingMessagesState,
 } from "./dataStoreContext.js";
-export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
+export {
+	FlushMode,
+	FlushModeExperimental,
+	VisibilityState,
+} from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 export { IFluidDataStoreFactory } from "./dataStoreFactory.js";
 export type {

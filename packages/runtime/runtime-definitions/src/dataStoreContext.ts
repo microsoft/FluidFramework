@@ -422,6 +422,18 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 /**
+ * The state maintained for messages that are received when a channel isn't yet loaded.
+ * @internal
+ */
+export interface IPendingMessagesState {
+	messages: {
+		message: ISequencedRuntimeMessageCore;
+		messageContents: IRuntimeMessageContents[];
+	}[];
+	pendingCount: number;
+}
+
+/**
  * Represents the context for the data store like objects. It is used by the data store runtime to
  * get information and call functionality to its parent.
  *

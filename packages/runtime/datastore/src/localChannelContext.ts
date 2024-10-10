@@ -20,6 +20,7 @@ import {
 	ISummarizeResult,
 	type ISequencedRuntimeMessageCore,
 	type IRuntimeMessageContents,
+	type IPendingMessagesState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -34,7 +35,6 @@ import {
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,
 	summarizeChannelAsync,
-	type IPendingMessagesState,
 } from "./channelContext.js";
 import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 

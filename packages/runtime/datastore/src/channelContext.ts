@@ -37,14 +37,6 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
-export interface IPendingMessagesState {
-	messages: {
-		message: ISequencedRuntimeMessageCore;
-		messageContents: IRuntimeMessageContents[];
-	}[];
-	pendingCount: number;
-}
-
 export interface IChannelContext {
 	getChannel(): Promise<IChannel>;
 
