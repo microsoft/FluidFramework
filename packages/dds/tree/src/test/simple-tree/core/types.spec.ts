@@ -135,6 +135,7 @@ describe("simple-tree types", () => {
 				public static readonly identifier = "Subclass";
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
+				public static readonly metadata = undefined;
 
 				public static override prepareInstance<T2>(
 					this: typeof TreeNodeValid<T2>,
@@ -235,6 +236,7 @@ describe("simple-tree types", () => {
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
 				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+				public static readonly metadata = undefined;
 
 				public static override buildRawNode<T2>(
 					this: typeof TreeNodeValid<T2>,
@@ -288,6 +290,7 @@ describe("simple-tree types", () => {
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
 				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+				public static readonly metadata = undefined;
 
 				public static override buildRawNode<T2>(
 					this: typeof TreeNodeValid<T2>,
