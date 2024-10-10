@@ -1543,7 +1543,6 @@ export class MergeTree {
 			_pos: number,
 			context: InsertContext,
 			// Keeping this function within the scope of blockInsert for readability.
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 		): ISegmentChanges => {
 			const segmentChanges: ISegmentChanges = {};
 			if (segment) {
@@ -1983,7 +1982,6 @@ export class MergeTree {
 		refSeq: number,
 		clientId: number,
 		seq: number,
-		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
 		const startPos = start.side === Side.Before ? start.pos : start.pos + 1;
@@ -1992,7 +1990,7 @@ export class MergeTree {
 		this.ensureIntervalBoundary(startPos, refSeq, clientId);
 		this.ensureIntervalBoundary(endPos, refSeq, clientId);
 
-		let _overwrite = overwrite;
+		let _overwrite = false;
 		const localOverlapWithRefs: ISegmentLeaf[] = [];
 		const movedSegments: IMergeTreeSegmentDelta[] = [];
 		const localSeq =
@@ -2189,7 +2187,6 @@ export class MergeTree {
 		refSeq: number,
 		clientId: number,
 		seq: number,
-		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
 		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
@@ -2198,7 +2195,7 @@ export class MergeTree {
 				typeof start === "object" && typeof end === "object",
 				"Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled.",
 			);
-			this.obliterateRangeSided(start, end, refSeq, clientId, seq, overwrite, opArgs);
+			this.obliterateRangeSided(start, end, refSeq, clientId, seq, opArgs);
 		} else {
 			assert(
 				typeof start === "number" && typeof end === "number",
@@ -2210,7 +2207,6 @@ export class MergeTree {
 				refSeq,
 				clientId,
 				seq,
-				overwrite,
 				opArgs,
 			);
 		}
@@ -2222,10 +2218,9 @@ export class MergeTree {
 		refSeq: number,
 		clientId: number,
 		seq: number,
-		overwrite = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
-		let _overwrite = overwrite;
+		let _overwrite = false;
 		this.ensureIntervalBoundary(start, refSeq, clientId);
 		this.ensureIntervalBoundary(end, refSeq, clientId);
 		// eslint-disable-next-line import/no-deprecated
@@ -2405,7 +2400,6 @@ export class MergeTree {
 						UniversalSequenceNumber,
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
-						false,
 						{ op: removeOp },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
