@@ -639,7 +639,8 @@ for (const testOpts of testMatrix) {
 					const message = call.firstArg as ISequencedDocumentMessage;
 					if (
 						message.type === MessageType.Operation &&
-						(message.contents as { type: string }).type === "groupedBatch"
+						typeof message.contents === "string" &&
+						(JSON.parse(message.contents) as { type?: unknown }).type === "groupedBatch"
 					) {
 						groupedBatchCount++;
 					}

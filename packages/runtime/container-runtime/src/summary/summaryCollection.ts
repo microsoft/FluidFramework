@@ -353,11 +353,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	}
 
 	private parseContent(op: ISequencedDocumentMessage) {
-		// This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
-		// Note: Until that change is made in the loader, this case will never be hit.
-		// Then there will be a long time of needing both cases, until LTS catches up to the change.
+		// This should become unconditional once (Loader LTS) reaches 2.4 or later
+		// There will be a long time of needing both cases, until LTS catches up to the change.
 		// That said, we may instead move to listen for "op" events from ContainerRuntime,
-		// and parsing may not be required at all if ContainerRuntime.process() would parse it for all types of ops.
+		// and parsing may not be required at all if ContainerRuntime.process() continues to parse it for all types of ops.
 		if (typeof op.contents === "string") {
 			op.contents = JSON.parse(op.contents);
 		}

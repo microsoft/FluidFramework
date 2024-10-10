@@ -177,7 +177,7 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				ensureContentsDeserialized(inboundMessage, true, () => {});
+				ensureContentsDeserialized(inboundMessage);
 				const result = messageProcessor.process(inboundMessage, () => {});
 				switch (result?.type) {
 					case "fullBatch":
@@ -486,7 +486,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		ensureContentsDeserialized(documentMessage, true, () => {});
+		ensureContentsDeserialized(documentMessage);
 		const processResult = messageProcessor.process(documentMessage, () => {});
 
 		assert.equal(
