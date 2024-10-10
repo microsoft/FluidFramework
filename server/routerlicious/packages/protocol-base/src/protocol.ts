@@ -121,8 +121,8 @@ export class ProtocolOpHandler implements IProtocolHandler {
 				break;
 
 			case MessageType.Propose:
-                // TODO: Update callers to stop parsing the contents and do it here unconditionally
-                if (typeof message.contents === "string") {
+				// TODO: Update callers to stop parsing the contents and do it here unconditionally
+				if (typeof message.contents === "string") {
 					message.contents = JSON.parse(message.contents);
 				}
 				const proposal = message.contents as IProposal;
