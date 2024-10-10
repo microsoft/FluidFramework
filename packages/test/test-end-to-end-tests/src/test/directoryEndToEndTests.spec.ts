@@ -47,7 +47,10 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 	let sharedDirectory2: ISharedDirectory;
 	let sharedDirectory3: ISharedDirectory;
 
-	beforeEach("createContainers", async () => {
+	beforeEach("createContainers", async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
