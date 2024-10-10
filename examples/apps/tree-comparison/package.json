@@ -36,7 +36,7 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
@@ -56,9 +56,7 @@
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"tiny-typed-emitter": "^2.1.0",
-		"uuid": "^9.0.0"
-	},
-	"devDependencies": {
+		"uuid": "^9.0.0",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-tools/build-cli": "^0.48.0",
 		"@fluidframework/build-common": "^2.0.3",
