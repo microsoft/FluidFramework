@@ -478,3 +478,192 @@ export async function codeCoverageTesting1(
 
 	return attributes;
 }
+
+/**
+ * Testing
+ * @internal
+ */
+export async function codeCoverageTesting2(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	// Non null asserting here because of the length check above
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}
+
+/**
+ * Testing
+ * @internal
+ */
+export async function codeCoverageTesting3(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	// Non null asserting here because of the length check above
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}
+
+/**
+ * Testing
+ * @internal
+ */
+export async function codeCoverageTestin4(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	// Non null asserting here because of the length check above
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}
+
+/**
+ * Testing
+ * @internal
+ */
+export async function codeCoverageTesting5(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	// Non null asserting here because of the length check above
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}
+
+/**
+ * Testing
+ * @internal
+ */
+export async function codeCoverageTesting6(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	// Non null asserting here because of the length check above
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}
+
+/**
+ * Testing
+ * @internal
+ */
+export async function codeCoverageTesting7(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	// Non null asserting here because of the length check above
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}
+
+/**
+ * Testing
+ * @internal
+ */
+export async function codeCoverageTesting8(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	// Non null asserting here because of the length check above
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}
