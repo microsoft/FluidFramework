@@ -2124,13 +2124,22 @@ importers:
         version: 6.0.1
 
   examples/client-logger/app-insights-logger:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
       '@fluidframework/app-insights-logger':
         specifier: workspace:~
         version: link:../../../packages/framework/client-logger/app-insights-logger
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.48.0
+        version: 0.48.0
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -2140,6 +2149,9 @@ importers:
       '@fluidframework/counter':
         specifier: workspace:~
         version: link:../../../packages/dds/counter
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
@@ -2155,25 +2167,6 @@ importers:
       '@microsoft/applicationinsights-web':
         specifier: ^2.8.11
         version: 2.8.18(tslib@1.14.1)
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.48.0
-        version: 0.48.0
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@testing-library/dom':
         specifier: ^10.4.0
         version: 10.4.0
@@ -2231,6 +2224,12 @@ importers:
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -21857,7 +21856,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-channel-js@2.8.18(tslib@1.14.1):
     resolution: {integrity: sha512-KNYk8qeci8AcWKZUqgCElEr1Ef5G+iudq1mN57Sc/8hUONNp2fTfWh1Cm+RUTRIEWAC29uUWGyLhSqiTF3ox1w==}
@@ -21869,7 +21867,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-common@2.8.18(tslib@1.14.1):
     resolution: {integrity: sha512-/PBRmRL6rFCoO3vWpIEHuFnu+TinEYRKWOj+I+XVUH5myZpv+nYvaRdwryVTkmCYxLyL9kxtNn7hQx8DBlhdSw==}
@@ -21880,7 +21877,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-core-js@2.8.18(tslib@1.14.1):
     resolution: {integrity: sha512-yPHRZFLpnEO0uSgFPM1BLMRRwjoten9YBbn4pJRbCT4PigLnj748knmWsMwXIdcehtkRTYz78kPYa/LWP7nvmA==}
@@ -21890,7 +21886,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-dependencies-js@2.8.18(tslib@1.14.1):
     resolution: {integrity: sha512-XW3m1DEXo2CkTUEeBzXGjoMjud6b1Y1J6W1Nz0RJ3IMC5ptbSOeen5rRDSzcBEUZN75vWvbGmhxVuQTXnnIu2g==}
@@ -21902,7 +21897,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-properties-js@2.8.18(tslib@1.14.1):
     resolution: {integrity: sha512-WucPqEzgT20JhjwOPQhgBSal6tlKldUz3c6j5Kpj4Rej95c2vvm1t14lI/p9SvOjZDRK5dMfkuQtvFG7NrUlIA==}
@@ -21914,11 +21908,9 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-shims@2.0.2:
     resolution: {integrity: sha512-PoHEgsnmcqruLNHZ/amACqdJ6YYQpED0KSRe6J7gIJTtpZC1FfFU9b1fmDKDKtFoUSrPzEh1qzO3kmRZP0betg==}
-    dev: false
 
   /@microsoft/applicationinsights-web@2.8.18(tslib@1.14.1):
     resolution: {integrity: sha512-n6gW9WXr/oHrt2S8waXjYoBqzhPChJNoTPlKm+pwtO3iP+I8dQDuf8Q02RKLgCaWzvEhO/1GSznCECBX0jP+gg==}
@@ -21934,11 +21926,9 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/dynamicproto-js@1.1.11:
     resolution: {integrity: sha512-gNw9z9LbqLV+WadZ6/MMrWwO3e0LuoUH1wve/1iPsBNbgqeVCiB0EZFNNj2lysxS2gkqoF9hmyVaG3MoM1BkxA==}
-    dev: false
 
   /@microsoft/load-themed-styles@1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}

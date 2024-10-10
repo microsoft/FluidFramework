@@ -40,7 +40,8 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"dependencies": {},
+	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/app-insights-logger": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -52,9 +53,7 @@
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@microsoft/applicationinsights-web": "^2.8.11",
 		"react": "^18.3.1",
-		"react-dom": "^18.3.1"
-	},
-	"devDependencies": {
+		"react-dom": "^18.3.1",
 		"@biomejs/biome": "~1.8.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.48.0",
