@@ -1,0 +1,12 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		// SharedTree seems to have issues with exactOptionalPropertyTypes: true. It has it set to false itself, and if it's
+		// not set to false here the build fails complaining about types in SharedTree's .d.ts files.
+		"exactOptionalPropertyTypes": false,
+	},
+}

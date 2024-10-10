@@ -32,7 +32,7 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@azure/identity": "^4.2.0",
+		"@azure/identity": "^4.4.1",
 		"@azure/identity-cache-persistence": "^1.1.0",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
