@@ -43,6 +43,12 @@ import { CommandLogger } from "../../logging.js";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
 
 /**
+ * The multiple of minor versions to use for calculating the next version in the legacy compatibility range.
+ * This interval applies exclusively to the client release group; for all other release groups, the caret versions are used.
+ */
+const DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL = 10;
+
+/**
  * Controls behavior when there is a list of releases and one needs to be selected.
  */
 export type ReleaseSelectionMode =
@@ -388,7 +394,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}),
 		baseFileName: Flags.string({
 			description:
-				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
+				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
 		}),
 		...ReleaseReportBaseCommand.flags,
@@ -538,6 +544,15 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					flags.baseFileName,
 					this.logger,
 				),
+				writeReport(
+					context,
+					report,
+					"legacy-compat",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
 			];
 
 			await Promise.all(promises);
@@ -567,11 +582,16 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
-			const ranges = getRanges(latestVer);
+
+			// Legacy APi contracts only exists for the client release group
+			context.flubConfig.legacyCompatInterval = {
+				"client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL,
+			};
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
+					const ranges = getRanges(latestVer, context.flubConfig.legacyCompatInterval, pkg);
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -584,6 +604,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
+				const ranges = getRanges(latestVer, context.flubConfig.legacyCompatInterval, pkgName);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,

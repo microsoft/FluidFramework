@@ -12,6 +12,7 @@ export type {
 	PackageRequirements,
 	PolicyConfig,
 	PreviousVersionStyle,
+	LegacyCompatInterval,
 	ReleaseNotesConfig,
 	ReleaseNotesSection,
 	ReleaseNotesSectionName,

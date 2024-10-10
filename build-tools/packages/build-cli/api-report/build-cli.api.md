@@ -30,6 +30,7 @@ export interface FlubConfig {
         [name: string]: VersionBumpType | PreviousVersionStyle;
     };
     bump?: BumpConfig;
+    legacyCompatInterval?: LegacyCompatInterval;
     policy?: PolicyConfig;
     releaseNotes?: ReleaseNotesConfig;
     version?: 1;
@@ -37,6 +38,9 @@ export interface FlubConfig {
 
 // @public
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
+
+// @public
+export type LegacyCompatInterval = Partial<Record<ReleaseGroup, number>>;
 
 // @public
 export interface PackageNamePolicyConfig {
