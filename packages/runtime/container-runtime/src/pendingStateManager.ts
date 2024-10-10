@@ -340,9 +340,14 @@ export class PendingStateManager implements IDisposable {
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
 		// Find the first pending message that uses Batch ID, to compare to the incoming remote batch.
 		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
-		const pendingMessageUsingBatchId = this.pendingMessages
-			.toArray()
-			.find((pendingMessage) => pendingMessage.batchInfo.ignoreBatchId !== true);
+		const firstIndexUsingBatchId = Array.from({
+			length: this.pendingMessages.length,
+		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.ignoreBatchId !== true);
+		const pendingMessageUsingBatchId =
+			firstIndexUsingBatchId === -1
+				? undefined
+				: this.pendingMessages.get(firstIndexUsingBatchId);
+
 		if (pendingMessageUsingBatchId === undefined) {
 			return false;
 		}
