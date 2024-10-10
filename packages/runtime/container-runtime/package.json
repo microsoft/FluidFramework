@@ -234,6 +234,37 @@
 		"broken": {
 			"Function_isRuntimeMessage": {
 				"backCompat": false
+			},
+			"Class_ChannelCollection": {
+				"forwardCompat": false
+			},
+			"Class_FluidDataStoreContext": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Class_LocalFluidDataStoreContext": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Class_LocalFluidDataStoreContextBase": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_FluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_LocalFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_LocalFluidDataStoreContextBase": {
+				"backCompat": false
+			},
+			"Class_DocumentsSchemaController": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_DocumentsSchemaController": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "legacy"

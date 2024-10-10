@@ -130,6 +130,7 @@ declare type current_as_old_for_Interface_IDeltaConnection = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IDeltaHandler": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IDeltaHandler = requireAssignableTo<TypeOnly<old.IDeltaHandler>, TypeOnly<current.IDeltaHandler>>
 
 /*
