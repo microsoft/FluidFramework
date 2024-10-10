@@ -132,6 +132,7 @@ export interface IDeltaHandler {
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 * @deprecated - Use processMessages instead to process messages.
 	 */
 	process: (
 		message: ISequencedDocumentMessage,

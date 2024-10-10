@@ -19,6 +19,7 @@ import {
 	IChannelAttributes,
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
+	type IDeltaHandler,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -517,7 +518,7 @@ export abstract class SharedObjectCore<
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
 			},
-		});
+		} satisfies IDeltaHandler);
 	}
 
 	/**

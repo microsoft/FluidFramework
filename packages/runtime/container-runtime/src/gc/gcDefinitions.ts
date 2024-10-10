@@ -354,7 +354,6 @@ export interface IGarbageCollector {
 	): void;
 	/** Called to process garbage collection message.s */
 	processMessages(
-		message: Omit<ContainerRuntimeGCMessage, "contents">,
 		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,

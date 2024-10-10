@@ -666,26 +666,33 @@ export class FluidDataStoreRuntime
 	) {
 		this.verifyNotClosed();
 
-		/**
+		/*
 		 * Bunch contiguous messages for the same channel and send them together.
 		 * This is an optimization where DDSes can process a bunch of ops together. DDSes
 		 * like merge tree or shared tree can process ops more efficiently when they are bunched together.
 		 */
 		let previousAddress: string | undefined;
-		let contextMessageContents: IRuntimeMessageContents[] = [];
+		let previousMessageContents: IRuntimeMessageContents[] = [];
+
+		const sendPreviousBunch = () => {
+			assert(previousAddress !== undefined, "previous address must exist to send messages");
+
+			// process the last set of channel ops
+			const channelContext = this.contexts.get(previousAddress);
+			assert(!!channelContext, "Channel context not found");
+			channelContext.processMessages(message, previousMessageContents, local);
+			previousMessageContents = [];
+		};
 
 		for (const { contents, ...restOfMessageContents } of messageContents) {
 			const envelope = contents as IEnvelope;
 
 			// If the address of the message changes while processing the batch, process the previous bunch.
 			if (previousAddress !== undefined && previousAddress !== envelope.address) {
-				const channelContext = this.contexts.get(previousAddress);
-				assert(!!channelContext, "Channel context not found");
-				channelContext.processMessages(message, contextMessageContents, local);
-				contextMessageContents = [];
+				sendPreviousBunch();
 			}
 
-			contextMessageContents.push({
+			previousMessageContents.push({
 				contents: envelope.contents,
 				...restOfMessageContents,
 			});
@@ -693,16 +700,7 @@ export class FluidDataStoreRuntime
 		}
 
 		// Process the last bunch of messages.
-		if (contextMessageContents.length > 0) {
-			assert(
-				previousAddress !== undefined,
-				"previous address must exist if there are messages to process",
-			);
-			// process the last set of channel ops
-			const channelContext = this.contexts.get(previousAddress);
-			assert(!!channelContext, "Channel context not found");
-			channelContext.processMessages(message, contextMessageContents, local);
-		}
+		sendPreviousBunch();
 	}
 
 	private processAttachMessages(

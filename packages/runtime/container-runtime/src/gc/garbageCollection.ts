@@ -862,13 +862,11 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Process GC messages.
-	 * @param message - The GC message from the container runtime.
 	 * @param messageContents - The contents of the messages.
 	 * @param messageTimestampMs - The timestamp of the messages.
 	 * @param local - Whether it was send by this client.
 	 */
 	public processMessages(
-		message: Omit<ContainerRuntimeGCMessage, "contents">,
 		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,

@@ -102,33 +102,14 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		local: boolean,
 	): void {
 		const newMessageContents = getMessagesWithStashedOpHandling(messageContents);
-		if (this.handler.processMessages !== undefined) {
-			try {
-				// catches as data processing error whether or not they come from async pending queues
-				return this.handler.processMessages(message, newMessageContents, local);
-			} catch (error) {
-				throw DataProcessingError.wrapIfUnrecognized(
-					error,
-					"channelDeltaConnectionFailedToProcessMessages",
-				);
-			}
-		}
-
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messageContents) {
-			try {
-				// catches as data processing error whether or not they come from async pending queues
-				this.handler.process(
-					{ ...message, contents, clientSequenceNumber },
-					local,
-					localOpMetadata,
-				);
-			} catch (error) {
-				throw DataProcessingError.wrapIfUnrecognized(
-					error,
-					"channelDeltaConnectionFailedToProcessMessage",
-					message,
-				);
-			}
+		try {
+			// catches as data processing error whether or not they come from async pending queues
+			this.handler.processMessages(message, newMessageContents, local);
+		} catch (error) {
+			throw DataProcessingError.wrapIfUnrecognized(
+				error,
+				"channelDeltaConnectionFailedToProcessMessages",
+			);
 		}
 	}
 
