@@ -229,9 +229,12 @@ export async function selectAndFilterPackages(
 }
 
 /**
- * Convenience type that extracts only the properties of a package that are needed for filtering.
+ * Convenience type that contains only the properties of a package that are needed for filtering.
  */
-type FilterablePackage = Pick<IPackage, "name" | "private">;
+interface FilterablePackage {
+	name: string;
+	private?: boolean | undefined;
+}
 
 /**
  * Filters a list of packages by the filter criteria.

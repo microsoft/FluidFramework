@@ -70,7 +70,7 @@ describe("loadFluidRepo", () => {
 				const client = repo.workspaces.get("client" as WorkspaceName);
 				expect(client).to.not.be.undefined;
 				expect(client?.packages.length).to.equal(
-					153,
+					155,
 					"client workspace has the wrong number of packages",
 				);
 				expect(client?.releaseGroups.size).to.equal(
