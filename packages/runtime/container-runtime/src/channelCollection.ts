@@ -964,8 +964,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			);
 		}
 
-		// Process the last bunch of messages.
-		sendPreviousBunch();
+		// Process the last bunch of messages, if any. There may not be any messages in case all of them are
+		// ignored because the data store is deleted.
+		if (previousMessageState !== undefined) {
+			sendPreviousBunch();
+		}
 	}
 
 	private async getDataStore(
