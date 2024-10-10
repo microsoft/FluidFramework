@@ -114,7 +114,6 @@ jobs:
           --inFile RELEASE_NOTES/${{ fromJson(env.RELEASE_JSON).version }}.md \
           --outFile release-notes.md
 
-      # Generate release notes
       - name: Generate patch release notes
         # This condition is the logical inverse of the condition for the "Generate minor/major release notes" step.
         # One of these two steps should be executed each time the workflow is run.
