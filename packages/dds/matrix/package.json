@@ -139,7 +139,7 @@
 		"tslib": "^1.10.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
+		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
