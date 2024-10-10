@@ -29,6 +29,8 @@ import {
 	Side,
 	SequencePlace,
 	endpointPosAndSide,
+	PropertiesManager,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -67,6 +69,8 @@ import {
 	sequenceIntervalHelpers,
 	startReferenceSlidingPreference,
 } from "./intervals/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ISerializableIntervalPrivate } from "./intervals/intervalUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceIntervalClass } from "./intervals/sequenceInterval.js";
 
@@ -1167,7 +1171,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * {@inheritdoc IIntervalCollection.getIntervalById}
 	 */
-	public getIntervalById(id: string): TInterval | undefined {
+	public getIntervalById(id: string): ISerializableIntervalPrivate<TInterval> | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called before accessing intervals");
 		}
@@ -1326,10 +1330,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			let deltaProps: PropertySet | undefined;
 			let newInterval: TInterval | undefined;
 			if (props !== undefined) {
-				deltaProps = interval.addProperties(
+				interval.properties ??= new PropertiesManager();
+				deltaProps = interval.propertyManager?.addProperties(
+					interval.properties,
 					props,
-					true,
 					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+					true,
 				);
 			}
 			if (start !== undefined && end !== undefined) {
@@ -1478,15 +1484,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// strip it out of the properties here.
 		const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties ?? {};
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
-		const interval: TInterval | undefined = this.getIntervalById(id);
+		const interval: ISerializableIntervalPrivate<TInterval> | undefined =
+			this.getIntervalById(id);
 		if (!interval) {
 			// The interval has been removed locally; no-op.
 			return;
 		}
 
 		if (local) {
+			interval.propertyManager ??= new PropertiesManager();
 			// Let the propertyManager prune its pending change-properties set.
-			interval.propertyManager?.ackPendingProperties({
+			interval.propertyManager.ackPendingProperties({
 				type: MergeTreeDeltaType.ANNOTATE,
 				props: serializedInterval.properties ?? {},
 			});
@@ -1517,7 +1525,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 						op,
 					) ?? interval;
 			}
-			const deltaProps = newInterval.addProperties(newProps, true, op.sequenceNumber);
+			newInterval.propertyManager ??= new PropertiesManager();
+			const deltaProps = newInterval.propertyManager.addProperties(
+				newInterval.properties,
+				newProps,
+				op.sequenceNumber,
+				true,
+			);
 			if (this.onDeserialize) {
 				this.onDeserialize(newInterval);
 			}
@@ -1636,7 +1650,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
 		}
-		const segoff = { segment: lref.getSegment(), offset: lref.getOffset() };
+		const segoff: { segment: ISegmentInternal | undefined; offset: number | undefined } = {
+			segment: lref.getSegment(),
+			offset: lref.getOffset(),
+		};
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
@@ -1714,7 +1731,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				if (props) {
 					interval.start.addProperties(props);
 				}
-				const oldSeg = oldInterval.start.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.start.getSegment();
 				// remove and rebuild start interval as transient for event
 				this.client.removeLocalReferencePosition(oldInterval.start);
 				oldInterval.start.refType = ReferenceType.Transient;
@@ -1736,7 +1753,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					interval.end.addProperties(props);
 				}
 				// remove and rebuild end interval as transient for event
-				const oldSeg = oldInterval.end.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.end.getSegment();
 				this.client.removeLocalReferencePosition(oldInterval.end);
 				oldInterval.end.refType = ReferenceType.Transient;
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());

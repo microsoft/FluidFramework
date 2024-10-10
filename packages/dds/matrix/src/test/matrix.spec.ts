@@ -12,6 +12,7 @@ import {
 	IChannelServices,
 	type IChannel,
 } from "@fluidframework/datastore-definitions/internal";
+import type { ISegmentInternal } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -967,7 +968,7 @@ describe("Matrix1", () => {
 
 				function findVectorReferenceCount(vector: PermutationVector): number {
 					let count = 0;
-					vector.walkSegments((segment) => {
+					vector.walkSegments((segment: ISegmentInternal) => {
 						count += [...(segment.localRefs ?? [])].length;
 						return true;
 					});

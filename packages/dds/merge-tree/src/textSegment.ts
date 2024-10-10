@@ -106,9 +106,7 @@ export class TextSegment extends BaseSegment {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IMergeTreeTextHelper {
 	getText(
