@@ -11,13 +11,14 @@ import YAML from "yaml";
 
 import { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
 import { Logger, defaultLogger } from "./logging";
-import { Package } from "./npmPackage";
+import { type IFluidBuildPackage, PackageClass } from "./npmPackage";
 import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
 
+import { type IPackageManager, createPackageManager } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
-export type PackageManager = "npm" | "pnpm" | "yarn";
+// export type PackageManager = "npm" | "pnpm" | "yarn";
 
 /**
  * A monorepo is a collection of packages that are versioned and released together.
@@ -40,10 +41,10 @@ export type PackageManager = "npm" | "pnpm" | "yarn";
  * - If the version was not defined in lerna.json, then the version value in package.json will be used.
  */
 export class MonoRepo {
-	public readonly packages: Package[] = [];
+	public readonly packages: IFluidBuildPackage[] = [];
 	public readonly version: string;
 	public readonly workspaceGlobs: string[];
-	public readonly pkg: Package;
+	public readonly pkg: IFluidBuildPackage;
 
 	public get name(): string {
 		return this.kind;
@@ -62,7 +63,7 @@ export class MonoRepo {
 
 	static load(group: string, repoPackage: IFluidBuildDir) {
 		const { directory, ignoredDirs } = repoPackage;
-		let packageManager: PackageManager;
+		let packageManager: IPackageManager;
 		let packageDirs: string[];
 
 		try {
@@ -75,12 +76,12 @@ export class MonoRepo {
 			switch (tool.type) {
 				case "lerna":
 					// Treat lerna as "npm"
-					packageManager = "npm";
+					packageManager = createPackageManager("npm");
 					break;
 				case "npm":
 				case "pnpm":
 				case "yarn":
-					packageManager = tool.type;
+					packageManager = createPackageManager(tool.type);
 					break;
 				default:
 					throw new Error(`Unknown package manager ${tool.type}`);
@@ -108,7 +109,7 @@ export class MonoRepo {
 	constructor(
 		public readonly kind: string,
 		public readonly repoPath: string,
-		private readonly packageManager: PackageManager,
+		private readonly packageManager: IPackageManager,
 		packageDirs: string[],
 		ignoredDirs?: string[],
 		private readonly logger: Logger = defaultLogger,
@@ -123,9 +124,9 @@ export class MonoRepo {
 			throw new Error(`ERROR: package.json not found in ${repoPath}`);
 		}
 
-		this.pkg = Package.load(packagePath, kind, this);
+		this.pkg = PackageClass.load(packagePath, kind, this);
 
-		if (this.packageManager !== this.pkg.packageManager) {
+		if (this.packageManager.name !== this.pkg.packageManager.name) {
 			throw new Error(
 				`Package manager mismatch between ${packageManager} and ${this.pkg.packageManager}`,
 			);
@@ -133,10 +134,10 @@ export class MonoRepo {
 
 		for (const pkgDir of packageDirs) {
 			traceInit(`${kind}: Loading packages from ${pkgDir}`);
-			this.packages.push(Package.load(path.join(pkgDir, "package.json"), kind, this));
+			this.packages.push(PackageClass.load(path.join(pkgDir, "package.json"), kind, this));
 		}
 
-		if (packageManager === "pnpm") {
+		if (packageManager.name === "pnpm") {
 			const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
 			const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
 			this.workspaceGlobs = YAML.parse(workspaceString).packages;
@@ -146,7 +147,7 @@ export class MonoRepo {
 		const lernaPath = path.join(repoPath, "lerna.json");
 		if (existsSync(lernaPath)) {
 			const lerna = readJsonSync(lernaPath);
-			if (packageManager !== "pnpm" && lerna.packages !== undefined) {
+			if (packageManager.name !== "pnpm" && lerna.packages !== undefined) {
 				this.workspaceGlobs = lerna.packages;
 			}
 
@@ -155,7 +156,7 @@ export class MonoRepo {
 				this.version = lerna.version;
 				versionFromLerna = true;
 			}
-		} else if (packageManager !== "pnpm") {
+		} else if (packageManager.name !== "pnpm") {
 			// Load globs from package.json directly
 			if (this.pkg.packageJson.workspaces instanceof Array) {
 				this.workspaceGlobs = this.pkg.packageJson.workspaces;
@@ -177,9 +178,9 @@ export class MonoRepo {
 	}
 
 	public get installCommand(): string {
-		return this.packageManager === "pnpm"
+		return this.packageManager.name === "pnpm"
 			? "pnpm i"
-			: this.packageManager === "yarn"
+			: this.packageManager.name === "yarn"
 				? "npm run install-strict"
 				: "npm i --no-package-lock --no-shrinkwrap";
 	}

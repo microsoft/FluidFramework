@@ -10,7 +10,7 @@ import registerDebug from "debug";
 
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
-import { Package, Packages } from "../common/npmPackage";
+import { type IFluidBuildPackage, Packages } from "../common/npmPackage";
 import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
 import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
@@ -153,8 +153,8 @@ export class FluidRepoBuild extends FluidRepo {
 			this.context,
 			buildTargetNames,
 			getFluidBuildConfig(this.resolvedRoot)?.tasks,
-			(pkg: Package) => {
-				return (dep: Package) => {
+			(pkg: IFluidBuildPackage) => {
+				return (dep: IFluidBuildPackage) => {
 					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
 				};
 			},
@@ -162,14 +162,14 @@ export class FluidRepoBuild extends FluidRepo {
 	}
 
 	private getReleaseGroupPackages() {
-		const releaseGroupPackages: Package[] = [];
+		const releaseGroupPackages: IFluidBuildPackage[] = [];
 		for (const releaseGroup of this.releaseGroups.values()) {
 			releaseGroupPackages.push(releaseGroup.pkg);
 		}
 		return releaseGroupPackages;
 	}
 
-	private matchWithFilter(callback: (pkg: Package) => boolean) {
+	private matchWithFilter(callback: (pkg: IFluidBuildPackage) => boolean) {
 		let matched = false;
 		this.packages.packages.forEach((pkg) => {
 			if (!pkg.matched && callback(pkg)) {
@@ -224,8 +224,8 @@ export class FluidRepoBuild extends FluidRepo {
 		this.setMatchedPackage(monoRepo.pkg);
 	}
 
-	private setMatchedPackage(pkg: Package) {
+	private setMatchedPackage(pkg: IFluidBuildPackage) {
 		traceInit(`${pkg.nameColored}: matched`);
-		pkg.setMatched();
+		pkg.matched = true;
 	}
 }

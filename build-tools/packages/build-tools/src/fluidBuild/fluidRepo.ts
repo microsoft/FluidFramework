@@ -6,7 +6,7 @@
 import * as path from "path";
 
 import { MonoRepo } from "../common/monoRepo";
-import { Package, Packages } from "../common/npmPackage";
+import { type IFluidBuildPackage, Packages } from "../common/npmPackage";
 import { ExecAsyncResult } from "../common/utils";
 import {
 	type IFluidBuildDir,
@@ -48,7 +48,7 @@ export class FluidRepo {
 			return Packages.loadDir(item.directory, group, item.ignoredDirs);
 		};
 
-		const loadedPackages: Package[] = [];
+		const loadedPackages: IFluidBuildPackage[] = [];
 		for (const group in fluidBuildDirs) {
 			const item = normalizeEntry(fluidBuildDirs[group]);
 			if (Array.isArray(item)) {
@@ -69,14 +69,16 @@ export class FluidRepo {
 	}
 
 	public createPackageMap() {
-		return new Map<string, Package>(this.packages.packages.map((pkg) => [pkg.name, pkg]));
+		return new Map<string, IFluidBuildPackage>(
+			this.packages.packages.map((pkg) => [pkg.name, pkg]),
+		);
 	}
 
 	public reload() {
 		this.packages.packages.forEach((pkg) => pkg.reload());
 	}
 
-	public static async ensureInstalled(packages: Package[]) {
+	public static async ensureInstalled(packages: IFluidBuildPackage[]) {
 		const installedMonoRepo = new Set<MonoRepo>();
 		const installPromises: Promise<ExecAsyncResult>[] = [];
 		for (const pkg of packages) {

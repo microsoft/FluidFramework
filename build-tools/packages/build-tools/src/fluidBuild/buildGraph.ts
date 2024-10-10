@@ -11,7 +11,7 @@ import * as assert from "assert";
 import registerDebug from "debug";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
-import { Package } from "../common/npmPackage";
+import { type IFluidBuildPackage } from "../common/npmPackage";
 import { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
 import { FileHashCache } from "./fileHashCache";
@@ -71,7 +71,7 @@ class BuildGraphContext implements BuildContext {
 	public readonly repoRoot: string;
 	public readonly gitRepo: GitRepo;
 	constructor(
-		public readonly repoPackageMap: Map<string, Package>,
+		public readonly repoPackageMap: Map<string, IFluidBuildPackage>,
 		readonly buildContext: BuildContext,
 		public readonly workerPool?: WorkerPool,
 	) {
@@ -96,7 +96,7 @@ export class BuildPackage {
 
 	constructor(
 		public readonly context: BuildGraphContext,
-		public readonly pkg: Package,
+		public readonly pkg: IFluidBuildPackage,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
 		this._taskDefinitions = getTaskDefinitions(
@@ -485,16 +485,16 @@ export class BuildPackage {
  */
 export class BuildGraph {
 	private matchedPackages = 0;
-	private readonly buildPackages = new Map<Package, BuildPackage>();
+	private readonly buildPackages = new Map<IFluidBuildPackage, BuildPackage>();
 	private readonly context: BuildGraphContext;
 
 	public constructor(
-		packages: Map<string, Package>,
-		releaseGroupPackages: Package[],
+		packages: Map<string, IFluidBuildPackage>,
+		releaseGroupPackages: IFluidBuildPackage[],
 		buildContext: BuildContext,
 		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
-		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
+		getDepFilter: (pkg: IFluidBuildPackage) => (dep: IFluidBuildPackage) => boolean,
 	) {
 		this.context = new BuildGraphContext(
 			packages,
@@ -602,10 +602,10 @@ export class BuildGraph {
 	}
 
 	private getBuildPackage(
-		pkg: Package,
+		pkg: IFluidBuildPackage,
 		globalTaskDefinitions: TaskDefinitions,
 		pendingInitDep: BuildPackage[],
-	) {
+	): BuildPackage {
 		let buildPackage = this.buildPackages.get(pkg);
 		if (buildPackage === undefined) {
 			try {
@@ -624,10 +624,10 @@ export class BuildGraph {
 	}
 
 	private initializePackages(
-		packages: Map<string, Package>,
-		releaseGroupPackages: Package[],
+		packages: Map<string, IFluidBuildPackage>,
+		releaseGroupPackages: IFluidBuildPackage[],
 		globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
-		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
+		getDepFilter: (pkg: IFluidBuildPackage) => (dep: IFluidBuildPackage) => boolean,
 	) {
 		const globalTaskDefinitions = normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk);
 		const pendingInitDep: BuildPackage[] = [];
