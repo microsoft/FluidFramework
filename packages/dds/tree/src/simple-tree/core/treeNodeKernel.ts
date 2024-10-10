@@ -271,14 +271,6 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		return isHydrated(this.#hydrationState);
 	}
 
-	public get anchorNode2(): AnchorNode {
-		// If the kernel is unhydrated, it has no anchor node. It calls innerNode.anchorNode which
-		// throws an error.
-		return isHydrated(this.#hydrationState)
-			? this.#hydrationState.anchorNode
-			: this.innerNode.anchorNode;
-	}
-
 	public get anchorNode(): AnchorNode | undefined {
 		return isHydrated(this.#hydrationState) ? this.#hydrationState.anchorNode : undefined;
 	}
