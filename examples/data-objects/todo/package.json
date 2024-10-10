@@ -40,7 +40,8 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"dependencies": {},
+	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -50,9 +51,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
-		"uuid": "^9.0.0"
-	},
-	"devDependencies": {
+		"uuid": "^9.0.0",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",

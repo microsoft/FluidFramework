@@ -50,16 +50,15 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"dependencies": {},
+	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/task-manager": "workspace:~",
-		"react": "^18.3.1"
-	},
-	"devDependencies": {
+		"react": "^18.3.1",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",

@@ -38,7 +38,8 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"dependencies": {
+	"dependencies": {},
+	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -46,9 +47,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"monaco-editor": "^0.30.0",
-		"react": "^18.3.1"
-	},
-	"devDependencies": {
+		"react": "^18.3.1",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
