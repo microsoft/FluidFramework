@@ -68,13 +68,15 @@ export interface FlubConfig {
 	 * The multiple of minor versions to use for calculating the next version in the legacy compatibility range.
 	 * This interval applies exclusively to the client release group; for all other release groups, the caret versions are used.
 	 */
-	legacyCompatInterval?: LegacyCompatInterval;
+	releaseReport?: LegacyCompatInterval;
 }
 
 /**
  * Represents legacy compat interval per release groups.
  */
-export type LegacyCompatInterval = Partial<Record<ReleaseGroup, number>>;
+export interface LegacyCompatInterval {
+	legacyCompatInterval: Record<string, number>;
+}
 
 /**
  * A type representing the different version constraint styles we use when determining the previous version for type

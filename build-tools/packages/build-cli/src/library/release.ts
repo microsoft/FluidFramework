@@ -200,21 +200,21 @@ export function getLegacyCompatVersionRange(
 	pkg: Package | string,
 	interval: LegacyCompatInterval,
 ): string {
-	if (
-		interval.server !== undefined ||
-		interval["build-tools"] !== undefined ||
-		interval.historian !== undefined ||
-		interval.gitrest !== undefined
-	) {
-		throw new Error(`Legacy API contract only exists for the client release group`);
+	const releaseGroup = Object.keys(interval.legacyCompatInterval);
+	const hasInvalidReleaseGroup = releaseGroup.some((key) => key !== "client");
+
+	if (hasInvalidReleaseGroup) {
+		throw new Error(
+			"Invalid release group passed: Legacy compatibility range exists only for **client** release group ",
+		);
 	}
 
-	if (interval.client === undefined) {
+	if (interval.legacyCompatInterval.client === undefined) {
 		throw new Error(`Legacy compat interval not found for client release group`);
 	}
 
 	if (typeof pkg !== "string" && pkg.monoRepo?.releaseGroup === "client") {
-		const range = getLegacyRangeForClient(version, interval.client);
+		const range = getLegacyRangeForClient(version, interval.legacyCompatInterval.client);
 		return range;
 	}
 

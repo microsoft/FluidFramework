@@ -38,6 +38,7 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
+import type { LegacyCompatInterval } from "../../config.js";
 import { releaseGroupFlag } from "../../flags.js";
 import { CommandLogger } from "../../logging.js";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
@@ -584,14 +585,18 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const scheme = detectVersionScheme(latestVer);
 
 			// Legacy APi contracts only exists for the client release group
-			context.flubConfig.legacyCompatInterval = {
-				"client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL,
+			const defaultLegacyCompatInterval: LegacyCompatInterval = {
+				legacyCompatInterval: { "client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL },
 			};
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
-					const ranges = getRanges(latestVer, context.flubConfig.legacyCompatInterval, pkg);
+					const ranges = getRanges(
+						latestVer,
+						context.flubConfig.releaseReport ?? defaultLegacyCompatInterval,
+						pkg,
+					);
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -604,7 +609,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
-				const ranges = getRanges(latestVer, context.flubConfig.legacyCompatInterval, pkgName);
+				const ranges = getRanges(
+					latestVer,
+					context.flubConfig.releaseReport ?? defaultLegacyCompatInterval,
+					pkgName,
+				);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,
