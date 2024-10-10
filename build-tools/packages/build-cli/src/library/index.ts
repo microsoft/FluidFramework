@@ -16,7 +16,7 @@ export {
 	generateReleaseBranchName,
 } from "./branches.js";
 export { getDisplayDate, getDisplayDateRelative } from "./dates.js";
-export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
+export { DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
 export {
 	DEFAULT_CHANGESET_PATH,
 	fluidCustomChangeSetMetadataDefaults,

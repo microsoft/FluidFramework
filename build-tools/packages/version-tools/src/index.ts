@@ -9,7 +9,6 @@ export {
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isWorkspaceRange,
-	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
 	RangeOperator,
 	RangeOperators,
