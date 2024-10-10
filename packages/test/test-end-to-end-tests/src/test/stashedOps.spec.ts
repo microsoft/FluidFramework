@@ -18,7 +18,6 @@ import { IContainerExperimental } from "@fluidframework/container-loader/interna
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -362,21 +361,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const string = await d.getSharedObject<SharedString>(stringId);
 				const collection = string.getIntervalCollection(collectionId);
 				collection.add({ start: testStart, end: testEnd });
-				// [DEPRECATED]
-				// Submit a message with an unrecognized type
-				// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
-				(
-					d.context.containerRuntime as unknown as {
-						submit: (
-							containerRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-								Record<string, any>,
-						) => void;
-					}
-				).submit({
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" },
-				});
 			},
 		);
 

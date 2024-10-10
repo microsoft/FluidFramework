@@ -216,7 +216,7 @@ But we can do better by leveraging an index of the obliterate local references.
 By storing the obliterates in sequence order, as well as storing the obliterate "starts" in a sorted set, we can quickly compare the ordinals of the segment being inserted and those of the stored obliterates.
 This tells us whether or not the segment falls in the range of an obliterate, and we can then find the overlapping obliterate with the smallest movedSeq (i.e. the first obliterate operation that affected this segment) that the applying client has not already seen to apply to the new segment.
 
-This approach takes care of removed segments as well, since the ordinal of the removed segment will fall in between those of the segments containing the position of the start and end local references.
+This approach takes care of removed segments as well, since the ordinal of the removed segment will fall in between those of the segments containing the position of the start and end local references. This approach also handles obliterates that should expand - internally, the endpoints are modified based on their `Side` value to be inclusive or exclusive of the adjacent segments.
 
 All-in-all, the insert logic modification might look something like this:
 
@@ -544,10 +544,20 @@ One important consideration is what happens near the endpoints of the removed ra
 There are two general possibilities: either the obliterate expands to include segments inserted
 adjacent to the endpoint, or it doesn't.
 
-In the initial implementation, we should pick some fixed endpoint behavior analogous to how insertion merge policy is fixed.
-Each option is roughly equivalent in difficulty.
+In the initial implementation, we chose to have the endpoints not expand to include adjacent segments. However, recent feature requests have led to the implementation of
+obliterate with endpoint expansion, where concurrently inserted segments adjacent to the obliterate range are also removed. To support this, we have brought the interval concept
+of `Side` into merge-tree. See [sequencePlace.ts](https://github.com/microsoft/FluidFramework/blob/de91c3a6b2671e63d624ce60404e7312f111d1ce/packages/dds/merge-tree/src/sequencePlace.ts) for further documentation. The inclusivity of the endpoint depends on the value of `Side` at that position - the endpoint is exclusive if the side is nearer to the current position and inclusive if the side is further from the current position. For example, the start of a range with `Side.After` is exclusive of the character at the position, and would not expand to include content at the start of the range.
 
-If applications request more degrees of freedom in this area, the framework for merge outcomes described in [Move](##Move) is a good starting point.
+The range to obliterate can now specified as a slice range instead of only a set range with plain numbers. This means that obliterate will take in two arguments of type `InteriorSequencePlace`, which specify a position and a side for the start and end of the obliterate range. Based on the side of each endpoint, the obliterate operation will expand to include any segments inserted adjacent to the obliterate range.
+For example:
+```
+// Initial state at seq 0: 0123456789
+{ seq: 1, refSeq: 0, clientId: 1, op: <obliterate from { pos: 0, side: Side.Before } to { pos: 5, side: Side.Before }> }
+{ seq: 2, refSeq: 0, clientId: 2, op: <insert "A" at 0> }
+{ seq: 3, refSeq: 0, clientId: 3, op: <insert "B" at 5> }
+// Final state: B56789
+```
+Since the obliterate range includes segments at position 0 and excludes segments at position 5, the obliterate expands to include the "A" at the start of the range, but does not expand to include the "B" inserted at the end of the range.
 
 ## Public API
 
@@ -556,11 +566,12 @@ The public API of sequence will need to be updated for users to leverage the obl
 
 ```typescript
 class SharedSegmentSequence<TInterval extends IInterval> {
-	public obliterateRange(start: SequencePlace, end: SequencePlace);
+	public obliterateRange(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace);
 }
 ```
 
 For context, see [sequencePlace.ts](https://github.com/microsoft/FluidFramework/blob/de91c3a6b2671e63d624ce60404e7312f111d1ce/packages/dds/merge-tree/src/sequencePlace.ts).
+Obliterate can still take in number endpoints as well as `InteriorSequencePlace` endpoints with sides specified.
 
 One interesting alternative is to align the public API of sequence with the idea that there are two conceptual kinds of ranges: slice ranges and set ranges (see the next section
 for details).
