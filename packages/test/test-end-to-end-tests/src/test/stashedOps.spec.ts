@@ -2188,9 +2188,10 @@ describeCompat(
 					// Container won't be connected yet, so no race here.
 					const container = await loader.resolve({ url }, pendingLocalState);
 					await container.deltaManager.outbound.pause();
-					assert(
-						container.connectionState === ConnectionState.Disconnected,
-						`PRECONDITION: ${loggingId} should be disconnected when we pause the outbound queue, to ensure we haven't sent the counter op yet`,
+					assert.notEqual(
+						container.connectionState,
+						ConnectionState.Connected,
+						`PRECONDITION: ${loggingId} should not be connected yet when we pause the outbound queue, to ensure we haven't sent the counter op yet`,
 					);
 
 					// Wait for the container to connect, and then pause the inbound queue
