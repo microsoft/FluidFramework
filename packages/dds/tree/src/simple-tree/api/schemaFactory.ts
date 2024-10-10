@@ -297,7 +297,7 @@ export class SchemaFactory<
 	>(
 		name: Name,
 		fields: T,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -307,7 +307,7 @@ export class SchemaFactory<
 		T,
 		TCustomMetadata
 	> {
-		return objectSchema(this.scoped(name), fields, true, props);
+		return objectSchema(this.scoped(name), fields, true, options);
 	}
 
 	/**
@@ -338,7 +338,7 @@ export class SchemaFactory<
 		const TCustomMetadata = unknown,
 	>(
 		allowedTypes: T,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
@@ -366,7 +366,7 @@ export class SchemaFactory<
 	>(
 		name: Name,
 		allowedTypes: T,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -385,8 +385,8 @@ export class SchemaFactory<
 	 */
 	public map<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
-		allowedTypesOrProps?: T | NodeSchemaOptions<TCustomMetadata>,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		allowedTypesOrOptions?: T | NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
 		if (typeof nameOrAllowedTypes === "string") {
 			// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
@@ -399,10 +399,10 @@ export class SchemaFactory<
 				T
 			> = this.namedMap(
 				nameOrAllowedTypes as TName,
-				allowedTypesOrProps as T,
+				allowedTypesOrOptions as T,
 				true,
 				true,
-				props,
+				options,
 			);
 			return out;
 		}
@@ -418,7 +418,7 @@ export class SchemaFactory<
 					nameOrAllowedTypes as T,
 					false,
 					true,
-					allowedTypesOrProps as NodeSchemaOptions<TCustomMetadata>,
+					allowedTypesOrOptions as NodeSchemaOptions<TCustomMetadata>,
 				) as TreeNodeSchema,
 		) as TreeNodeSchemaBoth<
 			string,
@@ -446,7 +446,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -462,7 +462,7 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
-			props,
+			options,
 		);
 	}
 
@@ -504,7 +504,7 @@ export class SchemaFactory<
 		const TCustomMetadata = unknown,
 	>(
 		allowedTypes: T,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
@@ -534,7 +534,7 @@ export class SchemaFactory<
 	>(
 		name: Name,
 		allowedTypes: T,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -551,8 +551,8 @@ export class SchemaFactory<
 	 */
 	public array<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
-		allowedTypesOrProps?: T | NodeSchemaOptions<TCustomMetadata>,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		allowedTypesOrOptions?: T | NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, string>,
 		NodeKind.Array,
@@ -573,10 +573,10 @@ export class SchemaFactory<
 				TCustomMetadata
 			> = this.namedArray(
 				nameOrAllowedTypes as TName,
-				allowedTypesOrProps as T,
+				allowedTypesOrOptions as T,
 				true,
 				true,
-				props,
+				options,
 			);
 			return out;
 		}
@@ -589,7 +589,7 @@ export class SchemaFactory<
 				nameOrAllowedTypes as T,
 				false,
 				true,
-				allowedTypesOrProps as NodeSchemaOptions<TCustomMetadata>,
+				allowedTypesOrOptions as NodeSchemaOptions<TCustomMetadata>,
 			),
 		) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, string>,
@@ -621,7 +621,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-		props?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -636,7 +636,7 @@ export class SchemaFactory<
 			allowedTypes,
 			implicitlyConstructable,
 			customizable,
-			props,
+			options,
 		);
 	}
 
