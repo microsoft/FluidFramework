@@ -3960,7 +3960,10 @@ importers:
         version: 6.0.1
 
   examples/external-data:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../utils/example-utils
@@ -3970,6 +3973,12 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../packages/framework/aqueduct
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.48.0
+        version: 0.48.0
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../packages/dds/cell
@@ -3994,6 +4003,9 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../packages/loader/driver-utils
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../packages/dds/map
@@ -4018,52 +4030,12 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../packages/utils/telemetry-utils
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../packages/drivers/tinylicious-driver
-      cors:
-        specifier: ^2.8.4
-        version: 2.8.5
-      css-loader:
-        specifier: ^7.1.2
-        version: 7.1.2(webpack@5.95.0)
-      express:
-        specifier: ^4.19.2
-        version: 4.21.0
-      lodash.isequal:
-        specifier: ^4.5.0
-        version: 4.5.0
-      node-fetch:
-        specifier: ^2.6.9
-        version: 2.7.0
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-      style-loader:
-        specifier: ^4.0.0
-        version: 4.0.0(webpack@5.95.0)
-      valid-url:
-        specifier: ^1.0.9
-        version: 1.0.9
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.48.0
-        version: 0.48.0
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../packages/drivers/tinylicious-driver
       '@types/cors':
         specifier: ^2.8.4
         version: 2.8.17
@@ -4097,9 +4069,15 @@ importers:
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cors:
+        specifier: ^2.8.4
+        version: 2.8.5
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      css-loader:
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.95.0)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -4109,6 +4087,9 @@ importers:
       expect-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2
+      express:
+        specifier: ^4.19.2
+        version: 4.21.0
       good-fences:
         specifier: ^1.1.1
         version: 1.2.0
@@ -4127,6 +4108,12 @@ importers:
       jest-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+      lodash.isequal:
+        specifier: ^4.5.0
+        version: 4.5.0
+      node-fetch:
+        specifier: ^2.6.9
+        version: 2.7.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -4136,6 +4123,12 @@ importers:
       puppeteer:
         specifier: ^22.2.0
         version: 22.15.0(typescript@5.4.5)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -4145,6 +4138,9 @@ importers:
       stream-http:
         specifier: ^3.2.0
         version: 3.2.0
+      style-loader:
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.95.0)
       supertest:
         specifier: ^3.4.2
         version: 3.4.2
@@ -4160,6 +4156,9 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      valid-url:
+        specifier: ^1.0.9
+        version: 1.0.9
       webpack:
         specifier: ^5.94.0
         version: 5.95.0(webpack-cli@5.1.4)
@@ -38759,7 +38758,7 @@ packages:
 
   /valid-url@1.0.9:
     resolution: {integrity: sha512-QQDsV8OnSf5Uc30CKSwG9lnhMPe6exHtTXLRYX8uMwKENy640pU+2BgBL0LRbDh/eYRahNCS7aewCx0wf3NYVA==}
-    dev: false
+    dev: true
 
   /validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
