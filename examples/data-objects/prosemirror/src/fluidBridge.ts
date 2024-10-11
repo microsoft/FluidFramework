@@ -154,14 +154,14 @@ export class ProseMirrorTransactionBuilder {
 					);
 
 					if (this.things[i].length <= length) {
-						// Ether node is fully encompasing
+						// Ether node is fully encompassing
 						this.things[i].type = "delete";
 						this.things[i].event = range;
 						length -= this.things[i].length;
 						this.things[i].length = 0;
 						i++;
 					} else {
-						// Ether node is partially encompasing. Split it and loop around to then remove it
+						// Ether node is partially encompassing. Split it and loop around to then remove it
 						this.splitAt(length, i);
 					}
 				}
@@ -511,7 +511,7 @@ function sliceToGroupOpsInternal(
 				...{
 					[reservedRangeLabelsKey]: [proseMirrorTreeLabel],
 					[nodeTypeKey]: value.type,
-					[stackTypeKey]: stackTypeEnd
+					[stackTypeKey]: stackTypeEnd,
 				},
 			};
 
