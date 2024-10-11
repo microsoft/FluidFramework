@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { benchmark } from "@fluid-tools/benchmark";
+import { benchmark, Phase } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -35,7 +35,14 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 
 type ContainerRuntime_WithPrivates = Patch<ContainerRuntime, { flush: () => void }>;
 
-describeCompat(
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+describeCompat.only(
 	"Op Critical Paths - runtime benchmarks",
 	"NoCompat",
 	(getTestObjectProvider) => {
@@ -82,7 +89,13 @@ describeCompat(
 	},
 );
 
-describeCompat(
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+describeCompat.only(
 	"Op Critical Paths - runtime benchmarks",
 	"NoCompat",
 	(getTestObjectProvider) => {
@@ -115,9 +128,18 @@ describeCompat(
 
 		benchmark({
 			title: "Roundtrip",
+			startPhase: Phase.CollectData, // This will keep it at 1 iteration per batch, so beforeEachBatch runs before each iteration
 			before, // Set up container for a write connection
-			benchmarkFnAsync: async () => {
+			beforeEachBatch: () => {
+				// DANGER: This really should be awaited.
+				containerRuntime.deltaManager.inbound.pause().catch(() => {});
 				sendOps("B");
+			},
+			benchmarkFnAsync: async () => {
+				// This will resume the inbound queue and wait for the ops to come back.
+				// Since beforeEachBatch is not async, we will likely be measuring
+				// some of the sequencing time from the local server here too, unfortunately.
+				containerRuntime.deltaManager.inbound.resume();
 				await provider.ensureSynchronized();
 			},
 		});
