@@ -28,3 +28,7 @@ versioned_docs/*/api/*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# TODO: remove this once we have confirmed it's okay to check these files in
+./static/css
+./static/js
