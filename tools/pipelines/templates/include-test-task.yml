@@ -16,7 +16,17 @@ parameters:
 
 steps:
 # Test - With coverage - Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test.
-- ${{ if and(parameters.testCoverage, startsWith(parameters.taskTestStep, 'ci:test'), or(ne(variables['Build.Reason'], 'PullRequest'), and(not(contains(parameters.taskTestStep, 'realsvc:tinylicious')), not(contains(parameters.taskTestStep, 'stress:tinylicious'))))) }}:
+- ${{ if and(
+	parameters.testCoverage,
+	startsWith(parameters.taskTestStep, 'ci:test'),
+	or(
+		ne(variables['Build.Reason'], 'PullRequest'),
+		and(
+			not(contains(parameters.taskTestStep, 'realsvc:tinylicious')),
+			not(contains(parameters.taskTestStep, 'stress:tinylicious'))
+		)
+	)
+) }}:
   - task: Npm@1
     displayName: npm run ${{ parameters.taskTestStep }}:coverage
     inputs:
