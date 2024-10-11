@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": tree
+"section": fix
 ---
 
 Fix `.create` on structurally named MapNode and ArrayNode schema
