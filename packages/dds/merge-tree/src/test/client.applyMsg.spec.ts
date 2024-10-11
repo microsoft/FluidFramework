@@ -812,6 +812,132 @@ describe("client.applyMsg", () => {
 
 			logger.validate({ baseText: "BBBBBB B" });
 		});
+
+		it.skip("zero length obliterate at the start of the string", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+				},
+				"A",
+				"B",
+				"C",
+			);
+
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.A.makeOpMessage(
+					clients.A.obliterateRangeLocal(
+						{ pos: 0, side: Side.After },
+						{ pos: 1, side: Side.Before },
+					),
+					++seq,
+				),
+				clients.A.makeOpMessage(clients.A.insertTextLocal(1, "AAA"), ++seq),
+				clients.B.makeOpMessage(
+					clients.A.obliterateRangeLocal(
+						{ pos: 0, side: Side.After },
+						{ pos: 1, side: Side.Before },
+					),
+					++seq,
+				),
+				clients.B.makeOpMessage(clients.A.insertTextLocal(1, "BBB"), ++seq),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+
+			logger.validate({ baseText: "0AAA123456789" });
+		});
+
+		it.skip("zero length obliterate in the middle of the string", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+				},
+				"A",
+				"B",
+				"C",
+			);
+
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.A.makeOpMessage(
+					clients.A.obliterateRangeLocal(
+						{ pos: 4, side: Side.After },
+						{ pos: 5, side: Side.Before },
+					),
+					++seq,
+				),
+				clients.A.makeOpMessage(clients.A.insertTextLocal(5, "AAA"), ++seq),
+				clients.B.makeOpMessage(
+					clients.A.obliterateRangeLocal(
+						{ pos: 4, side: Side.After },
+						{ pos: 5, side: Side.Before },
+					),
+					++seq,
+				),
+				clients.B.makeOpMessage(clients.A.insertTextLocal(5, "BBB"), ++seq),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+
+			logger.validate({ baseText: "01234AAA56789" });
+		});
+
+		it.skip("zero length obliterate at the end of the string", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+				},
+				"A",
+				"B",
+				"C",
+			);
+
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.A.makeOpMessage(
+					clients.A.obliterateRangeLocal(
+						{ pos: 8, side: Side.After },
+						{ pos: 9, side: Side.Before },
+					),
+					++seq,
+				),
+				clients.A.makeOpMessage(clients.A.insertTextLocal(9, "AAA"), ++seq),
+				clients.B.makeOpMessage(
+					clients.A.obliterateRangeLocal(
+						{ pos: 8, side: Side.After },
+						{ pos: 9, side: Side.Before },
+					),
+					++seq,
+				),
+				clients.B.makeOpMessage(clients.A.insertTextLocal(9, "BBB"), ++seq),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+
+			logger.validate({ baseText: "012345678AAA9" });
+		});
 	});
 
 	describe("updates minSeq", () => {
