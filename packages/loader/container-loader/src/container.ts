@@ -1100,7 +1100,10 @@ export class Container
 
 				this._lifecycleState = "closing";
 
-				this.service?.off("metadataUpdate", this.metadataUpdateHandler);
+				// Back-compat for Old driver
+				if (this.service?.off !== undefined) {
+					this.service?.off("metadataUpdate", this.metadataUpdateHandler);
+				}
 
 				this._protocolHandler?.close();
 
