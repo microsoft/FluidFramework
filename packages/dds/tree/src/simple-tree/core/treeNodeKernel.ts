@@ -421,7 +421,7 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): TreeNodeSchema {
 	assert(
 		flexNode.context.isHydrated(),
-		"getTreeNodeSchemaFromHydratedFlexNode only allows hydrated flex tree nodes",
+		0xa56 /* getTreeNodeSchemaFromHydratedFlexNode only allows hydrated flex tree nodes */,
 	);
 
 	const context =
