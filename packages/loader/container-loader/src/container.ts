@@ -1597,10 +1597,9 @@ export class Container
 		serviceProvider: () => Promise<IDocumentService>,
 	): Promise<IDocumentService> {
 		const service = await serviceProvider();
-		// Back-compat for Old driver
-		if (service.on !== undefined) {
-			service.on("metadataUpdate", this.metadataUpdateHandler);
-		}
+
+		service.on("metadataUpdate", this.metadataUpdateHandler);
+
 		return service;
 	}
 
