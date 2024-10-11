@@ -44,7 +44,7 @@ describeCompat(
 		let defaultDataStore: ITestDataObject;
 		let containerRuntime: ContainerRuntime_WithPrivates;
 
-		const before = async () => {
+		before(async () => {
 			provider = getTestObjectProvider();
 			const loader = provider.makeTestLoader(testContainerConfig);
 			mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -56,7 +56,8 @@ describeCompat(
 
 			defaultDataStore._root.set("force", "write connection");
 			await provider.ensureSynchronized();
-		};
+		});
+
 		function sendOps(label: string) {
 			Array.from({ length: 100 }).forEach((_, i) => {
 				defaultDataStore._root.set(`key-${i}`, `value-${label}`);
@@ -67,7 +68,6 @@ describeCompat(
 
 		benchmark({
 			title: "Submit+Flush",
-			before, // Set up container for a write connection
 			benchmarkFnAsync: async () => {
 				sendOps("A");
 				const opsSent = await timeoutPromise<number>(
@@ -79,11 +79,19 @@ describeCompat(
 				assert(opsSent > 0, "Expecting op(s) to be sent.");
 			},
 		});
+
+		benchmark({
+			title: "Roundtrip",
+			benchmarkFnAsync: async () => {
+				sendOps("B");
+				await provider.ensureSynchronized();
+			},
+		});
 	},
 );
 
 describeCompat(
-	"Op Critical Paths - runtime benchmarks",
+	"Op Critical Paths - for investigating curious benchmark interference",
 	"NoCompat",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
@@ -91,7 +99,7 @@ describeCompat(
 		let defaultDataStore: ITestDataObject;
 		let containerRuntime: ContainerRuntime_WithPrivates;
 
-		const before = async () => {
+		before(async () => {
 			provider = getTestObjectProvider();
 			const loader = provider.makeTestLoader(testContainerConfig);
 			mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -103,7 +111,7 @@ describeCompat(
 
 			defaultDataStore._root.set("force", "write connection");
 			await provider.ensureSynchronized();
-		};
+		});
 
 		function sendOps(label: string) {
 			Array.from({ length: 100 }).forEach((_, i) => {
@@ -114,8 +122,7 @@ describeCompat(
 		}
 
 		benchmark({
-			title: "Roundtrip",
-			before, // Set up container for a write connection
+			title: "Roundtrip - Alone in describe block - takes 10x longer!",
 			benchmarkFnAsync: async () => {
 				sendOps("B");
 				await provider.ensureSynchronized();
