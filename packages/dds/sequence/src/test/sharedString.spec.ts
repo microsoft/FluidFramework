@@ -39,10 +39,6 @@ describe("SharedString", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		dataStoreRuntime1.options = {
-			mergeTreeEnableObliterate: true,
-			mergeTreeEnableSidedObliterate: true,
-		};
 		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
@@ -458,10 +454,6 @@ describe("SharedString", () => {
 
 			// Create and connect a second SharedString.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			dataStoreRuntime2.options = {
-				mergeTreeEnableObliterate: true,
-				mergeTreeEnableSidedObliterate: true,
-			};
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
@@ -657,95 +649,6 @@ describe("SharedString", () => {
 				"Could not annotate marker in remote string",
 			);
 		});
-
-		// TODO: these three tests currently fail with 0x2d8
-		// AB#19722
-		it.skip("zero length obliterate at the start of the string", () => {
-			sharedString.insertText(0, "0123456789");
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(
-				sharedString.getText(),
-				sharedString2.getText(),
-				"starting state should be equal",
-			);
-
-			sharedString.obliterateRange(
-				{ pos: 4, side: Side.After },
-				{ pos: 5, side: Side.Before },
-			);
-			sharedString.insertText(5, "AAA");
-			sharedString2.obliterateRange(
-				{ pos: 4, side: Side.After },
-				{ pos: 5, side: Side.Before },
-			);
-			sharedString2.insertText(5, "BBB");
-
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(
-				sharedString.getText(),
-				sharedString2.getText(),
-				"end state should be equal after obliterate",
-			);
-			assert.equal(sharedString2.getText(), "01AAA2456789", "obliterate failed");
-		});
-
-		it.skip("zero length obliterate in the middle of the string", () => {
-			sharedString.insertText(0, "0123456789");
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(
-				sharedString.getText(),
-				sharedString2.getText(),
-				"starting state should be equal",
-			);
-
-			sharedString.obliterateRange(
-				{ pos: 4, side: Side.After },
-				{ pos: 5, side: Side.Before },
-			);
-			sharedString.insertText(5, "AAA");
-			sharedString2.obliterateRange(
-				{ pos: 4, side: Side.After },
-				{ pos: 5, side: Side.Before },
-			);
-			sharedString2.insertText(5, "BBB");
-
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(
-				sharedString.getText(),
-				sharedString2.getText(),
-				"end state should be equal after obliterate",
-			);
-			assert.equal(sharedString2.getText(), "01234AAA56789", "obliterate failed");
-		});
-
-		it.skip("zero length obliterate at the end of the string", () => {
-			sharedString.insertText(0, "0123456789");
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(
-				sharedString.getText(),
-				sharedString2.getText(),
-				"starting state should be equal",
-			);
-
-			sharedString.obliterateRange(
-				{ pos: 8, side: Side.After },
-				{ pos: 9, side: Side.Before },
-			);
-			sharedString.insertText(9, "AAA");
-			sharedString2.obliterateRange(
-				{ pos: 8, side: Side.After },
-				{ pos: 9, side: Side.Before },
-			);
-			sharedString2.insertText(9, "BBB");
-
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(
-				sharedString.getText(),
-				sharedString2.getText(),
-				"end state should be equal after obliterate",
-			);
-			assert.equal(sharedString2.getText(), "01245678AAA9", "obliterate failed");
-		});
 	});
 
 	describe("reconnect", () => {
@@ -931,5 +834,81 @@ describe("SharedString", () => {
 				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })),
 			);
 		});
+	});
+});
+
+describe("Shared String Obliterate", () => {
+	let sharedString: SharedString;
+	let dataStoreRuntime1: MockFluidDataStoreRuntime;
+	let sharedString2: SharedString;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+	beforeEach(() => {
+		containerRuntimeFactory = new MockContainerRuntimeFactory();
+		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+		dataStoreRuntime1.options = {
+			mergeTreeEnableObliterate: true,
+			mergeTreeEnableSidedObliterate: true,
+		};
+		sharedString = new SharedStringClass(
+			dataStoreRuntime1,
+			"shared-string-1",
+			SharedStringFactory.Attributes,
+		);
+
+		// Connect the first SharedString.
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		const services1 = {
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		};
+		sharedString.initializeLocal();
+		sharedString.connect(services1);
+
+		// Create and connect a second SharedString.
+		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+		dataStoreRuntime2.options = {
+			mergeTreeEnableObliterate: true,
+			mergeTreeEnableSidedObliterate: true,
+		};
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		const services2 = {
+			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		};
+
+		sharedString2 = new SharedStringClass(
+			dataStoreRuntime2,
+			"shared-string-2",
+			SharedStringFactory.Attributes,
+		);
+		sharedString2.initializeLocal();
+		sharedString2.connect(services2);
+	});
+
+	// TODO: this test currently fails with 0x2d8
+	// AB#19722
+	it.skip("zero length obliterate in the middle of the string", () => {
+		sharedString.insertText(0, "0123456789");
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(
+			sharedString.getText(),
+			sharedString2.getText(),
+			"starting state should be equal",
+		);
+
+		sharedString.obliterateRange({ pos: 4, side: Side.After }, { pos: 5, side: Side.Before });
+		sharedString.insertText(5, "AAA");
+		sharedString2.obliterateRange({ pos: 4, side: Side.After }, { pos: 5, side: Side.Before });
+		sharedString2.insertText(5, "BBB");
+
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(
+			sharedString.getText(),
+			sharedString2.getText(),
+			"end state should be equal after obliterate",
+		);
+		assert.equal(sharedString2.getText(), "01234AAA56789", "obliterate failed");
 	});
 });
