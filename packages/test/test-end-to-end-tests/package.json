@@ -31,7 +31,6 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
-		"test:benchmark:report:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=local --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
 		"test:benchmark:report": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=local --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
 		"test:benchmark:report:frs": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=r11s --r11sEndpointName=frs --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
 		"test:benchmark:report:odsp": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=odsp --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
