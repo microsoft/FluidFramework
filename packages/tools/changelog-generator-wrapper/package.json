@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/changelog-generator-wrapper",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -33,8 +33,8 @@
 		"tsc": "echo \"No build required.\""
 	},
 	"dependencies": {
-		"@changesets/cli": "^2.26.1",
-		"@changesets/types": "^5.2.1",
+		"@changesets/cli": "^2.27.8",
+		"@changesets/types": "^6.0.0",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"typescript": "~5.4.5"
 	},
@@ -49,6 +49,7 @@
 	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

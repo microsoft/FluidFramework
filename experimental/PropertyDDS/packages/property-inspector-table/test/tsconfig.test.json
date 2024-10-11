@@ -1,9 +1,0 @@
-{
-	"extends": "../../../../../common/build/build-common/ts-common-config.json",
-	"compilerOptions": {
-		"allowJs": true,
-		"jsx": "react",
-		"types": ["jest"],
-	},
-	"include": ["./src/**/*", "./test/**/*", "./custom.d.ts"],
-}

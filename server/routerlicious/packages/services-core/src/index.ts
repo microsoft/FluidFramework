@@ -120,6 +120,12 @@ export {
 	shouldRetryNetworkError,
 } from "./runWithRetry";
 export { ISecretManager } from "./secretManager";
+export {
+	ICollaborationSession,
+	ICollaborationSessionClient,
+	ICollaborationSessionManager,
+	ICollaborationSessionTracker,
+} from "./collabSession";
 export { IStorageNameAllocator } from "./storageNameAllocator";
 export { IStorageNameRetriever } from "./storageNameRetriever";
 export {
@@ -168,5 +174,6 @@ export {
 	createCompositeTokenId,
 } from "./tokenRevocationManager";
 export { IServiceMessageResourceManager } from "./serviceMessage";
-export { IClusterDrainingChecker } from "./clusterDraining";
+export { IClusterDrainingChecker, clusterDrainingRetryTimeInMs } from "./clusterDraining";
 export { IWebSocketTracker } from "./webSocketTracker";
+export { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";

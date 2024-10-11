@@ -81,6 +81,9 @@ variables:
     readonly: true
   - group: prague-key-vault
   - group: ado-feeds
+  - name: pipelineIdentifierForTelemetry
+    value: 'PerformanceBenchmark'
+    readonly: true
 
 lockBehavior: sequential
 stages:
@@ -209,6 +212,12 @@ stages:
           artifactName: 'perf-test-outputs_execution-time'
         condition: succeededOrFailed()
 
+  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    parameters:
+      stageId: perf_unit_tests_runtime
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      testWorkspace: ${{ variables.testWorkspace }}
+
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
     displayName: Perf unit tests - memory
@@ -333,6 +342,12 @@ stages:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
           artifactName: 'perf-test-outputs_memory-usage'
         condition: succeededOrFailed()
+
+  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    parameters:
+      stageId: perf_unit_tests_memory
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      testWorkspace: ${{ variables.testWorkspace }}
 
   # Performance unit tests - customBenchmark
   - stage: perf_unit_tests_customBenchmark
@@ -459,7 +474,11 @@ stages:
           artifactName: 'perf-test-outputs_custom-data'
         condition: succeededOrFailed()
 
-
+  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    parameters:
+      stageId: perf_unit_tests_customBenchmark
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      testWorkspace: ${{ variables.testWorkspace }}
 
   - ${{ each endpointObject in parameters.endpoints }}:
 
@@ -656,45 +675,8 @@ stages:
               echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
               rm -rf ${{ variables.memoryUsageTestOutputFolder }};
 
-  # Capture telemetry about pipeline stages
-  - stage: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
-    condition: succeededOrFailed()
-    dependsOn:
-      - perf_unit_tests_runtime
-      - perf_unit_tests_memory
-      - perf_unit_tests_customBenchmark
-      - perf_e2e_tests_local
-      - perf_e2e_tests_odsp
-      - perf_e2e_tests_frs
-    jobs:
-    - job: upload_run_telemetry
-      displayName: Upload pipeline run telemetry to Kusto
-      pool: Small
-      steps:
-      - template: templates/include-telemetry-setup.yml
-        parameters:
-          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
-          devFeedUrl: $(ado-feeds-dev)
-          officeFeedUrl: $(ado-feeds-office)
-          isCheckoutNeeded: true
-
-      - task: Bash@3
-        displayName: Retrieve and Upload pipeline run stats to Kusto
-        env:
-          BUILD_ID: $(Build.BuildId)
-          ADO_API_TOKEN: $(System.AccessToken)
-          PIPELINE: 'PerformanceBenchmark'
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
-          script: |
-            echo "creating output folder"
-            mkdir -p ${{ variables.testWorkspace }}/timingOutput
-            echo "Retrieving pipeline run timeline data ..."
-            echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
-            curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
-            pwd;
-            ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-            cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+    - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+      parameters:
+        stageId: perf_e2e_tests_${{ endpointObject.endpointName }}
+        pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+        testWorkspace: ${{ variables.testWorkspace }}

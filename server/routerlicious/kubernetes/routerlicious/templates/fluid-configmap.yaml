@@ -153,6 +153,11 @@ data:
                 "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}},
                 "gracefulShutdownEnabled": {{ .Values.nexus.socketIo.gracefulShutdownEnabled}},
                 "pingPongLatencyTrackingEnabled": {{ .Values.nexus.socketIo.pingPongLatencyTrackingEnabled}}
+            },
+            "enableCollaborationSessionTracking": {{ .Values.nexus.enableCollaborationSessionTracking }},
+            "enableCollaborationSessionPruning": {{ .Values.nexus.enableCollaborationSessionPruning }},
+            "redisCollaborationSessionManagerOptions": {
+                "maxScanBatchSize": {{ .Values.nexus.redisCollaborationSessionManagerOptions.maxScanBatchSize }}
             }
         },
         "client": {

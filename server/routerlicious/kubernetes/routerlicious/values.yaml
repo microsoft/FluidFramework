@@ -61,6 +61,10 @@ nexus:
     perMessageDeflate: true
     gracefulShutdownEnabled: false
     pingPongLatencyTrackingEnabled: false
+  enableCollaborationSessionTracking: false
+  enableCollaborationSessionPruning: false
+  redisCollaborationSessionManagerOptions:
+    maxScanBatchSize: 800
 
 storage:
   enableWholeSummaryUpload: false

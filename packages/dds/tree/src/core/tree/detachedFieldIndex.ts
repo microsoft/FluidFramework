@@ -150,7 +150,15 @@ export class DetachedFieldIndex {
 					});
 				}
 				this.latestRelevantRevisionToFields.delete(current);
-				this.latestRelevantRevisionToFields.set(updated, inner);
+
+				const updatedInner = this.latestRelevantRevisionToFields.get(updated);
+				if (updatedInner !== undefined) {
+					for (const [root, nodeId] of inner) {
+						updatedInner.set(root, nodeId);
+					}
+				} else {
+					this.latestRelevantRevisionToFields.set(updated, inner);
+				}
 			}
 		}
 
@@ -349,10 +357,13 @@ export class DetachedFieldIndex {
 			0x9bd /* revisions should only be set once using this function after loading data from a summary */,
 		);
 
-		const newDetachedNodeToField = new Map();
+		const newDetachedNodeToField: NestedMap<Major, Minor, DetachedField> = new Map();
 		const rootMap = new Map();
 		forEachInNestedMap(this.detachedNodeToField, ({ root }, major, minor) => {
-			setInNestedMap(newDetachedNodeToField, major, minor, { root, latestRevision });
+			setInNestedMap(newDetachedNodeToField, major, minor, {
+				root,
+				latestRelevantRevision: latestRevision,
+			});
 			rootMap.set(root, { major, minor });
 		});
 

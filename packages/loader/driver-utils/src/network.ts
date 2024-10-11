@@ -112,14 +112,22 @@ export class AuthorizationError
 	implements IAuthorizationError, IFluidErrorBase
 {
 	readonly errorType = DriverErrorTypes.authorizationError;
+	readonly claims?: string;
+	readonly tenantId?: string;
 	readonly canRetry = false;
 
 	constructor(
 		message: string,
-		readonly claims: string | undefined,
-		readonly tenantId: string | undefined,
+		claims: string | undefined,
+		tenantId: string | undefined,
 		props: DriverErrorTelemetryProps,
 	) {
+		if (claims !== undefined) {
+			props.claims = claims;
+		}
+		if (tenantId !== undefined) {
+			props.tenantId = tenantId;
+		}
 		// don't log claims or tenantId
 		super(message, props, new Set(["claims", "tenantId"]));
 	}

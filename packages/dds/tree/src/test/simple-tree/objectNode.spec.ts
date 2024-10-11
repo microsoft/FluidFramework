@@ -7,7 +7,12 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, type NodeKind, type TreeNodeSchema } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	typeNameSymbol,
+	typeSchemaSymbol,
+	type NodeBuilderData,
+} from "../../simple-tree/index.js";
 
 import { describeHydration, hydrate, pretty } from "./utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
@@ -20,17 +25,83 @@ describeHydration(
 	"ObjectNode",
 	(init) => {
 		describe("shadowing", () => {
-			it("constructor", () => {
-				// constructor is a special case, since one is built in on the derived type.
+			describe("constructor", () => {
+				it("empty", () => {
+					class Schema extends schemaFactory.object("x", {}) {}
+					const n = init(Schema, {});
+					// constructor is a special case, since one is built in on the derived type.
+					// Check that it is exposed as expected based on type:
+					const x = n.constructor;
+					// eslint-disable-next-line @typescript-eslint/ban-types
+					type check_ = requireAssignableTo<typeof x, Function>;
+					assert.equal(x, Schema);
+				});
+
+				it("required", () => {
+					class Schema extends schemaFactory.object("x", {
+						constructor: schemaFactory.number,
+					}) {}
+
+					const n = init(Schema, { constructor: 5 });
+
+					const x = n.constructor;
+					type check_ = requireAssignableTo<typeof x, number>;
+					assert.equal(x, 5);
+				});
+
+				describe("optional", () => {
+					class Schema extends schemaFactory.object("x", {
+						constructor: schemaFactory.optional(schemaFactory.number),
+					}) {}
+
+					it("explicit undefined", () => {
+						const n = init(Schema, { constructor: undefined });
+						const x = n.constructor;
+						type check_ = requireAssignableTo<typeof x, number | undefined>;
+						assert.equal(x, undefined);
+					});
+
+					it("default", () => {
+						// Example of how a type conversion that allows using literals with defaults can still be allowed to compile in the presence of overloaded inherited values.
+						const data: { [P in "constructor"]?: undefined } = {};
+						const insertable: NodeBuilderData<typeof Schema> = data;
+
+						const n = init(Schema, insertable);
+						const x = n.constructor;
+						assert.equal(x, undefined);
+
+						{
+							// In this particular case of overloads, TypeScript knows this is unsafe, but in other similar cases (like the one above), it can compile without error.
+							// @ts-expect-error Unsafely construct insertable with correct type.
+							const _insertable: NodeBuilderData<typeof Schema> = {};
+						}
+					});
+				});
+			});
+
+			it("union", () => {
 				class Schema extends schemaFactory.object("x", {
 					constructor: schemaFactory.number,
 				}) {}
+				class Other extends schemaFactory.object("y", {
+					other: schemaFactory.number,
+				}) {}
 
-				const n = init(Schema, { constructor: 5 });
+				// TODO:
+				// "init" can't handle field schema, so this uses hydrate, making the two versions of this test the same.
+				// Either:
+				// 1. Generalize init
+				// 2. Reorganize these tests to avoid hitting this requirement
+				// 3. Some other refactor to resolve this
+				const a = hydrate([Schema, Other], { constructor: 5 });
+				const b = hydrate([Schema, Other], { other: 6 });
 
-				const x = n.constructor;
-				type check_ = requireAssignableTo<typeof x, number>;
-				assert.equal(x, 5);
+				// eslint-disable-next-line @typescript-eslint/ban-types
+				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
+				assert.equal(a.constructor, 5);
+				assert.equal(b.constructor, Other);
+				assert(Tree.is(b, Other));
+				assert.equal(b.other, 6);
 			});
 		});
 
@@ -134,41 +205,65 @@ describeHydration(
 			});
 		});
 
+		// Regression test for accidental use of ?? preventing null values from being read correctly.
+		it("can read null field", () => {
+			class Root extends schemaFactory.object("", {
+				x: schemaFactory.null,
+			}) {}
+			const node = init(Root, { x: null });
+			assert.equal(node.x, null);
+		});
+
 		describe("supports setting", () => {
 			describe("primitives", () => {
-				function check<const TNode>(
-					schema: TreeNodeSchema<string, NodeKind, TNode>,
-					before: TNode,
-					after: TNode,
-				) {
-					describe(`required ${typeof before} `, () => {
-						it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-							const Root = schemaFactory.object("", { value: schema });
-							const root = init(Root, { value: before });
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
+				it("required", () => {
+					class Root extends schemaFactory.object("", {
+						x: schemaFactory.number,
+					}) {}
+					const node = init(Root, { x: 5 });
+					assert.equal(node.x, 5);
+					node.x = 6;
+					assert.equal(node.x, 6);
+				});
 
-					describe(`optional ${typeof before}`, () => {
-						it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-							const root = init(
-								schemaFactory.object("", { value: schemaFactory.optional(schema) }),
-								{ value: undefined },
-							);
-							assert.equal(root.value, undefined);
-							root.value = before;
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
-				}
+				it("optional", () => {
+					class Root extends schemaFactory.object("", {
+						y: schemaFactory.optional(schemaFactory.number),
+					}) {}
+					const node = init(Root, {});
+					assert.equal(node.y, undefined);
+					node.y = 6;
+					assert.equal(node.y, 6);
+					node.y = undefined;
+					assert.equal(node.y, undefined);
+				});
 
-				check(schemaFactory.boolean, false, true);
-				check(schemaFactory.number, 0, 1);
-				check(schemaFactory.string, "", "!");
+				it("invalid normalize numbers", () => {
+					class Root extends schemaFactory.object("", {
+						x: [schemaFactory.number, schemaFactory.null],
+					}) {}
+					const node = init(Root, { x: NaN });
+					assert.equal(node.x, null);
+					node.x = 6;
+					assert.equal(node.x, 6);
+					node.x = Infinity;
+					assert.equal(node.x, null);
+					node.x = -0;
+					assert(Object.is(node.x, 0));
+				});
+
+				it("invalid numbers error", () => {
+					class Root extends schemaFactory.object("", {
+						x: schemaFactory.number,
+					}) {}
+					const node = init(Root, { x: 1 });
+					assert.throws(() => {
+						node.x = NaN;
+					}, validateUsageError(/NaN/));
+					assert.equal(node.x, 1);
+					node.x = -0;
+					assert(Object.is(node.x, 0));
+				});
 			});
 
 			describe("required object", () => {
@@ -254,6 +349,14 @@ describeHydration(
 			describe.skip("optional map", () => {
 				// TODO
 			});
+		});
+
+		it("default optional field", () => {
+			class Schema extends schemaFactory.object("x", {
+				x: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const n = init(Schema, {});
+			assert.equal(n.x, undefined);
 		});
 	},
 	() => {
@@ -373,6 +476,29 @@ describeHydration(
 			const newNode = new HasId({ id: "x" });
 			assert.equal(newNode.id, "x");
 			assert.equal(Tree.shortId(newNode), "x");
+		});
+
+		it("custom identifier access works on POJO mode object", () => {
+			const HasId = schemaFactory.object("hasID", { id: schemaFactory.identifier });
+			const newNode = new HasId({ id: "x" });
+			assert.equal(newNode.id, "x");
+			assert.equal(Tree.shortId(newNode), "x");
+		});
+
+		it("schema access POJO", () => {
+			const Pojo = schemaFactory.object("A", {});
+			const node = new Pojo({});
+			assert.equal(Tree.schema(node), Pojo);
+			assert.equal(node[typeNameSymbol], Pojo.identifier);
+			assert.equal(node[typeSchemaSymbol], Pojo);
+		});
+
+		it("schema access Customizable", () => {
+			const Customizable = schemaFactory.object("A", {});
+			const node = new Customizable({});
+			assert.equal(Tree.schema(node), Customizable);
+			assert.equal(node[typeNameSymbol], Customizable.identifier);
+			assert.equal(node[typeSchemaSymbol], Customizable);
 		});
 	},
 );

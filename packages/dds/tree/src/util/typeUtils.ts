@@ -10,55 +10,9 @@
 /**
  * Return a type thats equivalent to the input, but with different IntelliSense.
  * This tends to convert unions and intersections into objects.
- * @public
+ * @system @public
  */
 export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTrick];
-
-/**
- * Remove all fields which permit undefined from `T`.
- */
-export type RequiredFields<T> = [
-	{
-		[P in keyof T as undefined extends T[P] ? never : P]: T[P];
-	},
-][_InlineTrick];
-
-/**
- * Extract fields which permit undefined but can also hold other types.
- */
-export type OptionalFields<T> = [
-	{
-		[P in keyof T as undefined extends T[P]
-			? T[P] extends undefined
-				? never
-				: P
-			: never]?: T[P];
-	},
-][_InlineTrick];
-
-/**
- * Converts properties of an object which permit undefined into optional properties.
- * Removes fields which only allow undefined.
- *
- * @remarks
- * This version does not flatten the resulting type.
- * This version exists because some cases recursive types need to avoid this
- * flattening since it causes complication issues.
- *
- * See also `AllowOptional`.
- */
-// export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
-export type AllowOptionalNotFlattened<T> = [
-	RequiredFields<T> & OptionalFields<T>,
-][_InlineTrick];
-
-/**
- * Converts properties of an object which permit undefined into optional properties.
- * Removes fields which only allow undefined.
- */
-export type AllowOptional<T> = [
-	FlattenKeys<RequiredFields<T> & OptionalFields<T>>,
-][_InlineTrick];
 
 /**
  * Use for trick to "inline" generic types.
@@ -81,7 +35,7 @@ export type AllowOptional<T> = [
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @public
+ * @system @public
  */
 export type _InlineTrick = 0;
 
@@ -157,9 +111,15 @@ export type _RecursiveTrick = never;
  * Alternative to the built in Record type which does not permit unexpected members,
  * and is readonly.
  *
+ * @remarks
+ * This does not work correctly when `K` is more specific than `string` or `symbol`.
+ * For example `{a: 5}` is not assignable to `RestrictiveReadonlyRecord<"a",: number>`
+ *
  * @privateRemarks
  * `number` is not allowed as a key here since doing so causes the compiler to reject recursive schema.
  * The cause for this is unclear, but empirically it was the case when this comment was written.
+ *
+ * @deprecated Use a more robust / specific type instead. This type never worked as intended.
  * @public
  */
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -167,15 +127,13 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 };
 
 /**
- * Assume that `TInput` is a `TAssumeToBe`.
- *
+ * Alternative to the built-in `Record<string, T>` type which is readonly and does not permit symbols.
  * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
+ * It would be nice if `keyof RestrictiveStringRecord<T>` returned string, but it does not: use `keyof RestrictiveStringRecord<T> & string` instead.
+ * @system @public
  */
-export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe]
-	? TInput
-	: TAssumeToBe;
+export type RestrictiveStringRecord<T> = {
+	readonly [P in string]: T;
+} & {
+	readonly [P in symbol]?: never;
+};
