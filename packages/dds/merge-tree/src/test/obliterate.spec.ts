@@ -48,7 +48,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({
@@ -81,7 +80,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 2,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			assert.equal(client.getText(), "");
@@ -104,7 +102,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 2,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			assert.equal(client.getText(), "h");
@@ -120,7 +117,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({
@@ -143,7 +139,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({
@@ -193,7 +188,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({
