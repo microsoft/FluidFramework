@@ -3,10 +3,11 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": feature
+"section": tree
+highlight: true
 ---
 
-Add (alpha) SharedTree branching APIs
+✨ New! Add (alpha) SharedTree branching APIs
 
 This adds a handful of APIs to allow for creating and coordinating "version-control"-style branches of the SharedTree.
 Use the `getBranch` entry point function to acquire a branch.

@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": "tree"
+"section": "deprecation"
 ---
 RestrictiveReadonlyRecord is deprecated
 

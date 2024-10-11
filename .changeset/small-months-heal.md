@@ -5,6 +5,6 @@
 "section": tree
 ---
 
-Branch merges generate revertibles
+Branch merges now generate revertibles
 
 Merging any number of commits into a target branch (via the 'merge' method) now generates a revertible for each commit on the target branch.
