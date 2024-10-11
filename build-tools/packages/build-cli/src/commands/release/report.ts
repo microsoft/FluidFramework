@@ -38,16 +38,9 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import type { LegacyCompatInterval } from "../../config.js";
 import { releaseGroupFlag } from "../../flags.js";
 import { CommandLogger } from "../../logging.js";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
-
-/**
- * The multiple of minor versions to use for calculating the next version in the legacy compatibility range.
- * This interval applies exclusively to the client release group; for all other release groups, the caret versions are used.
- */
-const DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL = 10;
 
 /**
  * Controls behavior when there is a list of releases and one needs to be selected.
@@ -584,15 +577,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
 
-			// Legacy API contracts only exists for the client release group
-			const defaultLegacyCompatInterval: LegacyCompatInterval = {
-				legacyCompatInterval: { "client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL },
-			};
+			if (context.flubConfig.releaseReport === undefined) {
+				throw new Error(`Legacy compat interval not found in fluidBuild.config.cjs.`);
+			}
 
-			const ranges = getRanges(
-				latestVer,
-				context.flubConfig.releaseReport ?? defaultLegacyCompatInterval,
-			);
+			const ranges = getRanges(latestVer, context.flubConfig.releaseReport);
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
