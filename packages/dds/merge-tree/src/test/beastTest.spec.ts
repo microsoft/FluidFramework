@@ -355,7 +355,6 @@ function checkMarkRemoveMergeTree(
 		UniversalSequenceNumber,
 		LocalClientId,
 		UniversalSequenceNumber,
-		false,
 		{ op: createRemoveRangeOp(start, end) },
 	);
 	accumTime += elapsedMicroseconds(clockStart);
@@ -464,7 +463,6 @@ export function mergeTreeLargeTest(): void {
 			UniversalSequenceNumber,
 			LocalClientId,
 			UniversalSequenceNumber,
-			false,
 			undefined as never,
 		);
 		accumTime += elapsedMicroseconds(clockStart);
@@ -1543,7 +1541,6 @@ function findReplacePerf(filename: string): void {
 					UniversalSequenceNumber,
 					client.getClientId(),
 					1,
-					false,
 					undefined as never,
 				);
 				insertText({
