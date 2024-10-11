@@ -7,7 +7,7 @@
 highlight: true
 ---
 
-✨ New! Add alpha API for providing SharedTree configuration options
+✨ New! Alpha API for providing SharedTree configuration options
 
 A new alpha `configuredSharedTree` had been added.
 This allows providing configuration options, primarily for debugging, testing and evaluation of upcoming features.

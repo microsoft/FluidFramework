@@ -7,9 +7,9 @@
 highlight: true
 ---
 
-✨ New! Add (alpha) SharedTree branching APIs
+✨ New! Alpha SharedTree branching APIs
 
-This adds a handful of APIs to allow for creating and coordinating "version-control"-style branches of the SharedTree.
+Several APIs have been added to allow for creating and coordinating "version-control"-style branches of the SharedTree.
 Use the `getBranch` entry point function to acquire a branch.
 For example:
 

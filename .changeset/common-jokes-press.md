@@ -7,7 +7,7 @@
 highlight: true
 ---
 
-✨ New! Add alpha API for snapshotting Schema
+✨ New! Alpha API for snapshotting Schema
 
 `extractPersistedSchema` can now be used to extra a JSON-compatible representation of the subset of a schema that gets stored in documents.
 This can be used write tests which snapshot an applications schema.
