@@ -1,0 +1,124 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+@media (min-width: 860px) {
+  .interactive-demo__header .block-heading, .interactive-demo__tab .tab-panel .block-feature {
+    margin-inline: auto;
+    width: calc(83.33333%); } }
+
+@media (min-width: 1440px) {
+  .interactive-demo__header .block-heading, .interactive-demo__tab .tab-panel .block-feature {
+    width: calc(14 / 24 * 100%); } }
+
+.interactive-demo {
+  --interactive-demo-bg-overlay: var(
+    --theme-background-background-overlay-fill,
+    rgba(255, 255, 255, 0.6)
+  );
+  --interactive-demo-bg-img-display: block; }
+  .interactive-demo .block-slim {
+    --block-slim-justify: center; }
+    .interactive-demo .block-slim .block-items-list {
+      --block-items-list-justify: center;
+      z-index: 2; }
+
+.interactive-demo__header .block-heading {
+  margin-bottom: var(--root-spacing-xl);
+  padding-top: var(--root-spacing-3xl); }
+
+.interactive-demo__header .row {
+  justify-content: center;
+  margin-bottom: calc( 1rem + calc(var(--root-spacing-2xs) + var(--root-spacing-xl))); }
+
+.interactive-demo__bg-image {
+  display: var(--interactive-demo-bg-img-display);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 2rem;
+  --bg-val: var(--interactive-demo-bg-overlay); }
+  .interactive-demo__bg-image .ocr-img {
+    --image-display: block;
+    --image-width: 100%;
+    --image-height: 100%;
+    --image-object-fit: cover; }
+
+.interactive-demo__tab {
+  position: relative; }
+  .interactive-demo__tab .tabs {
+    margin-top: -60px;
+    padding-right: 1rem;
+    padding-left: 1rem;
+    max-width: calc(1328px + var(--root-spacing-xs));
+    margin-left: auto;
+    margin-right: auto; }
+    @media (min-width: 540px) {
+      .interactive-demo__tab .tabs {
+        padding-right: 4rem;
+        padding-left: 4rem; } }
+    @media (min-width: 860px) {
+      .interactive-demo__tab .tabs {
+        padding-right: 3.5rem;
+        padding-left: 3.5rem; } }
+    @media (min-width: 1440px) {
+      .interactive-demo__tab .tabs {
+        padding-right: 5%;
+        padding-left: 5%;
+        width: 90%;
+        box-sizing: content-box; } }
+    @media (min-width: 1440px) {
+      .interactive-demo__tab .tabs {
+        padding-left: 0;
+        padding-right: 0;
+        width: 100%; } }
+  .interactive-demo__tab .tab-panel-group {
+    --tabs-panel-margin-top: unset;
+    padding-top: var(--root-density-vertical-compact);
+    padding-bottom: var(--root-spacing-3xl);
+    justify-content: center; }
+  .interactive-demo__tab .tab-panel {
+    text-align: center; }
+    .interactive-demo__tab .tab-panel .media,
+    .interactive-demo__tab .tab-panel .media__asset {
+      width: 100%; }
+    @media (min-width: 860px) {
+      .interactive-demo__tab .tab-panel .media {
+        width: 66.667%;
+        margin: auto; } }
+    .interactive-demo__tab .tab-panel .media,
+    .interactive-demo__tab .tab-panel .ow-m365-video {
+      margin-top: var(--root-spacing-xl); }
+    .interactive-demo__tab .tab-panel .media--highlight {
+      padding: var(--root-spacing-l); }
+      .interactive-demo__tab .tab-panel .media--highlight .ocr-img {
+        --image-border-radius: var(--root-radii-s); }
+    .interactive-demo__tab .tab-panel .block-feature__body {
+      z-index: 2; }
+  .interactive-demo__tab .ow-m365-video-player-ctn .c-video-player {
+    min-width: auto; }
+
+.interactive-demo--bg-overlay-disable {
+  --interactive-demo-bg-overlay: none; }
+
+.interactive-demo--bg-img-hide {
+  --interactive-demo-bg-img-display: none; }
+
+.interactive-demo--hide-tabs .tabs__slider {
+  display: none; }
+
+.interactive-demo--hide-tabs .tab-panel-group {
+  padding-top: 0; }
+
+.interactive-demo--hide-tabs .block-heading {
+  margin-bottom: var(--root-density-vertical-default); }
+
+.interactive-demo:has(.interactive-demo__bg-image) .tabs .tab__item {
+  background: var(--theme-background-card-normal); }
+  .interactive-demo:has(.interactive-demo__bg-image) .tabs .tab__item:active {
+    background: var(--theme-background-card-pressed); }

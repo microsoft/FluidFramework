@@ -1,0 +1,9 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+.section-master--blade-case-study-carousel .carousel--type-case-study {
+  --carousel-window-margin-bottom: var(--sm-density, var(--root-spacing-xl)); }

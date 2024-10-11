@@ -1,0 +1,77 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+.hero-article {
+  --hero-article-min-height: 580px;
+  min-height: var(--hero-article-min-height);
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-top: var(--root-breadth-vertical-relaxed);
+  padding-bottom: var(--root-breadth-vertical-relaxed); }
+  @media (max-width: 1439.98px) {
+    .hero-article {
+      --hero-article-min-height: 351px; } }
+  @media (max-width: 859.98px) {
+    .hero-article {
+      flex-direction: column-reverse;
+      padding-top: 0; }
+      .hero-article .hero-article__media {
+        padding-bottom: var(--root-density-vertical-default); } }
+  .hero-article__bg-img {
+    position: absolute;
+    height: 100%;
+    width: 100%; }
+    @media (max-width: 859.98px) {
+      .hero-article__bg-img {
+        display: none; } }
+    html[dir="rtl"] .hero-article__bg-img {
+      transform: scaleX(-1); }
+    .hero-article__bg-img.overlay__target::before {
+      --bg-val: var(--theme-background-background-overlay-fill); }
+    .hero-article__bg-img .ocr-img {
+      --image-height: 100%;
+      --image-width: 100%; }
+  .hero-article__breadcrumbs {
+    order: 1; }
+    @media (max-width: 859.98px) {
+      .hero-article__breadcrumbs {
+        padding-inline: 0; } }
+    @media (min-width: 860px) {
+      .hero-article__breadcrumbs {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding-top: var(--root-spacing-xl); } }
+  .hero-article__media {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50vw;
+    height: 100%; }
+    @media (max-width: 859.98px) {
+      .hero-article__media {
+        position: unset;
+        width: 100%; } }
+    html[dir="rtl"] .hero-article__media {
+      right: unset;
+      left: 0; }
+  .hero-article .media {
+    --media-height: 100%;
+    justify-content: center; }
+  .hero-article .hero-article__media .ocr-img {
+    --image-height: 100%; }
+  .hero-article .block-heading {
+    -webkit-padding-end: var(--root-copy-padding-l);
+            padding-inline-end: var(--root-copy-padding-l); }
+  .hero-article .button-group {
+    flex-wrap: wrap; }
+    .hero-article .button-group .ocr-icon {
+      --icon-width: fit-content; }

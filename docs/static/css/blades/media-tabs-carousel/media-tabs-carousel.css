@@ -1,0 +1,47 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+.media-tabs-carousel {
+  position: relative;
+  max-width: 1600px;
+  width: 100%;
+  --media-tabs-bg-assests-display: block; }
+  .media-tabs-carousel__bg-asset-primary, .media-tabs-carousel__bg-asset-secondary {
+    display: var(--media-tabs-bg-assests-display);
+    position: absolute; }
+    .media-tabs-carousel__bg-asset-primary .media, .media-tabs-carousel__bg-asset-secondary .media {
+      --media-width: 400px; }
+      @media (max-width: 1439.98px) {
+        .media-tabs-carousel__bg-asset-primary .media, .media-tabs-carousel__bg-asset-secondary .media {
+          --media-width: 240px; } }
+    @media (max-width: 859.98px) {
+      .media-tabs-carousel__bg-asset-primary, .media-tabs-carousel__bg-asset-secondary {
+        --media-tabs-bg-assests-display: none; } }
+  .media-tabs-carousel--primary-asset-position-top-left .media-tabs-carousel__bg-asset-primary {
+    top: 0;
+    left: 0; }
+  .media-tabs-carousel--primary-asset-position-top-right .media-tabs-carousel__bg-asset-primary {
+    top: 0;
+    right: 0; }
+  .media-tabs-carousel--primary-asset-position-bottom-left .media-tabs-carousel__bg-asset-primary {
+    bottom: 50px;
+    left: 0; }
+  .media-tabs-carousel--primary-asset-position-bottom-right .media-tabs-carousel__bg-asset-primary {
+    bottom: 50px;
+    right: 0; }
+  .media-tabs-carousel--secondary-asset-position-top-left .media-tabs-carousel__bg-asset-secondary {
+    top: 0;
+    left: 0; }
+  .media-tabs-carousel--secondary-asset-position-top-right .media-tabs-carousel__bg-asset-secondary {
+    top: 0;
+    right: 0; }
+  .media-tabs-carousel--secondary-asset-position-bottom-left .media-tabs-carousel__bg-asset-secondary {
+    bottom: 50px;
+    left: 0; }
+  .media-tabs-carousel--secondary-asset-position-bottom-right .media-tabs-carousel__bg-asset-secondary {
+    bottom: 50px;
+    right: 0; }

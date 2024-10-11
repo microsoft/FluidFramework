@@ -1,0 +1,55 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+.banner-features {
+  padding: var(--root-spacing-3xl) var(--root-spacing-2xl);
+  border-radius: var(--root-radii-l);
+  --layout-column-gap: var(--root-density-horizontal-relaxed);
+  row-gap: var(--root-spacing-3xl); }
+  .banner-features__feature .block-feature__headings,
+  .banner-features__feature .block-feature sub .ms-rte-link,
+  .banner-features__feature .block-feature sup .ms-rte-link {
+    color: var(--theme-foreground-base-strong); }
+  .banner-features__feature .ocr-icon {
+    color: var(--theme-foreground-base-icon); }
+  .banner-features.layout--cols-1 .block-feature {
+    --block-feature--direction: column;
+    --block-feature-align-items: center;
+    --block-feature-text-align: center;
+    align-items: center !important; }
+    .banner-features.layout--cols-1 .block-feature__footer {
+      display: flex;
+      flex-direction: var(--block-feature--direction);
+      align-items: center !important; }
+    .banner-features.layout--cols-1 .block-feature__headings {
+      text-align: center; }
+  @media (max-width: 1439.98px) {
+    .banner-features__feature .block-feature {
+      --block-feature--direction: column;
+      --block-feature-align-items: center;
+      --block-feature-text-align: center;
+      align-items: center !important; }
+      .banner-features__feature .block-feature__footer {
+        display: flex;
+        flex-direction: var(--block-feature--direction);
+        align-items: center !important; }
+      .banner-features__feature .block-feature__headings {
+        text-align: center; } }
+  @media (max-width: 859.98px) {
+    .banner-features.layout--cols-3, .banner-features.layout--cols-2 {
+      --layout-column-count: 1; } }
+  .banner-features--alignment-stacked:not([class*="bg-"]) {
+    padding: 0; }
+  .banner-features--alignment-stacked .block-feature,
+  .banner-features--alignment-stacked .block-feature.block-feature--align-list {
+    --block-feature--spacing: var(--root-spacing-m);
+    --block-feature--direction: column; }
+    .banner-features--alignment-stacked .block-feature .block-feature__body,
+    .banner-features--alignment-stacked .block-feature.block-feature--align-list .block-feature__body {
+      --block-feature-body-gap: var(--root-spacing-m); }

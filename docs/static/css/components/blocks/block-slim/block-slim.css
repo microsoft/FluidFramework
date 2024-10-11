@@ -1,0 +1,44 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+.block-slim {
+  --block-slim-justify: flex-start;
+  --block-slim-flex-direction: row;
+  --block-slim-gap: initial;
+  display: flex;
+  justify-content: var(--block-slim-justify);
+  flex-direction: var(--block-slim-flex-direction);
+  gap: var(--block-slim-gap); }
+  .block-slim__button--fill {
+    flex-grow: 1; }
+  .block-slim__label {
+    color: var(--theme-foreground-base-highlight); }
+    .block-slim__label--eyebrow {
+      text-transform: uppercase; }
+
+.block-slim--related-products {
+  --block-slim-gap: var(--root-spacing-xs);
+  flex-wrap: wrap; }
+  .block-slim--related-products .list-item__inner {
+    -moz-column-gap: var(--root-spacing-xs);
+         column-gap: var(--root-spacing-xs); }
+  .block-slim--related-products .badge {
+    --badge-width: 2rem;
+    --badge-height: 2rem;
+    --badge-border-radius: var(--root-radii-s); }
+    .block-slim--related-products .badge .ocr-icon {
+      --icon-font-size: var(--root-icon-m-font-size);
+      --icon-max-width: var(--root-icon-m-max-width);
+      --icon-max-height: var(--root-icon-m-max-height); }
+
+.block-slim.block-slim--checklist {
+  --block-slim-flex-direction: column;
+  --block-slim-gap: var(--root-spacing-xs); }
+  .block-slim.block-slim--checklist .list-item__inner {
+    padding: 0; }
+    .block-slim.block-slim--checklist .list-item__inner .ocr-icon {
+      --icon-svg-fill: var(--theme-foreground-base-icon); }

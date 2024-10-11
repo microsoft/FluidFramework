@@ -1,0 +1,49 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+.statement-banner .layout__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center; }
+
+.statement-banner .badge {
+  margin-bottom: var(--root-spacing-l);
+  align-self: center;
+  --badge-height: 96px;
+  --badge-width: 96px;
+  box-shadow: var(--root-depth-4); }
+  @media (max-width: 1439.98px) {
+    .statement-banner .badge {
+      --badge-height: 72px;
+      --badge-width: 72px; } }
+  .statement-banner .badge .ocr-icon {
+    --icon-font-size: 32px;
+    --icon-max-height: 32px;
+    --icon-max-width: 32px; }
+    @media (max-width: 1439.98px) {
+      .statement-banner .badge .ocr-icon {
+        --icon-font-size: 24px;
+        --icon-max-height: 24px;
+        --icon-max-width: 24px; } }
+
+.statement-banner .layout--boxed {
+  margin-bottom: var(--root-density-vertical-default); }
+
+.statement-banner .block-heading__title {
+  display: inline;
+  -webkit-padding-end: calc( var(--root-marquee-letter-spacing) * -1);
+          padding-inline-end: calc( var(--root-marquee-letter-spacing) * -1); }
+
+.statement-banner .block-heading__paragraph {
+  --block-heading-paragraph-margin: 0; }
+
+.statement-banner--hero .block-heading__title.text-gradient {
+  --text-gradient-bg-image: linear-gradient(90deg, #801ea4 0%, #dc2c04 100%); }
+
+.statement-banner--campaign {
+  z-index: 3;
+  position: relative; }

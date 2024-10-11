@@ -1,0 +1,55 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+.editorial-cards {
+  /* stylelint-enable */ }
+  .editorial-cards__block-section-title {
+    margin-bottom: var(--root-density-vertical-default); }
+  .editorial-cards.editorial-cards--2-up {
+    /* stylelint-disable */
+    /* selector-max-class */ }
+    .editorial-cards.editorial-cards--2-up > .layout--cols-2 {
+      --layout-column-gap: var(--root-density-horizontal-relaxed); }
+    @media (min-width: 860px) {
+      .editorial-cards.editorial-cards--2-up .ghost-card > .layout--cols-2 {
+        --ghost-card-image-max-width: 152px; } }
+    @media (max-width: 859.98px) {
+      .editorial-cards.editorial-cards--2-up .ghost-card .ocr-divider {
+        --ghost-card-ocr-divider-display: none; } }
+  @media (min-width: 860px) {
+    .editorial-cards.editorial-cards--2-up-lg .block-feature, .editorial-cards.editorial-cards--3-up .block-feature {
+      -webkit-padding-end: var(--root-copy-padding-l);
+              padding-inline-end: var(--root-copy-padding-l); } }
+  @media (min-width: 540px) {
+    .editorial-cards.editorial-cards--4-up > .layout {
+      --layout-column-count: 2; } }
+  @media (min-width: 1440px) {
+    .editorial-cards.editorial-cards--4-up > .layout {
+      --layout-column-count: 4; } }
+  .editorial-cards .editorial-cards__footer {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--root-density-vertical-default); }
+    .editorial-cards .editorial-cards__footer > .button-group {
+      width: 100%; }
+    @media (min-width: 540px) {
+      .editorial-cards .editorial-cards__footer {
+        display: none; } }
+  .editorial-cards .row {
+    flex-wrap: wrap; }
+  .editorial-cards .block-feature {
+    height: calc(100% - var(--ghost-card-feature-margin)); }
+    .editorial-cards .block-feature .block-feature__body {
+      height: 100%; }
+  .editorial-cards .card-horizontal .card-horizontal__content {
+    gap: var(--root-spacing-m); }
+  .editorial-cards .card-horizontal .card-horizontal__content > :last-child {
+    margin-top: 0; }
+  .editorial-cards > .layout {
+    --layout-row-gap: var(--root-spacing-2xl); }

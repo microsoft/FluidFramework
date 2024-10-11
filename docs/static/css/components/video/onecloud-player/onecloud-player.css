@@ -1,0 +1,17 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+.ow-m365-video {
+  max-width: 100%; }
+  .ow-m365-video.ow-sm {
+    width: 800px; }
+  .ow-m365-video.ow-md {
+    width: 1200px; }
+  .ow-m365-video.ow-lg {
+    width: 1600px; }
+  .ow-m365-video.ow-xl {
+    width: 1920px; }

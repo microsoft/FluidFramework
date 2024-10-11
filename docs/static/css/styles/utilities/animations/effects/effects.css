@@ -1,0 +1,359 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+@keyframes fade-in {
+  0% {
+    opacity: 0; }
+  100% {
+    opacity: 1; } }
+
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100px); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
+
+@keyframes multi-slide-up-1 {
+  0% {
+    opacity: 0;
+    transform: translateY(75px); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
+
+@keyframes multi-slide-up-2 {
+  0% {
+    opacity: 0;
+    transform: translateY(225px); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
+
+@keyframes multi-slide-up-3 {
+  0% {
+    opacity: 0;
+    transform: translateY(375px); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
+
+@keyframes multi-slide-up-4 {
+  0% {
+    opacity: 0;
+    transform: translateY(525px); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
+
+@keyframes multi-slide-up-5 {
+  0% {
+    opacity: 0;
+    transform: translateY(675px); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
+
+@keyframes multi-slide-up-6 {
+  0% {
+    opacity: 0;
+    transform: translateY(825px); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
+
+@keyframes scale-down-center {
+  0% {
+    transform: scale(2); }
+  100% {
+    transform: scale(1); } }
+
+@keyframes slide-right {
+  0% {
+    opacity: 0;
+    transform: translateX(50px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes multi-slide-right-1 {
+  0% {
+    opacity: 0;
+    transform: translateX(75px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes multi-slide-right-2 {
+  0% {
+    opacity: 0;
+    transform: translateX(225px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes multi-slide-right-3 {
+  0% {
+    opacity: 0;
+    transform: translateX(375px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes multi-slide-right-4 {
+  0% {
+    opacity: 0;
+    transform: translateX(525px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes multi-slide-right-5 {
+  0% {
+    opacity: 0;
+    transform: translateX(675px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes multi-slide-right-6 {
+  0% {
+    opacity: 0;
+    transform: translateX(825px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes scale-down-right {
+  0% {
+    opacity: 0;
+    transform: scale(1.25);
+    transform-origin: 0% 50%; }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    transform-origin: 0% 50%; } }
+
+@keyframes slide-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-50px); }
+  100% {
+    opacity: 1;
+    transform: translateX(0); } }
+
+@keyframes overflow-container {
+  0% {
+    overflow: hidden; }
+  100% {
+    overflow: initial; } }
+
+@keyframes typing {
+  from {
+    width: 0; } }
+
+@keyframes blink-caret {
+  50% {
+    border-color: transparent; } }
+
+@keyframes hide-blink-caret {
+  100% {
+    border-color: transparent; } }
+
+.animation .animation {
+  animation-delay: 250ms; }
+
+.animation--duration-1600 {
+  --animation-duration: 1600ms !important; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-1,
+  .animation--effect-1-scroll.effect-on {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), fade-in var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-2,
+  .animation--effect-2-scroll.effect-on {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), slide-up var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-3,
+  .animation--effect-3-scroll.effect-on {
+    --animation-duration: 2400ms;
+    animation: overflow-container var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-3 > *:nth-child(1),
+  .animation--effect-3-scroll.effect-on > *:nth-child(1) {
+    --animation-duration: 1200ms;
+    animation: multi-slide-up-1 var(--animation-duration) ease-in-out 25ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-3 > *:nth-child(2),
+  .animation--effect-3-scroll.effect-on > *:nth-child(2) {
+    --animation-duration: 1200ms;
+    animation: multi-slide-up-2 var(--animation-duration) ease-in-out 50ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-3 > *:nth-child(3),
+  .animation--effect-3-scroll.effect-on > *:nth-child(3) {
+    --animation-duration: 1200ms;
+    animation: multi-slide-up-3 var(--animation-duration) ease-in-out 75ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-3 > *:nth-child(4),
+  .animation--effect-3-scroll.effect-on > *:nth-child(4) {
+    --animation-duration: 1200ms;
+    animation: multi-slide-up-4 var(--animation-duration) ease-in-out 100ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-3 > *:nth-child(5),
+  .animation--effect-3-scroll.effect-on > *:nth-child(5) {
+    --animation-duration: 1200ms;
+    animation: multi-slide-up-5 var(--animation-duration) ease-in-out 125ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-3 > *:nth-child(6),
+  .animation--effect-3-scroll.effect-on > *:nth-child(6) {
+    --animation-duration: 1200ms;
+    animation: multi-slide-up-6 var(--animation-duration) ease-in-out 150ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-4,
+  .animation--effect-4-scroll.effect-on {
+    --animation-duration: 2400ms;
+    animation: fade-in var(--animation-duration), overflow-container var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-4.media,
+  .animation--effect-4 .media,
+  .animation--effect-4-scroll.effect-on.media,
+  .animation--effect-4-scroll.effect-on .media {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), scale-down-center var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-5,
+  .animation--effect-5-scroll.effect-on {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), slide-right var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-5 .carousel__window .carousel__container > *:nth-child(1),
+  .animation--effect-5-scroll.effect-on .carousel__window .carousel__container > *:nth-child(1) {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), multi-slide-right-1 var(--animation-duration) ease-in-out 25ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-5 .carousel__window .carousel__container > *:nth-child(2),
+  .animation--effect-5-scroll.effect-on .carousel__window .carousel__container > *:nth-child(2) {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), multi-slide-right-2 var(--animation-duration) ease-in-out 50ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-5 .carousel__window .carousel__container > *:nth-child(3),
+  .animation--effect-5-scroll.effect-on .carousel__window .carousel__container > *:nth-child(3) {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), multi-slide-right-3 var(--animation-duration) ease-in-out 75ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-5 .carousel__window .carousel__container > *:nth-child(4),
+  .animation--effect-5-scroll.effect-on .carousel__window .carousel__container > *:nth-child(4) {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), multi-slide-right-4 var(--animation-duration) ease-in-out 100ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-5 .carousel__window .carousel__container > *:nth-child(5),
+  .animation--effect-5-scroll.effect-on .carousel__window .carousel__container > *:nth-child(5) {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), multi-slide-right-5 var(--animation-duration) ease-in-out 125ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-5 .carousel__window .carousel__container > *:nth-child(6),
+  .animation--effect-5-scroll.effect-on .carousel__window .carousel__container > *:nth-child(6) {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), multi-slide-right-6 var(--animation-duration) ease-in-out 150ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-6,
+  .animation--effect-6-scroll.effect-on {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), slide-up var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-6 .media,
+  .animation--effect-6-scroll.effect-on .media {
+    --animation-duration: 2100ms;
+    animation: overflow-container var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-6 .media img,
+  .animation--effect-6 .media video,
+  .animation--effect-6 .media:first-child img,
+  .animation--effect-6 .media:first-child video,
+  .animation--effect-6-scroll.effect-on .media img,
+  .animation--effect-6-scroll.effect-on .media video,
+  .animation--effect-6-scroll.effect-on .media:first-child img,
+  .animation--effect-6-scroll.effect-on .media:first-child video {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), scale-down-center var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-7.media img,
+  .animation--effect-7.media video,
+  .animation--effect-7 .media:first-child img,
+  .animation--effect-7 .media:first-child video,
+  .animation--effect-7-scroll.effect-on.media img,
+  .animation--effect-7-scroll.effect-on.media video,
+  .animation--effect-7-scroll.effect-on .media:first-child img,
+  .animation--effect-7-scroll.effect-on .media:first-child video {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), scale-down-right var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animation--effect-8,
+  .animation--effect-8-scroll.effect-on {
+    --animation-duration: 1200ms;
+    animation: fade-in var(--animation-duration), slide-left var(--animation-duration) ease-in-out 0ms 1 normal none; } }
+
+.animation--effect-9 .animation__target,
+.animation--effect-9-scroll.effect-on .animation__target {
+  --animation-e9-target-border-width: 0.15em;
+  --animation-e9-target-border-color: var(--theme-foreground-base-subtle);
+  --animation-e9-target-white-space: nowrap;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-right: var(--animation-e9-target-border-width) solid var(--animation-e9-target-border-color);
+  white-space: var(--animation-e9-target-white-space);
+  margin: 0 auto;
+  -webkit-padding-end: 0.07em;
+          padding-inline-end: 0.07em;
+  width: 100%; }
+  @media (prefers-reduced-motion: no-preference) {
+    .animation--effect-9 .animation__target,
+    .animation--effect-9-scroll.effect-on .animation__target {
+      animation: typing 2500ms steps(50, end), blink-caret 500ms step-end infinite alternate, hide-blink-caret 1000ms 5000ms forwards; } }
+
+.animation--effect-2-scroll,
+.animation--effect-3-scroll,
+.animation--effect-5-scroll,
+.animation--effect-6-scroll,
+.animation--effect-8-scroll {
+  opacity: 0;
+  transition: opacity 1200ms ease-in-out 50ms; }
+  .animation--effect-2-scroll.effect-on,
+  .animation--effect-3-scroll.effect-on,
+  .animation--effect-5-scroll.effect-on,
+  .animation--effect-6-scroll.effect-on,
+  .animation--effect-8-scroll.effect-on {
+    opacity: 1; }

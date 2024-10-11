@@ -1,0 +1,41 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+/* #region Blade Modifiers */
+.section-master--blade-hero-double-cta {
+  --sm-hdcta-layout-header-md-mr: var(--root-spacing-4xl);
+  /* Sets an override for 2-columns layout that hides the background image for stacked layout.
+    * Condition to satisfy this style is: 2-columns reversed layout and background-image with stacked layout.
+    */ }
+  .section-master--blade-hero-double-cta.section-master--bg-image-stacked.section-master--layout-reverse .section-master__image {
+    --sm-bg-img-sm-display: none; }
+  .section-master--blade-hero-double-cta.section-master--layout-reverse {
+    /* Override the top margin from layout container for stacked column layout */ }
+    .section-master--blade-hero-double-cta.section-master--layout-reverse .section-master__layout {
+      margin-top: initial;
+      /* Overrides the top padding to match the hero blade padding (24px)
+        * Density must be set to compact to set the padding to 24px
+        */
+      /* This override is set assuming the 2nd column is always image. */ }
+      .section-master--blade-hero-double-cta.section-master--layout-reverse .section-master__layout .section-master__layout-header {
+        --sm-layout-heading-sm-padding-top: var(--sm-density); }
+        @media (min-width: 860px) {
+          .section-master--blade-hero-double-cta.section-master--layout-reverse .section-master__layout .section-master__layout-header {
+            margin-right: calc(var(--sm-hdcta-layout-header-md-mr) - var(--layout-column-gap)); } }
+      .section-master--blade-hero-double-cta.section-master--layout-reverse .section-master__layout .section-master__layout-slot {
+        /* Set negative margin to span the image full to width. */
+        --sm-layout-slot-xs-margin-left: -1rem;
+        --sm-layout-slot-xs-margin-right: -1rem;
+        --sm-layout-slot-sm-margin-left: -4rem;
+        --sm-layout-slot-sm-margin-right: -4rem; }
+  .section-master--blade-hero-double-cta .section-master__layout-header {
+    -webkit-padding-end: var(--root-copy-padding-l);
+            padding-inline-end: var(--root-copy-padding-l); }
+
+/* #endregion */

@@ -1,0 +1,100 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+.featured-cards {
+  --image-safe-fixed-padding: 300px;
+  --feature-cards-border-radius: var(--root-spacing-l);
+  border-radius: var(--feature-cards-border-radius); }
+  @media (min-width: 860px) {
+    .featured-cards {
+      position: relative;
+      padding-top: var(--image-safe-fixed-padding);
+      padding-inline: var(--root-spacing-xl);
+      padding-bottom: var(--root-spacing-xl);
+      --surface-bg: none; } }
+  @media (min-width: 1440px) {
+    .featured-cards {
+      --image-safe-fixed-padding: 400px; } }
+  @media (min-width: 860px) {
+    .featured-cards .featured-cards__media {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0; }
+      .featured-cards .featured-cards__media .featured-cards__default-media,
+      .featured-cards .featured-cards__media .featured-cards__card-media {
+        height: 100%;
+        width: 100%; }
+      .featured-cards .featured-cards__media .media {
+        --media-height: 100%;
+        --media-width: 100%; }
+        .featured-cards .featured-cards__media .media .ocr-img {
+          --image-width: 100%; }
+        .featured-cards .featured-cards__media .media img {
+          height: var(--media-height); } }
+  @media (max-width: 859.98px) {
+    .featured-cards .featured-cards__default-media .media {
+      --surface-border-width: 0; } }
+  .featured-cards .featured-cards__card-media {
+    display: none; }
+    @media (min-width: 860px) {
+      .featured-cards .featured-cards__card-media {
+        display: block;
+        position: absolute;
+        top: 0;
+        z-index: 0; } }
+  .featured-cards .featured-cards__cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--root-spacing-xs);
+    padding: var(--root-spacing-xs) var(--root-spacing-xs) var(--root-spacing-l) var(--root-spacing-xs); }
+    @media (min-width: 860px) {
+      .featured-cards .featured-cards__cards {
+        flex-direction: row;
+        gap: var(--root-spacing-m);
+        align-items: stretch;
+        padding: 0; } }
+  .featured-cards .featured-cards__card {
+    flex: 1 1 0; }
+    @media (max-width: 859.98px) {
+      .featured-cards .featured-cards__card .block-feature__paragraph {
+        display: block !important; } }
+    .featured-cards .featured-cards__card .card {
+      --card-box-shadow: none; }
+      @media (max-width: 859.98px) {
+        .featured-cards .featured-cards__card .card.surface--glass-selected, .featured-cards .featured-cards__card .card.surface--glass {
+          --surface-bg: var(--theme-background-card-normal, #fefefe);
+          --surface-border-width: var(--root-border-s);
+          --surface-border-style: solid;
+          --surface-border-color: var(--theme-border-card-fade);
+          --surface-backdrop-filter: blur(80px);
+          -webkit-backdrop-filter: var(--surface-backdrop-filter);
+                  backdrop-filter: var(--surface-backdrop-filter); } }
+  @media (max-width: 859.98px) {
+    .featured-cards .card__interactive-btn-wrapper {
+      display: none; } }
+  @media (min-width: 860px) {
+    .featured-cards [data-mount="featured-cards-interactive"] .featured-cards__media {
+      position: relative;
+      top: unset;
+      left: unset;
+      right: unset;
+      bottom: unset; }
+      .featured-cards [data-mount="featured-cards-interactive"] .featured-cards__media .ocr-img {
+        --image-object-fit: cover; }
+    .featured-cards [data-mount="featured-cards-interactive"] .featured-cards__default-media {
+      transition: opacity 1s ease-in-out; }
+    .featured-cards [data-mount="featured-cards-interactive"] .featured-cards__cards {
+      padding-inline: var(--root-spacing-xl);
+      padding-bottom: var(--root-spacing-xl);
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0; } }

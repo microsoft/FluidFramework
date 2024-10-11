@@ -1,0 +1,6 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */.announcement-banner{display:flex;background-color:var(--theme-background-highlight-normal);padding:var(--root-spacing-xs) 0}.announcement-banner .col{display:flex;align-items:center;justify-content:center;position:relative;width:100%}.announcement-banner__badge{align-self:flex-start}html:not([dir=rtl]) .announcement-banner__badge{margin-right:var(--root-spacing-s)}html[dir=rtl] .announcement-banner__badge{margin-left:var(--root-spacing-s)}.announcement-banner__center{display:flex;justify-content:center;align-items:center;flex-wrap:wrap}@media (max-width:539.98px){.announcement-banner__center{flex-grow:1}}.announcement-banner__content{color:var(--theme-foreground-base-strong);text-align:center}html:not([dir=rtl]) .announcement-banner__action{margin-left:var(--root-spacing-xs)}html[dir=rtl] .announcement-banner__action{margin-right:var(--root-spacing-xs)}.announcement-banner__action .link{--link-text-color:var(--theme-foreground-accent-subtle-normal)}.announcement-banner__dismiss{display:flex;align-items:flex-start;color:var(--theme-foreground-accent-strong-normal)}.announcement-banner__dismiss button{--button-color:var(--theme-foreground-accent-subtle-normal)}

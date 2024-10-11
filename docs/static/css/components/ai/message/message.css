@@ -1,0 +1,16 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+.ai-chat-message {
+  padding: var(--root-spacing-m) var(--root-spacing-l);
+  border-radius: var(--root-radii-s);
+  font-size: 0.875rem;
+  font-weight: 400; }
+  .ai-chat-message--tag {
+    border-width: var(--root-border-xs);
+    padding: var(--root-spacing-xs) 10px;
+    width: auto;
+    line-height: 20px; }

@@ -1,0 +1,35 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+.ocr-accordion ul:first-child {
+  overflow: hidden;
+  color: var(--theme-foreground-base-subtle);
+  padding: 0; }
+
+.ocr-accordion:not(.ocr-accordion--contained) .ocr-accordion-item:first-child .ocr-accordion-item__header {
+  padding-top: 0 !important; }
+
+.ocr-accordion--contained ul:first-child {
+  box-shadow: var(--root-depth-8);
+  border-radius: var(--root-radii-s);
+  background-color: var(--theme-background-card-normal); }
+  .ocr-accordion--contained ul:first-child .ocr-accordion-item .indicator {
+    display: none; }
+  .ocr-accordion--contained ul:first-child .ocr-accordion-item__content {
+    margin: 0; }
+  .ocr-accordion--contained ul:first-child .ocr-accordion-item__header {
+    padding: var(--root-spacing-l) var(--root-spacing-xl) !important; }
+  .ocr-accordion--contained ul:first-child .ocr-accordion-item__body {
+    padding: var(--root-spacing-xl);
+    background-color: var(--accordion--item--background-card-color); }
+  .ocr-accordion--contained ul:first-child .ocr-accordion-item .btn-collapse {
+    justify-content: space-between !important; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .accordion--vertical:has(.collapsing) {
+    --animation-duration: 1200ms;
+    animation: overflow-container var(--animation-duration) ease-in-out 0ms 1 normal none; } }

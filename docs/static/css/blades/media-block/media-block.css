@@ -1,0 +1,42 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+.media-block {
+  --media-block-spacing-top: 0;
+  --media-block-spacing-horizontal: 0;
+  --media-block-button-group-padding-top: var(--root-density-vertical-default);
+  --media-block-paragraph-padding-top: var(--root-density-vertical-default);
+  --media-block-paragraph-padding-horizontal: var(--root-spacing-l);
+  --media-block-spacing-bottom: var(--root-breadth-vertical-comfortable);
+  --image-width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--media-block-spacing-top);
+  padding-inline: var(--media-block-spacing-horizontal); }
+  .media-block .media-block__caption {
+    color: var(--theme-foreground-base-subtle);
+    padding-top: var(--media-block-paragraph-padding-top);
+    padding-bottom: var(--media-block-spacing-bottom); }
+  .media-block:has(.media-block__button-group) .media-block__caption {
+    padding-bottom: 0; }
+  .media-block:has(.media-block__button-group) .media-block__button-group {
+    padding-top: var(--media-block-button-group-padding-top);
+    padding-bottom: var(--media-block-spacing-bottom); }
+  .media-block--interactive, .media-block--centered {
+    --media-block-spacing-top: var(--root-breadth-vertical-relaxed);
+    --media-block-paragraph-padding-top: var(--root-density-vertical-compact);
+    --media-block-button-group-padding-top: var(--root-density-vertical-compact);
+    --media-block-paragraph-padding-horizontal: 0;
+    --image-border-radius: var(--root-radii-m);
+    padding-bottom: var(--media-block-spacing-bottom); }
+    .media-block--interactive .media-block__caption, .media-block--centered .media-block__caption {
+      padding-bottom: 0; }
+    .media-block--interactive .media-block__button-group, .media-block--centered .media-block__button-group {
+      padding-bottom: 0; }
+  .media-block--centered .layout__col {
+    padding-inline: var(--root-density-horizontal-default); }
+  .media-block--bottom-spacing-none {
+    --media-block-spacing-bottom: 0; }

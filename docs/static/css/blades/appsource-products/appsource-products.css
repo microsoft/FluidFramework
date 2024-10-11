@@ -1,0 +1,19 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+.appsource-tabs .carousel__arrow-prev {
+  padding: calc(var(--root-spacing-s) + 1px) calc(var(--root-spacing-s) + 2px) calc(var(--root-spacing-s) + 1px) var(--root-spacing-s); }
+
+.appsource-tabs .carousel__arrow-next {
+  padding: calc(var(--root-spacing-s) + 1px) var(--root-spacing-s) calc(var(--root-spacing-s) + 1px) calc(var(--root-spacing-s) + 2px); }
+
+.appsource-tabs .tab-panel-group {
+  margin-top: 3rem; }
+
+.link-appsource {
+  position: absolute;
+  bottom: 1rem; }

@@ -1,0 +1,6 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */.button-group{--button-group-direction:column;display:flex;flex-direction:var(--button-group-direction);gap:var(--root-spacing-xs)}@media (min-width:540px){.button-group:not(.button-group--stacked){--button-group-direction:row}}@media (max-width:539.98px){.button-group:not(.button-group--stacked) .btn--icon{width:auto}.button-group:not(.button-group--stacked) .ocr-icon{--icon-width:auto}}

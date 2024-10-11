@@ -1,0 +1,46 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+.ocr-img {
+  --image-display: inherit;
+  --image-width: inherit;
+  --image-max-width: 100%;
+  --image-height: auto;
+  --image-border-radius: inherit;
+  --image-object-fit: inherit;
+  --image-aspect-ratio: initial;
+  display: var(--image-display);
+  width: var(--image-width);
+  max-width: var(--image-max-width);
+  height: var(--image-height); }
+  .ocr-img picture,
+  .ocr-img img {
+    width: inherit;
+    max-width: inherit;
+    height: inherit;
+    -o-object-fit: var(--image-object-fit);
+       object-fit: var(--image-object-fit);
+    border-radius: var(--image-border-radius);
+    aspect-ratio: var(--image-aspect-ratio); }
+
+.img-fluid picture,
+.img-fluid img {
+  max-width: 100%;
+  height: auto; }
+
+.img-object-cover picture,
+.img-object-cover img {
+  -o-object-fit: cover;
+     object-fit: cover;
+  height: 100%;
+  width: 100%; }
+
+@media (forced-colors: active) and (prefers-color-scheme: dark) {
+  .img-hc-dark {
+    filter: invert(1); } }

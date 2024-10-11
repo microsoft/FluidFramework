@@ -1,0 +1,98 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+[data-mount="m365-video"] {
+  position: relative;
+  --video-btn-width: 32px;
+  --video-btn-height: 32px;
+  --video-btn-position: 3rem; }
+  [data-mount="m365-video"].overlay__target {
+    --bg-val: var(--theme-background-background-overlay-fill, rgba(255, 255, 255, 0.6)); }
+  [data-mount="m365-video"] .m365-video__control {
+    position: absolute;
+    z-index: 1;
+    color: var(--button-color) !important;
+    height: var(--video-btn-height);
+    width: var(--video-btn-width); }
+    html:not([dir="rtl"]) .m365-video--control-top-left[data-mount="m365-video"] .m365-video__control, html:not([dir="rtl"])
+    .m365-video--control-bottom-left[data-mount="m365-video"] .m365-video__control {
+      left: var(--video-btn-position); }
+    html[dir="rtl"] .m365-video--control-top-left[data-mount="m365-video"] .m365-video__control, html[dir="rtl"]
+    .m365-video--control-bottom-left[data-mount="m365-video"] .m365-video__control {
+      right: var(--video-btn-position); }
+    html:not([dir="rtl"]) .m365-video--control-top-right[data-mount="m365-video"] .m365-video__control, html:not([dir="rtl"])
+    .m365-video--control-bottom-right[data-mount="m365-video"] .m365-video__control {
+      right: var(--video-btn-position); }
+    html[dir="rtl"] .m365-video--control-top-right[data-mount="m365-video"] .m365-video__control, html[dir="rtl"]
+    .m365-video--control-bottom-right[data-mount="m365-video"] .m365-video__control {
+      left: var(--video-btn-position); }
+    .m365-video--control-top-left[data-mount="m365-video"] .m365-video__control,
+    .m365-video--control-top-right[data-mount="m365-video"] .m365-video__control {
+      top: var(--video-btn-position); }
+    .m365-video--control-bottom-right[data-mount="m365-video"] .m365-video__control,
+    .m365-video--control-bottom-left[data-mount="m365-video"] .m365-video__control {
+      bottom: var(--video-btn-position); }
+    .m365-video--control-small[data-mount="m365-video"] .m365-video__control {
+      --video-btn-height: 24px;
+      --video-btn-width: 24px; }
+    .m365-video--control-large[data-mount="m365-video"] .m365-video__control {
+      --video-btn-height: 48px;
+      --video-btn-width: 48px; }
+    .m365-video--control-secondary[data-mount="m365-video"] .m365-video__control {
+      box-sizing: border-box;
+      --button-bg-color: transparent;
+      --button-color: var(--theme-foreground-accent-subtle-normal) !important;
+      --button-border-color: var(--theme-border-accent-subtle-normal);
+      background-color: var(--button-bg-color);
+      color: var(--button-color);
+      border-color: var(--button-border-color);
+      --button-hover-bg-color: transparent;
+      --button-hover-color: var(--theme-foreground-accent-subtle-hover) !important;
+      --button-hover-border-color: var(--theme-border-accent-subtle-hover);
+      --button-pressed-bg-color: transparent;
+      --button-pressed-color: var(--theme-foreground-accent-subtle-pressed) !important;
+      --button-pressed-border-color: var(--theme-border-accent-subtle-pressed);
+      --button-color: var(--theme-foreground-accent-strong-normal) !important;
+      --button-border-color: var(--theme-foreground-accent-strong-normal); }
+      .m365-video--control-secondary[data-mount="m365-video"] .m365-video__control:hover {
+        --button-bg-color: var(--button-hover-bg-color);
+        --button-color: var(--button-hover-color);
+        --button-border-color: var(--button-hover-border-color);
+        background-color: var(--button-bg-color);
+        color: var(--button-color);
+        border-color: var(--button-border-color);
+        background-image: none;
+        box-shadow: none; }
+      .m365-video--control-secondary[data-mount="m365-video"] .m365-video__control:active {
+        --button-bg-color: var(--button-pressed-bg-color);
+        --button-color: var(--button-pressed-color);
+        --button-border-color: var(--button-pressed-border-color);
+        background-color: var(--button-bg-color);
+        color: var(--button-color);
+        border-color: var(--button-border-color); }
+  @media (max-width: 859.98px) {
+    [data-mount="m365-video"].m365-video--mobile-d-none {
+      display: none; } }
+  [data-mount="m365-video"].m365-video--full-height {
+    height: 100%; }
+    [data-mount="m365-video"].m365-video--full-height figure {
+      height: 100%; }
+    [data-mount="m365-video"].m365-video--full-height video {
+      height: 100%;
+      -o-object-fit: cover;
+         object-fit: cover; }
+  @media (min-width: 860px) {
+    [data-mount="m365-video"].m365-video--full-height-desktop-only {
+      height: 100%; }
+      [data-mount="m365-video"].m365-video--full-height-desktop-only figure {
+        height: 100%; }
+      [data-mount="m365-video"].m365-video--full-height-desktop-only video {
+        height: 100%;
+        -o-object-fit: cover;
+           object-fit: cover; } }

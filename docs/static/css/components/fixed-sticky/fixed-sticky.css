@@ -1,0 +1,40 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+.fixed-sticky {
+  transition: background 0.2s ease-out, shadow 0.2s ease-out; }
+  .fixed-sticky .sticky-show-stuck {
+    display: none; }
+  .fixed-sticky.get-height .sticky-show-stuck {
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    position: fixed;
+    left: -9999px;
+    width: 100%; }
+  .fixed-sticky.stuck {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1020;
+    transition: position 300ms ease-in-out; }
+    .fixed-sticky.stuck .sticky-show-stuck {
+      display: block; }
+    .fixed-sticky.stuck .sticky-hide-stuck {
+      display: none; }
+    .fixed-sticky.stuck.sticky-direction-top.stuck-depth {
+      box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.45), 0 0.1875rem 0.4375rem rgba(0, 0, 0, 0.3); }
+    .fixed-sticky.stuck.sticky-direction-bottom.stuck-depth {
+      box-shadow: 0 -0.0625rem 0.125rem rgba(0, 0, 0, 0.45), 0 -0.1875rem 0.4375rem rgba(0, 0, 0, 0.3); }
+    .fixed-sticky.stuck .tab-group {
+      border-bottom: none; }
+      .fixed-sticky.stuck .tab-group a:active, .fixed-sticky.stuck .tab-group a:focus,
+      .fixed-sticky.stuck .tab-group button:active,
+      .fixed-sticky.stuck .tab-group button:focus {
+        margin-bottom: 0; }

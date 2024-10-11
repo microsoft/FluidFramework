@@ -1,0 +1,43 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+.checklist-item {
+  --checklist-item-border-style: var(--root-radii-s);
+  --checklist-item-font-color: var(--theme-foreground-base-strong);
+  --checklist-item-max-width: 292px;
+  color: var(--checklist-item-font-color);
+  min-width: -moz-fit-content;
+  min-width: fit-content;
+  max-width: var(--checklist-item-max-width); }
+  .checklist-item:not(:has(.checklist-item__body)) {
+    display: flex;
+    gap: var(--root-spacing-xs); }
+  .checklist-item .checklist-item__body {
+    display: flex;
+    gap: var(--root-spacing-xs);
+    align-items: center; }
+  .checklist-item--special {
+    --checklist-item-max-width: 432px;
+    --surface-border-radius: var(--checklist-item-border-style);
+    padding: var(--root-spacing-m) var(--root-spacing-l); }
+    .checklist-item--special .checklist-item__body {
+      gap: var(--root-spacing-l); }
+      .checklist-item--special .checklist-item__body .badge {
+        min-width: var(--badge-width); }
+      .checklist-item--special .checklist-item__body .checklist-item__content {
+        padding-bottom: var(--root-spacing-2xs); }
+  .checklist-item--special.theme-night,
+  .theme-night .checklist-item--special {
+    color: var(--checklist-item-font-color); }
+    .checklist-item--special.theme-night .badge,
+    .theme-night .checklist-item--special .badge {
+      --badge-background-color: var(--theme-background-glass-normal);
+      --badge-border-width: var(--root-border-xs);
+      --badge-border-color: var(--theme-border-glass-fade);
+      --badge-box-shadow: none; }
+      .checklist-item--special.theme-night .badge [class*="glyph-"],
+      .theme-night .checklist-item--special .badge [class*="glyph-"] {
+        color: var(--theme-foreground-base-icon-dark); }

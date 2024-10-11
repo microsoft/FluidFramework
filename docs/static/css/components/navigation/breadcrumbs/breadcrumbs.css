@@ -1,0 +1,53 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+/* prettier-ignore */
+/* stylelint-disable-line declaration-no-important */
+/* prettier-ignore */
+.breadcrumbs {
+  --breadcrumbs-mobile-background-color: var(--theme-background-base-fade);
+  --breadcrumbs-nav-padding: var(--root-spacing-m);
+  --breadcrumbs-collapsed-padding: var(--root-spacing-2xs);
+  --breadcrumbs-list-padding: var(--root-spacing-2xs);
+  --breadcrumbs-padding-sides: var(--root-spacing-l);
+  padding: var(--breadcrumbs-nav-padding) var(--breadcrumbs-padding-sides);
+  background-color: var(--breadcrumbs-mobile-background-color); }
+  @media (min-width: 860px) {
+    .breadcrumbs {
+      padding: 0;
+      background-color: transparent; } }
+  .breadcrumbs--collapsed {
+    --breadcrumbs-nav-padding: var(--breadcrumbs-collapsed-padding); }
+  .breadcrumbs__list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 0 var(--breadcrumbs-list-padding) 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--root-spacing-2xs); }
+    .breadcrumbs__list li {
+      margin: auto 0; }
+      .breadcrumbs__list li:last-child .link.link-inline {
+        text-decoration: none;
+        font-weight: var(--root-body-font-weight);
+        --link-text-color: var(--theme-foreground-base-subtle); }
+      .breadcrumbs__list li:last-child .glyph-prepend {
+        display: none; }
+      .breadcrumbs__list li:not(:last-child) .glyph-prepend {
+        display: inline-block; }
+      .breadcrumbs__list li.breadcrumbs__btn-expand {
+        display: inline-flex;
+        flex: 0 0 auto;
+        gap: var(--root-spacing-2xs); }
+        .breadcrumbs__list li.breadcrumbs__btn-expand .ocr-icon {
+          margin: auto; }
+      .breadcrumbs__list li.breadcrumbs__item--d-none {
+        display: none; }
+      .breadcrumbs__list li .link.link-inline {
+        vertical-align: top; }
+      .breadcrumbs__list li .ocr-icon {
+        display: inline !important;
+        --icon-glyph-color: var(--theme-foreground-base-subtle); }

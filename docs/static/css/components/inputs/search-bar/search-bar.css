@@ -1,0 +1,14 @@
+/*!
+ * OneCloud Reimagine v0.286.0
+ * MWF (Moray) v2.8.1
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright 2011-2020 The Bootstrap Authors and Twitter, Inc.
+ */
+.search-bar {
+  --search-bar-vertical-padding: var(--root-spacing-s);
+  background-color: var(--theme-background-card-normal);
+  padding: var(--search-bar-vertical-padding) var(--root-spacing-s) var(--search-bar-vertical-padding) var(--root-spacing-m);
+  border-radius: var(--root-radii-m);
+  box-shadow: var(--root-depth-2); }
+  .search-bar--size-sm {
+    --search-bar-vertical-padding: var(--root-spacing-xs); }

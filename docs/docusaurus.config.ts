@@ -56,11 +56,15 @@ const config: Config = {
 	// For GitHub pages deployment, it is often '/<projectName>/'
 	baseUrl: "/",
 
+	// #region Linter options
+
 	// Reports many false positives for API documentation
 	onBrokenAnchors: "ignore",
 	onBrokenLinks: "warn",
 	onBrokenMarkdownLinks: "throw",
 	onDuplicateRoutes: "throw",
+
+	// #endregion
 
 	// Even if you don't use internationalization, you can use this field to set
 	// useful metadata like html lang. For example, if your site is Chinese, you
