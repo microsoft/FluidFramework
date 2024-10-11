@@ -153,6 +153,10 @@ export class DataStoreContexts
 				existing,
 			},
 			async () => (!wait && !existing ? undefined : deferredContext.promise),
+			{
+				start: true,
+				end: true,
+			},
 		);
 	}
 
