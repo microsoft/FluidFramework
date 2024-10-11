@@ -35,7 +35,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 
 type ContainerRuntime_WithPrivates = Patch<ContainerRuntime, { flush: () => void }>;
 
-describeCompat.only(
+describeCompat(
 	"Op Critical Paths - runtime benchmarks",
 	"NoCompat",
 	(getTestObjectProvider) => {
@@ -43,21 +43,6 @@ describeCompat.only(
 		let mainContainer: IContainer;
 		let defaultDataStore: ITestDataObject;
 		let containerRuntime: ContainerRuntime_WithPrivates;
-
-		//* no worky
-		// before(async () => {
-		// 	provider = getTestObjectProvider();
-		// 	const loader = provider.makeTestLoader(testContainerConfig);
-		// 	mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		// 	await mainContainer.attach(provider.driver.createCreateNewRequest());
-		// 	defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
-		// 	containerRuntime = defaultDataStore._context
-		// 		.containerRuntime as ContainerRuntime_WithPrivates;
-
-		// 	defaultDataStore._root.set("force", "write connection");
-		// 	await provider.ensureSynchronized();
-		// });
 
 		const before = async () => {
 			provider = getTestObjectProvider();
@@ -75,12 +60,6 @@ describeCompat.only(
 		function sendOps(label: string) {
 			Array.from({ length: 100 }).forEach((_, i) => {
 				defaultDataStore._root.set(`key-${i}`, `value-${label}`);
-			});
-
-			//* Waste time to see how the numbers work out
-			const x: number[] = [];
-			Array.from({ length: 0 }).forEach((_, a) => {
-				x[a] = a;
 			});
 
 			containerRuntime.flush();
@@ -100,25 +79,10 @@ describeCompat.only(
 				assert(opsSent > 0, "Expecting op(s) to be sent.");
 			},
 		});
-
-		//* TIL: beforeEach doesn't happen before each iteration
-		// describe("Process", () => {
-		// 	beforeEach(async () => {
-		// 		await mainContainer.deltaManager.outbound.pause();
-		// 		sendOps();
-		// 	});
-		// 	benchmark({
-		// 		title: "Process",
-		// 		benchmarkFnAsync: async () => {
-		// 			mainContainer.deltaManager.outbound.resume();
-		// 			await provider.ensureSynchronized();
-		// 		},
-		// 	});
-		// });
 	},
 );
 
-describeCompat.only(
+describeCompat(
 	"Op Critical Paths - runtime benchmarks",
 	"NoCompat",
 	(getTestObjectProvider) => {
@@ -144,12 +108,6 @@ describeCompat.only(
 		function sendOps(label: string) {
 			Array.from({ length: 100 }).forEach((_, i) => {
 				defaultDataStore._root.set(`key-${i}`, `value-${label}`);
-			});
-
-			//* Waste time to see how the numbers work out
-			const x: number[] = [];
-			Array.from({ length: 0 }).forEach((_, a) => {
-				x[a] = a;
 			});
 
 			containerRuntime.flush();
