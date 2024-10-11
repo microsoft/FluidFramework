@@ -175,7 +175,7 @@ export class ScribeLambdaFactory
 				}
 			}
 
-			const isEphemeralContainer = document.isEphemeralContainer;
+			const isEphemeralContainer = document?.isEphemeralContainer;
 
 			scribeSessionMetric = createSessionMetric(
 				tenantId,
