@@ -146,6 +146,12 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 		await provider.ensureSynchronized();
 
 		// So the handleGetPromise executes as soon as the handle op is processed, before the blob attach op is processed
+		// original test which has been solved
+		// await assert.rejects(
+		// 	mainObject3.handleGetPromise.promise,
+		// 	(error: Error) => error.message === "Error: 0x11f",
+		// 	"Blob should not be fetched",
+		// );
 		await mainObject3.handleGetPromise.promise;
 	});
 });

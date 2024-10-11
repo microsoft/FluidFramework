@@ -811,6 +811,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
+							// In order to follow natural blob creation flow we need to:
+							// 1 send the blob attach op
+							// 2 resolve the blob handle
+							// 3 wait for op referencing the blob
 							if (!entry.opsent) {
 								this.sendBlobAttachOp(id, entry.storageId);
 							}
