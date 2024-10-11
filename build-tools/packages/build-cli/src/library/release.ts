@@ -12,7 +12,6 @@ import {
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
-import type { Package } from "@fluidframework/build-tools";
 import type { LegacyCompatInterval } from "../config.js";
 import { ReleaseGroup } from "../releaseGroups.js";
 
@@ -78,7 +77,6 @@ export interface ReleaseRanges {
  *
  * @param version - The version.
  * @param interval - The multiple of minor versions to use for calculating the next version in the range.
- * @param pkg - Package name or package details such as release group, etc
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.
  * @returns The {@link ReleaseRanges} for a version string
@@ -86,7 +84,6 @@ export interface ReleaseRanges {
 export const getRanges = (
 	version: ReleaseVersion,
 	interval: LegacyCompatInterval,
-	pkg: Package | string,
 	scheme?: VersionScheme,
 ): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
@@ -97,14 +94,14 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getLegacyCompatVersionRange(version, schemeToUse, pkg, interval),
+				legacyCompat: getLegacyCompatVersionRange(version, interval),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: getLegacyCompatVersionRange(version, schemeToUse, pkg, interval),
+				legacyCompat: getLegacyCompatVersionRange(version, interval),
 			};
 };
 
@@ -131,6 +128,21 @@ interface PackageRange {
 export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
 
 /**
+ * Determines the appropriate legacy compatible range based on the release group.
+ *
+ * @param details - Full details about a release.
+ * @returns - The version to use.
+ * `legacyCompat` if the release group is "client".
+ * `caret` for all other release groups.
+ */
+function fixLegacyCompatVersions(details: ReleaseDetails): string {
+	if (details.releaseGroup !== "client") {
+		details.ranges.legacyCompat = details.ranges.caret;
+	}
+	return details.ranges.legacyCompat;
+}
+
+/**
  * Converts a {@link ReleaseReport} into different formats based on the kind.
  */
 export function toReportKind(
@@ -141,6 +153,9 @@ export function toReportKind(
 
 	switch (kind) {
 		case "full": {
+			for (const [, details] of Object.entries(report)) {
+				fixLegacyCompatVersions(details);
+			}
 			return report;
 		}
 
@@ -170,7 +185,7 @@ export function toReportKind(
 
 		case "legacy-compat": {
 			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = details.ranges.legacyCompat;
+				toReturn[pkg] = fixLegacyCompatVersions(details);
 			}
 			break;
 		}
@@ -187,17 +202,12 @@ export function toReportKind(
  * Generates a new version representing the next version in a legacy compatibility range based on a specified multiple of minor versions.
  *
  * @param version - A string representing the current version.
- * @param schemeToUse - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
- * version.
- * @param pkg - Package name or package details such as release group, etc
  * @param interval - The multiple of minor versions to use for calculating the next version in the range.
  *
  * @returns A string representing the next version in the legacy compatibility range.
  */
 export function getLegacyCompatVersionRange(
 	version: string,
-	schemeToUse: VersionScheme,
-	pkg: Package | string,
 	interval: LegacyCompatInterval,
 ): string {
 	const releaseGroup = Object.keys(interval.legacyCompatInterval);
@@ -213,12 +223,7 @@ export function getLegacyCompatVersionRange(
 		throw new Error(`Legacy compat interval not found for client release group`);
 	}
 
-	if (typeof pkg !== "string" && pkg.monoRepo?.releaseGroup === "client") {
-		const range = getLegacyRangeForClient(version, interval.legacyCompatInterval.client);
-		return range;
-	}
-
-	return schemeToUse === "internal" ? getVersionRange(version, "^") : `^${version}`;
+	return getLegacyRangeForClient(version, interval.legacyCompatInterval.client);
 }
 
 /**

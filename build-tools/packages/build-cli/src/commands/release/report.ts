@@ -589,14 +589,14 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				legacyCompatInterval: { "client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL },
 			};
 
+			const ranges = getRanges(
+				latestVer,
+				context.flubConfig.releaseReport ?? defaultLegacyCompatInterval,
+			);
+
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
-					const ranges = getRanges(
-						latestVer,
-						context.flubConfig.releaseReport ?? defaultLegacyCompatInterval,
-						pkg,
-					);
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -609,11 +609,6 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
-				const ranges = getRanges(
-					latestVer,
-					context.flubConfig.releaseReport ?? defaultLegacyCompatInterval,
-					pkgName,
-				);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,
