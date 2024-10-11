@@ -195,7 +195,7 @@ export enum ForestType {
 export function getBranch(tree: ITree): TreeBranch;
 
 // @alpha
-export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
+export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): TreeBranch;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
