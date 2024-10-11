@@ -1,0 +1,6 @@
+import BrowserOnly from '@docusaurus/BrowserOnly';
+
+{/* Workaround for https://github.com/facebook/docusaurus/issues/10198 */}
+<BrowserOnly>
+  {() => (window.location.href = `/home`)}
+</BrowserOnly>
