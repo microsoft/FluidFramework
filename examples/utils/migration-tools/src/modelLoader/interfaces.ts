@@ -69,7 +69,7 @@ export interface IMigratableModelLoader<ModelType> {
 	loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
 
 	/**
-	 * Load a model for the container with the given id.
+	 * Load a model for the container with the given id to at least the specified sequence number.
 	 * @param id - the id of the container to load
 	 * @param sequenceNumber - the sequence number we want to load to at minimum
 	 */
