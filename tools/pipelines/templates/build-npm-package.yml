@@ -425,6 +425,7 @@ extends:
                           targetType: inline
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
+                            set -eux -o pipefail
                             Coverage_Report_Artifact_Name="Code Coverage Report"
                             export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE=$Coverage_Report_Artifact_Name
                             export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR=$Coverage_Report_Artifact_Name
