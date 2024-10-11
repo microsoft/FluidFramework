@@ -630,6 +630,6 @@ module.exports = {
 	releaseReport: {
 		legacyCompatInterval: {
 			"client": 10,
-		}
+		},
 	},
 };
