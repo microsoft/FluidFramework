@@ -65,3 +65,4 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       packages: ${{ parameters.packages }}
       testWorkspace: ${{ variables.testWorkspace }}
+      stressMode: ${{ parameters.stressMode }}

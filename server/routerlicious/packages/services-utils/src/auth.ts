@@ -298,6 +298,7 @@ export function verifyStorageToken(
 		const moreOptions: IVerifyTokenOptions = options;
 		moreOptions.maxTokenLifetimeSec = maxTokenLifetimeSec;
 		moreOptions.requireTokenExpiryCheck = isTokenExpiryEnabled;
+
 		try {
 			await verifyToken(
 				tenantId,
@@ -308,6 +309,7 @@ export function verifyStorageToken(
 			);
 			// Riddler is known to take too long sometimes. Check timeout before continuing.
 			getGlobalTimeoutContext().checkTimeout();
+
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },

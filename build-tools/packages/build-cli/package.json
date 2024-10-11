@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.48.0",
+	"version": "0.49.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -176,7 +176,6 @@
 		"eslint-config-prettier": "~9.1.0",
 		"jssm-viz-cli": "5.97.1",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
 		"rimraf": "^4.4.1",

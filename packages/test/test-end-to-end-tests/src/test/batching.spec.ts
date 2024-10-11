@@ -11,7 +11,6 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	IContainerRuntimeOptions,
-	UnknownContainerRuntimeMessage,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -115,6 +114,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	let container1: IContainer;
+	let container2: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let dataObject1map1: ISharedMap;
@@ -141,7 +141,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObject1map2 = await dataObject1.getSharedObject<ISharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(configCopy);
+		container2 = await provider.loadTestContainer(configCopy);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		dataObject2map1 = await dataObject2.getSharedObject<ISharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<ISharedMap>(map2Id);
@@ -157,7 +157,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("[DEPRECATED] can send and a batch containing a future/unknown op type", async () => {
+	it("[DEPRECATED] can send and receive a batch specifying compatDetails", async () => {
 		await setupContainers({
 			flushMode: FlushMode.TurnBased,
 			compressionOptions: {
@@ -168,35 +168,45 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 			chunkSizeInBytes: 100,
 		});
 		const futureOpSubmitter2 = dataObject2.context.containerRuntime as unknown as {
-			submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+			submit: (containerRuntimeMessage: any) => void;
 		};
 		const dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
 		const dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 		setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 		setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 
-		// Submit two ops, one of which is unrecognized
+		// Submit two ops: a FluidDataStoreOp and a GC op
 		dataObject2map1.set("key1", "value1");
 		futureOpSubmitter2.submit({
-			type: "FUTURE_TYPE" as any,
-			contents: "Hello",
+			type: ContainerMessageType.GC,
+			contents: {
+				type: "TombstoneLoaded",
+				nodePath: "/",
+			},
 			compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed
 		});
 
 		// Wait for the ops to get flushed and processed.
 		await provider.ensureSynchronized();
 
-		assert.equal(
-			dataObject1BatchMessages.filter((m) => m.type !== ContainerMessageType.ChunkedOp)[1]
-				.type,
-			"FUTURE_TYPE",
-			"Unknown op type not preserved (dataObject1)",
+		// Neither container should have closed
+		assert.equal(container1.closed, false, "Container1 should not have closed");
+		assert.equal(container2.closed, false, "Container2 should not have closed");
+
+		// Both ops should have reached both containers
+		assert.deepEqual(
+			dataObject1BatchMessages
+				.filter((m) => m.type !== ContainerMessageType.ChunkedOp) // Don't worry about ChunkedOps, not sure how many there will be
+				.map((m) => m.type),
+			[ContainerMessageType.FluidDataStoreOp, ContainerMessageType.GC],
+			"Unexpected op types received (dataObject1)",
 		);
-		assert.equal(
-			dataObject2BatchMessages.filter((m) => m.type !== ContainerMessageType.ChunkedOp)[1]
-				.type,
-			"FUTURE_TYPE",
-			"Unknown op type not preserved (dataObject2)",
+		assert.deepEqual(
+			dataObject2BatchMessages
+				.filter((m) => m.type !== ContainerMessageType.ChunkedOp) // Don't worry about ChunkedOps, not sure how many there will be
+				.map((m) => m.type),
+			[ContainerMessageType.FluidDataStoreOp, ContainerMessageType.GC],
+			"Unexpected op types received (dataObject2)",
 		);
 	});
 
