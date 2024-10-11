@@ -22,6 +22,7 @@ import {
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
+	type TreeLeafValue,
 	type TreeNode,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
@@ -39,6 +40,7 @@ import {
 } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
+import { testSimpleTrees } from "../../testTrees.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -1011,4 +1013,160 @@ describe("treeNodeApi", () => {
 			assert.deepEqual(eventLog, [new Set(["prop1"])]);
 		});
 	});
+
+	// create is mostly the same as node constructors which have their own tests, so just cover the new cases (optional and top level unions) here.
+	describe("create", () => {
+		it("undefined", () => {
+			// Valid
+			assert.equal(TreeBeta.create(schema.optional([]), undefined), undefined);
+			// Undefined where not allowed
+			assert.throws(
+				() => TreeBeta.create(schema.required([]), undefined as never),
+				validateUsageError("invalid"),
+			);
+			// Undefined required, not provided
+			assert.throws(
+				() => TreeBeta.create(schema.optional([]), 1 as unknown as undefined),
+				validateUsageError("invalid"),
+			);
+		});
+
+		it("union", () => {
+			// Valid
+			assert.equal(TreeBeta.create([schema.null, schema.number], null), null);
+			// invalid
+			assert.throws(
+				() => TreeBeta.create([schema.null, schema.number], "x" as unknown as number),
+				validateUsageError("invalid"),
+			);
+		});
+
+		// Integration test object complex objects work (mainly covered by tests elsewhere)
+		it("object", () => {
+			const A = schema.object("A", { x: schema.number });
+			const a = TreeBeta.create(A, { x: 1 });
+			assert.equal(a, { x: 1 });
+		});
+	});
+
+	describe("concise", () => {
+		describe("importConcise", () => {
+			it("undefined", () => {
+				// Valid
+				assert.equal(TreeBeta.importConcise(schema.optional([]), undefined), undefined);
+				// Undefined where not allowed
+				assert.throws(
+					() => TreeBeta.importConcise(schema.required([]), undefined),
+					validateUsageError("invalid"),
+				);
+				// Undefined required, not provided
+				assert.throws(
+					() => TreeBeta.importConcise(schema.optional([]), 1),
+					validateUsageError("invalid"),
+				);
+			});
+
+			it("union", () => {
+				// Valid
+				assert.equal(TreeBeta.importConcise([schema.null, schema.number], null), null);
+				// invalid
+				assert.throws(
+					() => TreeBeta.importConcise([schema.null, schema.number], "x"),
+					validateUsageError("invalid"),
+				);
+			});
+
+			it("object", () => {
+				const A = schema.object("A", { x: schema.number });
+				const a = TreeBeta.importConcise(A, { x: 1 });
+				assert.equal(a, { x: 1 });
+			});
+		});
+
+		describe("roundtrip", () => {
+			for (const testCase of testSimpleTrees) {
+				if (testCase.root !== undefined) {
+					it(testCase.name, () => {
+						const tree = TreeBeta.create(testCase.schema, testCase.root);
+						assert(tree !== undefined);
+						// TODO: fix typing
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const exported = TreeBeta.exportConcise(tree as any);
+						const imported = TreeBeta.importConcise(testCase.schema, exported);
+						// TODO: fix typing
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						expectTreesEqual(tree as any, imported as any);
+					});
+				}
+			}
+		});
+	});
+
+	describe("concise", () => {
+		describe("importVerbose", () => {
+			it("undefined", () => {
+				// Valid
+				assert.equal(TreeBeta.importVerbose(schema.optional([]), undefined), undefined);
+				// Undefined where not allowed
+				assert.throws(
+					() => TreeBeta.importVerbose(schema.required([]), undefined),
+					validateUsageError("invalid"),
+				);
+				// Undefined required, not provided
+				assert.throws(
+					() => TreeBeta.importVerbose(schema.optional([]), 1),
+					validateUsageError("invalid"),
+				);
+			});
+
+			it("union", () => {
+				// Valid
+				assert.equal(TreeBeta.importVerbose([schema.null, schema.number], null), null);
+				// invalid
+				assert.throws(
+					() => TreeBeta.importVerbose([schema.null, schema.number], "x"),
+					validateUsageError("invalid"),
+				);
+			});
+
+			it("object", () => {
+				const A = schema.object("A", { x: schema.number });
+				const a = TreeBeta.importVerbose(A, { type: A.identifier, fields: { x: 1 } });
+				assert.equal(a, { x: 1 });
+			});
+		});
+
+		describe("roundtrip", () => {
+			for (const testCase of testSimpleTrees) {
+				if (testCase.root !== undefined) {
+					it(testCase.name, () => {
+						const tree = TreeBeta.create(testCase.schema, testCase.root);
+						assert(tree !== undefined);
+						// TODO: fix typing
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const exported = TreeBeta.exportVerbose(tree as any);
+						const imported = TreeBeta.importVerbose(testCase.schema, exported);
+						// TODO: fix typing
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						expectTreesEqual(tree as any, imported as any);
+					});
+				}
+			}
+		});
+	});
+
+	// TODO: test exportCompressed
 });
+
+function expectTreesEqual(a: TreeNode | TreeLeafValue, b: TreeNode | TreeLeafValue): void {
+	// Validate the same schema objects are used.
+	assert.equal(Tree.schema(a), Tree.schema(b));
+
+	// This should catch all cases, assuming exportVerbose works correctly.
+	assert.deepEqual(TreeBeta.exportVerbose(a), TreeBeta.exportVerbose(b));
+
+	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
+	// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
+	// but should have no false positives since equal trees always have the same concise tree.
+	assert.deepEqual(TreeBeta.exportConcise(a), TreeBeta.exportConcise(b));
+}

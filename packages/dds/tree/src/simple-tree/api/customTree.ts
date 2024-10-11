@@ -28,6 +28,7 @@ import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
  * Options for how to encode a tree.
+ * @beta
  */
 export interface EncodeOptions<TCustom> {
 	/**

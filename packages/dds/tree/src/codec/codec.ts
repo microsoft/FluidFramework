@@ -328,3 +328,22 @@ export function withSchemaValidation<
 		},
 	};
 }
+
+/**
+ * Versions of FLuid Framework client packages.
+ * @remarks
+ * Used to express compatibility requirements by indicating the oldest version with which compatibility must be maintained.
+ * @privateRemarks
+ * This scheme assumes a single version will always be enough to communicate compatibility.
+ * For this to work, compatibility has to be strictly increasing.
+ * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
+ * a more complex scheme may be needed to allow safely opting into incompatible features in those cases:
+ * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
+ * @beta
+ */
+export enum FluidClientVersion {
+	v2_0 = "v2_0",
+	v2_1 = "v2_1",
+	v2_2 = "v2_2",
+	v2_3 = "v2_3",
+}
