@@ -2,6 +2,9 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+---
+section: tree
+---
 
 Expose experimental alpha APIs for producing schema from enums
 
