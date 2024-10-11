@@ -136,6 +136,7 @@ const config: Config = {
 			logo: {
 				alt: "Fluid Framework Logo",
 				src: "assets/fluid-icon.svg",
+				target: "/index.html",
 			},
 			items: [
 				{
