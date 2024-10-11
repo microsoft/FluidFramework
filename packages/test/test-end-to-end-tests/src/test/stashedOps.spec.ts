@@ -12,6 +12,7 @@ import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
+	type ILoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
@@ -2211,8 +2212,17 @@ describeCompat(
 				async function rehydrateConnectAndPause(loggingId: string) {
 					// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
 					// Container won't be connected yet, so no race here.
-					const container = await loader.resolve({ url }, pendingLocalState);
+					const container = await loader.resolve(
+						{
+							url,
+							headers: {
+								[LoaderHeader.loadMode]: { deltaConnection: "none" },
+							} satisfies Partial<ILoaderHeader>,
+						},
+						pendingLocalState,
+					);
 					await container.deltaManager.outbound.pause();
+					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
 					// This order matters - we need to process our inbound join op to finish connecting!
