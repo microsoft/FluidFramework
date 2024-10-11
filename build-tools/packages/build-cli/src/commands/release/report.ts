@@ -584,7 +584,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
 
-			// Legacy APi contracts only exists for the client release group
+			// Legacy API contracts only exists for the client release group
 			const defaultLegacyCompatInterval: LegacyCompatInterval = {
 				legacyCompatInterval: { "client": DEFAULT_CLIENT_LEGACY_COMPAT_INTERVAL },
 			};

@@ -12,7 +12,7 @@ import {
 import { MonoRepo } from "@fluidframework/build-tools";
 import { cosmiconfigSync } from "cosmiconfig";
 import { Context } from "./library/index.js";
-import { type ReleaseGroup } from "./releaseGroups.js";
+import type { ReleaseGroup } from "./releaseGroups.js";
 
 /**
  * Flub configuration that is expected in the flub config file or package.json.
