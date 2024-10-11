@@ -7,6 +7,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { GitRepo } from "../../../common/gitRepo";
+import { sha256 } from "../../hash";
 import { LeafWithDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
@@ -23,7 +24,7 @@ export class FlubListTask extends LeafWithDoneFileTask {
 		return split.length < 3 || split[2].startsWith("-") ? undefined : split[2];
 	}
 
-	public async getDoneFileContent(): Promise<string | undefined> {
+	protected async getDoneFileContent(): Promise<string | undefined> {
 		const resourceGroup = this.getReleaseGroup();
 		if (resourceGroup === undefined) {
 			return undefined;
@@ -53,7 +54,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 		return existsSync(infoFilePath) ? readFile(infoFilePath) : undefined;
 	}
 
-	public async getDoneFileContent(): Promise<string | undefined> {
+	protected async getDoneFileContent(): Promise<string | undefined> {
 		const layerInfoFile = await this.getLayerInfoFile();
 		return layerInfoFile
 			? JSON.stringify({
@@ -67,22 +68,17 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 }
 
 export class FlubCheckPolicyTask extends LeafWithDoneFileTask {
-	public async getDoneFileContent(): Promise<string | undefined> {
+	protected async getDoneFileContent(): Promise<string | undefined> {
+		// We are using the "commit" (for HEAD) as a summary of the state of unchanged files to speed this up.
 		const gitRepo = new GitRepo(this.node.pkg.directory);
-		const modifiedFiles = await gitRepo.getModifiedFiles();
-		const fileHashP = Promise.all(
-			modifiedFiles.map(async (file) => [
-				file,
-				await this.node.context.fileHashCache.getFileHash(this.getPackageFileFullPath(file)),
-			]),
-		);
-		// We are using the "commit" as a summary of the state of unchanged files to speed this up
-		// However, that would mean that the task will activated when the commit is made or file
-		// is staged, even when the file content didn't change.
-		// We probably can do some more complicated but more precise if there are significant benefits.
+
+		// Cover all the changes (including adding and removing of files, regardless of their staged state) relative to HEAD.
+		const diff = await gitRepo.exec("diff HEAD", "diff HEAD");
+		const modificationHash = sha256(Buffer.from(diff));
+
 		return JSON.stringify({
 			commit: await gitRepo.getCurrentSha(),
-			modifiedFiles: await fileHashP,
+			modifications: modificationHash,
 		});
 	}
 }
