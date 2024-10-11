@@ -1603,14 +1603,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		ac.abort();
 		const pendingOps = await pendingOpsP;
 
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
+		// we are able to load from the pending ops even though we abort
+		await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 	});
 
 	it("close while uploading multiple blob", async function () {
