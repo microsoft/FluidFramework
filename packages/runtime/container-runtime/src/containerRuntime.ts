@@ -2812,17 +2812,6 @@ export class ContainerRuntime
 				runtimeBatch,
 			);
 		} else {
-			if (!runtimeBatch) {
-				// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
-				// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
-				if (
-					typeof messageCopy.contents === "string" &&
-					messageCopy.contents !== "" &&
-					messageCopy.type !== MessageType.ClientLeave
-				) {
-					messageCopy.contents = JSON.parse(messageCopy.contents);
-				}
-			}
 			this.processInboundMessages(
 				[{ message: messageCopy, localOpMetadata: undefined }],
 				{ batchStart: true, batchEnd: true }, // Single message
@@ -2910,6 +2899,16 @@ export class ContainerRuntime
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
+		}
+
+		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
+		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
+		if (
+			typeof message.contents === "string" &&
+			message.contents !== "" &&
+			message.type !== MessageType.ClientLeave
+		) {
+			message.contents = JSON.parse(message.contents);
 		}
 
 		this.emit("op", message, false /* runtimeMessage */);
