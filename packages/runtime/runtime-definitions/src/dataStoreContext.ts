@@ -117,13 +117,6 @@ export const VisibilityState = {
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
 /**
- * Utility type for patching over properties of T with U.
- * @legacy
- * @alpha
- */
-export type Patch<T, U> = Omit<T, keyof U> & U;
-
-/**
  * @legacy
  * @alpha
  * @sealed
@@ -132,30 +125,24 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	(
 		event: "batchBegin",
 		listener: (
-			op: Patch<
-				ISequencedDocumentMessage,
-				{
-					/** @deprecated Use the "op" event to get details about the message contents */
-					contents: unknown;
-				}
-			>,
+			op: Omit<ISequencedDocumentMessage, "contents"> & {
+				/** @deprecated Use the "op" event to get details about the message contents */
+				contents: unknown;
+			},
 		) => void,
 	);
 	(
 		event: "batchEnd",
 		listener: (
 			error: any,
-			op: Patch<
-				ISequencedDocumentMessage,
-				{
-					/** @deprecated Use the "op" event to get details about the message contents */
-					contents: unknown;
-				}
-			>,
+			op: Omit<ISequencedDocumentMessage, "contents"> & {
+				/** @deprecated Use the "op" event to get details about the message contents */
+				contents: unknown;
+			},
 		) => void,
 	);
 	/**
-	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
+	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
 	 * represent internal container runtime type / content.
 	 */
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
