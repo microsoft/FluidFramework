@@ -107,6 +107,7 @@ const testConfigs: EndToEndTestConfig<MarkdownRenderConfiguration>[] = [
 			],
 			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
+			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
 		},
 		renderConfig: {
 			startingHeadingLevel: 2,

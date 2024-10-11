@@ -442,7 +442,12 @@ class EagerMapTreeRequiredField
 	implements FlexTreeRequiredField
 {
 	public override get content(): FlexTreeUnknownUnboxed {
-		return super.content ?? fail("Expected EagerMapTree required field to have a value");
+		// This cannot use ?? since null is a legal value here.
+		assert(
+			super.content !== undefined,
+			"Expected EagerMapTree required field to have a value",
+		);
+		return super.content;
 	}
 }
 
