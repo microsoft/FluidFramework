@@ -248,8 +248,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			(this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
 
 		if (message.type === joinMessageType) {
-			assert(this.runtime.connected, "Received presence join signal while not connected");
-			this.prepareJoinResponse(message.content.updateProviders, message.clientId);
+			// It is possible for some signals to come in while client is not connected due
+			// to how work is scheduled. If we are not connected, we can't respond to the
+			// join request. We will make our own Join request once we are connected.
+			if (this.runtime.connected) {
+				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
+			}
+			// It is okay to continue processing the contained updates even if we are not
+			// connected.
 		} else {
 			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
