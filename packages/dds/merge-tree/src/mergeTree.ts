@@ -2142,13 +2142,13 @@ export class MergeTree {
 		if (this.options?.mergeTreeEnableSidedObliterate) {
 			assert(
 				typeof start === "object" && typeof end === "object",
-				0xa45 /* Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled. */,
+				"Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled.",
 			);
 			this.obliterateRangeSided(start, end, refSeq, clientId, seq, opArgs);
 		} else {
 			assert(
 				typeof start === "number" && typeof end === "number",
-				0xa46 /* Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled. */,
+				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
 			);
 			this.obliterateRangeSided(
 				{ pos: start, side: Side.Before },

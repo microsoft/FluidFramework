@@ -98,7 +98,7 @@ export function getStoredSchema(schema: TreeNodeSchema): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
-			assert(schema instanceof LeafNodeSchema, 0xa4a /* invalid kind */);
+			assert(schema instanceof LeafNodeSchema, "invalid kind");
 			return new LeafNodeStoredSchema(schema.info);
 		}
 		case NodeKind.Map: {
@@ -116,7 +116,7 @@ export function getStoredSchema(schema: TreeNodeSchema): TreeNodeStoredSchema {
 			return new ObjectNodeStoredSchema(fields);
 		}
 		case NodeKind.Object: {
-			assert(isObjectNodeSchema(schema), 0xa4b /* invalid kind */);
+			assert(isObjectNodeSchema(schema), "invalid kind");
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const field of schema.flexKeyMap.values()) {
 				fields.set(field.storedKey, convertField(field.schema));

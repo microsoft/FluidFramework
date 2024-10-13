@@ -156,7 +156,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 
 			const clientConnectionId = this.runtime.clientId;
-			assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
+			assert(clientConnectionId !== undefined, "Client connected without clientId");
 			const currentClientToSessionValueState =
 				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
 
@@ -248,10 +248,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			(this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
 
 		if (message.type === joinMessageType) {
-			assert(
-				this.runtime.connected,
-				0xa5a /* Received presence join signal while not connected */,
-			);
+			assert(this.runtime.connected, "Received presence join signal while not connected");
 			this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 		} else {
 			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);

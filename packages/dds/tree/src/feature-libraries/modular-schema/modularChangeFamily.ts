@@ -1630,10 +1630,7 @@ export class ModularChangeFamily
 			numNodes += numChildren;
 		}
 
-		assert(
-			numNodes === change.nodeChanges.size,
-			0xa4d /* Node table contains unparented nodes */,
-		);
+		assert(numNodes === change.nodeChanges.size, "Node table contains unparented nodes");
 	}
 
 	/**
@@ -1652,10 +1649,7 @@ export class ModularChangeFamily
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
 			for (const [child, _index] of handler.getNestedChanges(fieldChange.change)) {
 				const parentFieldId = getParentFieldId(change, child);
-				assert(
-					areEqualFieldIds(parentFieldId, fieldId),
-					0xa4e /* Inconsistent node parentage */,
-				);
+				assert(areEqualFieldIds(parentFieldId, fieldId), "Inconsistent node parentage");
 				numChildren += 1;
 			}
 
@@ -1665,7 +1659,7 @@ export class ModularChangeFamily
 					fields.length === 1 &&
 						fields[0] !== undefined &&
 						areEqualFieldIds(fields[0], fieldId),
-					0xa4f /* Inconsistent cross field keys */,
+					"Inconsistent cross field keys",
 				);
 			}
 		}
