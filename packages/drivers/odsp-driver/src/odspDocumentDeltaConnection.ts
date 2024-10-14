@@ -668,7 +668,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						if (!this.enableMultiplexing || !documentId) {
 							if (!documentId) {
 								assert(
-									msgs.some((m) => m.targetClientId !== undefined),
+									msgs.every((m) => !m.targetClientId),
 									"targetClientId defined while documentId is not",
 								);
 							}
