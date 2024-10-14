@@ -26,3 +26,7 @@ function makeEditOnBranch(mainView: TreeView<typeof MySchema>) {
 	// To prevent this, use `mainBranch.merge(forkBranch, false)`.
 }
 ```
+
+Merging any number of commits into a target branch (via the `TreeBranch.merge` method) generates a revertible for each
+commit on the target branch. See [#22644](https://github.com/microsoft/FluidFramework/pull/22644) for more information
+about revertible support in the branching APIs.
