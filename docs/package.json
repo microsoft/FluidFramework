@@ -43,7 +43,7 @@
 		"start": "hugo server"
 	},
 	"dependencies": {
-		"@fluid-tools/api-markdown-documenter": "^0.17.0",
+		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@rushstack/node-core-library": "^4.0.2",
