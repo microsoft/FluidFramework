@@ -2,26 +2,48 @@
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-### Installation
+## Installation
 
 ```shell
 $ pnpm i
 ```
 
-### Local Development
+## Local Development
+
+There are two options for local testing.
+
+### `build:api-documentation` and `start`
+
+The easiest way to get started testing the website is to leverage Docusaurus's `start` functionality.
+This command starts a local development server and opens up a browser window.
+Most changes are reflected live without having to restart the server.
+
+Before you can use this, you'll need to ensure our API documentation has been built.
+So start by running:
+
+```shell
+npm run build:api-documentation
+```
+
+Then, run:
 
 ```shell
 $ npm start
 ```
 
-This command starts a local development server and opens up a browser window.
-Most changes are reflected live without having to restart the server.
+#### Limitations
+
+Note: the following functionality will not work in this mode.
+Instead, you will need to [build](#build) and [serve](#serve)
 
 Note that offline search will not work in this mode.
 It requires running a full build to run its indexing.
-To test search, you will need to run `npm run build` and `npm run serve`.
+To test search, you will need to use the [`build` and `serve`](#build-and-serve) workflow.
 
-### Build
+### `build` and `serve`
+
+The second option, which is substantially slower, leverages the same build that our build pipelines use to generate our production site.
+First, run:
 
 ```shell
 $ npm run build
@@ -33,18 +55,28 @@ This includes the generation of API documentation contents.
 To *just* build the API documentation, run `build:api-documentation`.
 To *just* build the static site (without rebuilding the API documentation), run `build:docusaurus`.
 
+Then, run:
+
+```shell
+npm run serve
+```
+
 Note: the Docusaurus build is fairly slow.
 If you don't need to test search, it is recommended to run `npm start` instead.
 This is faster, and will watch for content changes and update automatically.
 You will still need to build the API documentation first.
 
-#### Local API docs build
+### Local API docs build
 
 To include the repo-local API docs in the build, first build the code from the root of the repo, then run `build:dev` or `build:api-documentation:dev` from this directory.
 This will generate a "local" docs version (in addition to the production versions), which strictly includes API documentation generated from the local build artifacts.
 So long as the API documentation was generated in this manner, those docs will be viewable regardless of how to run Docusaurus (`npm start` or `npm run serve`).
 
 To remove the local docs view, simply run `npm run clean` and re-run the build without the `:dev` postfix.
+
+## Docs Versioning
+
+TODO
 
 ## Docusaurus
 
@@ -194,7 +226,6 @@ The replacement syntax to use in `.mdx` files would be:
 ### Known issues
 
 -   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
--   Link check doesn't handle custom heading anchors - maybe there is a plugin for this?
 
 ### Other TODOs
 
@@ -206,11 +237,13 @@ The replacement syntax to use in `.mdx` files would be:
 -   Remove "new website features" demo page
 -   Add eslint for components
 -   Preserve existing redirects that are still needed
-    -   TODO
+    -   `docs/apis` => `docs/api`
+    -   TODO: what else?
 -   Add new redirects to accommodate changes:
     -   `docs/api/v*` => `docs/v*/api`
+        -   TODO: verify this is okay for v2 which is "current"
     -   `docs/data-structures/counter` => `docs/v1/data-structures/counter`
-    -   etc.
+    -   TODO: what else?
 -   Review content changes with tech writer
     -   Structural changes (contents added/removed by version)
         -   \- Tree.md for v1
@@ -219,6 +252,7 @@ The replacement syntax to use in `.mdx` files would be:
     -   Content changes:
         -   `/docs/api/index.mdx`
         -   `/versioned_docs/api/index.mdx`
+        -   TODO: what else?
 
 #### After merging into main
 
