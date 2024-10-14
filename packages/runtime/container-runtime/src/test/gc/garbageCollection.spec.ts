@@ -500,7 +500,6 @@ describe("Garbage Collection Tests", () => {
 						type: GarbageCollectionMessageType.TombstoneLoaded,
 						nodePath: nodes[0],
 					},
-					compatDetails: { behavior: "Ignore" },
 				} satisfies ContainerRuntimeGCMessage,
 				"submitted message not as expected",
 			);
