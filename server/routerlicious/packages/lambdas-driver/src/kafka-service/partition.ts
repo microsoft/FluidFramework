@@ -152,7 +152,7 @@ export class Partition extends EventEmitter {
 		this.paused = true;
 
 		this.q.pause();
-		this.q.kill(); // flush all the messages in the queue since kafka consumer will resume from last successful offset
+		this.q.remove(() => true); // flush all the messages in the queue since kafka consumer will resume from last successful offset
 
 		if (this.lambda?.pause) {
 			this.lambda.pause();
