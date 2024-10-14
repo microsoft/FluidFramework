@@ -6,7 +6,7 @@
 "section": tree
 ---
 
-Optimize non-leaf field access
+Non-leaf field access has been optimized
 
 When reading non-leaf children which have been read previously, they are retrieved from cache faster.
 Several operations on subtrees under arrays have been optimized, including reading of non-leaf nodes for the first time.

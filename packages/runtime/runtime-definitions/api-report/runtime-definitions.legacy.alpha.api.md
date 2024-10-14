@@ -95,11 +95,15 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 // @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
-    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
+    (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents"> & {
+        contents: unknown;
+    }) => void): any;
+    // (undocumented)
+    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents"> & {
+        contents: unknown;
+    }) => void): any;
     // (undocumented)
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
-    // (undocumented)
-    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)

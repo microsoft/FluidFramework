@@ -3,7 +3,7 @@
 "fluid-framework": minor
 ---
 ---
-"section": tree
+"section": fix
 ---
 
 Fix reading of `null` from unhydrated trees

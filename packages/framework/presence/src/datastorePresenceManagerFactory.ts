@@ -21,7 +21,7 @@ import type { IExtensionMessage } from "@fluid-experimental/presence/internal/co
 function assertSignalMessageIsValid(
 	message: IInboundSignalMessage | IExtensionMessage,
 ): asserts message is IExtensionMessage {
-	assert(message.clientId !== null, "Signal must have a client ID");
+	assert(message.clientId !== null, 0xa58 /* Signal must have a client ID */);
 	// The other difference between messages is that `content` for
 	// IExtensionMessage is JsonDeserialized and we are fine assuming that.
 }

@@ -3,12 +3,13 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": feature
+"section": tree
+highlight: true
 ---
 
-Add (alpha) SharedTree branching APIs
+✨ New! Alpha SharedTree branching APIs
 
-This adds a handful of APIs to allow for creating and coordinating "version-control"-style branches of the SharedTree.
+Several APIs have been added to allow for creating and coordinating "version-control"-style branches of the SharedTree.
 Use the `getBranch` entry point function to acquire a branch.
 For example:
 
@@ -25,3 +26,7 @@ function makeEditOnBranch(mainView: TreeView<typeof MySchema>) {
 	// To prevent this, use `mainBranch.merge(forkBranch, false)`.
 }
 ```
+
+Merging any number of commits into a target branch (via the `TreeBranch.merge` method) generates a revertible for each
+commit on the target branch. See [#22644](https://github.com/microsoft/FluidFramework/pull/22644) for more information
+about revertible support in the branching APIs.

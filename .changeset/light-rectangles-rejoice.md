@@ -5,7 +5,7 @@
 section: tree
 ---
 
-Allow associating metadata with Field Schema
+Metadata can now be associated with Field Schema
 
 Users of TreeView can now specify metadata when creating Field Schema.
 This includes system-understood metadata, i.e., `description`.
@@ -25,7 +25,7 @@ class Point extends schemaFactory.object("Point", {
 
 ```
 
-Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/). (`getJsonSchema`) can leverage such system-understood metadata to generate useful information.
+Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/) (`getJsonSchema`) can leverage such system-understood metadata to generate useful information.
 In the case of the `description` property, this is mapped directly to the `description` property supported by JSON Schema.
 
 Custom, user-defined properties can also be specified.
@@ -34,7 +34,7 @@ These properties will not be leveraged by the system by default, but can be used
 Example:
 
 An application is implementing search functionality.
-By default, the app author wishes for all app content to be potentially indexable by search, unless otherwise specified.
+By default, the app author wishes for all app content to be indexable by search, unless otherwise specified.
 They can leverage schema metadata to decorate fields that should be ignored by search, and leverage that information when walking the tree during a search.
 
 ```typescript

@@ -445,7 +445,7 @@ class EagerMapTreeRequiredField
 		// This cannot use ?? since null is a legal value here.
 		assert(
 			super.content !== undefined,
-			"Expected EagerMapTree required field to have a value",
+			0xa57 /* Expected EagerMapTree required field to have a value */,
 		);
 		return super.content;
 	}

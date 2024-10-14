@@ -253,7 +253,7 @@ export class SharedTreeBranch<
 		this.assertNotDisposed();
 
 		const revisionTag = taggedChange.revision;
-		assert(revisionTag !== undefined, "Revision tag must be provided");
+		assert(revisionTag !== undefined, 0xa49 /* Revision tag must be provided */);
 
 		const newHead = mintCommit(this.head, {
 			revision: revisionTag,

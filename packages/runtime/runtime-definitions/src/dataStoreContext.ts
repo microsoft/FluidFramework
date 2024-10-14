@@ -122,13 +122,30 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
  * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
-	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
+	(
+		event: "batchBegin",
+		listener: (
+			op: Omit<ISequencedDocumentMessage, "contents"> & {
+				/** @deprecated Use the "op" event to get details about the message contents */
+				contents: unknown;
+			},
+		) => void,
+	);
+	(
+		event: "batchEnd",
+		listener: (
+			error: any,
+			op: Omit<ISequencedDocumentMessage, "contents"> & {
+				/** @deprecated Use the "op" event to get details about the message contents */
+				contents: unknown;
+			},
+		) => void,
+	);
 	/**
-	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
+	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
 	 * represent internal container runtime type / content.
 	 */
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
-	(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "dispose", listener: () => void);
 }
