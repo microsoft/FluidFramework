@@ -66,10 +66,8 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		const { directory, version: pkgVersion } = pkg;
 		const bumpType = this.bumpType ?? "patch";
 
-		// This is the version that the changesets tooling calculates by default. It does a semver minor bump on the current
+		// This is the version that the changesets tooling calculates by default. It does a bump of the highest semver type in the changesets on the current
 		// version. We search for that version in the generated changelog and replace it with the one that we want.
-		// For internal versions, bumping the semver major is the same as just taking the public version from the internal
-		// version and using it directly.
 		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
 			? bumpVersionScheme(pkgVersion, bumpType, "internal")
 			: inc(pkgVersion, bumpType);
