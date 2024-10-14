@@ -3,11 +3,12 @@
 "@fluidframework/tree": minor
 ---
 ---
-"section": "tree"
+"section": "deprecation"
 ---
-RestrictiveReadonlyRecord is deprecated
 
-`RestrictiveReadonlyRecord` was an attempt to implement a version of the built-in `Record<TKey, TValue>` type that would prohibit (instead of leaving unrestricted like Record does) values under keys that do not extend `TKey`.
+SharedTree's `RestrictiveReadonlyRecord` is deprecated
+
+`RestrictiveReadonlyRecord` was an attempt to implement a version of TypeScript's built-in `Record<TKey, TValue>` type that would prohibit (instead of leaving unrestricted like Record does) values under keys that do not extend `TKey`.
 
 The implementation of `RestrictiveReadonlyRecord` failed to accomplish this except for the edge cases where `TKey` was exactly `string` or exactly `symbol`.
 Fixing this bug appears to be impossible within the current limitation of TypeScript, however this library does not require any case other than `TKey` being exactly `string`.
