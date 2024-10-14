@@ -5,7 +5,7 @@
 section: tree
 ---
 
-Exposes the view schema from the TreeView interface.
+Expose the view schema from the TreeView interface
 
 Users of TreeView can now access the type-safe view schema directly on the view object via `TreeView.schema`.
 This allows users to avoid passing the schema around in addition to the view in scenarios where both are needed.

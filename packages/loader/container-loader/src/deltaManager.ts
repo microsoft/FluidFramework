@@ -1031,15 +1031,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			});
 		}
 
-		// TODO: AB#12052: Stop parsing message.contents here, let the downstream handlers do it
-		if (
-			typeof message.contents === "string" &&
-			message.contents !== "" &&
-			message.type !== MessageType.ClientLeave
-		) {
-			message.contents = JSON.parse(message.contents);
-		}
-
 		// Validate client sequence number has no gap. Decrement the noOpCount by gap
 		// If the count ends up negative, that means we have a real gap and throw error
 		if (
