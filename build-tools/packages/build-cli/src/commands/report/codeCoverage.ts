@@ -105,7 +105,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			token: flags.githubApiToken,
 		};
 
-		let skipBuildFailureOnRegression = false;
+		let shouldFailBuildOnRegression = true;
 		const commentBody = await getCommentBody(
 			githubProps,
 			flags.githubPRNumber,
@@ -118,7 +118,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 
 			if (match !== null) {
 				// If the checkbox is checked, the match will be 'x' or 'X'
-				skipBuildFailureOnRegression = match[1].toLowerCase() === "x";
+				shouldFailBuildOnRegression = !(match[1].toLowerCase() === "x");
 			}
 		}
 
@@ -160,9 +160,9 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		let messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
 
 		if (!success) {
-			messageContentWithIdentifier = skipBuildFailureOnRegression
-				? `${messageContentWithIdentifier}\n\n- [x] Check is skipped! If you want to re-run this test again and allow build failure on regression, please uncheck this box and trigger build again.`
-				: `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!! If the regression is due to removal of tests, removal of code with lots of tests or any other valid reason, please tick the checkbox and trigger the build again.`;
+			messageContentWithIdentifier = shouldFailBuildOnRegression
+				? `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!!`
+				: `${messageContentWithIdentifier}\n\n- [x] Check is skipped!`;
 
 			messageContentWithIdentifier = `${messageContentWithIdentifier}\n${summaryFooterOnFailure}`;
 		}
@@ -175,7 +175,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		);
 
 		// Fail the build if the code coverage analysis shows that a regression has been found.
-		if (!(success || skipBuildFailureOnRegression)) {
+		if (!success && shouldFailBuildOnRegression) {
 			this.error("Code coverage failed", { exit: 255 });
 		}
 	}
