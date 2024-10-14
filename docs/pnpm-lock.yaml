@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.17.0
-        version: 0.17.0
+        specifier: ^0.17.1
+        version: 0.17.1
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
         version: file:../tools/markdown-magic(markdown-magic@2.6.1)
@@ -149,8 +149,8 @@ packages:
       regenerator-runtime: 0.13.11
     dev: false
 
-  /@fluid-tools/api-markdown-documenter@0.17.0:
-    resolution: {integrity: sha512-D+ZITA52UmDrbY2WPBVPR/JIEpSPgxtdwsu+9YpSyywyC+9QEMCrOfN9q7ymCqzBjnKbxFMq86pqvaM0UlSiJg==}
+  /@fluid-tools/api-markdown-documenter@0.17.1:
+    resolution: {integrity: sha512-GP9OlzEcvqDJTN77V6KYf774uoG7i2hIIwcsLC94rmBbC51ckjjkyaMZFslqUB6OyOohbkrBJY9I0Wf/2wyaNw==}
     dependencies:
       '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
