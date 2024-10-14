@@ -181,6 +181,4 @@ export class Migrator implements IMigrator {
     get migrationState(): MigrationState;
 }
 
-// (No @packageDocumentation comment for this package)
-
 ```
