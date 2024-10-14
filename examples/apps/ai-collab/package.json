@@ -16,7 +16,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib next-env.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -30,26 +30,6 @@
 		"next:dev": "next dev",
 		"next:start": "next start",
 		"start:server": "tinylicious"
-	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {},
 	"devDependencies": {
@@ -77,13 +57,8 @@
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"@types/uuid": "^9.0.2",
-		"c8": "^8.0.1",
-		"concurrently": "^8.2.1",
-		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"fluid-framework": "workspace:^",
-		"moment": "^2.21.0",
 		"mui": "^0.0.1",
 		"next": "^14.2.8",
 		"notistack": "^3.0.1",

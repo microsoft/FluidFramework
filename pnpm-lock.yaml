@@ -429,27 +429,12 @@ importers:
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.8
-      c8:
-        specifier: ^8.0.1
-        version: 8.0.1
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
       fluid-framework:
         specifier: workspace:^
         version: link:../../../packages/framework/fluid-framework
-      moment:
-        specifier: ^2.21.0
-        version: 2.30.1
       mui:
         specifier: ^0.0.1
         version: 0.0.1
