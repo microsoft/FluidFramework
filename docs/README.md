@@ -223,13 +223,9 @@ The replacement syntax to use in `.mdx` files would be:
 
 ## TODOs
 
-### Before merging into main
+### Critical
 
--   Add component-level unit testing (with accessibility tests)
--   Add end-to-end testing
--   Verify specific browser support
 -   Remove "new website features" demo page
--   Add eslint for components
 -   Preserve existing redirects that are still needed
     -   `docs/apis` => `docs/api`
     -   TODO: what else?
@@ -248,11 +244,21 @@ The replacement syntax to use in `.mdx` files would be:
         -   `/versioned_docs/api/index.mdx`
         -   TODO: what else?
 
+### Nice to have before merging into main
+
+-   Ensure code blocks include a copy button
+-   Add component-level unit testing (with accessibility tests)
+-   Add end-to-end testing
+-   Add eslint for components
+
 ### After merging into main
 
 -   Add prettier (wait until after merge to reduce diff noise)
 -   Add markdown-lint (same as above)
 -   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
+
+### Before merging into main
+
 
 ## Site changes relative to current website
 
