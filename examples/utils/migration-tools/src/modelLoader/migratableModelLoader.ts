@@ -8,12 +8,9 @@ import {
 	type IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import {
-	ILoaderProps,
-	Loader,
-	loadContainerPaused,
-} from "@fluidframework/container-loader/internal";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { type IMigratableModelContainerRuntimeEntryPoint } from "./instantiateMigratableRuntime.js";
 import type {
@@ -108,8 +105,8 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 		return { model, migrationTool, attach };
 	}
 
-	public async loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>> {
-		const container = await this.loader.resolve({
+	private async loadContainer(id: string): Promise<IContainer> {
+		return this.loader.resolve({
 			url: id,
 			headers: {
 				[LoaderHeader.loadMode]: {
@@ -121,22 +118,32 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 				},
 			},
 		});
+	}
+
+	public async loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>> {
+		const container = await this.loadContainer(id);
 		const { model, migrationTool } =
 			await this.getModelAndMigrationToolFromContainer(container);
 		return { model, migrationTool };
 	}
 
-	public async loadExistingPaused(
+	public async loadExistingToSequenceNumber(
 		id: string,
 		sequenceNumber: number,
 	): Promise<IAttachedMigratableModel<ModelType>> {
-		const container = await loadContainerPaused(
-			this.loader,
-			{
-				url: id,
-			},
-			sequenceNumber,
-		);
+		const container = await this.loadContainer(id);
+		await new Promise<void>((resolve) => {
+			if (sequenceNumber <= container.deltaManager.lastSequenceNumber) {
+				resolve();
+			}
+			const callbackOps = (message: ISequencedDocumentMessage): void => {
+				if (sequenceNumber <= message.sequenceNumber) {
+					resolve();
+					container.deltaManager.off("op", callbackOps);
+				}
+			};
+			container.deltaManager.on("op", callbackOps);
+		});
 		const { model, migrationTool } =
 			await this.getModelAndMigrationToolFromContainer(container);
 		return { model, migrationTool };

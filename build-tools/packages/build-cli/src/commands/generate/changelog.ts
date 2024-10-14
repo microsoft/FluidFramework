@@ -5,7 +5,11 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import {
+	type VersionBumpType,
+	bumpVersionScheme,
+	isInternalVersionScheme,
+} from "@fluid-tools/version-tools";
 import { FluidRepo, Package } from "@fluidframework/build-tools";
 import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
@@ -50,16 +54,18 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		},
 	];
 
+	private bumpType?: VersionBumpType;
+
 	private async processPackage(pkg: Package): Promise<void> {
 		const { directory, version: pkgVersion } = pkg;
+		const bumpType = this.bumpType ?? "patch";
 
-		// This is the version that the changesets tooling calculates by default. It does a semver major bump on the current
-		// version. We search for that version in the generated changelog and replace it with the one that we want.
-		// For internal versions, bumping the semver major is the same as just taking the public version from the internal
-		// version and using it directly.
+		// This is the version that the changesets tooling calculates by default. It does a bump of the highest semver type
+		// in the changesets on the current version. We search for that version in the generated changelog and replace it
+		// with the one that we want.
 		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
-			? fromInternalScheme(pkgVersion)[0].version
-			: inc(pkgVersion, "major");
+			? bumpVersionScheme(pkgVersion, bumpType, "internal")
+			: inc(pkgVersion, bumpType);
 		const versionToUse = this.flags.version?.version ?? pkgVersion;
 
 		// Replace the changeset version with the correct version.
@@ -91,6 +97,19 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<void> {
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
+
+		// Determine the highest bump type and save it for later - it determines the changesets-calculated version.
+		const bumpTypes: Set<VersionBumpType> = new Set();
+		for (const changeset of changesets) {
+			for (const bumpType of changeset.changeTypes) {
+				bumpTypes.add(bumpType);
+			}
+		}
+		this.bumpType = bumpTypes.has("major")
+			? "major"
+			: bumpTypes.has("minor")
+				? "minor"
+				: "patch";
 
 		const toWrite: Promise<void>[] = [];
 		for (const changeset of changesets) {

@@ -37,6 +37,7 @@ import {
 	RawOperationType,
 	signalUsageStorageId,
 	type IClusterDrainingChecker,
+	clusterDrainingRetryTimeInMs,
 } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -53,11 +54,12 @@ import {
 import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
-import { isNetworkError, type NetworkError } from "@fluidframework/server-services-client";
 import {
-	isTokenRevokedError,
-	type IRevokedTokenChecker,
-} from "@fluidframework/server-services-core/dist/tokenRevocationManager";
+	isNetworkError,
+	type NetworkError,
+	InternalErrorCode,
+} from "@fluidframework/server-services-client";
+import { type IRevokedTokenChecker } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -359,6 +361,16 @@ describe("Routerlicious", () => {
 							(err) => {
 								assert.strictEqual(isNetworkError(err), true);
 								assert.strictEqual((err as NetworkError).code, 503);
+								assert.strictEqual(
+									(err as NetworkError).internalErrorCode,
+									InternalErrorCode.ClusterDraining,
+									"Error should be a have internalErrorCode set to ClusterDraining",
+								);
+								assert.strictEqual(
+									(err as NetworkError).retryAfterMs,
+									clusterDrainingRetryTimeInMs,
+									"Error should have retryAfterMs set",
+								);
 								return true;
 							},
 						);
@@ -376,9 +388,9 @@ describe("Routerlicious", () => {
 									"Error should be a NetworkError",
 								);
 								assert.strictEqual(
-									isTokenRevokedError(err),
-									true,
-									"Error should be a TokenRevokedError",
+									(err as NetworkError).internalErrorCode,
+									InternalErrorCode.TokenRevoked,
+									"Error should be a have internalErrorCode set to TokenRevoked",
 								);
 								assert.strictEqual((err as NetworkError).code, 403);
 								return true;

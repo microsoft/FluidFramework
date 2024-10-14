@@ -95,11 +95,15 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 // @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
-    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
+    (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents"> & {
+        contents: unknown;
+    }) => void): any;
+    // (undocumented)
+    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents"> & {
+        contents: unknown;
+    }) => void): any;
     // (undocumented)
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
-    // (undocumented)
-    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
@@ -120,9 +124,9 @@ export interface IEnvelope {
 
 // @alpha
 export interface IExperimentalIncrementalSummaryContext {
-    latestSummarySequenceNumber: number;
-    summaryPath: string;
-    summarySequenceNumber: number;
+    readonly latestSummarySequenceNumber: number;
+    readonly summaryPath: string;
+    readonly summarySequenceNumber: number;
 }
 
 // @alpha
@@ -297,6 +301,7 @@ export interface ISummarizerNode {
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    // @deprecated
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 

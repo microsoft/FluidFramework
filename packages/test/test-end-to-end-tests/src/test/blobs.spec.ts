@@ -36,7 +36,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-import { TestSnapshotCache } from "../testSnapshotCache.js";
+import { TestPersistedCache } from "../testPersistedCache.js";
 
 import {
 	MockDetachedBlobStorage,
@@ -277,10 +277,10 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	]);
 
 	let provider: ITestObjectProvider;
-	let testSnapshotCache: TestSnapshotCache;
+	let testPersistedCache: TestPersistedCache;
 	beforeEach("getTestObjectProvider", async function () {
-		testSnapshotCache = new TestSnapshotCache();
-		provider = getTestObjectProvider({ persistedCache: testSnapshotCache });
+		testPersistedCache = new TestPersistedCache();
+		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
@@ -299,8 +299,9 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		const attachOpP = new Promise<void>((resolve, reject) =>
 			container1.on("op", (op) => {
 				if (
-					(op.contents as { type?: unknown } | undefined)?.type ===
-					ContainerMessageType.BlobAttach
+					typeof op.contents === "string" &&
+					(JSON.parse(op.contents) as { type?: unknown })?.type ===
+						ContainerMessageType.BlobAttach
 				) {
 					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
 						resolve();
@@ -348,7 +349,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		// Make sure the next container loads from the network so as to get latest snapshot.
-		testSnapshotCache.clearCache();
+		testPersistedCache.clearCache();
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const snapshot2 = (container2 as any).runtime.blobManager.summarize();
 		assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
