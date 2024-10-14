@@ -273,7 +273,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			this.view = view;
 			assert(
 				!this.checkout.forest.anchors.slots.has(SimpleContextSlot),
-				"extra simple tree context",
+				0xa47 /* extra simple tree context */,
 			);
 			this.checkout.forest.anchors.slots.set(
 				SimpleContextSlot,
