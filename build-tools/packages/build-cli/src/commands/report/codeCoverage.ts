@@ -162,7 +162,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		if (!success) {
 			messageContentWithIdentifier = shouldFailBuildOnRegression
 				? `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!!`
-				: `${messageContentWithIdentifier}\n\n- [x] Check is skipped!`;
+				: `${messageContentWithIdentifier}\n\n- [x] Skip This Check!!`;
 
 			messageContentWithIdentifier = `${messageContentWithIdentifier}\n${summaryFooterOnFailure}`;
 		}
