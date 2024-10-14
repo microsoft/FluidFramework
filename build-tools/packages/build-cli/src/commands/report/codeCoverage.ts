@@ -137,7 +137,6 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		).catch((error: Error) => {
 			commentMessage = "## Code Coverage Summary\n\nError getting code coverage report";
 			this.logger.errorLog(`Error getting code coverage report: ${error}`);
-			return undefined;
 		});
 
 		// Don't fail if we can not compare the code coverage due to an error.
