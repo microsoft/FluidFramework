@@ -60,13 +60,13 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	private async processPackage(pkg: Package): Promise<void> {
 		const { directory, version: pkgVersion } = pkg;
 
-		// This is the version that the changesets tooling calculates by default. It does a semver major bump on the current
+		// This is the version that the changesets tooling calculates by default. It does a semver minor bump on the current
 		// version. We search for that version in the generated changelog and replace it with the one that we want.
 		// For internal versions, bumping the semver major is the same as just taking the public version from the internal
 		// version and using it directly.
 		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
 			? fromInternalScheme(pkgVersion)[0].version
-			: inc(pkgVersion, "major");
+			: inc(pkgVersion, "minor");
 		const versionToUse = this.flags.version?.version ?? pkgVersion;
 
 		// Replace the changeset version with the correct version.
