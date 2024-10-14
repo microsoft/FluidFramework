@@ -225,7 +225,8 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Critical
 
--   Remove "new website features" demo page
+-   Fix links on Community page
+    -   Icons are not currently links, while they are on the old site. Should be an easy fix.
 -   Preserve existing redirects that are still needed
     -   `docs/apis` => `docs/api`
     -   TODO: what else?

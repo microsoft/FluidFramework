@@ -147,12 +147,6 @@ const config: Config = {
 				},
 				{ to: "/community", label: "Community", position: "left" },
 				{ to: "/support", label: "Support", position: "left" },
-				{ to: "/new-site-features", label: "New Website Features", position: "left" },
-				// {
-				// 	href: githubUrl,
-				// 	label: "GitHub",
-				// 	position: "right",
-				// },
 			],
 		},
 		// Note: we have configured a custom footer component. See src/theme/Footer/index.tsx.
