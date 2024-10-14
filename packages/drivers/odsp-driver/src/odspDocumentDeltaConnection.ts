@@ -676,10 +676,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 							return;
 						}
 
+						if (documentId !== this.documentId) {
+							return;
+						}
+
 						const filteredMsgs = msgs.filter(
-							(m) =>
-								documentId === this.documentId &&
-								(!m.targetClientId || m.targetClientId === this.clientId),
+							(m) => !m.targetClientId || m.targetClientId === this.clientId,
 						);
 
 						if (filteredMsgs.length > 0) {
