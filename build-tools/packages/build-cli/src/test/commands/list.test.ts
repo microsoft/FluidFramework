@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
 
 import { type PackageNamePolicyConfig } from "../../config.js";
@@ -45,8 +45,6 @@ function feedsForPackages(
 describe("feeds", () => {
 	it("dev and build feed are mutually exclusive", async () => {
 		const resolvedRoot = await getResolvedFluidRoot();
-		const gitRepo = new GitRepo(resolvedRoot);
-		const branch = await gitRepo.getCurrentBranchName();
 
 		const context = new Context(resolvedRoot);
 		const config = context.flubConfig.policy?.packageNames;
