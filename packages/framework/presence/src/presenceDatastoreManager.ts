@@ -156,7 +156,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 
 			const clientConnectionId = this.runtime.clientId;
-			assert(clientConnectionId !== undefined, "Client connected without clientId");
+			assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 			const currentClientToSessionValueState =
 				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
 
