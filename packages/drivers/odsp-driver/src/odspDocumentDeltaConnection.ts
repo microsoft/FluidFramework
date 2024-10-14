@@ -672,8 +672,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						const msgs = Array.isArray(msg) ? msg : [msg];
 						const filteredMsgs = msgs.filter(
 							(m) =>
-								(!m.targetClientId && documentId === this.documentId) ||
-								(m.targetClientId && m.targetClientId === this.clientId),
+								documentId === this.documentId &&
+								(!m.targetClientId || m.targetClientId === this.clientId),
 						);
 
 						if (filteredMsgs.length > 0) {
