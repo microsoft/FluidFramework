@@ -115,6 +115,6 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	public resume() {
-		this.emit("resume"); // TODO add listeners to pause the partition for circuit breaker functionality
+		this.emit("resume"); // TODO add listeners to resume the partition for circuit breaker functionality
 	}
 }
