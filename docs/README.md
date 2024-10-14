@@ -223,13 +223,7 @@ The replacement syntax to use in `.mdx` files would be:
 
 ## TODOs
 
-### Known issues
-
--   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
-
-### Other TODOs
-
-#### Before merging into main
+### Before merging into main
 
 -   Add component-level unit testing (with accessibility tests)
 -   Add end-to-end testing
@@ -254,10 +248,11 @@ The replacement syntax to use in `.mdx` files would be:
         -   `/versioned_docs/api/index.mdx`
         -   TODO: what else?
 
-#### After merging into main
+### After merging into main
 
 -   Add prettier (wait until after merge to reduce diff noise)
 -   Add markdown-lint (same as above)
+-   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
 
 ## Site changes relative to current website
 
