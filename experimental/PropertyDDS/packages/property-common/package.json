@@ -41,12 +41,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -71,7 +73,7 @@
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.47.0",
+		"@fluidframework/build-tools": "^0.48.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
