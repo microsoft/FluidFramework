@@ -15,6 +15,7 @@ import {
 	type GitHubProps,
 	createOrUpdateCommentOnPr,
 	getChangedFilePaths,
+	getCommentBody,
 } from "../../library/githubRest.js";
 import { BaseCommand } from "../../library/index.js";
 
@@ -56,12 +57,12 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		codeCoverageAnalysisArtifactNameBaseline: Flags.string({
 			description: "Code coverage artifact name for the baseline build.",
 			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE",
-			required: true,
+			required: false,
 		}),
 		codeCoverageAnalysisArtifactNamePR: Flags.string({
 			description: "Code coverage artifact name for the PR build.",
 			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR",
-			required: true,
+			required: false,
 		}),
 		githubPRNumber: Flags.integer({
 			description: "Github PR number.",
@@ -93,7 +94,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
-			artifactName: flags.codeCoverageAnalysisArtifactNameBaseline,
+			artifactName: flags.codeCoverageAnalysisArtifactNameBaseline ?? "Code Coverage Report",
 			branch: flags.targetBranchName,
 			buildsToSearch: 50,
 		};
@@ -102,7 +103,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdPR,
-			artifactName: flags.codeCoverageAnalysisArtifactNamePR,
+			artifactName: flags.codeCoverageAnalysisArtifactNamePR ?? "Code Coverage Report",
 			buildsToSearch: 20,
 			buildId: flags.adoBuildId,
 		};
@@ -112,6 +113,23 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			repo: flags.githubRepositoryName,
 			token: flags.githubApiToken,
 		};
+
+		let skipBuildFailureOnRegression = false;
+		const commentBody = await getCommentBody(
+			githubProps,
+			flags.githubPRNumber,
+			commentIdentifier,
+		);
+		if (commentBody !== undefined) {
+			// Use a regular expression to find the checkbox in the comment body
+			const checkboxRegex = /- \[([ Xx])]/;
+			const match = checkboxRegex.exec(commentBody);
+
+			if (match !== null) {
+				// If the checkbox is checked, the match will be 'x' or 'X'
+				skipBuildFailureOnRegression = match[1].toLowerCase() === "x";
+			}
+		}
 
 		// Get the paths of the files that have changed in the PR relative to root of the repo.
 		// This is used to determine which packages have been affect so that we can do code coverage
@@ -148,7 +166,13 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			);
 		}
 
-		const messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
+		let messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
+
+		if (!success) {
+			messageContentWithIdentifier = skipBuildFailureOnRegression
+				? `${messageContentWithIdentifier}\n\n- [x] Check is skipped! If you want to re-run this test again and allow build failure on regression, please uncheck this box and trigger build again.`
+				: `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!! If the regression is due to removal of tests, removal of code with lots of tests or any other valid reason, please tick the checkbox and trigger the build again.`;
+		}
 
 		await createOrUpdateCommentOnPr(
 			githubProps,
@@ -158,7 +182,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		);
 
 		// Fail the build if the code coverage analysis shows that a regression has been found.
-		if (!success) {
+		if (!(success || skipBuildFailureOnRegression)) {
 			this.error("Code coverage failed", { exit: 255 });
 		}
 	}

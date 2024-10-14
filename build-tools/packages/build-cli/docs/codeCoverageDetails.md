@@ -91,3 +91,16 @@ The code coverage PR checks will fail in the following cases:
 - If the code coverage(line and branch) for a newly added package is < 50%.
 
 The enforcement code is in the function `isCodeCoverageCriteriaPassed`.
+
+### What to do if the code coverage check fails:
+
+- In the code coverage summary, a checkbox will appear which will not allow the code coverage check to fail the build.
+  Now, if the regression is due to removal of tests, removal of code with lots of tests or any other valid reason,
+  please tick the checkbox and trigger the build again. This till it will still do the comparison, but will not fail
+  the build due to regression.
+- You can again uncheck the checkbox, to fail the build on regression before triggering the build.
+- You can also add more tets to increase the code coverage for the package which showed the regression in the summary.
+- You may sometimes want to check which lines are covered or not covered by your tests, you can follow these steps:
+  - Go to the PR ADO build.
+  - Then, go to the published artifacts. You will see a `codeCoverageAnalysis` named artifact, which you can expand to reach to a particular file's coverage html which will show which lines are covered/not covered by your tests.
+  - You can also run different kind of tests locally with `:coverage` tests commands to find out the coverage.
