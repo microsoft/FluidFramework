@@ -17,6 +17,7 @@ import type {
 	AdditionalPackageProps,
 	IPackage,
 	IPackageManager,
+	IWorkspace,
 	PackageDependency,
 	PackageJson,
 	PackageName,
@@ -25,9 +26,9 @@ import type {
 import { lookUpDirSync } from "./utils.js";
 
 export abstract class PackageBase<
-	TAddProps extends AdditionalPackageProps = undefined,
 	J extends PackageJson = PackageJson,
-> implements IPackage
+	TAddProps extends AdditionalPackageProps = undefined,
+> implements IPackage<J>
 {
 	// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive; this value is changed
 	private static packageCount: number = 0;
@@ -71,6 +72,7 @@ export abstract class PackageBase<
 	public constructor(
 		public readonly packageJsonFilePath: string,
 		public readonly packageManager: IPackageManager,
+		public readonly workspace: IWorkspace,
 		public readonly isWorkspaceRoot: boolean,
 		public readonly releaseGroup: ReleaseGroupName,
 		public isReleaseGroupRoot: boolean,
@@ -166,9 +168,10 @@ export abstract class PackageBase<
 export class Package<
 	TAddProps extends AdditionalPackageProps = undefined,
 	J extends PackageJson = PackageJson,
-> extends PackageBase<TAddProps, J> {
+> extends PackageBase<J, TAddProps> {
 	public static loadFromWorkspaceDefinition<
 		T extends typeof Package,
+		J extends PackageJson = PackageJson,
 		TAddProps extends AdditionalPackageProps = undefined,
 	>(
 		this: T,
@@ -176,9 +179,10 @@ export class Package<
 		packageManager: IPackageManager,
 		isWorkspaceRoot: boolean,
 		workspaceDefinition: WorkspaceDefinition,
+		workspace: IWorkspace,
 		additionalProperties?: TAddProps,
 	): IPackage {
-		const packageName: PackageName = (readJsonSync(packageJsonFilePath) as PackageJson)
+		const packageName: PackageName = (readJsonSync(packageJsonFilePath) as J)
 			.name as PackageName;
 		const releaseGroupName = findReleaseGroupForPackage(
 			packageName,
@@ -199,14 +203,18 @@ export class Package<
 		const { rootPackageName } = releaseGroupDefinition;
 		const isReleaseGroupRoot =
 			rootPackageName === undefined ? false : packageName === rootPackageName;
-		return new this(
+
+		const pkg = new this(
 			packageJsonFilePath,
 			packageManager,
+			workspace,
 			isWorkspaceRoot,
 			releaseGroupName,
 			isReleaseGroupRoot,
 			additionalProperties,
-		) as InstanceType<T> & TAddProps;
+		);
+
+		return pkg;
 	}
 }
 
@@ -215,12 +223,14 @@ export function loadPackageFromWorkspaceDefinition(
 	packageManager: IPackageManager,
 	isWorkspaceRoot: boolean,
 	workspaceDefinition: WorkspaceDefinition,
+	workspace: IWorkspace,
 ): IPackage {
 	return Package.loadFromWorkspaceDefinition(
 		packageJsonFilePath,
 		packageManager,
 		isWorkspaceRoot,
 		workspaceDefinition,
+		workspace,
 	);
 }
 

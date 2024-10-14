@@ -6,6 +6,8 @@
 import { SimpleGit } from "simple-git";
 import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
+import type { IFluidRepoLayout } from "./config.js";
+
 /**
  * A type representing fluid-build-specific config that may be in package.json.
  */
@@ -58,6 +60,11 @@ export interface IFluidRepo extends Reloadable {
 	 * "microsoft/FluidFramework".
 	 */
 	upstreamRemotePartialUrl?: string;
+
+	/**
+	 * The layout configuration for the repo.
+	 */
+	configuration: IFluidRepoLayout;
 
 	/**
 	 * Transforms an absolute path to a path relative to the FluidRepo root.
@@ -246,9 +253,9 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
  */
 export interface IPackageManager {
 	readonly name: PackageManagerName;
+	readonly lockfileName: string;
 	installCommand(updateLockfile: boolean): string;
 }
-
 /**
  * Information about a package dependency.
  */
@@ -312,6 +319,11 @@ export interface IPackage<J extends PackageJson = PackageJson>
 	 * returns a boolean value. If the package.json is missing the `private` field, this will return false.
 	 */
 	readonly private: boolean;
+
+	/**
+	 * The workspace that this package belongs to.
+	 */
+	readonly workspace: IWorkspace;
 
 	/**
 	 * Whether the package is a workspace root package or not. A workspace will only have one root package.

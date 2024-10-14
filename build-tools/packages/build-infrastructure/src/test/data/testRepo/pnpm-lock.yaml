@@ -34,6 +34,14 @@ importers:
         specifier: workspace:~
         version: link:../../pkg-b
 
+  packages/group3/pkg-f:
+    dependencies:
+      '@group3/pkg-g':
+        specifier: workspace:~
+        version: link:../pkg-g
+
+  packages/group3/pkg-g: {}
+
   packages/pkg-a:
     dependencies:
       '@shared/shared':

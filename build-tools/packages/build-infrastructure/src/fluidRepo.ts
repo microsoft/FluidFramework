@@ -7,8 +7,9 @@ import path from "node:path";
 
 import { type SimpleGit, simpleGit } from "simple-git";
 
-import { getFluidRepoLayout } from "./config.js";
+import { type IFluidRepoLayout, getFluidRepoLayout } from "./config.js";
 import { NotInGitRepository } from "./errors.js";
+import { findGitRootSync } from "./git.js";
 import {
 	type IFluidRepo,
 	type IPackage,
@@ -18,7 +19,6 @@ import {
 	type ReleaseGroupName,
 	type WorkspaceName,
 } from "./types.js";
-import { findGitRootSync } from "./utils.js";
 import { Workspace } from "./workspace.js";
 import { loadWorkspacesFromLegacyConfig } from "./workspaceCompat.js";
 
@@ -27,6 +27,10 @@ export class FluidRepo implements IFluidRepo {
 	 * The absolute path to the root of the FluidRepo. This is the path where the config file is located.
 	 */
 	public readonly root: string;
+
+	public readonly configuration: IFluidRepoLayout;
+
+	public readonly configFilePath: string;
 
 	/**
 	 * @param searchPath - The path that should be searched for a repo layout config file.
@@ -37,8 +41,10 @@ export class FluidRepo implements IFluidRepo {
 		searchPath: string,
 		public readonly upstreamRemotePartialUrl?: string,
 	) {
-		const { config, configFile } = getFluidRepoLayout(searchPath);
-		this.root = path.resolve(path.dirname(configFile));
+		const { config, configFilePath } = getFluidRepoLayout(searchPath);
+		this.root = path.resolve(path.dirname(configFilePath));
+		this.configuration = config;
+		this.configFilePath = configFilePath;
 
 		// Check for the repoLayout config first
 		if (config.repoLayout === undefined) {

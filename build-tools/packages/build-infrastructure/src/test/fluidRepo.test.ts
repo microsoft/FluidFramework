@@ -10,8 +10,8 @@ import { expect } from "chai";
 import { describe, it } from "mocha";
 
 import { loadFluidRepo } from "../fluidRepo.js";
+import { findGitRootSync } from "../git.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
-import { findGitRootSync } from "../utils.js";
 
 import { testDataPath } from "./init.js";
 

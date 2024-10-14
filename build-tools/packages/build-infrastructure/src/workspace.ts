@@ -80,6 +80,7 @@ export class Workspace implements IWorkspace {
 				this.packageManager,
 				/* isWorkspaceRoot */ foundPackages.length === 1,
 				definition,
+				this,
 			);
 			this.packages.push(loadedPackage);
 		}
@@ -92,6 +93,7 @@ export class Workspace implements IWorkspace {
 				this.packageManager,
 				/* isWorkspaceRoot */ true,
 				definition,
+				this,
 			);
 
 			// Prepend the root package to the list of packages

@@ -202,7 +202,7 @@ const configExplorer = cosmiconfigSync(configName, {
 export function getFluidRepoLayout(
 	searchPath: string,
 	noCache = false,
-): { config: IFluidRepoLayout; configFile: string } {
+): { config: IFluidRepoLayout; configFilePath: string } {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
@@ -220,5 +220,5 @@ export function getFluidRepoLayout(
 		);
 	}
 
-	return { config, configFile: configResult.filepath };
+	return { config, configFilePath: configResult.filepath };
 }

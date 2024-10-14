@@ -5,9 +5,11 @@
 
 import path from "node:path";
 
+import execa from "execa";
 import readPkgUp from "read-pkg-up";
 import type { SimpleGit } from "simple-git";
 
+import { NotInGitRepository } from "./errors.js";
 import type { IFluidRepo, IPackage, IReleaseGroup, IWorkspace, PackageName } from "./types.js";
 
 /**
@@ -139,5 +141,84 @@ export async function getRemote(
 		if (r.refs.fetch.toLowerCase().includes(lowerPartialUrl)) {
 			return r.name;
 		}
+	}
+}
+
+/**
+ * Returns an array containing repo repo-relative paths to all the files in the provided directory.
+ * A given path will only be included once in the array; that is, there will be no duplicate paths.
+ * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
+ *
+ * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
+ * return all files in the repo use the value `"."`.
+ */
+export async function getFiles(git: SimpleGit, directory: string): Promise<string[]> {
+	// Note that `--deduplicate` is not used here because it is not available until git version 2.31.0.
+	const results = await git.raw(
+		"ls-files",
+		// Includes cached (staged) files.
+		"--cached",
+		// Includes other (untracked) files that are not ignored.
+		"--others",
+		// Excludes files that are ignored by standard ignore rules.
+		"--exclude-standard",
+		// Shows the full path of the files relative to the repository root.
+		"--full-name",
+		directory,
+	);
+
+	// Deduplicate the list of files by building a Set.
+	// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
+	// those from the full list.
+	const allFiles = new Set(
+		results
+			.split("\n")
+			.map((line) => line.trim())
+			// filter out empty lines
+			.filter((line) => line !== ""),
+	);
+	const status = await git.status();
+	for (const deletedFile of status.deleted) {
+		allFiles.delete(deletedFile);
+	}
+
+	// Files are already repo root-relative
+	return [...allFiles];
+}
+
+/**
+ * Returns the absolute path to the nearest Git repository root found starting at `cwd`.
+ *
+ * @param cwd - The working directory to use to start searching for Git repositories. Defaults to `process.cwd()` if not
+ * provided.
+ *
+ * @throws A `NotInGitRepository` error if no git repo is found.
+ *
+ * @privateRemarks
+ * This function is helpful because it is synchronous. The SimpleGit wrapper is async-only.
+ */
+export function findGitRootSync(cwd = process.cwd()): string {
+	try {
+		// This call will throw outside a git repo, which we'll catch and throw a NotInGitRepo error instead.
+		const result = execa.sync("git", ["rev-parse", "--show-toplevel"], {
+			cwd,
+			encoding: "utf8",
+			// Ignore stdin but pipe (capture) stdout and stderr since git will write to both.
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+
+		// If anything was written to stderr, then it's not a git repo.
+		// This is likely unnecessary since the earlier exec call should throw, but just in case, throw here as well.
+		if (result.stderr) {
+			throw new NotInGitRepository(cwd);
+		}
+
+		return result.stdout.trim();
+	} catch (error) {
+		const message = (error as Error).message;
+		if (message.includes("not a git repository")) {
+			throw new NotInGitRepository(cwd);
+		}
+		throw error;
 	}
 }

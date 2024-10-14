@@ -10,7 +10,7 @@ import * as path from "node:path";
 import { describe, it } from "mocha";
 
 import { NotInGitRepository } from "../errors.js";
-import { findGitRootSync } from "../utils.js";
+import { findGitRootSync } from "../git.js";
 
 import { packageRootPath } from "./init.js";
 
