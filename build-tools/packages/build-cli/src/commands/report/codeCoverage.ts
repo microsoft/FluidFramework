@@ -183,10 +183,10 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 
 const summaryFooterOnFailure =
 	"### What to do if the code coverage check fails:\n" +
-	"Ideally, add more tests to increase the code coverage for the package(s) whose code-coverage regressed.\n\n" +
-	"If a regression is causing the build to fail and is due to removal of tests, removal of code with lots of tests or any other valid reason, there is a checkbox further up in this comment that determines if the code coverage check should fail the build or not. You can check the box by editing this comment and trigger the build again. The test coverage analysis will still be done, but it will not fail the build if a regression is detected.\n" +
-	"Unchecking the checkbox (again by editing the comment) and triggering another build should go back to failing the build if a test-coverage regression is detected.\n\n" +
-	"You can check which lines are covered or not covered by your tests with these steps:\n" +
-	"- Go to the PR ADO build.\n" +
-	"- Click on the link to see its published artifacts. You will see an artifact named `codeCoverageAnalysis`, which you can expand to reach to a particular source file's coverage html which will show which lines are covered/not covered by your tests.\n" +
-	"- You can also run different kind of tests locally with `:coverage` tests commands to find out the coverage.\n";
+	"- Ideally, add more tests to increase the code coverage for the package(s) whose code-coverage regressed.\n" +
+	"- If a regression is causing the build to fail and is due to removal of tests, removal of code with lots of tests or any other valid reason, there is a checkbox further up in this comment that determines if the code coverage check should fail the build or not. You can check the box and trigger the build again. The test coverage analysis will still be done, but it will not fail the build if a regression is detected.\n" +
+	"- Unchecking the checkbox and triggering another build should go back to failing the build if a test-coverage regression is detected.\n\n" +
+	"- You can check which lines are covered or not covered by your tests with these steps:\n" +
+	"  - Go to the PR ADO build.\n" +
+	"  - Click on the link to see its published artifacts. You will see an artifact named `codeCoverageAnalysis`, which you can expand to reach to a particular source file's coverage html which will show which lines are covered/not covered by your tests.\n" +
+	"  - You can also run different kind of tests locally with `:coverage` tests commands to find out the coverage.\n";
