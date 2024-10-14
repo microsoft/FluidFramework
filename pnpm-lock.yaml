@@ -388,7 +388,7 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluidframework/devtools':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -400,7 +400,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/service-clients/odsp-client
       '@fluidframework/tinylicious-client':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
       '@fluidframework/tree':
         specifier: workspace:~
@@ -433,7 +433,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       fluid-framework:
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
       mui:
         specifier: ^0.0.1
