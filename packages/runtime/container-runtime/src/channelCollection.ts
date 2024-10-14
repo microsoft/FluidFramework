@@ -886,7 +886,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		let previousMessageContents: IRuntimeMessageContents[] = [];
 
 		// Helper that sends the previous bunch of messages to the data store. It validates that the data stores exists.
-		const sendPreviousBunch = () => {
+		const sendBunchedMessages = () => {
 			assert(previousMessageState !== undefined, "previous state must exist to send messages");
 			const previousContext = this.contexts.get(previousMessageState.address);
 			assert(!!previousContext, "Context not found");
@@ -939,7 +939,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				previousMessageState !== undefined &&
 				(previousMessageState.address !== address || previousMessageState.type !== contextType)
 			) {
-				sendPreviousBunch();
+				sendBunchedMessages();
 			}
 			previousMessageContents.push({
 				contents: contextContents,
@@ -967,7 +967,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Process the last bunch of messages, if any. There may not be any messages in case all of them are
 		// ignored because the data store is deleted.
 		if (previousMessageState !== undefined) {
-			sendPreviousBunch();
+			sendBunchedMessages();
 		}
 	}
 

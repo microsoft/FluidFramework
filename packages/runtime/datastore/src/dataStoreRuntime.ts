@@ -674,7 +674,7 @@ export class FluidDataStoreRuntime
 		let previousAddress: string | undefined;
 		let previousMessageContents: IRuntimeMessageContents[] = [];
 
-		const sendPreviousBunch = () => {
+		const sendBunchedMessages = () => {
 			assert(previousAddress !== undefined, "previous address must exist to send messages");
 
 			// process the last set of channel ops
@@ -689,7 +689,7 @@ export class FluidDataStoreRuntime
 
 			// If the address of the message changes while processing the batch, process the previous bunch.
 			if (previousAddress !== undefined && previousAddress !== envelope.address) {
-				sendPreviousBunch();
+				sendBunchedMessages();
 			}
 
 			previousMessageContents.push({
@@ -700,7 +700,7 @@ export class FluidDataStoreRuntime
 		}
 
 		// Process the last bunch of messages.
-		sendPreviousBunch();
+		sendBunchedMessages();
 	}
 
 	private processAttachMessages(
