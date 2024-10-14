@@ -87,14 +87,14 @@ const getCodeCoverageSummary = (
 const getCodeCoverageSummaryForPackages = (coverageReport: CodeCoverageComparison): string => {
 	const metrics = codeCoverageDetailsHeader + getMetricRows(coverageReport);
 
-	return `<details><summary><b>${getColorGlyph(coverageReport.branchCoverageDiff + coverageReport.lineCoverageDiff)} ${
+	return `<details><summary><b>${getGlyphForHtml(coverageReport.branchCoverageDiff + coverageReport.lineCoverageDiff)} ${
 		coverageReport.packagePath
 	}:</b> <br> Line Coverage Change: ${formatDiff(coverageReport.lineCoverageDiff)}&nbsp;&nbsp;&nbsp;&nbsp;Branch Coverage Change: ${formatDiff(
 		coverageReport.branchCoverageDiff,
 	)}</summary>${metrics}</table></details>`;
 };
 
-const getColorGlyph = (codeCoverageDiff: number): string => {
+const getGlyphForHtml = (codeCoverageDiff: number): string => {
 	if (codeCoverageDiff === 0) {
 		return "&rarr;";
 	}
@@ -103,7 +103,7 @@ const getColorGlyph = (codeCoverageDiff: number): string => {
 		return "&uarr;";
 	}
 
-	return "&darr;&darr;";
+	return "&darr;";
 };
 
 const formatDiff = (coverageDiff: number): string => {
@@ -114,8 +114,8 @@ const formatDiff = (coverageDiff: number): string => {
 };
 
 const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): string => {
-	const glyphForLineCoverage = getColorGlyph(codeCoverageComparisonReport.lineCoverageDiff);
-	const glyphForBranchCoverage = getColorGlyph(
+	const glyphForLineCoverage = getGlyphForHtml(codeCoverageComparisonReport.lineCoverageDiff);
+	const glyphForBranchCoverage = getGlyphForHtml(
 		codeCoverageComparisonReport.branchCoverageDiff,
 	);
 

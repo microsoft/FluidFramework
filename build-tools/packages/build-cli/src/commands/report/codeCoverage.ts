@@ -54,16 +54,6 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			env: "ADO_CI_BUILD_DEFINITION_ID_PR",
 			required: true,
 		}),
-		codeCoverageAnalysisArtifactNameBaseline: Flags.string({
-			description: "Code coverage artifact name for the baseline build.",
-			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE",
-			required: false,
-		}),
-		codeCoverageAnalysisArtifactNamePR: Flags.string({
-			description: "Code coverage artifact name for the PR build.",
-			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR",
-			required: false,
-		}),
 		githubPRNumber: Flags.integer({
 			description: "Github PR number.",
 			env: "GITHUB_PR_NUMBER",
@@ -90,11 +80,12 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 	public async run(): Promise<void> {
 		const { flags } = this;
 
+		const artifactNamePrefix = "Code Coverage Report";
 		const codeCoverageConstantsForBaseline: IAzureDevopsBuildCoverageConstants = {
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
-			artifactName: flags.codeCoverageAnalysisArtifactNameBaseline ?? "Code Coverage Report",
+			artifactName: artifactNamePrefix,
 			branch: flags.targetBranchName,
 			buildsToSearch: 50,
 		};
@@ -103,7 +94,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdPR,
-			artifactName: flags.codeCoverageAnalysisArtifactNamePR ?? "Code Coverage Report",
+			artifactName: artifactNamePrefix,
 			buildsToSearch: 20,
 			buildId: flags.adoBuildId,
 		};
@@ -172,6 +163,8 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			messageContentWithIdentifier = skipBuildFailureOnRegression
 				? `${messageContentWithIdentifier}\n\n- [x] Check is skipped! If you want to re-run this test again and allow build failure on regression, please uncheck this box and trigger build again.`
 				: `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!! If the regression is due to removal of tests, removal of code with lots of tests or any other valid reason, please tick the checkbox and trigger the build again.`;
+
+			messageContentWithIdentifier = `${messageContentWithIdentifier}\n${summaryFooterOnFailure}`;
 		}
 
 		await createOrUpdateCommentOnPr(
@@ -187,3 +180,13 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		}
 	}
 }
+
+const summaryFooterOnFailure =
+	"### What to do if the code coverage check fails:\n" +
+	"- In the code coverage summary, a checkbox will appear which will not allow the code coverage check to fail the build. Now, if the regression is due to removal of tests, removal of code with lots of tests or any other valid reason, please tick the checkbox and trigger the build again. This till it will still do the comparison, but will not fail the build due to regression.\n" +
+	"- You can again uncheck the checkbox, to fail the build on regression before triggering the build.\n" +
+	"- You can also add more tets to increase the code coverage for the package which showed the regression in the summary.\n" +
+	"- You may sometimes want to check which lines are covered or not covered by your tests, you can follow these steps:\n" +
+	"  - Go to the PR ADO build.\n" +
+	"  - Then, go to the published artifacts. You will see a `codeCoverageAnalysis` named artifact, which you can expand to reach to a particular file's coverage html which will show which lines are covered/not covered by your tests.\n" +
+	"  - You can also run different kind of tests locally with `:coverage` tests commands to find out the coverage.\n";
