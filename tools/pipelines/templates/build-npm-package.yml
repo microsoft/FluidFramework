@@ -421,28 +421,23 @@ extends:
                           GITHUB_API_TOKEN: $(githubPublicRepoSecret)
                           TARGET_BRANCH_NAME: '$(targetBranchName)'
                           ADO_BUILD_ID: $(Build.BuildId)
+                          GITHUB_PR_NUMBER: $(System.PullRequest.PullRequestNumber)
+                          ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
+                          ADO_CI_BUILD_DEFINITION_ID_PR: 11
                         inputs:
                           targetType: inline
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
                             set -eux -o pipefail
-                            Coverage_Report_Artifact_Name="Code Coverage Report"
-                            export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE=$Coverage_Report_Artifact_Name
-                            export CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR=$Coverage_Report_Artifact_Name
-                            echo "Code Coverage Artifact Name Prefix for Baseline: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE"
-                            echo "Code Coverage Artifact Name Prefix for PR: $CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR"
                             REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
                             REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
                             export GITHUB_REPOSITORY_NAME=$REPO_NAME
                             export GITHUB_REPOSITORY_OWNER=$REPO_OWNER
                             echo "Github Repository Owner: $GITHUB_REPOSITORY_OWNER"
                             echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
-                            export GITHUB_PR_NUMBER=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
                             echo "Github PR number: $GITHUB_PR_NUMBER"
                             echo "ADO Build Number: $ADO_BUILD_ID"
                             echo "Target Branch Name: $TARGET_BRANCH_NAME"
-                            export ADO_CI_BUILD_DEFINITION_ID_BASELINE=48
-                            export ADO_CI_BUILD_DEFINITION_ID_PR=11
                             echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
                             echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
                             echo "Running code coverage comparison"
