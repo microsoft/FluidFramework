@@ -581,18 +581,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				throw new Error(`releaseReport not found in config.`);
 			}
 
+			const ranges = getRanges(latestVer, context.flubConfig.releaseReport, pkgName);
+
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
-					assert(
-						pkg.monoRepo?.releaseGroup !== undefined,
-						`releaseGroup for ${pkgName} is undefined.`,
-					);
-					const ranges = getRanges(
-						latestVer,
-						context.flubConfig.releaseReport,
-						pkg.monoRepo?.releaseGroup,
-					);
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -605,7 +598,6 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
-				const ranges = getRanges(latestVer, context.flubConfig.releaseReport, pkgName);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,

@@ -32,7 +32,7 @@ export interface FlubConfig {
     bump?: BumpConfig;
     policy?: PolicyConfig;
     releaseNotes?: ReleaseNotesConfig;
-    releaseReport?: LegacyCompatInterval;
+    releaseReport?: ReleaseReportConfig;
     version?: 1;
 }
 
@@ -40,7 +40,7 @@ export interface FlubConfig {
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
 // @public
-export interface LegacyCompatInterval {
+export interface ReleaseReportConfig {
     legacyCompatInterval: Record<ReleaseGroup | string, number>;
 }
 

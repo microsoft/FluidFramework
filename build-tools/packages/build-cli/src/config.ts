@@ -76,7 +76,7 @@ export interface FlubConfig {
  */
 export interface ReleaseReportConfig {
 	/**
-	 * Each key in the `legacyCompatInterval` object represents a specific release group,
+	 * Each key in the `legacyCompatInterval` object represents a specific release group or package name as string,
 	 * and the associated value is a number that defines the legacy compatibility interval for that group.
 	 */
 	legacyCompatInterval: Record<ReleaseGroup | string, number>;

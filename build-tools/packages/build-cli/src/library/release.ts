@@ -202,7 +202,6 @@ function getLegacyCompatVersionRange(
 	interval: ReleaseReportConfig,
 	releaseGroupOrPackage: ReleaseGroup | string,
 ): string {
-	console.log(releaseGroupOrPackage);
 	const intervalValue = interval.legacyCompatInterval[releaseGroupOrPackage];
 	if (intervalValue > 0) {
 		return getLegacyCompatRange(version, intervalValue);
