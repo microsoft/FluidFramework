@@ -533,14 +533,14 @@ export const checkChangelogs: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { confirmed } = await prompts({
+	const answer = await prompts({
 		type: "confirm",
 		name: "confirmed",
 		message: `Did you generate and commit the CHANGELOG.md files for the release?`,
 		initial: false,
 	});
 
-	if (!confirmed) {
+	if (answer.confirmed !== true) {
 		log.logHr();
 		log.errorLog(`Changelogs must be generated.`);
 		BaseStateHandler.signalFailure(machine, state);
