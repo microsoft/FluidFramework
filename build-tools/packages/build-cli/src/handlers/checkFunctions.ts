@@ -8,7 +8,6 @@ import { existsSync } from "node:fs";
 import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
-import prompts from "prompts";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
@@ -533,12 +532,13 @@ export const checkChangelogs: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const answer = await prompts({
+	const question: inquirer.ConfirmQuestion = {
 		type: "confirm",
 		name: "confirmed",
-		message: `Did you generate and commit the CHANGELOG.md files for the release?`,
-		initial: false,
-	});
+		message: "Did you generate and commit the CHANGELOG.md files for the release?",
+	};
+
+	const answer = await inquirer.prompt(question);
 
 	if (answer.confirmed !== true) {
 		log.logHr();
