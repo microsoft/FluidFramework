@@ -91,7 +91,13 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				this.snapshotOps = undefined;
 			}
 
-			const ops = await this.deltaStorageService.get(this.tenantId, this.id, from, to);
+			const ops = await this.deltaStorageService.get(
+				this.tenantId,
+				this.id,
+				from,
+				to,
+				fetchReason,
+			);
 			validateMessages("storage", ops.messages, from, this.logger, false /* strict */);
 			opsFromStorage += ops.messages.length;
 			return ops;
