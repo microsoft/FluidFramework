@@ -143,7 +143,8 @@ export class DeltaStorageService implements IDeltaStorageService {
 		tenantId: string,
 		id: string,
 		from: number, // inclusive
-		to: number, // exclusive
+		to: number, // exclusive,
+		fetchReason: string,
 	): Promise<IDeltasFetchResult> {
 		const ops = await PerformanceEvent.timedExecAsync(
 			this.logger,
@@ -158,6 +159,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 				const response = await restWrapper.get<ISequencedDocumentMessage[]>(url, {
 					from: from - 1,
 					to,
+					fetchReason,
 				});
 				event.end({
 					length: response.content.length,
