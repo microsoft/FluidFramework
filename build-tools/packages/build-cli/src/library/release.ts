@@ -214,6 +214,7 @@ function getLegacyCompatVersionRange(
 
 /**
  * Generates a new version representing the next version in a legacy compatibility range for any release group.
+ * Does not support Fluid internal schema or prerelease versions.
  *
  * @param version - A string representing the current version.
  * @param interval - The multiple of minor versions to use for calculating the next version.
