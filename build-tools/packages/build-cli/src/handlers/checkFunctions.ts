@@ -497,7 +497,14 @@ export const checkReleaseNotes: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { releaseGroup, releaseVersion } = data;
+	const { bumpType, releaseGroup, releaseVersion } = data;
+
+	// This check should be skipped for patches and non client/server releases. Patch releases should always pass this
+	// check, as will release groups other than client/server.
+	if (!["client", "server"].includes(releaseGroup) || bumpType === "patch") {
+		BaseStateHandler.signalSuccess(machine, state);
+		return true;
+	}
 
 	// Check if the release notes file exists
 	const filename = `RELEASE_NOTES/${releaseVersion}.md`;
@@ -531,6 +538,15 @@ export const checkChangelogs: StateHandlerFunction = async (
 	data: FluidReleaseStateHandlerData,
 ): Promise<boolean> => {
 	if (testMode) return true;
+
+	const { releaseGroup, bumpType } = data;
+
+	// This check should be skipped for patches and non client/server releases. Patch releases should always pass this
+	// check, as will release groups other than client/server.
+	if (!["client", "server"].includes(releaseGroup) || bumpType === "patch") {
+		BaseStateHandler.signalSuccess(machine, state);
+		return true;
+	}
 
 	const question: inquirer.ConfirmQuestion = {
 		type: "confirm",
