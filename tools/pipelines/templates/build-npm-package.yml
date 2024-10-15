@@ -358,7 +358,15 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          testCoverage: ${{ parameters.testCoverage }}
+                          testCoverage: ${{
+                            and(parameters.testCoverage,
+                            or(
+                              ne(variables['Build.Reason'], 'PullRequest'),
+                              and(
+                                not(contains(parameters.taskTestStep, 'realsvc:tinylicious')),
+                                not(contains(parameters.taskTestStep, 'stress:tinylicious'))
+                              )
+                            ))}}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3
