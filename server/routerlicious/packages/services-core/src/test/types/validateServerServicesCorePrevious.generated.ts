@@ -610,6 +610,7 @@ declare function get_old_InterfaceDeclaration_IContext():
 declare function use_current_InterfaceDeclaration_IContext(
     use: TypeOnly<current.IContext>): void;
 use_current_InterfaceDeclaration_IContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContext());
 
 /*
@@ -3133,6 +3134,7 @@ declare function get_old_ClassDeclaration_MongoManager():
 declare function use_current_ClassDeclaration_MongoManager(
     use: TypeOnly<current.MongoManager>): void;
 use_current_ClassDeclaration_MongoManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MongoManager());
 
 /*
