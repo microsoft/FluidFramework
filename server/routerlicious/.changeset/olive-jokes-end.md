@@ -1,9 +1,10 @@
 ---
 "@fluidframework/server-routerlicious-base": minor
 ---
+
 ---
-"section": feature
----
+
+## "section": feature
 
 Added the startupprobe as a resource for Alfred, Nexus and Riddler
 
