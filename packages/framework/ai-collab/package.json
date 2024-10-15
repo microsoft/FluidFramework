@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/ai-collab",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {

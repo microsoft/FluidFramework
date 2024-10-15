@@ -388,7 +388,7 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluidframework/devtools':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -400,7 +400,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/service-clients/odsp-client
       '@fluidframework/tinylicious-client':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
       '@fluidframework/tree':
         specifier: workspace:~
@@ -433,7 +433,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       fluid-framework:
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
       mui:
         specifier: ^0.0.1
@@ -15556,9 +15556,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../utils/telemetry-utils
-      axe-core:
-        specifier: ^4.9.1
-        version: 4.10.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -15647,6 +15644,9 @@ importers:
       '@types/testing-library__jest-dom':
         specifier: ^5.14.5
         version: 5.14.9
+      axe-core:
+        specifier: ^4.9.1
+        version: 4.10.0
       chai:
         specifier: ^4.2.0
         version: 4.5.0
@@ -25518,7 +25518,7 @@ packages:
   /axe-core@4.10.0:
     resolution: {integrity: sha512-Mr2ZakwQ7XUAjp7pAwQWRhhK8mQQ6JAaNWSjmjxil0R8BPioMtQsTLOolGYkji1rcL++3dCqZA3zWqpT+9Ew6g==}
     engines: {node: '>=4'}
-    dev: false
+    dev: true
 
   /axios@0.28.1(debug@4.3.7):
     resolution: {integrity: sha512-iUcGA5a7p0mVb4Gm/sy+FSECNkPFT4y7wt6OM/CDpO/OnNCvSs3PoMG8ibrC9jRoGYU0gUK5pXVC4NPXq6lHRQ==}
