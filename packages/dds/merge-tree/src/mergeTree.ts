@@ -282,6 +282,14 @@ export interface IMergeTreeOptions {
 	 * @defaultValue `false`
 	 */
 	mergeTreeEnableSidedObliterate?: boolean;
+
+	/**
+	 * Enables support for annotate adjust operations, which allow for specifying
+	 * a summand which is summed with the current value to compute the new value.
+	 *
+	 * @defaultValue `false`
+	 */
+	mergeTreeEnableAnnotateAdjust?: boolean;
 }
 export function errorIfOptionNotTrue(
 	options: IMergeTreeOptions | undefined,
@@ -1952,6 +1960,12 @@ export class MergeTree {
 		 */
 		rollback?: PropertiesRollback;
 	}): void {
+		if (this.options?.mergeTreeEnableAnnotateAdjust !== true && adjust !== undefined) {
+			throw new UsageError(
+				"mergeTreeEnableAnnotateAdjust must be enabled if adjustments are specified.",
+			);
+		}
+
 		this.ensureIntervalBoundary(start, referenceSequenceNumber, clientId);
 		this.ensureIntervalBoundary(end, referenceSequenceNumber, clientId);
 		const deltaSegments: IMergeTreeSegmentDelta[] = [];

@@ -521,6 +521,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				mergeTreeEnableSidedObliterate: (c, n) => c.getBoolean(n),
 				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
 				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
+				mergeTreeEnableAnnotateAdjust: (c, n) => c.getBoolean(n),
 			},
 			dataStoreRuntime.options,
 		);

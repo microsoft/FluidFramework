@@ -38,7 +38,7 @@ export class PropertiesManager {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): MapLike<unknown> {
 		const properties = (seg.properties ??= createMap<unknown>());
-		const deltas = createMap();
+		const deltas: MapLike<unknown> = {};
 
 		for (const [key, value] of [
 			...Object.entries(op.props ?? {})
