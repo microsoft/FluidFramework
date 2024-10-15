@@ -578,12 +578,16 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const scheme = detectVersionScheme(latestVer);
 
 			if (context.flubConfig.releaseReport === undefined) {
-				throw new Error(`legacy-compat release report not found.`);
+				throw new Error(`releaseReport not found in config.`);
 			}
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
+					assert(
+						pkg.monoRepo?.releaseGroup !== undefined,
+						`releaseGroup for ${pkgName} is undefined.`,
+					);
 					const ranges = getRanges(
 						latestVer,
 						context.flubConfig.releaseReport,
@@ -601,7 +605,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
-				const ranges = getRanges(latestVer, context.flubConfig.releaseReport, undefined);
+				const ranges = getRanges(latestVer, context.flubConfig.releaseReport, pkgName);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,

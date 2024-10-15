@@ -9,7 +9,7 @@ import { getLegacyCompatRange } from "../../library/release.js";
 interface TestMatrix {
 	inputVersion: string;
 	subCases: {
-		[interval: number]: string;
+		[interval: number]: string | Error;
 	};
 }
 
@@ -111,15 +111,36 @@ describe("Legacy compatibility ranges", () => {
 				200: "2.200.0",
 			},
 		},
+		{
+			inputVersion: "2.0.0-internal.3.5.2",
+			subCases: {
+				10: new Error("Internal version schema is not supported"),
+			},
+		},
+		{
+			inputVersion: "2.5.0-300362",
+			subCases: {
+				10: new Error("Prerelease section is not expected"),
+			},
+		},
 	];
 
 	for (const { inputVersion, subCases } of testMatrix) {
 		for (const [interval, upperBound] of Object.entries(subCases)) {
 			const expected = `>=${inputVersion} <${upperBound}`;
-			it(`legacy compat: ${inputVersion} and compat version interval ${interval} yields ${expected}`, () => {
-				const range = getLegacyCompatRange(inputVersion, Number.parseInt(interval, 10));
-				assert.strictEqual(range, expected);
-			});
+			if (upperBound instanceof Error) {
+				it(`should throw error for input version '${inputVersion}' and interval '${interval}'`, () => {
+					assert.throws(
+						() => getLegacyCompatRange(inputVersion, Number.parseInt(interval, 10)),
+						Error,
+					);
+				});
+			} else {
+				it(`legacy compat: ${inputVersion} and compat version interval ${interval} yields ${expected}`, () => {
+					const range = getLegacyCompatRange(inputVersion, Number.parseInt(interval, 10));
+					assert.strictEqual(range, expected);
+				});
+			}
 		}
 	}
 });

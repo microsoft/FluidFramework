@@ -12,7 +12,7 @@ import {
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
-import type { LegacyCompatInterval } from "../config.js";
+import type { ReleaseReportConfig } from "../config.js";
 import { ReleaseGroup } from "../releaseGroups.js";
 
 /**
@@ -79,14 +79,15 @@ export interface ReleaseRanges {
  *
  * @param version - The version.
  * @param legacyCompatInterval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param releaseGroupOrPackage - Release group or package name
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.
  * @returns The {@link ReleaseRanges} for a version string
  */
 export const getRanges = (
 	version: ReleaseVersion,
-	legacyCompatInterval: LegacyCompatInterval,
-	releaseGroup: ReleaseGroup | undefined,
+	legacyCompatInterval: ReleaseReportConfig,
+	releaseGroupOrPackage: ReleaseGroup | string,
 	scheme?: VersionScheme,
 ): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
@@ -97,12 +98,7 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getLegacyCompatVersionRange(
-					version,
-					legacyCompatInterval,
-					releaseGroup,
-					schemeToUse,
-				),
+				legacyCompat: getVersionRange(version, "~"),
 			}
 		: {
 				patch: `~${version}`,
@@ -112,8 +108,7 @@ export const getRanges = (
 				legacyCompat: getLegacyCompatVersionRange(
 					version,
 					legacyCompatInterval,
-					releaseGroup,
-					schemeToUse,
+					releaseGroupOrPackage,
 				),
 			};
 };
@@ -198,25 +193,23 @@ export function toReportKind(
  *
  * @param version - A string representing the current version.
  * @param interval - The multiple of minor versions to use for calculating the next version in the range.
- * @param releaseGroup - Release group
- * @param schemeToUse - The version scheme.
+ * @param releaseGroupOrPackage - Release group or package name
  *
  * @returns A string representing the next version in the legacy compatibility range.
  */
-export function getLegacyCompatVersionRange(
+function getLegacyCompatVersionRange(
 	version: string,
-	interval: LegacyCompatInterval,
-	releaseGroup: ReleaseGroup | undefined,
-	schemeToUse: VersionScheme,
+	interval: ReleaseReportConfig,
+	releaseGroupOrPackage: ReleaseGroup | string,
 ): string {
-	for (const [group, intervalValue] of Object.entries(interval.legacyCompatInterval)) {
-		if (group === releaseGroup && intervalValue > 0) {
-			return getLegacyCompatRange(version, intervalValue);
-		}
+	console.log(releaseGroupOrPackage);
+	const intervalValue = interval.legacyCompatInterval[releaseGroupOrPackage];
+	if (intervalValue > 0) {
+		return getLegacyCompatRange(version, intervalValue);
 	}
 
 	// If legacy compat range is equal to 0, return caret version.
-	return schemeToUse === "internal" ? getVersionRange(version, "^") : `^${version}`;
+	return `^${version}`;
 }
 
 /**
@@ -231,6 +224,14 @@ export function getLegacyCompatRange(version: string, interval: number): string 
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");
+	}
+
+	if (detectVersionScheme(version) === "internal") {
+		throw new Error(`Internal version schema is not supported`);
+	}
+
+	if (semVersion.prerelease.length > 0) {
+		throw new Error(`Prerelease section is not expected`);
 	}
 	// Calculate the next compatible minor version using the compatVersionInterval
 	const baseMinor = Math.floor(semVersion.minor / interval) * interval;

@@ -65,20 +65,21 @@ export interface FlubConfig {
 	releaseNotes?: ReleaseNotesConfig;
 
 	/**
-	 * The multiple of minor versions to use for calculating the next version in the legacy compatibility range.
+	 * Configuration for `release report` command
 	 */
-	releaseReport?: LegacyCompatInterval;
+	releaseReport?: ReleaseReportConfig;
 }
 
 /**
- * Represents legacy compat interval per release groups.
+ * Configuration for the `release report` command. If this configuration is not present in the config, the
+ * `release report` command will report an error.
  */
-export interface LegacyCompatInterval {
+export interface ReleaseReportConfig {
 	/**
 	 * Each key in the `legacyCompatInterval` object represents a specific release group,
 	 * and the associated value is a number that defines the legacy compatibility interval for that group.
 	 */
-	legacyCompatInterval: Record<string, number>;
+	legacyCompatInterval: Record<ReleaseGroup | string, number>;
 }
 
 /**
