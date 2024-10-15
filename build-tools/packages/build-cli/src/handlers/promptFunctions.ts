@@ -10,6 +10,7 @@ import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWri
 import {
 	difference,
 	generateReleaseBranchName,
+	getDefaultBumpTypeForBranch,
 	getPreReleaseDependencies,
 } from "../library/index.js";
 import { CommandLogger } from "../logging.js";
@@ -483,7 +484,18 @@ export const promptToGenerateReleaseNotes: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { command, promptWriter, releaseGroup, releaseVersion, bumpType } = data;
+	const {
+		command,
+		context,
+		promptWriter,
+		releaseGroup,
+		releaseVersion,
+		bumpType: inputBumpType,
+	} = data;
+	const currentBranch = await context.gitRepo.getCurrentBranchName();
+
+	// If an bumpType was set in the handler data, use it. Otherwise set it as the default for the branch.
+	const bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(currentBranch);
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO GENERATE RELEASE NOTES",
