@@ -665,16 +665,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					event,
 					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
 						const msgs = Array.isArray(msg) ? msg : [msg];
-						if (!this.enableMultiplexing || !documentId) {
-							if (!documentId) {
-								assert(
-									msgs.every((m) => !m.targetClientId),
-									"targetClientId defined while documentId is not",
-								);
-							}
+						if (!this.enableMultiplexing) {
 							listener(msg, documentId);
 							return;
 						}
+
+						assert(
+							documentId !== undefined,
+							"documentId is required when multiplexing is enabled.",
+						);
 
 						if (documentId !== this.documentId) {
 							return;
