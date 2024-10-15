@@ -16,6 +16,10 @@
 		"build": "concurrently npm:build:api npm:build:md-magic && npm run hugo",
 		"build:api": "npm run download:api && npm run build:api-documentation && npm run build:redirects",
 		"build:api-documentation": "node ./api-markdown-documenter/index.js",
+		"build:local": "concurrently npm:build:local:api npm:build:md-magic && npm run hugo",
+		"build:local:api": "npm run download:api && npm run build:local:rollup && npm run build:local:api-documentation && npm run build:redirects",
+		"build:local:api-documentation": "node ./api-markdown-documenter/index.js true",
+		"build:local:rollup": "node ./local-api-rollup.js",
 		"build:md-magic": "markdown-magic",
 		"build:md-magic:code": "markdown-magic --files \"**/*.md\" !docs --workingDirectory ..",
 		"build:redirects": "node ./build-redirects.js",
@@ -39,7 +43,7 @@
 		"start": "hugo server"
 	},
 	"dependencies": {
-		"@fluid-tools/api-markdown-documenter": "^0.17.0",
+		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@rushstack/node-core-library": "^4.0.2",

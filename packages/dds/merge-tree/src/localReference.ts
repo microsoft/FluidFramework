@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentInternal, type ISegment } from "./mergeTreeNodes.js";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
 import { PropertySet, addProperties } from "./properties.js";
@@ -86,7 +86,7 @@ export interface LocalReferencePosition extends ReferencePosition {
 class LocalReference implements LocalReferencePosition {
 	public properties: PropertySet | undefined;
 
-	private segment: ISegment | undefined;
+	private segment: ISegmentInternal | undefined;
 	private offset: number = 0;
 	private listNode: ListNode<LocalReference> | undefined;
 
@@ -109,7 +109,7 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	public link(
-		segment: ISegment | undefined,
+		segment: ISegmentInternal | undefined,
 		offset: number,
 		listNode: ListNode<LocalReference> | undefined,
 	): void {
@@ -132,7 +132,7 @@ class LocalReference implements LocalReferencePosition {
 		this.offset = offset;
 	}
 
-	public isLeaf(): this is ISegment {
+	public isLeaf(): this is ISegmentInternal {
 		return false;
 	}
 
@@ -140,7 +140,7 @@ class LocalReference implements LocalReferencePosition {
 		this.properties = addProperties(this.properties, newProps);
 	}
 
-	public getSegment(): ISegment | undefined {
+	public getSegment(): ISegmentInternal | undefined {
 		return this.segment;
 	}
 
