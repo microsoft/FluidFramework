@@ -61,10 +61,10 @@ export class MigratableTinyliciousModelLoader<ModelType>
 	public async loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>> {
 		return this.modelLoader.loadExisting(id);
 	}
-	public async loadExistingPaused(
+	public async loadExistingToSequenceNumber(
 		id: string,
 		sequenceNumber: number,
 	): Promise<IAttachedMigratableModel<ModelType>> {
-		return this.modelLoader.loadExistingPaused(id, sequenceNumber);
+		return this.modelLoader.loadExistingToSequenceNumber(id, sequenceNumber);
 	}
 }
