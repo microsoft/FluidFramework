@@ -2189,7 +2189,7 @@ describe("Garbage Collection Tests", () => {
 			});
 		});
 
-		it("can submit GC op compat behavior", async () => {
+		it("can submit GC op", async () => {
 			const gcWithPrivates = garbageCollector as GcWithPrivates;
 			const containerRuntimeGCMessage: Omit<ContainerRuntimeGCMessage, "type" | "contents"> & {
 				type: string;
@@ -2197,35 +2197,16 @@ describe("Garbage Collection Tests", () => {
 			} = {
 				type: ContainerMessageType.GC,
 				contents: gcMessageFromFuture,
-				compatDetails: { behavior: "Ignore" },
 			};
 
 			assert.doesNotThrow(
 				() =>
 					gcWithPrivates.submitMessage(containerRuntimeGCMessage as ContainerRuntimeGCMessage),
-				"Cannot submit GC message with compatDetails",
+				"Cannot submit GC message",
 			);
 		});
 
-		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-				compatDetails: { behavior: "Ignore" },
-			};
-			assert.throws(
-				() =>
-					garbageCollector.processMessage(
-						containerRuntimeGCMessage,
-						Date.now(),
-						false /* local */,
-					),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
-
-		it("process remote op with unrecognized type and no compat behavior", async () => {
+		it("process remote op with unrecognized type", async () => {
 			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
