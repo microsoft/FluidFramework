@@ -9,7 +9,9 @@ import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 const tinyliciousClient = new TinyliciousClient({});
 
 export const containerIdFromUrl = (): string =>
-	new URL(window.location.href).searchParams.get("fluidContainerId") ?? "";
+	typeof window === "undefined" // Need to check if window exists because this function is called during server-side rendering
+		? ""
+		: new URL(window.location.href).searchParams.get("fluidContainerId") ?? "";
 
 export async function loadContainer<T extends ContainerSchema>(
 	containerSchema: T,
