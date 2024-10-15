@@ -15,7 +15,6 @@ import Deque from "double-ended-queue";
 
 import type {
 	InboundSequencedContainerRuntimeMessage,
-	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import {
@@ -601,11 +600,9 @@ describe("Pending State Manager", () => {
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
-					RecentlyAddedContainerRuntimeMessageDetails = {
+				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> = {
 					type: "FROM_THE_FUTURE",
 					contents: "Hello",
-					compatDetails: { behavior: "FailToProcess" },
 				};
 
 				pendingStateManager.onFlushBatch(

@@ -88,18 +88,12 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-type TypedContainerRuntimeMessage<
-	TType extends ContainerMessageType,
-	TContents,
-	TUSedCompatDetails extends boolean = false,
-> = {
+interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
 	contents: TContents;
-} & (TUSedCompatDetails extends true
-	? Partial<RecentlyAddedContainerRuntimeMessageDetails>
-	: { compatDetails?: undefined });
+}
 
 /**
  * Additional details expected for any recently added message.
@@ -145,8 +139,7 @@ export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 >;
 export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
-	GarbageCollectionMessage,
-	true // TUsedCompatDetails
+	GarbageCollectionMessage
 >;
 export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
