@@ -253,6 +253,7 @@ The replacement syntax to use in `.mdx` files would be:
         -   `/docs/api/index.mdx`
         -   `/versioned_docs/api/index.mdx`
         -   TODO: what else?
+    -   v2 Release notes just link to GitHub. Is this what we want?
 
 ### Nice to have before merging into main
 
