@@ -120,11 +120,11 @@ const config: Config = {
 		},
 
 		// Temp announcement bar announcing Fluid v2.
-		announcementBar: {
-			id: "fluid-2-announcement",
-			content: "🎉 Fluid Framework 2 is now in General Availability! <a target=\"_blank\" href=\"https://aka.ms/fluid/release_blog\">Learn more</a>.",
-			isCloseable: true,
-		},
+		// announcementBar: {
+		// 	id: "fluid-2-announcement",
+		// 	content: "🎉 Fluid Framework 2 is now in General Availability! <a target=\"_blank\" href=\"https://aka.ms/fluid/release_blog\">Learn more</a>.",
+		// 	isCloseable: true,
+		// },
 
 		// Top nav-bar
 		navbar: {
