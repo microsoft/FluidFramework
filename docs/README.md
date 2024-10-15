@@ -237,6 +237,12 @@ The replacement syntax to use in `.mdx` files would be:
     -   `docs/api/v*` => `docs/v*/api`
         -   TODO: verify this is okay for v2 which is "current"
     -   `docs/data-structures/counter` => `docs/v1/data-structures/counter`
+    -   `docs/build` => `docs/build/overview`
+    -   `docs/concepts` => `docs/concepts/architecture`
+    -   `docs/data-structures` => `docs/data-structures/overview`
+    -   `docs/deployment` => `docs/deployment/service-options`
+    -   `docs/start` => `docs/start/quick-start`
+    -   `docs/testing` => `docs/testing/tinylicious`
     -   TODO: what else?
 -   Review content changes with tech writer
     -   Structural changes (contents added/removed by version)
