@@ -39,7 +39,8 @@ const config = {
 				inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v1"),
 				outputPath: path.resolve(versionedDocsPath, "version-1", "api"),
 				uriRoot: "/docs/v1/api",
-			}
+			},
+			maintained: true,
 		},
 	],
 

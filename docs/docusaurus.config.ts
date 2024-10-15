@@ -23,6 +23,7 @@ const versionsConfig: {[versionName: string]: VersionOptions} = {
 	current: {
 		label: DocsVersions.currentVersion.label,
 		badge: false,
+		banner: "none",
 	},
 }
 
@@ -31,6 +32,7 @@ for (const version of DocsVersions.otherVersions) {
 		label: version.label,
 		path: version.path,
 		badge: true,
+		banner: "unmaintained",
 	}
 }
 
@@ -40,13 +42,14 @@ if (GeneratedApiVersions.apiDocsVersions.includes("local")) {
 		label: DocsVersions.local.label,
 		path: DocsVersions.local.path,
 		badge: true,
+		banner: "unreleased",
 	}
 }
 
 // #endregion
 
 const config: Config = {
-	title: "Fluid Framework Documentation",
+	title: "Fluid Framework",
 	// tagline: "TODO",
 	favicon: "assets/fluid-icon.svg",
 
