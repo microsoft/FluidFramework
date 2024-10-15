@@ -1157,7 +1157,6 @@ describe("Runtime", () => {
 				const gcMessageWithDeprecatedCompatDetails: ContainerRuntimeGCMessage = {
 					type: ContainerMessageType.GC,
 					contents: { type: "Sweep", deletedNodeIds: [] },
-					compatDetails: { behavior: "Ignore" },
 				};
 
 				assert.doesNotThrow(
