@@ -499,21 +499,20 @@ export const checkReleaseNotes: StateHandlerFunction = async (
 
 	const { bumpType, releaseGroup, releaseVersion } = data;
 
-	// This check should be skipped for patches and non client/server releases. Patch releases should always pass this
+	// This check should only be run for client/server minor/major releases. Patch releases should always pass this
 	// check, as will release groups other than client/server.
-	if (!["client", "server"].includes(releaseGroup) || bumpType === "patch") {
-		BaseStateHandler.signalSuccess(machine, state);
-		return true;
-	}
+	if (["client", "server"].includes(releaseGroup) && bumpType !== "patch") {
+		// Check if the release notes file exists
+		const filename = `RELEASE_NOTES/${releaseVersion}.md`;
 
-	// Check if the release notes file exists
-	const filename = `RELEASE_NOTES/${releaseVersion}.md`;
-
-	if (!existsSync(filename)) {
-		log.logHr();
-		log.errorLog(`Release notes for ${releaseGroup} version ${releaseVersion} are not found.`);
-		BaseStateHandler.signalFailure(machine, state);
-		return false;
+		if (!existsSync(filename)) {
+			log.logHr();
+			log.errorLog(
+				`Release notes for ${releaseGroup} version ${releaseVersion} are not found.`,
+			);
+			BaseStateHandler.signalFailure(machine, state);
+			return false;
+		}
 	}
 
 	BaseStateHandler.signalSuccess(machine, state);
@@ -541,26 +540,23 @@ export const checkChangelogs: StateHandlerFunction = async (
 
 	const { releaseGroup, bumpType } = data;
 
-	// This check should be skipped for patches and non client/server releases. Patch releases should always pass this
+	// This check should only be run for client/server minor/major releases. Patch releases should always pass this
 	// check, as will release groups other than client/server.
-	if (!["client", "server"].includes(releaseGroup) || bumpType === "patch") {
-		BaseStateHandler.signalSuccess(machine, state);
-		return true;
-	}
+	if (["client", "server"].includes(releaseGroup) && bumpType !== "patch") {
+		const question: inquirer.ConfirmQuestion = {
+			type: "confirm",
+			name: "confirmed",
+			message: "Did you generate and commit the CHANGELOG.md files for the release?",
+		};
 
-	const question: inquirer.ConfirmQuestion = {
-		type: "confirm",
-		name: "confirmed",
-		message: "Did you generate and commit the CHANGELOG.md files for the release?",
-	};
+		const answer = await inquirer.prompt(question);
 
-	const answer = await inquirer.prompt(question);
-
-	if (answer.confirmed !== true) {
-		log.logHr();
-		log.errorLog(`Changelogs must be generated.`);
-		BaseStateHandler.signalFailure(machine, state);
-		return false;
+		if (answer.confirmed !== true) {
+			log.logHr();
+			log.errorLog(`Changelogs must be generated.`);
+			BaseStateHandler.signalFailure(machine, state);
+			return false;
+		}
 	}
 
 	BaseStateHandler.signalSuccess(machine, state);
