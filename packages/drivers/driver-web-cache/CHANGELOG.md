@@ -1,5 +1,9 @@
 # @fluidframework/driver-web-cache
 
+## 2.4.0
+
+Dependency updates only.
+
 ## 2.3.0
 
 Dependency updates only.

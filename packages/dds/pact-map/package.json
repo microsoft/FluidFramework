@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/pact-map",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"description": "Distributed data structure for key-value pairs using pact consensus",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,12 +66,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -92,7 +94,7 @@
 		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
+		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",

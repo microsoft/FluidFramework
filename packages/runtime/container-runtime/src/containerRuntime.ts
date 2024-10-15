@@ -185,6 +185,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	serializeOpContents,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -762,7 +763,7 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
  * to understand if/when it is hit.
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
-let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
 	return (codePath: string) => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
@@ -2710,8 +2711,13 @@ export class ContainerRuntime
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
 
-		// We expect runtime messages to have JSON contents - deserialize it in place.
-		ensureContentsDeserialized(messageCopy, hasModernRuntimeMessageEnvelope, logLegacyCase);
+		let runtimeBatch: boolean =
+			hasModernRuntimeMessageEnvelope || isUnpackedRuntimeMessage(messageCopy);
+		if (runtimeBatch) {
+			// We expect runtime messages to have JSON contents - deserialize it in place.
+			ensureContentsDeserialized(messageCopy);
+		}
+
 		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
@@ -2749,7 +2755,6 @@ export class ContainerRuntime
 				}
 			}
 
-			let runtimeBatch: boolean = true;
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
 			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
@@ -2807,12 +2812,23 @@ export class ContainerRuntime
 				runtimeBatch,
 			);
 		} else {
+			if (!runtimeBatch) {
+				// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
+				// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
+				if (
+					typeof messageCopy.contents === "string" &&
+					messageCopy.contents !== "" &&
+					messageCopy.type !== MessageType.ClientLeave
+				) {
+					messageCopy.contents = JSON.parse(messageCopy.contents);
+				}
+			}
 			this.processInboundMessages(
 				[{ message: messageCopy, localOpMetadata: undefined }],
 				{ batchStart: true, batchEnd: true }, // Single message
 				local,
 				savedOp,
-				isUnpackedRuntimeMessage(messageCopy) /* runtimeBatch */,
+				runtimeBatch,
 			);
 		}
 
@@ -4212,7 +4228,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: BatchMessage = {
-					contents: JSON.stringify(idAllocationMessage),
+					contents: serializeOpContents(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -4275,13 +4291,13 @@ export class ContainerRuntime
 					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: JSON.stringify(msg),
+					contents: serializeOpContents(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
 			const message: BatchMessage = {
-				contents: JSON.stringify(containerRuntimeMessage) /* serialized content */,
+				contents: serializeOpContents(containerRuntimeMessage),
 				metadata,
 				localOpMetadata,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,

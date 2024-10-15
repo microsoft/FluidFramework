@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-client",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -107,7 +107,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
+		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-tools/build-cli": "^0.48.0",
 		"@fluidframework/aqueduct": "workspace:~",
