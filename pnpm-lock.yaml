@@ -177,7 +177,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/azure-service-utils-previous':
-        specifier: npm:@fluidframework/azure-service-utils@2.4.0
+        specifier: npm:@fluidframework/azure-service-utils@~2.4.0
         version: /@fluidframework/azure-service-utils@2.4.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -6395,7 +6395,7 @@ importers:
         specifier: ~1.8.3
         version: 1.8.3
       '@fluid-experimental/attributable-map-previous':
-        specifier: npm:@fluid-experimental/attributable-map@2.4.0
+        specifier: npm:@fluid-experimental/attributable-map@~2.4.0
         version: /@fluid-experimental/attributable-map@2.4.0
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
@@ -7192,7 +7192,7 @@ importers:
         specifier: ~1.8.3
         version: 1.8.3
       '@fluid-internal/client-utils-previous':
-        specifier: npm:@fluid-internal/client-utils@2.4.0
+        specifier: npm:@fluid-internal/client-utils@~2.4.0
         version: /@fluid-internal/client-utils@2.4.0
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
@@ -7325,7 +7325,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/container-definitions-previous':
-        specifier: npm:@fluidframework/container-definitions@2.4.0
+        specifier: npm:@fluidframework/container-definitions@~2.4.0
         version: /@fluidframework/container-definitions@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7373,7 +7373,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/core-interfaces-previous':
-        specifier: npm:@fluidframework/core-interfaces@2.4.0
+        specifier: npm:@fluidframework/core-interfaces@~2.4.0
         version: /@fluidframework/core-interfaces@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7427,7 +7427,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/core-utils-previous':
-        specifier: npm:@fluidframework/core-utils@2.4.0
+        specifier: npm:@fluidframework/core-utils@~2.4.0
         version: /@fluidframework/core-utils@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7506,7 +7506,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/driver-definitions-previous':
-        specifier: npm:@fluidframework/driver-definitions@2.4.0
+        specifier: npm:@fluidframework/driver-definitions@~2.4.0
         version: /@fluidframework/driver-definitions@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7579,7 +7579,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/cell-previous':
-        specifier: npm:@fluidframework/cell@2.4.0
+        specifier: npm:@fluidframework/cell@~2.4.0
         version: /@fluidframework/cell@2.4.0
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -7682,7 +7682,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/counter-previous':
-        specifier: npm:@fluidframework/counter@2.4.0
+        specifier: npm:@fluidframework/counter@~2.4.0
         version: /@fluidframework/counter@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7909,7 +7909,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/map-previous':
-        specifier: npm:@fluidframework/map@2.4.0
+        specifier: npm:@fluidframework/map@~2.4.0
         version: /@fluidframework/map@2.4.0(debug@4.3.7)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8042,7 +8042,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/matrix-previous':
-        specifier: npm:@fluidframework/matrix@2.4.0
+        specifier: npm:@fluidframework/matrix@~2.4.0
         version: /@fluidframework/matrix@2.4.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8172,7 +8172,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/merge-tree-previous':
-        specifier: npm:@fluidframework/merge-tree@2.4.0
+        specifier: npm:@fluidframework/merge-tree@~2.4.0
         version: /@fluidframework/merge-tree@2.4.0(debug@4.3.7)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8287,7 +8287,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/ordered-collection-previous':
-        specifier: npm:@fluidframework/ordered-collection@2.4.0
+        specifier: npm:@fluidframework/ordered-collection@~2.4.0
         version: /@fluidframework/ordered-collection@2.4.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8496,7 +8496,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/register-collection-previous':
-        specifier: npm:@fluidframework/register-collection@2.4.0
+        specifier: npm:@fluidframework/register-collection@~2.4.0
         version: /@fluidframework/register-collection@2.4.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8620,7 +8620,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/sequence-previous':
-        specifier: npm:@fluidframework/sequence@2.4.0
+        specifier: npm:@fluidframework/sequence@~2.4.0
         version: /@fluidframework/sequence@2.4.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8750,7 +8750,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/shared-object-base-previous':
-        specifier: npm:@fluidframework/shared-object-base@2.4.0
+        specifier: npm:@fluidframework/shared-object-base@~2.4.0
         version: /@fluidframework/shared-object-base@2.4.0(debug@4.3.7)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8859,7 +8859,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/shared-summary-block-previous':
-        specifier: npm:@fluidframework/shared-summary-block@2.4.0
+        specifier: npm:@fluidframework/shared-summary-block@~2.4.0
         version: /@fluidframework/shared-summary-block@2.4.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8977,7 +8977,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/task-manager-previous':
-        specifier: npm:@fluidframework/task-manager@2.4.0
+        specifier: npm:@fluidframework/task-manager@~2.4.0
         version: /@fluidframework/task-manager@2.4.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -9234,7 +9234,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@fluidframework/tree-previous':
-        specifier: npm:@fluidframework/tree@2.4.0
+        specifier: npm:@fluidframework/tree@~2.4.0
         version: /@fluidframework/tree@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -9343,7 +9343,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/debugger-previous':
-        specifier: npm:@fluidframework/debugger@2.4.0
+        specifier: npm:@fluidframework/debugger@~2.4.0
         version: /@fluidframework/debugger@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -9413,7 +9413,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/driver-base-previous':
-        specifier: npm:@fluidframework/driver-base@2.4.0
+        specifier: npm:@fluidframework/driver-base@~2.4.0
         version: /@fluidframework/driver-base@2.4.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -9498,7 +9498,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/driver-web-cache-previous':
-        specifier: npm:@fluidframework/driver-web-cache@2.4.0
+        specifier: npm:@fluidframework/driver-web-cache@~2.4.0
         version: /@fluidframework/driver-web-cache@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -9577,7 +9577,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/file-driver-previous':
-        specifier: npm:@fluidframework/file-driver@2.4.0
+        specifier: npm:@fluidframework/file-driver@~2.4.0
         version: /@fluidframework/file-driver@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -9674,7 +9674,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/local-driver-previous':
-        specifier: npm:@fluidframework/local-driver@2.4.0
+        specifier: npm:@fluidframework/local-driver@~2.4.0
         version: /@fluidframework/local-driver@2.4.0(debug@4.3.7)
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -9789,7 +9789,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-driver-previous':
-        specifier: npm:@fluidframework/odsp-driver@2.4.0
+        specifier: npm:@fluidframework/odsp-driver@~2.4.0
         version: /@fluidframework/odsp-driver@2.4.0(debug@4.3.7)
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -9871,7 +9871,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-driver-definitions-previous':
-        specifier: npm:@fluidframework/odsp-driver-definitions@2.4.0
+        specifier: npm:@fluidframework/odsp-driver-definitions@~2.4.0
         version: /@fluidframework/odsp-driver-definitions@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -9941,7 +9941,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-urlresolver-previous':
-        specifier: npm:@fluidframework/odsp-urlresolver@2.4.0
+        specifier: npm:@fluidframework/odsp-urlresolver@~2.4.0
         version: /@fluidframework/odsp-urlresolver@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -10023,7 +10023,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/replay-driver-previous':
-        specifier: npm:@fluidframework/replay-driver@2.4.0
+        specifier: npm:@fluidframework/replay-driver@~2.4.0
         version: /@fluidframework/replay-driver@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -10117,7 +10117,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/routerlicious-driver-previous':
-        specifier: npm:@fluidframework/routerlicious-driver@2.4.0
+        specifier: npm:@fluidframework/routerlicious-driver@~2.4.0
         version: /@fluidframework/routerlicious-driver@2.4.0(debug@4.3.7)
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -10217,7 +10217,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/routerlicious-urlresolver-previous':
-        specifier: npm:@fluidframework/routerlicious-urlresolver@2.4.0
+        specifier: npm:@fluidframework/routerlicious-urlresolver@~2.4.0
         version: /@fluidframework/routerlicious-urlresolver@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -10308,7 +10308,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/tinylicious-driver-previous':
-        specifier: npm:@fluidframework/tinylicious-driver@2.4.0
+        specifier: npm:@fluidframework/tinylicious-driver@~2.4.0
         version: /@fluidframework/tinylicious-driver@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -10399,7 +10399,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/agent-scheduler-previous':
-        specifier: npm:@fluidframework/agent-scheduler@2.4.0
+        specifier: npm:@fluidframework/agent-scheduler@~2.4.0
         version: /@fluidframework/agent-scheduler@2.4.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -10572,7 +10572,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct-previous':
-        specifier: npm:@fluidframework/aqueduct@2.4.0
+        specifier: npm:@fluidframework/aqueduct@~2.4.0
         version: /@fluidframework/aqueduct@2.4.0(debug@4.3.7)
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -11245,7 +11245,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/fluid-static-previous':
-        specifier: npm:@fluidframework/fluid-static@2.4.0
+        specifier: npm:@fluidframework/fluid-static@~2.4.0
         version: /@fluidframework/fluid-static@2.4.0
       '@fluidframework/map':
         specifier: workspace:~
@@ -11518,7 +11518,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/request-handler-previous':
-        specifier: npm:@fluidframework/request-handler@2.4.0
+        specifier: npm:@fluidframework/request-handler@~2.4.0
         version: /@fluidframework/request-handler@2.4.0(debug@4.3.7)
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -11606,7 +11606,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
       '@fluidframework/synthesize-previous':
-        specifier: npm:@fluidframework/synthesize@2.4.0
+        specifier: npm:@fluidframework/synthesize@~2.4.0
         version: /@fluidframework/synthesize@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -11694,7 +11694,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@fluidframework/undo-redo-previous':
-        specifier: npm:@fluidframework/undo-redo@2.4.0
+        specifier: npm:@fluidframework/undo-redo@~2.4.0
         version: /@fluidframework/undo-redo@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -11809,7 +11809,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/container-loader-previous':
-        specifier: npm:@fluidframework/container-loader@2.4.0
+        specifier: npm:@fluidframework/container-loader@~2.4.0
         version: /@fluidframework/container-loader@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -11921,7 +11921,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/driver-utils-previous':
-        specifier: npm:@fluidframework/driver-utils@2.4.0
+        specifier: npm:@fluidframework/driver-utils@~2.4.0
         version: /@fluidframework/driver-utils@2.4.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12112,7 +12112,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/container-runtime-previous':
-        specifier: npm:@fluidframework/container-runtime@2.4.0
+        specifier: npm:@fluidframework/container-runtime@~2.4.0
         version: /@fluidframework/container-runtime@2.4.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12206,7 +12206,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/container-runtime-definitions-previous':
-        specifier: npm:@fluidframework/container-runtime-definitions@2.4.0
+        specifier: npm:@fluidframework/container-runtime-definitions@~2.4.0
         version: /@fluidframework/container-runtime-definitions@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12291,7 +12291,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/datastore-previous':
-        specifier: npm:@fluidframework/datastore@2.4.0
+        specifier: npm:@fluidframework/datastore@~2.4.0
         version: /@fluidframework/datastore@2.4.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12382,7 +12382,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/datastore-definitions-previous':
-        specifier: npm:@fluidframework/datastore-definitions@2.4.0
+        specifier: npm:@fluidframework/datastore-definitions@~2.4.0
         version: /@fluidframework/datastore-definitions@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12458,7 +12458,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/id-compressor-previous':
-        specifier: npm:@fluidframework/id-compressor@2.4.0
+        specifier: npm:@fluidframework/id-compressor@~2.4.0
         version: /@fluidframework/id-compressor@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -12543,7 +12543,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-definitions-previous':
-        specifier: npm:@fluidframework/runtime-definitions@2.4.0
+        specifier: npm:@fluidframework/runtime-definitions@~2.4.0
         version: /@fluidframework/runtime-definitions@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -12625,7 +12625,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils-previous':
-        specifier: npm:@fluidframework/runtime-utils@2.4.0
+        specifier: npm:@fluidframework/runtime-utils@~2.4.0
         version: /@fluidframework/runtime-utils@2.4.0(debug@4.3.7)
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -12746,7 +12746,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils-previous':
-        specifier: npm:@fluidframework/test-runtime-utils@2.4.0
+        specifier: npm:@fluidframework/test-runtime-utils@~2.4.0
         version: /@fluidframework/test-runtime-utils@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -12846,7 +12846,7 @@ importers:
         specifier: workspace:~
         version: link:../../framework/aqueduct
       '@fluidframework/azure-client-previous':
-        specifier: npm:@fluidframework/azure-client@2.4.0
+        specifier: npm:@fluidframework/azure-client@~2.4.0
         version: /@fluidframework/azure-client@2.4.0
       '@fluidframework/azure-local-service':
         specifier: workspace:~
@@ -13342,7 +13342,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@fluidframework/tinylicious-client-previous':
-        specifier: npm:@fluidframework/tinylicious-client@2.4.0
+        specifier: npm:@fluidframework/tinylicious-client@~2.4.0
         version: /@fluidframework/tinylicious-client@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -14600,7 +14600,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-utils-previous':
-        specifier: npm:@fluidframework/test-utils@2.4.0
+        specifier: npm:@fluidframework/test-utils@~2.4.0
         version: /@fluidframework/test-utils@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -14924,7 +14924,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/devtools-previous':
-        specifier: npm:@fluidframework/devtools@2.4.0
+        specifier: npm:@fluidframework/devtools@~2.4.0
         version: /@fluidframework/devtools@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -15259,7 +15259,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       '@fluidframework/devtools-core-previous':
-        specifier: npm:@fluidframework/devtools-core@2.4.0
+        specifier: npm:@fluidframework/devtools-core@~2.4.0
         version: /@fluidframework/devtools-core@2.4.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -15778,7 +15778,7 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/fetch-tool-previous':
-        specifier: npm:@fluid-tools/fetch-tool@2.4.0
+        specifier: npm:@fluid-tools/fetch-tool@~2.4.0
         version: /@fluid-tools/fetch-tool@2.4.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -15863,7 +15863,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/fluid-runner-previous':
-        specifier: npm:@fluidframework/fluid-runner@2.4.0
+        specifier: npm:@fluidframework/fluid-runner@~2.4.0
         version: /@fluidframework/fluid-runner@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -16084,7 +16084,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-doclib-utils-previous':
-        specifier: npm:@fluidframework/odsp-doclib-utils@2.4.0
+        specifier: npm:@fluidframework/odsp-doclib-utils@~2.4.0
         version: /@fluidframework/odsp-doclib-utils@2.4.0(debug@4.3.7)
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -16172,7 +16172,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/telemetry-utils-previous':
-        specifier: npm:@fluidframework/telemetry-utils@2.4.0
+        specifier: npm:@fluidframework/telemetry-utils@~2.4.0
         version: /@fluidframework/telemetry-utils@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
@@ -16278,7 +16278,7 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/tool-utils-previous':
-        specifier: npm:@fluidframework/tool-utils@2.4.0
+        specifier: npm:@fluidframework/tool-utils@~2.4.0
         version: /@fluidframework/tool-utils@2.4.0
       '@microsoft/api-extractor':
         specifier: 7.47.8
