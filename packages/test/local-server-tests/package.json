@@ -62,7 +62,7 @@
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
+		"@fluidframework/build-tools": "^0.49.0",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
