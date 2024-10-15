@@ -14,8 +14,8 @@ import type { IReadinessCheck, IReadinessStatus } from "@fluidframework/server-s
 export class StartupCheck implements IReadinessCheck {
 	private isStartupComplete: boolean = false;
 
-	public isReady(): Promise<IReadinessStatus> {
-		return Promise.resolve({ ready: this.isStartupComplete });
+	public async isReady(): Promise<IReadinessStatus> {
+		return { ready: this.isStartupComplete };
 	}
 
 	public setReady(): void {
