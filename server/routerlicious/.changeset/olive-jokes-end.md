@@ -1,0 +1,10 @@
+---
+"@fluidframework/server-routerlicious-base": minor
+---
+---
+"section": feature
+---
+
+Added the startupprobe as a resource for Alfred, Nexus and Riddler
+
+The startup probe was intended to be a singleton. However, this caused issues between Historian and Routerlicious. To ensure no weird compatability issues arise, this singleton implementation has been removed.
