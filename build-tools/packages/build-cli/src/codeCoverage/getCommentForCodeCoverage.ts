@@ -54,7 +54,7 @@ export function getCommentForCodeCoverageDiff(
 		getSummaryFooter(baselineBuildInfo),
 		success
 			? "### Code coverage comparison check passed!!"
-			: "### Code coverage comparison check failed!!",
+			: "### Code coverage comparison check failed!!<br>More Details: [Readme](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/codeCoverageDetails.md#success-criteria)",
 	].join("\n\n");
 }
 
@@ -87,23 +87,23 @@ const getCodeCoverageSummary = (
 const getCodeCoverageSummaryForPackages = (coverageReport: CodeCoverageComparison): string => {
 	const metrics = codeCoverageDetailsHeader + getMetricRows(coverageReport);
 
-	return `<details><summary><b>${getColorGlyph(coverageReport.branchCoverageDiff + coverageReport.lineCoverageDiff)} ${
+	return `<details><summary><b>${getGlyphForHtml(coverageReport.branchCoverageDiff + coverageReport.lineCoverageDiff)} ${
 		coverageReport.packagePath
-	}:</b> <br> Line Coverage Change: ${formatDiff(coverageReport.lineCoverageDiff)}  Branch Coverage Change: ${formatDiff(
+	}:</b> <br> Line Coverage Change: ${formatDiff(coverageReport.lineCoverageDiff)}&nbsp;&nbsp;&nbsp;&nbsp;Branch Coverage Change: ${formatDiff(
 		coverageReport.branchCoverageDiff,
 	)}</summary>${metrics}</table></details>`;
 };
 
-const getColorGlyph = (codeCoverageDiff: number): string => {
+const getGlyphForHtml = (codeCoverageDiff: number): string => {
 	if (codeCoverageDiff === 0) {
-		return "■";
+		return "&rarr;";
 	}
 
 	if (codeCoverageDiff > 0) {
-		return "⯅";
+		return "&uarr;";
 	}
 
-	return "⯅⯅";
+	return "&darr;";
 };
 
 const formatDiff = (coverageDiff: number): string => {
@@ -114,8 +114,8 @@ const formatDiff = (coverageDiff: number): string => {
 };
 
 const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): string => {
-	const glyphForLineCoverage = getColorGlyph(codeCoverageComparisonReport.lineCoverageDiff);
-	const glyphForBranchCoverage = getColorGlyph(
+	const glyphForLineCoverage = getGlyphForHtml(codeCoverageComparisonReport.lineCoverageDiff);
+	const glyphForBranchCoverage = getGlyphForHtml(
 		codeCoverageComparisonReport.branchCoverageDiff,
 	);
 

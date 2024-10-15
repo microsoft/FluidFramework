@@ -41,7 +41,6 @@ export const knownReleaseGroups: readonly ["build-tools", "client", "server", "g
 
 // @public
 export interface LegacyCompatInterval {
-    // (undocumented)
     legacyCompatInterval: Record<string, number>;
 }
 

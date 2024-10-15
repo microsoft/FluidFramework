@@ -215,7 +215,7 @@ export function getLegacyCompatVersionRange(
 		}
 	}
 
-	// If legacy compat range is less than or equal to 0, return caret version.
+	// If legacy compat range is equal to 0, return caret version.
 	return schemeToUse === "internal" ? getVersionRange(version, "^") : `^${version}`;
 }
 

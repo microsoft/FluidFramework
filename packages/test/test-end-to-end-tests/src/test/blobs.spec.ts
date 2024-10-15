@@ -299,8 +299,9 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		const attachOpP = new Promise<void>((resolve, reject) =>
 			container1.on("op", (op) => {
 				if (
-					(op.contents as { type?: unknown } | undefined)?.type ===
-					ContainerMessageType.BlobAttach
+					typeof op.contents === "string" &&
+					(JSON.parse(op.contents) as { type?: unknown })?.type ===
+						ContainerMessageType.BlobAttach
 				) {
 					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
 						resolve();

@@ -72,10 +72,12 @@ export interface FlubConfig {
 
 /**
  * Represents legacy compat interval per release groups.
- * @param legacyCompatInterval - Each key in the `legacyCompatInterval` object represents a specific release group,
- * and the associated value is a number that defines the compatibility interval for that group.
  */
 export interface LegacyCompatInterval {
+	/**
+	 * Each key in the `legacyCompatInterval` object represents a specific release group,
+	 * and the associated value is a number that defines the legacy compatibility interval for that group.
+	 */
 	legacyCompatInterval: Record<string, number>;
 }
 

@@ -357,7 +357,7 @@ export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): TreeBranch {
 	assert(
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
-		"Unsupported implementation",
+		0xa48 /* Unsupported implementation */,
 	);
 	const checkout: TreeCheckout = treeOrView.checkout;
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
