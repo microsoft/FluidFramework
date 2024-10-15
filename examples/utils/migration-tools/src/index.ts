@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @packageDocumentation
+ * This package contains tools for migrating data from one version to another, used by Fluid examples.
+ * They are not currently intended for use in production scenarios.
+ */
+
 export type {
 	DataTransformationCallback,
 	IAcceptedMigrationDetails,

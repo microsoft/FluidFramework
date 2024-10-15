@@ -2296,16 +2296,6 @@ export class MergeTree {
 				segment.removedSeq = undefined;
 				segment.localRemovedSeq = undefined;
 
-				// Note: optional chaining short-circuits:
-				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
-				this.mergeTreeDeltaCallback?.(
-					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
-					{
-						operation: MergeTreeDeltaType.INSERT,
-						deltaSegments: [{ segment }],
-					},
-				);
-
 				for (
 					let updateNode = segment.parent;
 					updateNode !== undefined;
@@ -2317,6 +2307,16 @@ export class MergeTree {
 						this.collabWindow.clientId,
 					);
 				}
+
+				// Note: optional chaining short-circuits:
+				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
+				this.mergeTreeDeltaCallback?.(
+					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+					{
+						operation: MergeTreeDeltaType.INSERT,
+						deltaSegments: [{ segment }],
+					},
+				);
 			});
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||
