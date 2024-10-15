@@ -10440,6 +10440,12 @@ importers:
 
   packages/framework/ai-collab:
     dependencies:
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree

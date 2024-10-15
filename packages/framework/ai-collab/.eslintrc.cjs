@@ -8,7 +8,10 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	rules: {},
+	rules: {
+		"unicorn/switch-case-braces": "off",
+		"unicorn/no-array-for-each": "off",
+	},
 	overrides: [
 		{
 			// Rules only for test files

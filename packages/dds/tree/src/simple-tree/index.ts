@@ -51,7 +51,14 @@ export {
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type SimpleNodeSchemaBase,
 	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -113,6 +120,7 @@ export {
 	normalizeFieldSchema,
 	type ApplyKind,
 	type FieldSchemaMetadata,
+	normalizeAllowedTypes,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

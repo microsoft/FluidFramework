@@ -10,6 +10,7 @@ import type { FieldKind } from "../schemaTypes.js";
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
@@ -24,6 +25,7 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 /**
  * A {@link SimpleNodeSchema} for an object node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Object> {
@@ -36,6 +38,7 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Ob
 /**
  * A {@link SimpleNodeSchema} for an array node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Array> {
@@ -51,6 +54,7 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Arr
 /**
  * A {@link SimpleNodeSchema} for a map node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> {
@@ -66,6 +70,7 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> 
 /**
  * A {@link SimpleNodeSchema} for a leaf node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
@@ -81,6 +86,8 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf
  * @remarks This definition is incomplete, and references child types by identifiers.
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
+ *
+ * @internal
  */
 export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
@@ -95,6 +102,7 @@ export type SimpleNodeSchema =
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleFieldSchema {
@@ -123,7 +131,7 @@ export interface SimpleFieldSchema {
  * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references,
  * which are represented inline with identifiers.
  *
- * @sealed
+ * @internal
  */
 export interface SimpleTreeSchema extends SimpleFieldSchema {
 	/**

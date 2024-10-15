@@ -21,6 +21,7 @@ import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
+ * @internal
  */
 export function isTreeNodeSchemaClass<
 	Name extends string,
@@ -327,6 +328,8 @@ export class FieldSchema<
 
 /**
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
+ *
+ * @internal
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
 	return schema instanceof FieldSchema
@@ -339,6 +342,8 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
+ *
+ * @internal
  */
 export function normalizeAllowedTypes(
 	types: ImplicitAllowedTypes,
