@@ -1,0 +1,9 @@
+.container {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+}
+.bgImage {
+	width: 100%;
+	height: "auto"
+}
