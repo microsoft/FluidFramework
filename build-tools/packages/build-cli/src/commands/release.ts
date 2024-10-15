@@ -153,11 +153,10 @@ async function getBumpType(
 	const bumpedMajor = bumpVersionScheme(version, "major");
 	const bumpedMinor = bumpVersionScheme(version, "minor");
 	const bumpedPatch = bumpVersionScheme(version, "patch");
-
 	const questions: inquirer.Question[] = [];
 
 	let bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(branch);
-	if (inputBumpType === undefined) {
+	if (bumpType === undefined) {
 		const choices = [
 			{ value: "major", name: `major (${version} => ${bumpedMajor.version})` },
 			{ value: "minor", name: `minor (${version} => ${bumpedMinor.version})` },
@@ -168,7 +167,7 @@ async function getBumpType(
 			name: "bumpType",
 			choices,
 			default: bumpType,
-			message: `The current branch is '${branch}'. The default bump type for that branch is '${bumpType}', but you can change it now if needed.`,
+			message: `The current branch is '${branch}'. There is no default bump type for this branch. What type of release are you doing?`,
 		};
 		questions.push(askBumpType);
 		const answers = await inquirer.prompt(questions);
