@@ -4,7 +4,7 @@
  */
 
 import { assert } from "chai";
-import { getLegacyRangeForClient } from "../../library/release.js";
+import { getLegacyCompatRange } from "../../library/release.js";
 
 interface TestMatrix {
 	inputVersion: string;
@@ -116,8 +116,8 @@ describe("Legacy compatibility ranges", () => {
 	for (const { inputVersion, subCases } of testMatrix) {
 		for (const [interval, upperBound] of Object.entries(subCases)) {
 			const expected = `>=${inputVersion} <${upperBound}`;
-			it(`legacy compat: ${inputVersion} and compat version interval ${interval} yields ">=${inputVersion} <${upperBound}"`, () => {
-				const range = getLegacyRangeForClient(inputVersion, Number.parseInt(interval, 10));
+			it(`legacy compat: ${inputVersion} and compat version interval ${interval} yields ${expected}`, () => {
+				const range = getLegacyCompatRange(inputVersion, Number.parseInt(interval, 10));
 				assert.strictEqual(range, expected);
 			});
 		}

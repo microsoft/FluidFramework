@@ -42,7 +42,7 @@ export interface ReleaseDetails {
  *
  * @remarks
  *
- * "minor" and "caret" are equivalent, as are "patch" and "tilde." All four are included because both terms are commonly
+ * "minor" and "caret" are equivalent, as are "patch" and "tilde." All five are included because both terms are commonly
  * used by partners, and having both eases confusion.
  */
 export interface ReleaseRanges {
@@ -67,7 +67,9 @@ export interface ReleaseRanges {
 	tilde: string;
 
 	/**
-	 * A legacy compat range. It exists only for the "client" release group.
+	 * A legacy compatibility range that is configurable per release group.
+	 * This range extends beyond standard version ranges and lies between major and minor versions.
+	 * Exceeding this range indicates compatibility differences.
 	 */
 	legacyCompat: string;
 }
@@ -76,14 +78,15 @@ export interface ReleaseRanges {
  * Get the release ranges for a version string.
  *
  * @param version - The version.
- * @param interval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param legacyCompatInterval - The multiple of minor versions to use for calculating the next version in the range.
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.
  * @returns The {@link ReleaseRanges} for a version string
  */
 export const getRanges = (
 	version: ReleaseVersion,
-	interval: LegacyCompatInterval,
+	legacyCompatInterval: LegacyCompatInterval,
+	releaseGroup: ReleaseGroup | undefined,
 	scheme?: VersionScheme,
 ): ReleaseRanges => {
 	const schemeToUse = scheme ?? detectVersionScheme(version);
@@ -94,21 +97,31 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				legacyCompat: getLegacyCompatVersionRange(version, interval),
+				legacyCompat: getLegacyCompatVersionRange(
+					version,
+					legacyCompatInterval,
+					releaseGroup,
+					schemeToUse,
+				),
 			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-				legacyCompat: getLegacyCompatVersionRange(version, interval),
+				legacyCompat: getLegacyCompatVersionRange(
+					version,
+					legacyCompatInterval,
+					releaseGroup,
+					schemeToUse,
+				),
 			};
 };
 
 /**
- * An interface representing a mapping of package names to their corresponding version strings.
+ * An interface representing a mapping of package names to their corresponding version strings or ranges.
  */
-interface PackageRange {
+interface PackageVersion {
 	[packageName: string]: string;
 }
 
@@ -118,7 +131,7 @@ interface PackageRange {
  * "full" corresponds to the {@link ReleaseReport} interface. It contains a lot of package metadata indexed by package
  * name.
  *
- * The "caret", "tilde", and "legacy-compat" correspond to the {@link PackageRange} interface.
+ * The "caret", "tilde", and "legacy-compat" correspond to the {@link PackageVersion} interface.
  * Each of these compatibility classes contains a map of package names to their respective
  * equivalent version range strings:
  * "caret": caret-equivalent version ranges.
@@ -128,34 +141,16 @@ interface PackageRange {
 export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
 
 /**
- * Determines the appropriate legacy compatible range based on the release group.
- *
- * @param details - Full details about a release.
- * @returns - The version to use.
- * `legacyCompat` if the release group is "client".
- * `caret` for all other release groups.
- */
-function fixLegacyCompatVersions(details: ReleaseDetails): string {
-	if (details.releaseGroup !== "client") {
-		details.ranges.legacyCompat = details.ranges.caret;
-	}
-	return details.ranges.legacyCompat;
-}
-
-/**
  * Converts a {@link ReleaseReport} into different formats based on the kind.
  */
 export function toReportKind(
 	report: ReleaseReport,
 	kind: ReportKind,
-): ReleaseReport | PackageRange {
-	const toReturn: PackageRange = {};
+): ReleaseReport | PackageVersion {
+	const toReturn: PackageVersion = {};
 
 	switch (kind) {
 		case "full": {
-			for (const [, details] of Object.entries(report)) {
-				fixLegacyCompatVersions(details);
-			}
 			return report;
 		}
 
@@ -185,7 +180,7 @@ export function toReportKind(
 
 		case "legacy-compat": {
 			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = fixLegacyCompatVersions(details);
+				toReturn[pkg] = details.ranges.legacyCompat;
 			}
 			break;
 		}
@@ -203,38 +198,36 @@ export function toReportKind(
  *
  * @param version - A string representing the current version.
  * @param interval - The multiple of minor versions to use for calculating the next version in the range.
+ * @param releaseGroup - Release group
+ * @param schemeToUse - The version scheme.
  *
  * @returns A string representing the next version in the legacy compatibility range.
  */
 export function getLegacyCompatVersionRange(
 	version: string,
 	interval: LegacyCompatInterval,
+	releaseGroup: ReleaseGroup | undefined,
+	schemeToUse: VersionScheme,
 ): string {
-	const releaseGroup = Object.keys(interval.legacyCompatInterval);
-	const hasInvalidReleaseGroup = releaseGroup.some((key) => key !== "client");
-
-	if (hasInvalidReleaseGroup) {
-		throw new Error(
-			"Invalid release group passed: Legacy compatibility range exists only for **client** release group ",
-		);
+	for (const [group, intervalValue] of Object.entries(interval.legacyCompatInterval)) {
+		if (group === releaseGroup && intervalValue > 0) {
+			return getLegacyCompatRange(version, intervalValue);
+		}
 	}
 
-	if (interval.legacyCompatInterval.client === undefined) {
-		throw new Error(`Legacy compat interval not found for client release group`);
-	}
-
-	return getLegacyRangeForClient(version, interval.legacyCompatInterval.client);
+	// If legacy compat range is less than or equal to 0, return caret version.
+	return schemeToUse === "internal" ? getVersionRange(version, "^") : `^${version}`;
 }
 
 /**
- * Generates a new version representing the next version in a legacy compatibility range for "client" release group.
+ * Generates a new version representing the next version in a legacy compatibility range for any release group.
  *
  * @param version - A string representing the current version.
- * @param interval - The multiple of minor versions to use for calculating the next version in the range for "client" release group.
+ * @param interval - The multiple of minor versions to use for calculating the next version.
  *
- * @returns A string representing the next version in the legacy compatibility range for "client" release group.
+ * @returns A string representing the next version in the legacy compatibility range.
  */
-export function getLegacyRangeForClient(version: string, interval: number): string {
+export function getLegacyCompatRange(version: string, interval: number): string {
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");

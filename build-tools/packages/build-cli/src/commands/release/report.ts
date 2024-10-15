@@ -578,14 +578,17 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const scheme = detectVersionScheme(latestVer);
 
 			if (context.flubConfig.releaseReport === undefined) {
-				throw new Error(`Legacy compat interval not found in fluidBuild.config.cjs.`);
+				throw new Error(`legacy-compat release report not found.`);
 			}
-
-			const ranges = getRanges(latestVer, context.flubConfig.releaseReport);
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
+					const ranges = getRanges(
+						latestVer,
+						context.flubConfig.releaseReport,
+						pkg.monoRepo?.releaseGroup,
+					);
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
@@ -598,6 +601,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					};
 				}
 			} else {
+				const ranges = getRanges(latestVer, context.flubConfig.releaseReport, undefined);
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,
