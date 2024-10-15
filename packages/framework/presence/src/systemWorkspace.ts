@@ -60,7 +60,7 @@ export interface SystemWorkspace
 	onConnectionAdded(clientConnectionId: ClientConnectionId): void;
 
 	/**
-	 * Must be called when disconnect event is received for a client.
+	 * Removes the client connection id from the system workspace.
 	 *
 	 * @param clientConnectionId - The client connection id that was lost.
 	 */
