@@ -12,13 +12,13 @@ import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
+	type ILoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -30,7 +30,9 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	ISharedDirectory,
 	SharedDirectory,
@@ -99,7 +101,7 @@ type SharedObjCallback = (
 const getPendingOps = async (
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
-	send: boolean,
+	send: false | true | "afterReconnect",
 	cb: SharedObjCallback = () => undefined,
 ) => {
 	const container: IContainerExperimental =
@@ -118,9 +120,15 @@ const getPendingOps = async (
 	await cb(container, dataStore);
 
 	let pendingState: string | undefined;
-	if (send) {
+	if (send === true) {
 		pendingState = await container.getPendingLocalState?.();
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
+		container.close();
+	} else if (send === "afterReconnect") {
+		pendingState = await container.getPendingLocalState?.();
+		container.disconnect();
+		container.connect();
+		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
 		pendingState = await container.closeAndGetPendingLocalState?.();
@@ -363,21 +371,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const string = await d.getSharedObject<SharedString>(stringId);
 				const collection = string.getIntervalCollection(collectionId);
 				collection.add({ start: testStart, end: testEnd });
-				// [DEPRECATED]
-				// Submit a message with an unrecognized type
-				// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
-				(
-					d.context.containerRuntime as unknown as {
-						submit: (
-							containerRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-								Record<string, any>,
-						) => void;
-					}
-				).submit({
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" },
-				});
 			},
 		);
 
@@ -1606,14 +1599,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		ac.abort();
 		const pendingOps = await pendingOpsP;
 
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
+		// we are able to load from the pending ops even though we abort
+		await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 	});
 
 	it("close while uploading multiple blob", async function () {
@@ -2044,6 +2031,42 @@ describeCompat(
 		const { SharedCounter } = apis.dds;
 		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
 
+		function getIdCompressor(dds: IChannel): IIdCompressor {
+			return (dds as any).runtime.idCompressor as IIdCompressor;
+		}
+
+		/**
+		 * Load the container with the given pendingLocalState, and wait for it to close,
+		 * checking that it closed with the given error message (if possible).
+		 *
+		 * Note: There is a race condition for when the closure happens so we check a few ways the error could propagate.
+		 */
+		async function waitForExpectedContainerErrorOnLoad(
+			pendingLocalState: string,
+			expectedErrorMessage: string,
+		): Promise<boolean> {
+			try {
+				// We expect either loader.resolve to throw or else the container to close right after load
+				const container = await loader.resolve({ url }, pendingLocalState);
+
+				// This is to workaround a race condition in Container.load where the container might close between microtasks
+				// such that it resolves to the closed container rather than rejecting as it's supposed to.
+				if (container.closed) {
+					// We can't access the error that closed the container due to a gap in the API,
+					// so we must assume it is the expected error.
+					return true;
+				}
+
+				await timeoutPromise((_resolve, reject) => {
+					container.once("closed", reject);
+				});
+			} catch (error) {
+				return (error as Error).message === expectedErrorMessage;
+			}
+			// Unreachable (the timeoutPromise will throw)
+			return false;
+		}
+
 		// We disable summarization (so no summarizer container is loaded) due to challenges specifying the exact
 		// expected behavior of the summarizer container in these tests, in the presence of race conditions.
 		// We aren't testing anything about summmarization anyway, so no need for it.
@@ -2105,7 +2128,6 @@ describeCompat(
 				// Second container, attempted to load from pendingLocalState
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "generic", // We downgrade this log if the container was still loading (which is the case for this test)
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2114,27 +2136,23 @@ describeCompat(
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
 					provider,
-					true, // Do send ops from first container instance before closing
+					"afterReconnect", // Send ops after reconnecting, to ensure a different clientId
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
 
-				// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
-				// 1. first container - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
-				// 2. second container - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
-				//
-				// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
-				const obj = JSON.parse(pendingLocalState);
-				obj.clientId = "2356461c-85d2-4002-b699-5e8a0defa60b"; // Different GUID to simulate reconnect after getPendingLocalState
-				const pendingLocalStateAdjusted = JSON.stringify(obj);
-
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
 				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
-				await assert.rejects(
-					async () => loader.resolve({ url }, pendingLocalStateAdjusted),
-					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
+				const closedWithExpectedError = await waitForExpectedContainerErrorOnLoad(
+					pendingLocalState,
+					"Forked Container Error! Matching batchIds but mismatched clientId" /* expectedError */,
+				);
+				assert(
+					closedWithExpectedError,
 					"Container should have closed due to ForkedContainerError",
 				);
 
@@ -2171,6 +2189,8 @@ describeCompat(
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
@@ -2178,8 +2198,17 @@ describeCompat(
 				async function rehydrateConnectAndPause(loggingId: string) {
 					// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
 					// Container won't be connected yet, so no race here.
-					const container = await loader.resolve({ url }, pendingLocalState);
+					const container = await loader.resolve(
+						{
+							url,
+							headers: {
+								[LoaderHeader.loadMode]: { deltaConnection: "none" },
+							} satisfies Partial<ILoaderHeader>,
+						},
+						pendingLocalState,
+					);
 					await container.deltaManager.outbound.pause();
+					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
 					// This order matters - we need to process our inbound join op to finish connecting!
@@ -2260,7 +2289,6 @@ describeCompat(
 				// Container 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2272,6 +2300,8 @@ describeCompat(
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
@@ -2287,26 +2317,12 @@ describeCompat(
 
 				// Rehydrate the second time - when we are catching up, we'll recognize the incoming op (from container2),
 				// and since it's coming from a different clientID we'll realize the container is forked and we'll close
-				// NOTE: there is a race condition for when the closure happens so we check a few ways the error could propagate.
-				await assert.rejects(
-					async () => {
-						// We expect either loader.resolve to throw or else the container to close right after load
-						const container3 = await loader.resolve({ url }, pendingLocalState);
-
-						// This is to workaround a race condition in Container.load where the container might close between microtasks
-						// such that it resolves to the closed container rather than rejecting as it's supposed to.
-						if (container3.closed) {
-							// If the container is closed, assume it was due to the right error until the bug mentioned above is fixed
-							throw new Error(
-								"Forked Container Error! Matching batchIds but mismatched clientId",
-							);
-						}
-
-						await timeoutPromise((_resolve, reject) => {
-							container3.once("closed", reject);
-						});
-					},
-					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
+				const closedWithExpectedError = await waitForExpectedContainerErrorOnLoad(
+					pendingLocalState,
+					"Forked Container Error! Matching batchIds but mismatched clientId" /* expectedError */,
+				);
+				assert(
+					closedWithExpectedError,
 					"Container should have closed due to ForkedContainerError",
 				);
 

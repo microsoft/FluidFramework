@@ -7,6 +7,7 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	ITelemetryLoggerExt,
+	PerformanceEvent,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -41,7 +42,10 @@ export class DataStoreContexts
 	private readonly _logger: ITelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
-		this._logger = createChildLogger({ logger: baseLogger });
+		this._logger = createChildLogger({
+			namespace: "FluidDataStoreContexts",
+			logger: baseLogger,
+		});
 	}
 
 	[Symbol.iterator](): Iterator<[string, FluidDataStoreContext]> {

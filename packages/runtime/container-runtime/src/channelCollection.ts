@@ -69,6 +69,7 @@ import {
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
+	type IConfigProvider,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -119,6 +120,18 @@ type PendingAliasResolve = (success: boolean) => void;
 interface FluidDataStoreMessage {
 	content: any;
 	type: string;
+}
+
+function computeRuntimeHeaderData(
+	config: IConfigProvider,
+	data: Partial<RuntimeHeaderData>,
+): Required<RuntimeHeaderData> {
+	return {
+		wait: config.getBoolean("Fluid.ContainerRuntime.WaitHeaderDefault") ?? true,
+		viaHandle: false,
+		allowTombstone: false,
+		...data,
+	};
 }
 
 /**

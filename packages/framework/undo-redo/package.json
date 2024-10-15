@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/undo-redo",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"description": "Undo Redo",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -80,12 +80,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -103,12 +105,12 @@
 		"@fluidframework/sequence": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
+		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.47.0",
+		"@fluid-tools/build-cli": "^0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.47.0",
+		"@fluidframework/build-tools": "^0.49.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@~2.3.0",
