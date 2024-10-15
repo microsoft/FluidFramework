@@ -185,7 +185,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@~2.3.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@~2.4.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
@@ -227,26 +227,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAlias_MapNodeInsertableData": {
-				"backCompat": false
-			},
-			"Interface_InternalTypes_TreeNodeSchemaNonClass": {
-				"backCompat": false
-			},
-			"Interface_FieldSchemaUnsafe": {
-				"forwardCompat": false
-			},
-			"Interface_ITreeViewConfiguration": {
-				"forwardCompat": false
-			},
-			"TypeAlias_ImplicitFieldSchema": {
-				"forwardCompat": false
-			},
-			"TypeAlias_ImplicitAllowedTypes": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }
