@@ -1,3 +1,6 @@
+# TODO: can probably be removed once we move to pipeline-based deployment
+.env
+
 # Dependencies
 /node_modules
 
