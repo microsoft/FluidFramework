@@ -441,7 +441,7 @@ extends:
                             echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
                             echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
                             echo "Running code coverage comparison"
-                            npm run code-coverage-analysis:report
+                            flub report codeCoverage
 
 
                   # Process test result, include publishing and logging
