@@ -64,11 +64,6 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			env: "GITHUB_REPOSITORY_NAME",
 			required: true,
 		}),
-		// githubRepositoryOwner: Flags.string({
-		// 	description: "Github repository owner.",
-		// 	env: "GITHUB_REPOSITORY_OWNER",
-		// 	required: true,
-		// }),
 		targetBranchName: Flags.string({
 			description: "Target branch name.",
 			env: "TARGET_BRANCH_NAME",
