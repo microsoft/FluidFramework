@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/functional-tests",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"private": true,
 	"description": "Functional tests",
 	"homepage": "https://fluidframework.com",
@@ -41,12 +41,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
