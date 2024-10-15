@@ -13,7 +13,7 @@ Run comparison of code coverage stats
 USAGE
   $ flub report codeCoverage --adoBuildId <value> --adoApiToken <value> --githubApiToken <value>
     --adoCIBuildDefinitionIdBaseline <value> --adoCIBuildDefinitionIdPR <value> --githubPRNumber <value>
-    --githubRepositoryName <value> --githubRepositoryOwner <value> --targetBranchName <value> [-v | --quiet]
+    --githubRepositoryName <value> --targetBranchName <value> [-v | --quiet]
 
 FLAGS
   --adoApiToken=<value>                     (required) Token to get auth for accessing ADO builds.
@@ -23,7 +23,6 @@ FLAGS
   --githubApiToken=<value>                  (required) Token to get auth for accessing Github PR.
   --githubPRNumber=<value>                  (required) Github PR number.
   --githubRepositoryName=<value>            (required) Github repository name.
-  --githubRepositoryOwner=<value>           (required) Github repository owner.
   --targetBranchName=<value>                (required) Target branch name.
 
 LOGGING FLAGS

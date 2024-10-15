@@ -64,11 +64,11 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			env: "GITHUB_REPOSITORY_NAME",
 			required: true,
 		}),
-		githubRepositoryOwner: Flags.string({
-			description: "Github repository owner.",
-			env: "GITHUB_REPOSITORY_OWNER",
-			required: true,
-		}),
+		// githubRepositoryOwner: Flags.string({
+		// 	description: "Github repository owner.",
+		// 	env: "GITHUB_REPOSITORY_OWNER",
+		// 	required: true,
+		// }),
 		targetBranchName: Flags.string({
 			description: "Target branch name.",
 			env: "TARGET_BRANCH_NAME",
@@ -99,9 +99,10 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			buildId: flags.adoBuildId,
 		};
 
+		const repoInfo = flags.githubRepositoryName.split("/");
 		const githubProps: GitHubProps = {
-			owner: flags.githubRepositoryOwner,
-			repo: flags.githubRepositoryName,
+			owner: repoInfo[0],
+			repo: repoInfo[1],
 			token: flags.githubApiToken,
 		};
 

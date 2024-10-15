@@ -37,8 +37,8 @@
 				"ADO_CI_BUILD_DEFINITION_ID_BASELINE": "48",
 				"ADO_CI_BUILD_DEFINITION_ID_PR": "11",
 				"TARGET_BRANCH_NAME": "main",
-				"GITHUB_REPOSITORY_OWNER": "microsoft",
-				"GITHUB_REPOSITORY_NAME": "FluidFramework",
+				// "GITHUB_REPOSITORY_OWNER": "microsoft",
+				"GITHUB_REPOSITORY_NAME": "microsoft/FluidFramework",
 			},
 		},
 		{
