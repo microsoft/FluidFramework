@@ -1494,7 +1494,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			interval.propertyManager ??= new PropertiesManager();
 			// Let the propertyManager prune its pending change-properties set.
 			interval.propertyManager.ack({
-				props: serializedInterval.properties ?? {},
+				props: newProps,
 			});
 
 			this.ackInterval(interval, op);
@@ -1525,8 +1525,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			}
 			newInterval.propertyManager ??= new PropertiesManager();
 			const deltaProps = newInterval.propertyManager.handleProperties(
-				newInterval.properties,
-				newProps,
+				{ props: newProps },
+				newInterval,
 				op.sequenceNumber,
 				true,
 			);
