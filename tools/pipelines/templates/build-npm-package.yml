@@ -431,6 +431,7 @@ extends:
                           TARGET_BRANCH_NAME: '$(targetBranchName)'
                           ADO_BUILD_ID: $(Build.BuildId)
                           GITHUB_PR_NUMBER: $(System.PullRequest.PullRequestNumber)
+                          GITHUB_REPOSITORY_NAME: $(Build.Repository.Name)
                           ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
                           ADO_CI_BUILD_DEFINITION_ID_PR: 11
                         inputs:
@@ -438,11 +439,6 @@ extends:
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
                             set -eux -o pipefail
-                            REPO_NAME=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f2)
-                            REPO_OWNER=$(echo $BUILD_REPOSITORY_NAME | cut -d'/' -f1)
-                            export GITHUB_REPOSITORY_NAME=$REPO_NAME
-                            export GITHUB_REPOSITORY_OWNER=$REPO_OWNER
-                            echo "Github Repository Owner: $GITHUB_REPOSITORY_OWNER"
                             echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
                             echo "Github PR number: $GITHUB_PR_NUMBER"
                             echo "ADO Build Number: $ADO_BUILD_ID"
