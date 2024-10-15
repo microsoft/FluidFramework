@@ -58,6 +58,13 @@ export interface SystemWorkspace
 	 * @param clientConnectionId - The new client connection id.
 	 */
 	onConnectionAdded(clientConnectionId: ClientConnectionId): void;
+
+	/**
+	 * Must be called when disconnect event is received for a client.
+	 *
+	 * @param clientConnectionId - The client connection id that was lost.
+	 */
+	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
 }
 
 class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
@@ -74,7 +81,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	public constructor(
 		clientSessionId: ClientSessionId,
 		private readonly datastore: SystemWorkspaceDatastore,
-		public readonly events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+		public readonly events: IEmitter<
+			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
+		>,
 	) {
 		this.selfAttendee = {
 			sessionId: clientSessionId,
@@ -141,6 +150,16 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 		this.selfAttendee.currentConnectionId = () => clientConnectionId;
 		this.attendees.set(clientConnectionId, this.selfAttendee);
+	}
+
+	public removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
+		// TODO: Remove clientConnectionId from datastore?
+		// TODO: Remove clientSessionId from attendees map if no other clientConnectionId is present.
+		const attendee = this.attendees.get(clientConnectionId);
+		if (attendee) {
+			this.attendees.delete(clientConnectionId);
+			this.events.emit("attendeeDisconnected", attendee);
+		}
 	}
 
 	public getAttendees(): ReadonlySet<ISessionClient> {

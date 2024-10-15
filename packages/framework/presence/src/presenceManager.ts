@@ -45,9 +45,23 @@ export type PresenceExtensionInterface = Required<
 >;
 
 /**
+ *	Mangement of client connection ids.
+ */
+export interface ClientConnectionManager {
+	/**
+	 * Remove client connection id from the system workspace.
+	 *
+	 * @param clientConnectionId - The client connection id to be removed.
+	 */
+	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
+}
+
+/**
  * The Presence manager
  */
-class PresenceManager implements IPresence, PresenceExtensionInterface {
+class PresenceManager
+	implements IPresence, PresenceExtensionInterface, ClientConnectionManager
+{
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
@@ -86,6 +100,10 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 	private onConnect(clientConnectionId: ClientConnectionId): void {
 		this.systemWorkspace.onConnectionAdded(clientConnectionId);
 		this.datastoreManager.joinSession(clientConnectionId);
+	}
+
+	public removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
+		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
 
 	public getAttendees(): ReadonlySet<ISessionClient> {
@@ -169,6 +187,6 @@ function setupSubComponents(
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
 	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
-): IPresence & PresenceExtensionInterface {
+): IPresence & PresenceExtensionInterface & ClientConnectionManager {
 	return new PresenceManager(runtime, clientSessionId);
 }
