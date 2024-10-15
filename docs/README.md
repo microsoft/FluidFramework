@@ -227,6 +227,9 @@ The replacement syntax to use in `.mdx` files would be:
 
 -   Fix links on Community page
     -   Icons are not currently links, while they are on the old site. Should be an easy fix.
+-   Restore link check scripts (restore related infra from main branch - it should be able to work the same as it did before)
+    -   Docusaurus validates links between the pages it serves, but it won't validate links to external URLs, nor to static contents.
+        So we still want this validation.
 -   Preserve existing redirects that are still needed
     -   `docs/apis` => `docs/api`
     -   TODO: what else?
