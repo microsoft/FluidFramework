@@ -4,3 +4,5 @@ summary: "An open-source client technology stack that enables real-time collabor
 ---
 
 Imagine there was a fancy landing page here. Coming soon 😉
+
+For now, try clicking `Docs` above to view our documentation.
