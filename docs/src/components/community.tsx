@@ -5,10 +5,13 @@
 
 import clsx from "clsx";
 
+import Link from "@docusaurus/Link";
 import Heading from '@theme/Heading';
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 
 import '@site/src/css/community.css';
+
+// TODO: it probably makes more sense to inline this stuff into `Community.mdx`
 
 type CommunityLinkItem = {
 	title: string;
@@ -70,10 +73,10 @@ function CommunityLink({title, Icon, description, linkUrl: href}: CommunityLinkI
 	return (
 		<div className={clsx('col col--4')}>
 			<div className="text--center">
-				<Icon className={"community-link-icon"} role="img" />
+				<Icon className={"community-link-icon"} role="img"/>
 			</div>
 			<div className="text--center padding-horiz--md">
-				<Heading as="h3">{title}</Heading>
+				<Heading as="h3"><Link  href={href}>{title}</Link></Heading>
 				<p>{description}</p>
 			</div>
 		</div>
