@@ -1,7 +1,10 @@
+
 .container {
-	width: 100%;
-	display: flex;
-	flex-direction: row;
+	width: 100vw;
+  	margin-left: calc(-50vw + 50%);
+  	max-width: 100vw;
+	padding:0;
+	margin: 0;
 }
 .bgImage {
 	width: 100%;
