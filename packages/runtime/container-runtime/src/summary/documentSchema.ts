@@ -489,7 +489,7 @@ export class DocumentsSchemaController {
 		// Latter is importnat sure that's what will go into summary.
 		this.documentSchema = !existing
 			? this.desiredSchema
-			: (documentMetadataSchema as IDocumentSchemaCurrent) ??
+			: ((documentMetadataSchema as IDocumentSchemaCurrent) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -499,7 +499,7 @@ export class DocumentsSchemaController {
 					runtime: {
 						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 					},
-				} satisfies IDocumentSchemaCurrent);
+				} satisfies IDocumentSchemaCurrent));
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
 		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
