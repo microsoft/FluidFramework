@@ -33,7 +33,7 @@
 	"devDependencies": {
 		"@azure/identity": "^4.4.1",
 		"@azure/msal-browser": "^3.25.0",
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@emotion/react": "^11.13.3",
 		"@emotion/styled": "^11.13.0",
 		"@fluid-experimental/ai-collab": "workspace:~",
