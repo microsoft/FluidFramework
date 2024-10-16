@@ -41,7 +41,7 @@
 		{
 			"name": "fluid-build",
 			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
-			"cwd": "/home/tylerbu/code/TypeAgent/ts",
+			"cwd": "${workspaceFolder}/packages/common/container-definitions",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
