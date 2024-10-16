@@ -9,7 +9,8 @@ import BGImage from '@site/static/images/titleImage.png';
 
 export function TitleSection(): React.ReactElement {
   return (
-    <div className="container" >
+    <div className="rootContainer">
+    <div className="titleSectionContainer" >
 
         <img
           src={BGImage}
@@ -24,6 +25,7 @@ export function TitleSection(): React.ReactElement {
         </span>
       </div>
 
+    </div>
     </div>
   )
 }

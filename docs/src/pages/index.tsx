@@ -14,9 +14,7 @@ export default function(): React.ReactElement {
 		<Layout
 			title={`Hello from ${siteConfig.title}`}
 			description="Description will go into a meta tag in <head />">
-			<main>
-				<TitleSection />
-			</main>
+			<TitleSection />
 	  </Layout>
 	)
 }

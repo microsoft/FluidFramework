@@ -1,5 +1,8 @@
 
-.container {
+.rootContainer {
+	height: 100%;
+}
+.titleSectionContainer {
 	padding:0;
 	margin: 0;
 	max-width: 100%;
@@ -41,16 +44,56 @@
 	font-family: 'Segoe UI';
 	font-weight: 400;
 }
-@media (min-width: 2560px) {
+
+@media (max-width: 767px) {
+	.titleSectionContainer {
+		height: 20vh;
+	}
 	.title {
-	  font-size: 2.5vw; /* Slightly smaller font size for larger screens */
+		font-size: 5vw; /* Adapt for mobile phones */
 	}
 
 	.description {
-	  font-size: 0.8vw;
+		font-size: 2.68vw;
 	}
 	.titleBox{
-		max-width:850px;
+		left:0;
+		width: 80%;
+		text-align: center;
+		margin: 0 10% 0 10%;
+		top: 10%;
+	}
+}
+
+@media (min-width: 768px) {
+	.title {
+		font-size: 5vw; /* Even larger font for tablet-sized screens */
+	}
+
+	.description {
+		font-size: 1.8vw;
+	}
+	.titleSectionContainer {
+		height: 22vh;
+	}
+	.titleBox{
+		top:10%;
+	}
+}
+
+@media (min-width: 1024px) {
+	.title {
+		font-size: 3.35vw; /* Larger font for smaller screens */
+	}
+
+	.description {
+		font-size: 1.39vw;
+	}
+	.titleSectionContainer {
+		height: 28vh;
+	}
+	.titleBox{
+		top:12%;
 	}
 }
 
@@ -62,71 +105,20 @@
 	.description {
 	  font-size: 1.3vw;
 	}
-	.container {
+	.titleSectionContainer {
 		height: 36vh;
 	}
 }
 
-@media (max-width: 1024px) {
+@media (min-width: 2560px) {
 	.title {
-		font-size: 3.35vw; /* Larger font for smaller screens */
+	  font-size: 2.5vw; /* Slightly smaller font size for larger screens */
 	}
 
 	.description {
-		font-size: 1.39vw;
-	}
-	.container {
-		height: 28vh;
+	  font-size: 0.8vw;
 	}
 	.titleBox{
-		top:12%;
+		max-width:850px;
 	}
-}
-
-@media (max-width: 768px) {
-	.title {
-		font-size: 5vw; /* Even larger font for tablet-sized screens */
-	}
-
-	.description {
-		font-size: 1.8vw;
-	}
-	.container {
-		height: 22vh;
-	}
-	.titleBox{
-		top:10%;
-	}
-}
-
-@media (max-width: 425px) {
-	.container {
-		height: 20vh;
-	}
-	.title {
-		font-size: 8vw; /* Adapt for mobile phones */
-	}
-
-	.description {
-		font-size: 2.68vw;
-	}
-	.titleBox{
-		left:0;
-		width: 80%;
-		text-align: center;
-		margin: 0 10% 0 10%;
-	}
-}
-@media (max-width: 360px) {
-	.titleBox {
-		left: 0;
-        width: 90%;
-        text-align: center;
-        margin: 0 5% 0 5%;
-        top: 9%;
-	}
-	.description {
-		font-size: 3vw;
-	}
-
 }
