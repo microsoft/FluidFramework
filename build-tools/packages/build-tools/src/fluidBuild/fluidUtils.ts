@@ -155,7 +155,7 @@ let defaultConfigLoaded = false;
  *
  * @param rootDir - The path to the root package.json to load.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
- * @returns The fluidBuild section of the package.json, or undefined if not found
+ * @returns The the loaded fluidBuild config, or the default config if one is not found.
  */
 export function getFluidBuildConfig(
 	rootDir: string,
