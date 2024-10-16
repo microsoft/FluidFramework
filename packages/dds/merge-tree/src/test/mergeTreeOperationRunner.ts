@@ -78,7 +78,7 @@ export const annotateRange: TestOperation = (
 			[random.integer(1, 5)]: client.longClientId,
 		});
 	} else {
-		return client.adjustRangeLocal(opStart, opEnd, {
+		return client.annotateAdjustRangeLocal(opStart, opEnd, {
 			[random.integer(0, 2).toString()]: {
 				value: random.integer(-5, 5),
 				min: random.pick([undefined, random.integer(-100, 10)]),

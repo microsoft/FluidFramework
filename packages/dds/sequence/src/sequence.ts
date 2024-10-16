@@ -46,7 +46,9 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
+	type AdjustParams,
 	type InteriorSequencePlace,
+	type MapLike,
 } from "@fluidframework/merge-tree/internal";
 import {
 	ISummaryTreeWithStats,
@@ -299,6 +301,16 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 *
 	 */
 	annotateRange(start: number, end: number, props: PropertySet): void;
+
+	/**
+	 * Annotates the range with the provided properties
+	 *
+	 * @param start - The inclusive start position of the range to annotate
+	 * @param end - The exclusive end position of the range to annotate
+	 * @param adjust - The properties to annotate the range with
+	 *
+	 */
+	annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
 
 	/**
 	 * @param start - The inclusive start of the range to remove
@@ -602,6 +614,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	public annotateRange(start: number, end: number, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
+	}
+
+	public annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void {
+		this.guardReentrancy(() => this.client.annotateAdjustRangeLocal(start, end, adjust));
 	}
 
 	public getPropertiesAtPosition(pos: number): PropertySet | undefined {

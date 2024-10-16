@@ -17,7 +17,7 @@ import {
 	MergeTreeDeltaType,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import { PropertySet, type MapLike } from "./properties.js";
 import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
@@ -79,7 +79,7 @@ export function createAnnotateRangeOp(
 export function createAdjustRangeOp(
 	start: number,
 	end: number,
-	adjust: Record<string, AdjustParams>,
+	adjust: MapLike<AdjustParams>,
 ): IMergeTreeAnnotateMsg {
 	return {
 		pos1: start,

@@ -241,7 +241,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	/**
 	 * adjusts a value
 	 */
-	public adjustRangeLocal(
+	public annotateAdjustRangeLocal(
 		start: number,
 		end: number,
 		adjust: MapLike<AdjustParams>,
