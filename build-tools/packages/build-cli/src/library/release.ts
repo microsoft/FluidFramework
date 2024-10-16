@@ -98,7 +98,7 @@ export const getRanges = (
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-				// legactCompat is not currently supported for internal schema. Fallback to major compatibility range.
+				// legacyCompat is not currently supported for internal schema. Fallback to major compatibility range.
 				legacyCompat: getVersionRange(version, "^"),
 			}
 		: {
