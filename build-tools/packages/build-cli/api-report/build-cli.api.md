@@ -32,6 +32,7 @@ export interface FlubConfig {
     bump?: BumpConfig;
     policy?: PolicyConfig;
     releaseNotes?: ReleaseNotesConfig;
+    releaseReport?: ReleaseReportConfig;
     version?: 1;
 }
 
@@ -107,6 +108,11 @@ export type ReleaseNotesSectionName = string;
 
 // @internal
 export type ReleasePackage = string;
+
+// @public
+export interface ReleaseReportConfig {
+    legacyCompatInterval: Record<ReleaseGroup | string, number>;
+}
 
 export { run }
 

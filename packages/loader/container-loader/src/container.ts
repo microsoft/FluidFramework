@@ -394,7 +394,7 @@ export class Container
 					// to return container, so ignore this value and use undefined for opsBeforeReturn
 					const mode: IContainerLoadMode = pendingLocalState
 						? { ...(loadMode ?? defaultMode), opsBeforeReturn: undefined }
-						: loadMode ?? defaultMode;
+						: (loadMode ?? defaultMode);
 
 					const onClosed = (err?: ICriticalContainerError): void => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -1719,7 +1719,7 @@ export class Container
 			codeDetails,
 			baseSnapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
-			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
+			pendingLocalState ? (pendingLocalState?.pendingRuntimeState ?? {}) : undefined,
 			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 

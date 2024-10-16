@@ -97,7 +97,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	});
 
 	const items: JsonFieldSchema =
-		allowedTypes.length === 1 ? allowedTypes[0] ?? oob() : { anyOf: allowedTypes };
+		allowedTypes.length === 1 ? (allowedTypes[0] ?? oob()) : { anyOf: allowedTypes };
 
 	return {
 		type: "array",
@@ -144,7 +144,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 
 		const output: Mutable<JsonFieldSchema> =
 			allowedTypes.length === 1
-				? allowedTypes[0] ?? oob()
+				? (allowedTypes[0] ?? oob())
 				: {
 						anyOf: allowedTypes,
 					};
@@ -180,7 +180,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		patternProperties: {
 			"^.*$":
 				allowedTypes.length === 1
-					? allowedTypes[0] ?? oob()
+					? (allowedTypes[0] ?? oob())
 					: {
 							anyOf: allowedTypes,
 						},
