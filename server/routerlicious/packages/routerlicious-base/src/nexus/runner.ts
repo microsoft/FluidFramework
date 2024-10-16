@@ -32,7 +32,7 @@ import {
 	ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import * as app from "./app";
-import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { runnerHttpServerStop, type StartupCheck } from "@fluidframework/server-services-shared";
 
 export class NexusRunner implements IRunner {
 	private server: IWebServer;
@@ -53,6 +53,7 @@ export class NexusRunner implements IRunner {
 		private readonly storage: IDocumentStorage,
 		private readonly clientManager: IClientManager,
 		private readonly metricClientConfig: any,
+		private readonly startupCheck: StartupCheck,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -70,7 +71,7 @@ export class NexusRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		// Create an HTTP server with a request listener for health endpoints.
-		const nexus = app.create(this.config, this.readinessCheck);
+		const nexus = app.create(this.config, this.startupCheck, this.readinessCheck);
 		nexus.set("port", this.port);
 		this.server = this.serverFactory.create(nexus);
 
@@ -141,6 +142,7 @@ export class NexusRunner implements IRunner {
 
 		this.stopped = false;
 
+		this.startupCheck.setReady();
 		return this.runningDeferred.promise;
 	}
 
