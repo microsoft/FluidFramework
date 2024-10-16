@@ -24,6 +24,7 @@ const versionsConfig: {[versionName: string]: VersionOptions} = {
 		label: DocsVersions.currentVersion.label,
 		badge: false,
 		banner: "none",
+		noIndex: false,
 	},
 }
 
@@ -33,6 +34,7 @@ for (const version of DocsVersions.otherVersions) {
 		path: version.path,
 		badge: true,
 		banner: "unmaintained",
+		noIndex: false,
 	}
 }
 
@@ -43,6 +45,7 @@ if (GeneratedApiVersions.apiDocsVersions.includes("local")) {
 		path: DocsVersions.local.path,
 		badge: true,
 		banner: "unreleased",
+		noIndex: false,
 	}
 }
 
