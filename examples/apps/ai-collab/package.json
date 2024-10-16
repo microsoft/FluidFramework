@@ -43,7 +43,6 @@
 		"@fluidframework/build-tools": "^0.49.0",
 		"@fluidframework/devtools": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
@@ -70,6 +69,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }
