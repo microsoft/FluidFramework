@@ -28,46 +28,11 @@ function Footer(): JSX.Element {
 		<footer
 			className={clsx("footer", {
 				"footer--dark": true,
-			})}
-		>
-			<div className="footer-social">
-				<LinkItem targetUrl={xUrl} ariaLabel="Fluid Framework on X (Twitter).">
-					<XIcon /> @fluidframework
-				</LinkItem>
-				<LinkItem targetUrl={githubRepoUrl} ariaLabel="Fluid Framework on GitHub.">
-					<GitHubIcon /> fluid-framework
-				</LinkItem>
-				<LinkItem targetUrl={githubDiscussionsUrl} ariaLabel='Ask questions on GitHub.'>
-					💬 Ask questions
-				</LinkItem>
-				<LinkItem targetUrl={githubReportIssuesUrl} ariaLabel='Report issues on GitHub.'>
-					🐛 Report issues
-				</LinkItem>
-			</div>
-			<div className="footer-copyright">
-				<FooterLogo
-					src="https://storage.fluidframework.com/static/images/microsoft-logo.png"
-					href="https://www.microsoft.com/"
-					width={200}
-					alt="Microsoft Logo"
-				/>
-				<div className="footer__copyright">
-					{`Copyright © ${new Date().getFullYear()} Microsoft`}
-				</div>
-			</div>
-			<div className="footer-privacy">
-				<LinkItem targetUrl="https://privacy.microsoft.com/privacystatement">Privacy</LinkItem>
-				<LinkItem targetUrl="https://go.microsoft.com/fwlink/?linkid=2259814">
-					Consumer Health Privacy
-				</LinkItem>
-				<LinkItem targetUrl="https://www.microsoft.com/legal/terms-of-use">
-					Terms of Use
-				</LinkItem>
-				<LinkItem targetUrl="https://github.com/microsoft/FluidFramework/blob/main/LICENSE">
-					License
-				</LinkItem>
-			</div>
-		</footer>
+			})}>
+				<FooterSocialLinks />
+				<FooterCopyright />
+				<FooterPrivacyLinks />
+			</footer>
 	);
 }
 
@@ -82,6 +47,60 @@ function LinkItem({ ariaLabel, children, targetUrl }: LinkItemProps): JSX.Elemen
 		<Link className="footer__link-item" to={targetUrl} aria-label={ariaLabel}>
 			{children}
 		</Link>
+	);
+}
+
+function FooterSocialLinks(): JSX.Element {
+	return (
+		<div className="footer-social">
+			<LinkItem targetUrl={xUrl} ariaLabel="Fluid Framework on X (Twitter).">
+				<XIcon /> @fluidframework
+			</LinkItem>
+			<LinkItem targetUrl={githubRepoUrl} ariaLabel="Fluid Framework on GitHub.">
+				<GitHubIcon /> fluid-framework
+			</LinkItem>
+			<LinkItem targetUrl={githubDiscussionsUrl} ariaLabel='Ask questions on GitHub.'>
+				💬 Ask questions
+			</LinkItem>
+			<LinkItem targetUrl={githubReportIssuesUrl} ariaLabel='Report issues on GitHub.'>
+				🐛 Report issues
+			</LinkItem>
+		</div>
+	);
+}
+
+function FooterPrivacyLinks(): JSX.Element {
+	return (
+		<div className="footer-privacy">
+			<LinkItem targetUrl="https://privacy.microsoft.com/privacystatement">
+				Privacy
+			</LinkItem>
+			<LinkItem targetUrl="https://go.microsoft.com/fwlink/?linkid=2259814">
+				Consumer Health Privacy
+			</LinkItem>
+			<LinkItem targetUrl="https://www.microsoft.com/legal/terms-of-use">
+				Terms of Use
+			</LinkItem>
+			<LinkItem targetUrl="https://github.com/microsoft/FluidFramework/blob/main/LICENSE">
+				License
+			</LinkItem>
+		</div>
+	);
+}
+
+function FooterCopyright(): JSX.Element {
+	return (
+		<div className="footer-copyright">
+			<FooterLogo
+				src="https://storage.fluidframework.com/static/images/microsoft-logo.png"
+				href="https://www.microsoft.com/"
+				width={200}
+				alt="Microsoft Logo"
+			/>
+			<div className="footer__copyright">
+				{`Copyright © ${new Date().getFullYear()} Microsoft`}
+			</div>
+		</div>
 	);
 }
 
