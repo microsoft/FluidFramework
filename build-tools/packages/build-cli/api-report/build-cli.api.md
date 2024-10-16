@@ -40,11 +40,6 @@ export interface FlubConfig {
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
 // @public
-export interface ReleaseReportConfig {
-    legacyCompatInterval: Record<ReleaseGroup | string, number>;
-}
-
-// @public
 export interface PackageNamePolicyConfig {
     allowedScopes?: string[];
     mayPublish: {
@@ -113,6 +108,11 @@ export type ReleaseNotesSectionName = string;
 
 // @internal
 export type ReleasePackage = string;
+
+// @public
+export interface ReleaseReportConfig {
+    legacyCompatInterval: Record<ReleaseGroup | string, number>;
+}
 
 export { run }
 
