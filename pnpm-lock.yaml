@@ -393,9 +393,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../packages/framework/fluid-static
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/odsp-client
