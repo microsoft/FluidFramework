@@ -45,6 +45,48 @@ export function isTreeNodeSchemaClass<
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
+ * Additional information to provide to a Node Schema.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @public
+ */
+export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
+	/**
+	 * Optional metadata to associate with the Node Schema.
+	 * @remarks Note: this metadata is not persisted in the document.
+	 */
+	readonly metadata?: NodeSchemaMetadata<TCustomMetadata>;
+}
+
+/**
+ * Metadata associated with a Node Schema.
+ *
+ * @remarks Specified via {@link NodeSchemaOptions.metadata}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
+	/**
+	 * User-defined metadata.
+	 */
+	readonly custom?: TCustomMetadata;
+
+	/**
+	 * The description of the Node Schema.
+	 *
+	 * @remarks
+	 *
+	 * If provided, will be used by the system in scenarios where a description of the field is useful.
+	 * E.g., when converting a Node Schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * used as the `description` property.
+	 */
+	readonly description?: string | undefined;
+}
+
+/**
  * Kind of a field on a node.
  * @remarks
  * More kinds may be added over time, so do not assume this is an exhaustive set.
@@ -99,7 +141,7 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
  *
  * @public
  */
-export interface FieldProps<TCustomMetadata = unknown> {
+export interface FieldProps<out TCustomMetadata = unknown> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -213,7 +255,7 @@ export function getDefaultProvider(input: FieldProvider): DefaultProvider {
  * @sealed
  * @public
  */
-export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
+export interface FieldSchemaMetadata<out TCustomMetadata = unknown> {
 	/**
 	 * User-defined metadata.
 	 */

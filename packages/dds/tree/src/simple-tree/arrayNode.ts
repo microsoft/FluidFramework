@@ -18,6 +18,8 @@ import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
+	type NodeSchemaOptions,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -1045,11 +1047,13 @@ export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
+	props?: NodeSchemaOptions<TCustomMetadata>,
 ) {
 	type Output = TreeNodeSchemaBoth<
 		TName,
@@ -1057,7 +1061,8 @@ export function arraySchema<
 		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		TCustomMetadata
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
@@ -1139,6 +1144,8 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			props?.metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
