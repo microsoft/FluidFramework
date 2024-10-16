@@ -37,7 +37,7 @@ export function isTreeArrayNode(obj: unknown): obj is TreeArrayNode {
  * @alpha
  */
 export function sharedTreeTraverse<T = unknown>(
-	jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[],
+	jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown>,
 	path: ObjectPath,
 ): T | undefined {
 	let current: unknown = jsonObject;

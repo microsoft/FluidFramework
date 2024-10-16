@@ -353,8 +353,10 @@ export function getBranch(tree: ITree): TreeBranch;
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  */
-export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
-export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): TreeBranch {
+export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): TreeBranch;
+export function getBranch<T extends ImplicitFieldSchema>(
+	treeOrView: ITree | TreeView<T>,
+): TreeBranch {
 	assert(
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
 		0xa48 /* Unsupported implementation */,
