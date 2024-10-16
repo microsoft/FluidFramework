@@ -5,7 +5,7 @@
 
 import React from "react";
 import "@site/src/css/TitleSection.css";
-import BGImage from '@site/static/images/titleImage.png';
+import BGImage from '@site/static/images/home-banner.png';
 
 export function TitleSection(): React.ReactElement {
   return (
