@@ -4,8 +4,8 @@
  */
 
 import React from "react";
-import "@site/src/css/TitleSection.css";
-import BGImage from '@site/static/images/home-banner.png';
+import "@site/src/css/titleSection.css";
+import BGImage from '@site/static/assets/home-banner.png';
 
 export function TitleSection(): React.ReactElement {
   return (
