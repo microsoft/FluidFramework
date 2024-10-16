@@ -52,8 +52,7 @@ import {
 	type GUIDNodeValue,
 } from "./operationTypes.js";
 
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
+import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
@@ -190,7 +189,7 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
  */
 export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	const parentNode = fieldEdit.parentNodePath
-		? navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root
+		? (navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root)
 		: tree.root;
 
 	if (!Tree.is(parentNode, tree.currentSchema)) {

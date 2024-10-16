@@ -16,10 +16,9 @@ import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
-	IErrorBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { ISignalEnvelope, type IErrorBase } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -65,6 +64,7 @@ import {
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
+	getSingleUseLegacyLogCallback,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -925,6 +925,7 @@ describe("Runtime", () => {
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
 				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 1);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
 					"generate telemetry event and throw an error that closes the container",
@@ -958,6 +959,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} / 2 connection state changes, with pending state, should ` +
 					"generate telemetry event but not throw an error that closes the container",
@@ -982,6 +984,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, with ` +
 					"feature disabled, should not generate telemetry event nor throw an error that closes the container",
@@ -1004,6 +1007,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with no pending state, should ` +
 					"not generate telemetry event nor throw an error that closes the container",
@@ -1025,6 +1029,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing local op, should not generate telemetry event nor throw an error that closes the container",
@@ -1060,6 +1065,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",
@@ -1220,39 +1226,11 @@ describe("Runtime", () => {
 				);
 
 				// Connect, which will trigger resubmit
-				changeConnectionState(patchedContainerRuntime, true, mockClientId);
-
-				assert.strictEqual(
-					submittedOps.length,
-					3,
-					"Only 3 messages should be sent - Do not resubmit the future/unknown op",
+				assert.throws(
+					() => changeConnectionState(patchedContainerRuntime, true, mockClientId),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type and 'Ignore' compat behavior should fail to resubmit",
 				);
-			});
-
-			it("Op with unrecognized type and no compat behavior causes resubmit to throw", async () => {
-				const patchedContainerRuntime = patchContainerRuntime();
-
-				changeConnectionState(patchedContainerRuntime, false, mockClientId);
-
-				patchedContainerRuntime.submit({
-					type: "FUTURE_TYPE" as any,
-					contents: "3",
-					// No compatDetails so it will throw on resubmit.
-				});
-
-				assert.strictEqual(
-					submittedOps.length,
-					0,
-					"no messages should be sent while disconnected",
-				);
-
-				// Note: hitting this error case in practice would require a new op type to be deployed,
-				// one such op to be stashed, then a new session loads on older code that is unaware
-				// of the new op type.
-				assert.throws(() => {
-					// Connect, which will trigger resubmit
-					changeConnectionState(patchedContainerRuntime, true, mockClientId);
-				}, "Expected resubmit to throw");
 			});
 
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
@@ -1273,32 +1251,11 @@ describe("Runtime", () => {
 					clientId: "someClientId",
 					minimumSequenceNumber: 0,
 				};
-				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
-			});
-
-			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-					Record<string, unknown> = {
-					type: "FROM THE FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "FailToProcess" },
-				};
-
-				const packedOp: Omit<
-					ISequencedDocumentMessage,
-					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
-				> = {
-					type: MessageType.Operation,
-					contents: JSON.stringify(futureRuntimeMessage),
-					sequenceNumber: 123,
-					clientId: "someClientId",
-					minimumSequenceNumber: 0,
-				};
 				assert.throws(
 					() =>
 						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
 					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
+					"Ops with unrecognized type and 'Ignore' compat behavior should fail to process",
 				);
 			});
 
@@ -2600,40 +2557,25 @@ describe("Runtime", () => {
 
 		it("Only log legacy codepath once", async () => {
 			const mockLogger = new MockLogger();
-			const containerRuntime = await ContainerRuntime.loadRuntime({
-				context: getMockContext({ logger: mockLogger }) as IContainerContext,
-				registryEntries: [],
-				existing: false,
-				provideEntryPoint: mockProvideEntryPoint,
-			});
-			mockLogger.clear();
 
-			const json = JSON.stringify({ hello: "world" });
-			const messageBase = { contents: json, clientId: "CLIENT_ID" };
-
-			// This message won't trigger the legacy op log
-			containerRuntime.process(
-				{
-					...messageBase,
-					contents: {},
-					sequenceNumber: 1,
-				} as unknown as ISequencedDocumentMessage,
-				false /* local */,
+			let legacyLogger = getSingleUseLegacyLogCallback(
+				createChildLogger({ logger: mockLogger }),
+				"someType",
 			);
 			assert.equal(mockLogger.events.length, 0, "Expected no event logged");
 
-			// This message should trigger the legacy op log
-			containerRuntime.process(
-				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
-				false /* local */,
+			legacyLogger = getSingleUseLegacyLogCallback(
+				createChildLogger({ logger: mockLogger }),
+				"someType",
 			);
+			legacyLogger("codePath1");
 			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
 
-			// This message would trigger the legacy op log, except we already logged once
-			containerRuntime.process(
-				{ ...messageBase, sequenceNumber: 3 } as unknown as ISequencedDocumentMessage,
-				false /* local */,
+			legacyLogger = getSingleUseLegacyLogCallback(
+				createChildLogger({ logger: mockLogger }),
+				"someType",
 			);
+			legacyLogger("codePath2");
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 
