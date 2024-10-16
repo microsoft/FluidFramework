@@ -8,9 +8,7 @@ import { expect } from "chai";
 import { describe, it } from "mocha";
 
 import { FluidReleaseMachine } from "../../machines/index.js";
-import { initializeCommandTestFunction } from "../init.js";
 
-const test = initializeCommandTestFunction(import.meta.url);
 const knownUnhandledStates: Set<string> = new Set([
 	// Known unhandled states can be added here temporarily during development.
 ]);

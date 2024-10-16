@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { test as oclifTest } from "@oclif/test";
-
 /**
  * Initializes the oclif command test environment. \@oclif/test cannot find the path to the project in some
  * circumstances, so as a workaround we configure it explicitly by passing in the URL to the test module itself.
@@ -14,9 +12,11 @@ import { test as oclifTest } from "@oclif/test";
  *
  * @returns A test function that can be used to test oclif commands.
  */
-export function initializeCommandTestFunction(
-	moduleUrl: string,
-): ReturnType<typeof oclifTest.loadConfig> {
-	// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
-	return oclifTest.loadConfig({ root: moduleUrl });
-}
+// export function initializeCommandTestFunction(
+// 	moduleUrl: string,
+// ): ReturnType<typeof oclifTest.loadConfig> {
+// 	// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
+// 	return oclifTest.loadConfig({ root: moduleUrl });
+// }
+
+export const foo = 1;

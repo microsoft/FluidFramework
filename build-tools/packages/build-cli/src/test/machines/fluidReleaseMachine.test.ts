@@ -138,6 +138,7 @@ describe("FluidReleaseMachine", () => {
 
 			if (!state.startsWith("Do") || requiresBothActions.has(state)) {
 				it(state, () => {
+					// eslint-disable-next-line unicorn/no-array-for-each
 					["failure", "success"].forEach((item) => expect(exits).to.be.containing(item));
 				});
 			} else {

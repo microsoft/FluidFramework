@@ -5,7 +5,7 @@
 
 import { Package } from "@fluidframework/build-tools";
 import { runCommand } from "@oclif/test";
-import chai, { expect } from "chai";
+import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 
@@ -16,12 +16,12 @@ interface jsonOutput {
 	filtered: Package[];
 }
 
-describe("flub test-only-filter", async () => {
+describe("flub test-only-filter", () => {
 	it(`--all selector`, async () => {
 		const { stdout } = await runCommand(["test-only-filter", "--quiet", "--json", "--all"], {
 			root: import.meta.url,
 		});
-		const output: jsonOutput = JSON.parse(stdout);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { selected, filtered } = output;
 		expect(selected).to.be.ofSize(filtered.length);
 	});
@@ -31,13 +31,14 @@ describe("flub test-only-filter", async () => {
 			["test-only-filter", "--quiet", "--json", "--dir", "."],
 			{ root: import.meta.url },
 		);
-		const output: jsonOutput = JSON.parse(stdout);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { selected, filtered } = output;
 		expect(selected.length).to.equal(1);
 		expect(filtered.length).to.equal(1);
 
 		const pkg = filtered[0];
 
+		assert(pkg !== undefined);
 		expect(pkg.name).to.equal("@fluid-tools/build-cli");
 		expect(pkg.directory).to.equal("build-tools/packages/build-cli");
 	});
@@ -58,7 +59,7 @@ describe("flub test-only-filter", async () => {
 			["test-only-filter", "--quiet", "--json", "--all", "--private"],
 			{ root: import.meta.url },
 		);
-		const output: jsonOutput = JSON.parse(stdout);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);
@@ -71,7 +72,7 @@ describe("flub test-only-filter", async () => {
 			["test-only-filter", "--quiet", "--json", "--all", "--no-private"],
 			{ root: import.meta.url },
 		);
-		const output: jsonOutput = JSON.parse(stdout);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);
@@ -84,7 +85,7 @@ describe("flub test-only-filter", async () => {
 			["test-only-filter", "--quiet", "--json", "--all", "--skipScope", "@fluidframework"],
 			{ root: import.meta.url },
 		);
-		const output: jsonOutput = JSON.parse(stdout);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);

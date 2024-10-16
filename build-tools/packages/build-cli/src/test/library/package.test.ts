@@ -10,8 +10,6 @@ import { parseJSON } from "date-fns";
 import { describe, it } from "mocha";
 
 import { VersionDetails } from "../../library/index.js";
-
-import type { PackageJson } from "@fluidframework/build-tools";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,

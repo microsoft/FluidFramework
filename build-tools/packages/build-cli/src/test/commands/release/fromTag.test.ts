@@ -6,12 +6,11 @@
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
+import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 
 import { ReleaseGroup, ReleasePackage } from "../../../releaseGroups.js";
-import { initializeCommandTestFunction } from "../../init.js";
 
-const test = initializeCommandTestFunction(import.meta.url);
 chai.use(assertArrays);
 
 interface jsonOutput {

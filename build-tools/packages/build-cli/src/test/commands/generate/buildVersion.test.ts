@@ -6,8 +6,9 @@
 import { EOL } from "node:os";
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
-import { describe, it, after } from "mocha";
+import { after, describe, it } from "mocha";
 import mockedEnv from "mocked-env";
+
 /**
  * This list of git tags is deliberately unordered since often the list provided to commands is unordered.
  */
@@ -35,7 +36,7 @@ const test_tags = [
 
 function setEnv(variable: Record<string, string>): void {
 	const { name, value } = variable;
-	process.env[name] = value;
+	process.env[name ?? ""] = value;
 }
 
 /**
@@ -81,8 +82,15 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("reads build number from env variable", async () => {
-		const restore = mockedEnv({ VERSION_BUILDNUMBER: "88802" });
+		const restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "88802",
+			},
+			{ restore: true },
+		);
+
 		after(() => restore());
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -127,7 +135,15 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("reads patch setting from env variable", async () => {
-		setEnv({ VERSION_PATCH: "true" });
+		const restore = mockedEnv.default(
+			{
+				VERSION_PATCH: "true",
+			},
+			{ restore: true },
+		);
+
+		after(() => restore());
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
