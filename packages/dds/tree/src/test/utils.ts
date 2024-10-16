@@ -890,6 +890,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
