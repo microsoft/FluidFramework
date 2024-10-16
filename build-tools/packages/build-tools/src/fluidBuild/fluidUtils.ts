@@ -145,6 +145,12 @@ const configExplorer = cosmiconfigSync(configName, {
 });
 
 /**
+ * Set to true when the default config is returned by getFluidBuildConfig so that repeated calls to the function don't
+ * result in repeated searches for config.
+ */
+let defaultConfigLoaded = false;
+
+/**
  * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
  *
  * @param rootDir - The path to the root package.json to load.
@@ -156,6 +162,10 @@ export function getFluidBuildConfig(
 	noCache = false,
 	log = defaultLogger,
 ): IFluidBuildConfig {
+	if (defaultConfigLoaded) {
+		return DEFAULT_FLUIDBUILD_CONFIG;
+	}
+
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
@@ -167,6 +177,8 @@ export function getFluidBuildConfig(
 		log.warning(
 			`No fluidBuild config found when searching ${rootDir}; default configuration loaded. Packages and tasks will be inferred.`,
 		);
+		defaultConfigLoaded = true;
+		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
 	if (config.version === undefined) {
