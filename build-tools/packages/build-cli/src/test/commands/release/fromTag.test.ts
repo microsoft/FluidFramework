@@ -5,7 +5,7 @@
 
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { runCommand } from "@oclif/test";
-import { expect } from "chai";
+import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 
@@ -40,7 +40,7 @@ describe("flub release fromTag", () => {
 		const { stdout } = await runCommand(["release:fromTag", "build-tools_v0.26.1", "--json"], {
 			root: import.meta.url,
 		});
-		const output: jsonOutput = JSON.parse(stdout);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		expect(output).to.deep.equal(expected);
 	});
 });

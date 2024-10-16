@@ -6,7 +6,7 @@
 import { EOL } from "node:os";
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
-import { after, describe, it } from "mocha";
+import { afterEach, describe, it } from "mocha";
 import mockedEnv from "mocked-env";
 
 /**
@@ -34,11 +34,6 @@ const test_tags = [
 	"build-tools_v0.4.2000",
 ];
 
-function setEnv(variable: Record<string, string>): void {
-	const { name, value } = variable;
-	process.env[name ?? ""] = value;
-}
-
 /**
  * Convenience function to check if a particular line of stdout output equals the expected value.
  *
@@ -59,6 +54,10 @@ function stdoutLineEquals(stdout: string, lineIndex: number, testValue: string):
 }
 
 describe("generate:buildVersion", () => {
+	let restore = mockedEnv.default({}, { clear: true });
+
+	afterEach(() => restore());
+
 	it("outputs prerelease build number", async () => {
 		const { stdout } = await runCommand(
 			[
@@ -82,14 +81,12 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("reads build number from env variable", async () => {
-		const restore = mockedEnv.default(
+		restore = mockedEnv.default(
 			{
 				VERSION_BUILDNUMBER: "88802",
 			},
-			{ restore: true },
+			{ clear: true },
 		);
-
-		after(() => restore());
 
 		const { stdout } = await runCommand(
 			[
@@ -135,14 +132,12 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("reads patch setting from env variable", async () => {
-		const restore = mockedEnv.default(
+		restore = mockedEnv.default(
 			{
 				VERSION_PATCH: "true",
 			},
-			{ restore: true },
+			{ clear: true },
 		);
-
-		after(() => restore());
 
 		const { stdout } = await runCommand(
 			[
@@ -212,9 +207,13 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("reads release setting from env variable", async () => {
-		setEnv({
-			VERSION_RELEASE: "release",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_RELEASE: "release",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -236,9 +235,13 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("reads tag name from env variable", async () => {
-		setEnv({
-			VERSION_TAGNAME: "build-tools",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_TAGNAME: "build-tools",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -285,9 +288,13 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("outputs prerelease build number", async () => {
-		setEnv({
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -336,9 +343,13 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("outputs prerelease build number", async () => {
-		setEnv({
-			TEST_BUILD: "true",
-		});
+		restore = mockedEnv.default(
+			{
+				TEST_BUILD: "true",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -362,14 +373,18 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("tinylicious test case from 2022-08-26", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "tinylicious",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_PATCH: "true",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "88879",
+				VERSION_TAGNAME: "tinylicious",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "release",
+				VERSION_PATCH: "true",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -402,13 +417,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("lts test case from 2022-10-13", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "100339",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "100339",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "prerelease",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -450,13 +469,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("RC version, prerelease", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "prerelease",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -476,13 +499,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("RC version, test", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "true",
-			VERSION_RELEASE: "prerelease",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "true",
+				VERSION_RELEASE: "prerelease",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			[
 				"generate:buildVersion",
@@ -502,13 +529,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("RC version, release", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "release",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.0.0-rc.7.0.0", "--tags", ...test_tags],
 			{
@@ -520,13 +551,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("major version, release", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "release",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags],
 			{
@@ -538,13 +573,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("major version, prerelease", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "prerelease",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags],
 			{
@@ -556,13 +595,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("major version, test", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "true",
-			VERSION_RELEASE: "prerelease",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "true",
+				VERSION_RELEASE: "prerelease",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags],
 			{
@@ -574,13 +617,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("next unpublished patch version on latest minor (2.1.2) returns isLatest true", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "release",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.1.2", "--tags", ...test_tags],
 			{
@@ -592,13 +639,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("next unpublished patch version on non-latest minor (2.0.2) returns isLatest false", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "release",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.0.2", "--tags", ...test_tags],
 			{
@@ -610,13 +661,17 @@ describe("generate:buildVersion", () => {
 	});
 
 	it("next unpublished minor version (2.2.0) returns isLatest true", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "212045",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
-		});
+		restore = mockedEnv.default(
+			{
+				VERSION_BUILDNUMBER: "212045",
+				VERSION_TAGNAME: "client",
+				TEST_BUILD: "false",
+				VERSION_RELEASE: "release",
+				VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.2.0", "--tags", ...test_tags],
 			{
@@ -629,16 +684,28 @@ describe("generate:buildVersion", () => {
 });
 
 describe("generate:buildVersion for alpha/beta", () => {
+	let restore = mockedEnv.default({}, { clear: true });
+
+	afterEach(() => restore());
+
+	const defaultEnv = {
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+	};
+
 	it("tagName: client, release: prerelease, types: alpha", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "alpha",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "alpha",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -647,15 +714,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, types: beta", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "beta",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "beta",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -664,15 +730,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, types: none", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "none",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "none",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -681,15 +746,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, types: public", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "public",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "public",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -698,15 +762,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, types: untrimmed", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "untrimmed",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "untrimmed",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -715,15 +778,15 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: release, types: untrimmed", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "untrimmed",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				VERSION_RELEASE: "release",
+				PACKAGE_TYPES_FIELD: "untrimmed",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -731,15 +794,15 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: release, types: public", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "release",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "public",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				VERSION_RELEASE: "release",
+				PACKAGE_TYPES_FIELD: "public",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -747,15 +810,15 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: true, types: alpha", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "true",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "alpha",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				TEST_BUILD: "true",
+				PACKAGE_TYPES_FIELD: "alpha",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -764,15 +827,15 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: true, types: beta", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "true",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "beta",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				TEST_BUILD: "true",
+				PACKAGE_TYPES_FIELD: "beta",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -781,15 +844,15 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: true, types: none", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "true",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "none",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				TEST_BUILD: "true",
+				PACKAGE_TYPES_FIELD: "none",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -798,15 +861,15 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: true, types: public", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "true",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "public",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				TEST_BUILD: "true",
+				PACKAGE_TYPES_FIELD: "public",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(["generate:buildVersion", "--fileVersion", "0.4.0"], {
 			root: import.meta.url,
 		});
@@ -815,15 +878,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: false, types: alpha", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "alpha",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "alpha",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"],
 			{
@@ -834,15 +896,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: false, types: beta", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "beta",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "beta",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"],
 			{
@@ -853,15 +914,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: false, types: public", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "public",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "public",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"],
 			{
@@ -872,15 +932,14 @@ describe("generate:buildVersion for alpha/beta", () => {
 	});
 
 	it("tagName: client, release: prerelease, test-build: false, types: untrimmed", async () => {
-		setEnv({
-			VERSION_BUILDNUMBER: "88879",
-			VERSION_TAGNAME: "client",
-			TEST_BUILD: "false",
-			VERSION_RELEASE: "prerelease",
-			VERSION_PATCH: "False",
-			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-			PACKAGE_TYPES_FIELD: "untrimmed",
-		});
+		restore = mockedEnv.default(
+			{
+				...defaultEnv,
+				PACKAGE_TYPES_FIELD: "untrimmed",
+			},
+			{ clear: true },
+		);
+
 		const { stdout } = await runCommand(
 			["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"],
 			{

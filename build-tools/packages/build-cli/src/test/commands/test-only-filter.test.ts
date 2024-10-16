@@ -48,7 +48,7 @@ describe("flub test-only-filter", () => {
 			["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"],
 			{ root: import.meta.url },
 		);
-		const output: jsonOutput = JSON.parse(stdout);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { selected, filtered } = output;
 		expect(selected.length).to.equal(4);
 		expect(filtered.length).to.equal(4);
@@ -93,6 +93,7 @@ describe("flub test-only-filter", () => {
 			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-tools/build-cli",
 			"fluid-framework",
+			// eslint-disable-next-line unicorn/no-array-for-each
 		].forEach((item) => {
 			expect(names).to.be.containing(item);
 		});
