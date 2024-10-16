@@ -1,0 +1,132 @@
+
+.container {
+	padding:0;
+	margin: 0;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.overlay {
+	min-width: inherit;
+    min-height: inherit;
+    position: absolute;
+    top: 4%;
+    height: 580px;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.bgImage {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.titleBox {
+	z-index: 2;
+    position: absolute;
+    top: 14%;
+    left: 7.5%;
+    height: 15vh;
+    width: 40vw;
+
+    max-height: 164px;
+}
+.title {
+	color: #0E1726;
+	font-family: 'Segoe UI';
+	font-weight: 600;
+}
+.description {
+	color: #17253D;;
+	font-family: 'Segoe UI';
+	font-weight: 400;
+}
+@media (min-width: 2560px) {
+	.title {
+	  font-size: 2.5vw; /* Slightly smaller font size for larger screens */
+	}
+
+	.description {
+	  font-size: 0.8vw;
+	}
+	.titleBox{
+		max-width:850px;
+	}
+}
+
+@media (min-width: 1440px) {
+	.title {
+	  font-size: 3vw; /* Slightly smaller font size for larger screens */
+	}
+
+	.description {
+	  font-size: 1.3vw;
+	}
+	.container {
+		height: 36vh;
+	}
+}
+
+@media (max-width: 1024px) {
+	.title {
+		font-size: 3.35vw; /* Larger font for smaller screens */
+	}
+
+	.description {
+		font-size: 1.39vw;
+	}
+	.container {
+		height: 28vh;
+	}
+	.titleBox{
+		top:12%;
+	}
+}
+
+@media (max-width: 768px) {
+	.title {
+		font-size: 5vw; /* Even larger font for tablet-sized screens */
+	}
+
+	.description {
+		font-size: 1.8vw;
+	}
+	.container {
+		height: 22vh;
+	}
+	.titleBox{
+		top:10%;
+	}
+}
+
+@media (max-width: 425px) {
+	.container {
+		height: 20vh;
+	}
+	.title {
+		font-size: 8vw; /* Adapt for mobile phones */
+	}
+
+	.description {
+		font-size: 2.68vw;
+	}
+	.titleBox{
+		left:0;
+		width: 80%;
+		text-align: center;
+		margin: 0 10% 0 10%;
+	}
+}
+@media (max-width: 360px) {
+	.titleBox {
+		left: 0;
+        width: 90%;
+        text-align: center;
+        margin: 0 5% 0 5%;
+        top: 9%;
+	}
+	.description {
+		font-size: 3vw;
+	}
+
+}
