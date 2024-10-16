@@ -1,12 +1,48 @@
 
 .container {
-	width: 100vw;
-  	margin-left: calc(-50vw + 50%);
-  	max-width: 100vw;
+	height: 580px;
 	padding:0;
 	margin: 0;
+	max-width: 100%;
+	overflow: hidden;
 }
+
+.overlay {
+	min-width: inherit;
+    min-height: inherit;
+    position: absolute;
+    top: 4%;
+    height: 580px;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
 .bgImage {
 	width: 100%;
-	height: "auto"
+	height: 100%;
+	object-fit: cover;
+}
+.titleBox {
+	z-index: 2;
+	position: absolute;
+    top: 16%;
+    left: 7.5%;
+	height: 164px;
+	width: 600px;
+}
+
+.title{
+    font-family: 'Segoe UI';
+    color: #0E1726;
+    font-size: 48px;
+    font-weight: 600;
+}
+
+.description {
+	position: absolute;
+    font-family: 'Segoe UI';
+    color: #17253D;
+	font-size: 20px;
+	line-height: 32px;
+    font-weight: 400;
 }
