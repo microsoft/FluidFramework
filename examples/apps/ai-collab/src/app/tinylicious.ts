@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidContainer, type ContainerSchema } from "@fluidframework/fluid-static";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { IFluidContainer, type ContainerSchema } from "fluid-framework";
 
 const tinyliciousClient = new TinyliciousClient({});
 
