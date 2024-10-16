@@ -14,7 +14,7 @@ import {
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { runnerHttpServerStop, type StartupCheck } from "@fluidframework/server-services-shared";
 import { Provider } from "nconf";
 import type { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
 import * as app from "./app";
@@ -41,6 +41,7 @@ export class RiddlerRunner implements IRunner {
 		private readonly fetchTenantKeyMetricInterval: number,
 		private readonly riddlerStorageRequestMetricInterval: number,
 		private readonly tenantKeyGenerator: ITenantKeyGenerator,
+		private readonly startupCheck: StartupCheck,
 		private readonly cache?: ICache,
 		private readonly config?: Provider,
 		private readonly readinessCheck?: IReadinessCheck,
@@ -66,6 +67,7 @@ export class RiddlerRunner implements IRunner {
 				this.fetchTenantKeyMetricInterval,
 				this.riddlerStorageRequestMetricInterval,
 				this.tenantKeyGenerator,
+				this.startupCheck,
 				this.cache,
 				this.readinessCheck,
 			);
@@ -84,6 +86,7 @@ export class RiddlerRunner implements IRunner {
 
 		this.stopped = false;
 
+		this.startupCheck.setReady();
 		return this.runningDeferred.promise;
 	}
 

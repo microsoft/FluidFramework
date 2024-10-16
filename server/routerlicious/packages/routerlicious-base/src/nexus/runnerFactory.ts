@@ -28,6 +28,7 @@ import { StorageNameAllocator } from "./services";
 import { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -66,6 +67,7 @@ export class NexusResources implements core.IResources {
 		public port: any,
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
+		public startupCheck: StartupCheck,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
@@ -536,6 +538,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					customizations?.customCreateSocketIoAdapter,
 			  );
 
+		const startupCheck = new StartupCheck();
+
 		return new NexusResources(
 			config,
 			webServerFactory,
@@ -553,6 +557,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			port,
 			documentsCollectionName,
 			metricClientConfig,
+			startupCheck,
 			redisThrottleAndUsageStorageManager,
 			verifyMaxMessageSize,
 			redisCache,
@@ -586,6 +591,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.storage,
 			resources.clientManager,
 			resources.metricClientConfig,
+			resources.startupCheck,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
