@@ -14,7 +14,7 @@ import { Package, Packages } from "../common/npmPackage";
 import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
 import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
-import type { IFluidBuildDirs } from "./fluidBuildConfig";
+import { DEFAULT_FLUIDBUILD_CONFIG, type IFluidBuildDirs } from "./fluidBuildConfig";
 import { FluidRepo } from "./fluidRepo";
 import { getFluidBuildConfig } from "./fluidUtils";
 import { NpmDepChecker } from "./npmDepChecker";
@@ -34,12 +34,8 @@ export interface IPackageMatchedOptions {
 
 export class FluidRepoBuild extends FluidRepo {
 	public static create(context: BuildContext) {
-		// Default to just resolveRoot if no config is found
-		const packageManifest = context.fluidBuildConfig ?? {
-			repoPackages: {
-				root: "",
-			},
-		};
+		// Use default config rooted in current directory if no config is found
+		const packageManifest = context.fluidBuildConfig ?? DEFAULT_FLUIDBUILD_CONFIG;
 		return new FluidRepoBuild(context.repoRoot, context, packageManifest.repoPackages);
 	}
 	private constructor(

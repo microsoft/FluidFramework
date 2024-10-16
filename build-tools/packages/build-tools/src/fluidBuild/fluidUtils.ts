@@ -14,7 +14,11 @@ import { readJson } from "fs-extra";
 
 import { defaultLogger } from "../common/logging";
 import { commonOptions } from "./commonOptions";
-import { FLUIDBUILD_CONFIG_VERSION, type IFluidBuildConfig } from "./fluidBuildConfig";
+import {
+	DEFAULT_FLUIDBUILD_CONFIG,
+	FLUIDBUILD_CONFIG_VERSION,
+	type IFluidBuildConfig,
+} from "./fluidBuildConfig";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
@@ -157,10 +161,12 @@ export function getFluidBuildConfig(
 	}
 
 	const configResult = configExplorer.search(rootDir);
-	const config = configResult?.config as IFluidBuildConfig | undefined;
+	const config: IFluidBuildConfig = configResult?.config ?? DEFAULT_FLUIDBUILD_CONFIG;
 
-	if (config === undefined) {
-		throw new Error("No fluidBuild configuration found.");
+	if (configResult?.config === undefined) {
+		log.warning(
+			`No fluidBuild config found when searching ${rootDir}; default configuration loaded. Packages and tasks will be inferred.`,
+		);
 	}
 
 	if (config.version === undefined) {
