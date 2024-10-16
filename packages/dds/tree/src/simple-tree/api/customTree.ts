@@ -102,8 +102,8 @@ export function customFromCursorInner<TChild, THandle>(
 						const storedKey = reader.getFieldKey();
 						const key =
 							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
-								? nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
-									fail("missing property key")
+								? (nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
+									fail("missing property key"))
 								: storedKey;
 						// Length is checked above.
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

@@ -14,6 +14,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import * as app from "./app";
 import { IFileSystemManagerFactories, IRepositoryManagerFactory } from "./utils";
+import type { StartupCheck } from "@fluidframework/server-services-shared";
 
 export class GitrestRunner implements IRunner {
 	private server: IWebServer;
@@ -25,6 +26,7 @@ export class GitrestRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		private readonly repositoryManagerFactory: IRepositoryManagerFactory,
+		private readonly startupCheck: StartupCheck,
 		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
@@ -35,6 +37,7 @@ export class GitrestRunner implements IRunner {
 			this.config,
 			this.fileSystemManagerFactories,
 			this.repositoryManagerFactory,
+			this.startupCheck,
 			this.readinessCheck,
 		);
 		gitrest.set("port", this.port);
@@ -47,6 +50,7 @@ export class GitrestRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
+		this.startupCheck.setReady();
 		return this.runningDeferred.promise;
 	}
 

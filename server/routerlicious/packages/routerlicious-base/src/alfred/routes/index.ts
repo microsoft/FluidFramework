@@ -23,6 +23,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
+import type { StartupCheck } from "@fluidframework/server-services-shared";
 
 export interface IRoutes {
 	agent: Router;
@@ -41,6 +42,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: StartupCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -60,6 +62,7 @@ export function create(
 			appTenants,
 			documentRepository,
 			documentDeleteService,
+			startupCheck,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			collaborationSessionEventEmitter,
