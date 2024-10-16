@@ -1,5 +1,5 @@
 import React from "react";
-import {TitleSection} from '../components/TitleSection';
+import {TitleSection} from '../components/titleSection';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
