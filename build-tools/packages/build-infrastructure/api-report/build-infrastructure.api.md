@@ -135,7 +135,7 @@ export interface Installable {
 }
 
 // @public
-export interface IPackage<J extends PackageJson = PackageJson> extends Pick<Installable, "checkInstall">, Reloadable {
+export interface IPackage<J extends PackageJson = PackageJson> extends Installable, Reloadable {
     combinedDependencies: Generator<PackageDependency, void>;
     readonly directory: string;
     getScript(name: string): string | undefined;
@@ -215,6 +215,7 @@ export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps
     get directory(): string;
     // (undocumented)
     getScript(name: string): string | undefined;
+    install(updateLockfile: boolean): Promise<boolean>;
     // (undocumented)
     isReleaseGroupRoot: boolean;
     // (undocumented)

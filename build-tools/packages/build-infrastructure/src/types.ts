@@ -275,7 +275,7 @@ export type PackageName = Opaque<string, "PackageName">;
  * when the package.json has custom keys/values.
  */
 export interface IPackage<J extends PackageJson = PackageJson>
-	extends Pick<Installable, "checkInstall">,
+	extends Installable,
 		Reloadable {
 	/**
 	 * The name of the package

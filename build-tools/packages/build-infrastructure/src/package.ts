@@ -163,6 +163,13 @@ export abstract class PackageBase<
 		}
 		return succeeded;
 	}
+
+	/**
+	 * Installs the dependencies for all packages in this package's workspace.
+	 */
+	public async install(updateLockfile: boolean): Promise<boolean> {
+		return this.workspace.install(updateLockfile);
+	}
 }
 
 export class Package<

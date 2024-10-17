@@ -145,10 +145,17 @@ export class Workspace implements IWorkspace {
 
 	public async install(updateLockfile: boolean): Promise<boolean> {
 		const command = this.packageManager.installCommand(updateLockfile);
-		const output = await execa(this.packageManager.name, command.split(" "), {
-			cwd: this.directory,
-		});
-		console.debug(output);
+
+		try {
+			const output = await execa(this.packageManager.name, command.split(" "), {
+				cwd: this.directory,
+			});
+			console.debug(output);
+		} catch (error) {
+			console.error(`Error during install: ${(error as Error).message}`);
+			return false;
+		}
+
 		return true;
 	}
 
