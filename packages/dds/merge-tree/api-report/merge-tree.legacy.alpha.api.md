@@ -270,6 +270,7 @@ export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
+    mergeTreeEnableAnnotateAdjust?: boolean;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeEnableSidedObliterate?: boolean;
