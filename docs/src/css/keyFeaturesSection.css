@@ -1,0 +1,423 @@
+.keyFeaturesSection {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 72px 0px;
+
+	width: 100%;
+
+	background: #FFFDFB;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
+
+/* TODO: better name */
+.keyFeaturesInner {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 5px;
+	gap: 48px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
+
+.keyFeaturesSectionHeader {
+/* Layout */
+
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	padding: 0px;
+	gap: 16px;
+
+	width: 100%;
+	/* height: 72px; */
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+
+
+}
+
+/* TODO: better name */
+.keyFeaturesSectionHeaderInner {
+	/* Heading */
+
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 0px;
+
+	/* width: 880px;
+	height: 72px; */
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 1;
+
+}
+
+.keyFeaturesSubtitle {
+	/* VP4/label/eyebrow */
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 600;
+	font-size: 12px;
+	line-height: 16px;
+	/* identical to box height, or 133% */
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+
+	/* M365/Day/Section Eyebrow */
+	color: #61615E;
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+/* TODO: allow wrapping */
+.keyFeaturesTitle {
+	/* VP4/heading/m */
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 600;
+	font-size: 40px;
+	line-height: 48px;
+	/* identical to box height, or 120% */
+	letter-spacing: -0.05em;
+
+	/* m365-theme/day/foreground/base/strong */
+	color: #0E1726;
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeaturesCardGrid {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	padding: 0px;
+	gap: 16px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	flex-grow: 0;
+}
+
+.keyFeatureCard {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 0px;
+	isolation: isolate;
+
+	max-width: 432px;
+	max-height: 605px;
+
+	/* day/background/card/normal */
+	background: #FEFEFE;
+	/* elevation/day/level-2 */
+	box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
+	border-radius: 24px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardImageContainer {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 8px 8px 0px;
+
+	width: 100%;
+	height: 242px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+	z-index: 1;
+}
+
+.keyFeatureCardImage {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 0px;
+	isolation: isolate;
+
+	width: 100%;
+	height: 234px;
+
+	/* background: url(CRM_Msft_FluidF_R04_07.jpg), url(CRM_Msft_FluidF_R01_03.jpg), url(2160x1215 Word.jpg); */
+	border-radius: 16px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardContents {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding: 24px;
+
+	width: 100%;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	align-self: stretch;
+	flex-grow: 1;
+	z-index: 0;
+}
+
+.keyFeatureCardBody {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 0px;
+	gap: 16px;
+
+	/* width: 384px;
+	height: 212px;
+ */
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardBodyLabelContainer {
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	padding: 0px;
+	gap: 16px;
+
+	/* width: 384px;
+	height: 28px; */
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardBodyLabel {
+	/* VP4/heading/2xs */
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 600;
+	font-size: 20px;
+	line-height: 28px;
+	/* identical to box height, or 140% */
+	letter-spacing: -0.03em;
+
+	/* m365-theme/day/foreground/base/strong */
+	color: #0E1726;
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardBodyTextContainer {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 0px;
+	gap: 16px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardBodyText {
+	/* VP4/body/m */
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 24px;
+	/* or 150% */
+	letter-spacing: -0.03em;
+
+	/* day/foreground/base/subtle */
+	color: #17253D;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardFooter {
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 0px;
+/*
+	width: 384px;
+	height: 32px; */
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+.keyFeatureCardFooterContent {
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	padding: 0px;
+	gap: 24px;
+
+	/* width: 115px;
+	height: 32px; */
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
+
+.keyFeatureCardFooterLink {
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	padding: 0px;
+	gap: 8px;
+
+	/* width: 115px;
+	height: 32px; */
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
+
+.keyFeatureCardFooterLinkButton {
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	padding: 8px;
+
+	width: 32px;
+	height: 32px;
+
+	background: #000000;
+	border-radius: 8px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
+
+.keyFeatureCardFooterLinkLabelFrame {
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	padding: 0px 0px 2px;
+
+	/* width: 75px;
+	height: 24px; */
+
+
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	flex-grow: 0;
+}
+
+.keyFeatureCardFooterLinkLabelText {
+	/* width: 75px;
+	height: 22px; */
+
+	/* VP4/action/label */
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 600;
+	font-size: 15px;
+	line-height: 22px;
+	/* identical to box height, or 147% */
+	text-align: center;
+	letter-spacing: -0.02em;
+
+	/* day/foreground/accent-subtle/normal */
+	color: #2A446F;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
