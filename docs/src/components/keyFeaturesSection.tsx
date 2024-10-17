@@ -8,6 +8,7 @@ import OpenSourecImage from '@site/static/assets/home-open-source.png';
 import PerformanceImage from '@site/static/assets/home-performance.png';
 
 import "@site/src/css/keyFeaturesSection.css";
+import { SectionHeader } from '@site/src/components/sectionHeader';
 
 const easyToUseText = "Transform your collaborative experience with our developer friendly framework - where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software.";
 
@@ -18,19 +19,10 @@ const performanceText = "Unleash unparalleled speed and performance with our cut
 export function KeyFeaturesSection(): JSX.Element {
 	return <div className="keyFeaturesSection">
 		<div className="keyFeaturesInner">
-			<KeyFeaturesSectionHeader />
+			<SectionHeader title="Start building with Fluid Framework" subtitle="Key Features" />
 			<KeyFeaturesCardGrid/>
 		</div>
 	</div>
-}
-
-function KeyFeaturesSectionHeader(): JSX.Element {
-	return <div className="keyFeaturesSectionHeader">
-		<div className="keyFeaturesSectionHeaderInner">
-			<p className="keyFeaturesSubtitle">Key Features</p>
-			<p className="keyFeaturesTitle">Start building with Fluid Framework</p>
-		</div>
-	</div>;
 }
 
 function KeyFeaturesCardGrid(): JSX.Element {
