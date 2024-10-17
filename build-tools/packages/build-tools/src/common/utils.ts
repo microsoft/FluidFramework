@@ -104,13 +104,7 @@ function printExecError(
 				? `${errorPrefix}: ${ret.stdout}\n${ret.stderr}`
 				: `${errorPrefix}: ${ret.stderr}`,
 		);
-	} else if (
-		warning &&
-		ret.stderr &&
-		// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
-		// Otherwise fluid-build spams warnings for all tsc-multi tasks.
-		!ret.stderr.includes("Found 0 errors")
-	) {
+	} else if (warning && ret.stderr) {
 		// no error code but still error messages, treat them is non fatal warnings
 		console.warn(`${errorPrefix}: warning during command ${command}`);
 		console.warn(`${errorPrefix}: ${ret.stderr}`);
