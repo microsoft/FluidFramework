@@ -982,7 +982,7 @@ export class MergeTree {
 	private blockLength(node: MergeBlock, refSeq: number, clientId: number): number {
 		return this.collabWindow.collaborating && clientId !== this.collabWindow.clientId
 			? node.partialLengths!.getPartialLength(refSeq, clientId)
-			: node.cachedLength ?? 0;
+			: (node.cachedLength ?? 0);
 	}
 
 	/**
@@ -1684,7 +1684,7 @@ export class MergeTree {
 			// possible seq, as the highest is reserved for the previous.
 			const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
 			const segSeq =
-				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
+				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : (node.seq ?? 0);
 
 			return (
 				newSeq > segSeq ||
