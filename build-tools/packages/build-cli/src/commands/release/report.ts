@@ -390,7 +390,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}),
 		baseFileName: Flags.string({
 			description:
-				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
+				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
 		}),
 		...ReleaseReportBaseCommand.flags,
@@ -540,6 +540,15 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					flags.baseFileName,
 					this.logger,
 				),
+				writeReport(
+					context,
+					report,
+					"legacy-compat",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
 			];
 
 			await Promise.all(promises);
@@ -569,7 +578,12 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
-			const ranges = getRanges(latestVer);
+
+			if (context.flubConfig.releaseReport === undefined) {
+				throw new Error(`releaseReport not found in config.`);
+			}
+
+			const ranges = getRanges(latestVer, context.flubConfig.releaseReport, pkgName);
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {

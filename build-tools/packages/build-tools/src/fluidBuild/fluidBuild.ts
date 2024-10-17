@@ -25,7 +25,7 @@ async function main() {
 	log(`Build Root: ${resolvedRoot}`);
 
 	// Load the packages
-	const repo = FluidRepoBuild.create({
+	const repo = new FluidRepoBuild({
 		repoRoot: resolvedRoot,
 		gitRepo: new GitRepo(resolvedRoot),
 		fluidBuildConfig: getFluidBuildConfig(resolvedRoot),
@@ -142,8 +142,7 @@ async function main() {
 	const timeInMinutes =
 		timer.getTotalTime() > 60000
 			? ` (${Math.floor(timer.getTotalTime() / 60000)}m ${(
-					(timer.getTotalTime() % 60000) /
-					1000
+					(timer.getTotalTime() % 60000) / 1000
 				).toFixed(3)}s)`
 			: "";
 	log(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s${timeInMinutes}`);

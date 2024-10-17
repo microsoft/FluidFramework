@@ -30,6 +30,7 @@ export class Partition extends EventEmitter {
 	private readonly checkpointManager: CheckpointManager;
 	private readonly context: Context;
 	private closed = false;
+	private paused = false;
 
 	constructor(
 		private readonly id: number,
@@ -45,6 +46,14 @@ export class Partition extends EventEmitter {
 		this.context.on("error", (error: any, errorData: IContextErrorData) => {
 			Lumberjack.verbose("Emitting error from partition, context error event");
 			this.emit("error", error, errorData);
+		});
+
+		this.context.on("pause", (offset: number, reason?: any) => {
+			this.emit("pause", this.id, offset, reason);
+		});
+
+		this.context.on("resume", () => {
+			this.emit("resume", this.id);
 		});
 
 		// Create the incoming message queue
@@ -79,6 +88,7 @@ export class Partition extends EventEmitter {
 
 				const errorData: IContextErrorData = {
 					restart: true,
+					errorLabel: "partition:lambdaFactory.create",
 				};
 				this.emit("error", error, errorData);
 				this.q.kill();
@@ -132,6 +142,35 @@ export class Partition extends EventEmitter {
 		}
 
 		this.removeAllListeners();
+	}
+
+	public pause(): void {
+		if (this.paused) {
+			Lumberjack.info(`Partition already paused, returning early.`, { partitionId: this.id });
+			return;
+		}
+		this.paused = true;
+
+		this.q.pause();
+		this.q.remove(() => true); // flush all the messages in the queue since kafka consumer will resume from last successful offset
+
+		if (this.lambda?.pause) {
+			this.lambda.pause();
+		}
+		Lumberjack.info(`Partition paused`, { partitionId: this.id });
+	}
+
+	public resume(): void {
+		if (!this.paused) {
+			Lumberjack.info(`Partition already resumed, returning early.`, {
+				partitionId: this.id,
+			});
+			return;
+		}
+		this.paused = false;
+
+		this.q.resume();
+		Lumberjack.info(`Partition resumed`, { partitionId: this.id });
 	}
 
 	/**
