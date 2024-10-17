@@ -45,13 +45,13 @@ export type PresenceExtensionInterface = Required<
 >;
 
 /**
- *	Mangement of client connection ids.
+ *	Internal managment of client connection ids.
  */
 export interface ClientConnectionManager {
 	/**
-	 * Remove client connection id from the system workspace.
+	 * Remove the current client connection id from the corresponding disconnected attendee.
 	 *
-	 * @param clientConnectionId - The client connection id to be removed.
+	 * @param clientConnectionId - The current client connection id to be removed.
 	 */
 	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
 }

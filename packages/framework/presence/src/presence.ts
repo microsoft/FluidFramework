@@ -30,6 +30,17 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
  */
 export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSessionId" };
 
+
+/**
+ * The connection status of the {@link ISessionClient}.
+ *
+ * @alpha
+ */
+export enum SessionClientStatus {
+	Connected = "Connected",
+	Disconnected = "Disconnected",
+}
+
 /**
  * A client within a Fluid session (period of container connectivity to service).
  *
@@ -60,8 +71,19 @@ export interface ISessionClient<
 	 *
 	 * @remarks
 	 * Connection id will change on reconnect.
+	 *
+	 * If {@link ISessionClient.status} is {@link SessionClientStatus.Disconnected}, this will represent the last known connection id,
 	 */
-	currentConnectionId(): ClientConnectionId;
+	connectionId(): ClientConnectionId;
+
+
+	/**
+	 * Get status of session client.
+	 *
+	 * @returns Status of session client.
+	 *
+	 */
+	status: SessionClientStatus;
 }
 
 /**

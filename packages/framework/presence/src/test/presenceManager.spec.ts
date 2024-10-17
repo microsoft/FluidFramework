@@ -125,7 +125,7 @@ describe("Presence", () => {
 						"Attendee has wrong session id",
 					);
 					assert.equal(
-						newAttendee.currentConnectionId(),
+						newAttendee.connectionId(),
 						initialAttendeeConnectionId,
 						"Attendee has wrong client connection id",
 					);
@@ -199,7 +199,7 @@ describe("Presence", () => {
 						);
 						// Current connection id is updated
 						assert(
-							newAttendee.currentConnectionId() === updatedClientConnectionId,
+							newAttendee.connectionId() === updatedClientConnectionId,
 							"Attendee does not have updated client connection id",
 						);
 						// Attendee is available via new connection id
