@@ -189,7 +189,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: true
-    reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
+    reportCodeCoverageComparison: ${{ and(eq(variables['Build.Reason'], 'PullRequest'), eq(variables['System.PullRequest.TargetBranch'], 'main')) }}
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
