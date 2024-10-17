@@ -25,7 +25,7 @@ const newlineCrossPlatform = /\r?\n/;
  * @param tag - The tag.
  * @returns The version string, or undefined if one could not be found.
  *
- * TODO: Need up reconcile slightly different version in version-tools/src/schemes.ts
+ * TODO: Need to reconcile slightly different version in version-tools/src/schemes.ts
  */
 function getVersionFromTag(tag: string): string | undefined {
 	// This is sufficient, but there is a possibility that this will fail if we add a tag that includes "_v" in its
@@ -69,9 +69,7 @@ const defaultGitOptions: Partial<SimpleGitOptions> = {
  * @internal
  */
 export class Repository implements GitContext {
-	// public readonly gitContext: GitContext;
 	private readonly git: SimpleGit;
-	// private readonly baseDir: string;
 
 	/**
 	 * A git client for the repository that can be used to call git directly.
@@ -94,7 +92,6 @@ export class Repository implements GitContext {
 		};
 		log?.verbose("gitOptions:");
 		log?.verbose(JSON.stringify(options));
-		// this.baseDir = options.baseDir;
 		this.git = simpleGit(options);
 
 		// Use synchronous git functions since we're in a constructor
