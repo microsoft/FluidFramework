@@ -2161,9 +2161,7 @@ describeCompat(
 			},
 		);
 
-		// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
-		// Skip it for now until above items are resolved.
-		itExpects.skip(
+		itExpects(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close: contianer1, container2, container3
@@ -2184,6 +2182,11 @@ describeCompat(
 				},
 			],
 			async function () {
+				// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
+				// Skip it for now until above items are resolved.
+				if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+					this.skip();
+				}
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
