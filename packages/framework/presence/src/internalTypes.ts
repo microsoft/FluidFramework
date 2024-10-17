@@ -43,7 +43,7 @@ export const brandedObjectEntries = Object.entries as <K extends string, T>(
  */
 export type IEphemeralRuntime = Pick<
 	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "connected" | "getAudience" | "getQuorum" | "off" | "on" | "submitSignal"
+	"clientId" | "connected" | "getQuorum" | "off" | "on" | "submitSignal"
 > &
 	Partial<Pick<IFluidDataStoreRuntime, "logger">>;
 
