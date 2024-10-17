@@ -60,7 +60,8 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			required: true,
 		}),
 		githubRepositoryName: Flags.string({
-			description: "Github repository name.",
+			description:
+				"Github repository name. It should be in this format: <org_or_owner>/<name>. For example: microsoft/FluidFramework",
 			env: "GITHUB_REPOSITORY_NAME",
 			required: true,
 		}),
@@ -95,6 +96,9 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		};
 
 		const repoInfo = flags.githubRepositoryName.split("/");
+		if (repoInfo.length !== 2) {
+			this.error("Invalid github repository name", { exit: 1 });
+		}
 		const githubProps: GitHubProps = {
 			owner: repoInfo[0],
 			repo: repoInfo[1],
