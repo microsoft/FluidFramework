@@ -6,7 +6,7 @@
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { Context, Repository } from "./library/index.js";
+import { Context } from "./library/index.js";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
 
 /**
@@ -179,10 +179,10 @@ const selectPackagesFromContext = async (
 	const selected: PackageWithKind[] = [];
 
 	if (selection.changedSinceBranch !== undefined) {
-		const git = new Repository({ baseDir: context.gitRepo.resolvedRoot });
-		const remote = await git.getRemote(context.originRemotePartialUrl);
+		const git = await context.getGitRepository();
+		const remote = await git.getRemote(git.upstreamRemotePartialUrl);
 		if (remote === undefined) {
-			throw new Error(`Can't find a remote with ${context.originRemotePartialUrl}`);
+			throw new Error(`Can't find a remote with ${git.upstreamRemotePartialUrl}`);
 		}
 		const { packages } = await git.getChangedSinceRef(
 			selection.changedSinceBranch,
