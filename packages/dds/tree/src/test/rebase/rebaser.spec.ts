@@ -129,7 +129,7 @@ describe("rebaser", () => {
 				const tester = new BranchTester(main, branch);
 				const base =
 					baseInMain !== undefined
-						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
+						? (tester[baseInMain] ?? fail("Expected baseInMain to be in main"))
 						: tester.main;
 
 				const { newSourceHead } = rebaseBranch(

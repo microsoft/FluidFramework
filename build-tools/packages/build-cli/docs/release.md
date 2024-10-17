@@ -203,7 +203,7 @@ FLAGS
 
   --baseFileName=<value>
       If provided, the output files will be named using this base name followed by the report kind (caret, simple, full,
-      tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
+      tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
       'foo.caret.json', 'foo.simple.json', etc.
 
 LOGGING FLAGS
