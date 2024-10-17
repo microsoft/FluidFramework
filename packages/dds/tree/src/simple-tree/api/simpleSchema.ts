@@ -5,7 +5,7 @@
 
 import type { ValueSchema } from "../../core/index.js";
 import type { NodeKind } from "../core/index.js";
-import type { FieldKind } from "../schemaTypes.js";
+import type { FieldKind, FieldSchemaMetadata } from "../schemaTypes.js";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
@@ -120,9 +120,9 @@ export interface SimpleFieldSchema {
 	readonly allowedTypes: ReadonlySet<string>;
 
 	/**
-	 * {@inheritDoc FieldSchemaMetadata.description}
+	 * {@inheritDoc FieldSchemaMetadata}
 	 */
-	readonly description?: string | undefined;
+	readonly metadata?: FieldSchemaMetadata | undefined;
 }
 
 /**

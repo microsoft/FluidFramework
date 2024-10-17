@@ -93,6 +93,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
     readonly custom?: TCustomMetadata;
     readonly description?: string | undefined;
+    readonly omitFromJson?: boolean | undefined;
 }
 
 // @public

@@ -162,6 +162,7 @@ export {
 	normalizeFieldSchema,
 	isTreeNodeSchemaClass,
 	normalizeAllowedTypes,
+	getSimpleSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

@@ -137,6 +137,10 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
 	for (const [key, value] of Object.entries(schema.fields)) {
+		if (value.metadata?.omitFromJson === true) {
+			// Don't emit JSON Schema for fields which specify they should be excluded.
+			continue;
+		}
 		const allowedTypes: JsonSchemaRef[] = [];
 		for (const allowedType of value.allowedTypes) {
 			allowedTypes.push(createSchemaRef(allowedType));
@@ -150,8 +154,8 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 					};
 
 		// Don't include "description" property at all if it's not present in the input.
-		if (value.description !== undefined) {
-			output.description = value.description;
+		if (value.metadata?.description !== undefined) {
+			output.description = value.metadata.description;
 		}
 
 		properties[key] = output;
