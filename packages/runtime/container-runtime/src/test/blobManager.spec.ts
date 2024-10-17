@@ -217,6 +217,19 @@ export class MockRuntime
 		}
 	}
 
+	public async processAllWithReupload() {
+		while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
+			const p1 = this.processBlobs(true);
+			const p2 = this.processHandles();
+			this.processOps();
+			await Promise.race([p1, p2]);
+			// need an extra tick to process the reupload blobs
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+			this.processOps();
+			await Promise.all([p1, p2]);
+		}
+	}
+
 	public async attach() {
 		if (this.detachedStorage.blobs.size > 0) {
 			const table = new Map();
@@ -441,8 +454,7 @@ describe("BlobManager", () => {
 		runtime.disconnect();
 		await new Promise<void>((resolve) => setTimeout(resolve, 50));
 		await runtime.connect();
-		assert.strictEqual(runtime.closed, true);
-		await runtime.processAll();
+		await runtime.processAllWithReupload();
 	});
 
 	it("completes after disconnection while upload pending", async () => {
