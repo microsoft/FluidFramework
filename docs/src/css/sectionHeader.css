@@ -28,6 +28,8 @@
 	align-items: center;
 	padding: 0px;
 
+	width: 100%;
+
 	/* width: 880px;
 	height: 72px; */
 
@@ -53,7 +55,6 @@
 	/* M365/Day/Section Eyebrow */
 	color: #61615E;
 
-
 	/* Inside auto layout */
 	flex: none;
 	order: 0;
@@ -74,7 +75,6 @@
 
 	/* m365-theme/day/foreground/base/strong */
 	color: #0E1726;
-
 
 	/* Inside auto layout */
 	flex: none;
