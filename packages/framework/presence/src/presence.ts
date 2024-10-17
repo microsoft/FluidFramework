@@ -30,7 +30,6 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
  */
 export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSessionId" };
 
-
 /**
  * The connection status of the {@link ISessionClient}.
  *
@@ -75,7 +74,6 @@ export interface ISessionClient<
 	 * If {@link ISessionClient.status} is {@link SessionClientStatus.Disconnected}, this will represent the last known connection id,
 	 */
 	connectionId(): ClientConnectionId;
-
 
 	/**
 	 * Get status of session client.

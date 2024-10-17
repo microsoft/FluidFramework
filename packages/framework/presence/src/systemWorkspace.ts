@@ -151,6 +151,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		};
 
 		this.selfAttendee.connectionId = () => clientConnectionId;
+		this.selfAttendee.status = SessionClientStatus.Connected;
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 	}
 

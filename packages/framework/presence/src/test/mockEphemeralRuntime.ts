@@ -5,8 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IAudience } from "@fluidframework/container-definitions";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
+import type {
+	IClient,
+	IQuorumClients,
+	ISequencedClient,
+} from "@fluidframework/driver-definitions";
 import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ClientConnectionId } from "../baseTypes.js";
@@ -43,10 +48,43 @@ export function makeMockQuorum(clientIds: string[]): IQuorumClients {
 }
 
 /**
+ * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
+ */
+export function makeMockAudience(clientIds: string[]): IAudience {
+	const clients = new Map<string, IClient>();
+	for (const [index, clientId] of clientIds.entries()) {
+		// eslint-disable-next-line unicorn/prefer-code-point
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const email = userId;
+		const user = {
+			id: userId,
+			name,
+			email,
+		};
+		clients.set(clientId, {
+			mode: "write",
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			user,
+			scopes: [],
+		});
+	}
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		getMember: (clientId: string): IClient | undefined => {
+			return clients.get(clientId);
+		},
+	} as IAudience;
+}
+
+/**
  * Mock ephemeral runtime for testing
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public logger?: ITelemetryBaseLogger;
+	public readonly audience: IAudience;
 	public readonly quorum: IQuorumClients;
 
 	public readonly listeners: {
@@ -73,7 +111,18 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			"client4",
 			"client5",
 		]);
+
+		const audience = makeMockAudience([
+			"client0",
+			"client1",
+			"client2",
+			"client3",
+			"client4",
+			"client5",
+		]);
 		this.quorum = quorum;
+		this.audience = audience;
+		this.getAudience = () => audience;
 		this.getQuorum = () => quorum;
 		this.on = (
 			event: string,
@@ -125,6 +174,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	): any => {
 		throw new Error("IEphemeralRuntime.off method not implemented.");
 	};
+
+	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]>;
 
 	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]>;
 
