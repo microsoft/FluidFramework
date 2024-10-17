@@ -428,12 +428,12 @@ extends:
                         condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'))
                         continueOnError: false
                         env:
-                          ADO_API_TOKEN: $(System.AccessToken)
-                          GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+                          ADO_API_TOKEN: '$(System.AccessToken)'
+                          GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
                           TARGET_BRANCH_NAME: '$(targetBranchName)'
-                          ADO_BUILD_ID: $(Build.BuildId)
-                          GITHUB_PR_NUMBER: $(System.PullRequest.PullRequestNumber)
-                          GITHUB_REPOSITORY_NAME: $(Build.Repository.Name)
+                          ADO_BUILD_ID: '$(Build.BuildId)'
+                          GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+                          GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
                           ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
                           ADO_CI_BUILD_DEFINITION_ID_PR: 11
                         inputs:
@@ -448,7 +448,7 @@ extends:
                             echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
                             echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
                             echo "Running code coverage comparison"
-                            flub report codeCoverage
+                            flub report codeCoverage --verbose
 
 
                   # Process test result, include publishing and logging
