@@ -892,7 +892,6 @@ export class GarbageCollector implements IGarbageCollector {
 					// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 					// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
 					this.summaryStateTracker.autoRecovery.requestFullGCOnNextRun();
-
 					break;
 				}
 				default:

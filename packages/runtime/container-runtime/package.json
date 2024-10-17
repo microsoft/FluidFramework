@@ -233,11 +233,7 @@
 	"typeValidation": {
 		"broken": {
 			"Class_DocumentsSchemaController": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"ClassStatics_DocumentsSchemaController": {
-				"backCompat": false
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

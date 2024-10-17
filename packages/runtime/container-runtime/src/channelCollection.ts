@@ -45,6 +45,7 @@ import {
 	gcDataBlobKey,
 	type ISequencedRuntimeMessageCore,
 	type IRuntimeMessageContents,
+	type InboundAttachMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -407,7 +408,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		local: boolean,
 	) {
 		for (const { contents } of messageContents) {
-			const attachMessage = contents as IAttachMessage;
+			const attachMessage = contents as InboundAttachMessage;
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
 				attachMessage.snapshot,
@@ -866,17 +867,26 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/**
-	 * Not used anymore. This is still here for back-compat purposes because channel collection implements
+	 * This is still here for back-compat purposes because channel collection implements
 	 * IFluidDataStoreChannel. Once it is removed from the interface, this method can be removed.
-	 * Container runtime calls `processMessages` instead. For the experimental nested data stores feature,
-	 * the data store context will call `processMessages` as well.
+	 * Container runtime calls `processMessages` instead.
 	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		throw new Error("process should not be called.");
+		this.processMessages(
+			message,
+			[
+				{
+					contents: message.contents,
+					localOpMetadata,
+					clientSequenceNumber: message.clientSequenceNumber,
+				},
+			],
+			local,
+		);
 	}
 
 	/**
@@ -906,14 +916,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 			// corruption in case a deleted data store accidentally submitted an op.
-			if (
-				this.checkAndLogIfDeleted(
-					envelope.address,
-					context,
-					"Changed",
-					"processFluidDataStoreOp",
-				)
-			) {
+			if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
 				return;
 			}
 
@@ -944,6 +947,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				timestampMs: transformedMessage.timestamp,
 				packagePath: context.isLoaded ? context.packagePath : undefined,
 			});
+
+			// Notify GC of any outbound references that were added by this op.
+			detectOutboundReferences(
+				address,
+				transformedMessage.contents,
+				(fromPath: string, toPath: string) =>
+					this.parentContext.addedGCOutboundRoute(
+						fromPath,
+						toPath,
+						transformedMessage.timestamp,
+					),
+			);
 		}
 	}
 

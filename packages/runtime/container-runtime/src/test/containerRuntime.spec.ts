@@ -40,7 +40,6 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
-	type ISequencedRuntimeMessageCore,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -2523,19 +2522,15 @@ describe("Runtime", () => {
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
 
-				const messages: ISequencedRuntimeMessageCore[] = [
+				// Add ops to this context.
+				const messages = [
 					{ sequenceNumber: 1 },
 					{ sequenceNumber: 2 },
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
-				] as unknown as ISequencedRuntimeMessageCore[];
-				messages.forEach((message) => {
-					missingDataStoreContext.processMessages(
-						message,
-						[{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 }],
-						false,
-					);
-				});
+				];
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				missingDataStoreContext["pending"] = messages as ISequencedDocumentMessage[];
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				(containerContext.deltaManager as any).lastSequenceNumber = 2;
