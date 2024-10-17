@@ -5,23 +5,33 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
-import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	TestObjectProvider,
+	type ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 import {
 	DOWithST,
+	DOWithST2,
 	newRuntimeFactory,
 	treeConfig1,
 	treeConfig2,
-	type DOWithST2,
 	type RootDO2,
 } from "./newCode.js";
-import { oldRuntimeFactory, setLSTQuantity, type RootDO } from "./oldCode.js";
+import { oldRuntimeFactory, RootDO, setLSTQuantity } from "./oldCode.js";
+import { runtimeOptions } from "./utils.js";
 
 const lstValue1 = 42;
 const lstValue2 = 38;
@@ -113,12 +123,56 @@ export interface IMigrationStrategy {
 	migrateWithManyContainers(...containers: IContainer[]): Promise<RootDO2[]>;
 }
 
-const migrationStrategies: IMigrationStrategy[] = [];
+const DOWithSTFactory = new DataObjectFactory(
+	"a",
+	DOWithST,
+	[SharedTree.getFactory(), LegacySharedTree.getFactory()],
+	{},
+);
+const DOWithST2Factory = new DataObjectFactory(
+	"b",
+	DOWithST2,
+	[SharedTree.getFactory(), LegacySharedTree.getFactory()],
+	{},
+);
+const rootDOFactory = new DataObjectFactory(
+	"rootdo",
+	RootDO,
+	[LegacySharedTree.getFactory()],
+	{},
+	[DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
+);
+const exampleRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	defaultFactory: rootDOFactory,
+	registryEntries: [rootDOFactory.registryEntry],
+	runtimeOptions,
+});
 
-describeCompat.skip("basicMigration", "NoCompat", (getTestObjectProvider) => {
+class ExampleStrategy implements IMigrationStrategy {
+	name: string = "Example strategy";
+	runtimeFactory = exampleRuntimeFactory;
+	public async migrateWithSummary(provider: ITestObjectProvider): Promise<string> {
+		return "abc";
+	}
+	public async migrateWithoutSummary(provider: ITestObjectProvider): Promise<RootDO2> {
+		const container = await provider.loadContainer(this.runtimeFactory);
+		const rootDataObject = (await container.getEntryPoint()) as RootDO2;
+		return rootDataObject;
+	}
+	public async migrateWithManyContainers(...containers: IContainer[]): Promise<RootDO2[]> {
+		throw new Error();
+	}
+}
+
+const migrationStrategies: IMigrationStrategy[] = [new ExampleStrategy()];
+const createFluidEntryPoint = () => {
+	throw new Error();
+};
+describe.skip("basicMigration", () => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
-		provider = getTestObjectProvider();
+		const driver = new LocalServerTestDriver();
+		provider = new TestObjectProvider(Loader, driver, createFluidEntryPoint);
 	});
 
 	for (const strategy of migrationStrategies) {

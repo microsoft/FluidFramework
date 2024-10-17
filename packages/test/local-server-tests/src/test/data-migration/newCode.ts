@@ -179,7 +179,7 @@ export const DOWithST2Factory = new DataObjectFactory(
 	[SharedTree.getFactory()],
 	{},
 );
-export const RootDO2Factory = new DataObjectFactory("rootdo2", RootDO2, [], {}, [
+export const RootDO2Factory = new DataObjectFactory("rootdo", RootDO2, [], {}, [
 	DOWithSTFactory.registryEntry,
 	DOWithST2Factory.registryEntry,
 ]);
