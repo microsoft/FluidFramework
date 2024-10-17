@@ -8,6 +8,9 @@ import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { TitleSection } from '@site/src/components/TitleSection';
 import { KeyFeaturesSection } from "@site/src/components/keyFeaturesSection";
+import { PartnersSection } from "@site/src/components/partnersSection";
+import { HowItWorksSection } from "@site/src/components/howItWorksSection";
+import { ServiceSection } from "@site/src/components/serviceSection";
 
 export default function(): React.ReactElement {
 	const {siteConfig} = useDocusaurusContext();
@@ -17,6 +20,9 @@ export default function(): React.ReactElement {
 			description="Description will go into a meta tag in <head />">
 			<TitleSection />
 			<KeyFeaturesSection />
+			<PartnersSection />
+			<HowItWorksSection />
+			<ServiceSection />
 	  </Layout>
 	)
 }

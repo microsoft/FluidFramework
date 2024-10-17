@@ -13,7 +13,7 @@ export interface SectionHeaderProps {
 export function SectionHeader({title, subtitle}: SectionHeaderProps): JSX.Element {
 	return <div className="sectionHeader">
 		<div className="sectionHeaderInner">
-			<p className="sectionHeaderSubtitle">{subtitle}</p>
+			{ subtitle && (<p className="sectionHeaderSubtitle">{subtitle}</p>) }
 			<p className="sectionHeaderTitle">{title}</p>
 		</div>
 	</div>;

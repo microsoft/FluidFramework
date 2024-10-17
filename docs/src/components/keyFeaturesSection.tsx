@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { HomePageSection } from '@site/src/components/homePageSection';
+
 import EasyToUseImage from '@site/static/assets/home-easy-to-use.png';
 import OpenSourecImage from '@site/static/assets/home-open-source.png';
 import PerformanceImage from '@site/static/assets/home-performance.png';
 
 import "@site/src/css/keyFeaturesSection.css";
-import { SectionHeader } from '@site/src/components/sectionHeader';
 
 const easyToUseText = "Transform your collaborative experience with our developer friendly framework - where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software.";
 
@@ -17,12 +18,9 @@ const openSourceText = "We believe that an open, inclusive, and respectful com
 const performanceText = "Unleash unparalleled speed and performance with our cutting-edge solution for building real-time collaborative applications. Collaborative features are only successful if they are fast, scale to large data and user bases. Fluid offers an approachable programming model that leverages mainstream web technology while delivering best-in-class performance.";
 
 export function KeyFeaturesSection(): JSX.Element {
-	return <div className="keyFeaturesSection">
-		<div className="keyFeaturesInner">
-			<SectionHeader title="Start building with Fluid Framework" subtitle="Key Features" />
-			<KeyFeaturesCardGrid/>
-		</div>
-	</div>
+	return <HomePageSection title="Start building with Fluid Framework" subtitle="Key Features">
+		<KeyFeaturesCardGrid/>
+	</HomePageSection>;
 }
 
 function KeyFeaturesCardGrid(): JSX.Element {
