@@ -21,13 +21,13 @@ import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	ICreateBlobResponse,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	type ISequencedRuntimeMessageCore,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
@@ -596,7 +596,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return this.sendBlobAttachOp(localId, blobId);
 	}
 
-	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
+	public processBlobAttachMessage(message: ISequencedRuntimeMessageCore, local: boolean) {
 		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
 		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 

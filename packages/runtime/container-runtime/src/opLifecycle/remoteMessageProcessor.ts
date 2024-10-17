@@ -59,6 +59,7 @@ export type InboundMessageResult =
 			messages: InboundSequencedContainerRuntimeMessage[];
 			batchStart: BatchStartInfo;
 			length: number;
+			groupedBatch: boolean;
 	  }
 	| {
 			type: "batchStartingMessage";
@@ -171,6 +172,7 @@ export class RemoteMessageProcessor {
 					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
 				},
 				length: groupedMessages.length, // Will be 0 for an empty batch
+				groupedBatch: true,
 			};
 		}
 
@@ -220,6 +222,7 @@ export class RemoteMessageProcessor {
 					keyMessage: message,
 				},
 				length: 1,
+				groupedBatch: false,
 			};
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);

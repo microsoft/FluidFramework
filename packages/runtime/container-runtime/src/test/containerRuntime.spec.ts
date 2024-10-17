@@ -40,6 +40,7 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
+	type ISequencedRuntimeMessageCore,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -875,7 +876,7 @@ describe("Runtime", () => {
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					process: (..._args) => {},
+					processMessages: (..._args) => {},
 					setConnectionState: (..._args) => {},
 				} as ChannelCollection;
 			};
@@ -2264,8 +2265,8 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function createSnapshot(addMissindDatasore: boolean, setGroupId: boolean = true) {
-				if (addMissindDatasore) {
+			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true) {
+				if (addMissingDatastore) {
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
 						trees: {
@@ -2521,15 +2522,20 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
-				// Add ops to this context.
-				const messages = [
+
+				const messages: ISequencedRuntimeMessageCore[] = [
 					{ sequenceNumber: 1 },
 					{ sequenceNumber: 2 },
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
-				];
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				missingDataStoreContext["pending"] = messages as ISequencedDocumentMessage[];
+				] as unknown as ISequencedRuntimeMessageCore[];
+				messages.forEach((message) => {
+					missingDataStoreContext.processMessages(
+						message,
+						[{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 }],
+						false,
+					);
+				});
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				(containerContext.deltaManager as any).lastSequenceNumber = 2;

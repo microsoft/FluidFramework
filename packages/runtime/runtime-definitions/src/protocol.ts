@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ITree, ISignalMessage } from "@fluidframework/driver-definitions/internal";
+import type {
+	ITree,
+	ISignalMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * An envelope wraps the contents with the intended target
@@ -65,3 +69,27 @@ export interface IAttachMessage {
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 	snapshot: IAttachMessage["snapshot"] | null;
 };
+
+/**
+ * This is the message type that is used within the runtime when processing a sequenced message.
+ * It is the same as ISequencedDocumentMessage, but without the contents and clientSequenceNumbers
+ * which are sent separately. The contents are modified at multiple layers in the stack so having it
+ * separate doesn't require packing and unpacking the entire message.
+ * @alpha
+ * @legacy
+ */
+export type ISequencedRuntimeMessageCore = Omit<
+	ISequencedDocumentMessage,
+	"contents" | "clientSequenceNumber"
+>;
+
+/**
+ * These are the contents of a runtime message as it is processed throughout the stack.
+ * @alpha
+ * @legacy
+ */
+export interface IRuntimeMessageContents {
+	contents: unknown;
+	localOpMetadata: unknown;
+	clientSequenceNumber: number;
+}
