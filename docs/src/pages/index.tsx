@@ -12,6 +12,9 @@ import { PartnersSection } from "@site/src/components/partnersSection";
 import { HowItWorksSection } from "@site/src/components/howItWorksSection";
 import { ServiceSection } from "@site/src/components/serviceSection";
 
+// TODO: ideally the sections should be aligned horizontally.
+// Currently, each is centered and scales independently.
+
 export default function(): React.ReactElement {
 	const {siteConfig} = useDocusaurusContext();
 	return (
