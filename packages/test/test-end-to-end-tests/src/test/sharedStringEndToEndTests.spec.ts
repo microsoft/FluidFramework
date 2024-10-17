@@ -188,7 +188,10 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 		await provider.ensureSynchronized();
 	});
 
-	it("can load summarized grouped batch", async () => {
+	it("can load summarized grouped batch", async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
 		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
