@@ -184,8 +184,8 @@ export class Interval implements ISerializableInterval {
 			);
 		}
 
-		const startPos = typeof start === "number" ? start : start?.pos ?? this.start;
-		const endPos = typeof end === "number" ? end : end?.pos ?? this.end;
+		const startPos = typeof start === "number" ? start : (start?.pos ?? this.start);
+		const endPos = typeof end === "number" ? end : (end?.pos ?? this.end);
 
 		if (this.start === startPos && this.end === endPos) {
 			// Return undefined to indicate that no change is necessary.

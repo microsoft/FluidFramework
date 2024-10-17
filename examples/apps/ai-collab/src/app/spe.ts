@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { start } from "@/infra/authHelper"; // eslint-disable-line import/no-internal-modules
 
