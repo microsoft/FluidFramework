@@ -9,7 +9,7 @@ import { TscDependentTask } from "./tscTask";
 export class GenerateEntrypointsTask extends TscDependentTask {
 	protected get configFileFullPaths() {
 		// Add package.json, which tsc should also depend on, but currently doesn't.
-		return [this.node.pkg.packageJsonFileName];
+		return [this.node.pkg.packageJsonFilePath];
 	}
 
 	protected async getToolVersion() {

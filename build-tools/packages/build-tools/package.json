@@ -39,6 +39,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluid-tools/build-infrastructure": "workspace:~",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.0",
 		"async": "^3.2.4",
@@ -59,6 +60,7 @@
 		"picomatch": "^2.3.1",
 		"rimraf": "^4.4.1",
 		"semver": "^7.5.4",
+		"simple-git": "^3.19.1",
 		"sort-package-json": "1.57.0",
 		"ts-deepmerge": "^7.0.0",
 		"ts-morph": "^22.0.0",

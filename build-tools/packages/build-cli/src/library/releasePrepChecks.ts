@@ -99,7 +99,7 @@ export const CheckDependenciesInstalled: CheckFunction = async (
 			: [releaseGroupOrPackage];
 
 	const installChecks = await Promise.all(
-		packagesToCheck.map(async (pkg) => pkg.checkInstall(false)),
+		packagesToCheck.map(async (pkg) => pkg.checkInstall()),
 	);
 
 	// If any of the install checks returned false, dependencies need to be installed
