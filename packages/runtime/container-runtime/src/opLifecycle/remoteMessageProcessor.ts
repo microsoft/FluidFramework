@@ -20,11 +20,11 @@ import { asBatchMetadata } from "../metadata.js";
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
+// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
+import { serializeOpContents } from "./outbox.js";
 
-/** Messages being received as a batch, with details needed to process the batch */
-export interface InboundBatch {
-	/** Messages in this batch */
-	readonly messages: InboundSequencedContainerRuntimeMessage[];
+/** Info about the batch we learn when we process the first message */
+export interface BatchStartInfo {
 	/** Batch ID, if present */
 	readonly batchId: string | undefined;
 	/** clientId that sent this batch. Used to compute Batch ID if needed */
@@ -46,6 +46,33 @@ export interface InboundBatch {
 	readonly keyMessage: ISequencedDocumentMessage;
 }
 
+/**
+ * Result of processing the next inbound message.
+ * Depending on the message and configuration of RemoteMessageProcessor, the result may be:
+ * - A full batch of messages (including a single-message batch)
+ * - The first message of a multi-message batch
+ * - The next message in a multi-message batch
+ */
+export type InboundMessageResult =
+	| {
+			type: "fullBatch";
+			messages: InboundSequencedContainerRuntimeMessage[];
+			batchStart: BatchStartInfo;
+			length: number;
+	  }
+	| {
+			type: "batchStartingMessage";
+			batchStart: BatchStartInfo;
+			nextMessage: InboundSequencedContainerRuntimeMessage;
+			length?: never;
+	  }
+	| {
+			type: "nextBatchMessage";
+			batchEnd?: boolean;
+			nextMessage: InboundSequencedContainerRuntimeMessage;
+			length?: never;
+	  };
+
 function assertHasClientId(
 	message: ISequencedDocumentMessage,
 ): asserts message is ISequencedDocumentMessage & { clientId: string } {
@@ -62,12 +89,7 @@ function assertHasClientId(
  * @internal
  */
 export class RemoteMessageProcessor {
-	/**
-	 * The current batch being received, with details needed to process it.
-	 *
-	 * @remarks If undefined, we are expecting the next message to start a new batch.
-	 */
-	private batchInProgress: InboundBatch | undefined;
+	private batchInProgress: boolean = false;
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -105,7 +127,7 @@ export class RemoteMessageProcessor {
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
 		logLegacyCase: (codePath: string) => void,
-	): InboundBatch | undefined {
+	): InboundMessageResult | undefined {
 		let message = remoteMessageCopy;
 
 		assertHasClientId(message);
@@ -134,110 +156,98 @@ export class RemoteMessageProcessor {
 		}
 
 		if (isGroupedBatch(message)) {
-			// We should be awaiting a new batch (batchInProgress undefined)
-			assert(
-				this.batchInProgress === undefined,
-				0x9d3 /* Grouped batch interrupting another batch */,
-			);
+			// We should be awaiting a new batch (batchInProgress false)
+			assert(!this.batchInProgress, 0x9d3 /* Grouped batch interrupting another batch */);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+
 			return {
+				type: "fullBatch",
 				messages: groupedMessages, // Will be [] for an empty batch
-				batchStartCsn: message.clientSequenceNumber,
-				clientId,
-				batchId,
-				keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+				batchStart: {
+					batchStartCsn: message.clientSequenceNumber,
+					clientId,
+					batchId,
+					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+				},
+				length: groupedMessages.length, // Will be 0 for an empty batch
 			};
 		}
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message, logLegacyCase);
 
-		const { batchEnded } = this.addMessageToBatch(
+		return this.getResultBasedOnBatchMetadata(
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
-
-		if (!batchEnded) {
-			// batch not yet complete
-			return undefined;
-		}
-
-		const completedBatch = this.batchInProgress;
-		this.batchInProgress = undefined;
-		return completedBatch;
 	}
 
 	/**
-	 * Add the given message to the current batch, and indicate whether the batch is now complete.
-	 *
-	 * @returns batchEnded: true if the batch is now complete, batchEnded: false if more messages are expected
+	 * Now that the message has been "unwrapped" as to any virtualization (grouping, compression, chunking),
+	 * inspect the batch metadata flag and determine what kind of result to return.
 	 */
-	private addMessageToBatch(
+	private getResultBasedOnBatchMetadata(
 		message: InboundSequencedContainerRuntimeMessage & { clientId: string },
-	): { batchEnded: boolean } {
+	): InboundMessageResult {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
-		if (this.batchInProgress === undefined) {
+		if (!this.batchInProgress) {
 			// We are waiting for a new batch
 			assert(batchMetadataFlag !== false, 0x9d5 /* Unexpected batch end marker */);
 
 			// Start of a new multi-message batch
 			if (batchMetadataFlag === true) {
-				this.batchInProgress = {
-					messages: [message],
-					batchId: asBatchMetadata(message.metadata)?.batchId,
-					clientId: message.clientId,
-					batchStartCsn: message.clientSequenceNumber,
-					keyMessage: message,
+				this.batchInProgress = true;
+				return {
+					type: "batchStartingMessage",
+					batchStart: {
+						batchId: asBatchMetadata(message.metadata)?.batchId,
+						clientId: message.clientId,
+						batchStartCsn: message.clientSequenceNumber,
+						keyMessage: message,
+					},
+					nextMessage: message,
 				};
-
-				return { batchEnded: false };
 			}
 
 			// Single-message batch (Since metadata flag is undefined)
-			this.batchInProgress = {
+			return {
+				type: "fullBatch",
 				messages: [message],
-				batchStartCsn: message.clientSequenceNumber,
-				clientId: message.clientId,
-				batchId: asBatchMetadata(message.metadata)?.batchId,
-				keyMessage: message,
+				batchStart: {
+					batchStartCsn: message.clientSequenceNumber,
+					clientId: message.clientId,
+					batchId: asBatchMetadata(message.metadata)?.batchId,
+					keyMessage: message,
+				},
+				length: 1,
 			};
-			return { batchEnded: true };
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
 
-		this.batchInProgress.messages.push(message);
+		// Clear batchInProgress state if the batch is ending
+		if (batchMetadataFlag === false) {
+			this.batchInProgress = false;
+		}
 
-		return { batchEnded: batchMetadataFlag === false };
+		return {
+			type: "nextBatchMessage",
+			nextMessage: message,
+			batchEnd: batchMetadataFlag === false,
+		};
 	}
 }
 
 /**
- * Takes an incoming message and if the contents is a string, JSON.parse's it in place
+ * Takes an incoming runtime message JSON.parse's its contents in place, if needed (old Loader does this for us).
+ * Only to be used for runtine messages.
+ * @remarks - Serialization during submit happens via {@link serializeOpContents}
  * @param mutableMessage - op message received
- * @param hasModernRuntimeMessageEnvelope - false if the message does not contain the modern op envelop where message.type is MessageType.Operation
- * @param logLegacyCase - callback to log when legacy op is encountered
  */
-export function ensureContentsDeserialized(
-	mutableMessage: ISequencedDocumentMessage,
-	hasModernRuntimeMessageEnvelope: boolean,
-	logLegacyCase: (codePath: string) => void,
-): void {
-	// This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
-	// Note: Until that change is made in the loader, this case will never be hit.
-	// Then there will be a long time of needing both cases, until LTS catches up to the change.
-	let didParseJsonContents: boolean;
+export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+	// This should become unconditional once Loader LTS reaches 2.4 or later.
+	// There will be a long time of needing both cases, until LTS advances to that point.
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
-		didParseJsonContents = true;
-	} else {
-		didParseJsonContents = false;
-	}
-
-	// The DeltaManager parses the contents of the message as JSON if it is a string,
-	// so we should never end up parsing it here.
-	// Let's observe if we are wrong about this to learn about these cases.
-	if (didParseJsonContents) {
-		logLegacyCase("ensureContentsDeserialized_foundJsonContents");
 	}
 }
 

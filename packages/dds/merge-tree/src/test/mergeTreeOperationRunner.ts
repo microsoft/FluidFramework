@@ -14,6 +14,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -38,6 +39,32 @@ export const obliterateRange: TestOperation = (
 	opStart: number,
 	opEnd: number,
 ) => client.obliterateRangeLocal(opStart, opEnd);
+
+export const obliterateRangeSided: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	let startSide: Side;
+	let endSide: Side;
+
+	const oblEnd = random.integer(opStart, client.getLength() - 1);
+	// TODO: to create zero length obliterate ops, change '<=' to '<'.
+	// Doing so may cause different failures than those without zero length.
+	// AB#19930
+	if (oblEnd - opStart <= 1) {
+		startSide = Side.Before;
+		endSide = Side.After;
+	} else {
+		startSide = random.pick([Side.Before, Side.After]);
+		endSide = random.pick([Side.Before, Side.After]);
+	}
+
+	const start = { pos: opStart, side: startSide };
+	const end = { pos: oblEnd, side: endSide };
+	return client.obliterateRangeLocal(start, end);
+};
 
 export const annotateRange: TestOperation = (
 	client: TestClient,
@@ -215,6 +242,7 @@ export interface IMergeTreeOperationRunnerConfig {
 	readonly opsPerRoundRange: IConfigRange;
 	readonly incrementalLog?: boolean;
 	readonly operations: readonly TestOperation[];
+	readonly applyOpDuringGeneration?: boolean;
 	growthFunc(input: number): number;
 	resultsFilePostfix?: string;
 }
@@ -261,8 +289,9 @@ export function runMergeTreeOperationRunner(
 				opsPerRound,
 				minLength,
 				config.operations,
+				config.applyOpDuringGeneration,
 			);
-			seq = apply(seq, messageData, clients, logger, random);
+			seq = apply(messageData[0][0].sequenceNumber - 1, messageData, clients, logger, random);
 			const resultText = logger.validate();
 			results.push({
 				initialText,
@@ -276,7 +305,7 @@ export function runMergeTreeOperationRunner(
 
 	if (config.resultsFilePostfix !== undefined) {
 		const resultsFilePath = `${replayResultsPath}/len_${minLength}-clients_${clients.length}-${config.resultsFilePostfix}`;
-		fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined, 4));
+		fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined, "\t"));
 	}
 
 	return seq;
@@ -290,15 +319,24 @@ export function generateOperationMessagesForClients(
 	opsPerRound: number,
 	minLength: number,
 	operations: readonly TestOperation[],
+	applyOpDuringGeneration?: boolean,
 ): [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] {
 	const minimumSequenceNumber = startingSeq;
-	let tempSeq = startingSeq * -1;
+	let runningSeq = startingSeq;
 	const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
 
 	for (let i = 0; i < opsPerRound; i++) {
 		// pick a client greater than 0, client 0 only applies remote ops
 		// and is our baseline
 		const client = clients[random.integer(1, clients.length - 1)];
+
+		if (applyOpDuringGeneration === true && messages.length > 0 && random.bool()) {
+			const toApply = messages
+				.filter(([msg]) => msg.sequenceNumber > client.getCollabWindow().currentSeq)
+				.slice(0, random.integer(1, 3));
+			applyMessages(toApply[0][0].sequenceNumber - 1, toApply, [client], logger);
+		}
+
 		const len = client.getLength();
 		const sg = client.peekPendingSegmentGroups();
 		let op: IMergeTreeOp | undefined;
@@ -325,7 +363,7 @@ export function generateOperationMessagesForClients(
 					`op created but segment group not enqueued.${logger}`,
 				);
 			}
-			const message = client.makeOpMessage(op, --tempSeq);
+			const message = client.makeOpMessage(op, ++runningSeq);
 			message.minimumSequenceNumber = minimumSequenceNumber;
 			messages.push([
 				message,
@@ -335,6 +373,16 @@ export function generateOperationMessagesForClients(
 			]);
 		}
 	}
+
+	const maxProcessedSeq = Math.max(...clients.map((c) => c.getCollabWindow().currentSeq));
+	if (messages.length > 0) {
+		const index = messages.findIndex(([msg]) => msg.sequenceNumber === maxProcessedSeq);
+		if (index !== -1) {
+			const apply = messages.splice(0, index + 1);
+			applyMessages(apply[0][0].sequenceNumber - 1, apply, clients, logger);
+		}
+	}
+
 	return messages;
 }
 
@@ -378,7 +426,11 @@ export function applyMessages(
 		for (let i = 0; i < messageData.length; i++) {
 			const [message] = messageData[i];
 			message.sequenceNumber = ++seq;
-			for (const c of clients) c.applyMsg(message);
+			for (const c of clients) {
+				if (c.getCollabWindow().currentSeq < message.sequenceNumber) {
+					c.applyMsg(message);
+				}
+			}
 		}
 	} catch (error) {
 		throw logger.addLogsToError(error);

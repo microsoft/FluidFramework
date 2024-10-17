@@ -20,7 +20,7 @@ import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { type FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
+import { SharedTreeFactory, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -28,11 +28,11 @@ import {
 	WideRoot,
 	deepPath,
 	localFieldKey,
-	makeDeepContent,
+	makeDeepContentSimple,
 	makeDeepStoredContent,
 	makeJsDeepTree,
 	makeJsWideTreeWithEndValue,
-	makeWideContentWithEndValue,
+	makeWideContentWithEndValueSimple,
 	makeWideStoredContentWithEndValue,
 	readDeepCursorTree,
 	readDeepFlexTree,
@@ -153,12 +153,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: FlexTreeView;
+			let tree: CheckoutFlexTreeView;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepCursorTree(tree);
@@ -168,7 +168,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: FlexTreeView;
+			let tree: CheckoutFlexTreeView;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -180,7 +180,7 @@ describe("SharedTree benchmarks", () => {
 						expected += index;
 					}
 					tree = flexTreeViewWithContent(
-						makeWideContentWithEndValue(numberOfNodes, numberOfNodes - 1),
+						makeWideContentWithEndValueSimple(numberOfNodes, numberOfNodes - 1),
 					);
 				},
 				benchmarkFn: () => {
@@ -193,12 +193,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: FlexTreeView;
+			let tree: CheckoutFlexTreeView;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepFlexTree(tree);
@@ -208,14 +208,14 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: FlexTreeView;
+			let tree: CheckoutFlexTreeView;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
-					tree = flexTreeViewWithContent(makeWideContentWithEndValue(numberOfNodes));
+					tree = flexTreeViewWithContent(makeWideContentWithEndValueSimple(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { nodesCount, sum } = readWideFlexTree(tree);
@@ -369,7 +369,7 @@ describe("SharedTree benchmarks", () => {
 		// - generating 5 edits per second with a 2000ms round-trip time
 		// - generating 10 edits per second with a 1000ms round-trip time
 		// - generating 100 edits per second with a 100ms round-trip time
-		const commitCounts = [1, 5, 10];
+		const commitCounts = isInPerformanceTestingMode ? [1, 5, 10] : [1, 2];
 		for (const peerCount of peerCounts) {
 			for (const commitCount of commitCounts) {
 				const test = benchmark({

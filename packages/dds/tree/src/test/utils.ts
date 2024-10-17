@@ -91,13 +91,10 @@ import {
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	type FlexFieldSchema,
 	type NodeKeyManager,
-	ViewSchema,
 	buildForest,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
-	intoStoredSchema,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
@@ -113,32 +110,31 @@ import {
 	CheckoutFlexTreeView,
 	type ISharedTree,
 	type ITreeCheckout,
-	type InitializeAndSchematizeConfiguration,
 	SharedTree,
 	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
 	type TreeCheckout,
-	type TreeContent,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITransaction,
 	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ensureSchema, type TreeStoredContent } from "../shared-tree/schematizeTree.js";
+import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 import {
 	SchematizingSimpleTreeView,
-	requireSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
-	TreeViewConfiguration,
+	type TreeViewConfiguration,
 	SchemaFactory,
 	type InsertableTreeFieldFromImplicitField,
 	toStoredSchema,
+	type TreeViewEvents,
+	type TreeView,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -152,6 +148,8 @@ import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-ut
 import type { Client } from "@fluid-private/test-dds-utils";
 import { cursorFromInsertable } from "../simple-tree/index.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 
 // Testing utilities
 
@@ -576,13 +574,22 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(content: TreeContent): JsonableTree[] {
+function contentToJsonableTree(
+	content: TreeSimpleContent | TreeStoredContent,
+): JsonableTree[] {
 	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
 }
 
-export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
+export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
 	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, intoStoredSchema(content.schema));
+	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
+}
+export function validateTreeStoredContent(
+	tree: ITreeCheckout,
+	content: TreeStoredContent,
+): void {
+	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
+	expectSchemaEqual(tree.storedSchema, content.schema);
 }
 
 export function expectSchemaEqual(
@@ -720,8 +727,8 @@ function createCheckoutWithContent(
 	return { checkout, logger };
 }
 
-export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
-	content: TreeContent<TRoot>,
+export function flexTreeViewWithContent(
+	content: TreeSimpleContent,
 	args?: {
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
@@ -730,17 +737,17 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	},
 ): CheckoutFlexTreeView {
 	const view = checkoutWithContent(
-		{ initialTree: content.initialTree, schema: intoStoredSchema(content.schema) },
+		{ initialTree: content.initialTree, schema: toStoredSchema(content.schema) },
 		args,
 	);
 	return new CheckoutFlexTreeView(
 		view,
-		content.schema,
+		defaultSchemaPolicy,
 		args?.nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
-export function forestWithContent(content: TreeStoredContent | TreeContent): IEditableForest {
+export function forestWithContent(content: TreeStoredContent): IEditableForest {
 	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
@@ -883,6 +890,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
@@ -942,11 +950,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 export function testChangeReceiver<TChange>(
 	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
 ): [
-	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[0],
+	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[1],
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
-	const changeReceiver = (change: TChange): number => changes.push(change);
+	const changeReceiver = (taggedChange: TaggedChange<TChange>): number =>
+		changes.push(taggedChange.change);
 	return [changeReceiver, () => [...changes]];
 }
 
@@ -1039,7 +1048,9 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
+export function createTestUndoRedoStacks(
+	events: Listenable<TreeViewEvents | CheckoutEvents>,
+): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -1096,34 +1107,6 @@ export function mintRevisionTag(): RevisionTag {
 }
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
-
-/**
- * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
- */
-export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
-	tree: SharedTree,
-	config: InitializeAndSchematizeConfiguration<TRoot>,
-	onDispose?: () => void,
-	nodeKeyManager?: NodeKeyManager,
-): CheckoutFlexTreeView {
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, intoStoredSchema(config.schema));
-	if (
-		!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, {
-			initialTree: config.initialTree,
-			schema: viewSchema.storedSchema,
-		})
-	) {
-		assert.fail("Schematize failed");
-	}
-
-	return requireSchema(
-		tree.checkout,
-		viewSchema,
-		onDispose ?? (() => {}),
-		nodeKeyManager ?? new MockNodeKeyManager(),
-		config.schema,
-	);
-}
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -1198,56 +1181,41 @@ export function getView<TSchema extends ImplicitFieldSchema>(
  * Views the supplied checkout with the given schema.
  */
 export function viewCheckout<TSchema extends ImplicitFieldSchema>(
-	checkout: ITreeCheckout,
+	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
 	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
 }
 
 /**
- * Forks a simple tree view.
- */
-export function forkView<T extends ImplicitFieldSchema>(
-	viewToFork: SchematizingSimpleTreeView<T>,
-): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
-export function forkView<TIn extends ImplicitFieldSchema, TOut extends ImplicitFieldSchema>(
-	viewToFork: SchematizingSimpleTreeView<TIn>,
-	schema?: TOut,
-): SchematizingSimpleTreeView<TOut> & { checkout: ITreeCheckoutFork };
-export function forkView<T extends ImplicitFieldSchema>(
-	viewToFork: SchematizingSimpleTreeView<T>,
-	schema?: T,
-): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
-	return new SchematizingSimpleTreeView<T>(
-		viewToFork.checkout.fork(),
-		new TreeViewConfiguration({
-			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
-			schema: schema ?? viewToFork.config.schema,
-		}),
-		new MockNodeKeyManager(),
-	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
-}
-
-/**
  * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
  */
 export class MockTreeCheckout implements ITreeCheckout {
-	private readonly _editor: ISharedTreeEditor | undefined;
 	public constructor(
 		public readonly forest: IForestSubscription,
-		editor?: ISharedTreeEditor,
-	) {
-		this._editor = editor;
+		private readonly options?: {
+			schema?: TreeStoredSchemaSubscription;
+			editor?: ISharedTreeEditor;
+		},
+	) {}
+
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot> {
+		throw new Error("'viewWith' not implemented in MockTreeCheckout.");
 	}
 
 	public get storedSchema(): TreeStoredSchemaSubscription {
-		throw new Error("'storedSchema' property not implemented in MockTreeCheckout.");
+		if (this.options?.schema === undefined) {
+			throw new Error("No schema provided to MockTreeCheckout.");
+		}
+		return this.options.schema;
 	}
 	public get editor(): ISharedTreeEditor {
-		if (this._editor === undefined) {
+		if (this.options?.editor === undefined) {
 			throw new Error("No editor provided to MockTreeCheckout.");
 		}
-		return this._editor;
+		return this.options.editor;
 	}
 	public get transaction(): ITransaction {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
@@ -1259,7 +1227,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 
-	public fork(): ITreeCheckoutFork {
+	public branch(): ITreeCheckoutFork {
 		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
 	}
 	public merge(view: unknown, disposeView?: unknown): void {

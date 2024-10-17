@@ -21,6 +21,16 @@ export interface IRunner {
 	 * Stops the runner
 	 */
 	stop(caller?: string, uncaughtException?: any): Promise<void>;
+
+	/**
+	 * Pauses the runner
+	 */
+	pause?(partitionId: number, offset: number): Promise<void>;
+
+	/**
+	 * Resumes the runner
+	 */
+	resume?(partitionId: number): Promise<void>;
 }
 
 /**

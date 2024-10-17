@@ -33,6 +33,7 @@ import { DeltaService, DocumentDeleteService } from "../../alfred/services";
 import * as SessionHelper from "../../utils/sessionHelper";
 import Sinon from "sinon";
 import { Constants } from "../../utils";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -174,6 +175,7 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottler,
 					);
+					const startupCheck = new StartupCheck();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -186,6 +188,7 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,
@@ -375,6 +378,7 @@ describe("Routerlicious", () => {
 						restClusterGetSessionThrottler,
 					);
 
+					const startupCheck = new StartupCheck();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -387,6 +391,7 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,
@@ -542,6 +547,7 @@ describe("Routerlicious", () => {
 						restClusterGetSessionThrottler,
 					);
 
+					const startupCheck = new StartupCheck();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -554,6 +560,7 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,
@@ -665,6 +672,7 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restClusterGetSessionThrottler,
 					);
+					const startupCheck = new StartupCheck();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -677,6 +685,7 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
 					);
 					supertest = request(app);
 				});
@@ -747,6 +756,7 @@ describe("Routerlicious", () => {
 
 					spyGetSession = Sinon.spy(SessionHelper, "getSession");
 
+					const startupCheck = new StartupCheck();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -759,6 +769,7 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
 					);
 					supertest = request(app);
 				});
@@ -864,6 +875,7 @@ describe("Routerlicious", () => {
 						restClusterGetSessionThrottler,
 					);
 
+					const startupCheck = new StartupCheck();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -876,6 +888,7 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,

@@ -225,6 +225,18 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 }
 
 // @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
+
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
+
+// @public
 export enum DocumentationNodeType {
     BlockQuote = "BlockQuote",
     CodeSpan = "CodeSpan",
@@ -299,6 +311,9 @@ export interface DocumentNodeProps {
     readonly children: SectionNode[];
     readonly documentPath: string;
 }
+
+// @public
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
 export interface DocumentWriter {
@@ -426,8 +441,7 @@ declare namespace HtmlRenderer {
         renderApiModelAsHtml as renderApiModel,
         renderDocumentsAsHtml as renderDocuments,
         renderDocument,
-        renderNode,
-        renderNodes
+        renderHtml
     }
 }
 export { HtmlRenderer }
@@ -549,8 +563,8 @@ declare namespace MarkdownRenderer {
         renderApiModelAsMarkdown as renderApiModel,
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
-        renderNode_2 as renderNode,
-        renderNodes_2 as renderNodes
+        renderNode,
+        renderNodes
     }
 }
 export { MarkdownRenderer }
@@ -602,16 +616,33 @@ export { ReleaseTag }
 function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
+function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
+
+// @public
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
+
+// @public @sealed
+export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+}
 
 // @public
 function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
-function renderNode_2(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+function renderHtml(html: Nodes, { prettyFormatting }: {
+    prettyFormatting?: boolean;
+}): string;
+
+// @public @sealed
+export interface RenderHtmlConfig {
+    prettyFormatting?: boolean;
+}
 
 // @public
-function renderNodes_2(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+function renderNode(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+
+// @public
+function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -713,6 +744,29 @@ export interface TextFormatting {
     readonly bold?: boolean;
     readonly italic?: boolean;
     readonly strikethrough?: boolean;
+}
+
+// @public
+export interface ToHtmlConfig extends ConfigurationBase {
+    readonly customTransformations?: ToHtmlTransformations;
+    readonly language?: string;
+    readonly rootFormatting?: TextFormatting;
+    readonly startingHeadingLevel?: number;
+}
+
+// @public
+export interface ToHtmlContext extends TextFormatting {
+    readonly headingLevel: number;
+    readonly logger: Logger;
+    readonly transformations: ToHtmlTransformations;
+}
+
+// @public
+export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
+
+// @public
+export interface ToHtmlTransformations {
+    [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { ConnectedClientId } from "./baseTypes.js";
-import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { IPresence } from "./presence.js";
+import type { ClientConnectionId } from "./baseTypes.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
+import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
 import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
-import type { PresenceStates, PresenceStatesSchema } from "./types.js";
+import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import type {
+	PresenceStates,
+	PresenceStatesSchema,
+	PresenceWorkspaceAddress,
+} from "./types.js";
 
-import type { IRuntimeInternal } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
 
 interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;
@@ -27,27 +31,24 @@ interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 }
 
 interface SystemDatastore {
-	"system:presence": {
-		priorClientIds: {
-			[ClientId: ConnectedClientId]: InternalTypes.ValueRequiredState<ConnectedClientId[]>;
-		};
-	};
+	"system:presence": SystemWorkspaceDatastore;
 }
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type PresenceDatastore = {
+type InternalWorkspaceAddress = `${"s" | "n"}:${PresenceWorkspaceAddress}`;
+
+type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
-} & SystemDatastore;
+};
 
 interface GeneralDatastoreMessageContent {
 	[WorkspaceAddress: string]: {
 		[StateValueManagerKey: string]: {
-			[ClientId: ConnectedClientId]: ClientUpdateEntry;
+			[ClientSessionId: ClientSessionId]: ClientUpdateEntry;
 		};
 	};
 }
 
-type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
+type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
 
 const datastoreUpdateMessageType = "Pres:DatastoreUpdate";
 interface DatastoreUpdateMessage extends IInboundSignalMessage {
@@ -56,7 +57,7 @@ interface DatastoreUpdateMessage extends IInboundSignalMessage {
 		sendTimestamp: number;
 		avgLatency: number;
 		isComplete?: true;
-		data: GeneralDatastoreMessageContent & Partial<SystemDatastore>;
+		data: DatastoreMessageContent;
 	};
 }
 
@@ -64,7 +65,7 @@ const joinMessageType = "Pres:ClientJoin";
 interface ClientJoinMessage extends IInboundSignalMessage {
 	type: typeof joinMessageType;
 	content: {
-		updateProviders: ConnectedClientId[];
+		updateProviders: ClientConnectionId[];
 		sendTimestamp: number;
 		avgLatency: number;
 		data: DatastoreMessageContent;
@@ -78,36 +79,22 @@ function isPresenceMessage(
 }
 
 /**
- * This interface is a subset of (IContainerRuntime & IRuntimeInternal) and (IFluidDataStoreRuntime) that is needed by the PresenceStates.
- *
- * @privateRemarks
- * Replace with non-DataStore based interface.
- *
- * @internal
- */
-export type IEphemeralRuntime = Pick<
-	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "getAudience" | "off" | "on" | "submitSignal"
->;
-
-/**
  * @internal
  */
 export interface PresenceDatastoreManager {
+	joinSession(clientId: ClientConnectionId): void;
 	getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: string,
+		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema>;
-	processSignal(message: IInboundSignalMessage, local: boolean): void;
+	processSignal(message: IExtensionMessage, local: boolean): void;
 }
 
 /**
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastore = {
-		"system:presence": { priorClientIds: {} },
-	};
+	private readonly datastore: PresenceDatastore;
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -115,58 +102,38 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private readonly workspaces = new Map<string, PresenceStatesEntry<PresenceStatesSchema>>();
 
 	public constructor(
+		private readonly clientSessionId: ClientSessionId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly presence: IPresence,
+		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
+		private readonly logger: ITelemetryLoggerExt | undefined,
+		systemWorkspaceDatastore: SystemWorkspaceDatastore,
+		systemWorkspace: PresenceStatesEntry<PresenceStatesSchema>,
 	) {
-		runtime.on("disconnected", () => {
-			const { clientId } = this.runtime;
-			assert(clientId !== undefined, "Disconnected without local clientId");
-			for (const [_address, allKnownWorkspaceState] of Object.entries(this.datastore)) {
-				for (const [_key, allKnownState] of Object.entries(allKnownWorkspaceState)) {
-					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-					delete allKnownState[clientId];
-				}
-			}
-			// TODO: Consider caching prior (current) clientId to broadcast when reconnecting so others may remap state.
-		});
-		runtime.on("connected", () => {
-			const { clientId } = this.runtime;
-			assert(clientId !== undefined, "Connected without local clientId");
-			for (const [address, _allKnownWorkspaceState] of Object.entries(this.datastore)) {
-				const workspace = this.workspaces.get(address);
-				if (workspace) {
-					workspace.internal.onConnect(clientId);
-				} else {
-					// A client may not send state without creating a workspace.
-					// Once a workspace is created, it is never removed. So there
-					// should never be an unmanaged workspace with this client's
-					// clientId in it.
-					// TODO: Consider asserting there is no representation of this
-					// client in held state -- search for past client ids.
-				}
-			}
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
+		this.workspaces.set("system:presence", systemWorkspace);
+	}
 
-			// Broadcast join message to all clients
-			const updateProviders = [...this.runtime.getAudience().getMembers().keys()].filter(
-				(audienceClientId) => audienceClientId !== clientId,
-			);
-			// Limit to three providers to prevent flooding the network.
-			// If none respond, others present will (should) after a delay.
-			if (updateProviders.length > 3) {
-				updateProviders.length = 3;
-			}
-			this.runtime.submitSignal(joinMessageType, {
-				sendTimestamp: Date.now(),
-				avgLatency: this.averageLatency,
-				data: this.datastore,
-				updateProviders,
-			} satisfies ClientJoinMessage["content"]);
-		});
-		runtime.on("signal", this.processSignal.bind(this));
+	public joinSession(clientId: ClientConnectionId): void {
+		// Broadcast join message to all clients
+		const updateProviders = [...this.runtime.getQuorum().getMembers().keys()].filter(
+			(quorumClientId) => quorumClientId !== clientId,
+		);
+		// Limit to three providers to prevent flooding the network.
+		// If none respond, others present will (should) after a delay.
+		if (updateProviders.length > 3) {
+			updateProviders.length = 3;
+		}
+		this.runtime.submitSignal(joinMessageType, {
+			sendTimestamp: Date.now(),
+			avgLatency: this.averageLatency,
+			data: this.datastore,
+			updateProviders,
+		} satisfies ClientJoinMessage["content"]);
 	}
 
 	public getWorkspace<TSchema extends PresenceStatesSchema>(
-		internalWorkspaceAddress: string,
+		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
 	): PresenceStates<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
@@ -180,20 +147,35 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		const localUpdate = (
-			stateKey: string,
-			value: ClientUpdateEntry,
+			states: { [key: string]: ClientUpdateEntry },
 			forceBroadcast: boolean,
 		): void => {
-			const clientId = this.runtime.clientId;
-			if (clientId === undefined) {
+			// Check for connectivity before sending updates.
+			if (!this.runtime.connected) {
 				return;
 			}
 
+			const clientConnectionId = this.runtime.clientId;
+			assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
+			const currentClientToSessionValueState =
+				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+
+			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
+			for (const [key, value] of Object.entries(states)) {
+				updates[key] = { [this.clientSessionId]: value };
+			}
 			this.localUpdate(
 				{
-					[internalWorkspaceAddress]: {
-						[stateKey]: { [clientId]: value },
+					// Always send current connection mapping for some resiliency against
+					// lost signals. This ensures that client session id found in `updates`
+					// (which is this client's client session id) is always represented in
+					// system workspace of recipient clients.
+					"system:presence": {
+						clientToSessionId: {
+							[clientConnectionId]: { ...currentClientToSessionValueState },
+						},
 					},
+					[internalWorkspaceAddress]: updates,
 				},
 				forceBroadcast,
 			);
@@ -201,8 +183,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const entry = createPresenceStates(
 			{
-				clientId: () => this.runtime.clientId,
-				lookupClient: this.presence.getAttendee.bind(this.presence),
+				clientSessionId: this.clientSessionId,
+				lookupClient: this.lookupClient,
 				localUpdate,
 			},
 			workspaceDatastore,
@@ -213,10 +195,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		return entry.public;
 	}
 
-	private localUpdate(
-		data: GeneralDatastoreMessageContent & Partial<SystemDatastore>,
-		_forceBroadcast: boolean,
-	): void {
+	private localUpdate(data: DatastoreMessageContent, _forceBroadcast: boolean): void {
 		const content = {
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
@@ -237,11 +216,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public processSignal(
+		// Note: IInboundSignalMessage is used here in place of IExtensionMessage
+		// as IExtensionMessage's strictly JSON `content` creates type compatibility
+		// issues with `ClientSessionId` keys and really unknown value content.
+		// IExtensionMessage is a subset of IInboundSignalMessage so this is safe.
+		// Change types of DatastoreUpdateMessage | ClientJoinMessage to
+		// IExtensionMessage<> derivatives to see the issues.
 		message: IInboundSignalMessage | DatastoreUpdateMessage | ClientJoinMessage,
 		local: boolean,
 	): void {
 		const received = Date.now();
-		assert(message.clientId !== null, "Map received signal without clientId");
+		assert(message.clientId !== null, 0xa3a /* Map received signal without clientId */);
 		if (!isPresenceMessage(message)) {
 			return;
 		}
@@ -263,36 +248,16 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			(this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
 
 		if (message.type === joinMessageType) {
-			const updateProviders = message.content.updateProviders;
-			this.refreshBroadcastRequested = true;
-			// We must be connected to receive this message, so clientId should be defined.
-			// If it isn't then, not really a problem; just won't be in provider list.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (updateProviders.includes(this.runtime.clientId!)) {
-				// Send all current state to the new client
-				this.broadcastAllKnownState();
-			} else {
-				// Schedule a broadcast to the new client after a delay only to send if
-				// another broadcast hasn't been seen in the meantime. The delay is based
-				// on the position in the audience list. It doesn't have to be a stable
-				// list across all clients. We need something to provide suggested order
-				// to prevent a flood of broadcasts.
-				let indexOfSelf = 0;
-				for (const clientId of this.runtime.getAudience().getMembers().keys()) {
-					if (clientId === this.runtime.clientId) {
-						break;
-					}
-					indexOfSelf += 1;
-				}
-				const waitTime = indexOfSelf * 20 + 200;
-				setTimeout(() => {
-					if (this.refreshBroadcastRequested) {
-						this.broadcastAllKnownState();
-					}
-				}, waitTime);
+			// It is possible for some signals to come in while client is not connected due
+			// to how work is scheduled. If we are not connected, we can't respond to the
+			// join request. We will make our own Join request once we are connected.
+			if (this.runtime.connected) {
+				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 			}
+			// It is okay to continue processing the contained updates even if we are not
+			// connected.
 		} else {
-			assert(message.type === datastoreUpdateMessageType, "Unexpected message type");
+			assert(message.type === datastoreUpdateMessageType, 0xa3b /* Unexpected message type */);
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
 			}
@@ -309,12 +274,90 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				let workspaceDatastore = this.datastore[workspaceAddress];
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
-					// TODO: Emit workspaceActivated event for PresenceEvents
+					if (!workspaceAddress.startsWith("system:")) {
+						// TODO: Emit workspaceActivated event for PresenceEvents
+					}
 				}
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Handles responding to another client joining the session.
+	 *
+	 * @param updateProviders - list of client connection id's that requestor selected
+	 * to provide response
+	 * @param requestor - `requestor` is only used in telemetry. While it is the requestor's
+	 * client connection id, that is not most important. It is important that this is a
+	 * unique shared id across all clients that might respond as we want to monitor the
+	 * response patterns. The convenience of being client connection id will allow
+	 * correlation with other telemetry where it is often called just `clientId`.
+	 */
+	private prepareJoinResponse(
+		updateProviders: ClientConnectionId[],
+		requestor: ClientConnectionId,
+	): void {
+		this.refreshBroadcastRequested = true;
+		// We must be connected to receive this message, so clientId should be defined.
+		// If it isn't then, not really a problem; just won't be in provider or quorum list.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const clientId = this.runtime.clientId!;
+		// const requestor = message.clientId;
+		if (updateProviders.includes(clientId)) {
+			// Send all current state to the new client
+			this.broadcastAllKnownState();
+			this.logger?.sendTelemetryEvent({
+				eventName: "JoinResponse",
+				details: {
+					type: "broadcastAll",
+					requestor,
+					role: "primary",
+				},
+			});
+		} else {
+			// Schedule a broadcast to the new client after a delay only to send if
+			// another broadcast hasn't been seen in the meantime. The delay is based
+			// on the position in the quorum list. It doesn't have to be a stable
+			// list across all clients. We need something to provide suggested order
+			// to prevent a flood of broadcasts.
+			let relativeResponseOrder;
+			const quorumMembers = this.runtime.getQuorum().getMembers();
+			const self = quorumMembers.get(clientId);
+			if (self) {
+				// Compute order quorum join order (indicated by sequenceNumber)
+				relativeResponseOrder = 0;
+				for (const { sequenceNumber } of quorumMembers.values()) {
+					if (sequenceNumber < self.sequenceNumber) {
+						relativeResponseOrder++;
+					}
+				}
+			} else {
+				// Order past quorum members + arbitrary additional offset up to 10
+				relativeResponseOrder = quorumMembers.size + Math.random() * 10;
+			}
+			// These numbers have been chosen arbitrarily to start with.
+			// 20 is minimum wait time, 20 is the additional wait time per provider
+			// given an chance before us with named providers given more time.
+			const waitTime = 20 + 20 * (3 * updateProviders.length + relativeResponseOrder);
+			setTimeout(() => {
+				// Make sure a broadcast is still needed and we are currently connected.
+				// If not connected, nothing we can do.
+				if (this.refreshBroadcastRequested && this.runtime.connected) {
+					this.broadcastAllKnownState();
+					this.logger?.sendTelemetryEvent({
+						eventName: "JoinResponse",
+						details: {
+							type: "broadcastAll",
+							requestor,
+							role: "secondary",
+							order: relativeResponseOrder,
+						},
+					});
+				}
+			}, waitTime);
 		}
 	}
 }

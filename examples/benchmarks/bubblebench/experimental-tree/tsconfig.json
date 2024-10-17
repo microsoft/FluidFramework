@@ -4,14 +4,7 @@
 	"compilerOptions": {
 		"lib": ["ESNext", "DOM"],
 		"outDir": "./lib",
-		"types": [
-			"react",
-			"react-dom",
-			"jest",
-			"puppeteer",
-			"jest-environment-puppeteer",
-			"expect-puppeteer",
-		],
+		"types": ["react", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},

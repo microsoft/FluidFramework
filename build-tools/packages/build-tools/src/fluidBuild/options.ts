@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
-import * as path from "path";
+import { existsSync } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 import { defaultLogger } from "../common/logging";
-import { existsSync } from "../common/utils";
 import { commonOptionString, parseOption } from "./commonOptions";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";

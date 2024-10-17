@@ -3,15 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
-import type { ConnectedClientId } from "./baseTypes.js";
-import type { IPresence, ISessionClient, PresenceEvents } from "./presence.js";
+import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
-	IEphemeralRuntime,
-	PresenceDatastoreManager,
-} from "./presenceDatastoreManager.js";
+	ITelemetryLoggerExt,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+
+import type { ClientConnectionId } from "./baseTypes.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
+import type {
+	ClientSessionId,
+	IPresence,
+	ISessionClient,
+	PresenceEvents,
+} from "./presence.js";
+import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
+import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
 	PresenceStates,
 	PresenceWorkspaceAddress,
@@ -22,69 +32,72 @@ import type {
 	IContainerExtension,
 	IExtensionMessage,
 } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IEmitter } from "@fluid-experimental/presence/internal/events";
 import { createEmitter } from "@fluid-experimental/presence/internal/events";
 
 /**
+ * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.
+ *
  * @internal
  */
-export interface IPresenceManager
-	extends IPresence,
-		Pick<Required<IContainerExtension<[]>>, "processSignal"> {}
+export type PresenceExtensionInterface = Required<
+	Pick<IContainerExtension<never>, "processSignal">
+>;
 
 /**
- * Common Presence manager
+ * The Presence manager
  */
-class PresenceManager implements IPresenceManager {
+class PresenceManager implements IPresence, PresenceExtensionInterface {
 	private readonly datastoreManager: PresenceDatastoreManager;
-	private readonly attendees = new Map<ConnectedClientId, ISessionClient>();
-	private readonly selfAttendee: ISessionClient = {
-		currentClientId: () => {
-			throw new Error("Client has never been connected");
-		},
-	};
-
-	public constructor(runtime: IEphemeralRuntime) {
-		// If already connected, populate self and attendees.
-		const originalClientId = runtime.clientId;
-		if (originalClientId !== undefined) {
-			this.selfAttendee.currentClientId = () => originalClientId;
-			this.attendees.set(originalClientId, this.selfAttendee);
-		}
-
-		// Watch for connected event that will produce new (or first) clientId.
-		// This event is added before instantiating the datastore manager so
-		// that self can be given a proper clientId before datastore manager
-		// might possibly try to use it. (Datastore manager is expected to
-		// use connected clientId more directly and no order dependence should
-		// be relied upon, but helps with debugging consistency.)
-		runtime.on("connected", () => {
-			const clientId = runtime.clientId;
-			assert(clientId !== undefined, "Connected without local clientId");
-			this.selfAttendee.currentClientId = () => clientId;
-			this.attendees.set(clientId, this.selfAttendee);
-		});
-
-		this.datastoreManager = new PresenceDatastoreManagerImpl(runtime, this);
-	}
+	private readonly systemWorkspace: SystemWorkspace;
 
 	public readonly events = createEmitter<PresenceEvents>();
 
-	public getAttendees(): ReadonlySet<ISessionClient> {
-		return new Set(this.attendees.values());
-	}
-	public getAttendee(clientId: ConnectedClientId): ISessionClient {
-		const attendee = this.attendees.get(clientId);
-		if (attendee) {
-			return attendee;
+	private readonly mc: MonitoringContext | undefined = undefined;
+
+	public constructor(runtime: IEphemeralRuntime, clientSessionId: ClientSessionId) {
+		const logger = runtime.logger;
+		if (logger) {
+			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
+			this.mc.logger.sendTelemetryEvent({ eventName: "PresenceInstantiated" });
 		}
-		const newAttendee = {
-			currentClientId: () => clientId,
-		};
-		this.attendees.set(clientId, newAttendee);
-		return newAttendee;
+
+		[this.datastoreManager, this.systemWorkspace] = setupSubComponents(
+			clientSessionId,
+			runtime,
+			this.events,
+			this.mc?.logger,
+		);
+
+		runtime.on("connected", this.onConnect.bind(this));
+
+		// Check if already connected at the time of construction.
+		// If constructed during data store load, the runtime may already be connected
+		// and the "connected" event will be raised during completion. With construction
+		// delayed we expect that "connected" event has passed.
+		// Note: In some manual testing, this does not appear to be enough to
+		// always trigger an initial connect.
+		const clientId = runtime.clientId;
+		if (clientId !== undefined && runtime.connected) {
+			this.onConnect(clientId);
+		}
 	}
+
+	private onConnect(clientConnectionId: ClientConnectionId): void {
+		this.systemWorkspace.onConnectionAdded(clientConnectionId);
+		this.datastoreManager.joinSession(clientConnectionId);
+	}
+
+	public getAttendees(): ReadonlySet<ISessionClient> {
+		return this.systemWorkspace.getAttendees();
+	}
+
+	public getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
+		return this.systemWorkspace.getAttendee(clientId);
+	}
+
 	public getMyself(): ISessionClient {
-		return this.selfAttendee;
+		return this.systemWorkspace.getMyself();
 	}
 
 	public getStates<TSchema extends PresenceStatesSchema>(
@@ -114,86 +127,48 @@ class PresenceManager implements IPresenceManager {
 }
 
 /**
+ * Helper for Presence Manager setup
+ *
+ * Presence Manager is outermost layer of the presence system and has two main
+ * sub-components:
+ * 1. PresenceDatastoreManager: Manages the unified general data for states and
+ * registry for workspaces.
+ * 2. SystemWorkspace: Custom internal workspace for system states including
+ * attendee management. It is registered with the PresenceDatastoreManager.
+ */
+function setupSubComponents(
+	clientSessionId: ClientSessionId,
+	runtime: IEphemeralRuntime,
+	events: IEmitter<PresenceEvents>,
+	logger: ITelemetryLoggerExt | undefined,
+): [PresenceDatastoreManager, SystemWorkspace] {
+	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
+		clientToSessionId: {},
+	};
+	const systemWorkspaceConfig = createSystemWorkspace(
+		clientSessionId,
+		systemWorkspaceDatastore,
+		events,
+	);
+	const datastoreManager = new PresenceDatastoreManagerImpl(
+		clientSessionId,
+		runtime,
+		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
+		logger,
+		systemWorkspaceDatastore,
+		systemWorkspaceConfig.statesEntry,
+	);
+	return [datastoreManager, systemWorkspaceConfig.workspace];
+}
+
+/**
  * Instantiates Presence Manager
  *
  * @internal
  */
-export function createPresenceManager(runtime: IEphemeralRuntime): IPresenceManager {
-	return new PresenceManager(runtime);
+export function createPresenceManager(
+	runtime: IEphemeralRuntime,
+	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
+): IPresence & PresenceExtensionInterface {
+	return new PresenceManager(runtime, clientSessionId);
 }
-
-// ============================================================================
-// This demonstrates pattern where PresenceStates creation uses a ctor and allows
-// instanceof verification for new requests.
-//
-// /**
-//  * @internal
-//  */
-// export type PresenceStatesFactory<TSchema, T> = new (
-// 	containerRuntime: IContainerRuntime & IRuntimeInternal,
-// 	initialContent: TSchema,
-// ) => PresenceStatesEntry<TSchema, T>;
-
-// class PresenceStatesEntry<TSchema extends PresenceStatesSchema>
-// 	implements InstanceType<PresenceStatesFactory<TSchema, PresenceStates<TSchema>>>
-// {
-// 	public readonly map: PresenceStates<TSchema>;
-// 	public readonly processSignal: (signal: IInboundSignalMessage, local: boolean) => void;
-// 	public readonly ensureContent: (content: TSchema) => void;
-
-// 	public constructor(
-// 		runtime: IEphemeralRuntime,
-// 		initialContent: TSchema,
-// 	) {
-// 		const { public, internal } = createPresenceStates(
-// 			this,
-// 			runtime,
-// 			initialContent,
-// 		);
-// 		this.map = public;
-// 		this.processSignal = internal.processSignal.bind(internal);
-// 		this.ensureContent = internal.ensureContent.bind(internal);
-// 	}
-// }
-
-// export class PresenceManager implements IContainerExtension<never> {
-// 	public readonly extension: IPresenceManager = this;
-// 	public readonly interface = this;
-
-// 	public constructor(private readonly runtime: IExtensionRuntime) {}
-
-// 	public onNewContext(): void {
-// 		// No-op
-// 	}
-
-// 	static readonly extensionId = "dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a";
-// 	private readonly maps = new Map<string, PresenceStatesEntry<unknown, unknown>>();
-
-// 	/**
-// 	 * Acquires an Presence Workspace from store or adds new one.
-// 	 *
-// 	 * @param mapAddress - Address of the requested Presence Workspace
-// 	 * @param factory - Factory to create the Presence Workspace if not found
-// 	 * @returns The Presence Workspace
-// 	 */
-// 	public acquirePresenceStates<
-// 		T extends PresenceStatesFacade<unknown>,
-// 		TSchema = T extends PresenceStatesFacade<infer _TSchema> ? _TSchema : never,
-// 	>(
-// 		containerRuntime: IContainerRuntime & IRuntimeInternal,
-// 		mapAddress: PresenceWorkspaceAddress,
-// 		requestedContent: TSchema,
-// 		factoryFacade: PresenceStatesFactoryFacade<T>,
-// 	): T {
-// 		const factory = factoryFacade as unknown as PresenceStatesFactory<TSchema, T>;
-// 		let existing = this.maps.get(mapAddress);
-// 		if (existing) {
-// 			assert(existing instanceof factory, "Existing PresenceStates is not of the expected type");
-// 			return existing.ensureContent(requestedContent);
-// 		}
-//		// TODO create the appropriate ephemeral runtime (map address must be in submitSignal, etc.)
-// 		const entry = new factory(containerRuntime, requestedContent);
-// 		this.maps.set(mapAddress, entry);
-// 		return entry.public;
-// 	}
-// }
