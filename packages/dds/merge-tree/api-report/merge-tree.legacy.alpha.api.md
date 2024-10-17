@@ -167,7 +167,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
-    walkSegments<T>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+    walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
 // @alpha @deprecated (undocumented)
@@ -252,13 +252,10 @@ export interface IClientEvents {
     (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): void;
 }
 
-// @alpha
+// @alpha @sealed
 export interface IConcurrentMoveInfo {
-    // (undocumented)
     clientId: number;
-    // (undocumented)
     refSeq: number;
-    // (undocumented)
     seq: number;
 }
 
