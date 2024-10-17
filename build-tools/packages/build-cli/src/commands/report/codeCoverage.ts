@@ -97,7 +97,8 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 
 		const repoInfo = flags.githubRepositoryName.split("/");
 		if (repoInfo.length !== 2) {
-			this.error("Invalid github repository name", { exit: 1 });
+			this.errorLog("Invalid github repository name");
+			return;
 		}
 		const githubProps: GitHubProps = {
 			owner: repoInfo[0],
@@ -106,73 +107,84 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		};
 
 		let shouldFailBuildOnRegression = true;
-		const commentBody = await getCommentBody(
-			githubProps,
-			flags.githubPRNumber,
-			commentIdentifier,
-		);
-		if (commentBody !== undefined) {
-			// Use a regular expression to find the checkbox in the comment body
-			const checkboxRegex = /- \[([ Xx])]/;
-			const match = checkboxRegex.exec(commentBody);
-
-			if (match !== null) {
-				// If the checkbox is checked, the match will be 'x' or 'X'
-				shouldFailBuildOnRegression = !(match[1].toLowerCase() === "x");
-			}
-		}
-
-		// Get the paths of the files that have changed in the PR relative to root of the repo.
-		// This is used to determine which packages have been affect so that we can do code coverage
-		// analysis on those packages only.
-		const changedFiles = await getChangedFilePaths(githubProps, flags.githubPRNumber);
-
-		let commentMessage: string = "";
-		const report = await getCodeCoverageReport(
-			flags.adoApiToken,
-			codeCoverageConstantsForBaseline,
-			codeCoverageConstantsForPR,
-			changedFiles,
-			this.logger,
-		).catch((error: Error) => {
-			commentMessage = "## Code Coverage Summary\n\nError getting code coverage report";
-			this.logger.errorLog(`Error getting code coverage report: ${error}`);
-		});
-
 		// Don't fail if we can not compare the code coverage due to an error.
 		let success: boolean = true;
-		if (report !== undefined) {
-			const packagesListWithCodeCoverageChanges = getPackagesWithCodeCoverageChanges(
-				report.comparisonData,
+		// If any error occurs while getting the code coverage metrics, we will log the error and return.
+		// We don't want this check to throw and potentially cause build failures as that would be error in this
+		// command and not in the PR. If we see no comments getting posted on the PR because of this, then we can
+		// investigate the command and fix it.
+		try {
+			const commentBody = await getCommentBody(
+				githubProps,
+				flags.githubPRNumber,
+				commentIdentifier,
+			);
+			if (commentBody !== undefined) {
+				// Use a regular expression to find the checkbox in the comment body
+				const checkboxRegex = /- \[([ Xx])]/;
+				const match = checkboxRegex.exec(commentBody);
+
+				if (match !== null) {
+					// If the checkbox is checked, the match will be 'x' or 'X'
+					shouldFailBuildOnRegression = !(match[1].toLowerCase() === "x");
+				}
+			}
+
+			// Get the paths of the files that have changed in the PR relative to root of the repo.
+			// This is used to determine which packages have been affect so that we can do code coverage
+			// analysis on those packages only.
+			const changedFiles = await getChangedFilePaths(githubProps, flags.githubPRNumber);
+
+			let commentMessage: string = "";
+			const report = await getCodeCoverageReport(
+				flags.adoApiToken,
+				codeCoverageConstantsForBaseline,
+				codeCoverageConstantsForPR,
+				changedFiles,
 				this.logger,
+			).catch((error: Error) => {
+				commentMessage = "## Code Coverage Summary\n\nError getting code coverage report";
+				this.logger.errorLog(`Error getting code coverage report: ${error}`);
+			});
+
+			if (report !== undefined) {
+				const packagesListWithCodeCoverageChanges = getPackagesWithCodeCoverageChanges(
+					report.comparisonData,
+					this.logger,
+				);
+
+				success = isCodeCoverageCriteriaPassed(
+					packagesListWithCodeCoverageChanges,
+					this.logger,
+				);
+
+				commentMessage = getCommentForCodeCoverageDiff(
+					packagesListWithCodeCoverageChanges,
+					report.baselineBuildMetrics,
+					success,
+				);
+			}
+
+			let messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
+
+			if (!success) {
+				messageContentWithIdentifier = shouldFailBuildOnRegression
+					? `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!!`
+					: `${messageContentWithIdentifier}\n\n- [x] Skip This Check!!`;
+
+				messageContentWithIdentifier = `${messageContentWithIdentifier}\n${summaryFooterOnFailure}`;
+			}
+
+			await createOrUpdateCommentOnPr(
+				githubProps,
+				flags.githubPRNumber,
+				messageContentWithIdentifier,
+				commentIdentifier,
 			);
-
-			success = isCodeCoverageCriteriaPassed(packagesListWithCodeCoverageChanges, this.logger);
-
-			commentMessage = getCommentForCodeCoverageDiff(
-				packagesListWithCodeCoverageChanges,
-				report.baselineBuildMetrics,
-				success,
-			);
+		} catch (error) {
+			this.errorLog(`Error in code coverage check: ${error}`);
+			return;
 		}
-
-		let messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
-
-		if (!success) {
-			messageContentWithIdentifier = shouldFailBuildOnRegression
-				? `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!!`
-				: `${messageContentWithIdentifier}\n\n- [x] Skip This Check!!`;
-
-			messageContentWithIdentifier = `${messageContentWithIdentifier}\n${summaryFooterOnFailure}`;
-		}
-
-		await createOrUpdateCommentOnPr(
-			githubProps,
-			flags.githubPRNumber,
-			messageContentWithIdentifier,
-			commentIdentifier,
-		);
-
 		// Fail the build if the code coverage analysis shows that a regression has been found.
 		if (!success && shouldFailBuildOnRegression) {
 			this.error("Code coverage failed", { exit: 255 });

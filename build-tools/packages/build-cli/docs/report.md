@@ -22,7 +22,8 @@ FLAGS
   --adoCIBuildDefinitionIdPR=<value>        (required) Build definition/pipeline number/id for the PR build.
   --githubApiToken=<value>                  (required) Token to get auth for accessing Github PR.
   --githubPRNumber=<value>                  (required) Github PR number.
-  --githubRepositoryName=<value>            (required) Github repository name.
+  --githubRepositoryName=<value>            (required) Github repository name. It should be in this format:
+                                            <org_or_owner>/<name>. For example: microsoft/FluidFramework
   --targetBranchName=<value>                (required) Target branch name.
 
 LOGGING FLAGS
