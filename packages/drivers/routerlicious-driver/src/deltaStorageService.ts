@@ -150,7 +150,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 		id: string,
 		from: number, // inclusive
 		to: number, // exclusive,
-		fetchReason: string,
+		fetchReason?: string,
 	): Promise<IDeltasFetchResult> {
 		const ops = await PerformanceEvent.timedExecAsync(
 			this.logger,
@@ -162,10 +162,11 @@ export class DeltaStorageService implements IDeltaStorageService {
 			async (event) => {
 				const restWrapper = await this.getRestWrapper();
 				const url = this.getDeltaStorageUrl();
+				const reason = fetchReason ?? "No reason provided";
 				const response = await restWrapper.get<ISequencedDocumentMessage[]>(url, {
 					from: from - 1,
 					to,
-					reason: fetchReason,
+					reason,
 				});
 				event.end({
 					length: response.content.length,
