@@ -25,7 +25,7 @@ async function main() {
 	log(`Build Root: ${resolvedRoot}`);
 
 	// Load the packages
-	const repo = FluidRepoBuild.create({
+	const repo = new FluidRepoBuild({
 		repoRoot: resolvedRoot,
 		gitRepo: new GitRepo(resolvedRoot),
 		fluidBuildConfig: getFluidBuildConfig(resolvedRoot),
