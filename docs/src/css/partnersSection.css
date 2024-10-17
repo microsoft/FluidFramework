@@ -1,17 +1,1 @@
-/* TODO: get the actual CSS from the Figma */
-.partnersSection {
-	/* Auto layout */
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	padding: 72px 0px;
-
-	width: 100%;
-
-	background: #FFFDFB;
-
-	/* Inside auto layout */
-	flex: none;
-	order: 0;
-	flex-grow: 0;
-}
+/* TODO */
