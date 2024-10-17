@@ -76,7 +76,6 @@ describe("flub test-only-filter", () => {
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);
-		// expect(names.includes("@fluid-private/readme-command")).to.be.true;
 		expect(names).not.to.be.containing("@fluid-private/changelog-generator-wrapper");
 	});
 
