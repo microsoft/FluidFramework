@@ -207,7 +207,8 @@ function ackSegment(
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
@@ -240,11 +241,6 @@ export interface IMergeTreeOptions {
 	newMergeTreeSnapshotFormat?: boolean;
 
 	/**
-	 * Options related to attribution
-	 */
-	attribution?: IMergeTreeAttributionOptions;
-
-	/**
 	 * Enables support for the obliterate operation -- a stronger form of remove
 	 * which deletes concurrently inserted segments
 	 *
@@ -274,6 +270,17 @@ export interface IMergeTreeOptions {
 	 */
 	mergeTreeEnableSidedObliterate?: boolean;
 }
+
+/**
+ * @internal
+ */
+export interface IMergeTreeOptionsInternal extends IMergeTreeOptions {
+	/**
+	 * Options related to attribution
+	 */
+	attribution?: IMergeTreeAttributionOptions;
+}
+
 export function errorIfOptionNotTrue(
 	options: IMergeTreeOptions | undefined,
 	option: keyof IMergeTreeOptions,
@@ -583,7 +590,7 @@ export class MergeTree {
 
 	private readonly obliterates = new Obliterates(this);
 
-	public constructor(public options?: IMergeTreeOptions) {
+	public constructor(public options?: IMergeTreeOptionsInternal) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
 		this.attributionPolicy = options?.attribution?.policyFactory?.();

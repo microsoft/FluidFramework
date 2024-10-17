@@ -258,6 +258,19 @@ export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
 // @alpha (undocumented)
+export interface IMergeTreeOptions {
+    // (undocumented)
+    catchUpBlobName?: string;
+    mergeTreeEnableObliterate?: boolean;
+    mergeTreeEnableObliterateReconnect?: boolean;
+    mergeTreeEnableSidedObliterate?: boolean;
+    mergeTreeReferencesCanSlideToEndpoint?: boolean;
+    // (undocumented)
+    mergeTreeSnapshotChunkSize?: number;
+    newMergeTreeSnapshotFormat?: boolean;
+}
+
+// @alpha (undocumented)
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     // (undocumented)
     pos1?: number;
