@@ -28,7 +28,10 @@ import {
 	IRepositoryManagerFactory,
 } from "./utils";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import {
+	createHealthCheckEndpoints,
+	type StartupCheck,
+} from "@fluidframework/server-services-shared";
 
 function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: express.Request) {
 	return params.storageRoutingId?.tenantId ?? (request.body as ICreateRepoParams)?.name;
@@ -38,6 +41,7 @@ export function create(
 	store: nconf.Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repositoryManagerFactory: IRepositoryManagerFactory,
+	startupCheck: StartupCheck,
 	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
@@ -96,7 +100,11 @@ export function create(
 	app.use(apiRoutes.repository.contents);
 	app.use(apiRoutes.summaries);
 
-	const healthCheckEndpoints = createHealthCheckEndpoints("gitrest", readinessCheck);
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		"gitrest",
+		startupCheck,
+		readinessCheck,
+	);
 	app.use("/healthz", healthCheckEndpoints);
 
 	// catch 404 and forward to error handler
