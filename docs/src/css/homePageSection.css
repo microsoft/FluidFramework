@@ -21,8 +21,10 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 5px;
+	padding: 8px;
 	gap: 48px;
+
+	width: 100%;
 
 	/* Inside auto layout */
 	flex: none;
