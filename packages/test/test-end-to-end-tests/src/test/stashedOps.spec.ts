@@ -2161,7 +2161,9 @@ describeCompat(
 			},
 		);
 
-		itExpects(
+		// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
+		// Skip it for now until above items are resolved.
+		itExpects.skip(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close: contianer1, container2, container3
