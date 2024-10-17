@@ -276,7 +276,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					expired,
 				});
 				if (expired) {
-					// Instead of returning a promise, handle reupload asynchronously
+					// handle reupload asynchronously
 					this.reuploadBlobAndSendOp(localId, pendingEntry);
 					return; // Return void to avoid promise violation
 				}
@@ -288,8 +288,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private reuploadBlobAndSendOp(localId: string, pendingEntry: PendingBlob): void {
 		(async () => {
-			// Reupload the blob and update the pending entry
 			await this.uploadBlob(localId, pendingEntry.blob).then(() =>
+				// uploadBlob and onUploadResolve will not send another blob attach so we need to do it here
 				this.sendBlobAttachOp(localId, pendingEntry.storageId),
 			);
 			// Once the blob is re-uploaded, proceed with sending the BlobAttachOp
@@ -299,7 +299,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				eventName: "BlobReuploadFailed",
 				error,
 				localId,
-			}); // Immediately invoke the async function
+			});
 		});
 	}
 
