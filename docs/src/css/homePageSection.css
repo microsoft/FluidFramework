@@ -24,8 +24,6 @@
 	padding: 8px;
 	gap: 48px;
 
-	width: 100%;
-
 	/* Inside auto layout */
 	flex: none;
 	order: 0;
