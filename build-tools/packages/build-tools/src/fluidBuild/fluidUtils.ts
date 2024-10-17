@@ -153,34 +153,28 @@ let defaultConfigLoaded = false;
 /**
  * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
  *
- * @param rootDir - The path to the root package.json to load.
- * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
+ * @param searchDir - The path to search for the config. The search will look up the folder hierarchy for a config in
+ * either a standalone file or package.json
  * @returns The the loaded fluidBuild config, or the default config if one is not found.
  */
 export function getFluidBuildConfig(
-	rootDir: string,
-	noCache = false,
+	searchDir: string,
 	log = defaultLogger,
 ): IFluidBuildConfig {
 	if (defaultConfigLoaded) {
 		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
-	if (noCache === true) {
-		configExplorer.clearCaches();
-	}
-
-	const configResult = configExplorer.search(rootDir);
-	const config: IFluidBuildConfig = configResult?.config ?? DEFAULT_FLUIDBUILD_CONFIG;
-
+	const configResult = configExplorer.search(searchDir);
 	if (configResult?.config === undefined) {
 		log.warning(
-			`No fluidBuild config found when searching ${rootDir}; default configuration loaded. Packages and tasks will be inferred.`,
+			`No fluidBuild config found when searching ${searchDir}; default configuration loaded. Packages and tasks will be inferred.`,
 		);
 		defaultConfigLoaded = true;
 		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
+	const config = configResult.config;
 	if (config.version === undefined) {
 		log.warning(
 			"fluidBuild config has no version field. This field will be required in a future release.",
