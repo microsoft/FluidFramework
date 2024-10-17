@@ -5,6 +5,53 @@
 ```ts
 
 // @alpha
+export function aiCollab(options: AiCollabOptions<ImplicitFieldSchema>): Promise<AiCollabSuccessResponse | AiCollabErrorResponse>;
+
+// @alpha
+export interface AiCollabErrorResponse {
+    // (undocumented)
+    errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
+    // (undocumented)
+    status: "failure" | "partial-failure";
+    // (undocumented)
+    tokenUsage: TokenUsage;
+}
+
+// @alpha
+export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
+    // (undocumented)
+    dumpDebugLog?: boolean;
+    // (undocumented)
+    finalReviewStep?: boolean;
+    // (undocumented)
+    limiters?: {
+        abortController?: AbortController;
+        maxSequentialErrors?: number;
+        maxModelCalls?: number;
+        tokenLimits?: TokenUsage;
+    };
+    // (undocumented)
+    openAI: OpenAiClientOptions;
+    // (undocumented)
+    prompt: {
+        systemRoleContext: string;
+        userAsk: string;
+    };
+    // (undocumented)
+    treeView: TreeView<TSchema>;
+    // (undocumented)
+    validator?: (newContent: TreeNode) => void;
+}
+
+// @alpha
+export interface AiCollabSuccessResponse {
+    // (undocumented)
+    status: "success";
+    // (undocumented)
+    tokenUsage: TokenUsage;
+}
+
+// @alpha
 export function createMergableDiffSeries(diffs: Difference[]): Difference[];
 
 // @alpha
@@ -67,6 +114,14 @@ export interface DifferenceRemove {
 export type ObjectPath = (string | number)[];
 
 // @alpha
+export interface OpenAiClientOptions {
+    // (undocumented)
+    client: OpenAI;
+    // (undocumented)
+    modelName?: string;
+}
+
+// @alpha
 export interface Options {
     // (undocumented)
     cyclesFix: boolean;
@@ -106,5 +161,13 @@ export function sharedTreeDiff(obj: Record<string, unknown> | unknown[], newObj:
 
 // @alpha
 export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[], path: ObjectPath): T | undefined;
+
+// @alpha
+export interface TokenUsage {
+    // (undocumented)
+    inputTokens: number;
+    // (undocumented)
+    outputTokens: number;
+}
 
 ```
