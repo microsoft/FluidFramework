@@ -28,12 +28,12 @@ You can run this example using the following steps:
     - For an even faster build, you can add the package name to the build command, like this:
       `pnpm run build:fast --nolint @fluid-example/ai-collab`
 1. Start a Tinylicious server by running `pnpm start:server` from this directory.
-1. In a separate terminal also from this directory, run `pnpm next:dev` and open http://localhost:3000/task-list in a
+1. In a separate terminal also from this directory, run `pnpm next:dev` and open http://localhost:3000/ in a
     web browser to see the app running.
 
 ### Using SharePoint embedded instead of tinylicious
 
-1. Go to [page.tsx](src/app/tasks-list/page.tsx), look for comment
+1. Go to [page.tsx](src/app/page.tsx), look for comment
 `// Uncomment the import line that corresponds to the server you want to use`, comment the line for tinylicious and
 uncomment the line for SharePoint Embedded.
 1. In the same `.env` file you created in the pre-requisites section, set the correct values for the following variables:

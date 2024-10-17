@@ -189,7 +189,7 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
  */
 export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	const parentNode = fieldEdit.parentNodePath
-		? navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root
+		? (navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root)
 		: tree.root;
 
 	if (!Tree.is(parentNode, tree.currentSchema)) {
