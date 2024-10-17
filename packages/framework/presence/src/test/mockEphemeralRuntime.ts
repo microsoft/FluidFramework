@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type {
-	IQuorumClients,
-	ISequencedClient,
-} from "@fluidframework/driver-definitions";
+import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ClientConnectionId } from "../baseTypes.js";
