@@ -19,7 +19,6 @@ import {
 	rootFieldKey,
 	setGenericTreeField,
 } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import {
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
@@ -28,7 +27,12 @@ import {
 } from "../feature-libraries/index.js";
 import { brand } from "../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
-import { SchemaFactory } from "../simple-tree/index.js";
+import {
+	booleanSchema,
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+} from "../simple-tree/index.js";
 import { JsonArray, JsonObject } from "./json/index.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
@@ -51,17 +55,25 @@ export const testTreeSchema = [
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptyObjectIdentifier }],
-	["true boolean", { type: leaf.boolean.name, value: true }],
-	["false boolean", { type: leaf.boolean.name, value: false }],
-	["integer", { type: leaf.number.name, value: Number.MIN_SAFE_INTEGER - 1 }],
-	["string", { type: leaf.string.name, value: "test" }],
-	["string with escaped characters", { type: leaf.string.name, value: '\\"\b\f\n\r\t' }],
-	["string with emoticon", { type: leaf.string.name, value: "😀" }],
+	["true boolean", { type: brand(booleanSchema.identifier), value: true }],
+	["false boolean", { type: brand(booleanSchema.identifier), value: false }],
+	["integer", { type: brand(numberSchema.identifier), value: Number.MIN_SAFE_INTEGER - 1 }],
+	["string", { type: brand(stringSchema.identifier), value: "test" }],
+	[
+		"string with escaped characters",
+		{ type: brand(stringSchema.identifier), value: '\\"\b\f\n\r\t' },
+	],
+	["string with emoticon", { type: brand(stringSchema.identifier), value: "😀" }],
 	[
 		"field",
 		{
 			type: brand(JsonObject.identifier),
-			fields: { x: [{ type: emptyObjectIdentifier }, { type: leaf.number.name, value: 6 }] },
+			fields: {
+				x: [
+					{ type: emptyObjectIdentifier },
+					{ type: brand(numberSchema.identifier), value: 6 },
+				],
+			},
 		},
 	],
 	[
@@ -98,7 +110,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 					{
 						type: brand(JsonObject.identifier),
 						fields: {
-							c: [{ type: leaf.number.name, value: 6 }],
+							c: [{ type: brand(numberSchema.identifier), value: 6 }],
 						},
 					},
 				],
@@ -129,7 +141,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 			fields: {
 				child: [
 					{
-						type: leaf.number.name,
+						type: brand(numberSchema.identifier),
 						value: 1,
 					},
 				],
@@ -148,7 +160,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 						fields: {
 							child: [
 								{
-									type: leaf.number.name,
+									type: brand(numberSchema.identifier),
 									value: 1,
 								},
 							],
@@ -171,7 +183,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 					{ type: emptyObjectIdentifier3 },
 					{ type: emptyObjectIdentifier3 },
 					{ type: emptyObjectIdentifier3 },
-					{ type: leaf.number.name, value: 1 },
+					{ type: brand(numberSchema.identifier), value: 1 },
 					{ type: emptyObjectIdentifier3 },
 				],
 			},
@@ -517,7 +529,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				it("first node in a root field", () => {
 					const cursor = factory({
 						type: brand(JsonObject.identifier),
-						fields: { key: [{ type: leaf.number.name, value: 0 }] },
+						fields: { key: [{ type: brand(numberSchema.identifier), value: 0 }] },
 					});
 					cursor.enterField(brand("key"));
 					cursor.firstNode();
@@ -533,8 +545,8 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						type: brand(JsonObject.identifier),
 						fields: {
 							key: [
-								{ type: leaf.number.name, value: 0 },
-								{ type: leaf.number.name, value: 1 },
+								{ type: brand(numberSchema.identifier), value: 0 },
+								{ type: brand(numberSchema.identifier), value: 1 },
 							],
 						},
 					});

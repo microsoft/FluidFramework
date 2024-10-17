@@ -55,7 +55,7 @@ export class BenchmarkReporter {
     constructor(outputDirectory?: string);
     recordResultsSummary(): void;
     recordSuiteResults(suiteName: string): void;
-    recordTestResult(suiteName: string, testName: string, result: Readonly<BenchmarkResult>): void;
+    recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
 }
 
 // @public

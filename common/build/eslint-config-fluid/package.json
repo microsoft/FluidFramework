@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "5.4.0",
+	"version": "5.5.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,7 +52,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-		"mocha-json-output-reporter": "^2.1.0",
+
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"sort-json": "^2.0.1",

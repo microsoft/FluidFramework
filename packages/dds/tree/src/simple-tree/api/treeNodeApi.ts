@@ -5,19 +5,9 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../../core/index.js";
-import {
-	type LazyItem,
-	type TreeStatus,
-	isLazy,
-	isTreeValue,
-	FlexObjectNodeSchema,
-	isMapTreeNode,
-} from "../../feature-libraries/index.js";
+import { EmptyKey, rootFieldKey } from "../../core/index.js";
+import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
-import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
@@ -43,7 +33,13 @@ import {
 	type TreeNode,
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
+	getOrCreateNodeFromInnerNode,
+	UnhydratedFlexTreeNode,
+	typeSchemaSymbol,
+	getOrCreateInnerNode,
 } from "../core/index.js";
+import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { isLazy, type LazyItem } from "../flexList.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -139,7 +135,7 @@ export const treeNodeApi: TreeNodeApi = {
 			return undefined;
 		}
 
-		const output = getOrCreateNodeFromFlexTreeNode(editNode);
+		const output = getOrCreateNodeFromInnerNode(editNode);
 		assert(
 			!isTreeValue(output),
 			0x87f /* Parent can't be a leaf, so it should be a node not a value */,
@@ -155,19 +151,50 @@ export const treeNodeApi: TreeNodeApi = {
 		}
 
 		// The flex-domain strictly operates in terms of "stored keys".
-		// To find the associated developer-facing "view key", we need to look up the field associated with
-		// the stored key from the flex-domain, and get view key its simple-domain counterpart was created with.
+		// To find the associated developer-facing "property key", we need to look up the field associated with
+		// the stored key from the flex-domain, and get property key its simple-domain counterpart was created with.
 		const storedKey = getStoredKey(node);
 		const parentSchema = treeNodeApi.schema(parent);
-		const viewKey = getViewKeyFromStoredKey(parentSchema, storedKey);
-		return viewKey;
+		const propertyKey = getPropertyKeyFromStoredKey(parentSchema, storedKey);
+		return propertyKey;
 	},
 	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,
 		eventName: K,
 		listener: TreeChangeEvents[K],
 	): Off {
-		return getKernel(node).on(eventName, listener);
+		const kernel = getKernel(node);
+		switch (eventName) {
+			case "nodeChanged": {
+				const nodeSchema = kernel.schema;
+				if (isObjectNodeSchema(nodeSchema)) {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						const changedProperties = new Set(
+							Array.from(
+								changedFields,
+								(field) =>
+									nodeSchema.storedKeyToPropertyKey.get(field) ??
+									fail(`Could not find stored key '${field}' in schema.`),
+							),
+						);
+						listener({ changedProperties });
+					});
+				} else if (nodeSchema.kind === NodeKind.Array) {
+					return kernel.on("childrenChangedAfterBatch", () => {
+						listener({ changedProperties: undefined });
+					});
+				} else {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						listener({ changedProperties: changedFields });
+					});
+				}
+			}
+			case "treeChanged": {
+				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
+			}
+			default:
+				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
+		}
 	},
 	status(node: TreeNode): TreeStatus {
 		return getKernel(node).getStatus();
@@ -198,17 +225,20 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
+		const schema = node[typeSchemaSymbol];
+		if (!isObjectNodeSchema(schema)) {
+			return undefined;
+		}
+
 		const flexNode = getOrCreateInnerNode(node);
-		const flexSchema = flexNode.schema;
-		const identifierFieldKeys =
-			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
+		const identifierFieldKeys = schema.identifierFieldKeys;
 
 		switch (identifierFieldKeys.length) {
 			case 0:
 				return undefined;
 			case 1: {
 				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
-				if (isMapTreeNode(flexNode)) {
+				if (flexNode instanceof UnhydratedFlexTreeNode) {
 					if (identifier === undefined) {
 						throw new UsageError(
 							"Tree.shortId cannot access default identifiers on unhydrated nodes",
@@ -216,7 +246,10 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier?.context !== undefined, 0xa12 /* Expected LazyIdentifierField */);
+				assert(
+					identifier?.context.isHydrated() === true,
+					0xa27 /* Expected hydrated identifier */,
+				);
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
@@ -245,7 +278,7 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 			return booleanSchema;
 		case "object": {
 			if (isTreeNode(value)) {
-				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
+				// TODO: This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
 				return tryGetTreeNodeSchema(value);
 			}
 			if (value === null) {
@@ -265,26 +298,31 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
  */
 function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
-	// "view keys".
+	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
+	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
+		assert(
+			parentField.parent.key === EmptyKey,
+			0xa28 /* When using index as key, field should use EmptyKey */,
+		);
 		return parentField.index;
 	}
 
 	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
+	assert(parentField.index === 0, 0xa29 /* When using field key as key, index should be 0 */);
 	return parentField.parent.key;
 }
 
 /**
- * Given a node schema, gets the view key corresponding with the provided {@link FieldProps.key | stored key}.
+ * Given a node schema, gets the property key corresponding with the provided {@link FieldProps.key | stored key}.
  */
-function getViewKeyFromStoredKey(
+function getPropertyKeyFromStoredKey(
 	schema: TreeNodeSchema,
 	storedKey: string | number,
 ): string | number {
-	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "view key".
-	// For any other kind of node, the stored key and the view key are the same.
+	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "property key".
+	// For any other kind of node, the stored key and the property key are the same.
 	if (schema.kind !== NodeKind.Object) {
 		return storedKey;
 	}
@@ -292,18 +330,18 @@ function getViewKeyFromStoredKey(
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 
 	// Invariants:
-	// - The set of all view keys under an object must be unique.
-	// - The set of all stored keys (including those implicitly created from view keys) must be unique.
-	// To find the view key associated with the provided stored key, first check for any stored key matches (which are optionally populated).
-	// If we don't find any, then search for a matching view key.
-	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
+	// - The set of all property keys under an object must be unique.
+	// - The set of all stored keys (including those implicitly created from property keys) must be unique.
+	// To find the property key associated with the provided stored key, first check for any stored key matches (which are optionally populated).
+	// If we don't find any, then search for a matching property key.
+	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		if (fieldSchema instanceof FieldSchema && fieldSchema.props?.key === storedKey) {
-			return viewKey;
+			return propertyKey;
 		}
 	}
 
 	if (fields[storedKey] === undefined) {
-		fail("Existing stored key should always map to a view key");
+		fail("Existing stored key should always map to a property key");
 	}
 
 	return storedKey;

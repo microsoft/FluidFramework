@@ -14,12 +14,14 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
+import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
 import {
 	BatchManager,
 	type BatchMessage,
+	type BatchStartInfo,
 	ensureContentsDeserialized,
 	type IBatch,
-	type InboundBatch,
+	type InboundMessageResult,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -160,13 +162,10 @@ describe("RemoteMessageProcessor", () => {
 			outboundMessages.push(...batch.messages);
 
 			const messageProcessor = getMessageProcessor();
-			let actualBatch: InboundBatch | undefined;
+			let batchStart: BatchStartInfo | undefined;
+			const inboundMessages: InboundSequencedContainerRuntimeMessage[] = [];
 			let seqNum = 1;
 			for (const message of outboundMessages) {
-				assert(
-					actualBatch === undefined,
-					"actualBatch only should be set when we're done looping",
-				);
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
 					type: MessageType.Operation,
@@ -178,9 +177,37 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				ensureContentsDeserialized(inboundMessage, true, () => {});
-				// actualBatch will remain undefined every time except the last time through the loop
-				actualBatch = messageProcessor.process(inboundMessage, () => {});
+				ensureContentsDeserialized(inboundMessage);
+				const result = messageProcessor.process(inboundMessage, () => {});
+				switch (result?.type) {
+					case "fullBatch":
+						assert(
+							option.compressionAndChunking.chunking || outboundMessages.length === 1,
+							"Apart from chunking, expected fullBatch for single-message batch only (includes Grouped Batches)",
+						);
+						batchStart = result.batchStart;
+						inboundMessages.push(...result.messages);
+						break;
+					case "batchStartingMessage":
+						batchStart = result.batchStart;
+						inboundMessages.push(result.nextMessage);
+						break;
+					case "nextBatchMessage":
+						assert(
+							batchStart !== undefined,
+							"batchStart should have been set from a prior message",
+						);
+						inboundMessages.push(result.nextMessage);
+						break;
+					default:
+						// These are leading chunks
+						assert(result === undefined, "unexpected result type");
+						assert(
+							option.compressionAndChunking.chunking,
+							"undefined result only expected with chunking",
+						);
+						break;
+				}
 			}
 
 			const expected = option.grouping
@@ -199,17 +226,19 @@ describe("RemoteMessageProcessor", () => {
 						getProcessedMessage("e", startSeqNum, startSeqNum, false),
 					];
 
-			assert.deepStrictEqual(actualBatch?.messages, expected, "unexpected output");
+			assert.deepStrictEqual(inboundMessages, expected, "unexpected output");
 			assert.equal(
-				actualBatch?.batchStartCsn,
+				batchStart?.batchStartCsn,
 				leadingChunkCount + 1,
 				"unexpected batchStartCsn",
 			);
 		});
 	});
 
-	it("Processes multiple batches", () => {
+	it("Processes multiple batches (No Grouped Batching)", () => {
 		let csn = 1;
+
+		// Use BatchManager.popBatch to get the right batch metadata included
 		const batchManager = new BatchManager({
 			canRebase: false,
 			hardLimit: Number.MAX_VALUE,
@@ -244,92 +273,130 @@ describe("RemoteMessageProcessor", () => {
 			processor.process(message, () => {}),
 		);
 
-		const expectedResults = [
-			// A
-			undefined,
-			undefined,
+		// Expected results
+		const messagesA = [
 			{
-				messages: [
-					{
-						"contents": "A1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 1,
-						"metadata": { "batch": true },
-						"clientId": "CLIENT_ID",
-					},
-					{
-						"contents": "A2",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 2,
-						"clientId": "CLIENT_ID",
-					},
-					{
-						"contents": "A3",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 3,
-						"metadata": { "batch": false },
-						"clientId": "CLIENT_ID",
-					},
-				],
-				clientId: "CLIENT_ID",
-				batchId: undefined,
-				batchStartCsn: 1,
+				"contents": "A1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 1,
+				"metadata": { "batch": true },
+				"clientId": "CLIENT_ID",
 			},
-			// B
 			{
-				messages: [
-					{
-						"contents": "B1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 4,
-						"clientId": "CLIENT_ID",
-					},
-				],
-				clientId: "CLIENT_ID",
-				batchId: undefined,
-				batchStartCsn: 4,
+				"contents": "A2",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 2,
+				"clientId": "CLIENT_ID",
 			},
-			// C
-			undefined,
 			{
-				messages: [
-					{
-						"contents": "C1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 5,
-						"metadata": { "batch": true, "batchId": "C" },
-						"clientId": "CLIENT_ID",
-					},
-					{
-						"contents": "C2",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 6,
-						"metadata": { "batch": false },
-						"clientId": "CLIENT_ID",
-					},
-				],
-				batchId: "C",
-				clientId: "CLIENT_ID",
-				batchStartCsn: 5,
-			},
-			// D
-			{
-				messages: [
-					{
-						"contents": "D1",
-						"referenceSequenceNumber": 1,
-						"clientSequenceNumber": 7,
-						"metadata": { "batchId": "D" },
-						"clientId": "CLIENT_ID",
-					},
-				],
-				clientId: "CLIENT_ID",
-				batchId: "D",
-				batchStartCsn: 7,
+				"contents": "A3",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 3,
+				"metadata": { "batch": false },
+				"clientId": "CLIENT_ID",
 			},
 		];
+		const messagesB = [
+			{
+				"contents": "B1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 4,
+				"clientId": "CLIENT_ID",
+			},
+		];
+		const messagesC = [
+			{
+				"contents": "C1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 5,
+				"metadata": { "batch": true, "batchId": "C" },
+				"clientId": "CLIENT_ID",
+			},
+			{
+				"contents": "C2",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 6,
+				"metadata": { "batch": false },
+				"clientId": "CLIENT_ID",
+			},
+		];
+		const messagesD = [
+			{
+				"contents": "D1",
+				"referenceSequenceNumber": 1,
+				"clientSequenceNumber": 7,
+				"metadata": { "batchId": "D" },
+				"clientId": "CLIENT_ID",
+			},
+		];
+		const expectedInfo: Partial<InboundMessageResult>[] = [
+			// A
+			{
+				type: "batchStartingMessage",
+				batchStart: {
+					batchId: undefined,
+					clientId: "CLIENT_ID",
+					keyMessage: messagesA[0] as ISequencedDocumentMessage,
+					batchStartCsn: 1,
+				},
+			},
+			{ type: "nextBatchMessage", batchEnd: false },
+			{ type: "nextBatchMessage", batchEnd: true },
+			// B
+			{
+				type: "fullBatch",
+				batchStart: {
+					clientId: "CLIENT_ID",
+					batchId: undefined,
+					batchStartCsn: 4,
+					keyMessage: messagesB[0] as ISequencedDocumentMessage,
+				},
+				length: 1,
+			},
+			// C
+			{
+				type: "batchStartingMessage",
+				batchStart: {
+					batchId: "C",
+					clientId: "CLIENT_ID",
+					batchStartCsn: 5,
+					keyMessage: messagesC[0] as ISequencedDocumentMessage,
+				},
+			},
+			{ type: "nextBatchMessage", batchEnd: true },
+			// D
+			{
+				type: "fullBatch",
+				batchStart: {
+					clientId: "CLIENT_ID",
+					batchId: "D",
+					batchStartCsn: 7,
+					keyMessage: messagesD[0] as ISequencedDocumentMessage,
+				},
+				length: 1,
+			},
+		];
+		const expectedMessages = [...messagesA, ...messagesB, ...messagesC, ...messagesD];
 
-		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
+		assert.deepStrictEqual(
+			processResults.flatMap((result) =>
+				result?.type === "fullBatch" ? [...result.messages] : [result?.nextMessage],
+			),
+			expectedMessages,
+			"unexpected output from process",
+		);
+
+		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
+		const clearMessages = (result: any) => {
+			delete result.messages;
+			delete result.nextMessage;
+			return result as InboundMessageResult;
+		};
+		assert.deepStrictEqual(
+			processResults.map(clearMessages),
+			expectedInfo,
+			"unexpected result info",
+		);
 	});
 
 	describe("Throws on invalid batches", () => {
@@ -419,14 +486,19 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		ensureContentsDeserialized(documentMessage, true, () => {});
-		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
+		ensureContentsDeserialized(documentMessage);
+		const processResult = messageProcessor.process(documentMessage, () => {});
 
+		assert.equal(
+			processResult?.type,
+			"fullBatch",
+			"Single message should yield a 'fullBatch' result",
+		);
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
+		const [inboundMessage] = processResult.messages;
 
-		assert.deepStrictEqual(result.contents, contents.contents);
-		assert.deepStrictEqual(result.type, contents.type);
+		assert.deepStrictEqual(inboundMessage.contents, contents.contents);
+		assert.deepStrictEqual(inboundMessage.type, contents.type);
 	});
 
 	it("Don't unpack non-datastore messages", () => {
@@ -438,13 +510,18 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
+		const processResult = messageProcessor.process(documentMessage, () => {});
 
+		assert.equal(
+			processResult?.type,
+			"fullBatch",
+			"Single message should yield a 'fullBatch' result",
+		);
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
+		const [inboundMessage] = processResult.messages;
 
-		assert.deepStrictEqual(result.contents, message.contents);
-		assert.deepStrictEqual(result.type, message.type);
+		assert.deepStrictEqual(inboundMessage.contents, message.contents);
+		assert.deepStrictEqual(inboundMessage.type, message.type);
 	});
 
 	it("Processing groupedBatch works as expected", () => {
@@ -481,7 +558,7 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const inboundBatch = messageProcessor.process(
+		const processResult = messageProcessor.process(
 			groupedBatch as ISequencedDocumentMessage,
 			() => {},
 		);
@@ -511,13 +588,17 @@ describe("RemoteMessageProcessor", () => {
 			},
 		];
 		assert.deepStrictEqual(
-			inboundBatch,
+			processResult,
 			{
+				type: "fullBatch",
 				messages: expected,
-				batchStartCsn: 12,
-				clientId: "CLIENT_ID",
-				batchId: "BATCH_ID",
-				emptyBatchSequenceNumber: undefined,
+				batchStart: {
+					batchStartCsn: 12,
+					clientId: "CLIENT_ID",
+					batchId: "BATCH_ID",
+					keyMessage: expected[0],
+				},
+				length: 2,
 			},
 			"unexpected processing of groupedBatch",
 		);
@@ -545,11 +626,15 @@ describe("RemoteMessageProcessor", () => {
 		assert.deepStrictEqual(
 			processResult,
 			{
+				type: "fullBatch",
 				messages: [],
-				batchStartCsn: 8,
-				clientId: "CLIENT_ID",
-				batchId: "BATCH_ID",
-				emptyBatchSequenceNumber: 10,
+				batchStart: {
+					batchStartCsn: 8,
+					clientId: "CLIENT_ID",
+					batchId: "BATCH_ID",
+					keyMessage: groupedBatch,
+				},
+				length: 0,
 			},
 			"unexpected processing of empty groupedBatch",
 		);

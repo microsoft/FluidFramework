@@ -97,11 +97,7 @@ export class BenchmarkReporter {
 	 * Appends a prettified version of the results of a benchmark instance provided to the provided
 	 * BenchmarkResults object.
 	 */
-	public recordTestResult(
-		suiteName: string,
-		testName: string,
-		result: Readonly<BenchmarkResult>,
-	): void {
+	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
 		let results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
 			results = {
@@ -120,21 +116,19 @@ export class BenchmarkReporter {
 		} else {
 			table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 		}
-		table.cell("name", chalk.italic(testName));
-		table.cell("total time (s)", prettyNumber((result as BenchmarkData).elapsedSeconds, 2));
 
-		// Additional if-statement to display columns in more readble order.
+		table.cell("name", chalk.italic(testName));
+
 		if (isResultError(result)) {
 			table.cell("error", result.error);
-		}
+		} else {
+			table.cell("total time (s)", prettyNumber(result.elapsedSeconds, 2));
 
-		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
-		// This is useful if this reporter is given unexpected data (such as from a memory test).
-		// It can also be used as a way to add extensible data formatting in the future.
-		const customData = (result as BenchmarkData).customData;
-		for (const [key, val] of Object.entries(customData)) {
-			const displayValue = val.formattedValue;
-			table.cell(key, displayValue, Table.padLeft);
+			const customData = result.customData;
+			for (const [key, val] of Object.entries(customData)) {
+				const displayValue = val.formattedValue;
+				table.cell(key, displayValue, Table.padLeft);
+			}
 		}
 
 		table.newRow();

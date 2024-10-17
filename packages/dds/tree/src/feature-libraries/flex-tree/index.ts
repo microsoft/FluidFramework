@@ -8,8 +8,6 @@ export {
 	type FlexTreeNode,
 	type FlexTreeEntity,
 	type FlexTreeTypedField,
-	type FlexTreeLeafNode,
-	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -29,7 +27,13 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, type FlexTreeContext, Context, ContextSlot } from "./context.js";
+export {
+	getTreeContext,
+	type FlexTreeContext,
+	type FlexTreeHydratedContext,
+	Context,
+	ContextSlot,
+} from "./context.js";
 
 export { type FlexTreeNodeEvents } from "./treeEvents.js";
 

@@ -1,0 +1,6 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.entrypoint.json",
+	"mainEntryPointFilePath": "<projectFolder>/dist/alpha.d.ts",
+	"bundledPackages": ["@fluidframework/*"]
+}

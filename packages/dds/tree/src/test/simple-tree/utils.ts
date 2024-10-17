@@ -8,14 +8,19 @@ import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.j
 import {
 	buildForest,
 	cursorForMapTreeNode,
+	defaultSchemaPolicy,
 	getSchemaAndPolicy,
 	MockNodeKeyManager,
 } from "../../feature-libraries/index.js";
 import {
+	HydratedContext,
 	isTreeNode,
 	isTreeNodeSchemaClass,
 	mapTreeFromNodeData,
+	normalizeFieldSchema,
+	SimpleContextSlot,
 	type ImplicitFieldSchema,
+	type InsertableContent,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
@@ -24,12 +29,14 @@ import {
 import {
 	getTreeNodeForField,
 	prepareContentForHydration,
-	type InsertableContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import type { TreeCheckout } from "../../shared-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/index.js";
 
 /**
@@ -116,9 +123,13 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
 	});
 	const manager = new MockNodeKeyManager();
-	const field = new CheckoutFlexTreeView(branch, toFlexSchema(schema), manager).flexTree;
-
-	assert(field.context !== undefined, "Expected LazyField");
+	const checkout = new CheckoutFlexTreeView(branch, defaultSchemaPolicy, manager);
+	const field = checkout.flexTree;
+	branch.forest.anchors.slots.set(
+		SimpleContextSlot,
+		new HydratedContext(normalizeFieldSchema(schema).allowedTypeSet, checkout.context),
+	);
+	assert(field.context.isHydrated(), "Expected LazyField");
 	const mapTree = mapTreeFromNodeData(
 		initialTree as InsertableContent,
 		schema,
@@ -143,4 +154,28 @@ export function pretty(arg: unknown): number | string {
 		return arg;
 	}
 	return JSON.stringify(arg);
+}
+
+/**
+ * Creates a branch of the input tree view and returns a new tree view for the branch.
+ *
+ * @remarks To merge the branch back into the original view after applying changes on the branch view, use
+ * `<originalView>.checkout.merge(<branchView>.checkout)`.
+ *
+ * @param originalView - The tree view to branch.
+ * @returns A new tree view for a branch of the input tree view, and an {@link TreeCheckoutFork} object that can be
+ * used to merge the branch back into the original view.
+ */
+export function getViewForForkedBranch<TSchema extends ImplicitFieldSchema>(
+	originalView: SchematizingSimpleTreeView<TSchema>,
+): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: TreeCheckout } {
+	const forkCheckout = originalView.checkout.branch();
+	return {
+		forkView: new SchematizingSimpleTreeView<TSchema>(
+			forkCheckout,
+			originalView.config,
+			originalView.nodeKeyManager,
+		),
+		forkCheckout,
+	};
 }

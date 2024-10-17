@@ -11,74 +11,25 @@ import {
 	type Anchor,
 	type AnchorNode,
 	EmptyKey,
-	type FieldAnchor,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type MapTree,
-	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf as leafDomain } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
-import type {
-	FlexAllowedTypes,
-	FlexFieldKind,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeNodeSchema,
-} from "../../../feature-libraries/index.js";
-import type { TreeContent } from "../../../shared-tree/index.js";
+import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
 
-import { contextWithContentReadonly } from "./utils.js";
-import {
-	cursorFromInsertable,
-	SchemaFactory,
-	toFlexSchema,
-} from "../../../simple-tree/index.js";
-import { getFlexSchema } from "../../../simple-tree/toFlexSchema.js";
-import { JsonArray, JsonObject, singleJsonCursor } from "../../json/index.js";
+import { readonlyTreeWithContent } from "./utils.js";
+import { cursorFromInsertable, SchemaFactory } from "../../../simple-tree/index.js";
+import { JsonObject, singleJsonCursor } from "../../json/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
-
-const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
-
-/**
- * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
- */
-function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
-	const cursor = context.checkout.forest.allocateCursor();
-
-	assert.equal(
-		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
-		TreeNavigationResult.Ok,
-	);
-	return cursor;
-}
-
-/**
- * Initializes a test tree, context, and cursor, and moves the cursor to the tree's root.
- *
- * @returns The initialized context and cursor.
- */
-function initializeTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
-	treeContent: TreeContent,
-): {
-	context: Context;
-	cursor: ITreeSubscriptionCursor;
-} {
-	const context = contextWithContentReadonly(treeContent);
-	const cursor = initializeCursor(context, rootFieldAnchor);
-
-	return {
-		context,
-		cursor,
-	};
-}
+import { brand } from "../../../util/index.js";
 
 /**
  * Test {@link LazyTreeNode} implementation.
  */
-class TestLazyTree<TSchema extends FlexTreeNodeSchema> extends LazyTreeNode<TSchema> {}
+class TestLazyTree extends LazyTreeNode {}
 
 /**
  * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
@@ -95,33 +46,12 @@ function createAnchors(
 
 describe("LazyNode", () => {
 	describe("LazyNode", () => {
-		it("is", () => {
-			const { context, cursor } = initializeTreeWithContent({
-				schema: toFlexSchema(JsonObject),
-				initialTree: singleJsonCursor({}),
-			});
-			cursor.enterNode(0);
-
-			const { anchor, anchorNode } = createAnchors(context, cursor);
-
-			const node = new TestLazyTree(
-				context,
-				getFlexSchema(JsonObject),
-				cursor,
-				anchorNode,
-				anchor,
-			);
-
-			assert(node.is(getFlexSchema(JsonObject)));
-			assert(!node.is(getFlexSchema(JsonArray)));
-		});
-
 		it("parent", () => {
-			const schemaBuilder = new SchemaFactory("test");
-			const ParentNode = schemaBuilder.map("map", schemaBuilder.string);
+			const schemaFactory = new SchemaFactory("test");
+			const ParentNode = schemaFactory.map("map", schemaFactory.string);
 
-			const { context, cursor } = initializeTreeWithContent({
-				schema: toFlexSchema(ParentNode),
+			const { context, cursor } = readonlyTreeWithContent({
+				schema: ParentNode,
 				initialTree: cursorFromInsertable(ParentNode, { [EmptyKey]: "test" }),
 			});
 			cursor.enterNode(0);
@@ -130,7 +60,7 @@ describe("LazyNode", () => {
 
 			const node = new TestLazyTree(
 				context,
-				getFlexSchema(ParentNode),
+				brand(ParentNode.identifier),
 				cursor,
 				anchorNode,
 				anchor,
@@ -142,15 +72,15 @@ describe("LazyNode", () => {
 
 		it("keys", () => {
 			{
-				const { context, cursor } = initializeTreeWithContent({
-					schema: toFlexSchema(JsonObject),
+				const { context, cursor } = readonlyTreeWithContent({
+					schema: JsonObject,
 					initialTree: singleJsonCursor({}),
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
 				const node = new TestLazyTree(
 					context,
-					getFlexSchema(JsonObject),
+					brand(JsonObject.identifier),
 					cursor,
 					anchorNode,
 					anchor,
@@ -158,15 +88,15 @@ describe("LazyNode", () => {
 				assert.deepEqual([...node.keys()], []);
 			}
 			{
-				const { context, cursor } = initializeTreeWithContent({
-					schema: toFlexSchema(JsonObject),
+				const { context, cursor } = readonlyTreeWithContent({
+					schema: JsonObject,
 					initialTree: singleJsonCursor({ x: 5 }),
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
 				const node = new TestLazyTree(
 					context,
-					getFlexSchema(JsonObject),
+					brand(JsonObject.identifier),
 					cursor,
 					anchorNode,
 					anchor,
@@ -176,15 +106,21 @@ describe("LazyNode", () => {
 		});
 
 		it("leaf", () => {
-			const { context, cursor } = initializeTreeWithContent({
-				schema: toFlexSchema(stringSchema),
+			const { context, cursor } = readonlyTreeWithContent({
+				schema: stringSchema,
 				initialTree: singleJsonCursor("Hello world"),
 			});
 			cursor.enterNode(0);
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new LazyTreeNode(context, leafDomain.string, cursor, anchorNode, anchor);
+			const node = new LazyTreeNode(
+				context,
+				brand(stringSchema.identifier),
+				cursor,
+				anchorNode,
+				anchor,
+			);
 
 			assert.equal(node.value, "Hello world");
 		});
@@ -205,5 +141,5 @@ function nodeToMapTree(node: FlexTreeNode): MapTree {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
-	return { fields, type: node.schema.name, value: node.value };
+	return { fields, type: node.schema, value: node.value };
 }

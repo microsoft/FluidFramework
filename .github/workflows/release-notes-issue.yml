@@ -68,7 +68,7 @@ jobs:
       # be included.
       - name: Generate release notes file
         run: |
-          flub generate releaseNotes -g client -t minor --includeUnknown --out RELEASE_NOTES.md -v
+          flub generate releaseNotes -g client -t minor --includeUnknown --headingLinks --outFile RELEASE_NOTES.md -v
 
       # Read the release notes file that we just generated into an output variable.
       - name: Read release notes file
@@ -78,18 +78,23 @@ jobs:
           path: ./RELEASE_NOTES.md
 
       # Read the issue intro from a data file and put it in an output variable.
-      - name: Read issue intro file
+      - name: Read issue intro template
         id: intro
-        uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # ratchet:juliangruber/read-file-action@v1
+        # release notes: https://github.com/Lehoczky/render-nunjucks-template-action/releases/tag/v1.0.0
+        uses: Lehoczky/render-nunjucks-template-action@9e23a64f080194d15347e881438ee53201e25c25 # ratchet:Lehoczky/render-nunjucks-template-action@v1.0.0
         with:
-          path: ${{ github.workspace }}/.github/workflows/data/release-notes-issue-intro.md
+          template-path: .github/workflows/data/release-notes-issue-intro.njk
+          vars: |
+            {
+              "version": "${{ steps.setVersion.outputs.VERSION }}"
+            }
 
       # Replace the issue body with the intro; we'll append the new release notes in the next step.
       - name: Replace issue body with intro
         uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
         with:
           issue-number: ${{ env.ISSUE }}
-          body: ${{ steps.intro.outputs.content }}
+          body: ${{ steps.intro.outputs.result }}
           edit-mode: replace
 
       # Append the release notes we generated to the issue body.

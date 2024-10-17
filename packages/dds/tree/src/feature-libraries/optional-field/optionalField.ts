@@ -266,6 +266,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
+		revision: RevisionTag | undefined,
 	): OptionalChangeset => {
 		const { moves, childChanges } = change;
 
@@ -298,11 +299,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					change.valueReplace.src === undefined
 						? {
 								isEmpty: true,
-								dst: makeChangeAtomId(genId.allocate()),
+								dst: makeChangeAtomId(genId.allocate(), revision),
 							}
 						: {
 								isEmpty: false,
-								dst: isRollback ? change.valueReplace.src : makeChangeAtomId(genId.allocate()),
+								dst: isRollback
+									? change.valueReplace.src
+									: makeChangeAtomId(genId.allocate(), revision),
 							};
 				if (change.valueReplace.isEmpty === false) {
 					replace.src = change.valueReplace.dst;
@@ -312,7 +315,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				inverted.valueReplace = {
 					isEmpty: false,
 					src: "self",
-					dst: makeChangeAtomId(genId.allocate()),
+					dst: makeChangeAtomId(genId.allocate(), revision),
 				};
 			}
 		}
@@ -581,52 +584,53 @@ export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
-	 * Creates a change which replaces the field with `newContent`
-	 * @param newContent - the new content for the field
+	 * Creates a change which will replace the content already in the field (if any at the time the change applies)
+	 * with new content.
+	 * The content in the field will be moved to the `ids.detach` register.
+	 * The content in the `ids.detach` register will be moved to into the field.
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param changeId - the ID associated with the replacement of the current content.
-	 * @param buildId - the ID associated with the creation of the `newContent`.
+	 * @param ids - the "fill" and "detach" ids associated with the change.
 	 */
 	set(
 		wasEmpty: boolean,
 		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
+			fill: ChangeAtomId;
+			detach: ChangeAtomId;
 		},
 	): OptionalChangeset;
 
 	/**
 	 * Creates a change which clears the field's contents (if any).
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param changeId - the ID associated with the detach.
+	 * @param detachId - the ID of the register that existing field content (if any) will be moved to.
 	 */
-	clear(wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset;
+	clear(wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
 		wasEmpty: boolean,
 		ids: {
-			fill: ChangesetLocalId;
+			fill: ChangeAtomId;
 			// Should be interpreted as a set of an empty field if undefined.
-			detach: ChangesetLocalId;
+			detach: ChangeAtomId;
 		},
 	): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
 		valueReplace: {
 			isEmpty: wasEmpty,
-			src: { localId: ids.fill },
-			dst: { localId: ids.detach },
+			src: ids.fill,
+			dst: ids.detach,
 		},
 	}),
 
-	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset => ({
+	clear: (wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
 		valueReplace: {
 			isEmpty: wasEmpty,
-			dst: { localId: detachId },
+			dst: detachId,
 		},
 	}),
 

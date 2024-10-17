@@ -17,3 +17,4 @@ export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
 export { CheckpointReason, ICheckpoint } from "./checkpointHelper";
 export { IServerMetadata } from "./serverMetadata";
 export { DocumentCheckpointManager } from "./documentLambdaCheckpointManager";
+export { circuitBreakerOptions, LambdaCircuitBreaker } from "./circuitBreaker";

@@ -17,6 +17,7 @@ import {
 	mintCommit,
 	rebaseChange,
 	type RebaseStatsWithDuration,
+	tagChange,
 } from "../core/index.js";
 import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
@@ -642,7 +643,7 @@ export class EditManager<
 				...newChangeFullyRebased.telemetryProperties,
 			});
 
-			peerLocalBranch.apply(newCommit.change, newCommit.revision);
+			peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
 			this.pushCommitToTrunk(sequenceId, {
 				...newCommit,
 				change: newChangeFullyRebased.change,

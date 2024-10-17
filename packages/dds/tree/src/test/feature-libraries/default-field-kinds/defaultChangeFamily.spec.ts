@@ -19,7 +19,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
@@ -38,6 +37,7 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import { JsonObject } from "../../json/index.js";
+import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 const family = defaultChangeFamily;
@@ -94,7 +94,7 @@ const root_bar0_bar0: UpPath = {
 	parentIndex: 0,
 };
 
-const nodeX = { type: leaf.string.name, value: "X" };
+const nodeX: JsonableTree = { type: brand(stringSchema.identifier), value: "X" };
 
 function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
 	assert.equal(actual.length, expected.length);
@@ -121,7 +121,6 @@ function initializeEditableForest(data?: JsonableTree): {
 			testIdCompressor,
 		);
 	}
-	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
 	const detachedFieldIndex = makeDetachedFieldIndex(
@@ -129,13 +128,11 @@ function initializeEditableForest(data?: JsonableTree): {
 		testRevisionTagCodec,
 		testIdCompressor,
 	);
-	const builder = new DefaultEditBuilder(family, (change) => {
-		const taggedChange = { revision: currentRevision, change };
+	const builder = new DefaultEditBuilder(family, mintRevisionTag, (taggedChange) => {
 		changes.push(taggedChange);
 		const delta = intoDelta(taggedChange);
 		deltas.push(delta);
-		applyDelta(delta, currentRevision, forest, detachedFieldIndex);
-		currentRevision = mintRevisionTag();
+		applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
 	});
 	return {
 		forest,
@@ -167,7 +164,7 @@ describe("DefaultEditBuilder", () => {
 		const { builder, deltas, forest } = initializeEditableForest({
 			type: brand(JsonObject.identifier),
 			fields: {
-				foo: [{ type: leaf.number.name, value: 0 }],
+				foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 			},
 		});
 		assert.equal(deltas.length, 0);
@@ -176,11 +173,14 @@ describe("DefaultEditBuilder", () => {
 		const fooEditor = builder.sequenceField(fooPath);
 		fooEditor.remove(0, 1);
 		assert.equal(deltas.length, 1);
-		fooEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.number.name, value: 42 }));
+		fooEditor.insert(
+			0,
+			cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 42 }),
+		);
 		expectForest(forest, {
 			type: brand(JsonObject.identifier),
 			fields: {
-				foo: [{ type: leaf.number.name, value: 42 }],
+				foo: [{ type: brand(numberSchema.identifier), value: 42 }],
 			},
 		});
 		assert.equal(deltas.length, 2);
@@ -205,12 +205,12 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 					],
@@ -223,8 +223,8 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
@@ -254,12 +254,12 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 					],
@@ -272,8 +272,8 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
@@ -299,8 +299,8 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{ type: brand(JsonObject.identifier) },
 					],
 				},
@@ -312,8 +312,8 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{ type: brand(JsonObject.identifier), fields: { foo: [nodeX] } },
 					],
 				},
@@ -336,17 +336,17 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
-									{ type: leaf.number.name, value: 4 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+									{ type: brand(numberSchema.identifier), value: 4 },
 								],
 							},
 						},
@@ -360,17 +360,17 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
-									{ type: leaf.number.name, value: 4 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+									{ type: brand(numberSchema.identifier), value: 4 },
 									nodeX,
 								],
 							},
@@ -392,19 +392,19 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
-									{ type: leaf.number.name, value: 4 },
-									{ type: leaf.number.name, value: 5 },
-									{ type: leaf.number.name, value: 6 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+									{ type: brand(numberSchema.identifier), value: 4 },
+									{ type: brand(numberSchema.identifier), value: 5 },
+									{ type: brand(numberSchema.identifier), value: 6 },
 								],
 							},
 						},
@@ -416,17 +416,17 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
-									{ type: leaf.number.name, value: 4 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+									{ type: brand(numberSchema.identifier), value: 4 },
 								],
 							},
 						},
@@ -441,10 +441,10 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			});
@@ -454,10 +454,10 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 3 },
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
 					],
 				},
 			};
@@ -469,10 +469,10 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			});
@@ -482,10 +482,10 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
-						{ type: leaf.number.name, value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
 					],
 				},
 			};
@@ -497,10 +497,10 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			});
@@ -510,10 +510,10 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			};
@@ -525,12 +525,12 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
-					bar: [{ type: leaf.number.name, value: 0 }],
+					bar: [{ type: brand(numberSchema.identifier), value: 0 }],
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: barKey }, 1);
@@ -538,12 +538,12 @@ describe("DefaultEditBuilder", () => {
 			const expected: JsonableTree = {
 				type: brand(JsonObject.identifier),
 				fields: {
-					foo: [{ type: leaf.number.name, value: 0 }],
+					foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 					bar: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			};
@@ -559,17 +559,17 @@ describe("DefaultEditBuilder", () => {
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 					],
@@ -590,17 +590,17 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
@@ -618,17 +618,17 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
@@ -651,17 +651,17 @@ describe("DefaultEditBuilder", () => {
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 					],
@@ -679,10 +679,10 @@ describe("DefaultEditBuilder", () => {
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
@@ -691,7 +691,7 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								bar: [{ type: leaf.number.name, value: 0 }],
+								bar: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 					],
@@ -712,7 +712,7 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 					],
@@ -721,10 +721,10 @@ describe("DefaultEditBuilder", () => {
 							type: brand(JsonObject.identifier),
 							fields: {
 								bar: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
@@ -743,10 +743,10 @@ describe("DefaultEditBuilder", () => {
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
@@ -765,13 +765,13 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
 					],
@@ -789,10 +789,10 @@ describe("DefaultEditBuilder", () => {
 							type: brand(JsonObject.identifier),
 							fields: {
 								foo: [
-									{ type: leaf.number.name, value: 0 },
-									{ type: leaf.number.name, value: 1 },
-									{ type: leaf.number.name, value: 2 },
-									{ type: leaf.number.name, value: 3 },
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
 								],
 							},
 						},
@@ -814,12 +814,12 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: brand(JsonObject.identifier),
 							fields: {
-								foo: [{ type: leaf.number.name, value: 0 }],
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 							},
 						},
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			};
@@ -864,10 +864,10 @@ describe("DefaultEditBuilder", () => {
 										type: brand(JsonObject.identifier),
 										fields: {
 											foo: [
-												{ type: leaf.number.name, value: 0 },
-												{ type: leaf.number.name, value: 1 },
-												{ type: leaf.number.name, value: 2 },
-												{ type: leaf.number.name, value: 3 },
+												{ type: brand(numberSchema.identifier), value: 0 },
+												{ type: brand(numberSchema.identifier), value: 1 },
+												{ type: brand(numberSchema.identifier), value: 2 },
+												{ type: brand(numberSchema.identifier), value: 3 },
 											],
 										},
 									},
@@ -881,9 +881,9 @@ describe("DefaultEditBuilder", () => {
 							fields: {
 								bar: [
 									{
-										type: leaf.number.name,
+										type: brand(numberSchema.identifier),
 										fields: {
-											bar: [{ type: leaf.number.name, value: 0 }],
+											bar: [{ type: brand(numberSchema.identifier), value: 0 }],
 										},
 									},
 								],
@@ -911,7 +911,7 @@ describe("DefaultEditBuilder", () => {
 									{
 										type: brand(JsonObject.identifier),
 										fields: {
-											foo: [{ type: leaf.number.name, value: 0 }],
+											foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 										},
 									},
 								],
@@ -924,13 +924,13 @@ describe("DefaultEditBuilder", () => {
 							fields: {
 								bar: [
 									{
-										type: leaf.number.name,
+										type: brand(numberSchema.identifier),
 										fields: {
 											bar: [
-												{ type: leaf.number.name, value: 0 },
-												{ type: leaf.number.name, value: 1 },
-												{ type: leaf.number.name, value: 2 },
-												{ type: leaf.number.name, value: 3 },
+												{ type: brand(numberSchema.identifier), value: 0 },
+												{ type: brand(numberSchema.identifier), value: 1 },
+												{ type: brand(numberSchema.identifier), value: 2 },
+												{ type: brand(numberSchema.identifier), value: 3 },
 											],
 										},
 									},
@@ -948,11 +948,11 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					foo: [
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
-					bar: [{ type: leaf.number.name, value: 0 }],
+					bar: [{ type: brand(numberSchema.identifier), value: 0 }],
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: barKey }, 1);
@@ -961,10 +961,10 @@ describe("DefaultEditBuilder", () => {
 				type: brand(JsonObject.identifier),
 				fields: {
 					bar: [
-						{ type: leaf.number.name, value: 0 },
-						{ type: leaf.number.name, value: 1 },
-						{ type: leaf.number.name, value: 2 },
-						{ type: leaf.number.name, value: 3 },
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
 					],
 				},
 			};

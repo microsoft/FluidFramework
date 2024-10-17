@@ -5,6 +5,7 @@
 
 export {
 	areEqualChangeAtomIds,
+	areEqualChangeAtomIdOpts,
 	makeChangeAtomId,
 	asChangeAtomId,
 	mintCommit,

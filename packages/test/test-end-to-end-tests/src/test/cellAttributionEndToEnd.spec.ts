@@ -131,7 +131,12 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 	itSkipsFailureOnSpecificDrivers(
 		"Can attribute content from multiple collaborators",
 		["tinylicious", "t9s"],
-		async () => {
+		async function () {
+			// Skip tests for r11s drivers due to timeout issues because of certain network calls
+			// taking longer time and this test has nothing to do with r11s driver.
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+				this.skip();
+			}
 			const container1 = await provider.makeTestContainer(getTestConfig(true));
 			const sharedCell1 = await sharedCellFromContainer(container1);
 			const container2 = await provider.loadTestContainer(getTestConfig(true));
@@ -169,7 +174,12 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 		},
 	);
 
-	it("attributes content created in a detached state", async () => {
+	it("attributes content created in a detached state", async function () {
+		// Skip tests for r11s drivers due to timeout issues because of certain network calls
+		// taking longer time and this test has nothing to do with r11s driver.
+		if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+			this.skip();
+		}
 		const loader = provider.makeTestLoader(getTestConfig(true));
 		const defaultCodeDetails: IFluidCodeDetails = {
 			package: "defaultTestPackage",

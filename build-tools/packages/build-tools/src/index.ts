@@ -4,8 +4,9 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export { FluidRepo, type IFluidBuildConfig } from "./common/fluidRepo";
-export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
+export { FluidRepo } from "./fluidBuild/fluidRepo";
+export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./fluidBuild/fluidUtils";
 export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
 export {
@@ -20,20 +21,23 @@ export { Timer } from "./common/timer";
 export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
-} from "./common/fluidTaskDefinitions";
-export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
-export * as TscUtils from "./common/tscUtils";
+} from "./fluidBuild/fluidTaskDefinitions";
+export {
+	getApiExtractorConfigFilePath,
+	getEsLintConfigFilePath,
+} from "./fluidBuild/tasks/taskUtils";
+export * as TscUtils from "./fluidBuild/tscUtils";
+export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
 
-export {
-	type BrokenCompatTypes,
-	type ITypeValidationConfig,
-} from "./common/typeValidatorConfig";
-export {
+/**
+ * The types defined here cannot be in build-cli because it is an ESM-only package, and these types are imported in
+ * packages that are dual-emit or CJS-only. Long term these types should move to a shared library between build-cli and
+ * build-tools.
+ */
+export type {
 	TypeOnly,
 	MinimalType,
 	FullType,
 	requireAssignableTo,
-} from "./typeValidator/compatibility";
-export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
-export { type TypeData } from "./typeValidator/typeData";
-export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";
+	SkipUniqueSymbols,
+} from "./common/typeCompatibility";

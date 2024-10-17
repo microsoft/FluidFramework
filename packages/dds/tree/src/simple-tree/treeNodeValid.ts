@@ -7,26 +7,23 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
 	NodeKind,
-	tryGetSimpleNodeSchema,
 	isTreeNode,
 	TreeNodeKernel,
 	privateToken,
 	TreeNode,
 	type InternalTreeNode,
+	typeSchemaSymbol,
+	type InnerNode,
+	type Context,
+	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import {
-	type FlexTreeNode,
-	type MapTreeNode,
-	isFlexTreeNode,
-	markEager,
-} from "../feature-libraries/index.js";
+import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../util/index.js";
 
-import { getFlexSchema } from "./toFlexSchema.js";
-import { getOrCreateInnerNode, setInnerNode } from "./proxyBinding.js";
+import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
+import { markEager } from "./flexList.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -60,7 +57,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		this: typeof TreeNodeValid<T>,
 		instance: TreeNodeValid<T>,
 		input: T,
-	): MapTreeNode {
+	): UnhydratedFlexTreeNode {
 		return fail("Schema must override buildRawNode");
 	}
 
@@ -68,7 +65,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
 	 */
-	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): void {}
+	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): Context {
+		fail("Missing oneTimeSetup");
+	}
 
 	/**
 	 * The most derived constructor (the one invoked with the `new` operator, not a parent class constructor invoked with as `super`) used to construct an instance of this type.
@@ -110,7 +109,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
 			}
 			assert(schemaBase.constructorCached === undefined, 0x962 /* overwriting wrong cache */);
-			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: false };
+			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: undefined };
 			assert(
 				this.constructorCached === schemaBase.constructorCached,
 				0x9b5 /* Inheritance should work */,
@@ -129,18 +128,26 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 	}
 
+	/**
+	 * Node creation function for implementing the TreeNodeSchemaNonClass half of TreeNodeSchemaBoth.
+	 * @remarks
+	 * When used as TreeNodeSchemaNonClass and subclassed,
+	 * does not actually have the correct compile time type for the return value due to TypeScript limitations.
+	 * This is why this is not exposed as part of TreeNodeSchemaCLass where subclassing is allowed.
+	 */
+	public static create<TInput, TOut, TThis extends new (args: TInput) => TOut>(
+		this: TThis,
+		input: TInput,
+	): TOut {
+		return new this(input);
+	}
+
 	public constructor(input: TInput | InternalTreeNode) {
 		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
 		const cache = schema.markMostDerived();
-		if (!cache.oneTimeInitialized) {
-			const flexSchema = getFlexSchema(schema);
-			assert(
-				tryGetSimpleNodeSchema(flexSchema) === schema,
-				0x961 /* Schema class not properly configured */,
-			);
-			schema.oneTimeSetup();
-			cache.oneTimeInitialized = true;
+		if (cache.oneTimeInitialized === undefined) {
+			cache.oneTimeInitialized = schema.oneTimeSetup();
 		}
 
 		if (isTreeNode(input)) {
@@ -150,17 +157,18 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			);
 		}
 
-		const node: FlexTreeNode = isFlexTreeNode(input)
-			? input
-			: schema.buildRawNode(this, input);
+		const node: InnerNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
 		assert(
-			tryGetSimpleNodeSchema(node.schema) === schema,
+			getSimpleNodeSchemaFromInnerNode(node) === schema,
 			0x83b /* building node with wrong schema */,
 		);
 
 		const result = schema.prepareInstance(this, node);
-		new TreeNodeKernel(result, schema);
-		setInnerNode(result, node);
+		// The TreeNodeKernel associates itself the TreeNode (result here, not node) so it can be looked up later via getKernel.
+		// If desired this could be put in a non-enumerable symbol property for lookup instead, but that gets messy going through proxies,
+		// so just relying on the WeakMap seems like the cleanest approach.
+		new TreeNodeKernel(result, schema, node, cache.oneTimeInitialized);
+
 		return result;
 	}
 }
@@ -180,7 +188,7 @@ markEager(TreeNodeValid);
  */
 export interface MostDerivedData {
 	readonly constructor: typeof TreeNodeValid & TreeNodeSchema;
-	oneTimeInitialized: boolean;
+	oneTimeInitialized?: Context;
 }
 
 // #region NodeJS custom inspect for TreeNodes.
@@ -203,11 +211,7 @@ function inspectNodeFunction(
 	options?: unknown,
 	inspect?: unknown,
 ): unknown {
-	// TODO: replicated from tryGetSchema to avoid cycle.
-	// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
-	const schema = tryGetSimpleNodeSchema(
-		getOrCreateInnerNode(this).schema,
-	) as TreeNodeSchemaClass;
+	const schema = this[typeSchemaSymbol];
 	const title = `${schema.name}: ${NodeKind[schema.kind]} Node (${schema.identifier})`;
 
 	if (depth < 2) {
