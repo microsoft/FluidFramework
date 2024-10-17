@@ -141,7 +141,7 @@ async function main() {
 
 	const totalTime = timer.getTotalTime();
 	const timeInMinutes =
-	totalTime > 60000
+		totalTime > 60000
 			? ` (${Math.floor(totalTime / 60000)}m ${((totalTime % 60000) / 1000).toFixed(3)}s)`
 			: "";
 	log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
