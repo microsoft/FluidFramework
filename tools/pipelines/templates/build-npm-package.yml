@@ -617,7 +617,7 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                # Publish thec Code Coverage  artifact in this format as it is easier for devs to find coverage html for each file.
+                # Publish the Code Coverage  artifact in this format as it is easier for devs to find coverage html for each file.
                 - ${{ if eq(parameters.testCoverage, true) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifacts - code-coverage
