@@ -128,6 +128,27 @@ export function toRemovalInfo(
 }
 
 /**
+ * Tracks information about each concurrent move operation which affected a segment.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IConcurrentMoveInfo {
+	/**
+	 * The clientId at which this segment was obliterated.
+	 */
+	clientId: number;
+	/**
+	 * The sequence number at which this segment was obliterated.
+	 */
+	seq: number;
+	/**
+	 * The refSeq (perspective) from which this segment was obliterated.
+	 */
+	refSeq: number;
+}
+
+/**
  * Tracks information about when and where this segment was moved to.
  *
  * Note that merge-tree does not currently support moving and only supports
@@ -149,14 +170,9 @@ export interface IMoveInfo {
 	movedSeq: number;
 
 	/**
-	 * All seqs at which this segment was moved. In the case of overlapping,
-	 * concurrent moves this array will contain multiple seqs.
-	 *
-	 * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
-	 *
-	 * The first element corresponds to the seq of the first move
+	 * Stores the seq, client id, and ref seq for each obliterate.
 	 */
-	movedSeqs: number[];
+	concurrentMoves: IConcurrentMoveInfo[];
 
 	/**
 	 * A reference to the inserted destination segment corresponding to this
@@ -167,15 +183,6 @@ export interface IMoveInfo {
 	 * Currently this field is unused, as we only support obliterate operations
 	 */
 	moveDst?: ReferencePosition;
-
-	/**
-	 * List of client IDs that have moved this segment.
-	 *
-	 * The client that actually moved the segment (i.e. whose move op was sequenced
-	 * first) is stored as the first client in this list. Other clients in the
-	 * list have all issued concurrent ops to move the segment.
-	 */
-	movedClientIds: number[];
 
 	/**
 	 * If this segment was inserted into a concurrently moved range and
@@ -195,14 +202,11 @@ export interface IMoveInfo {
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
-	if (maybe?.movedClientIds !== undefined && maybe?.movedSeq !== undefined) {
+	if (maybe?.concurrentMoves !== undefined) {
 		return maybe as IMoveInfo;
 	}
 	assert(
-		maybe?.movedClientIds === undefined &&
-			maybe?.movedSeq === undefined &&
-			maybe?.movedSeqs === undefined &&
-			maybe?.wasMovedOnInsert === undefined,
+		maybe?.concurrentMoves === undefined && maybe?.wasMovedOnInsert === undefined,
 		0x86d /* movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set */,
 	);
 }
@@ -554,8 +558,7 @@ export abstract class BaseSegment implements ISegment {
 	public removedSeq?: number;
 	public removedClientIds?: number[];
 	public movedSeq?: number;
-	public movedSeqs?: number[];
-	public movedClientIds?: number[];
+	public concurrentMoves?: IConcurrentMoveInfo[];
 	public wasMovedOnInsert?: boolean | undefined;
 	public index: number = 0;
 	public ordinal: string = "";
@@ -631,9 +634,8 @@ export abstract class BaseSegment implements ISegment {
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
 		b.removedSeq = this.removedSeq;
-		b.movedClientIds = this.movedClientIds?.slice();
+		b.concurrentMoves = this.concurrentMoves?.slice();
 		b.movedSeq = this.movedSeq;
-		b.movedSeqs = this.movedSeqs;
 		b.wasMovedOnInsert = this.wasMovedOnInsert;
 		b.seq = this.seq;
 		b.attribution = this.attribution?.clone();
@@ -701,10 +703,12 @@ export abstract class BaseSegment implements ISegment {
 				const obliterateInfo = segmentGroup.obliterateInfo;
 				assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
 				this.localMovedSeq = obliterateInfo.localSeq = undefined;
-				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
+
+				const seqIdx = moveInfo.concurrentMoves.findIndex(
+					({ seq }) => seq === UnassignedSequenceNumber,
+				);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
-					opArgs.sequencedMessage!.sequenceNumber;
+				moveInfo.concurrentMoves[seqIdx]!.seq = opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
 					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
@@ -749,15 +753,21 @@ export abstract class BaseSegment implements ISegment {
 		leafSegment.seq = this.seq;
 		leafSegment.localSeq = this.localSeq;
 		leafSegment.clientId = this.clientId;
-		leafSegment.movedClientIds = this.movedClientIds?.slice();
+		leafSegment.concurrentMoves = this.concurrentMoves?.map((move) => ({
+			...move,
+		}));
 		leafSegment.movedSeq = this.movedSeq;
-		leafSegment.movedSeqs = this.movedSeqs?.slice();
 		leafSegment.localMovedSeq = this.localMovedSeq;
 		leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
 
 		this.trackingCollection.copyTo(leafSegment);
 		if (this.attribution) {
 			leafSegment.attribution = this.attribution.splitAt(pos);
+		}
+		if (this.concurrentMoves !== undefined) {
+			this.concurrentMoves = this.concurrentMoves?.map((move) => ({
+				...move,
+			}));
 		}
 
 		return leafSegment;

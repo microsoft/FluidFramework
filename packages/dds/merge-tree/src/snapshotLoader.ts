@@ -117,9 +117,6 @@ export class SnapshotLoader {
 			if (spec.movedSeq !== undefined) {
 				seg.movedSeq = spec.movedSeq;
 			}
-			if (spec.movedSeqs !== undefined) {
-				seg.movedSeqs = spec.movedSeqs;
-			}
 			// this format had a bug where it didn't store all the overlap clients
 			// this is for back compat, so we change the singular id to an array
 			// this will only cause problems if there is an overlapping delete
@@ -135,10 +132,12 @@ export class SnapshotLoader {
 					this.client.getOrAddShortClientId(sid),
 				);
 			}
-			if (spec.movedClientIds !== undefined) {
-				seg.movedClientIds = spec.movedClientIds?.map((sid) =>
-					this.client.getOrAddShortClientId(sid),
-				);
+			if (spec.concurrentMoves !== undefined) {
+				seg.concurrentMoves = spec.concurrentMoves.map(({ seq, clientId: sid, refSeq }) => ({
+					seq,
+					clientId: this.client.getOrAddShortClientId(sid),
+					refSeq,
+				}));
 			}
 		} else {
 			seg = this.client.specToSegment(spec);
