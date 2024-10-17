@@ -30,7 +30,11 @@ import type { AdjustParams } from "./adjust.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
-import { IMergeTreeOptions, MergeTree, errorIfOptionNotTrue } from "./mergeTree.js";
+import {
+	MergeTree,
+	errorIfOptionNotTrue,
+	type IMergeTreeOptionsInternal,
+} from "./mergeTree.js";
 import type {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -153,7 +157,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	constructor(
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
-		options?: IMergeTreeOptions & PropertySet,
+		options?: IMergeTreeOptionsInternal & PropertySet,
 		private readonly getMinInFlightRefSeq: () => number | undefined = (): undefined =>
 			undefined,
 	) {

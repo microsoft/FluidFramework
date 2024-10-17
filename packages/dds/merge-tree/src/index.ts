@@ -43,6 +43,7 @@ export {
 	AttributionPolicy,
 	IMergeTreeAttributionOptions,
 	IMergeTreeOptions,
+	IMergeTreeOptionsInternal,
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
