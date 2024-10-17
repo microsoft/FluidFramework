@@ -423,7 +423,7 @@ extends:
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
                       - task: Bash@3
                         displayName: Report Code Coverage Comparison
-                        condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['Build.Reason'], 'PullRequest'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
+                        condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
                         continueOnError: false
                         env:
                           ADO_API_TOKEN: $(System.AccessToken)
