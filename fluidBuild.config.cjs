@@ -625,4 +625,11 @@ module.exports = {
 			other: { heading: "Other Changes" },
 		},
 	},
+
+	// This setting influence `flub release report` behavior. This defines the legacy compat range for release group or independent packages.
+	releaseReport: {
+		legacyCompatInterval: {
+			"client": 10,
+		},
+	},
 };

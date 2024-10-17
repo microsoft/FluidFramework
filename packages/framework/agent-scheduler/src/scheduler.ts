@@ -267,10 +267,8 @@ export class AgentScheduler
 		// Probably okay for now to have every client try to do this.
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		quorum.on("removeMember", async (clientId: string) => {
-			assert(
-				this.runtime.objectsRoutingContext.isAttached,
-				0x11c /* "Detached object routing context" */,
-			);
+			// TODO AB#19980: The scenario with a detached routing context is not fully supported.
+			if (!this.runtime.objectsRoutingContext.isAttached) return;
 			// Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
 			if (this.isActive()) {
 				const tasks: Promise<any>[] = [];

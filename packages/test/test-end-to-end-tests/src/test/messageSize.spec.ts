@@ -311,6 +311,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					{ messagesInBatch: 3, messageSize: 51 * bytesPerKB }, // Three large messages (51 KB each)
 					{ messagesInBatch: 1500, messageSize: bytesPerKB }, // Many small messages (1 KB each)
 				].forEach((testConfig) => {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					it(
 						"Large payloads pass when compression enabled, " +
 							"compressed content is over max op size and chunking enabled. " +
@@ -490,6 +491,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						payloadGenerator: generateRandomStringOfSize,
 					}, // Ten large messages with compression and chunking
 				].forEach((config) => {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					it(
 						"Payload size check, " +
 							"Sending " +

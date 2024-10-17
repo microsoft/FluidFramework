@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -27,7 +28,11 @@ import { EditorView } from "prosemirror-view";
 import {
 	IProseMirrorNode,
 	ProseMirrorTransactionBuilder,
+	nodeTypeKey,
 	sliceToGroupOps,
+	stackTypeBegin,
+	stackTypeEnd,
+	stackTypeKey,
 } from "./fluidBridge.js";
 import { schema } from "./fluidSchema.js";
 import { create as createSelection } from "./selection.js";
@@ -106,27 +111,39 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 			} else if (Marker.is(segment)) {
 				// TODO are marks applied to the structural nodes as well? Or just inner text?
 
+				const nodeType = segment.properties![nodeTypeKey];
+				const stackType = segment.properties![stackTypeKey];
 				switch (segment.refType) {
 					case ReferenceType.Simple:
-						// TODO consolidate the text segment and simple references
-						const nodeJson: IProseMirrorNode = {
-							type: segment.properties!.type,
-							attrs: segment.properties!.attrs,
-						};
+						if (stackType === stackTypeBegin) {
+							// Create the new node, add it to the top's content, and push it on the stack
+							const newNode = { type: nodeType, content: [] };
+							top.content!.push(newNode);
+							nodeStack.push(newNode);
+						} else if (stackType === stackTypeEnd) {
+							const popped = nodeStack.pop();
+							assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
+						} else {
+							// TODO consolidate the text segment and simple references
+							const nodeJson: IProseMirrorNode = {
+								type: segment.properties!.type,
+								attrs: segment.properties!.attrs,
+							};
 
-						if (segment.properties) {
-							nodeJson.marks = [];
-							for (const propertyKey of Object.keys(segment.properties)) {
-								if (propertyKey !== "type" && propertyKey !== "attrs") {
-									nodeJson.marks.push({
-										type: propertyKey,
-										value: segment.properties[propertyKey],
-									});
+							if (segment.properties) {
+								nodeJson.marks = [];
+								for (const propertyKey of Object.keys(segment.properties)) {
+									if (propertyKey !== "type" && propertyKey !== "attrs") {
+										nodeJson.marks.push({
+											type: propertyKey,
+											value: segment.properties[propertyKey],
+										});
+									}
 								}
 							}
-						}
 
-						top.content!.push(nodeJson);
+							top.content!.push(nodeJson);
+						}
 						break;
 
 					default:
