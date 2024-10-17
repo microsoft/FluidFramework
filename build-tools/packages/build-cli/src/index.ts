@@ -15,6 +15,7 @@ export type {
 	ReleaseNotesConfig,
 	ReleaseNotesSection,
 	ReleaseNotesSectionName,
+	ReleaseReportConfig,
 	ScriptRequirement,
 } from "./config.js";
 export type { knownReleaseGroups, ReleaseGroup, ReleasePackage } from "./releaseGroups.js";

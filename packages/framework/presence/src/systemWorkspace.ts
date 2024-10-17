@@ -134,7 +134,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] = value;
 			} else {
-				assert(knownSessionId.value === value.value, "Mismatched SessionId");
+				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
 			}
 		}
 		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.

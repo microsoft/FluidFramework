@@ -19,6 +19,7 @@ import {
 	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 const limit = 10;
 const sha = "testSha";
@@ -118,6 +119,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -126,6 +128,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -225,6 +228,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -233,6 +237,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -346,6 +351,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -354,6 +360,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -456,6 +463,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -464,6 +472,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -529,6 +538,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -537,6 +547,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -594,6 +605,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -602,6 +614,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -658,6 +671,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -666,6 +680,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -749,6 +764,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -757,6 +773,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -844,6 +861,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -852,6 +870,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -953,6 +972,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -961,6 +981,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -1043,6 +1064,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -1051,6 +1073,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -1107,6 +1130,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -1115,6 +1139,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -1163,6 +1188,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -1171,6 +1197,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
@@ -1222,6 +1249,7 @@ describe("routes", () => {
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
+				const startupCheck = new StartupCheck();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -1230,6 +1258,7 @@ describe("routes", () => {
 					tenantThrottlers,
 					clusterThrottlers,
 					documentManager,
+					startupCheck,
 					defaultCache,
 				);
 				superTest = request(app);
