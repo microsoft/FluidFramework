@@ -231,52 +231,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-<<<<<<< HEAD
 		"broken": {},
 		"entrypoint": "legacy"
-=======
-		"broken": {
-			"Function_isRuntimeMessage": {
-				"backCompat": false
-			},
-			"Class_ChannelCollection": {
-				"backCompat": false
-			},
-			"Class_FluidDataStoreContext": {
-				"backCompat": false
-			},
-			"Class_LocalFluidDataStoreContext": {
-				"backCompat": false
-			},
-			"Class_LocalFluidDataStoreContextBase": {
-				"backCompat": false
-			},
-			"ClassStatics_ChannelCollection": {
-				"backCompat": false
-			},
-			"ClassStatics_FluidDataStoreContext": {
-				"backCompat": false
-			},
-			"ClassStatics_LocalFluidDataStoreContext": {
-				"backCompat": false
-			},
-			"ClassStatics_LocalFluidDataStoreContextBase": {
-				"backCompat": false
-			},
-			"Interface_IFluidDataStoreContextInternal": {
-				"backCompat": false
-			},
-			"Interface_IFluidDataStoreContextProps": {
-				"backCompat": false
-			},
-			"Interface_ILocalDetachedFluidDataStoreContextProps": {
-				"backCompat": false
-			},
-			"Interface_ILocalFluidDataStoreContextProps": {
-				"backCompat": false
-			}
-		},
-		"entrypoint": "internal"
->>>>>>> 98b9ca6e32 (Added function to broken list since it's meant to be removed)
 	}
 }
