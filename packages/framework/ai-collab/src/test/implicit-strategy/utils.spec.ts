@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { sharedTreeTraverse } from "../shared-tree-diff/index.js";
+import { sharedTreeTraverse } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeTraversalTest");
 

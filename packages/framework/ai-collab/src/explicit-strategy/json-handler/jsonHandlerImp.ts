@@ -133,6 +133,8 @@ export const getCreateResponseHandler: () => (
  * TBD
  */
 export class StreamedType {
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
 	private readonly _brand = Symbol();
 }
 

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { sharedTreeDiff } from "../../shared-tree-diff/index.js";
+import { sharedTreeDiff } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 

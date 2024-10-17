@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	TreeNode,
 	NodeKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
@@ -20,10 +19,10 @@ import {
 
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
-import { fail } from "./utils.js";
+import { fail, isTreeNode } from "./utils.js";
 
 /**
- * TBD
+ * The log of edits produced by an LLM that have been performed on the Shared tree.
  */
 export type EditLog = {
 	edit: TreeEdit;
@@ -40,7 +39,7 @@ export function toDecoratedJson(
 	idGenerator.assignIds(root);
 	const stringified: string = JSON.stringify(root, (_, value) => {
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-			assert(value instanceof TreeNode, "Non-TreeNode value in tree.");
+			assert(isTreeNode(value), "Non-TreeNode value in tree.");
 			const objId =
 				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
 			assert(
@@ -85,7 +84,7 @@ export function getSuggestingSystemPrompt(
 }
 
 /**
- * TBD
+ * Creates a prompt containing unique instructions necessary for the LLM to generate explicit edits to the Shared Tree
  */
 export function getEditingSystemPrompt(
 	userPrompt: string,
@@ -149,7 +148,8 @@ export function getEditingSystemPrompt(
 }
 
 /**
- * TBD
+ * Creates a prompt asking the LLM to confirm whether the edits it has performed has successfully accomplished the user's goal.
+ * @remarks This is a form of self-assessment for the LLM to evaluate its work for correctness.
  */
 export function getReviewSystemPrompt(
 	userPrompt: string,

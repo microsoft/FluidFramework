@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -8,7 +7,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	Tree,
-	// getOrCreateInnerNode,
 	NodeKind,
 	type ImplicitAllowedTypes,
 	type TreeArrayNode,
@@ -61,19 +59,6 @@ function populateDefaults(
 			assert(typeof json[typeField] === "string", "missing or invalid type field");
 			const nodeSchema = definitionMap.get(json[typeField]);
 			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
-
-			for (const [key, fieldSchema] of Object.entries(nodeSchema.fields)) {
-				const defaulter = fieldSchema?.metadata?.llmDefault;
-				if (defaulter !== undefined) {
-					// TODO: Properly type. The input `json` is a JsonValue, but the output can contain nodes (from the defaulters) amidst the json.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
-					json[key] = defaulter() as any;
-				}
-			}
-
-			for (const value of Object.values(json)) {
-				populateDefaults(value, definitionMap);
-			}
 		}
 	}
 }
@@ -98,7 +83,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			populateDefaults(treeEdit.content, definitionMap);
 
 			const treeSchema = normalizeFieldSchema(tree.schema);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
@@ -138,7 +123,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
 
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
@@ -210,7 +195,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			const modification = treeEdit.modification;
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 			const schemaIdentifier = (modification as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
@@ -426,33 +411,13 @@ function getPlaceInfo(
 }
 
 /**
- * Returns the target node with the matching internal objectId from the {@link ObjectTarget}
+ * Returns the target node with the matching internal objectId using the provided {@link ObjectTarget}
  */
 function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): TreeNode {
 	const node = idGenerator.getNode(target[objectIdKey]);
 	assert(node !== undefined, "objectId does not exist in nodeMap");
 	return node;
 }
-
-// /**
-//  * Returns the target node with the matching internal objectId from the {@link ObjectTarget} and the index of the nod, if the
-//  * parent node is an array node.
-//  */
-// function getTargetInfo(
-// 	target: ObjectTarget,
-// 	idGenerator: IdGenerator,
-// ): {
-// 	node: TreeNode;
-// 	nodeIndex: number | undefined;
-// } {
-// 	const node = idGenerator.getNode(target[objectIdKey]);
-// 	assert(node !== undefined, "objectId does not exist in nodeMap");
-
-// 	Tree.key(node);
-
-// 	const nodeIndex = Tree.key(node);
-// 	return { node, nodeIndex: typeof nodeIndex === "number" ? nodeIndex : undefined };
-// }
 
 function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 	switch (treeEdit.type) {

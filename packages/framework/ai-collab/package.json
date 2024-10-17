@@ -92,6 +92,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"openai": "^4.67.3",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
@@ -102,6 +103,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.48.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:^",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
