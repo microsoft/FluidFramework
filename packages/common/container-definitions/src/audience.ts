@@ -36,14 +36,12 @@ export interface IAudienceOwner extends IAudience {
 export interface IAudienceEvents extends IEvent {
 	/**
 	 * "addMember" event is raised when a new user joins collaborative session.
-	 */
-	(event: "addMember", listener: (clientId: string, client: IClient) => void): void;
-
-	/**
 	 * "removeMember" event is raised when a user leaves collaborative session.
 	 */
-	(event: "removeMember", listener: (clientId: string, client: IClient) => void): void;
-
+	(
+		event: "addMember" | "removeMember",
+		listener: (clientId: string, client: IClient) => void,
+	): void;
 	/**
 	 * Notifies that client established new connection and caught-up on ops.
 	 * @param oldValue - represents old connection. Please note that oldValue.client in almost all cases will be undefined,
