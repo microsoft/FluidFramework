@@ -19,7 +19,9 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: flex-start;
+
+	height: 100%;
 
 	/* TODO: spacing, etc. */
 }
@@ -70,11 +72,9 @@
 }
 
 .howItWorksCodeCardText {
-	position: absolute;
-	/* width: 795px;
-	height: 531px;
-	left: 177px;
-	top: 2385px; */
+	max-width: 795px;
+	max-height:531px;
+	overflow: auto;
 
 	font-family: 'Segoe UI';
 	font-style: normal;
