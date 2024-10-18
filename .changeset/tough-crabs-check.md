@@ -14,3 +14,5 @@ Properties of `eventName`s beginning "fluid:telemetry:ContainerRuntime:Signal" a
    - `outOfOrderSignals` -> `outOfOrder`
 - SignalLost/SignalOutOfOrder: rename `trackingSequenceNumber` to `expectedSequenceNumber`
 - SignalOutOfOrder: rename `type` to `contentsType` and only emit it some of the time
+
+Reminder: Naming and structure of telemetry events are not considered a part of API and may change at any time.
