@@ -71,7 +71,7 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
-		await new Promise<void>((resolve) => this.io.close(() => resolve()));
+		await this.io.close();
 	}
 }
 
