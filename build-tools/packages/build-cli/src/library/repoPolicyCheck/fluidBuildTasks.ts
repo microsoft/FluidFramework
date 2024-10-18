@@ -106,27 +106,6 @@ function findScript(json: Readonly<PackageJson>, command: string): string | unde
 }
 
 /**
- * Find the script name for the tsc-multi command in a npm package.json
- *
- * @param json - the package.json content to search script in
- * @param config - the tsc-multi config to check for
- * @returns first script name found to match the command
- *
- * @remarks
- */
-function findTscMultiScript(json: PackageJson, config: string): string | undefined {
-	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
-		if (scriptCommands === undefined) {
-			continue;
-		}
-
-		if (scriptCommands.startsWith("tsc-multi") && scriptCommands.includes(config)) {
-			return script;
-		}
-	}
-}
-
-/**
  * Find the script name for the fluid-tsc command in a package.json
  *
  * @param json - the package.json content to search script in
@@ -171,12 +150,9 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 	if (project === "./tsconfig.json") {
 		addIfDefined(findScript(json, "tsc"));
 		addIfDefined(findFluidTscScript(json, undefined));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.cjs.json"));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.node16.cjs.json"));
 	}
 	addIfDefined(findScript(json, `tsc --project ${project}`));
 	addIfDefined(findFluidTscScript(json, project));
-	addIfDefined(findTscMultiScript(json, project));
 	if (tscScripts.length === 1) {
 		return tscScripts[0];
 	}
@@ -715,7 +691,6 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const projectMap = new Map<string, string>();
-			// Note: this does not check tsc-multi commands which do very likely reuse project files
 			return buildDepsHandler(
 				file,
 				root,
