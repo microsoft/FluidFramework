@@ -27,8 +27,6 @@ import type { PackageJson } from "./types.js";
  * @remarks
  *
  * The package.json is always sorted using sort-package-json.
- *
- * @internal
  */
 export function updatePackageJsonFile<J extends PackageJson = PackageJson>(
 	packagePath: string,
