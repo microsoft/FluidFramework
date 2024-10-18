@@ -64,7 +64,6 @@
 		"markdownlint-rule-emphasis-style": "^1.0.1",
 		"markdownlint-rule-github-internal-links": "^0.1.0",
 		"markdownlint-rule-helpers": "^0.25.0",
-		"node-fetch": "^3.3.2",
 		"prettier": "~3.2.5",
 		"prettier-plugin-go-template": "^0.0.15",
 		"rimraf": "^5.0.5",
