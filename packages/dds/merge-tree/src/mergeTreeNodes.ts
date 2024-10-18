@@ -265,7 +265,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
 	 *
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localSeq?: number;
 	/**
@@ -274,7 +273,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * will be updated to the seq at which that client removed this segment.
 	 *
 	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localRemovedSeq?: number;
 	/**
@@ -896,9 +894,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * @internal
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;
