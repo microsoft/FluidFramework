@@ -214,7 +214,7 @@ describe("getPendingLocalState", () => {
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
 		await runtime2.connect();
-		await runtime2.processAll();
+		await runtime2.processAllWithReupload();
 
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
