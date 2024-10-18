@@ -9,7 +9,9 @@ import path from "node:path";
 import { expect } from "chai";
 import { afterEach, describe, it } from "mocha";
 import * as semver from "semver";
-import { ResetMode, simpleGit } from "simple-git";
+import { simpleGit } from "simple-git";
+// import { ResetMode, simpleGit } from "simple-git";
+// import * as snapshot from "memfs/lib/snapshot";
 
 import { loadFluidRepo } from "../fluidRepo.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
@@ -31,10 +33,14 @@ assert(secondWorkspace !== undefined);
  * A git client rooted in the test repo. Used for resetting tests.
  */
 const git = simpleGit(testRepoRoot);
+// const snap = snapshot.toSnapshotSync({ fs, path });
+// const snap = await snapshot.toSnapshot({ fs: fs.promises, path });
+
+// ufs.use(fs).use(fs1);
 
 describe("setVersion", () => {
 	afterEach(async () => {
-		await git.reset(ResetMode.HARD, [testRepoRoot]);
+		await git.checkout(["HEAD", "--", testRepoRoot]);
 		repo.reload();
 	});
 
@@ -70,7 +76,7 @@ describe("setVersion", () => {
 
 describe("setDependencyVersion", () => {
 	afterEach(async () => {
-		await git.reset(ResetMode.HARD, [testRepoRoot]);
+		await git.checkout(["HEAD", "--", testRepoRoot]);
 		repo.reload();
 	});
 
