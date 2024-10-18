@@ -12,8 +12,6 @@ import type {
 	TreeFieldFromImplicitField,
 } from "@fluidframework/tree/internal";
 
-import { isTreeNode } from "./utils.js";
-
 /**
  * Given a tree node, generates a set of LLM friendly, unique ids for each node in a given Shared Tree.
  * @remarks - simple id's are important for the LLM and this library to create and distinguish between different types certain TreeEdits
@@ -56,8 +54,10 @@ export class IdGenerator {
 					this.assignIds(element);
 				});
 			} else {
-				assert(isTreeNode(node), "Non-TreeNode value in tree.");
-				const objId = this.getOrCreateId(node);
+				// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
+				// Uncomment this assertion back once we have a typeguard ready.
+				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
+				const objId = this.getOrCreateId(node as TreeNode);
 				Object.keys(node).forEach((key) => {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					this.assignIds((node as unknown as any)[key]);

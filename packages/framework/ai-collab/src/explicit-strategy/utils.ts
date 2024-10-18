@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNode } from "@fluidframework/tree";
-
 /**
  * Subset of Map interface.
  *
@@ -59,12 +57,4 @@ export function getOrCreate<K, V>(
 		map.set(key, value);
 	}
 	return value;
-}
-
-/**
- * Checks if the given object is an {@link TreeNode}.
- */
-export function isTreeNode(obj: unknown): obj is TreeNode {
-	// Check if the object is not null and has the private brand field
-	return obj !== null && typeof obj === "object" && "#brand" in obj;
 }

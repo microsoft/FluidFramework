@@ -38,9 +38,7 @@ import type { JsonValue } from "./json-handler/jsonParser.js";
 import { toDecoratedJson } from "./promptGeneration.js";
 import { fail } from "./utils.js";
 
-/**
- * TBD
- */
+// eslint-disable-next-line jsdoc/require-jsdoc
 export const typeField = "__fluid_type";
 
 function populateDefaults(
@@ -83,13 +81,12 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			populateDefaults(treeEdit.content, definitionMap);
 
 			const treeSchema = normalizeFieldSchema(tree.schema);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
 			if (treeSchema.kind === FieldKind.Optional && treeEdit.content === undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(tree as any).root = treeEdit.content;
+				tree.root = treeEdit.content;
 			} else {
 				for (const allowedType of treeSchema.allowedTypeSet.values()) {
 					if (schemaIdentifier === allowedType.identifier) {
@@ -123,7 +120,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const schemaIdentifier = (treeEdit.content as any)[typeField];
 
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
@@ -195,7 +192,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 
 			const modification = treeEdit.modification;
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const schemaIdentifier = (modification as any)[typeField];
 
 			let insertedObject: TreeNode | undefined;
@@ -271,7 +268,6 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			if (isObjectTarget(source)) {
 				const sourceNode = getNodeFromTarget(source, idGenerator);
 				const sourceIndex = Tree.key(sourceNode) as number;
-
 				const sourceArrayNode = Tree.parent(sourceNode) as TreeArrayNode;
 				const sourceArraySchema = Tree.schema(sourceArrayNode);
 				if (sourceArraySchema.kind !== NodeKind.Array) {
@@ -281,8 +277,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				const allowedTypes = [
 					...normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
 				];
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-				const nodeToMove = sourceArrayNode[sourceIndex];
+				const nodeToMove = sourceArrayNode.at(sourceIndex);
 				assert(nodeToMove !== undefined, "node to move must exist");
 				if (isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
 					destinationArrayNode.moveRangeToIndex(
@@ -305,7 +300,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 					...normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
 				];
 				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
-					const nodeToMove = array[i];
+					const nodeToMove = array.at(i);
 					assert(nodeToMove !== undefined, "node to move must exist");
 					if (!isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
 						throw new UsageError("Illegal node type in destination array");

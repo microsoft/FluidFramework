@@ -15,11 +15,12 @@ import {
 	type JsonNodeSchema,
 	type JsonSchemaRef,
 	type JsonTreeSchema,
+	type TreeNode,
 } from "@fluidframework/tree/internal";
 
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
-import { fail, isTreeNode } from "./utils.js";
+import { fail } from "./utils.js";
 
 /**
  * The log of edits produced by an LLM that have been performed on the Shared tree.
@@ -39,9 +40,12 @@ export function toDecoratedJson(
 	idGenerator.assignIds(root);
 	const stringified: string = JSON.stringify(root, (_, value) => {
 		if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-			assert(isTreeNode(value), "Non-TreeNode value in tree.");
+			// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
+			// Uncomment this assertion back once we have a typeguard ready.
+			// assert(isTreeNode(node), "Non-TreeNode value in tree.");
 			const objId =
-				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
+				idGenerator.getId(value as TreeNode) ??
+				fail("ID of new node should have been assigned.");
 			assert(
 				!Object.prototype.hasOwnProperty.call(value, objectIdKey),
 				`Collision of object id property.`,
