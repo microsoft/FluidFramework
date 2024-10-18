@@ -38,9 +38,16 @@ export class SummaryReader implements ISummaryReader {
 		private readonly documentId: string,
 		private readonly summaryStorage: IGitManager,
 		private readonly enableWholeSummaryUpload: boolean,
+		private readonly isEphemeralContainer: boolean | undefined,
 		private readonly maxRetriesOnError: number = 6,
 	) {
-		this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
+		this.lumberProperties = {
+			...getLumberBaseProperties(
+				this.documentId,
+				this.tenantId,
+			),
+			[CommonProperties.isEphemeralContainer]: this.isEphemeralContainer,
+	};
 	}
 
 	/**
