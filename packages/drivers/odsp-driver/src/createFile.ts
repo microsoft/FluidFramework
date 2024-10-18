@@ -34,7 +34,6 @@ import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import {
 	INewFileInfo,
-	appendNavParam,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
