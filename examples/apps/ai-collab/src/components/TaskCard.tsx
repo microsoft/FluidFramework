@@ -11,7 +11,6 @@ import {
 	type DifferenceMove,
 	SharedTreeBranchManager,
 } from "@fluid-experimental/ai-collab";
-import { type TreeView } from "@fluidframework/tree";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -30,6 +29,7 @@ import {
 	Tooltip,
 	Typography,
 } from "@mui/material";
+import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 

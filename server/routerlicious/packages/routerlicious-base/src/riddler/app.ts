@@ -16,7 +16,10 @@ import {
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
 import { ITenantRepository } from "./mongoTenantRepository";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import {
+	createHealthCheckEndpoints,
+	type StartupCheck,
+} from "@fluidframework/server-services-shared";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
@@ -29,6 +32,7 @@ export function create(
 	fetchTenantKeyMetricInterval: number,
 	riddlerStorageRequestMetricInterval: number,
 	tenantKeyGenerator: ITenantKeyGenerator,
+	startupCheck: StartupCheck,
 	cache?: ICache,
 	readinessCheck?: IReadinessCheck,
 ) {
@@ -68,7 +72,7 @@ export function create(
 		),
 	);
 
-	const healthEndpoints = createHealthCheckEndpoints("riddler", readinessCheck);
+	const healthEndpoints = createHealthCheckEndpoints("riddler", startupCheck, readinessCheck);
 
 	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler

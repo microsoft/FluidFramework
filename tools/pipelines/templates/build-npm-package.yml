@@ -134,6 +134,11 @@ parameters:
 - name: testCoverage
   type: boolean
 
+# Indicates if we should report the code coverage comparison and report metrics on the PR.
+- name: reportCodeCoverageComparison
+  type: boolean
+  default: false
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -353,7 +358,18 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          testCoverage: ${{ parameters.testCoverage }}
+                          # Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test. We don't include coverage for these tests in our baseline coverage stats, so we don't need to run them with coverage here too.
+                          testCoverage: ${{
+                            and(
+                              parameters.testCoverage,
+                              or(
+                                ne(variables['Build.Reason'], 'PullRequest'),
+                                and(
+                                  not(contains(taskTestStep, 'realsvc:tinylicious')),
+                                  not(contains(taskTestStep, 'stress:tinylicious'))
+                                )
+                              )
+                            )}}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3
@@ -407,6 +423,33 @@ extends:
                         inputs:
                           sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                      - task: Bash@3
+                        displayName: Report Code Coverage Comparison
+                        condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
+                        continueOnError: false
+                        env:
+                          ADO_API_TOKEN: '$(System.AccessToken)'
+                          GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
+                          TARGET_BRANCH_NAME: '$(targetBranchName)'
+                          ADO_BUILD_ID: '$(Build.BuildId)'
+                          GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+                          GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
+                          ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
+                          ADO_CI_BUILD_DEFINITION_ID_PR: 11
+                        inputs:
+                          targetType: inline
+                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          script: |
+                            set -eux -o pipefail
+                            echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
+                            echo "Github PR number: $GITHUB_PR_NUMBER"
+                            echo "ADO Build Number: $ADO_BUILD_ID"
+                            echo "Target Branch Name: $TARGET_BRANCH_NAME"
+                            echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
+                            echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
+                            echo "Running code coverage comparison"
+                            flub report codeCoverage --verbose
+
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
@@ -576,10 +619,11 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
+                # Publish the Code Coverage artifact in this format as it is easier for devs to find coverage html for each file.
                 - ${{ if eq(parameters.testCoverage, true) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifacts - code-coverage
-                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'), ne(variables['Build.Reason'], 'PullRequest'))
+                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                     targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
                     artifactName: codeCoverageAnalysis
                     sbomEnabled: false
