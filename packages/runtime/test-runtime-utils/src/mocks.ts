@@ -1003,9 +1003,6 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	/**
-	 * @deprecated - This has been replaced by processMessages
-	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -1013,16 +1010,6 @@ export class MockFluidDataStoreRuntime
 	) {
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
-		});
-	}
-
-	public processMessages(
-		message: ISequencedRuntimeMessageCore,
-		messageContents: IRuntimeMessageContents[],
-		local: boolean,
-	) {
-		this.deltaConnections.forEach((dc) => {
-			dc.processMessages(message, messageContents, local);
 		});
 	}
 
