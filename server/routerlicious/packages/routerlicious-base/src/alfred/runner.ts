@@ -29,6 +29,7 @@ import { runnerHttpServerStop, type StartupCheck } from "@fluidframework/server-
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
+import type { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * @internal
@@ -44,6 +45,7 @@ export class AlfredRunner implements IRunner {
 		private readonly config: Provider,
 		private readonly port: string | number,
 		private readonly tenantManager: ITenantManager,
+		private readonly tenantRepository: ITenantRepository,
 		private readonly restTenantThrottlers: Map<string, IThrottler>,
 		private readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly singleUseTokenCache: ICache,
@@ -75,6 +77,7 @@ export class AlfredRunner implements IRunner {
 			const alfred = app.create(
 				this.config,
 				this.tenantManager,
+				this.tenantRepository,
 				this.restTenantThrottlers,
 				this.restClusterThrottlers,
 				this.singleUseTokenCache,

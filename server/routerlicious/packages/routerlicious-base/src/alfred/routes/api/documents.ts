@@ -51,10 +51,12 @@ import { v4 as uuid } from "uuid";
 import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
+import type { ITenantRepository } from "../../mongoTenantRepository";
 
 export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
+	tenantRepository: ITenantRepository,
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
@@ -183,6 +185,7 @@ export function create(
 		async (request, response, next) => {
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
+			const documentUrls = await getDocumentUrlsfromTenant(tenantId);
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -215,9 +218,9 @@ export function create(
 				summary,
 				sequenceNumber,
 				crypto.randomBytes(4).toString("hex"),
-				externalOrdererUrl,
-				externalHistorianUrl,
-				externalDeltaStreamUrl,
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				values,
 				enableDiscovery,
 				isEphemeral,
@@ -241,9 +244,9 @@ export function create(
 				if (enableDiscovery) {
 					// Session information
 					const session: ISession = {
-						ordererUrl: externalOrdererUrl,
-						historianUrl: externalHistorianUrl,
-						deltaStreamUrl: externalDeltaStreamUrl,
+						ordererUrl: documentUrls.documentOrdererUrl,
+						historianUrl: documentUrls.documentHistorianUrl,
+						deltaStreamUrl: documentUrls.documentDeltaStreamUrl,
 						// Indicate to consumer that session was newly created.
 						isSessionAlive: false,
 						isSessionActive: false,
@@ -294,6 +297,23 @@ export function create(
 		};
 	}
 
+	async function getDocumentUrlsfromTenant(tenantId: string) : Promise<{ documentOrdererUrl: string; documentHistorianUrl: string; documentDeltaStreamUrl: string; }> {
+		const tenantInfo = tenantRepository.findOne(tenantId);
+		const privateLinkEnable = (await tenantInfo)?.customData?.privateLinkEnable;
+		if (privateLinkEnable) {
+			return {
+				documentOrdererUrl: `${tenantId}.${externalOrdererUrl}`,
+				documentHistorianUrl: `${tenantId}.${externalHistorianUrl}`,
+				documentDeltaStreamUrl: `${tenantId}.${externalDeltaStreamUrl}`,
+			};
+		};
+		return {
+			documentOrdererUrl: externalOrdererUrl,
+			documentHistorianUrl: externalHistorianUrl,
+			documentDeltaStreamUrl: externalDeltaStreamUrl,
+		};
+	}
+
 	/**
 	 * Get the session information.
 	 */
@@ -314,6 +334,7 @@ export function create(
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
+			const documentUrls = await getDocumentUrlsfromTenant(tenantId);
 
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
@@ -324,9 +345,9 @@ export function create(
 			const connectionTrace = new StageTrace<string>("GetSession");
 
 			const session = getSession(
-				externalOrdererUrl,
-				externalHistorianUrl,
-				externalDeltaStreamUrl,
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				tenantId,
 				documentId,
 				documentRepository,

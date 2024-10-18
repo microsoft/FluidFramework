@@ -38,10 +38,12 @@ import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import type { StartupCheck } from "@fluidframework/server-services-shared";
+import type { ITenantRepository } from "./mongoTenantRepository";
 
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
+	tenantRepository: ITenantRepository,
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
@@ -160,6 +162,7 @@ export function create(
 	const routes = alfredRoutes.create(
 		config,
 		tenantManager,
+		tenantRepository,
 		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,

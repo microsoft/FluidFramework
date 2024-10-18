@@ -15,11 +15,13 @@ import {
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { IDocumentDeleteService } from "./services";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * @internal
  */
 export interface IAlfredResourcesCustomizations {
+	tenantRepository?: ITenantRepository;
 	documentRepository?: IDocumentRepository;
 	storageNameAllocator?: IStorageNameAllocator;
 	documentDeleteService?: IDocumentDeleteService;

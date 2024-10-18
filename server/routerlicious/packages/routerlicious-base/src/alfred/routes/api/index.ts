@@ -30,10 +30,12 @@ import {
 	type StartupCheck,
 } from "@fluidframework/server-services-shared";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
+import type { ITenantRepository } from "../../mongoTenantRepository";
 
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
+	tenantRepository: ITenantRepository,
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
@@ -64,6 +66,7 @@ export function create(
 	const documentsRoute = documents.create(
 		storage,
 		appTenants,
+		tenantRepository,
 		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,

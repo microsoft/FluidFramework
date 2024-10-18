@@ -22,6 +22,8 @@ import {
 import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
+import { ITenantDocument } from "./tenantManager";
+import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
 
 /**
  * @internal
@@ -34,6 +36,7 @@ export class AlfredResources implements core.IResources {
 		public producer: core.IProducer,
 		public redisConfig: any,
 		public tenantManager: core.ITenantManager,
+		public tenantRepository: ITenantRepository,
 		public restTenantThrottlers: Map<string, core.IThrottler>,
 		public restClusterThrottlers: Map<string, core.IThrottler>,
 		public singleUseTokenCache: core.ICache,
@@ -157,12 +160,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Database connection for operations db
 		const operationsDbMongoManager = new core.MongoManager(factory);
+		const tenantCollectionName = config.get("mongo:collectionNames:tenants");
 		const documentsCollectionName = config.get("mongo:collectionNames:documents");
 		const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 
 		// Create the index on the documents collection
 		const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
 		const db: core.IDb = await dbManager.getDatabase();
+		const tenantCollection = db.collection<ITenantDocument>(tenantCollectionName);
 		const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
 		await documentsCollection.createIndex(
 			{
@@ -309,6 +314,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);
 
+		const tenantRepository =
+			customizations?.tenantRepository ?? new MongoTenantRepository(tenantCollection);
+
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,
 			operationsDbMongoManager,
@@ -380,6 +388,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			producer,
 			redisConfig,
 			tenantManager,
+			tenantRepository,
 			restTenantThrottlers,
 			restClusterThrottlers,
 			redisJwtCache,
@@ -412,6 +421,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.config,
 			resources.port,
 			resources.tenantManager,
+			resources.tenantRepository,
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
 			resources.singleUseTokenCache,
