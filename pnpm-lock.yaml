@@ -375,6 +375,9 @@ importers:
       '@fluid-experimental/ai-collab':
         specifier: workspace:~
         version: link:../../../packages/framework/ai-collab
+      '@fluid-experimental/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -450,6 +453,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      source-map-loader:
+        specifier: ^5.0.0
+        version: 5.0.0(webpack@5.95.0)
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
