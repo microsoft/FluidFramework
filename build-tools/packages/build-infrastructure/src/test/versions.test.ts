@@ -80,12 +80,12 @@ describe("setDependencyVersion", () => {
 	it("update release group deps", async () => {
 		await setDependencyVersion(
 			main.packages,
-			[...group2.packages].map((p) => p.name),
+			group2.packages.map((p) => p.name),
 			"workspace:~",
 		);
 		repo.reload();
 
-		const depsToCheck = new Set([...group2.packages, ...group3.packages].map((p) => p.name));
+		const depsToCheck = new Set(group2.packages.map((p) => p.name));
 		const allCorrect = main.packages.every((pkg) => {
 			for (const { name, version } of pkg.combinedDependencies) {
 				if (!depsToCheck.has(name)) {
@@ -93,6 +93,7 @@ describe("setDependencyVersion", () => {
 				}
 				const matches = version === "workspace:~";
 				if (matches === false) {
+					console.error(`${name} has incorrect version/range: ${version}`)
 					return false;
 				}
 			}

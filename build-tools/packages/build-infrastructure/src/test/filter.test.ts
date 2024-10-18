@@ -53,7 +53,6 @@ describe("filterPackages", () => {
 
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
-		console.debug(names);
 		expect(names).to.be.equalTo([
 			"main-release-group-root",
 			"@group2/pkg-d",
