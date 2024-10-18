@@ -12,12 +12,14 @@ import {
 	IRevokedTokenChecker,
 	IStorageNameRetriever,
 	IDocumentManager,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICache, IDenyList, ITenantService } from "./services";
 import * as app from "./app";
+import type { StartupCheck } from "@fluidframework/server-services-shared";
 
 export class HistorianRunner implements IRunner {
 	private server: IWebServer;
@@ -32,10 +34,12 @@ export class HistorianRunner implements IRunner {
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly documentManager: IDocumentManager,
+		private readonly startupCheck: StartupCheck,
 		private readonly cache?: ICache,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
 		private readonly ephemeralDocumentTTLSec?: number,
+		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -49,10 +53,12 @@ export class HistorianRunner implements IRunner {
 			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.documentManager,
+			this.startupCheck,
 			this.cache,
 			this.revokedTokenChecker,
 			this.denyList,
 			this.ephemeralDocumentTTLSec,
+			this.readinessCheck,
 		);
 		historian.set("port", this.port);
 
@@ -64,6 +70,7 @@ export class HistorianRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
+		this.startupCheck.setReady();
 		return this.runningDeferred.promise;
 	}
 

@@ -147,10 +147,29 @@ export function markRangeRemoved({
 	refSeq,
 	clientId,
 	seq,
-	overwrite = false,
 	opArgs,
 }: MarkRangeRemovedArgs): void {
-	mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
+	mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, opArgs);
+}
+
+export function obliterateRange({
+	mergeTree,
+	start,
+	end,
+	refSeq,
+	clientId,
+	seq,
+	opArgs,
+}: {
+	mergeTree: MergeTree;
+	start: number;
+	end: number;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	opArgs: IMergeTreeDeltaOpArgs;
+}): void {
+	mergeTree.obliterateRange(start, end, refSeq, clientId, seq, opArgs);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: MergeBlock): boolean {

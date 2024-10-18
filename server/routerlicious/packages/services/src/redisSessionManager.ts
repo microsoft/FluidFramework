@@ -48,6 +48,23 @@ interface IShortCollaborationSession {
 }
 
 /**
+ * Options for {@link RedisCollaborationSessionManager} that tune specific behaviors.
+ * @internal
+ */
+export interface IRedisCollaborationSessionManagerOptions {
+	/**
+	 * Maximum number of sessions to scan at once when calling {@link RedisCollaborationSessionManager.getAllSessions}.
+	 * The expected return size of a given session is less than 200 bytes, including the key.
+	 * @defaultValue 800 - Intended to keep each scan result under 200KB (which would be ~1000 sessions).
+	 */
+	maxScanBatchSize: number;
+}
+
+const defaultRedisCollaborationSessionManagerOptions: IRedisCollaborationSessionManagerOptions = {
+	maxScanBatchSize: 800,
+};
+
+/**
  * Manages the set of collaboration sessions in a Redis hashmap.
  * @internal
  */
@@ -56,11 +73,14 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 	 * Redis hashmap key.
 	 */
 	private readonly prefix: string = "collaboration-session";
+	private readonly options: IRedisCollaborationSessionManagerOptions;
 
 	constructor(
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
+		options?: Partial<IRedisCollaborationSessionManagerOptions>,
 	) {
+		this.options = { ...defaultRedisCollaborationSessionManagerOptions, ...options };
 		if (parameters?.prefix) {
 			this.prefix = parameters.prefix;
 		}
@@ -100,14 +120,37 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 	}
 
 	public async getAllSessions(): Promise<ICollaborationSession[]> {
-		const sessionJsons = await this.redisClientConnectionManager
+		// Use HSCAN to iterate over te key:value pairs of the hashmap
+		// in batches to get all sessions with minimal impact on Redis.
+		const sessionJsonScanStream = this.redisClientConnectionManager
 			.getRedisClient()
-			.hgetall(this.prefix);
-		const sessions: ICollaborationSession[] = [];
-		for (const [fieldKey, sessionJson] of Object.entries(sessionJsons)) {
-			sessions.push(this.getFullSession(fieldKey, JSON.parse(sessionJson)));
-		}
-		return sessions;
+			.hscanStream(this.prefix, { count: this.options.maxScanBatchSize });
+		return new Promise((resolve, reject) => {
+			const sessions: ICollaborationSession[] = [];
+			sessionJsonScanStream.on("data", (result: string[]) => {
+				if (!result) {
+					// When redis scan is done, it pushes null to the stream.
+					// This should only trigger the "end" event, but we should check for it to be safe.
+					return;
+				}
+				if (!Array.isArray(result) || result.length % 2 !== 0) {
+					throw new Error("Invalid scan result");
+				}
+				// The scan stream emits an array of alternating field keys and values.
+				// For example, a hashmap like { key1: value1, key2: value2 } would emit ["key1", "value1", "key2", "value2"].
+				for (let i = 0; i < result.length; i += 2) {
+					const fieldKey = result[i];
+					const sessionJson = result[i + 1];
+					sessions.push(this.getFullSession(fieldKey, JSON.parse(sessionJson)));
+				}
+			});
+			sessionJsonScanStream.on("end", () => {
+				resolve(sessions);
+			});
+			sessionJsonScanStream.on("error", (error) => {
+				reject(error);
+			});
+		});
 	}
 
 	private getShortSession(session: ICollaborationSession): IShortCollaborationSession {

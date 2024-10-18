@@ -16,9 +16,10 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
  *
- * @type {import("@fluidframework/build-tools").IFluidBuildConfig}
+ * @type {import("@fluidframework/build-tools").IFluidBuildConfig & import("@fluid-tools/build-cli").FlubConfig}
  */
 module.exports = {
+	version: 1,
 	tasks: {
 		"ci:build": {
 			dependsOn: [
@@ -69,10 +70,7 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
-		// These dependencies for typetests:gen can be removed once build-tools is upgraded to 0.45+.
-		// After that version, typetests are generated from the previous version of the package only, so they have no
-		// dependent tasks.
-		"typetests:gen": ["^tsc"],
+		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
@@ -83,7 +81,7 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "typetests:gen"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
@@ -108,11 +106,11 @@ module.exports = {
 		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
-			dependsOn: ["build:manifest"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"build:manifest": {
-			dependsOn: ["tsc"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"depcruise": [],
@@ -159,6 +157,71 @@ module.exports = {
 			script: false,
 		},
 	},
+
+	multiCommandExecutables: ["oclif", "syncpack"],
+	declarativeTasks: {
+		"jssm-viz": {
+			inputGlobs: ["src/**/*.fsl"],
+			outputGlobs: ["src/**/*.fsl.svg"],
+		},
+		"oclif manifest": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["oclif.manifest.json"],
+		},
+		"oclif readme": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["README.md", "docs/**"],
+		},
+		"syncpack lint-semver-ranges": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
+		},
+		"syncpack list-mismatches": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
+		},
+	},
+
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
 		// Release groups
@@ -169,19 +232,15 @@ module.exports = {
 		},
 		"build-tools": {
 			directory: "build-tools",
-			defaultInterdependencyRange: "workspace:~",
 		},
 		"server": {
 			directory: "server/routerlicious",
-			defaultInterdependencyRange: "workspace:~",
 		},
 		"gitrest": {
 			directory: "server/gitrest",
-			defaultInterdependencyRange: "^",
 		},
 		"historian": {
 			directory: "server/historian",
-			defaultInterdependencyRange: "^",
 		},
 
 		// Independent packages
@@ -216,7 +275,7 @@ module.exports = {
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
-			"packages/common/client-utils/src/cjs/package.json",
+			"packages/framework/presence/src/cjs/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
@@ -230,11 +289,7 @@ module.exports = {
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
 			],
-			"fluid-build-tasks-tsc": [
-				// This can be removed once the client release group is using build-tools 0.39.0+.
-				// See https://github.com/microsoft/FluidFramework/pull/21238
-				"^packages/test/test-end-to-end-tests/package.json",
-			],
+			"fluid-build-tasks-tsc": [],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -255,8 +310,6 @@ module.exports = {
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
-				"build-tools/packages/readme-command/bin/dev.js",
-				"build-tools/packages/readme-command/bin/run.js",
 				"build-tools/packages/version-tools/bin/dev.js",
 				"build-tools/packages/version-tools/bin/run.js",
 				"common/build/build-common/gen_version.js",
@@ -268,6 +321,7 @@ module.exports = {
 				"docs/api/fallback/index.js",
 				"docs/build-redirects.js",
 				"docs/download-apis.js",
+				"docs/local-api-rollup.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
@@ -275,7 +329,6 @@ module.exports = {
 				"packages/test/mocha-test-setup/mocharc-common.js",
 				"packages/test/test-service-load/scripts/usePrereleaseDeps.js",
 				"packages/tools/devtools/devtools-browser-extension/test-setup.js",
-				"scripts/report-parser.js",
 				"tools/changelog-generator-wrapper/src/getDependencyReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/index.js",
@@ -334,6 +387,8 @@ module.exports = {
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
+				// comments in api-extractor JSON files fail parsing - PR #22498 to fix
+				"^packages/framework/presence/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -538,6 +593,18 @@ module.exports = {
 		},
 	},
 
+	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be
+	// overridden usig explicit CLI flags like `--interdependencyRange`.
+	bump: {
+		defaultInterdependencyRange: {
+			"client": "workspace:~",
+			"build-tools": "workspace:~",
+			"server": "workspace:~",
+			"gitrest": "^",
+			"historian": "^",
+		},
+	},
+
 	// This defines the branch release types for type tests. It applies only to the client release group. Settings for
 	// other release groups is in their root fluid-build config.
 	branchReleaseTypes: {
@@ -554,6 +621,13 @@ module.exports = {
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
 			other: { heading: "Other Changes" },
+		},
+	},
+
+	// This setting influence `flub release report` behavior. This defines the legacy compat range for release group or independent packages.
+	releaseReport: {
+		legacyCompatInterval: {
+			"client": 10,
 		},
 	},
 };

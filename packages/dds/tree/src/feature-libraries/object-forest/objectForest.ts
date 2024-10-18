@@ -140,7 +140,7 @@ export class ObjectForest implements IEditableForest {
 			);
 			if (this.currentCursors.size > 1) {
 				const unexpectedSources = [...this.currentCursors].flatMap((c) =>
-					c === cursor ? [] : c.source ?? null,
+					c === cursor ? [] : (c.source ?? null),
 				);
 
 				throw new Error(

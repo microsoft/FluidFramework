@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as BufferNode from "../../bufferNode";
 import * as BufferBrowser from "../../bufferBrowser";
+import * as BufferNode from "../../bufferNode";
 
 describe("Buffer isomorphism", () => {
 	test("from string utf-8/16 is compatible", () => {

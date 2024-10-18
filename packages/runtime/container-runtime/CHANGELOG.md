@@ -1,5 +1,32 @@
 # @fluidframework/container-runtime
 
+## 2.4.0
+
+### Minor Changes
+
+-   The `op.contents` member on ContainerRuntime's `batchBegin`/`batchEnd` event args is deprecated ([#22750](https://github.com/microsoft/FluidFramework/pull/22750)) [de6928b528](https://github.com/microsoft/FluidFramework/commit/de6928b528ceb115b12cdf7a4183077cbaa80a71)
+
+    The `batchBegin`/`batchEnd` events on ContainerRuntime indicate when a batch is beginning/finishing being processed.
+    The events include an argument of type `ISequencedDocumentMessage` which is the first or last message of the batch.
+
+    The `contents` property of the `op` argument should not be used when reasoning over the begin/end of a batch.
+    If you want to look at the `contents` of an op, wait for the `op` event.
+
+## 2.3.0
+
+### Minor Changes
+
+-   Restored old op processing behavior around batched ops to avoid potential regression ([#22508](https://github.com/microsoft/FluidFramework/pull/22508)) [709f085c580](https://github.com/microsoft/FluidFramework/commit/709f085c5802bb4ad80145911ca3b05e457e9d6e)
+
+    There's a theoretical risk of indeterminate behavior due to a recent change to how batches of ops are processed.
+    This fix reverses that change.
+
+    Pull Request #21785 updated the ContainerRuntime to hold onto the messages in an incoming batch until they've all arrived, and only then process the set of messages.
+
+    While the batch is being processed, the DeltaManager and ContainerRuntime's view of the latest sequence numbers will be
+    out of sync. This may have unintended side effects, so out of an abundance of caution we're reversing this behavior until
+    we can add the proper protections to ensure the system stays properly in sync.
+
 ## 2.2.0
 
 ### Minor Changes

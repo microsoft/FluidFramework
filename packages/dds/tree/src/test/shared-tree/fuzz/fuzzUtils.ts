@@ -24,7 +24,7 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import type { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
+import type { ITreeCheckout, SharedTree, TreeCheckout } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 import type {
@@ -200,7 +200,7 @@ export function createAnchors(tree: ITreeCheckout): Map<Anchor, [UpPath, Value]>
 	return anchors;
 }
 
-export type RevertibleSharedTreeView = ITreeCheckout & {
+export type RevertibleSharedTreeView = TreeCheckout & {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;

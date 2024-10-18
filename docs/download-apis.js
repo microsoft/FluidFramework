@@ -22,6 +22,9 @@ const {
 } = await fs.readJSON(path.resolve(dirname, "data", "versions.json"));
 const docVersions = previousVersions.concat(currentVersion);
 
+// remove local version from list to download, since there are no remote artifacts for it
+docVersions.splice(docVersions.indexOf("local"), 1);
+
 try {
 	await Promise.all(
 		docVersions.map(async (version) => {
@@ -33,7 +36,7 @@ try {
 			// condition, it'll correctly use _api-extractor-temp-v1
 			const versionPostfix =
 				version === currentVersion && docVersions.length > 1 ? "" : `-${version}`;
-			const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest${versionPostfix}.tar.gz`;
+			const url = `https://storage.fluidframework.com/api-extractor-json/latest${versionPostfix}.tar.gz`;
 
 			const destination = path.resolve(dirname, "_doc-models", version);
 

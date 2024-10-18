@@ -463,7 +463,7 @@ export function isMemoryTest(): boolean {
 		}
 	}
 	const isMemTest: boolean =
-		process.env.FLUID_E2E_MEMORY !== undefined ? true : isMemoryUsageTest ?? false;
+		process.env.FLUID_E2E_MEMORY !== undefined ? true : (isMemoryUsageTest ?? false);
 	return isMemTest;
 }
 

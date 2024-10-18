@@ -110,3 +110,113 @@ export async function isPrApprovedByUsers(
 	const approved = reviewers.some((user) => approvers.has(user));
 	return approved;
 }
+
+/**
+ * Creates or modifies a single review comment on a PR. The comment is identified with a unique identifier, so the same comment is updated on repeated calls.
+ *
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param prNumber - Pull request number.
+ * @param body - review comment body to be posted.
+ * @param commentIdentifier - unique identifier for the comment to be updated.
+ *
+ * @returns id of the comment that was updated.
+ */
+export async function createOrUpdateCommentOnPr(
+	{ owner, repo, token }: GitHubProps,
+	prNumber: number,
+	body: string,
+	commentIdentifier: string,
+): Promise<number> {
+	const octokit = new Octokit({ auth: token });
+
+	// List of review comments for the pull request
+	const { data: comments } = await octokit.pulls.listReviews({
+		owner,
+		repo,
+		pull_number: prNumber,
+	});
+
+	let commentId: number | undefined;
+	// Log the comments to find the comment_id
+	for (const comment of comments) {
+		if (comment.body.startsWith(commentIdentifier)) {
+			commentId = comment.id;
+			break;
+		}
+	}
+
+	if (commentId === undefined) {
+		const response = await octokit.pulls.createReview({
+			owner,
+			repo,
+			pull_number: prNumber,
+			event: "COMMENT",
+			body,
+		});
+		return response.data.id;
+	}
+	// Update PR review comment
+	const { data } = await octokit.pulls.updateReview({
+		owner,
+		repo,
+		pull_number: prNumber,
+		body,
+		review_id: commentId,
+	});
+	return data.id;
+}
+
+/**
+ * Retrieves body of the comment if commentIdentifier identifies the comment.
+ *
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param prNumber - Pull request number.
+ * @param commentIdentifier - unique identifier for the comment to be updated.
+ *
+ * @returns body of the comment identified by commentIdentifier.
+ */
+export async function getCommentBody(
+	{ owner, repo, token }: GitHubProps,
+	prNumber: number,
+	commentIdentifier: string,
+): Promise<string | undefined> {
+	const octokit = new Octokit({ auth: token });
+
+	// List of review comments for the pull request
+	const { data: comments } = await octokit.pulls.listReviews({
+		owner,
+		repo,
+		pull_number: prNumber,
+	});
+
+	let commentBody: string | undefined;
+	// Check the comments to find the comment with the identifier.
+	for (const comment of comments) {
+		if (comment.body.startsWith(commentIdentifier)) {
+			return comment.body;
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Api to get the changed file paths in a PR. The paths are relative to the root of the repo.
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param prNumber - Pr number for which the changed files paths are to be fetched
+ * @returns - List of file paths that are changed in the PR
+ */
+export async function getChangedFilePaths(
+	{ owner, repo, token }: GitHubProps,
+	prNumber: number,
+): Promise<string[]> {
+	const octokit = new Octokit({ auth: token });
+
+	// List of files changed in the pull request
+	const { data: files } = await octokit.pulls.listFiles({
+		owner,
+		repo,
+		pull_number: prNumber,
+	});
+	const fileNames = files.map((file) => file.filename);
+	return fileNames;
+}

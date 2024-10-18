@@ -854,7 +854,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor?: IIdCompressor & IIdCompressorCore;
+	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 

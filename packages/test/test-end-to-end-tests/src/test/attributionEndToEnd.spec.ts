@@ -19,7 +19,6 @@ import {
 	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
@@ -120,7 +119,6 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const getTestConfig = (
 		enable: boolean = false,
-		summaryVersion?: string,
 		disableSummaries: boolean = true,
 	): ITestContainerConfig => ({
 		...testContainerConfig,
@@ -136,7 +134,6 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 					track: enable,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
-				[LoaderHeader.version]: summaryVersion,
 			} as any,
 		},
 		runtimeOptions: disableSummaries
@@ -152,7 +149,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const getAttributorFromContainer = async (container: IContainer) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = dataStore.context.containerRuntime as ContainerRuntime;
+		const containerRuntime = dataStore.context.containerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);
 		assert(attributor !== undefined, "Attributor should be defined");
 		return attributor;
@@ -160,7 +157,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const getAttributorFromContainerWithNoAssert = async (container: IContainer) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = dataStore.context.containerRuntime as ContainerRuntime;
+		const containerRuntime = dataStore.context.containerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);
 		return attributor;
 	};
@@ -172,7 +169,12 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	itSkipsFailureOnSpecificDrivers(
 		"Can attribute content from multiple collaborators",
 		["tinylicious", "t9s"],
-		async () => {
+		async function () {
+			// Skip tests for r11s drivers due to timeout issues because of certain network calls
+			// taking longer time and this test has nothing to do with r11s driver.
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+				this.skip();
+			}
 			const container1 = await provider.makeTestContainer(getTestConfig(true));
 			const sharedString1 = await sharedStringFromContainer(container1);
 			const container2 = await provider.loadTestContainer(getTestConfig(true));
@@ -209,7 +211,12 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	it("attributes content created in a detached state", async () => {
+	it("attributes content created in a detached state", async function () {
+		// Skip tests for r11s drivers due to timeout issues because of certain network calls
+		// taking longer time and this test has nothing to do with r11s driver.
+		if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+			this.skip();
+		}
 		const loader = provider.makeTestLoader(getTestConfig(true));
 		const defaultCodeDetails: IFluidCodeDetails = {
 			package: "defaultTestPackage",
@@ -251,14 +258,13 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		assertAttributionMatches(sharedString2, 13, attributor2, "detached");
 	});
 
-	it("repopulates attribution association data using the summary tree", async () => {
+	it("repopulates attribution association data using the summary tree", async function () {
 		const container1 = await provider.makeTestContainer(getTestConfig(true));
 		const sharedString1 = await sharedStringFromContainer(container1);
 		const attributor1 = await getAttributorFromContainer(container1);
 
 		const text = "client 1";
 		sharedString1.insertText(0, text);
-		// await container1.attach(provider.driver.createCreateNewRequest("doc id"));
 		await provider.ensureSynchronized();
 		sharedString1.insertText(0, "client 2, ");
 		await provider.ensureSynchronized();
@@ -266,14 +272,14 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		const summarizer = await createSummarizer(
 			provider,
 			container1,
-			getTestConfig(true, undefined, false),
+			getTestConfig(true, false),
 		);
 		await provider.ensureSynchronized();
 		const summaryResult = await summarizeNow(summarizer.summarizer);
 
-		const container2 = await provider.loadTestContainer(
-			getTestConfig(true, summaryResult.summaryVersion),
-		);
+		const container2 = await provider.loadTestContainer(getTestConfig(true), {
+			[LoaderHeader.version]: summaryResult.summaryVersion,
+		});
 		const sharedString2 = await sharedStringFromContainer(container2);
 		const attributor2 = await getAttributorFromContainer(container2);
 

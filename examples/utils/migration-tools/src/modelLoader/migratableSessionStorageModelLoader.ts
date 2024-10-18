@@ -75,7 +75,7 @@ export class MigratableSessionStorageModelLoader<ModelType>
 		});
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);
 	}
-	public async loadExistingPaused(
+	public async loadExistingToSequenceNumber(
 		id: string,
 		sequenceNumber: number,
 	): Promise<IAttachedMigratableModel<ModelType>> {
@@ -85,6 +85,9 @@ export class MigratableSessionStorageModelLoader<ModelType>
 			codeLoader: this.codeLoader,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(id),
 		});
-		return modelLoader.loadExistingPaused(`${window.location.origin}/${id}`, sequenceNumber);
+		return modelLoader.loadExistingToSequenceNumber(
+			`${window.location.origin}/${id}`,
+			sequenceNumber,
+		);
 	}
 }

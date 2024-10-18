@@ -1,7 +1,6 @@
 {
 	"name": "@fluid-experimental/presence",
-	"version": "2.3.0",
-	"private": true,
+	"version": "2.5.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -33,6 +32,26 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./internal/container-definitions/internal": {
+			"import": "./lib/container-definitions/index.js",
+			"require": "./dist/container-definitions/index.js"
+		},
+		"./internal/core-interfaces": {
+			"import": "./lib/core-interfaces/index.js",
+			"require": "./dist/core-interfaces/index.js"
+		},
+		"./internal/events": {
+			"import": "./lib/events/events.js",
+			"require": "./dist/events/events.js"
+		},
+		"./internal/exposedInternalTypes": {
+			"import": "./lib/exposedInternalTypes.js",
+			"require": "./dist/exposedInternalTypes.js"
+		},
+		"./internal/exposedUtilityTypes": {
+			"import": "./lib/exposedUtilityTypes.js",
+			"require": "./dist/exposedUtilityTypes.js"
 		}
 	},
 	"files": [
@@ -47,7 +66,10 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:core-interfaces-no-exactOptionalPropertyTypes",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": "tsc --project ./src/test/core-interfaces/tsconfig.no-exactOptionalPropertyTypes.json",
 		"check:are-the-types-wrong": "echo skip per issue #112 - node10 requirement: attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -56,7 +78,7 @@
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -64,28 +86,80 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "echo \"No tests yet\"",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist"
 	},
-	"dependencies": {},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"dist/**/*.*js",
+			"lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/datastore": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
+	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@arethetypeswrong/cli": "^0.16.4",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
+		"@microsoft/api-extractor": "7.47.8",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "^18.19.0",
+		"@types/sinon": "^17.0.3",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
+		"mocha": "^10.2.0",
+		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"sinon": "^17.0.1",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": [
 				"build:esnext"
 			],
 			"check:exports:bundle-release-tags": [
@@ -96,11 +170,16 @@
 			],
 			"check:exports:esm:index": [
 				"build:esnext"
+			],
+			"eslint": [
+				"build:esnext",
+				"^build:test:esm"
 			]
 		}
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

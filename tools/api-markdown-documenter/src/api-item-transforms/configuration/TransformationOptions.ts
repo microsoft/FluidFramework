@@ -139,8 +139,8 @@ export interface ApiItemTransformationOptions {
 	 * @remarks
 	 *
 	 * Note that this is a {@link TransformApiItemWithoutChildren} only because we handle `Model`
-	 * and `Package` items specially. We never render `Package` child details directly to the `Modal` document.
-	 * These are always rendered to seperate documents from each other.
+	 * and `Package` items specially. We never render `Package` child details directly to the `Model` document.
+	 * These are always rendered to separate documents from each other.
 	 */
 	transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
 

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import { readFileSync, readJsonSync, writeJson, writeJsonSync } from "fs-extra";
+import { readJsonSync, writeJson, writeJsonSync } from "fs-extra";
 import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
@@ -20,12 +20,12 @@ import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
 	execWithErrorAsync,
-	existsSync,
 	isSameFileOrDir,
 	lookUpDirSync,
 	rimrafWithErrorAsync,
 } from "./utils";
 
+import { readFile } from "node:fs/promises";
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
@@ -221,7 +221,7 @@ export class Package {
 		const lockFileNames = ["pnpm-lock.yaml", "yarn.lock", "package-lock.json"];
 		for (const lockFileName of lockFileNames) {
 			const full = path.join(directory, lockFileName);
-			if (fs.existsSync(full)) {
+			if (existsSync(full)) {
 				return full;
 			}
 		}
@@ -230,7 +230,7 @@ export class Package {
 
 	public get installCommand(): string {
 		return this.packageManager === "pnpm"
-			? "pnpm i"
+			? "pnpm i --no-frozen-lockfile"
 			: this.packageManager === "yarn"
 				? "npm run install-strict"
 				: "npm i";
@@ -397,7 +397,7 @@ export class Packages {
 		}
 
 		const packages: Package[] = [];
-		const files = fs.readdirSync(dirFullPath, { withFileTypes: true });
+		const files = readdirSync(dirFullPath, { withFileTypes: true });
 		files.map((dirent) => {
 			if (dirent.isDirectory() && dirent.name !== "node_modules") {
 				const fullPath = path.join(dirFullPath, dirent.name);
@@ -579,7 +579,7 @@ export async function updatePackageJsonFileAsync(
 async function readPackageJsonAndIndentAsync(
 	pathToJson: string,
 ): Promise<[json: PackageJson, indent: string]> {
-	return fs.promises.readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
+	return readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
 		const indentation = detectIndent(contents).indent || "\t";
 		const pkgJson: PackageJson = JSON.parse(contents);
 		return [pkgJson, indentation];
