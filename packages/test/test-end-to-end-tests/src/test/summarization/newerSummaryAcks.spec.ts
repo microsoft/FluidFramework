@@ -83,7 +83,13 @@ describeCompat(
 		itExpects(
 			"closes the container on getting a newer summary ack and fetching the corresponding snapshot",
 			[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
-			async () => {
+			async function () {
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
+					this.skip();
+				}
 				const container1 = await provider.makeTestContainer(testContainerConfig);
 				const defaultDataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
 				defaultDataStore1._root.set("1", "2");

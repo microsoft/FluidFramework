@@ -276,6 +276,9 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler2: IAgentScheduler;
 
 		beforeEach("createContainersAndSchedulers", async function () {
+			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+				this.skip();
+			}
 			container1 = await createContainer();
 			scheduler1 = await getContainerEntryPointBackCompat<IAgentScheduler>(container1);
 
