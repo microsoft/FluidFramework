@@ -11,7 +11,6 @@ import Diagram from '@site/static/assets/services-diagram.svg';
 import "@site/src/css/serviceSection.css";
 
 export function ServiceSection(): JSX.Element {
-<<<<<<< HEAD
 	return (
 		<HomePageSection title="Fluid Framework in the Cloud" image={ServiceSectionBG}>
 
@@ -50,14 +49,4 @@ export function ServiceSection(): JSX.Element {
 			</div>
 		</HomePageSection>
 	);
-=======
-	return <HomePageSection title="Fluid Framework in the Cloud">
-		<div>
-			<Diagram />
-		</div>
-		<div>
-			TODO
-		</div>
-	</HomePageSection>;
->>>>>>> ed8a3790aa358f59f430a70dd45a56227c4cde89
 }
