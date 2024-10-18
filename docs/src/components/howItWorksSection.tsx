@@ -116,7 +116,6 @@ export function HowItWorksSection(): React.ReactElement {
 						Sample Code
 					</div>
 					<div className="howItWorksCodeCard">
-						<div className="howItWorksCodeCardFrame">
 							<div className="howItWorksCodeCardBody">
 								<CodeBlock
 									language="typescript" className="howItWorksCodeCardText"
@@ -125,7 +124,6 @@ export function HowItWorksSection(): React.ReactElement {
 									{code}
 								</CodeBlock>
 							</div>
-						</div>
 					</div>
 				</div>
 				<div className="howItWorksCodeColumn">
@@ -133,17 +131,13 @@ export function HowItWorksSection(): React.ReactElement {
 						Sample Output
 					</div>
 					<div className="howItWorksCodeCard">
-						<div className="howItWorksCodeCardFrame">
-							<div className="howItWorksCodeCardBody">
-								Foo
-							</div>
+						<div className="howItWorksCodeCardBody">
+							Foo
 						</div>
 					</div>
 					<div className="howItWorksCodeCard">
-						<div className="howItWorksCodeCardFrame">
-							<div className="howItWorksCodeCardBody">
-								Bar
-							</div>
+						<div className="howItWorksCodeCardBody">
+							Bar
 						</div>
 					</div>
 				</div>
