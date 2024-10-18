@@ -3,7 +3,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 72px 0px;
+	padding: 72px 0px 0px 0px;
 
 	width: 100%;
 
@@ -21,12 +21,14 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 8px;
-	gap: 48px;
 	z-index: 2;
 
 	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
+}
+
+.overlayBG{
+	background: linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2));
 }

@@ -1,11 +1,6 @@
 .serviceSectionContainer {
-	height: 100vh;
-	width: 100%;
-	overflow: hidden;
-	background-image: url('../../static/images/ffInCloudBG.png');
-	background-size: 150%;
-  	background-position: center;
-  	background-repeat: no-repeat;
+	height: 90vh;
+	width: 100vw;
 }
 
 .overlay {
@@ -17,96 +12,19 @@
 	display: flex;
 }
 
-/* Infographic */
-.infographic {
-	width: 1362px;
-	height: 673px;
-}
-/* Group 8 */
-.application {
-
-/* Rectangle 1 */
-
-width: 1324px;
-height: 146px;
-
-/* day/background/card/normal */
-background: #FEFEFE;
-/* elevation/day/level-2 */
-box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
-border-radius: 24px;
-}
-
-.applicationText {
-
-height: 42px;
-
-font-family: 'Segoe UI';
-font-style: normal;
-font-weight: 600;
-font-size: 28px;
-line-height: 37px;
-text-align: center;
-
-color: #000000;
-}
-
-.dottedBorder {
-	position: absolute;
-	width: 1287.99px;
-	height: 64.09px;
-
-	background: #FFFFFF;
-	border: 2px dashed #000000;
-	border-radius: 12px;
-}
-.ffClientLibrary {
-	/* Fluid Framework Client Library */
-
-position: absolute;
-width: 1287.99px;
-height: 29.5px;
-
-font-family: 'Segoe UI';
-font-style: normal;
-font-weight: 600;
-font-size: 18px;
-line-height: 24px;
-text-align: center;
-color: #000000;
-}
-
-/* Client */
-.client{
-width: 146px;
-height: 37px;
-
-
-font-family: 'Segoe UI';
-font-style: normal;
-font-weight: 400;
-font-size: 16px;
-line-height: 21px;
-text-align: center;
-
-color: #000000;
-
-transform: rotate(-90deg);
-}
-
 .service {
-
-/* Body */
 
 /* Auto layout */
 display: flex;
-flex-direction: row;
+flex-direction: column;
 align-items: flex-start;
 padding: 24px;
 left:136px;
 border-radius: 24px;
-background-color: white;
-height: 298px;
+background-color: #FEFEFE;
+box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
+max-height: 320px;
+max-width: 600px;
 
 
 /* Inside auto layout */
@@ -125,11 +43,11 @@ z-index: 4;
 /* Auto layout */
 display: flex;
 flex-direction: column;
-align-items: flex-start;
+align-items: center;
 padding: 0px;
 
 width: inherit;
-height: 250px;
+height: 100%;
 
 
 /* Inside auto layout */
@@ -149,8 +67,8 @@ align-items: flex-start;
 padding: 0px;
 gap: 16px;
 
-width: 606px;
-height: 116px;
+width: 100%;
+max-height: inherit;
 
 
 /* Inside auto layout */
@@ -158,7 +76,6 @@ flex: none;
 order: 1;
 align-self: stretch;
 flex-grow: 0;
-
 }
 .azureImg{
 	/* Badge */
@@ -220,7 +137,7 @@ flex-grow: 1;
 .serviceDescription {
 	/* Text */
 
-width: 606px;
+width: 100%;
 
 /* VP4/body/m */
 font-family: 'Segoe UI';
@@ -246,7 +163,7 @@ flex-grow: 0;
 /* Fluid Framework in the Cloud */
 .ffCloudTitle {
 position: relative;
-width: 1328px;
+width: 90%;
 height: 62px;
 left: 136px;
 
@@ -264,6 +181,8 @@ color: #000000;
 	flex-direction: row;
 	justify-content: space-evenly;
 	width: 100%;
+	height: 30%;
+	flex-wrap: wrap;
 }
 
 .msftLogo {

@@ -13,16 +13,28 @@ import "@site/src/css/homePageSection.css";
 export type HomePageSectionProps = React.PropsWithChildren<{
 	title: string;
 	subtitle?: string;
+	image?: string;
 }>;
 
 /**
  * Common base component for homepage sections
  */
-export function HomePageSection({title, subtitle, children}: HomePageSectionProps): JSX.Element {
-	return (<div className="homePageSection">
-		<div className="homePageSectionInner">
-			<SectionHeader title={title} subtitle={subtitle} />
-			{children}
+export function HomePageSection({title, subtitle, image, children}: HomePageSectionProps): JSX.Element {
+	const sectionStyle = image
+    ? { backgroundImage: `url(${image})`, backgroundSize: '150%',
+  	backgroundPosition: 'center',
+  	backgroundRepeat: 'no-repeat' }
+    : {};
+
+
+
+	return (
+		<div className="homePageSection" style={sectionStyle}>
+			<div className='overlayBG'/>
+			<div className="homePageSectionInner">
+				<SectionHeader title={title} subtitle={subtitle} />
+				{children}
+			</div>
 		</div>
-	</div>);
+	);
 }

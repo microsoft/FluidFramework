@@ -4,16 +4,18 @@
  */
 import React from "react";
 import { HomePageSection } from '@site/src/components/homePageSection';
+import ServiceSectionBG from '@site/static/images/ffInCloudBG.png';
 
 import "@site/src/css/serviceSection.css";
 
 export function ServiceSection(): JSX.Element {
 	return (
-		<div className="rootContainer">
-			<div className="serviceSectionContainer">{/*contains bg image */}
-				<div className="overlay"></div>
+		<HomePageSection title="Fluid Framework in the Cloud" image={ServiceSectionBG}>
+
+			<div className="serviceSectionContainer">
+			<div className="overlay"></div>
+
 				<div className="serviceContentContainer">
-					<div className="ffCloudTitle">Fluid Framework in the Cloud</div>
 
 					<div className="services">
 							<div className="service">{/*AFR*/}
@@ -43,6 +45,6 @@ export function ServiceSection(): JSX.Element {
 					</div>
 				</div>
 			</div>
-		</div>
+		</HomePageSection>
 	);
 }
