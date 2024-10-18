@@ -2393,9 +2393,10 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
 
-		if (this.remoteMessageProcessor.partialMessages.size > 0) {
-			const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
-			addBlobToSummary(summaryTree, chunksBlobName, content);
+		const partialMessages =
+			this.remoteMessageProcessor.getPartialMessageInfoForSummary(telemetryContext);
+		if (partialMessages !== undefined) {
+			addBlobToSummary(summaryTree, chunksBlobName, JSON.stringify(partialMessages));
 		}
 
 		const dataStoreAliases = this.channelCollection.aliases;
