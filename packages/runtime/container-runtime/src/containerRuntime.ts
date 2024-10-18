@@ -105,6 +105,7 @@ import {
 import type {
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
+	TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -3008,11 +3009,13 @@ export class ContainerRuntime
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
-			duration, // Roundtrip duration of the tracked signal in milliseconds.
-			signalsSent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
-			signalsLost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
-			outOfOrderSignals: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
-			reconnectCount: this.consecutiveReconnects, // Container reconnect count.
+			details: {
+				duration, // Roundtrip duration of the tracked signal in milliseconds.
+				sent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
+				lost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
+				outOfOrder: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
+				reconnectCount: this.consecutiveReconnects, // Container reconnect count.
+			},
 		});
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalsOutOfOrder = 0;
@@ -3047,9 +3050,11 @@ export class ContainerRuntime
 				this._signalTracking.signalsLost += signalsLost;
 				this.mc.logger.sendErrorEvent({
 					eventName: "SignalLost",
-					signalsLost, // Number of lost signals detected.
-					trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-					clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
+					details: {
+						signalsLost, // Number of lost signals detected.
+						expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+						clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
+					},
 				});
 			}
 			// Update the tracking signal sequence number to the next expected signal in the sequence.
@@ -3061,11 +3066,18 @@ export class ContainerRuntime
 			this._signalTracking.minimumTrackingSignalSequenceNumber
 		) {
 			this._signalTracking.signalsOutOfOrder++;
+			const details: TelemetryEventPropertyTypeExt = {
+				expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+				clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
+			};
+			// Only log `contents.type` when address is for container to avoid
+			// chance that contents type is customer data.
+			if (envelope.address === undefined) {
+				details.contentsType = envelope.contents.type; // Type of signal that was received out of order.
+			}
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SignalOutOfOrder",
-				type: envelope.contents.type, // Type of signal that was received out of order.
-				trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
-				clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
+				details,
 			});
 		}
 		if (
@@ -3078,7 +3090,8 @@ export class ContainerRuntime
 			) {
 				// Latency tracked signal has been received.
 				// We now log the roundtrip duration of the tracked signal.
-				// This telemetry event also logs metrics for signals sent, signals lost, and out of order signals received.
+				// This telemetry event also logs metrics for broadcast signals
+				// sent, lost, and out of order.
 				// These metrics are reset after logging the telemetry event.
 				this.sendSignalTelemetryEvent();
 			}
