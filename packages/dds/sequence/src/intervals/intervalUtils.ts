@@ -179,10 +179,8 @@ export interface ISerializableInterval extends IInterval {
 	 * Gets the id associated with this interval.
 	 * When the interval is used as part of an interval collection, this id can be used to modify or remove the
 	 * interval.
-	 * @remarks This signature includes `undefined` strictly for backwards-compatibility reasons, as older versions
-	 * of Fluid didn't always write interval ids.
 	 */
-	getIntervalId(): string | undefined;
+	getIntervalId(): string;
 }
 
 /**
