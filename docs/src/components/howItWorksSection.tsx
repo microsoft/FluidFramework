@@ -6,12 +6,13 @@
 import React from "react";
 import CodeBlock from '@theme/CodeBlock';
 
+import { FluidBundleLoader } from "@site/src/components/fluidBundleLoader";
 import { HomePageSection } from '@site/src/components/homePageSection';
 
 import "@site/src/css/howItWorksSection.css";
 
-const code = `
-import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
+const code =
+`import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const client = new TinyliciousClient();
@@ -130,16 +131,17 @@ export function HowItWorksSection(): React.ReactElement {
 					<div className="howItWorksCodeColumnLabel">
 						Sample Output
 					</div>
+					{/* TODO: these should be 2 separate cards, if possible. */}
 					<div className="howItWorksCodeCard">
-						<div className="howItWorksCodeCardBody">
-							Foo
-						</div>
+						{/* <div > */}
+							<FluidBundleLoader idPrefix="dice-roller" bundleName="dice-roller.2021-09-24.js" className="howItWorksCodeCardBody"/>
+						{/* </div> */}
 					</div>
-					<div className="howItWorksCodeCard">
+					{/* <div className="howItWorksCodeCard">
 						<div className="howItWorksCodeCardBody">
 							Bar
 						</div>
-					</div>
+					</div> */}
 				</div>
 			</div>
 			<div className="howItWorksTryOtherSamplesButton">
