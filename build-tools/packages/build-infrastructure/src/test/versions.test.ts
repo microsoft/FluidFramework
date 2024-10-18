@@ -80,7 +80,7 @@ describe("setDependencyVersion", () => {
 	it("update release group deps", async () => {
 		await setDependencyVersion(
 			main.packages,
-			[...group2.packages, ...group3.packages].map((p) => p.name),
+			[...group2.packages].map((p) => p.name),
 			"workspace:~",
 		);
 		repo.reload();
