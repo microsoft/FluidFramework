@@ -277,7 +277,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				});
 				if (expired) {
 					// handle reupload asynchronously
-					this.reuploadBlobAndSendOp(localId, pendingEntry);
+					this.reuploadBlobAndSendOp(localId, pendingEntry).catch((error) => {
+						this.mc.logger.sendErrorEvent({
+							eventName: "BlobReuploadFailed",
+							error,
+							localId,
+						});
+					});
 					return; // Return void to avoid promise violation
 				}
 			}
@@ -286,21 +292,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 	}
 
-	private reuploadBlobAndSendOp(localId: string, pendingEntry: PendingBlob): void {
-		(async () => {
-			await this.uploadBlob(localId, pendingEntry.blob).then(() =>
-				// uploadBlob and onUploadResolve will not send another blob attach so we need to do it here
-				this.sendBlobAttachOp(localId, pendingEntry.storageId),
-			);
-			// Once the blob is re-uploaded, proceed with sending the BlobAttachOp
-			pendingEntry.opsent = true;
-		})().catch((error) => {
-			this.mc.logger.sendErrorEvent({
-				eventName: "BlobReuploadFailed",
-				error,
-				localId,
-			});
-		});
+	private async reuploadBlobAndSendOp(
+		localId: string,
+		pendingEntry: PendingBlob,
+	): Promise<void> {
+		await this.uploadBlob(localId, pendingEntry.blob).then(() =>
+			// uploadBlob and onUploadResolve will not send another blob attach so we need to do it here
+			this.sendBlobAttachOp(localId, pendingEntry.storageId),
+		);
 	}
 
 	public get allBlobsAttached(): boolean {
