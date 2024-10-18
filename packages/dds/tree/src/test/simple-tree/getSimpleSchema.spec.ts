@@ -34,7 +34,6 @@ describe("getSimpleSchema", () => {
 				],
 			]),
 			allowedTypes: new Set(["com.fluidframework.leaf.string"]),
-			description: "An optional string.",
 		};
 		assert.deepEqual(actual, expected);
 	});

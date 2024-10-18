@@ -26,7 +26,16 @@ export {
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable } from "./create.js";
-export type { SimpleTreeSchema } from "./simpleSchema.js";
+export type {
+	SimpleTreeSchema,
+	SimpleNodeSchema,
+	SimpleFieldSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleArrayNodeSchema,
+	SimpleObjectNodeSchema,
+	SimpleNodeSchemaBase,
+} from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
