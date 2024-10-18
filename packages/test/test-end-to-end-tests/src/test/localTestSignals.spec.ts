@@ -271,7 +271,7 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		 *
 		 * TODO: Re-enable tests once {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/19030} is completed.
 		 */
-		if (provider.driver.type === "odsp") {
+		if (provider.driver.endpointName === "odsp") {
 			this.skip();
 		}
 
