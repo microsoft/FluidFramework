@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import path from "node:path";
 
 import { expect } from "chai";
 import { describe, it } from "mocha";
@@ -13,12 +12,12 @@ import { loadFluidRepo } from "../fluidRepo.js";
 import { findGitRootSync } from "../git.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 
-import { testDataPath, testRepoRoot } from "./init.js";
+import { testRepoRoot } from "./init.js";
 
 describe("loadFluidRepo", () => {
 	describe("testRepo", () => {
 		it("loads correctly", () => {
-			const repo = loadFluidRepo(path.join(testDataPath, "./testRepo"));
+			const repo = loadFluidRepo(testRepoRoot);
 			assert.strictEqual(
 				repo.workspaces.size,
 				2,

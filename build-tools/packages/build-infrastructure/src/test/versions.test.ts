@@ -93,7 +93,7 @@ describe("setDependencyVersion", () => {
 				}
 				const matches = version === "workspace:~";
 				if (matches === false) {
-					console.error(`${name} has incorrect version/range: ${version}`)
+					console.error(`${name} has incorrect version/range: ${version}`);
 					return false;
 				}
 			}

@@ -4,17 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
+import { unlink } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
 import { expect } from "chai";
+import { readJson, writeJson } from "fs-extra/esm";
 import { describe, it } from "mocha";
-import { simpleGit } from "simple-git";
+import { CleanOptions, simpleGit } from "simple-git";
 
 import { NotInGitRepository } from "../errors.js";
-import { findGitRootSync, getRemote } from "../git.js";
+import { loadFluidRepo } from "../fluidRepo.js";
+import { findGitRootSync, getChangedSinceRef, getRemote } from "../git.js";
+import type { PackageJson } from "../types.js";
 
-import { packageRootPath } from "./init.js";
+import { packageRootPath, testRepoRoot } from "./init.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
@@ -43,5 +47,37 @@ describe("getRemote", () => {
 	it("missing remote returns undefined", async () => {
 		const actual = await getRemote(git, "foo/bar");
 		expect(actual).to.be.undefined;
+	});
+});
+
+describe("getChangedSinceRef", () => {
+	const git = simpleGit(process.cwd());
+	const repo = loadFluidRepo(testRepoRoot);
+	let remote: string;
+
+	beforeEach(async () => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		remote = (await getRemote(git, "microsoft/FluidFramework"))!;
+
+		// set up
+		await unlink(path.join(testRepoRoot, "packages/group3/pkg-f/src/index.mjs"));
+		const pkgJson = path.join(testRepoRoot, "packages/group3/pkg-f/package.json");
+		const json = (await readJson(pkgJson)) as PackageJson;
+		json.author = "edited field";
+		await writeJson(pkgJson, json);
+		await writeJson(path.join(testRepoRoot, "second/newFile.json"), '{"foo": "bar"}');
+	});
+
+	afterEach(async () => {
+		await git.checkout(["HEAD", "--", testRepoRoot]);
+		await git.clean(CleanOptions.FORCE, [testRepoRoot]);
+	});
+
+	it("returns correct files", async () => {
+		const { files } = await getChangedSinceRef(repo, "HEAD", remote);
+
+		// files
+		expect(files).to.be.ofSize(1);
+		expect(files).to.be.containingAllOf(["/packages/group3/pkg-f/package.json"]);
 	});
 });

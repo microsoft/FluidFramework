@@ -69,9 +69,9 @@ async function getChangedDirectoriesSinceRef(
 /**
  * Gets the changed files, directories, release groups, and packages since the given ref.
  *
+ * @param fluidRepo - The Fluid repo.
  * @param ref - The ref to compare against.
  * @param remote - The remote to compare against.
- * @param context - The Context.
  * @returns An object containing the changed files, directories, release groups, workspaces, and packages. Note that a
  * package may appear in multiple groups. That is, if a single package in a release group is changed, the releaseGroups
  * value will contain that group, and the packages value will contain only the single package. Also, if two packages are
