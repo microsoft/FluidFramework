@@ -105,9 +105,9 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMessage): string {
 	// IMPORTANT: Order matters here, this must match the order of the properties used
 	// when submitting the message.
-	const { type, contents, compatDetails }: InboundContainerRuntimeMessage = message;
+	const { type, contents }: InboundContainerRuntimeMessage = message;
 	// Any properties that are not defined, won't be emitted by stringify.
-	return JSON.stringify({ type, contents, compatDetails });
+	return JSON.stringify({ type, contents });
 }
 
 function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
@@ -126,7 +126,6 @@ function scrubAndStringify(
 	// For these known/expected keys, we can either drill in (for contents)
 	// or just use the value as-is (since it's not personal info)
 	scrubbed.contents = message.contents && typesOfKeys(message.contents);
-	scrubbed.compatDetails = message.compatDetails;
 	scrubbed.type = message.type;
 
 	return JSON.stringify(scrubbed);

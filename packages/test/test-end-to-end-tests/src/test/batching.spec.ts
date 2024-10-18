@@ -183,7 +183,6 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 				type: "TombstoneLoaded",
 				nodePath: "/",
 			},
-			compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed
 		});
 
 		// Wait for the ops to get flushed and processed.
