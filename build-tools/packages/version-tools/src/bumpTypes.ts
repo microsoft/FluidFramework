@@ -86,17 +86,19 @@ export type InterdependencyRange =
  * excluding non-conforming strings than it does at finding valid ones. This appears to be sufficient for our needs,
  * which is good because I don't know how to fix it.
  */
-export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
-	if ((typeof r === "string" || r instanceof semver.SemVer) && semver.valid(r) !== null) {
+export function isInterdependencyRange(
+	r: string,
+): r is Exclude<InterdependencyRange, semver.SemVer> {
+	if (semver.valid(r) !== null) {
+		return true;
+	}
+
+	if (semver.validRange(r) !== null) {
 		return true;
 	}
 
 	if (isRangeOperator(r) || isWorkspaceRange(r)) {
 		return true;
-	}
-
-	if ((typeof r === "string" || r instanceof semver.Range) && semver.validRange(r) === null) {
-		return false;
 	}
 
 	if (typeof r === "string") {
