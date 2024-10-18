@@ -13,6 +13,7 @@ import "@site/src/css/fluidBundleLoader.css";
 export interface FluidBundleLoaderProps {
 	idPrefix: string;
 	bundleName: string;
+	className?: string;
 }
 
 /**
@@ -21,6 +22,7 @@ export interface FluidBundleLoaderProps {
 export function FluidBundleLoader({
 	idPrefix,
 	bundleName,
+	className,
 }: FluidBundleLoaderProps): JSX.Element {
 	React.useEffect(() => {
 		const script = document.createElement("script");
@@ -41,7 +43,7 @@ export function FluidBundleLoader({
 
 	return (
 		<>
-			<div id="content" style={{ minHeight: "200px" }}>
+			<div id="content" className={className}>
 				<Panel containerId={containerId} elementId={leftPanelId} />
 				<Panel containerId={containerId} elementId={rightPanelId} />
 			</div>
