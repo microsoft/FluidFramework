@@ -90,6 +90,7 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
+		// new entry for entrypoints + tsc + esnext
 		// build:api-reports may be handled in one step with build:docs when a
 		// package only uses api-extractor supported exports, which is a single
 		// export/entrypoint. For packages with /legacy exports, we need to

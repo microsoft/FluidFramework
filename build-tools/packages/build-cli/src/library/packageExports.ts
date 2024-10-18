@@ -200,6 +200,7 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 			continue;
 		}
 
+		// fix this
 		const findResults = findTypesPathsMatching(
 			mapQueryPathToOutKey,
 			exportValue,
