@@ -10,8 +10,8 @@ export function TitleSection(): React.ReactElement {
   return (
     <div className="rootContainer">
       <div className="titleSectionContainer" >{/*contains bg image */}
-        <div className="overlay"></div> {/* White overlay */}
-          <div className="contentContainer">
+        <div className="overlay"/> {/* White overlay */}
+        <div className="contentContainer">
             <div className="titleBox">
               <h3 className="title">Fluid Framework</h3>
               <span className="description">Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.

@@ -1,1 +1,326 @@
-/* TODO */
+.serviceSectionContainer {
+	height: 100vh;
+	width: 100%;
+	overflow: hidden;
+	background-image: url('../../static/images/ffInCloudBG.png');
+	background-size: 150%;
+  	background-position: center;
+  	background-repeat: no-repeat;
+}
+
+.overlay {
+	background: linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2));
+}
+
+.serviceContentContainer{
+	z-index: 2;
+	display: flex;
+}
+
+/* Infographic */
+.infographic {
+	width: 1362px;
+	height: 673px;
+}
+/* Group 8 */
+.application {
+
+/* Rectangle 1 */
+
+width: 1324px;
+height: 146px;
+
+/* day/background/card/normal */
+background: #FEFEFE;
+/* elevation/day/level-2 */
+box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
+border-radius: 24px;
+}
+
+.applicationText {
+
+height: 42px;
+
+font-family: 'Segoe UI';
+font-style: normal;
+font-weight: 600;
+font-size: 28px;
+line-height: 37px;
+text-align: center;
+
+color: #000000;
+}
+
+.dottedBorder {
+	position: absolute;
+	width: 1287.99px;
+	height: 64.09px;
+
+	background: #FFFFFF;
+	border: 2px dashed #000000;
+	border-radius: 12px;
+}
+.ffClientLibrary {
+	/* Fluid Framework Client Library */
+
+position: absolute;
+width: 1287.99px;
+height: 29.5px;
+
+font-family: 'Segoe UI';
+font-style: normal;
+font-weight: 600;
+font-size: 18px;
+line-height: 24px;
+text-align: center;
+color: #000000;
+}
+
+/* Client */
+.client{
+width: 146px;
+height: 37px;
+
+
+font-family: 'Segoe UI';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 21px;
+text-align: center;
+
+color: #000000;
+
+transform: rotate(-90deg);
+}
+
+.service {
+
+/* Body */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 24px;
+left:136px;
+border-radius: 24px;
+background-color: white;
+height: 298px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+z-index: 4;
+
+
+}
+
+.serviceContentContainer {
+	/* Content */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: inherit;
+height: 250px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+}
+
+.serviceContent{
+	/* Body */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 16px;
+
+width: 606px;
+height: 116px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+}
+.azureImg{
+	/* Badge */
+
+box-sizing: border-box;
+
+/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	padding: 0px;
+
+	width: 48px;
+	height: 48px;
+
+
+	background-image: url('../../static/assets/azure.png');
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	/* day/border/card(card)/fade */
+	border: 1px solid #E6F2FB;
+	border-radius: 8px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+
+}
+.serviceTitle {
+/* Title */
+
+width: 606px;
+height: 28px;
+
+/* VP4/heading/2xs */
+font-family: 'Segoe UI';
+font-style: normal;
+font-weight: 600;
+font-size: 20px;
+line-height: 28px;
+/* identical to box height, or 140% */
+letter-spacing: -0.03em;
+
+/* reimagine/day/foreground/base(theme)/strong */
+color: #0E1726;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+}
+
+.serviceDescription {
+	/* Text */
+
+width: 606px;
+
+/* VP4/body/m */
+font-family: 'Segoe UI';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 24px;
+/* or 150% */
+letter-spacing: -0.03em;
+
+/* reimagine/day/foreground/base(theme)/subtle */
+color: #17253D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+}
+
+/* Fluid Framework in the Cloud */
+.ffCloudTitle {
+position: relative;
+width: 1328px;
+height: 62px;
+left: 136px;
+
+font-family: 'Segoe UI';
+font-style: normal;
+font-weight: 600;
+font-size: 40px;
+/* or 62% */
+letter-spacing: -0.02em;
+color: #000000;
+}
+
+.services {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	width: 100%;
+}
+
+.msftLogo {
+	/* Badge */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 48px;
+height: 48px;
+
+/* day/background/card(card)/normal */
+background-image: url('../../static/assets/microsoft-logo.png');
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+/* day/border/card(card)/fade */
+border: 1px solid #E6F2FB;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+}
+
+.learnMore {
+/* Label */
+cursor: pointer;
+
+width: 73px;
+height: 20px;
+
+/* VP4/label/m */
+font-family: 'Segoe UI';
+font-style: normal;
+font-weight: 600;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+/* day/foreground/accent-subtle(cta)/normal */
+color: #2A446F;
+border-bottom: 1px solid #2A446F;
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+}
+.learnMore:hover {
+	text-decoration: none;
+	color: inherit;
+}

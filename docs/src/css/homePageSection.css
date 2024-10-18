@@ -23,6 +23,7 @@
 	align-items: center;
 	padding: 8px;
 	gap: 48px;
+	z-index: 2;
 
 	/* Inside auto layout */
 	flex: none;
