@@ -146,7 +146,9 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 
 	if (selection.directory !== undefined) {
 		const selectedAbsolutePath = path.join(
-			selection.directory === "." ? process.cwd() : path.resolve(selection.directory),
+			selection.directory === "."
+				? process.cwd()
+				: path.resolve(fluidRepo.root, selection.directory),
 		);
 
 		const dirPackage = [...fluidRepo.packages.values()].find(

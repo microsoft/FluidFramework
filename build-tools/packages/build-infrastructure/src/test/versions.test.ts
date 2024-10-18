@@ -10,8 +10,6 @@ import { expect } from "chai";
 import { afterEach, describe, it } from "mocha";
 import * as semver from "semver";
 import { simpleGit } from "simple-git";
-// import { ResetMode, simpleGit } from "simple-git";
-// import * as snapshot from "memfs/lib/snapshot";
 
 import { loadFluidRepo } from "../fluidRepo.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
@@ -26,6 +24,9 @@ assert(main !== undefined);
 const group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
 assert(group2 !== undefined);
 
+const group3 = repo.releaseGroups.get("group3" as ReleaseGroupName);
+assert(group3 !== undefined);
+
 const secondWorkspace = repo.workspaces.get("second" as WorkspaceName);
 assert(secondWorkspace !== undefined);
 
@@ -33,10 +34,6 @@ assert(secondWorkspace !== undefined);
  * A git client rooted in the test repo. Used for resetting tests.
  */
 const git = simpleGit(testRepoRoot);
-// const snap = snapshot.toSnapshotSync({ fs, path });
-// const snap = await snapshot.toSnapshot({ fs: fs.promises, path });
-
-// ufs.use(fs).use(fs1);
 
 describe("setVersion", () => {
 	afterEach(async () => {
@@ -83,12 +80,12 @@ describe("setDependencyVersion", () => {
 	it("update release group deps", async () => {
 		await setDependencyVersion(
 			main.packages,
-			group2.packages.map((p) => p.name),
+			[...group2.packages, ...group3.packages].map((p) => p.name),
 			"workspace:~",
 		);
 		repo.reload();
 
-		const depsToCheck = new Set(group2.packages.map((p) => p.name));
+		const depsToCheck = new Set([...group2.packages, ...group3.packages].map((p) => p.name));
 		const allCorrect = main.packages.every((pkg) => {
 			for (const { name, version } of pkg.combinedDependencies) {
 				if (!depsToCheck.has(name)) {
