@@ -43,6 +43,9 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 				assertSignalMessageIsValid(message);
 				manager.processSignal("", message, local);
 			});
+			this.runtime.getAudience().on("removeMember", (clientId: string) => {
+				manager.removeClientConnectionId(clientId);
+			});
 			this._presenceManager = manager;
 		}
 		return this._presenceManager;
