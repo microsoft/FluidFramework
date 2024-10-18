@@ -30,7 +30,7 @@ import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
-import type { Node as Node_2 } from 'unist';
+import type { Node } from 'unist';
 import type { Nodes } from 'hast';
 import type { Parent } from 'unist';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
@@ -216,7 +216,7 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements 
 }
 
 // @public
-export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
+export interface DocumentationNode<TData extends object = Data> extends Node<TData> {
     readonly isEmpty: boolean;
     readonly isLiteral: boolean;
     readonly isParent: boolean;

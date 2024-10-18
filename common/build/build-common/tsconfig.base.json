@@ -7,7 +7,7 @@
 		"incremental": true,
 		"inlineSources": true,
 		"jsx": "react",
-		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"lib": ["ES2020"],
 		"noImplicitAny": false,
 		"noUnusedLocals": true,
 		"pretty": true,
