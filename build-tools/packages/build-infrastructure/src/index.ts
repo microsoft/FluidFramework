@@ -15,6 +15,8 @@ export {
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
 export {
+	filterPackages,
+	type FilterablePackage,
 	selectAndFilterPackages,
 	type GlobString,
 	AllPackagesSelectionCriteria,
@@ -22,7 +24,11 @@ export {
 	type PackageSelectionCriteria,
 	type PackageFilterOptions,
 } from "./filter.js";
-export { loadFluidRepo, FluidRepo as FluidRepoBase } from "./fluidRepo.js";
+export {
+	FluidRepo as FluidRepoBase,
+	getAllDependenciesInRepo,
+	loadFluidRepo,
+} from "./fluidRepo.js";
 export {
 	getFiles,
 	findGitRootSync,
@@ -49,5 +55,6 @@ export type {
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
 export { PackageBase } from "./package.js";
-export { updatePackageJsonFile } from "./packageJsonUtils.js";
+export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
+export { setVersion } from "./versions.js";

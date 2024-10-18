@@ -10,7 +10,5 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"dependencies": {
-		"pkg-b": "workspace:~"
-	}
+	"dependencies": {}
 }

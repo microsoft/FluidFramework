@@ -78,8 +78,8 @@ async function getChangedDirectoriesSinceRef(
  * changed, each within separate release groups, the packages value will contain both packages, and the releaseGroups
  * value will contain both release groups.
  */
-export async function getChangedSinceRef(
-	fluidRepo: IFluidRepo,
+export async function getChangedSinceRef<P extends IPackage>(
+	fluidRepo: IFluidRepo<P>,
 	ref: string,
 	remote: string,
 ): Promise<{
@@ -103,7 +103,7 @@ export async function getChangedSinceRef(
 
 	const changedPackages = [...new Set(changedPackageNames)]
 		.map((name) => fluidRepo.packages.get(name as PackageName))
-		.filter((pkg): pkg is IPackage => pkg !== undefined);
+		.filter((pkg): pkg is P => pkg !== undefined);
 
 	const changedReleaseGroups = [...new Set(changedPackages.map((pkg) => pkg.releaseGroup))]
 		.map((rg) => fluidRepo.releaseGroups.get(rg))

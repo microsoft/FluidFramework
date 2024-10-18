@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"dependencies": {
+		"@group2/pkg-e": "workspace:~",
 		"@group3/pkg-g": "workspace:~"
 	}
 }

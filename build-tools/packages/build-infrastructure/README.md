@@ -93,6 +93,11 @@ filtering API. Packages can be selected based on criteria like workspace and rel
 filtered by scope or private/not private. Advanced filtering not covered by the built-in filters can be implemented
 using `Array.prototype.filter` on the results of package selection.
 
+### Built-in command-line tool to examine repo layout and config
+
+The included CLI tool makes it easy to examine the contents and layout of a Fluid repo. See [the CLI
+documentation](./docs/cli.md) for more information.
+
 ### Loading old config formats
 
 The `repoPackages` configuration currently used by fluid-build will be loaded if the newer `repoLayout` config can't be

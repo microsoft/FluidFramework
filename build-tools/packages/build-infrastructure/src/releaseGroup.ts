@@ -4,7 +4,13 @@
  */
 
 import { type ReleaseGroupDefinition, matchesReleaseGroupDefinition } from "./config.js";
-import type { IPackage, IReleaseGroup, IWorkspace, ReleaseGroupName } from "./types.js";
+import type {
+	IPackage,
+	IReleaseGroup,
+	IWorkspace,
+	PackageName,
+	ReleaseGroupName,
+} from "./types.js";
 
 export class ReleaseGroup implements IReleaseGroup {
 	public readonly name: ReleaseGroupName;
@@ -45,6 +51,34 @@ export class ReleaseGroup implements IReleaseGroup {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.packages[0]!.version;
 	}
+
+	public get releaseGroupDependencies(): IReleaseGroup[] {
+		const dependentReleaseGroups = new Set<IReleaseGroup>();
+		const ignoredDependencies = new Set<PackageName>();
+		for (const pkg of this.packages) {
+			for (const { name } of pkg.combinedDependencies) {
+				if (ignoredDependencies.has(name)) {
+					continue;
+				}
+				const depPackage = this.workspace.packages.find((p) => p.name === name);
+				if (depPackage === undefined || depPackage.releaseGroup === this.name) {
+					ignoredDependencies.add(name);
+					continue;
+				}
+
+				const releaseGroup = this.workspace.releaseGroups.get(depPackage.releaseGroup);
+				if (releaseGroup === undefined) {
+					throw new Error(
+						`Cannot find release group "${depPackage.releaseGroup}" in workspace "${this.workspace}"`,
+					);
+				}
+				dependentReleaseGroups.add(releaseGroup);
+			}
+		}
+
+		return [...dependentReleaseGroups];
+	}
+
 	public get rgPackages(): IPackage[] {
 		return this.packages;
 	}

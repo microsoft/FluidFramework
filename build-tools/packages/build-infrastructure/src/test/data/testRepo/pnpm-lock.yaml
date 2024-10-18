@@ -21,21 +21,17 @@ importers:
 
   packages/group2/pkg-d:
     dependencies:
-      '@shared/shared':
+      '@group2/pkg-e':
         specifier: workspace:~
-        version: link:../../shared
-      pkg-b:
-        specifier: workspace:~
-        version: link:../../pkg-b
+        version: link:../pkg-e
 
-  packages/group2/pkg-e:
-    dependencies:
-      pkg-b:
-        specifier: workspace:~
-        version: link:../../pkg-b
+  packages/group2/pkg-e: {}
 
   packages/group3/pkg-f:
     dependencies:
+      '@group2/pkg-e':
+        specifier: workspace:~
+        version: link:../../group2/pkg-e
       '@group3/pkg-g':
         specifier: workspace:~
         version: link:../pkg-g
@@ -63,7 +59,11 @@ importers:
         specifier: workspace:~
         version: link:../pkg-b
 
-  packages/shared: {}
+  packages/shared:
+    dependencies:
+      '@group2/pkg-d':
+        specifier: 1.0.0
+        version: link:../group2/pkg-d
 
 packages:
 

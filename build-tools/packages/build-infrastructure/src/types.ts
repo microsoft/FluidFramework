@@ -34,7 +34,7 @@ export type AdditionalPackageProps = Record<string, string> | undefined;
  *
  * See {@link IWorkspace} and {@link IReleaseGroup} for more details.
  */
-export interface IFluidRepo extends Reloadable {
+export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
 	/**
 	 * The absolute path to the root of the IFluidRepo. This is the path where the config file is located.
 	 */
@@ -53,7 +53,7 @@ export interface IFluidRepo extends Reloadable {
 	/**
 	 * A map of all packages in the Fluid repo.
 	 */
-	packages: Map<PackageName, IPackage>;
+	packages: Map<PackageName, P>;
 
 	/**
 	 * A partial URL to the upstream (remote) repo. This can be set to the name of the repo on GitHub. For example,
@@ -86,12 +86,12 @@ export interface IFluidRepo extends Reloadable {
 	/**
 	 * Returns the {@link IReleaseGroup} associated with a package.
 	 */
-	getPackageReleaseGroup(pkg: Readonly<IPackage>): Readonly<IReleaseGroup>;
+	getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
 
 	/**
 	 * Returns the {@link IWorkspace} associated with a package.
 	 */
-	getPackageWorkspace(pkg: Readonly<IPackage>): Readonly<IWorkspace>;
+	getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
 }
 
 /**
@@ -214,6 +214,13 @@ export interface IReleaseGroup extends Reloadable {
 	 * The workspace that the release group belongs to.
 	 */
 	readonly workspace: IWorkspace;
+
+	/**
+	 * An array of all the release groups that the release group depends on. If any package in a release group has any
+	 * dependency on a package in another release group within the same workspace, then the first release group depends
+	 * on the second.
+	 */
+	readonly releaseGroupDependencies: IReleaseGroup[];
 
 	/**
 	 * An optional ADO pipeline URL for the CI pipeline that builds the release group.
