@@ -138,6 +138,7 @@ export function sharedTreeDiff(
 				diffs.push({
 					type: "REMOVE",
 					path: [path],
+					objectId: undefined,
 					oldValue: objValue,
 				});
 				continue;
@@ -170,6 +171,7 @@ export function sharedTreeDiff(
 					diffs.push({
 						type: "REMOVE",
 						path: [path],
+						objectId,
 						oldValue: objValue,
 					});
 					continue;
@@ -181,6 +183,7 @@ export function sharedTreeDiff(
 				diffs.push({
 					type: "REMOVE",
 					path: [path],
+					objectId: undefined,
 					oldValue: objValue,
 				});
 				continue;
