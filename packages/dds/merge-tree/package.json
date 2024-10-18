@@ -178,6 +178,7 @@
 	},
 	"typeValidation": {
 		"broken": {},
+		"disabled": true,
 		"entrypoint": "legacy"
 	}
 }

@@ -342,17 +342,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collab: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
-	}
-
-	/**
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {

@@ -58,6 +58,7 @@ trigger:
     - next
     - lts
     - release/*
+    - test/*
   paths:
     include:
     - .dockerignore
