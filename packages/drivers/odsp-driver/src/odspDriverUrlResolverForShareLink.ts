@@ -27,7 +27,7 @@ import {
 	locatorQueryParamName,
 	storeLocatorInOdspUrl,
 } from "./odspFluidFileLink.js";
-import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
+import { appendNavParam, createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
@@ -44,10 +44,6 @@ export interface ShareLinkFetcherProps {
 	 */
 	identityType: IdentityType;
 }
-
-// back-compat: GitHub #9653
-const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
-	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
 
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
@@ -240,45 +236,21 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		dataStorePath: string,
 		packageInfoSource?: IContainerPackageInfo,
 	): Promise<string> {
-		const url = new URL(baseUrl);
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 		// If the user has passed an empty dataStorePath, then extract it from the resolved url.
 		const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
 
-		let containerPackageName: string | undefined;
-		if (packageInfoSource && "name" in packageInfoSource) {
-			containerPackageName = packageInfoSource.name;
-			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
-			// TODO: use a stronger type
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		} else if (isFluidPackage((packageInfoSource as any)?.package)) {
-			// TODO: use a stronger type
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			containerPackageName = (packageInfoSource as any)?.package.name;
-		} else {
-			// TODO: use a stronger type
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			containerPackageName = (packageInfoSource as any)?.package;
-		}
-		// TODO: use a stronger type
-		containerPackageName =
-			containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
-
 		const context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
-		storeLocatorInOdspUrl(url, {
-			siteUrl: odspResolvedUrl.siteUrl,
-			driveId: odspResolvedUrl.driveId,
-			itemId: odspResolvedUrl.itemId,
-			dataStorePath: actualDataStorePath,
-			appName: this.appName,
-			containerPackageName,
-			fileVersion: odspResolvedUrl.fileVersion,
+		return appendNavParam(
+			baseUrl,
+			odspResolvedUrl,
+			actualDataStorePath,
+			packageInfoSource,
 			context,
-		});
-
-		return url.href;
+			this.appName,
+		);
 	}
 
 	/**

@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISnapshot, type IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	IFileEntry,
@@ -34,6 +34,7 @@ import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import {
 	INewFileInfo,
+	appendNavParam,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
@@ -145,13 +146,19 @@ function extractShareLinkData(
 			return;
 		}
 		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		const webUrl = appendNavParam(
+			sharing.sharingLink.webUrl as string,
+			sharing.sharingLink.resolvedURL as IResolvedUrl,
+			"",
+		);
 		shareLinkInfo = {
 			createLink: {
 				link: sharing.sharingLink
 					? {
 							scope: sharing.sharingLink.scope,
 							role: sharing.sharingLink.type,
-							webUrl: sharing.sharingLink.webUrl,
+							webUrl,
 							...sharing.sharingLink,
 						}
 					: undefined,
