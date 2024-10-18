@@ -13512,12 +13512,18 @@ importers:
 
   packages/test/local-server-tests:
     dependencies:
+      '@fluid-experimental/tree':
+        specifier: workspace:~
+        version: link:../../../experimental/dds/tree
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
+      '@fluid-private/test-drivers':
+        specifier: workspace:~
+        version: link:../test-drivers
       '@fluid-private/test-loader-utils':
         specifier: workspace:~
         version: link:../../loader/test-loader-utils
@@ -13623,6 +13629,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
