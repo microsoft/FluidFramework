@@ -12,9 +12,6 @@ import "@site/src/css/serviceSection.css";
 export function ServiceSection(): JSX.Element {
 	return <HomePageSection title="Fluid Framework in the Cloud">
 		<div>
-			<Diagram />
-		</div>
-		<div>
 			TODO
 		</div>
 	</HomePageSection>;
