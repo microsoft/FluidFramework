@@ -13,7 +13,7 @@ import { loadFluidRepo } from "../fluidRepo.js";
 import { findGitRootSync } from "../git.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 
-import { testDataPath } from "./init.js";
+import { testDataPath, testRepoRoot } from "./init.js";
 
 describe("loadFluidRepo", () => {
 	describe("testRepo", () => {
@@ -56,7 +56,7 @@ describe("loadFluidRepo", () => {
 		});
 
 		it("releaseGroupDependencies", async () => {
-			const repo = loadFluidRepo(path.join(testDataPath, "./testRepo"));
+			const repo = loadFluidRepo(testRepoRoot);
 			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const actualDependencies = mainReleaseGroup!.releaseGroupDependencies;

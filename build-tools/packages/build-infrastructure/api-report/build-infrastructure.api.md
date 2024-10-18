@@ -326,7 +326,7 @@ export function selectAndFilterPackages<P extends IPackage>(fluidRepo: IFluidRep
 // @public
 export function setVersion<J extends PackageJson>(packages: IPackage[], version: semver.SemVer): Promise<void>;
 
-// @internal
+// @public
 export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;
 
 // @public
