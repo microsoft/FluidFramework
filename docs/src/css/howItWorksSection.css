@@ -1,1 +1,148 @@
-/* TODO */
+.howItWorksSectionBody {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	gap: 15px;
+}
+
+.howItWorksSectionCodeBody {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
+
+	gap: 10px;
+}
+
+.howItWorksCodeColumn {
+	display: flex;
+	flex-direction: column;
+
+	gap: 15px;
+}
+
+.howItWorksCodeColumnLabel {
+	/* Sample Code */
+
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 25px;
+	/* or 156% */
+	text-align: center;
+	letter-spacing: -0.02em;
+
+	color: #000000;
+}
+
+.howItWorksCodeCard {
+	/* Rectangle 34647953 */
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	box-sizing: border-box;
+
+	/* day/background/glass/normal */
+	background: rgba(255, 255, 255, 0.4);
+	border: 2px solid rgba(255, 255, 255, 0.8);
+	/* blur/glass */
+	backdrop-filter: blur(20px);
+	/* Note: backdrop-filter has minimal browser support */
+	border-radius: 8px;
+
+	padding: 15px;
+}
+
+.howItWorksCodeCardBody {
+	/* Rectangle 34647952 */
+
+	min-width: 350px;
+
+	box-sizing: border-box;
+
+	background: #FFFFFF;
+	border: 1px solid #E1E1E1;
+	border-radius: 5px;
+
+	flex: 1;
+}
+
+.howItWorksCodeCardText {
+	overflow: auto;
+
+	max-height: 600px;
+
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 350;
+	font-size: 16px;
+	line-height: 25px;
+	/* or 156% */
+	letter-spacing: -0.02em;
+
+	color: #000000;
+
+	/* Override styling from Docusaurus */
+	margin-bottom: 0px;
+}
+
+.howItWorksTryOtherSamplesButton {
+	/* Button */
+
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	padding: 12px 16px;
+	gap: 12px;
+
+	width: 208px;
+	min-width: 48px;
+	height: 48px;
+	min-height: 48px;
+
+	/* reimagine/day/background/accent-strong(cta)/normal */
+	background: #0078D4;
+	border-radius: 8px;
+}
+
+.howItWorksTryOtherSamplesButtonFrame {
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	padding: 0px 0px 2px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	flex-grow: 0;
+}
+
+.howItWorksTryOtherSamplesButtonLabel {
+	/* Label */
+
+	/* VP4/action/button */
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 600;
+	font-size: 15px;
+	line-height: 22px;
+	/* identical to box height, or 147% */
+	text-align: center;
+	letter-spacing: -0.02em;
+
+	/* reimagine/day/foreground/accent-strong(cta)/normal */
+	color: #FFFFFF;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
