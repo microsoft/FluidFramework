@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	getSimpleSchema,
 	normalizeFieldSchema,
+	// Tree,
 	type ImplicitFieldSchema,
 	type SimpleTreeSchema,
 	type TreeNode,
@@ -86,6 +87,9 @@ export async function generateTreeEdits(
 	const simpleSchema = getSimpleSchema(
 		normalizeFieldSchema(options.treeView.schema).allowedTypes,
 	);
+
+	// const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
+
 	const tokenUsage = { inputTokens: 0, outputTokens: 0 };
 
 	for await (const edit of generateEdits(
@@ -177,11 +181,11 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	tokenUsage: TokenUsage,
 ): AsyncGenerator<TreeEdit> {
 	const originalDecoratedJson =
-		options.finalReviewStep ?? false
+		(options.finalReviewStep ?? false)
 			? toDecoratedJson(idGenerator, options.treeView.root)
 			: undefined;
 	// reviewed is implicitly true if finalReviewStep is false
-	let hasReviewed = options.finalReviewStep ?? false ? false : true;
+	let hasReviewed = (options.finalReviewStep ?? false) ? false : true;
 
 	async function getNextEdit(): Promise<TreeEdit | undefined> {
 		const systemPrompt = getEditingSystemPrompt(
