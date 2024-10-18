@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { AdjustParams } from "./adjust.js";
 import { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
 	IMergeTreeAnnotateMsg,
@@ -16,7 +17,7 @@ import {
 	MergeTreeDeltaType,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import { PropertySet, type MapLike } from "./properties.js";
 import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
@@ -62,6 +63,28 @@ export function createAnnotateRangeOp(
 		pos1: start,
 		pos2: end,
 		props: { ...props },
+		type: MergeTreeDeltaType.ANNOTATE,
+	};
+}
+
+/**
+ * Creates the op for annotating the range with the provided properties
+ * @param start - The inclusive start position of the range to annotate
+ * @param end - The exclusive end position of the range to annotate
+ * @param props - The properties to annotate the range with
+ * @returns The annotate op
+ *
+ * @internal
+ */
+export function createAdjustRangeOp(
+	start: number,
+	end: number,
+	adjust: MapLike<AdjustParams>,
+): IMergeTreeAnnotateMsg {
+	return {
+		pos1: start,
+		pos2: end,
+		adjust: { ...adjust },
 		type: MergeTreeDeltaType.ANNOTATE,
 	};
 }

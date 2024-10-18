@@ -167,7 +167,7 @@ function runApplyStashedOpFarmTests(
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [new TestClient()];
+			const clients: TestClient[] = [new TestClient({ mergeTreeEnableAnnotateAdjust: true })];
 			// This test is based on reconnectFarm, but we keep a second set of clients. For
 			// these clients, we apply the generated ops as stashed ops, then regenerate
 			// them to simulate resubmit(), then apply them. In the end, they should arrive
@@ -175,7 +175,7 @@ function runApplyStashedOpFarmTests(
 			let stashClients: TestClient[] = [];
 
 			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
-			stashClients = [new TestClient()];
+			stashClients = [new TestClient({ mergeTreeEnableAnnotateAdjust: true })];
 			for (const [i, c] of stashClients.entries())
 				c.startOrUpdateCollaboration(clientNames[i]);
 

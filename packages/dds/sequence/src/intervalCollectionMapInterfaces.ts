@@ -70,6 +70,7 @@ export interface SequenceOptions
 		| "mergeTreeReferencesCanSlideToEndpoint"
 		| "mergeTreeEnableObliterate"
 		| "mergeTreeEnableSidedObliterate"
+		| "mergeTreeEnableAnnotateAdjust"
 	> {
 	/**
 	 * Enable the ability to use interval APIs that rely on positions before and

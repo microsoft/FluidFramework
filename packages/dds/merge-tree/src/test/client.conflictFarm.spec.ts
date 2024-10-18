@@ -97,6 +97,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 					new TestClient({
 						mergeTreeEnableObliterate: true,
 						mergeTreeEnableSidedObliterate: true,
+						mergeTreeEnableAnnotateAdjust: true,
 					}),
 				];
 				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);

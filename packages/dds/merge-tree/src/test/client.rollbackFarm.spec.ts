@@ -35,7 +35,13 @@ describe("MergeTree.Client", () => {
 			const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, opsPerRollback);
 
 			// A: readonly, B: rollback, C: rollback + edit, D: edit
-			const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
+			const clients = createClientsAtInitialState(
+				{ initialState: "", options: { mergeTreeEnableAnnotateAdjust: true } },
+				"A",
+				"B",
+				"C",
+				"D",
+			);
 			let seq = 0;
 
 			for (let round = 0; round < defaultOptions.rounds; round++) {

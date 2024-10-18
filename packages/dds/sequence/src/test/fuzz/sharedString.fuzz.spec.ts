@@ -30,6 +30,7 @@ export function makeSharedStringOperationGenerator(
 		addText,
 		removeRange,
 		annotateRange,
+		annotateAdjustRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
 		hasNonzeroLength,
@@ -50,6 +51,7 @@ export function makeSharedStringOperationGenerator(
 				: hasNonzeroLength,
 		],
 		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
+		[annotateAdjustRange, usableWeights.annotateRange, hasNonzeroLength],
 	]);
 }
 

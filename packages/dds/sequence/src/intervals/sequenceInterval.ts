@@ -423,11 +423,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
-			this.propertyManager.copyTo(
-				this.properties,
-				newInterval.properties,
-				newInterval.propertyManager,
-			);
+			this.propertyManager.copyTo(this.properties, newInterval);
 		}
 		return newInterval;
 	}

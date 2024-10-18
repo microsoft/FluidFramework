@@ -4,6 +4,16 @@
 
 ```ts
 
+// @alpha (undocumented)
+export interface AdjustParams {
+    // (undocumented)
+    max?: number | undefined;
+    // (undocumented)
+    min?: number | undefined;
+    // (undocumented)
+    value: number;
+}
+
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
@@ -160,20 +170,19 @@ export interface IMergeNodeCommon {
 }
 
 // @alpha (undocumented)
-export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
-    // (undocumented)
-    pos1?: number;
-    // (undocumented)
-    pos2?: number;
-    // (undocumented)
-    props: Record<string, any>;
-    // (undocumented)
-    relativePos1?: IRelativePosition;
-    // (undocumented)
-    relativePos2?: IRelativePosition;
-    // (undocumented)
+export type IMergeTreeAnnotateMsg = {
     type: typeof MergeTreeDeltaType.ANNOTATE;
-}
+    pos1?: number;
+    relativePos1?: IRelativePosition;
+    pos2?: number;
+    relativePos2?: IRelativePosition;
+} & ({
+    props: Record<string, unknown>;
+    adjust?: undefined;
+} | {
+    props?: undefined;
+    adjust: Record<string, AdjustParams>;
+});
 
 // @alpha (undocumented)
 export interface IMergeTreeDelta {
@@ -261,6 +270,7 @@ export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
+    mergeTreeEnableAnnotateAdjust?: boolean;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeEnableSidedObliterate?: boolean;

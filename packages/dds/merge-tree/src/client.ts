@@ -26,6 +26,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
+import type { AdjustParams } from "./adjust.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
@@ -54,6 +55,7 @@ import {
 	toMoveInfo,
 } from "./mergeTreeNodes.js";
 import {
+	createAdjustRangeOp,
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -79,7 +81,7 @@ import {
 	ReferenceType,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
@@ -236,6 +238,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		props: PropertySet,
 	): IMergeTreeAnnotateMsg | undefined {
 		const annotateOp = createAnnotateRangeOp(start, end, props);
+		this.applyAnnotateRangeOp({ op: annotateOp });
+		return annotateOp;
+	}
+
+	/**
+	 * adjusts a value
+	 */
+	public annotateAdjustRangeLocal(
+		start: number,
+		end: number,
+		adjust: MapLike<AdjustParams>,
+	): IMergeTreeAnnotateMsg | undefined {
+		const annotateOp = createAdjustRangeOp(start, end, adjust);
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;
 	}
@@ -556,15 +571,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
-		this._mergeTree.annotateRange(
-			range.start,
-			range.end,
-			op.props,
-			clientArgs.referenceSequenceNumber,
-			clientArgs.clientId,
-			clientArgs.sequenceNumber,
+		this._mergeTree.annotateRange({
+			...range,
+			...clientArgs,
+			props: op.props,
+			adjust: op.adjust,
 			opArgs,
-		);
+		});
 	}
 
 	/**
@@ -762,11 +775,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
 			| undefined,
-	): {
-		clientId: number;
-		referenceSequenceNumber: number;
-		sequenceNumber: number;
-	} {
+	): IMergeTreeClientSequenceArgs {
 		// If there this no sequenced message, then the op is local
 		// and unacked, so use this clients sequenced args
 		//
@@ -902,7 +911,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			switch (resetOp.type) {
 				case MergeTreeDeltaType.ANNOTATE: {
 					assert(
-						segment.propertyManager?.hasPendingProperties(resetOp.props) === true,
+						segment.propertyManager?.hasPendingProperties(resetOp.props ?? resetOp.adjust) ===
+							true,
 						0x036 /* "Segment has no pending properties" */,
 					);
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
@@ -916,11 +926,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
-						newOp = createAnnotateRangeOp(
-							segmentPosition,
-							segmentPosition + segment.cachedLength,
-							resetOp.props,
-						);
+						newOp =
+							resetOp.props === undefined
+								? createAdjustRangeOp(
+										segmentPosition,
+										segmentPosition + segment.cachedLength,
+										resetOp.adjust,
+									)
+								: createAnnotateRangeOp(
+										segmentPosition,
+										segmentPosition + segment.cachedLength,
+										resetOp.props,
+									);
 					}
 					break;
 				}
