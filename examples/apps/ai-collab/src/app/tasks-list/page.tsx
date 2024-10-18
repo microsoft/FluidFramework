@@ -20,7 +20,14 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-import { buildUserPresence, type UserPresence } from "./tasks-list/presence";
+import {
+	createContainer,
+	loadContainer,
+	postAttach,
+	containerIdFromUrl,
+} from "../tinylicious";
+
+import { buildUserPresence, type UserPresence } from "./presence";
 
 import { TaskGroup } from "@/components/TaskGroup";
 import UserProfilePhoto from "@/components/UserProfilePhoto";
@@ -35,8 +42,7 @@ import { useFluidContainerNextJs } from "@/useFluidContainerNextjs";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 // Uncomment the import line that corresponds to the server you want to use
-// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
-import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
+// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe";
 
 export async function createAndInitializeContainer(): Promise<
 	IFluidContainer<typeof CONTAINER_SCHEMA>

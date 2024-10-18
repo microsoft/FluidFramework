@@ -356,6 +356,13 @@ importers:
         version: 5.4.5
 
   examples/apps/ai-collab:
+    dependencies:
+      '@fluid-experimental/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
     devDependencies:
       '@azure/identity':
         specifier: ^4.4.1
@@ -453,6 +460,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      source-map-loader:
+        specifier: ^5.0.0
+        version: 5.0.0(webpack@5.95.0)
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
@@ -27728,6 +27738,11 @@ packages:
       dotenv-defaults: 2.0.2
       webpack: 5.95.0(webpack-cli@5.1.4)
     dev: true
+
+  /dotenv@16.4.5:
+    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+    engines: {node: '>=12'}
+    dev: false
 
   /dotenv@8.6.0:
     resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
