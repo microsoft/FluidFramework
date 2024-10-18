@@ -149,7 +149,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 		tenantId: string,
 		id: string,
 		from: number, // inclusive
-		to: number, // exclusive,
+		to: number, // exclusive
 		fetchReason?: string,
 	): Promise<IDeltasFetchResult> {
 		const ops = await PerformanceEvent.timedExecAsync(
