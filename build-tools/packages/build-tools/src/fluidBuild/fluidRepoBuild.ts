@@ -5,20 +5,29 @@
 
 import { existsSync } from "node:fs";
 import * as path from "node:path";
+import {
+	FluidRepoBase,
+	type IPackage,
+	type IWorkspace,
+	type ReleaseGroupName,
+	findGitRootSync,
+	getFluidRepoLayout,
+} from "@fluid-tools/build-infrastructure";
 import chalk from "chalk";
 import registerDebug from "debug";
+import { simpleGit } from "simple-git";
 
 import { defaultLogger } from "../common/logging";
-import { MonoRepo } from "../common/monoRepo";
-import { Package, Packages } from "../common/npmPackage";
-import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import { BuildPackage } from "../common/npmPackage";
+import {
+	ExecAsyncResult,
+	execWithErrorAsync,
+	isSameFileOrDir,
+	lookUpDirSync,
+} from "../common/utils";
 import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
-import { FluidRepo } from "./fluidRepo";
-import { getFluidBuildConfig } from "./fluidUtils";
-import { NpmDepChecker } from "./npmDepChecker";
-import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
-import { globFn } from "./tasks/taskUtils";
+import { getFluidBuildConfig } from "./config";
 
 const traceInit = registerDebug("fluid-build:init");
 
@@ -31,24 +40,105 @@ export interface IPackageMatchedOptions {
 	releaseGroups: string[];
 }
 
-export class FluidRepoBuild extends FluidRepo {
-	public constructor(protected context: BuildContext) {
-		super(context.repoRoot, context.fluidBuildConfig.repoPackages);
+export class FluidRepoBuild extends FluidRepoBase<BuildPackage> {
+	protected context: BuildContext;
+
+	public constructor(searchPath: string) {
+		super(searchPath);
+		const { config: fluidBuildConfig } = getFluidBuildConfig(searchPath);
+		const { config: fluidRepoLayout } = getFluidRepoLayout(searchPath);
+
+		const gitRoot = findGitRootSync(searchPath);
+		this.context = {
+			fluidBuildConfig,
+			fluidRepoLayout,
+			repoRoot: this.root,
+			gitRepo: simpleGit(gitRoot),
+			gitRoot,
+		};
 	}
 
-	public async clean() {
-		return Packages.clean(this.packages.packages, false);
+	// public get packages(): Map<PackageName, BuildPackage> {
+	// 	const pkgs: Map<PackageName, BuildPackage> = new Map();
+	// 	for (const ws of this.workspaces.values()) {
+	// 		for (const pkg of ws.packages) {
+	// 			if (pkgs.has(pkg.name)) {
+	// 				throw new Error(`Duplicate package: ${pkg.name}`);
+	// 			}
+
+	// 			const buildPackage = new BuildPackage(pkg);
+	// 			pkgs.set(pkg.name, buildPackage);
+	// 		}
+	// 	}
+
+	// 	return pkgs;
+	// }
+
+	public async clean(packages: IPackage[], status: boolean) {
+		const cleanP: Promise<ExecAsyncResult>[] = [];
+		let numDone = 0;
+		const execCleanScript = async (pkg: IPackage, cleanScript: string) => {
+			const startTime = Date.now();
+			const result = await execWithErrorAsync(
+				cleanScript,
+				{
+					cwd: pkg.directory,
+					env: {
+						PATH: `${process.env["PATH"]}${path.delimiter}${path.join(
+							pkg.directory,
+							"node_modules",
+							".bin",
+						)}`,
+					},
+				},
+				pkg.nameColored,
+			);
+
+			if (status) {
+				const elapsedTime = (Date.now() - startTime) / 1000;
+				log(
+					`[${++numDone}/${cleanP.length}] ${
+						pkg.nameColored
+					}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`,
+				);
+			}
+			return result;
+		};
+		for (const pkg of packages) {
+			const cleanScript = pkg.getScript("clean");
+			if (cleanScript) {
+				cleanP.push(execCleanScript(pkg, cleanScript));
+			}
+		}
+		const results = await Promise.all(cleanP);
+		return !results.some((result) => result.error);
+	}
+
+	public static async ensureInstalled(packages: IPackage[]) {
+		const installedWorkspaces = new Set<IWorkspace>();
+		const installPromises: Promise<boolean>[] = [];
+		for (const pkg of packages) {
+			if (!installedWorkspaces.has(pkg.workspace)) {
+				installedWorkspaces.add(pkg.workspace);
+				installPromises.push(pkg.workspace.install(false));
+			}
+		}
+		const rets = await Promise.all(installPromises);
+		return !rets.some((result) => !result);
+	}
+
+	public async install() {
+		return FluidRepoBuild.ensureInstalled([...this.packages.values()]);
 	}
 
 	public async uninstall() {
-		const cleanPackageNodeModules = this.packages.cleanNodeModules();
-		const removePromise: Promise<ExecAsyncResult>[] = [];
-		for (const g of this.releaseGroups.values()) {
-			removePromise.push(g.uninstall());
+		const cleanPromises: Promise<ExecAsyncResult>[] = [];
+		for (const pkg of this.packages.values()) {
+			cleanPromises.push(pkg.cleanNodeModules());
 		}
 
-		const r = await Promise.all([cleanPackageNodeModules, Promise.all(removePromise)]);
-		return r[0] && !r[1].some((ret) => ret?.error);
+		const r = await Promise.all(cleanPromises);
+		return !r.some((ret) => ret?.error);
 	}
 
 	public setMatched(options: IPackageMatchedOptions) {
@@ -70,13 +160,13 @@ export class FluidRepoBuild extends FluidRepo {
 			});
 
 			options.releaseGroups.forEach((releaseGroupName) => {
-				const releaseGroup = this.releaseGroups.get(releaseGroupName);
+				const releaseGroup = this.releaseGroups.get(releaseGroupName as ReleaseGroupName);
 				if (releaseGroup === undefined) {
 					throw new Error(
 						`Release group '${releaseGroupName}' specified is not defined in the repo.`,
 					);
 				}
-				this.setMatchedReleaseGroup(releaseGroup);
+				this.setMatchedWorkspace(releaseGroup.workspace);
 				matched = true;
 			});
 			return matched;
@@ -91,73 +181,25 @@ export class FluidRepoBuild extends FluidRepo {
 		return true;
 	}
 
-	/**
-	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
-	 */
-	public async depcheck(fix: boolean) {
-		for (const pkg of this.packages.packages) {
-			// Fluid specific
-			let checkFiles: string[];
-			if (pkg.packageJson.dependencies) {
-				const tsFiles = await globFn(`${pkg.directory}/**/*.ts`, {
-					ignore: `${pkg.directory}/node_modules/**`,
-				});
-				const tsxFiles = await globFn(`${pkg.directory}/**/*.tsx`, {
-					ignore: `${pkg.directory}/node_modules/**`,
-				});
-				checkFiles = tsFiles.concat(tsxFiles);
-			} else {
-				checkFiles = [];
-			}
-
-			const npmDepChecker = new NpmDepChecker(pkg, checkFiles);
-			if (await npmDepChecker.run(fix)) {
-				await pkg.savePackageJson();
-			}
-		}
-	}
-
-	/**
-	 * @deprecated symlink-related functionality will be removed in an upcoming release.
-	 */
-	public async symlink(options: ISymlinkOptions) {
-		// Only do parallel if we are checking only
-		const result = await this.packages.forEachAsync(
-			(pkg) => symlinkPackage(this, pkg, this.createPackageMap(), options),
-			!options.symlink,
-		);
-		return Packages.clean(
-			result.filter((entry) => entry.count).map((entry) => entry.pkg),
-			true,
-		);
-	}
-
-	public createBuildGraph(options: ISymlinkOptions, buildTargetNames: string[]) {
+	public createBuildGraph(buildTargetNames: string[]) {
+		const { config } = getFluidBuildConfig(this.root);
 		return new BuildGraph(
-			this.createPackageMap(),
-			this.getReleaseGroupPackages(),
+			this.packages,
+			[...this.packages.values()],
 			this.context,
 			buildTargetNames,
-			getFluidBuildConfig(this.resolvedRoot)?.tasks,
-			(pkg: Package) => {
-				return (dep: Package) => {
-					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
+			config.tasks,
+			(pkg: BuildPackage) => {
+				return (dep: BuildPackage) => {
+					return pkg.releaseGroup === dep.releaseGroup;
 				};
 			},
 		);
 	}
 
-	private getReleaseGroupPackages() {
-		const releaseGroupPackages: Package[] = [];
-		for (const releaseGroup of this.releaseGroups.values()) {
-			releaseGroupPackages.push(releaseGroup.pkg);
-		}
-		return releaseGroupPackages;
-	}
-
-	private matchWithFilter(callback: (pkg: Package) => boolean) {
+	private matchWithFilter(callback: (pkg: BuildPackage) => boolean) {
 		let matched = false;
-		this.packages.packages.forEach((pkg) => {
+		[...this.packages.values()].forEach((pkg) => {
 			if (!pkg.matched && callback(pkg)) {
 				this.setMatchedPackage(pkg);
 				matched = true;
@@ -175,43 +217,47 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 
 		for (const releaseGroup of this.releaseGroups.values()) {
-			if (isSameFileOrDir(releaseGroup.repoPath, pkgDir)) {
+			if (
+				isSameFileOrDir(
+					releaseGroup.rootPackage?.directory ?? releaseGroup.workspace.directory,
+					pkgDir,
+				)
+			) {
 				log(
-					`Release group ${chalk.cyanBright(releaseGroup.kind)} matched (directory: ${dir})`,
+					`Release group ${chalk.cyanBright(releaseGroup.name)} matched (directory: ${dir})`,
 				);
-				this.setMatchedReleaseGroup(releaseGroup);
+				this.setMatchedWorkspace(releaseGroup.workspace);
 				return;
 			}
 		}
 
-		const foundPackage = this.packages.packages.find((pkg) =>
+		const foundPackage = [...this.packages.values()].find((pkg) =>
 			isSameFileOrDir(pkg.directory, pkgDir),
 		);
 		if (foundPackage === undefined) {
-			throw new Error(
-				`Package in '${pkgDir}' not part of the Fluid repo '${this.resolvedRoot}'.`,
-			);
+			throw new Error(`Package in '${pkgDir}' not part of the Fluid repo '${this.root}'.`);
 		}
 
-		if (matchReleaseGroup && foundPackage.monoRepo !== undefined) {
+		if (matchReleaseGroup && foundPackage !== undefined) {
 			log(
 				`\tRelease group ${chalk.cyanBright(
-					foundPackage.monoRepo.kind,
+					foundPackage.releaseGroup,
 				)} matched (directory: ${dir})`,
 			);
-			this.setMatchedReleaseGroup(foundPackage.monoRepo);
+			this.setMatchedWorkspace(foundPackage.workspace);
 		} else {
 			log(`\t${foundPackage.nameColored} matched (${dir})`);
 			this.setMatchedPackage(foundPackage);
 		}
 	}
 
-	private setMatchedReleaseGroup(monoRepo: MonoRepo) {
-		this.setMatchedPackage(monoRepo.pkg);
+	private setMatchedWorkspace(workspace: IWorkspace) {
+		const rootPkg = new BuildPackage(workspace.rootPackage);
+		this.setMatchedPackage(rootPkg);
 	}
 
-	private setMatchedPackage(pkg: Package) {
+	private setMatchedPackage(pkg: BuildPackage) {
 		traceInit(`${pkg.nameColored}: matched`);
-		pkg.setMatched();
+		pkg.matched = true;
 	}
 }

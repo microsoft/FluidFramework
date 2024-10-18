@@ -4,7 +4,7 @@
  */
 
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
+import { type Package, PackageClass } from "@fluidframework/build-tools";
 import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
 import { Context, Repository } from "./library/index.js";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
@@ -191,7 +191,7 @@ const selectPackagesFromContext = async (
 		);
 		selected.push(
 			...packages.map((p) => {
-				const pkg = Package.load(p.packageJsonFileName, "none", undefined, {
+				const pkg = PackageClass.load(p.packageJsonFilePath, "none", undefined, {
 					kind: "packageFromDirectory" as PackageKind,
 				});
 				return pkg;
@@ -200,7 +200,7 @@ const selectPackagesFromContext = async (
 	}
 
 	if (selection.directory !== undefined) {
-		const pkg = Package.load(
+		const pkg = PackageClass.load(
 			path.join(
 				selection.directory === "." ? process.cwd() : selection.directory,
 				"package.json",
@@ -218,7 +218,7 @@ const selectPackagesFromContext = async (
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				PackageClass.load(pkg.packageJsonFilePath, pkg.group, pkg.monoRepo, {
 					kind: "independentPackage",
 				}),
 			);
@@ -229,7 +229,7 @@ const selectPackagesFromContext = async (
 	for (const rg of selection.releaseGroups) {
 		for (const pkg of context.packagesInReleaseGroup(rg)) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				PackageClass.load(pkg.packageJsonFilePath, pkg.group, pkg.monoRepo, {
 					kind: "releaseGroupChildPackage",
 				}),
 			);
@@ -248,8 +248,10 @@ const selectPackagesFromContext = async (
 		}
 
 		const dir = packages[0].monoRepo.directory;
-		const pkg = Package.loadDir(dir, rg);
-		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
+		const pkg = PackageClass.loadDir(dir, rg);
+		selected.push(
+			PackageClass.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }),
+		);
 	}
 
 	return selected;
@@ -280,7 +282,10 @@ export async function selectAndFilterPackages(
 /**
  * Convenience type that extracts only the properties of a package that are needed for filtering.
  */
-type FilterablePackage = Pick<Package, "name" | "private">;
+interface FilterablePackage {
+	name: string;
+	private?: boolean;
+}
 
 /**
  * Filters a list of packages by the filter criteria.
