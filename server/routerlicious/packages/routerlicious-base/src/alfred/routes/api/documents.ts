@@ -297,7 +297,13 @@ export function create(
 		};
 	}
 
-	async function getDocumentUrlsfromTenant(tenantId: string) : Promise<{ documentOrdererUrl: string; documentHistorianUrl: string; documentDeltaStreamUrl: string; }> {
+	async function getDocumentUrlsfromTenant(
+		tenantId: string,
+	): Promise<{
+		documentOrdererUrl: string;
+		documentHistorianUrl: string;
+		documentDeltaStreamUrl: string;
+	}> {
 		const tenantInfo = tenantRepository.findOne(tenantId);
 		const privateLinkEnable = (await tenantInfo)?.customData?.privateLinkEnable;
 		if (privateLinkEnable) {
@@ -306,7 +312,7 @@ export function create(
 				documentHistorianUrl: `${tenantId}.${externalHistorianUrl}`,
 				documentDeltaStreamUrl: `${tenantId}.${externalDeltaStreamUrl}`,
 			};
-		};
+		}
 		return {
 			documentOrdererUrl: externalOrdererUrl,
 			documentHistorianUrl: externalHistorianUrl,
