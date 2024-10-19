@@ -34,6 +34,10 @@ describe("presence-tracker", () => {
 		await page.waitForFunction(() => document.getElementById("mouse-position"));
 	});
 
+	it("Pointer Content exists", async () => {
+		await page.waitForFunction(() => document.getElementById("pointer-position"));
+	});
+
 	it("Current User is displayed", async () => {
 		const elementHandle = await page.waitForFunction(() =>
 			document.getElementById("focus-div"),
