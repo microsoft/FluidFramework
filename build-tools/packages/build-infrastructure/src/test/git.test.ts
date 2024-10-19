@@ -15,7 +15,7 @@ import { CleanOptions, simpleGit } from "simple-git";
 
 import { NotInGitRepository } from "../errors.js";
 import { loadFluidRepo } from "../fluidRepo.js";
-import { findGitRootSync, getChangedSinceRef, getRemote } from "../git.js";
+import { findGitRootSync, getChangedSinceRef, getFiles, getRemote } from "../git.js";
 import type { PackageJson } from "../types.js";
 
 import { packageRootPath, testRepoRoot } from "./init.js";
@@ -123,5 +123,41 @@ describe("getChangedSinceRef: local", () => {
 
 		expect(workspaces.map((p) => p.name)).to.be.containingAllOf(["main", "second"]);
 		expect(workspaces).to.be.ofSize(2);
+	});
+});
+
+describe("getFiles", () => {
+	const git = simpleGit(process.cwd());
+	const gitRoot = findGitRootSync();
+
+	it("correct files with clean working directory", async () => {
+		const actual = await getFiles(git, testRepoRoot);
+		console.debug(testRepoRoot, actual);
+
+		expect(actual).to.be.containingAllOf(
+			[
+				`${testRepoRoot}/.changeset/README.md`,
+				`${testRepoRoot}/.changeset/bump-main-group-minor.md`,
+				`${testRepoRoot}/.changeset/config.json`,
+				`${testRepoRoot}/fluidBuild.config.cjs`,
+				`${testRepoRoot}/package.json`,
+				`${testRepoRoot}/packages/group2/pkg-d/package.json`,
+				`${testRepoRoot}/packages/group2/pkg-e/package.json`,
+				`${testRepoRoot}/packages/group3/pkg-f/package.json`,
+				`${testRepoRoot}/packages/group3/pkg-f/src/index.mjs`,
+				`${testRepoRoot}/packages/group3/pkg-g/package.json`,
+				`${testRepoRoot}/packages/pkg-a/package.json`,
+				`${testRepoRoot}/packages/pkg-b/package.json`,
+				`${testRepoRoot}/packages/pkg-c/package.json`,
+				`${testRepoRoot}/packages/shared/package.json`,
+				`${testRepoRoot}/pnpm-lock.yaml`,
+				`${testRepoRoot}/pnpm-workspace.yaml`,
+				`${testRepoRoot}/second/package.json`,
+				`${testRepoRoot}/second/packages/other-pkg-a/package.json`,
+				`${testRepoRoot}/second/packages/other-pkg-b/package.json`,
+				`${testRepoRoot}/second/pnpm-lock.yaml`,
+				`${testRepoRoot}/second/pnpm-workspace.yaml`,
+			].map((p) => path.relative(gitRoot, p)),
+		);
 	});
 });

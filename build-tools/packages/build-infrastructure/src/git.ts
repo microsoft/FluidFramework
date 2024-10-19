@@ -41,9 +41,9 @@ export async function getMergeBaseRemote(
  * Gets all the files that have changed when compared to another ref. Paths are relative to the root of the git
  * repository.
  *
- * Note that newly added unstaged files are NOT included.
+ * Note that newly added, unstaged files are NOT included.
  */
-async function getChangedFilesSinceRef(
+export async function getChangedFilesSinceRef(
 	git: SimpleGit,
 	ref: string,
 	remote?: string,
