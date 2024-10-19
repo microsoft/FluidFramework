@@ -27,7 +27,7 @@ export class ListCommand extends Command {
 		const { flags } = await this.parse(ListCommand);
 		const { path: searchPath, full } = flags;
 
-		// load the fluid repo
+		// load the Fluid repo
 		const repo = loadFluidRepo(searchPath);
 		const _ = full ? await this.logFullReport(repo) : await this.logCompactReport(repo);
 	}

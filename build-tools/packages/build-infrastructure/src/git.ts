@@ -112,7 +112,7 @@ export async function getChangedSinceRef<P extends IPackage>(
 			(filePath) => path.join(gitRoot, filePath),
 		)
 		.filter((filePath) => {
-			// filter out changed paths that are not under the fluid repo
+			// filter out changed paths that are not under the Fluid repo
 			// since only paths under the repo should be included
 			return isPathUnder(fluidRepo.root, filePath);
 		})
