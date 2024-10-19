@@ -48,7 +48,10 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 	let sharedCell2: ISharedCell;
 	let sharedCell3: ISharedCell;
 
-	beforeEach("setup", async () => {
+	beforeEach("setup", async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
