@@ -11,57 +11,63 @@ import type { SimpleGit } from "simple-git";
 
 import { NotInGitRepository } from "./errors.js";
 import type { IFluidRepo, IPackage, IReleaseGroup, IWorkspace, PackageName } from "./types.js";
+import { isPathUnder } from "./utils.js";
 
 /**
- * Get the merge base between the current HEAD and the remote branch.
+ * Get the merge base between the current HEAD and a remote branch.
  *
  * @param branch - The branch to compare against.
- * @param remote - The remote to compare against.
+ * @param remote - The remote to compare against. If this is undefined, then the local branch is compared with.
  * @param localRef - The local ref to compare against. Defaults to HEAD.
  * @returns The ref of the merge base between the current HEAD and the remote branch.
  */
 export async function getMergeBaseRemote(
 	git: SimpleGit,
 	branch: string,
-	remote: string,
+	remote?: string,
 	localRef = "HEAD",
 ): Promise<string> {
-	const base = await git
-		.fetch([remote]) // make sure we have the latest remote refs
-		.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
+	if (remote !== undefined) {
+		// make sure we have the latest remote refs
+		await git.fetch([remote]);
+	}
+
+	const compareRef = remote === undefined ? branch : `refs/remotes/${remote}/${branch}`;
+	const base = await git.raw("merge-base", compareRef, localRef);
 	return base;
 }
 
 /**
- * Gets all the files that have changed when compared to a remote ref.
+ * Gets all the files that have changed when compared to another ref. Note that deleted files are NOT included.
  */
 async function getChangedFilesSinceRef(
 	git: SimpleGit,
 	ref: string,
-	remote: string,
+	remote?: string,
 ): Promise<string[]> {
-	// Find the merge base commit
-	const divergedAt = await getMergeBaseRemote(git, ref, remote);
-	// Now we can find which files we added
-	const added = await git
-		.fetch(["--all"]) // make sure we have the latest remote refs
-		.diff(["--name-only", "--diff-filter=d", divergedAt]);
+	if (remote !== undefined) {
+		// make sure we have the latest remote refs
+		await git.fetch([remote]);
+	}
 
-	const files = added
+	// Find the merge base commit
+	const divergedAt = remote === undefined ? ref : await getMergeBaseRemote(git, ref, remote);
+	// Now we can find which files have changed
+	const changed = await git.diff([divergedAt, "--name-only"]);
+	// const deleted = await git.diff([divergedAt, "--name-only", "--diff-filter=D"]);
+
+	const files = changed
 		.split("\n")
 		.filter((value) => value !== null && value !== undefined && value !== "");
 	return files;
 }
 
 /**
- * Gets all the directory paths that have changes when compared to a remote ref.
+ * Given an array of file paths, returns a deduplicated array of all of the directories those files are in.
  */
-async function getChangedDirectoriesSinceRef(
-	git: SimpleGit,
-	ref: string,
-	remote: string,
-): Promise<string[]> {
-	const files = await getChangedFilesSinceRef(git, ref, remote);
+function filePathsToDirectories(
+	files: string[],
+): string[] {
 	const dirs = new Set(files.map((f) => path.dirname(f)));
 	return [...dirs];
 }
@@ -81,7 +87,7 @@ async function getChangedDirectoriesSinceRef(
 export async function getChangedSinceRef<P extends IPackage>(
 	fluidRepo: IFluidRepo<P>,
 	ref: string,
-	remote: string,
+	remote?: string,
 ): Promise<{
 	files: string[];
 	dirs: string[];
@@ -91,8 +97,13 @@ export async function getChangedSinceRef<P extends IPackage>(
 }> {
 	const git = await fluidRepo.getGitRepository();
 	const repoRoot = await git.revparse(["--show-toplevel"]);
-	const files = await getChangedFilesSinceRef(git, ref, remote);
-	const dirs = await getChangedDirectoriesSinceRef(git, ref, remote);
+	const filesRaw = await getChangedFilesSinceRef(git, ref, remote);
+	const files = filesRaw.filter((filePath) =>
+		// filter out changed paths that are not under the fluid repo
+		// since only paths under the repo should be included
+		isPathUnder(fluidRepo.root, filePath),
+	);
+	const dirs = filePathsToDirectories(files);
 
 	const changedPackageNames = dirs
 		.map((dir) => {

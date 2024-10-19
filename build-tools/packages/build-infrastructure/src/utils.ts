@@ -36,3 +36,17 @@ export function lookUpDirSync(
 
 	return undefined;
 }
+
+/**
+ * Determines if a path is under a parent path
+ * .
+ * @param parent - The parent path.
+ * @param maybeChild - The child path.
+ * @returns `true` if the child is under the arent path, `false` otherwise.
+ */
+export function isPathUnder(parent: string, maybeChild: string): boolean {
+	const resolvedPathA = path.resolve(parent);
+	const resolvedPathB = path.resolve(maybeChild);
+
+	return resolvedPathB.startsWith(resolvedPathA + path.sep);
+}
