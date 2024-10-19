@@ -38,7 +38,10 @@ export async function getMergeBaseRemote(
 }
 
 /**
- * Gets all the files that have changed when compared to another ref. Note that deleted files are NOT included.
+ * Gets all the files that have changed when compared to another ref. Paths are relative to the root of the git
+ * repository.
+ *
+ * Note that newly added unstaged files are NOT included.
  */
 async function getChangedFilesSinceRef(
 	git: SimpleGit,
@@ -53,8 +56,13 @@ async function getChangedFilesSinceRef(
 	// Find the merge base commit
 	const divergedAt = remote === undefined ? ref : await getMergeBaseRemote(git, ref, remote);
 	// Now we can find which files have changed
-	const changed = await git.diff([divergedAt, "--name-only"]);
-	// const deleted = await git.diff([divergedAt, "--name-only", "--diff-filter=D"]);
+	const changed = await git.diff([
+		divergedAt,
+		"--name-only",
+		// Select all file change types except "broken"
+		// See https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---diff-filterACDMRTUXB82308203
+		"--diff-filter=ACDMRTUX",
+	]);
 
 	const files = changed
 		.split("\n")
@@ -65,15 +73,15 @@ async function getChangedFilesSinceRef(
 /**
  * Given an array of file paths, returns a deduplicated array of all of the directories those files are in.
  */
-function filePathsToDirectories(
-	files: string[],
-): string[] {
+function filePathsToDirectories(files: string[]): string[] {
 	const dirs = new Set(files.map((f) => path.dirname(f)));
 	return [...dirs];
 }
 
 /**
  * Gets the changed files, directories, release groups, and packages since the given ref.
+ *
+ * Returned paths are relative to the Fluid repo root.
  *
  * @param fluidRepo - The Fluid repo.
  * @param ref - The ref to compare against.
@@ -95,19 +103,26 @@ export async function getChangedSinceRef<P extends IPackage>(
 	releaseGroups: IReleaseGroup[];
 	packages: IPackage[];
 }> {
+	const gitRoot = findGitRootSync(fluidRepo.root);
 	const git = await fluidRepo.getGitRepository();
-	const repoRoot = await git.revparse(["--show-toplevel"]);
 	const filesRaw = await getChangedFilesSinceRef(git, ref, remote);
-	const files = filesRaw.filter((filePath) =>
-		// filter out changed paths that are not under the fluid repo
-		// since only paths under the repo should be included
-		isPathUnder(fluidRepo.root, filePath),
-	);
+	const files = filesRaw
+		.map(
+			// Make paths absolute
+			(filePath) => path.join(gitRoot, filePath),
+		)
+		.filter((filePath) => {
+			// filter out changed paths that are not under the fluid repo
+			// since only paths under the repo should be included
+			return isPathUnder(fluidRepo.root, filePath);
+		})
+		.map((filePath) => fluidRepo.relativeToRepo(filePath));
 	const dirs = filePathsToDirectories(files);
+	// .map((dir) => fluidRepo.relativeToRepo(dir));
 
 	const changedPackageNames = dirs
 		.map((dir) => {
-			const cwd = path.resolve(repoRoot, dir);
+			const cwd = path.resolve(fluidRepo.root, dir);
 			return readPkgUp.sync({ cwd })?.packageJson.name;
 		})
 		.filter((name): name is string => name !== undefined);

@@ -56,7 +56,9 @@ describe("getChangedSinceRef: local", () => {
 
 	beforeEach(async () => {
 		// create a file
-		await writeJson(path.join(testRepoRoot, "second/newFile.json"), '{"foo": "bar"}');
+		const newFile = path.join(testRepoRoot, "second/newFile.json");
+		await writeJson(newFile, '{"foo": "bar"}');
+		await git.add(newFile);
 
 		// delete a file
 		await unlink(path.join(testRepoRoot, "packages/group3/pkg-f/src/index.mjs"));
@@ -69,6 +71,7 @@ describe("getChangedSinceRef: local", () => {
 	});
 
 	afterEach(async () => {
+		await git.reset(["HEAD", "--", testRepoRoot]);
 		await git.checkout(["HEAD", "--", testRepoRoot]);
 		await git.clean(CleanOptions.FORCE, [testRepoRoot]);
 	});
@@ -76,43 +79,49 @@ describe("getChangedSinceRef: local", () => {
 	it("returns correct files", async () => {
 		const { files } = await getChangedSinceRef(repo, "HEAD");
 
-		// files
-		// expect(files).to.be.ofSize(1);
-		expect(files).to.be.containingAllOf(["/packages/group3/pkg-f/package.json"]);
+		expect(files).to.be.containingAllOf([
+			"packages/group3/pkg-f/package.json",
+			"packages/group3/pkg-f/src/index.mjs",
+			"second/newFile.json",
+		]);
+		expect(files).to.be.ofSize(3);
+	});
+
+	it("returns correct dirs", async () => {
+		const { dirs } = await getChangedSinceRef(repo, "HEAD");
+
+		expect(dirs).to.be.containingAllOf([
+			"packages/group3/pkg-f",
+			"packages/group3/pkg-f/src",
+			"second",
+		]);
+		expect(dirs).to.be.ofSize(3);
+	});
+
+	it("returns correct packages", async () => {
+		const { packages } = await getChangedSinceRef(repo, "HEAD");
+
+		expect(packages.map((p) => p.name)).to.be.containingAllOf([
+			"@group3/pkg-f",
+			"second-release-group-root",
+		]);
+		expect(packages).to.be.ofSize(2);
+	});
+
+	it("returns correct release groups", async () => {
+		const { releaseGroups } = await getChangedSinceRef(repo, "HEAD");
+
+		expect(releaseGroups.map((p) => p.name)).to.be.containingAllOf([
+			"group3",
+			"second-release-group",
+		]);
+		expect(releaseGroups).to.be.ofSize(2);
+	});
+
+	it("returns correct workspaces", async () => {
+		const { workspaces } = await getChangedSinceRef(repo, "HEAD");
+
+		expect(workspaces.map((p) => p.name)).to.be.containingAllOf(["main", "second"]);
+		expect(workspaces).to.be.ofSize(2);
 	});
 });
-
-// describe("getChangedSinceRef: remote", () => {
-// 	const git = simpleGit(process.cwd());
-// 	const repo = loadFluidRepo(testRepoRoot);
-// 	let remote: string;
-// 	let currentBranch: string;
-
-// 	beforeEach(async () => {
-// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-// 		remote = (await getRemote(git, "microsoft/FluidFramework"))!;
-// 		// eslint-disable-next-line unicorn/no-await-expression-member
-// 		currentBranch = (await git.branch()).current;
-
-// 		// set up
-// 		await unlink(path.join(testRepoRoot, "packages/group3/pkg-f/src/index.mjs"));
-// 		const pkgJson = path.join(testRepoRoot, "packages/group3/pkg-f/package.json");
-// 		const json = (await readJson(pkgJson)) as PackageJson;
-// 		json.author = "edited field";
-// 		await writeJson(pkgJson, json);
-// 		await writeJson(path.join(testRepoRoot, "second/newFile.json"), '{"foo": "bar"}');
-// 	});
-
-// 	afterEach(async () => {
-// 		await git.checkout(["HEAD", "--", testRepoRoot]);
-// 		await git.clean(CleanOptions.FORCE, [testRepoRoot]);
-// 	});
-
-// 	it("returns correct files", async () => {
-// 		const { files } = await getChangedSinceRef(repo, currentBranch, remote);
-
-// 		// files
-// 		expect(files).to.be.ofSize(1);
-// 		expect(files).to.be.containingAllOf(["/packages/group3/pkg-f/package.json"]);
-// 	});
-// });
