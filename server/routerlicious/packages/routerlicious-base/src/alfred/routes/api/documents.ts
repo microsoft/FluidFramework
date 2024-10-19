@@ -297,9 +297,7 @@ export function create(
 		};
 	}
 
-	async function getDocumentUrlsfromTenant(
-		tenantId: string,
-	): Promise<{
+	async function getDocumentUrlsfromTenant(tenantId: string): Promise<{
 		documentOrdererUrl: string;
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
