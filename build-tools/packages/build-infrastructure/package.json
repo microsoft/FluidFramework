@@ -28,6 +28,14 @@
 	"bin": {
 		"repo-layout": "./bin/run.js"
 	},
+	"files": [
+		"/bin",
+		"/dist",
+		"!dist/test",
+		"/lib",
+		"!lib/test",
+		"/oclif.manifest.json"
+	],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "npm run tsc && npm run build:test",
@@ -100,14 +108,6 @@
 		"typedoc-plugin-markdown": "^4.2.9",
 		"unionfs": "^4.5.4"
 	},
-	"files": [
-		"/bin",
-		"/dist",
-		"!dist/test",
-		"/lib",
-		"!lib/test",
-		"/oclif.manifest.json"
-	],
 	"oclif": {
 		"bin": "repo-layout",
 		"dirname": "repo-layout",
