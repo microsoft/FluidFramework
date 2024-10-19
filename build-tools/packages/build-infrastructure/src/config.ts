@@ -14,10 +14,6 @@ import {
 
 /**
  * The version of the fluidRepo configuration currently used.
- *
- * @remarks
- *
- * This is not exported outside of the build-infrastructure package; it is only used internally.
  */
 export const FLUIDREPO_CONFIG_VERSION = 1;
 

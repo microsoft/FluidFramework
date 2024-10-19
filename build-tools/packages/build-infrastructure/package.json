@@ -32,10 +32,10 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local && typedoc",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:manifest": "oclif manifest",
-		"build:readme": "oclif readme --version 0.0.0 --no-aliases --readme-path docs/cli.md",
+		"build:readme": "oclif readme --version 0.0.0 --no-aliases --readme-path src/docs/cli.md",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -96,6 +96,8 @@
 		"mocha": "^10.2.0",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
+		"typedoc": "^0.26.10",
+		"typedoc-plugin-markdown": "^4.2.9",
 		"unionfs": "^4.5.4"
 	},
 	"files": [

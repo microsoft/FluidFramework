@@ -1,3 +1,7 @@
+---
+title: repo-layout -- the build-infrastructure CLI
+---
+
 # repo-layout -- the build-infrastructure CLI
 
 # Table of contents

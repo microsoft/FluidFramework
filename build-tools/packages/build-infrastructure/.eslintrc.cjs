@@ -16,6 +16,8 @@ module.exports = {
 	rules: {
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
+
+		"tsdoc/syntax": ["warn"],
 	},
 	overrides: [
 		{

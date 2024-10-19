@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * build-infrastructure package comment.
+ *
+ * @module default entrypoint
+ * @group API
+ * @category API
+ */
+
 export {
 	type ReleaseGroupDefinition,
 	type WorkspaceDefinition,
