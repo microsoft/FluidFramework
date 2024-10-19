@@ -8,7 +8,11 @@ import * as path from "node:path";
 
 import { describe, it } from "mocha";
 
-import { readPackageJsonAndIndent, updatePackageJsonFile, updatePackageJsonFileAsync } from "../packageJsonUtils.js";
+import {
+	readPackageJsonAndIndent,
+	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
+} from "../packageJsonUtils.js";
 import { type PackageJson } from "../types.js";
 
 import { testDataPath } from "./init.js";

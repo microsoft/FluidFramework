@@ -81,7 +81,7 @@ export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[])
 };
 
 // @public
-export function getChangedSinceRef<P extends IPackage>(fluidRepo: IFluidRepo<P>, ref: string, remote: string): Promise<{
+export function getChangedSinceRef<P extends IPackage>(fluidRepo: IFluidRepo<P>, ref: string, remote?: string): Promise<{
     files: string[];
     dirs: string[];
     workspaces: IWorkspace[];
@@ -99,7 +99,7 @@ export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
 };
 
 // @public
-export function getMergeBaseRemote(git: SimpleGit, branch: string, remote: string, localRef?: string): Promise<string>;
+export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string): Promise<string>;
 
 // @public
 export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
