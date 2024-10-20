@@ -50,22 +50,17 @@ export type {
 	IPackageManager,
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
+export {
+	filterPackages,
+	type FilterablePackage,
+	selectAndFilterPackages,
+	type GlobString,
+	AllPackagesSelectionCriteria,
+	EmptySelectionCriteria,
+	type PackageSelectionCriteria,
+	type PackageFilterOptions,
+} from "./filter.js";
 
-// export {
-// 	filterPackages,
-// 	type FilterablePackage,
-// 	selectAndFilterPackages,
-// 	type GlobString,
-// 	AllPackagesSelectionCriteria,
-// 	EmptySelectionCriteria,
-// 	type PackageSelectionCriteria,
-// 	type PackageFilterOptions,
-// } from "./filter.js";
-// export {
-// 	FluidRepo as FluidRepoBase,
-// 	getAllDependenciesInRepo,
-// 	loadFluidRepo,
-// } from "./fluidRepo.js";
 // export {
 // 	getFiles,
 // 	findGitRootSync,

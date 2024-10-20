@@ -13,7 +13,24 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
+export const AllPackagesSelectionCriteria: PackageSelectionCriteria;
+
+// @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export const EmptySelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export interface FilterablePackage {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    private?: boolean | undefined;
+}
+
+// @public
+export function filterPackages<T extends FilterablePackage>(packages: T[], filters: PackageFilterOptions): Promise<T[]>;
 
 // @public
 export interface FluidPackageJsonFields {
@@ -54,6 +71,9 @@ export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
     config: IFluidRepoLayout;
     configFilePath: string;
 };
+
+// @public
+export type GlobString = string;
 
 // @public @deprecated
 export interface IFluidBuildDir {
@@ -210,6 +230,13 @@ export interface PackageDependency {
 }
 
 // @public
+export interface PackageFilterOptions {
+    private: boolean | undefined;
+    scope?: string[] | undefined;
+    skipScope?: string[] | undefined;
+}
+
+// @public (undocumented)
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
 // @public
@@ -219,6 +246,16 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
 export type PackageName = Opaque<string, "PackageName">;
 
 // @public
+export interface PackageSelectionCriteria {
+    changedSinceBranch?: string | undefined;
+    directory?: string | undefined;
+    releaseGroupRoots: (GlobString | string)[];
+    releaseGroups: (GlobString | string)[];
+    workspaceRoots: (GlobString | string)[];
+    workspaces: (GlobString | string)[];
+}
+
+// @public (undocumented)
 export interface ReleaseGroupDefinition {
     adoPipelineUrl?: string;
     exclude?: string[];
@@ -235,6 +272,12 @@ export interface Reloadable {
 }
 
 // @public
+export function selectAndFilterPackages<P extends IPackage>(fluidRepo: IFluidRepo<P>, selection: PackageSelectionCriteria, filter?: PackageFilterOptions): Promise<{
+    selected: P[];
+    filtered: P[];
+}>;
+
+// @public (undocumented)
 export interface WorkspaceDefinition {
     directory: string;
     releaseGroups: {
