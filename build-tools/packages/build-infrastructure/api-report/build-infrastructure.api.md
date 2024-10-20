@@ -13,6 +13,9 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
+export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
 export interface FluidPackageJsonFields {
     pnpm?: {
         overrides?: Record<string, string>;
@@ -21,6 +24,40 @@ export interface FluidPackageJsonFields {
 
 // @public
 export const FLUIDREPO_CONFIG_VERSION = 1;
+
+// @public (undocumented)
+export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
+    constructor(searchPath: string, upstreamRemotePartialUrl?: string | undefined);
+    // (undocumented)
+    readonly configFilePath: string;
+    // (undocumented)
+    readonly configuration: IFluidRepoLayout;
+    // (undocumented)
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
+    // (undocumented)
+    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
+    // (undocumented)
+    getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
+    // (undocumented)
+    get packages(): Map<PackageName, P>;
+    relativeToRepo(p: string): string;
+    // (undocumented)
+    get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
+    // (undocumented)
+    reload(): void;
+    readonly root: string;
+    // (undocumented)
+    readonly upstreamRemotePartialUrl?: string | undefined;
+    // (undocumented)
+    get workspaces(): Map<WorkspaceName, IWorkspace>;
+}
+
+// @public (undocumented)
+export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[]): {
+    packages: IPackage[];
+    releaseGroups: IReleaseGroup[];
+    workspaces: IWorkspace[];
+};
 
 // @public
 export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
@@ -135,10 +172,53 @@ export interface IWorkspace extends Installable, Reloadable {
 }
 
 // @public
+export function loadFluidRepo<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IFluidRepo<P>;
+
+// @public
 export class NotInGitRepository extends Error {
     constructor(path: string);
     // (undocumented)
     readonly path: string;
+}
+
+// @public (undocumented)
+export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps extends AdditionalPackageProps = undefined> implements IPackage<J> {
+    constructor(packageJsonFilePath: string, packageManager: IPackageManager, workspace: IWorkspace, isWorkspaceRoot: boolean, releaseGroup: ReleaseGroupName, isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
+    // (undocumented)
+    checkInstall(print?: boolean): Promise<boolean>;
+    // (undocumented)
+    get combinedDependencies(): Generator<PackageDependency, void>;
+    // (undocumented)
+    get directory(): string;
+    // (undocumented)
+    getScript(name: string): string | undefined;
+    install(updateLockfile: boolean): Promise<boolean>;
+    // (undocumented)
+    isReleaseGroupRoot: boolean;
+    // (undocumented)
+    readonly isWorkspaceRoot: boolean;
+    get name(): PackageName;
+    get nameColored(): string;
+    // (undocumented)
+    get packageJson(): J;
+    // (undocumented)
+    readonly packageJsonFilePath: string;
+    // (undocumented)
+    readonly packageManager: IPackageManager;
+    // (undocumented)
+    get private(): boolean;
+    // (undocumented)
+    readonly releaseGroup: ReleaseGroupName;
+    // (undocumented)
+    reload(): void;
+    // (undocumented)
+    savePackageJson(): Promise<void>;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    get version(): string;
+    // (undocumented)
+    readonly workspace: IWorkspace;
 }
 
 // @public
