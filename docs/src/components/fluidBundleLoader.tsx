@@ -51,12 +51,7 @@ export function FluidAppPanel({ containerId, elementId }: FluidAppPanelProps): J
 		<div className="browser-window-wrapper" id={elementId}>
 			<div aria-hidden="true" className="browser-window">
 				<div className="browser-window-nav">
-					<div className="browser-window-nav-url">{`http://localhost:8080#${containerId}`}</div>
-				</div>
-				<div className="browser-window-icon-wrapper">
-					<div className="browser-window-icon">−</div>
-					<div className="browser-window-icon">□</div>
-					<div className="browser-window-icon">x</div>
+					{`http://localhost:8080#${containerId}`}
 				</div>
 			</div>
 		</div>
