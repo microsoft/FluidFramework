@@ -302,9 +302,13 @@ export function create(
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
 	}> {
-		const tenantInfo = tenantRepository.findOne(tenantId);
-		const privateLinkEnable = (await tenantInfo)?.customData?.privateLinkEnable;
-		if (privateLinkEnable) {
+		const tenantInfo = await tenantRepository.findOne(tenantId);
+		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+		if (
+			privateLinkEnable &&
+			(externalOrdererUrl.includes("frs.azure") ||
+				externalOrdererUrl.includes("fluidrelay.azure"))
+		) {
 			return {
 				documentOrdererUrl: `${tenantId}.${externalOrdererUrl}`,
 				documentHistorianUrl: `${tenantId}.${externalHistorianUrl}`,
