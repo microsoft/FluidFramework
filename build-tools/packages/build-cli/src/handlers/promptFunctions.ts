@@ -10,6 +10,7 @@ import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWri
 import {
 	difference,
 	generateReleaseBranchName,
+	getDefaultBumpTypeForBranch,
 	getPreReleaseDependencies,
 } from "../library/index.js";
 import { CommandLogger } from "../logging.js";
@@ -451,6 +452,104 @@ export const promptToRunTypeTests: StateHandlerFunction = async (
 				title: "NEXT: typetests:prepare",
 				message: `To regenerate type tests, run the following command from the root of your release repo:`,
 				cmd: `npm run typetests:gen`,
+			},
+			{
+				title: "FINALLY: merge the resulting changes",
+				message: `Merge the resulting changes into the repo, then run the following command to continue the release:`,
+				cmd: `${command?.config.bin} ${command?.id} ${command?.argv?.join(" ")}`,
+			},
+		],
+	};
+
+	await promptWriter?.writePrompt(prompt);
+	return true;
+};
+
+/**
+ * Prompt the user to generate release notes.
+ *
+ * @param state - The current state machine state.
+ * @param machine - The state machine.
+ * @param testMode - Set to true to run function in test mode.
+ * @param log - A logger that the function can use for logging.
+ * @param data - An object with handler-specific contextual data.
+ * @returns True if the state was handled; false otherwise.
+ */
+export const promptToGenerateReleaseNotes: StateHandlerFunction = async (
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const {
+		command,
+		context,
+		promptWriter,
+		releaseGroup,
+		releaseVersion,
+		bumpType: inputBumpType,
+	} = data;
+	const currentBranch = await context.gitRepo.getCurrentBranchName();
+
+	// If an bumpType was set in the handler data, use it. Otherwise set it as the default for the branch.
+	const bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(currentBranch);
+
+	const prompt: InstructionalPrompt = {
+		title: "NEED TO GENERATE RELEASE NOTES",
+		sections: [
+			{
+				title: "FIRST: generate:releaseNotes",
+				message: `To generate the release notes, run the following command from the root of your release repo:`,
+				cmd: `flub generate releaseNotes -g ${releaseGroup} -t ${bumpType} --out RELEASE_NOTES/${releaseVersion}.md`,
+			},
+			{
+				title: "FINALLY: merge the resulting changes",
+				message: `Merge the resulting changes into the repo, then run the following command to continue the release:`,
+				cmd: `${command?.config.bin} ${command?.id} ${command?.argv?.join(" ")}`,
+			},
+			{
+				title: "REFER TO: See the release documentation for more details",
+				message:
+					"See the release documentation for more details:\nhttps://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call/release/release-prep",
+			},
+		],
+	};
+
+	await promptWriter?.writePrompt(prompt);
+	return true;
+};
+
+/**
+ * Prompt the user to generate release notes.
+ *
+ * @param state - The current state machine state.
+ * @param machine - The state machine.
+ * @param testMode - Set to true to run function in test mode.
+ * @param log - A logger that the function can use for logging.
+ * @param data - An object with handler-specific contextual data.
+ * @returns True if the state was handled; false otherwise.
+ */
+export const promptToGenerateChangelogs: StateHandlerFunction = async (
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const { command, promptWriter, releaseGroup } = data;
+
+	const prompt: InstructionalPrompt = {
+		title: "NEED TO GENERATE PER-PACKAGE CHANGELOGS",
+		sections: [
+			{
+				title: "FIRST: generate:changelog",
+				message: `To generate the changelog updates, run the following command from the root of your release repo:`,
+				cmd: `flub generate changelog -g ${releaseGroup}`,
 			},
 			{
 				title: "FINALLY: merge the resulting changes",

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { existsSync } from "node:fs";
 import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
@@ -471,6 +472,91 @@ export const checkAssertTagging: StateHandlerFunction = async (
 		);
 	} else {
 		log.warning("Skipping assert tagging.");
+	}
+
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
+};
+
+/**
+ * Checks that release notes have been generated.
+ *
+ * @param state - The current state machine state.
+ * @param machine - The state machine.
+ * @param testMode - Set to true to run function in test mode.
+ * @param log - A logger that the function can use for logging.
+ * @param data - An object with handler-specific contextual data.
+ * @returns True if the state was handled; false otherwise.
+ */
+export const checkReleaseNotes: StateHandlerFunction = async (
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const { bumpType, releaseGroup, releaseVersion } = data;
+
+	// This check should only be run for client/server minor/major releases. Patch releases should always pass this
+	// check, as will release groups other than client/server.
+	if (["client", "server"].includes(releaseGroup) && bumpType !== "patch") {
+		// Check if the release notes file exists
+		const filename = `RELEASE_NOTES/${releaseVersion}.md`;
+
+		if (!existsSync(filename)) {
+			log.logHr();
+			log.errorLog(
+				`Release notes for ${releaseGroup} version ${releaseVersion} are not found.`,
+			);
+			BaseStateHandler.signalFailure(machine, state);
+			return false;
+		}
+	}
+
+	BaseStateHandler.signalSuccess(machine, state);
+	return true;
+};
+
+/**
+ * Checks that changelogs have been generated.
+ *
+ * @param state - The current state machine state.
+ * @param machine - The state machine.
+ * @param testMode - Set to true to run function in test mode.
+ * @param log - A logger that the function can use for logging.
+ * @param data - An object with handler-specific contextual data.
+ * @returns True if the state was handled; false otherwise.
+ */
+export const checkChangelogs: StateHandlerFunction = async (
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const { releaseGroup, bumpType } = data;
+
+	// This check should only be run for client/server minor/major releases. Patch releases should always pass this
+	// check, as will release groups other than client/server.
+	if (["client", "server"].includes(releaseGroup) && bumpType !== "patch") {
+		const question: inquirer.ConfirmQuestion = {
+			type: "confirm",
+			name: "confirmed",
+			message: "Did you generate and commit the CHANGELOG.md files for the release?",
+		};
+
+		const answer = await inquirer.prompt(question);
+
+		if (answer.confirmed !== true) {
+			log.logHr();
+			log.errorLog(`Changelogs must be generated.`);
+			BaseStateHandler.signalFailure(machine, state);
+			return false;
+		}
 	}
 
 	BaseStateHandler.signalSuccess(machine, state);
