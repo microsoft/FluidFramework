@@ -6,7 +6,7 @@ import React from "react";
 import { HomePageSection } from '@site/src/components/homePageSection';
 import ServiceSectionBG from '@site/static/images/ffInCloudBG.png';
 
-import Diagram from '@site/static/assets/services-diagram.svg';
+import ServicesDiagram from '@site/static/assets/services-diagram.svg';
 
 import "@site/src/css/serviceSection.css";
 
@@ -18,8 +18,8 @@ export function ServiceSection(): JSX.Element {
 			<div className="overlay"></div>
 
 				<div className="serviceContentContainer">
-
 					<div className="services">
+						<ServicesDiagram />
 							<div className="service">{/*AFR*/}
 								<div className="serviceContent">
 										<div className="azureImg"></div>
