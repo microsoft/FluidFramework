@@ -6,7 +6,8 @@
 import React from "react";
 import CodeBlock from '@theme/CodeBlock';
 
-import { FluidBundleLoader } from "@site/src/components/fluidBundleLoader";
+import { CardWithBlur } from "@site/src/components/card";
+import { FluidAppPanel, useFluidBundle } from "@site/src/components/fluidBundleLoader";
 import { HomePageSection } from '@site/src/components/homePageSection';
 
 import "@site/src/css/howItWorksSection.css";
@@ -110,6 +111,9 @@ const renderDiceRoller = (dice, elem) => {
 `;
 
 export function HowItWorksSection(): React.ReactElement {
+	useFluidBundle("dice-roller.2021-09-24.js");
+	const containerId = Date.now().toString();
+
 	return <HomePageSection title="See how it works" subtitle="Open Source" image={ServiceSectionBG}>
 		<div className="howItWorksSectionBody">
 			<div className="howItWorksSectionCodeBody">
@@ -117,7 +121,7 @@ export function HowItWorksSection(): React.ReactElement {
 					<div className="howItWorksCodeColumnLabel">
 						Sample Code
 					</div>
-					<div className="howItWorksCodeCard">
+					<CardWithBlur>
 							<div className="howItWorksCodeCardBody">
 								<CodeBlock
 									language="typescript" className="howItWorksCodeCardText"
@@ -126,23 +130,18 @@ export function HowItWorksSection(): React.ReactElement {
 									{code}
 								</CodeBlock>
 							</div>
-					</div>
+					</CardWithBlur>
 				</div>
 				<div className="howItWorksCodeColumn">
 					<div className="howItWorksCodeColumnLabel">
 						Sample Output
 					</div>
-					{/* TODO: these should be 2 separate cards, if possible. */}
-					<div className="howItWorksCodeCard">
-						{/* <div > */}
-							<FluidBundleLoader idPrefix="dice-roller" bundleName="dice-roller.2021-09-24.js" className="howItWorksCodeCardBody"/>
-						{/* </div> */}
-					</div>
-					{/* <div className="howItWorksCodeCard">
-						<div className="howItWorksCodeCardBody">
-							Bar
-						</div>
-					</div> */}
+					<CardWithBlur>
+						<FluidAppPanel containerId={containerId} elementId="dice-roller-left"/>
+					</CardWithBlur>
+					<CardWithBlur>
+						<FluidAppPanel containerId={containerId} elementId="dice-roller-right"/>
+					</CardWithBlur>
 				</div>
 			</div>
 			<div className="howItWorksTryOtherSamplesButton">
