@@ -9,9 +9,9 @@
 Improve typing when exact TypeScript type for a schema is not provided
 
 The Tree APIs are designed to be used in a strongly typed way, with the full TypeScript type for the schema always being provided.
-Due to limitations of the TypeScript language, there was not a practical way to prevent less descriptive types, like `TreeNodeSchema` or `ImplicitFieldSchema` from being used where the type of a specific schema was intended.
+Due to limitations of the TypeScript language, there was no practical way to prevent less descriptive types, like `TreeNodeSchema` or `ImplicitFieldSchema`, from being used where the type of a specific schema was intended.
 Code which does this will encounter several issues with tree APIs, and this change fixes some of those issues.
-This change  mainly fixes that `NodeFromSchema<TreeNodeSchema>` used to return `unknown` and now returns `TreeNode | TreeLeafValue`.
+This change mainly fixes that `NodeFromSchema<TreeNodeSchema>` used to return `unknown` and now returns `TreeNode | TreeLeafValue`.
 
 This change by itself seems mostly harmless, as it just improves the precision of the typing in this one edge case.
 Unfortunately, there are other typing bugs which complicate the situation, causing APIs for inserting data into the tree to also behave poorly when given non-specific types like `TreeNodeSchema`.
@@ -46,7 +46,7 @@ const schemaFactory = new SchemaFactory("demo");
 const schema: TreeNodeSchema = schemaFactory.array(schemaFactory.number);
 const config = new TreeViewConfiguration({ schema });
 
-// This view is typed as `TreeView<TreeNodeSchema>`, which does not work well since its missing the actual schema type information.
+// This view is typed as `TreeView<TreeNodeSchema>`, which does not work well since it's missing the actual schema type information.
 const view = tree.viewWith(config);
 // Root is typed as `unknown` allowing invalid assignment operations.
 view.root = "invalid";
@@ -64,7 +64,7 @@ After this change:
 view.root = "invalid";
 // This no longer compiles:
 view.root = {};
-// This also longer compiles:
+// This also no longer compiles despite being valid at runtime:
 view.root = [];
 ```
 

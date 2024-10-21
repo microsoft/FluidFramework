@@ -40,7 +40,7 @@ export class SharedTreeBranchManager {
 
 	/**
 	 * Compares the differences between either two objects or a TreeNode and a plain object.
-	 * TODO: Should allow comparing two tree nodes? Should we allowed comparing two plain objects? Or just leave as tree node vs object?
+	 * TODO: Should allow comparing two tree nodes? Should we allow comparing two plain objects? Or just leave as tree node vs object?
 	 */
 	public compare(
 		obj: Record<string, unknown> | TreeArrayNode,
