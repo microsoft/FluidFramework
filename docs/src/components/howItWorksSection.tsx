@@ -11,6 +11,7 @@ import { FluidAppPanel, useFluidBundle } from "@site/src/components/fluidBundleL
 import { HomePageSection } from '@site/src/components/homePageSection';
 
 import "@site/src/css/howItWorksSection.css";
+import ServiceSectionBG from '@site/static/images/liveCodeBG.png';
 
 const code =
 `import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
@@ -113,7 +114,7 @@ export function HowItWorksSection(): React.ReactElement {
 	useFluidBundle("dice-roller.2021-09-24.js");
 	const containerId = Date.now().toString();
 
-	return <HomePageSection title="See how it works" subtitle="Open Source">
+	return <HomePageSection title="See how it works" subtitle="Open Source" image={ServiceSectionBG}>
 		<div className="howItWorksSectionBody">
 			<div className="howItWorksSectionCodeBody">
 				<div className="howItWorksCodeColumn">
