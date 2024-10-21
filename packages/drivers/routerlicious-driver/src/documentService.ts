@@ -15,6 +15,7 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
+	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	NetworkErrorBasic,
@@ -26,7 +27,6 @@ import {
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-import io from "socket.io-client";
 
 import { ICache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
@@ -34,7 +34,7 @@ import { ISnapshotTreeVersion } from "./definitions.js";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
 import { DocumentStorageService } from "./documentStorageService.js";
-import { RouterliciousErrorTypes } from "./errorUtils.js";
+import { RouterliciousErrorTypes, type IR11sError } from "./errorUtils.js";
 import { GitManager } from "./gitManager.js";
 import { Historian } from "./historian.js";
 import { NullBlobStorageService } from "./nullBlobStorageService.js";
@@ -47,6 +47,7 @@ import {
 } from "./restWrapper.js";
 import { RestWrapper } from "./restWrapperBase.js";
 import type { IGetSessionInfoResponse } from "./sessionInfoManager.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 import { ITokenProvider } from "./tokens.js";
 
 /**
@@ -60,6 +61,7 @@ export class DocumentService
 {
 	private storageManager: GitManager | undefined;
 	private noCacheStorageManager: GitManager | undefined;
+	private refreshTokenOnConnect = false;
 
 	private _policies: IDocumentServicePolicies | undefined;
 
@@ -221,6 +223,9 @@ export class DocumentService
 							.then(
 								(newOrdererToken) => {
 									this.ordererRestWrapper.setToken(newOrdererToken);
+									// Since the token is refreshed, we should not refresh it again on the next connect
+									// if we don't see any error regarding Token Revocation.
+									this.refreshTokenOnConnect = false;
 									return newOrdererToken;
 								},
 								(error) => {
@@ -251,7 +256,7 @@ export class DocumentService
 						this.tenantId,
 						this.documentId,
 						ordererToken.jwt,
-						io,
+						SocketIOClientStatic,
 						client,
 						this.deltaStreamUrl,
 						this.logger,
@@ -265,7 +270,7 @@ export class DocumentService
 		// Attempt to establish connection.
 		// Retry with new token on authorization error; otherwise, allow container layer to handle.
 		try {
-			const connection = await connect();
+			const connection = await connect(this.refreshTokenOnConnect);
 			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag which maybe provided by the service during connection.
 			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
 			const shouldSummarizeProtocolTree = (connection as R11sDocumentDeltaConnection).details
@@ -277,9 +282,20 @@ export class DocumentService
 				summarizeProtocolTree: shouldSummarizeProtocolTree,
 			};
 
+			connection.once("disconnect", (reason: IAnyDriverError) => {
+				if (reason.errorType === RouterliciousErrorTypes.authorizationError) {
+					this.refreshTokenOnConnect = true;
+				}
+			});
 			return connection;
 		} catch (error: any) {
-			if (error?.statusCode === 401) {
+			if (
+				typeof error === "object" &&
+				error !== null &&
+				((error as Partial<IR11sError>).errorType ===
+					RouterliciousErrorTypes.authorizationError ||
+					error?.statusCode === 401)
+			) {
 				// Fetch new token and retry once,
 				// otherwise 401 will be bubbled up as non-retriable AuthorizationError.
 				return connect(true /* refreshToken */);
