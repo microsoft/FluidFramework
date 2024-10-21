@@ -74,6 +74,7 @@ extends:
             targetType: 'inline'
             workingDirectory: .
             script: |
+              set -eu -o pipefail
               # We only need to install the root dependencies
               pnpm install --workspace-root --frozen-lockfile
 
@@ -94,4 +95,5 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
               pnpm store prune
