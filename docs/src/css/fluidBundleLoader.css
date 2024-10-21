@@ -1,6 +1,7 @@
 .browser-window-wrapper {
 	flex-grow: 1;
-	width: 100%;
+	/* TODO: confirm this is reasonable for small screens */
+	min-width: 300px;
 	border: 1px solid lightgray;
 	box-sizing: border-box;
 	position: relative;
