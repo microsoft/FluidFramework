@@ -300,7 +300,7 @@ export async function generateSuggestions(
 	openAIClient: OpenAiClientOptions,
 	view: TreeView<ImplicitFieldSchema>,
 	suggestionCount: number,
-	tokenUsage: TokenUsage,
+	tokenUsage?: TokenUsage,
 	guidance?: string,
 	abortController = new AbortController(),
 ): Promise<string[]> {
@@ -332,7 +332,7 @@ async function* streamFromLlm(
 	systemPrompt: string,
 	jsonSchema: JsonObject,
 	openAI: OpenAiClientOptions,
-	tokenUsage: TokenUsage,
+	tokenUsage?: TokenUsage,
 ): AsyncGenerator<string> {
 	const llmJsonSchema: ResponseFormatJSONSchema.JSONSchema = {
 		schema: jsonSchema,
@@ -355,7 +355,7 @@ async function* streamFromLlm(
 	const result = await openAI.client.chat.completions.create(body);
 	const choice = result.choices[0];
 
-	if (result.usage !== undefined) {
+	if (result.usage !== undefined && tokenUsage !== undefined) {
 		tokenUsage.inputTokens += result.usage?.prompt_tokens;
 		tokenUsage.outputTokens += result.usage?.completion_tokens;
 	}
