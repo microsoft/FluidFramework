@@ -30,7 +30,7 @@
 		"start:server": "tinylicious"
 	},
 	"dependencies": {
-		"openai": "^4.68.0"
+		"openai": "^4.67.3"
 	},
 	"devDependencies": {
 		"@azure/identity": "^4.4.1",

@@ -195,28 +195,31 @@ export function TaskCard(props: {
 											autoHideDuration: 5000,
 										});
 
-
 										const aiCollabOptions: AiCollabOptions<typeof SharedTreeAppState> = {
 											openAI: {
-												client: new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY, dangerouslyAllowBrowser: true }),
+												client: new OpenAI({
+													apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY,
+													dangerouslyAllowBrowser: true,
+												}),
 												modelName: "gpt-4o",
 											},
 											treeView: props.sharedTreeBranch,
 											prompt: {
-												systemRoleContext: "You are a manager that is helping out with a project management tool.",
+												systemRoleContext:
+													"You are a manager that is helping out with a project management tool.",
 												userAsk: query,
 											},
 											limiters: {
 												maxModelCalls: 15,
 											},
 											dumpDebugLog: true,
-										}
+										};
 
 										const response = await aiCollab(aiCollabOptions);
 
 										setIsAiTaskRunning(false);
 
-										if (response.status === 'success') {
+										if (response.status === "success") {
 											enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
 												variant: "success",
 												autoHideDuration: 5000,

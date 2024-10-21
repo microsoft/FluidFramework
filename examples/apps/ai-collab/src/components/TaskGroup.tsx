@@ -4,7 +4,10 @@
  */
 
 import {
-	aiCollab, SharedTreeBranchManager, type AiCollabOptions, type Difference,
+	aiCollab,
+	SharedTreeBranchManager,
+	type AiCollabOptions,
+	type Difference,
 	//  SharedTreeBranchManager
 } from "@fluid-experimental/ai-collab";
 import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
@@ -36,7 +39,6 @@ import {
 	type SharedTreeAppState,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
-
 
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
@@ -183,26 +185,37 @@ export function TaskGroup(props: {
 
 								const aiCollabOptions: AiCollabOptions<typeof SharedTreeAppState> = {
 									openAI: {
-										client: new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY, dangerouslyAllowBrowser: true }),
+										client: new OpenAI({
+											apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY,
+											dangerouslyAllowBrowser: true,
+										}),
 										modelName: "gpt-4o",
 									},
 									treeView: newBranchForkView,
 									prompt: {
-										systemRoleContext: "You are a manager that is helping out with a project management tool.",
+										systemRoleContext:
+											"You are a manager that is helping out with a project management tool.",
 										userAsk: query,
 									},
 									limiters: {
 										maxModelCalls: 15,
 									},
 									dumpDebugLog: true,
-								}
+								};
 
 								const response = await aiCollab(aiCollabOptions);
 
-								const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
-								const branchTaskGroup = newBranchForkView.root.taskGroups.find((group) => group.id === props.sharedTreeTaskGroup.id);
+								const branchManager = new SharedTreeBranchManager({
+									nodeIdAttributeName: "id",
+								});
+								const branchTaskGroup = newBranchForkView.root.taskGroups.find(
+									(group) => group.id === props.sharedTreeTaskGroup.id,
+								);
 
-								const diffs = branchManager.compare(props.sharedTreeTaskGroup as unknown as Record<string, unknown>, branchTaskGroup as unknown as Record<string, unknown>);
+								const diffs = branchManager.compare(
+									props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
+									branchTaskGroup as unknown as Record<string, unknown>,
+								);
 
 								if (response.status === "success") {
 									setLlmBranchData({
@@ -210,7 +223,9 @@ export function TaskGroup(props: {
 										originalBranch,
 										forkBranch: newBranchFork,
 										forkView: newBranchForkView,
-										newBranchTargetNode: newBranchForkView.root.taskGroups.find((group) => group.id === props.sharedTreeTaskGroup.id) as SharedTreeTaskGroup,
+										newBranchTargetNode: newBranchForkView.root.taskGroups.find(
+											(group) => group.id === props.sharedTreeTaskGroup.id,
+										) as SharedTreeTaskGroup,
 									});
 									setIsDiffModalOpen(true);
 									enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
