@@ -24,17 +24,7 @@ export function FluidBundleLoader({
 	bundleName,
 	className,
 }: FluidBundleLoaderProps): JSX.Element {
-	React.useEffect(() => {
-		const script = document.createElement("script");
-		script.src = `https://storage.fluidframework.com/static/js/${bundleName}`;
-		script.async = true;
-
-		document.body.appendChild(script);
-
-		return () => {
-			document.body.removeChild(script);
-		};
-	}, [bundleName]);
+	useFluidBundle(bundleName);
 
 	const leftPanelId = `${idPrefix}-left`;
 	const rightPanelId = `${idPrefix}-right`;
@@ -44,19 +34,19 @@ export function FluidBundleLoader({
 	return (
 		<>
 			<div id="content" className={className}>
-				<Panel containerId={containerId} elementId={leftPanelId} />
-				<Panel containerId={containerId} elementId={rightPanelId} />
+				<FluidAppPanel containerId={containerId} elementId={leftPanelId} />
+				<FluidAppPanel containerId={containerId} elementId={rightPanelId} />
 			</div>
 		</>
 	);
 }
 
-interface PanelProps {
+export interface FluidAppPanelProps {
 	elementId: string;
 	containerId: string;
 }
 
-function Panel({ containerId, elementId }: PanelProps): JSX.Element {
+export function FluidAppPanel({ containerId, elementId }: FluidAppPanelProps): JSX.Element {
 	return (
 		<div className="browser-window-wrapper" id={elementId}>
 			<div aria-hidden="true" className="browser-window">
@@ -71,4 +61,23 @@ function Panel({ containerId, elementId }: PanelProps): JSX.Element {
 			</div>
 		</div>
 	);
+}
+
+
+
+/**
+ * React effect that loads the specified Fluid app bundle and injects it into the document.
+ */
+export function useFluidBundle(bundleName: string): void {
+	React.useEffect(() => {
+		const script = document.createElement("script");
+		script.src = `https://storage.fluidframework.com/static/js/${bundleName}`;
+		script.async = true;
+
+		document.body.appendChild(script);
+
+		return () => {
+			document.body.removeChild(script);
+		};
+	}, [bundleName]);
 }
