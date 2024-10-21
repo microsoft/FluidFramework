@@ -5,13 +5,11 @@
 
 import chalk from "chalk";
 
-import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { commonOptions } from "./commonOptions";
 import { FluidRepoBuild } from "./fluidRepoBuild";
-import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
@@ -20,16 +18,16 @@ parseOptions(process.argv);
 
 async function main() {
 	const timer = new Timer(commonOptions.timer);
-	const resolvedRoot = await getResolvedFluidRoot(true);
-
-	log(`Build Root: ${resolvedRoot}`);
+	// const resolvedRoot = await getResolvedFluidRoot(true);
+	const repo = new FluidRepoBuild(process.cwd());
+	log(`Build Root: ${repo.root}`);
 
 	// Load the packages
-	const repo = new FluidRepoBuild({
-		repoRoot: resolvedRoot,
-		gitRepo: new GitRepo(resolvedRoot),
-		fluidBuildConfig: getFluidBuildConfig(resolvedRoot),
-	});
+	// const repo = new FluidRepoBuild({
+	// 	repoRoot: resolvedRoot,
+	// 	gitRepo: new GitRepo(resolvedRoot),
+	// 	fluidBuildConfig: getFluidBuildConfig(resolvedRoot),
+	// });
 	timer.time("Package scan completed");
 
 	// Set matched package based on options filter
@@ -37,12 +35,6 @@ async function main() {
 	if (!matched) {
 		error("No package matched");
 		process.exit(-4);
-	}
-
-	// Dependency checks
-	if (options.depcheck) {
-		await repo.depcheck(false);
-		timer.time("Dependencies check completed", true);
 	}
 
 	// Uninstall
@@ -80,9 +72,9 @@ async function main() {
 	}
 
 	// Symlink check
-	const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
-	await repo.symlink(options);
-	timer.time(`${symlinkTaskName} completed`, options.symlink);
+	// const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
+	// await repo.symlink(options);
+	// timer.time(`${symlinkTaskName} completed`, options.symlink);
 
 	let failureSummary = "";
 	let exitCode = 0;
@@ -100,7 +92,7 @@ async function main() {
 		// build the graph
 		let buildGraph: BuildGraph;
 		try {
-			buildGraph = repo.createBuildGraph(options, options.buildTaskNames);
+			buildGraph = repo.createBuildGraph(options.buildTaskNames);
 		} catch (e: unknown) {
 			error((e as Error).message);
 			process.exit(-11);

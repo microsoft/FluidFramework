@@ -92,7 +92,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		const rgOrPackage = findPackageOrReleaseGroup(lookupName, context);
 
 		// Handle single packages
-		if (rgOrPackage instanceof Package) {
+		if (rgOrPackage !== undefined && !(rgOrPackage instanceof MonoRepo)) {
 			const item = await this.outputSinglePackage(rgOrPackage);
 			return [item];
 		}
@@ -102,7 +102,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		}
 
 		const filterOptions = parsePackageFilterFlags(this.flags);
-		const packageList = await pnpmList(rgOrPackage.repoPath);
+		const packageList: ListItem[] = await pnpmList(rgOrPackage.repoPath);
 		const filteredPackages = await filterPackages(packageList, filterOptions);
 		const filtered = filteredPackages
 			.reverse()

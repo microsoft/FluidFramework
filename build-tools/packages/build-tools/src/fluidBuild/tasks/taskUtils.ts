@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 import * as path from "path";
 import * as glob from "glob";
 
-import type { PackageJson } from "../../common/npmPackage";
+import type { PackageJson } from "@fluid-tools/build-infrastructure";
 import { lookUpDirSync } from "../../common/utils";
 
 export function getEsLintConfigFilePath(dir: string) {

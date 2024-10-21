@@ -136,7 +136,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 			});
 		}
 
-		if (releaseGroupOrPackage instanceof Package) {
+		if (!(releaseGroupOrPackage instanceof MonoRepo)) {
 			this.error(
 				`"${rg}" is a package, not a release group. Only release groups are supported.`,
 				{

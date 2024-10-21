@@ -1,0 +1,20 @@
+{
+	"name": "main-release-group-root",
+	"version": "1.0.0",
+	"description": "Test package",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepo"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"dependencies": {
+		"@fluid-private/changelog-generator-wrapper": "link:../../../../../../../packages/tools/changelog-generator-wrapper",
+		"@fluid-tools/build-infrastructure": "link:../../../../../build-infrastructure"
+	},
+	"devDependencies": {
+		"@changesets/cli": "^2.27.9"
+	}
+}
