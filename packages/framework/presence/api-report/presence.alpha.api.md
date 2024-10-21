@@ -37,9 +37,10 @@ export interface IPresence {
 
 // @alpha @sealed
 export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    currentConnectionId(): ClientConnectionId;
+    connectionId(): ClientConnectionId;
     // (undocumented)
     readonly sessionId: SpecificSessionClientId;
+    status: SessionClientStatus;
 }
 
 // @alpha
@@ -213,6 +214,14 @@ export interface PresenceStatesSchema {
 
 // @alpha
 export type PresenceWorkspaceAddress = `${string}:${string}`;
+
+// @alpha
+export enum SessionClientStatus {
+    // (undocumented)
+    Connected = "Connected",
+    // (undocumented)
+    Disconnected = "Disconnected"
+}
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {

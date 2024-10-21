@@ -43,6 +43,7 @@ export type {
 	IPresence,
 	ISessionClient,
 	PresenceEvents,
+	SessionClientStatus,
 } from "./presence.js";
 
 export { acquirePresence } from "./experimentalAccess.js";
