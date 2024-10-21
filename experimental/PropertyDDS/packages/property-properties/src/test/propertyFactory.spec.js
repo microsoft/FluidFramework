@@ -3630,6 +3630,7 @@ describe("Template registration", function () {
 		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
 	});
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"should pass when registering a versioned remote template that exists" +
 			" in the local registry but is the same from what is locally registered",
@@ -3645,6 +3646,7 @@ describe("Template registration", function () {
 		},
 	);
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"should fail when registering a versioned remote template that exists" +
 			" in the local registry but differs from what is locally registered",
@@ -4163,6 +4165,7 @@ describe("inheritsFrom() method", () => {
 		expect(result).to.be.true;
 	});
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"should recognize that the test set that inherits from NamedNodeProperty" +
 			" also inherits from AbstractStaticCollectionProperty",

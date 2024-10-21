@@ -253,7 +253,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return {
 			field:
 				this.indexStack.length === 1
-					? prefix?.rootFieldOverride ?? this.getFieldKey()
+					? (prefix?.rootFieldOverride ?? this.getFieldKey())
 					: this.getFieldKey(),
 			parent: this.getOffsetPath(1, prefix),
 		};

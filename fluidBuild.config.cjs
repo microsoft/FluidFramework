@@ -310,8 +310,6 @@ module.exports = {
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
-				"build-tools/packages/readme-command/bin/dev.js",
-				"build-tools/packages/readme-command/bin/run.js",
 				"build-tools/packages/version-tools/bin/dev.js",
 				"build-tools/packages/version-tools/bin/run.js",
 				"common/build/build-common/gen_version.js",
@@ -622,6 +620,13 @@ module.exports = {
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
 			other: { heading: "Other Changes" },
+		},
+	},
+
+	// This setting influence `flub release report` behavior. This defines the legacy compat range for release group or independent packages.
+	releaseReport: {
+		legacyCompatInterval: {
+			"client": 10,
 		},
 	},
 };

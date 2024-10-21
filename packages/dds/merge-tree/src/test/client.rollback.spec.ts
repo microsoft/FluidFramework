@@ -330,17 +330,56 @@ describe("client.rollback", () => {
 	it("Should rollback delete which causes split segments", () => {
 		client.insertTextLocal(0, "abcde");
 		client.removeRangeLocal(1, 4);
+		let deltaEvent = false;
+		client.on("delta", () => {
+			assert.equal(client.getText(), "abcde");
+			deltaEvent = true;
+		});
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcde");
+		assert.equal(deltaEvent, true);
 	});
 	it("Should rollback delete across split segments", () => {
 		client.insertTextLocal(0, "abcde");
 		client.annotateRangeLocal(2, 3, { foo: "bar" });
 		client.removeRangeLocal(1, 4);
+
+		let deltaCount = 0;
+		let bFound = false;
+		let cFound = false;
+		let dFound = false;
+		client.on("delta", (_opArgs, delta) => {
+			deltaCount++;
+			assert.equal(client.getText().length, 2 + deltaCount);
+			assert.equal(delta.deltaSegments.length, 1);
+			assert.equal(delta.deltaSegments[0].segment.type, TextSegment.type);
+			const text = (delta.deltaSegments[0].segment as TextSegment).toString();
+			switch (text) {
+				case "b": {
+					bFound = true;
+					break;
+				}
+				case "c": {
+					cFound = true;
+					break;
+				}
+				case "d": {
+					dFound = true;
+					break;
+				}
+				default: {
+					assert(false, `Unexpected text segment: ${text}`);
+				}
+			}
+		});
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcde");
+		assert.equal(deltaCount, 3);
+		assert(bFound);
+		assert(cFound);
+		assert(dFound);
 	});
 	it("Should rollback delete and update blocks", () => {
 		const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
