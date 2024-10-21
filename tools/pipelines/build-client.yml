@@ -188,7 +188,8 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: ${{ variables.testCoverage }}
+    testCoverage: true
+    reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
@@ -225,6 +226,7 @@ extends:
       inputs:
         targetType: 'inline'
         script: |
+          set -eux -o pipefail
           echo Generating .env
           echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
 

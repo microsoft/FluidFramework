@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
@@ -648,10 +648,10 @@ export function testCorrectness() {
 		 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
-		describeStress("Combinatorial exhaustive", function ({ isStress }) {
-			const NUM_STEPS = isStress ? 5 : 4;
-			const NUM_PEERS = isStress ? 3 : 2;
-			if (isStress) {
+		describeStress("Combinatorial exhaustive", function ({ stressMode }) {
+			const NUM_STEPS = stressMode !== StressMode.Short ? 5 : 4;
+			const NUM_PEERS = stressMode !== StressMode.Short ? 3 : 2;
+			if (stressMode !== StressMode.Short) {
 				this.timeout(60_000);
 			}
 

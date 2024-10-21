@@ -79,16 +79,6 @@ export {
 	isNeverTree,
 } from "./modular-schema/index.js";
 
-export {
-	type Unenforced,
-	markEager,
-	type LazyItem,
-	type FlexListToUnion,
-	type ExtractItemType,
-	isLazy,
-	type FlexList,
-} from "./typed-schema/index.js";
-
 export { mapRootChanges } from "./deltaUtils.js";
 
 export {

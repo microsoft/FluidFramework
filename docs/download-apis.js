@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import chalk from "chalk";
-import download from "download";
+import { download } from "dill-cli";
 import fs from "fs-extra";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,6 +21,9 @@ const {
 	params: { currentVersion, previousVersions },
 } = await fs.readJSON(path.resolve(dirname, "data", "versions.json"));
 const docVersions = previousVersions.concat(currentVersion);
+
+// remove local version from list to download, since there are no remote artifacts for it
+docVersions.splice(docVersions.indexOf("local"), 1);
 
 try {
 	await Promise.all(
@@ -42,7 +45,7 @@ try {
 			await fs.emptyDir(destination);
 
 			// Download the artifacts
-			await download(url, destination, { extract: true });
+			await download(url, { downloadDir: destination, extract: true });
 		}),
 	);
 } catch (error) {
