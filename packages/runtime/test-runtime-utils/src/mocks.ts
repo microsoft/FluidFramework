@@ -58,6 +58,8 @@ import {
 	IFluidDataStoreChannel,
 	VisibilityState,
 	type ITelemetryContext,
+	type ISequencedRuntimeMessageCore,
+	type IRuntimeMessageContents,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -990,6 +992,9 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -998,6 +1003,16 @@ export class MockFluidDataStoreRuntime
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
 		});
+	}
+
+	public processMessages(
+		message: ISequencedRuntimeMessageCore,
+		messageContents: IRuntimeMessageContents[],
+		local: boolean,
+	) {
+		for (const { contents, localOpMetadata, clientSequenceNumber } of messageContents) {
+			this.process({ ...message, contents, clientSequenceNumber }, local, localOpMetadata);
+		}
 	}
 
 	public processSignal(message: any, local: boolean) {
