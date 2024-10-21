@@ -7,8 +7,7 @@ import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import/no-internal-modules
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import OpenAI from "openai";
-import { AzureOpenAI } from "openai";
+import { OpenAI, AzureOpenAI } from "openai";
 
 /**
  * Validates that the error is a UsageError with the expected error message.
