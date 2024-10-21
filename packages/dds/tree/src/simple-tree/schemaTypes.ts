@@ -423,8 +423,8 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
 /**
  * A special type which can be provided to some APIs as the schema type parameter when schema cannot easily be provided at compile time and an unsafe (instead of disabled) editing API is desired.
  * @remarks
- * When used this means the TypeScript typing should error on the side of completeness (allow all inputs that could be valid).
- * This introduces the risk that out of schema data could be allowed at compile time, and only error at runtime.
+ * When used, this means the TypeScript typing should err on the side of completeness (allow all inputs that could be valid).
+ * This introduces the risk that out-of-schema data could be allowed at compile time, and only error at runtime.
  *
  * @privateRemarks
  * This only applies to APIs which input data which is expected to be in schema, since APIs outputting have easy mechanisms to do so in a type safe way even when the schema is unknown.
@@ -515,7 +515,7 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
  * @privateRemarks
  * TODO:
  * This should behave contravariantly, but it uses NodeFromSchema which behaves covariantly.
- * This results in unsoundness where when the schema is less specific, more types are allowed instead of less.
+ * This results in unsoundness where, when the schema is less specific, more types are allowed instead of less.
  * @public
  */
 export type InsertableTypedNode<T extends TreeNodeSchema> =

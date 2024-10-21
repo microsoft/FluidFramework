@@ -32,7 +32,7 @@ function test<T extends ImplicitFieldSchema>(t: TestCase<T>): TestCaseErased {
 }
 
 /**
- * Map a generic function over an array, assuming that this is a well defined operation.
+ * Map a generic function over an array, assuming that doing so is well defined.
  * @remarks
  * This is useful for when a collection of generic interface value with differing values for their type parameter got collected in a single type erased array, but you want to process them generically.
  */
