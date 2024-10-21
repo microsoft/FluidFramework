@@ -24,9 +24,8 @@ import {
 	TypeValidationTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
-import { RenameTypesTask } from "./leaf/renamerTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
-import { TscMultiTask, TscTask } from "./leaf/tscTask";
+import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { Task } from "./task";
 import { type TaskHandler, isConstructorFunction } from "./taskHandlers";
@@ -38,7 +37,6 @@ const executableToLeafTask: {
 	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"fluid-tsc": TscTask,
-	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
 	"webpack": WebpackTask,
@@ -67,11 +65,6 @@ const executableToLeafTask: {
 	"flub list server": FlubListTask,
 	"flub list gitrest": FlubListTask,
 	"flub list historian": FlubListTask,
-
-	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
-	// pipeline then this mapping will have to be updated.
-	"renamer": RenameTypesTask,
-	"flub rename-types": RenameTypesTask,
 } as const;
 
 /**
