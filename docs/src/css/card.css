@@ -1,0 +1,19 @@
+.cardWithBlur {
+	/* Rectangle 34647953 */
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	box-sizing: border-box;
+
+	/* day/background/glass/normal */
+	background: rgba(255, 255, 255, 0.4);
+	border: 2px solid rgba(255, 255, 255, 0.8);
+	/* blur/glass */
+	backdrop-filter: blur(20px);
+	/* Note: backdrop-filter has minimal browser support */
+	border-radius: 8px;
+
+	padding: 15px;
+}

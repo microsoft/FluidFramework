@@ -6,6 +6,7 @@
 import React from "react";
 import CodeBlock from '@theme/CodeBlock';
 
+import { CardWithBlur } from "@site/src/components/card";
 import { FluidBundleLoader } from "@site/src/components/fluidBundleLoader";
 import { HomePageSection } from '@site/src/components/homePageSection';
 
@@ -116,7 +117,7 @@ export function HowItWorksSection(): React.ReactElement {
 					<div className="howItWorksCodeColumnLabel">
 						Sample Code
 					</div>
-					<div className="howItWorksCodeCard">
+					<CardWithBlur>
 							<div className="howItWorksCodeCardBody">
 								<CodeBlock
 									language="typescript" className="howItWorksCodeCardText"
@@ -125,18 +126,18 @@ export function HowItWorksSection(): React.ReactElement {
 									{code}
 								</CodeBlock>
 							</div>
-					</div>
+					</CardWithBlur>
 				</div>
 				<div className="howItWorksCodeColumn">
 					<div className="howItWorksCodeColumnLabel">
 						Sample Output
 					</div>
 					{/* TODO: these should be 2 separate cards, if possible. */}
-					<div className="howItWorksCodeCard">
+					<CardWithBlur>
 						{/* <div > */}
 							<FluidBundleLoader idPrefix="dice-roller" bundleName="dice-roller.2021-09-24.js" className="howItWorksCodeCardBody"/>
 						{/* </div> */}
-					</div>
+					</CardWithBlur>
 					{/* <div className="howItWorksCodeCard">
 						<div className="howItWorksCodeCardBody">
 							Bar
