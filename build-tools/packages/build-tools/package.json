@@ -21,6 +21,7 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
+		"build:packlist": "flub generate packlist --dir .",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",

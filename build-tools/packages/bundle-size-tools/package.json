@@ -25,6 +25,7 @@
 		"build:compile": "concurrently npm:tsc npm:build:copy",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
+		"build:packlist": "flub generate packlist --dir .",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
