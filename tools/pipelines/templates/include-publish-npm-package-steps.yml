@@ -28,7 +28,6 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
-      set -eux -o pipefail
       echo Generating .npmrc for ${{ parameters.feedUrl }}
       echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc

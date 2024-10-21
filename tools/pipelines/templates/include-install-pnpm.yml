@@ -44,7 +44,6 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
-      set -eux -o pipefail
       echo "Using node $(node --version)"
       sudo corepack enable
       echo "Using pnpm $(pnpm -v)"

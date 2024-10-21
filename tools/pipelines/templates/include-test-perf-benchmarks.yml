@@ -40,7 +40,6 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      set -eux -o pipefail
       echo "
       Variables:
         artifactBuildId=${{ parameters.artifactBuildId }}
@@ -93,8 +92,6 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.testWorkspace }}
     script: |
-      set -eux -o pipefail
-
       echo Initialize package
       npm init --yes
 

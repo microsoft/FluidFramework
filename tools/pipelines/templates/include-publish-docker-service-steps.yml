@@ -48,7 +48,6 @@ jobs:
           inputs:
             targetType: 'inline'
             script: |
-              set -eux -o pipefail
               'docker pull ${{ parameters.containerTag }}'
 
         - task: Docker@1

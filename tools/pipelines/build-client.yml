@@ -226,7 +226,6 @@ extends:
       inputs:
         targetType: 'inline'
         script: |
-          set -eux -o pipefail
           echo Generating .env
           echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
 
