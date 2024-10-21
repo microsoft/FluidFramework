@@ -5,6 +5,7 @@ Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
 * [`flub check changeset`](#flub-check-changeset)
+* [`flub check dependencyRanges`](#flub-check-dependencyranges)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
@@ -97,6 +98,60 @@ EXAMPLES
 ```
 
 _See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/changeset.ts)_
+
+## `flub check dependencyRanges`
+
+Checks that no packages have dependency ranges on Fluid internal versions using caret (^) or tilde (~) dependencies. Such ranges are invalid and will include unexpected versions. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.
+
+```
+USAGE
+  $ flub check dependencyRanges [-v | --quiet] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all |
+    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
+
+FLAGS
+  --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
+      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
+
+DESCRIPTION
+  Checks that no packages have dependency ranges on Fluid internal versions using caret (^) or tilde (~) dependencies.
+  Such ranges are invalid and will include unexpected versions. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI
+  PIPELINES ONLY.
+```
+
+_See code: [src/commands/check/dependencyRanges.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/dependencyRanges.ts)_
 
 ## `flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
 
