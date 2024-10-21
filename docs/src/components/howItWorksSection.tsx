@@ -10,6 +10,7 @@ import { FluidBundleLoader } from "@site/src/components/fluidBundleLoader";
 import { HomePageSection } from '@site/src/components/homePageSection';
 
 import "@site/src/css/howItWorksSection.css";
+import ServiceSectionBG from '@site/static/images/liveCodeBG.png';
 
 const code =
 `import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
@@ -109,7 +110,7 @@ const renderDiceRoller = (dice, elem) => {
 `;
 
 export function HowItWorksSection(): React.ReactElement {
-	return <HomePageSection title="See how it works" subtitle="Open Source">
+	return <HomePageSection title="See how it works" subtitle="Open Source" image={ServiceSectionBG}>
 		<div className="howItWorksSectionBody">
 			<div className="howItWorksSectionCodeBody">
 				<div className="howItWorksCodeColumn">
