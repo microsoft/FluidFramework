@@ -112,7 +112,7 @@
 		"json5": "^2.2.3",
 		"jssm": "5.98.2",
 		"jszip": "^3.10.1",
-		"latest-version": "^5.1.0",
+		"latest-version": "^9.0.0",
 		"mdast": "^3.0.0",
 		"mdast-util-heading-range": "^4.0.0",
 		"mdast-util-to-string": "^4.0.0",
