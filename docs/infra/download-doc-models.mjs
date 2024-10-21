@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import chalk from "chalk";
-import download from "download";
+import { download } from "dill-cli";
 import fs from "fs-extra";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -43,7 +43,7 @@ try {
 		await fs.emptyDir(destination);
 
 		// Download the artifacts
-		await download(url, destination, { extract: true });
+		await download(url, { downloadDir: destination, extract: true });
 	}));
 } catch (error) {
 	console.error(
