@@ -87,7 +87,7 @@ describe("Fuzz - Top-Level", () => {
 				directory: failureDirectory,
 			},
 			clientJoinOptions: {
-				clientAddProbability: 0,
+				clientAddProbability: 1,
 				maxNumberOfClients: 3,
 			},
 			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
