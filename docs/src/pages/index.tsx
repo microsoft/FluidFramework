@@ -29,6 +29,6 @@ export default function(): React.ReactElement {
 			<PartnersSection />
 			<HowItWorksSection />
 			<ServiceSection />
-	  </Layout>
+		</Layout>
 	)
 }
