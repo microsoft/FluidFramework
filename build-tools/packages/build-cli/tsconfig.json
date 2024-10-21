@@ -3,6 +3,7 @@
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
+		"lib": ["DOM"],
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"types": ["node"],
