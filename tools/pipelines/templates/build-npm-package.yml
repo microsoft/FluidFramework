@@ -234,7 +234,9 @@ extends:
                   targetType: inline
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
-                    set -eux -o pipefail
+                    # Note: deliberately not using `set -eux -o pipefail` because this script leverages the return code of grep
+                    # even in an error case
+
                     # Show all task group conditions
 
                     echo "
@@ -590,7 +592,8 @@ extends:
                 inputs:
                   targetType: inline
                   script: |
-                    set -eux -o pipefail
+                    # Note: deliberately not using `set -eux -o pipefail` because this script leverages the return code of grep
+                    # even in an error case
                     git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
                     if [ `cat git_status.log | wc -l` != "0" ]; then
                       cat git_status.log

@@ -118,7 +118,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      set -eux -o pipefail
+      # Note: deliberately not using `set -eux -o pipefail` because this script leverages the return code of grep
+      # even in an error case
       grep -r -e "\^2.0.0-dev.\d*.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
       if [[ $? == 0 ]]; then
         echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"
