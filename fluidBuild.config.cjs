@@ -80,6 +80,9 @@ module.exports = {
 		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:packlist": {
+			dependsOn: ["build"],
+		},
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
@@ -160,6 +163,10 @@ module.exports = {
 
 	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
+		"flub generate packlist": {
+			inputGlobs: ["**"],
+			outputGlobs: ["packlist.txt"],
+		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
 			outputGlobs: ["src/**/*.fsl.svg"],
@@ -574,6 +581,10 @@ module.exports = {
 				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
+				},
+				{
+					name: "build:packlist",
+					body: "flub generate packlist --dir .",
 				},
 			],
 			// All of our public packages should be using api-extractor
