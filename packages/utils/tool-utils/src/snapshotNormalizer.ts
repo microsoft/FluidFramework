@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISequencedDocumentMessage,
+	ITree,
+	ITreeEntry,
+} from "@fluidframework/driver-definitions/internal";
 import { TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	AttachmentTreeEntry,
@@ -22,6 +26,12 @@ const metadataBlobName = ".metadata";
  * @internal
  */
 export const gcBlobPrefix = "__gc";
+
+/**
+ * The name of the legacy catch-up ops blob in Merge Tree.
+ * @internal
+ */
+export const legacyCatchUpBlobName = "catchupOps";
 
 /**
  * @internal
@@ -110,6 +120,26 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 			delete (data as any).unreferencedTimestampMs;
 		}
 		content = JSON.stringify(gcState);
+	}
+
+	/**
+	 * The legacy catch-up ops blob in merge tree DDS contains sequenced messages. These ops used to have metadata property.
+	 * However, we stopped sending the metadata property to DDS because it was a Runtime layer concept. Remove the metadata
+	 * property from the ops because latest snapshots won't have the metadata property.
+	 */
+	if (blobName === legacyCatchUpBlobName) {
+		try {
+			const catchupOps = JSON.parse(content) as ISequencedDocumentMessage[];
+			if (catchupOps !== undefined && catchupOps.length > 0) {
+				for (const [index, op] of catchupOps.entries()) {
+					op.metadata = undefined;
+					catchupOps[index] = op;
+				}
+			}
+			content = JSON.stringify(catchupOps);
+		} catch {
+			// Do nothing
+		}
 	}
 
 	/**
@@ -239,10 +269,11 @@ function normalizeEntry(
 	switch (entry.type) {
 		case TreeEntry.Blob: {
 			let contents = entry.value.contents;
-			// If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
+			// If this blob has to be normalized, it's a GC or legacy catchup blob, parse and sort the blob contents first.
 			if (
 				(config?.blobsToNormalize?.includes(entry.path) ?? false) ||
-				entry.path.startsWith(gcBlobPrefix)
+				entry.path.startsWith(gcBlobPrefix) ||
+				entry.path === legacyCatchUpBlobName
 			) {
 				contents = getNormalizedBlobContent(contents, entry.path);
 			}
