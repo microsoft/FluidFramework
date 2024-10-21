@@ -109,6 +109,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MongoDb": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

@@ -981,7 +981,7 @@ export class MergeTree {
 	private blockLength(node: MergeBlock, refSeq: number, clientId: number): number {
 		return this.collabWindow.collaborating && clientId !== this.collabWindow.clientId
 			? node.partialLengths!.getPartialLength(refSeq, clientId)
-			: node.cachedLength ?? 0;
+			: (node.cachedLength ?? 0);
 	}
 
 	/**
@@ -1678,7 +1678,7 @@ export class MergeTree {
 			// possible seq, as the highest is reserved for the previous.
 			const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
 			const segSeq =
-				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
+				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : (node.seq ?? 0);
 
 			return (
 				newSeq > segSeq ||
@@ -2142,13 +2142,13 @@ export class MergeTree {
 		if (this.options?.mergeTreeEnableSidedObliterate) {
 			assert(
 				typeof start === "object" && typeof end === "object",
-				"Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled.",
+				0xa45 /* Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled. */,
 			);
 			this.obliterateRangeSided(start, end, refSeq, clientId, seq, opArgs);
 		} else {
 			assert(
 				typeof start === "number" && typeof end === "number",
-				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+				0xa46 /* Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled. */,
 			);
 			this.obliterateRangeSided(
 				{ pos: start, side: Side.Before },
@@ -2296,16 +2296,6 @@ export class MergeTree {
 				segment.removedSeq = undefined;
 				segment.localRemovedSeq = undefined;
 
-				// Note: optional chaining short-circuits:
-				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
-				this.mergeTreeDeltaCallback?.(
-					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
-					{
-						operation: MergeTreeDeltaType.INSERT,
-						deltaSegments: [{ segment }],
-					},
-				);
-
 				for (
 					let updateNode = segment.parent;
 					updateNode !== undefined;
@@ -2317,6 +2307,16 @@ export class MergeTree {
 						this.collabWindow.clientId,
 					);
 				}
+
+				// Note: optional chaining short-circuits:
+				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
+				this.mergeTreeDeltaCallback?.(
+					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+					{
+						operation: MergeTreeDeltaType.INSERT,
+						deltaSegments: [{ segment }],
+					},
+				);
 			});
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||
