@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
-import { type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
+import {
+	aiCollab, SharedTreeBranchManager, type AiCollabOptions, type Difference,
+	//  SharedTreeBranchManager
+} from "@fluid-experimental/ai-collab";
+import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -20,18 +23,20 @@ import {
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
+import { OpenAI } from "openai";
 import React, { useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
-import { editTaskGroup } from "@/actions/task";
+// import { editTaskGroup } from "@/actions/task";
 import {
 	SharedTreeTaskGroup,
-	sharedTreeTaskGroupToJson,
+	// sharedTreeTaskGroupToJson,
 	TREE_CONFIGURATION,
 	type SharedTreeAppState,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
+
 
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
@@ -172,43 +177,40 @@ export function TaskGroup(props: {
 									autoHideDuration: 5000,
 								});
 
-								// TODO: is this redundant? We already have props.sharedTreeTaskGroup
-								const indexOfTaskGroup = props.treeView.root.taskGroups.indexOf(
-									props.sharedTreeTaskGroup,
-								);
+								const originalBranch = getBranch(props.treeView);
+								const newBranchFork = originalBranch.branch();
+								const newBranchForkView = newBranchFork.viewWith(TREE_CONFIGURATION);
 
-								const resp = await editTaskGroup(
-									sharedTreeTaskGroupToJson(props.sharedTreeTaskGroup),
-									query,
-								);
-								if (resp.success) {
-									console.log("initiating checkoutNewMergedBranch");
-									const branchManager = new SharedTreeBranchManager({
-										nodeIdAttributeName: "id",
-									});
+								const aiCollabOptions: AiCollabOptions<typeof SharedTreeAppState> = {
+									openAI: {
+										client: new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY, dangerouslyAllowBrowser: true }),
+										modelName: "gpt-4o",
+									},
+									treeView: newBranchForkView,
+									prompt: {
+										systemRoleContext: "You are a manager that is helping out with a project management tool.",
+										userAsk: query,
+									},
+									limiters: {
+										maxModelCalls: 15,
+									},
+									dumpDebugLog: true,
+								}
 
-									const differences = branchManager.compare(
-										props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
-										resp.data as unknown as Record<string, unknown>,
-									);
-									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
-										branchManager.checkoutNewMergedBranchV2(
-											props.treeView,
-											TREE_CONFIGURATION,
-											["taskGroups", indexOfTaskGroup],
-										);
+								const response = await aiCollab(aiCollabOptions);
 
-									branchManager.mergeDiffs(differences, newBranchTargetNode);
+								const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
+								const branchTaskGroup = newBranchForkView.root.taskGroups.find((group) => group.id === props.sharedTreeTaskGroup.id);
 
-									console.log("forkBranch:", forkBranch);
-									console.log("newBranchTargetNode:", { ...newBranchTargetNode });
-									console.log("differences:", { ...differences });
+								const diffs = branchManager.compare(props.sharedTreeTaskGroup as unknown as Record<string, unknown>, branchTaskGroup as unknown as Record<string, unknown>);
+
+								if (response.status === "success") {
 									setLlmBranchData({
-										differences,
+										differences: diffs,
 										originalBranch,
-										forkBranch,
-										forkView,
-										newBranchTargetNode: newBranchTargetNode as unknown as SharedTreeTaskGroup,
+										forkBranch: newBranchFork,
+										forkView: newBranchForkView,
+										newBranchTargetNode: newBranchForkView.root.taskGroups.find((group) => group.id === props.sharedTreeTaskGroup.id) as SharedTreeTaskGroup,
 									});
 									setIsDiffModalOpen(true);
 									enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
@@ -221,7 +223,6 @@ export function TaskGroup(props: {
 										{ variant: "error", autoHideDuration: 5000 },
 									);
 								}
-
 								setIsAiTaskRunning(false);
 							}}
 						>
@@ -312,6 +313,7 @@ export function TaskGroup(props: {
 						<TaskCard
 							key={task.id}
 							sharedTreeTaskGroup={props.sharedTreeTaskGroup}
+							sharedTreeBranch={props.treeView}
 							sharedTreeTask={task}
 							branchDifferences={taskDiffs}
 						/>

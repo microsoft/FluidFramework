@@ -11,8 +11,8 @@ import type { Engineer, Task, TaskGroup } from "./task";
 const sf = new SchemaFactory("ai-collab-sample-application");
 
 export class SharedTreeTask extends sf.object("Task", {
-	id: sf.identifier,
 	title: sf.string,
+	id: sf.identifier,
 	description: sf.string,
 	priority: sf.string,
 	complexity: sf.number,
@@ -23,8 +23,8 @@ export class SharedTreeTask extends sf.object("Task", {
 export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 
 export class SharedTreeEngineer extends sf.object("Engineer", {
-	id: sf.identifier,
 	name: sf.string,
+	id: sf.identifier,
 	skills: sf.string,
 	maxCapacity: sf.number,
 }) {}
@@ -32,10 +32,10 @@ export class SharedTreeEngineer extends sf.object("Engineer", {
 export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
 
 export class SharedTreeTaskGroup extends sf.object("TaskGroup", {
-	id: sf.identifier,
-	title: sf.string,
-	description: sf.string,
 	tasks: SharedTreeTaskList,
+	id: sf.identifier,
+	description: sf.string,
+	title: sf.string,
 	engineers: SharedTreeEngineerList,
 }) {}
 

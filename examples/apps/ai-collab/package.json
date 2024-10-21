@@ -29,7 +29,9 @@
 		"start": "next dev",
 		"start:server": "tinylicious"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"openai": "^4.68.0"
+	},
 	"devDependencies": {
 		"@azure/identity": "^4.4.1",
 		"@azure/msal-browser": "^3.25.0",

@@ -6,10 +6,11 @@
 "use client";
 
 import {
+	aiCollab,
+	type AiCollabOptions,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
-	SharedTreeBranchManager,
 } from "@fluid-experimental/ai-collab";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
@@ -31,9 +32,9 @@ import {
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
+import { OpenAI } from "openai";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 
-import { editTask } from "@/actions/task";
 import {
 	SharedTreeTask,
 	SharedTreeTaskGroup,
@@ -61,7 +62,7 @@ function convertSharedTreeTaskToTask(sharedTreeTask: SharedTreeTask): Task {
 }
 
 export function TaskCard(props: {
-	sharedTreeBranch?: TreeView<typeof SharedTreeAppState>;
+	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
 	branchDifferences?: Difference[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
@@ -194,23 +195,32 @@ export function TaskCard(props: {
 											autoHideDuration: 5000,
 										});
 
-										const response = await editTask(task, query);
+
+										const aiCollabOptions: AiCollabOptions<typeof SharedTreeAppState> = {
+											openAI: {
+												client: new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY, dangerouslyAllowBrowser: true }),
+												modelName: "gpt-4o",
+											},
+											treeView: props.sharedTreeBranch,
+											prompt: {
+												systemRoleContext: "You are a manager that is helping out with a project management tool.",
+												userAsk: query,
+											},
+											limiters: {
+												maxModelCalls: 15,
+											},
+											dumpDebugLog: true,
+										}
+
+										const response = await aiCollab(aiCollabOptions);
 
 										setIsAiTaskRunning(false);
 
-										if (response.success) {
+										if (response.status === 'success') {
 											enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
 												variant: "success",
 												autoHideDuration: 5000,
 											});
-
-											const branchManager = new SharedTreeBranchManager({
-												nodeIdAttributeName: "id",
-											});
-											branchManager.mergeObject(
-												props.sharedTreeTask as unknown as Record<string, unknown>,
-												response.data as unknown as Record<string, unknown>,
-											);
 											setAiPromptPopoverAnchor(undefined);
 										} else {
 											enqueueSnackbar(
