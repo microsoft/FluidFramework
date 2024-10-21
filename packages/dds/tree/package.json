@@ -227,7 +227,26 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_InsertableTreeFieldFromImplicitField": {
+				"backCompat": false
+			},
+			"Interface_TreeArrayNode": {
+				"backCompat": false
+			},
+			"TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {
+				"backCompat": false
+			},
+			"TypeAlias_NodeFromSchema": {
+				"backCompat": false
+			},
+			"TypeAlias_TreeFieldFromImplicitField": {
+				"backCompat": false
+			},
+			"TypeAlias_TreeNodeFromImplicitAllowedTypes": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

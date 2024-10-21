@@ -33,6 +33,9 @@ export type {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
+	TreeNodeSchemaUnsafe,
+	AllowedTypesUnsafe,
+	TreeNodeSchemaNonClassUnsafe,
 } from "./simple-tree/index.js";
 export type { FlexList, FlexListToUnion, ExtractItemType } from "./simple-tree/index.js";
 

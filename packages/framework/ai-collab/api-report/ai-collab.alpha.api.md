@@ -105,6 +105,6 @@ export class SharedTreeBranchManager {
 export function sharedTreeDiff(obj: Record<string, unknown> | unknown[], newObj: Record<string, unknown> | unknown[], options?: Options, _stack?: (Record<string, unknown> | unknown[])[]): Difference[];
 
 // @alpha
-export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[], path: ObjectPath): T | undefined;
+export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown>, path: ObjectPath): T | undefined;
 
 ```
