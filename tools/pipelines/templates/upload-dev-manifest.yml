@@ -24,7 +24,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
-          set -eux -o pipefail
+          set -eu -o pipefail
           mkdir generate_release_reports
           flub release report -g client -o generate_release_reports --baseFileName manifest
 
@@ -34,7 +34,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
-          set -eux -o pipefail
+          set -eu -o pipefail
           mkdir upload_release_reports
           flub release report-unreleased --version $(version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
 
