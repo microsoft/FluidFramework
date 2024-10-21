@@ -302,8 +302,9 @@ export function create(
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
 	}> {
-		const tenantInfo = await tenantRepository.findOne(tenantId);
-		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+		// const tenantInfo = await tenantRepository.findOne(tenantId);
+		// const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+		const privateLinkEnable = true;
 		if (
 			privateLinkEnable &&
 			(externalOrdererUrl.includes("frs.azure") ||
