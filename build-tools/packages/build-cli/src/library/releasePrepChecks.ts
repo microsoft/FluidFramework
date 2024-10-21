@@ -227,3 +227,18 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 		};
 	}
 };
+
+// Add checks for:
+//
+// Release notes file for the current release exists.
+// No changesets remain - remaining changesets would likely mean the changelogs haven't been generated.
+// No release blocking bugs in GitHub and ADO.
+// The current version has not been published already (which would indicate a bump was missed at some point - unlikely
+// but also easy to check)
+// It might also be possible to check type test baseline versions across branches - so check both that main as at the
+// right baseline and the release branch is too. The prep command already switches branches as part of verifying the
+// asserts and policy checks  so there's precedent.
+//
+// Also the release command checks should include:
+//
+// Check that the type test baseline versions are correct post-release. On both release branches and the main branch
