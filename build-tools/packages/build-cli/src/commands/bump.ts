@@ -61,20 +61,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			required: false,
 			exclusive: ["exact"],
 		}),
-		exactDepType: Flags.string({
-			description:
-				'[DEPRECATED - Use interdependencyRange instead.] Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
-			options: [...RangeOperators, ...WorkspaceRanges],
-			deprecated: {
-				to: "interdependencyRange",
-				message: "The exactDepType flag is deprecated. Use interdependencyRange instead.",
-				version: "0.16.0",
-			},
-		}),
+		// The use of this "bump" tool to modify dependencies (only used by tools/pipelines/templates/include-set-package-version.yml) is independent of its use to update the versions of packages.
+		// Therefor this option should probably be removed from this "bump" tool and made into its own much simpler command to address its use-case.
 		interdependencyRange: Flags.string({
 			char: "d",
 			description:
-				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be set to the workspace string specified.',
+				'[Deprecated]: Use the "SetInterdependencyRange" command instead. Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be set to the workspace string specified.',
 			options: [...RangeOperators, ...WorkspaceRanges],
 		}),
 		commit: checkFlags.commit,
@@ -124,21 +116,15 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error("No dependency provided.");
 		}
 
-		// Fall back to the deprecated --exactDepType flag value if the new one isn't provided
-		const interdepRangeFlag = flags.interdependencyRange ?? flags.exactDepType;
-
-		let interdependencyRange: InterdependencyRange | undefined = isInterdependencyRange(
-			interdepRangeFlag,
-		)
-			? interdepRangeFlag
-			: undefined;
+		if (
+			flags.interdependencyRange !== undefined &&
+			!isInterdependencyRange(flags.interdependencyRange)
+		) {
+			this.error(`invalid value --interdependencyRange: ${flags.interdependencyRange}`);
+		}
 
 		const context = await this.getContext();
 		const { bumpType } = flags;
-		const workspaceProtocol =
-			typeof interdependencyRange === "string"
-				? interdependencyRange?.startsWith("workspace:")
-				: false;
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
@@ -165,15 +151,17 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
+		let interdependencyRange: InterdependencyRange | undefined;
+
 		if (rgOrPackage instanceof MonoRepo) {
 			const releaseRepo = rgOrPackage;
 			assert(releaseRepo !== undefined, `Release repo not found for ${rgOrPackage.name}`);
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
-			// Update the interdependency range to the configured default if the one provided isn't valid
+			// Update the interdependency range to the configured default if one ins't provided
 			interdependencyRange =
-				interdependencyRange ?? getDefaultInterdependencyRange(releaseRepo, context);
+				flags.interdependencyRange ?? getDefaultInterdependencyRange(releaseRepo, context);
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
@@ -218,7 +206,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Release group/package: ${chalk.blueBright(rgOrPackage.name)}`);
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
-		this.log(`Workspace protocol: ${workspaceProtocol === true ? chalk.green("yes") : "no"}`);
 		this.log(`Versions: ${newVersion.version} <== ${repoVersion}`);
 		this.log(
 			`Interdependency range: ${interdependencyRange === "" ? "exact" : interdependencyRange}`,
