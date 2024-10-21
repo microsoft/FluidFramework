@@ -163,6 +163,11 @@ export {
 	isTreeNodeSchemaClass,
 	normalizeAllowedTypes,
 	getSimpleSchema,
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

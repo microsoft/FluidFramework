@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { typeField } from "./agentEditReducer.js";
 import type { JsonPrimitive } from "./json-handler/index.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.
  * We could accomplish this via a path (probably JSON Pointer or JSONPath) from a possibly-null objectId, or wrap arrays in an identified object.
- *
- * TODO: We could add a "replace" edit type to avoid tons of little modifies.
  *
  * TODO: only 100 object fields total are allowed by OpenAI right now, so larger schemas will fail faster if we have a bunch of schema types generated for type-specific edits.
  *
@@ -39,12 +36,23 @@ import type { JsonPrimitive } from "./json-handler/index.js";
  * TODO: Give the model a final chance to evaluate the result.
  *
  * TODO: Separate system prompt into [system, user, system] for security.
+ *
+ * TODO: Top level arrays are not supported with current DSL.
+ *
+ * TODO: Structured Output fails when multiple schema types have the same first field name (e.g. id: sf.identifier on multiple types).
+ *
+ * TODO: Pass descriptions from schema metadata to the generated TS types that we put in the prompt
  */
 
 /**
  * TBD
  */
+export const typeField = "__fluid_type";
+/**
+ * TBD
+ */
 export const objectIdKey = "__fluid_objectId";
+
 /**
  * TBD
  */
@@ -63,8 +71,8 @@ export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
 
 /**
  * TBD
- * @remarks - For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
  */
+// For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
 export interface EditWrapper {
 	// eslint-disable-next-line @rushstack/no-new-null
 	edit: TreeEdit | null;
@@ -74,6 +82,7 @@ export interface EditWrapper {
  * TBD
  */
 export type TreeEdit = SetRoot | Insert | Modify | Remove | Move;
+
 /**
  * TBD
  */
@@ -85,16 +94,18 @@ export interface Edit {
  * TBD
  */
 export type Selection = ObjectTarget | Range;
+
 /**
  * TBD
  */
 export interface ObjectTarget {
-	[objectIdKey]: string;
+	target: string;
 }
 
 /**
- * @remarks - TODO: Allow support for nested arrays
+ * TBD
  */
+// TODO: Allow support for nested arrays
 export interface ArrayPlace {
 	type: "arrayPlace";
 	parentId: string;
@@ -132,7 +143,7 @@ export interface SetRoot extends Edit {
  */
 export interface Insert extends Edit {
 	type: "insert";
-	content: TreeEditObject;
+	content: TreeEditObject | JsonPrimitive;
 	destination: ObjectPlace | ArrayPlace;
 }
 

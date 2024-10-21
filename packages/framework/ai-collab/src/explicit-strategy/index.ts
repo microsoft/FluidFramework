@@ -13,9 +13,13 @@ import {
 	type TreeNode,
 	type TreeView,
 } from "@fluidframework/tree/internal";
+import type OpenAI from "openai";
+// eslint-disable-next-line import/no-internal-modules
+import { zodResponseFormat } from "openai/helpers/zod";
 import type {
 	ChatCompletionCreateParams,
 	ResponseFormatJSONSchema,
+
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
 
@@ -34,6 +38,8 @@ import {
 	type EditLog,
 } from "./promptGeneration.js";
 import { fail } from "./utils.js";
+import { generateGenericEditTypes } from "./typeGeneration.js";
+import { z } from "zod";
 
 const DEBUG_LOG: string[] = [];
 
@@ -108,7 +114,8 @@ export async function generateTreeEdits(
 				simpleSchema.definitions,
 				options.validator,
 			);
-			editLog.push({ edit: result });
+			const explanation = result.explanation; // TODO: describeEdit(result, idGenerator);
+			editLog.push({ edit: { ...result, explanation } });
 			sequentialErrorCount = 0;
 		} catch (error: unknown) {
 			if (error instanceof Error) {
@@ -180,50 +187,56 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	tokenLimits: TokenUsage | undefined,
 	tokenUsage: TokenUsage,
 ): AsyncGenerator<TreeEdit> {
+	const [types, rootTypeName] = generateGenericEditTypes(simpleSchema, true);
+
+	let plan: string | undefined;
+	if (options.plan !== undefined) {
+		plan = await getStringFromLlm(
+			getPlanningSystemPrompt(options.prompt, options.treeView, options.appGuidance),
+			options.openAIClient,
+		);
+	}
+
 	const originalDecoratedJson =
 		(options.finalReviewStep ?? false)
 			? toDecoratedJson(idGenerator, options.treeView.root)
 			: undefined;
 	// reviewed is implicitly true if finalReviewStep is false
 	let hasReviewed = (options.finalReviewStep ?? false) ? false : true;
-
 	async function getNextEdit(): Promise<TreeEdit | undefined> {
 		const systemPrompt = getEditingSystemPrompt(
-			options.prompt.userAsk,
+			options.prompt,
 			idGenerator,
 			options.treeView,
 			editLog,
-			options.prompt.systemRoleContext,
+			options.appGuidance,
+			plan,
 		);
 
 		DEBUG_LOG?.push(systemPrompt);
 
-		return new Promise((resolve: (value: TreeEdit | undefined) => void) => {
-			const editHandler = generateEditHandlers(simpleSchema, (jsonObject: JsonObject) => {
-				// eslint-disable-next-line unicorn/no-null
-				DEBUG_LOG?.push(JSON.stringify(jsonObject, null, 2));
-				const wrapper = jsonObject as unknown as EditWrapper;
-				if (wrapper.edit === null) {
-					DEBUG_LOG?.push("No more edits.");
-					return resolve(undefined);
-				} else {
-					return resolve(wrapper.edit);
-				}
-			});
+		const schema = types[rootTypeName] ?? fail("Root type not found.");
+		const wrapper = await getFromLlm<EditWrapper>(
+			systemPrompt,
+			options.openAIClient,
+			schema,
+			"A JSON object that represents an edit to a JSON tree.",
+		);
 
-			const responseHandler = createResponseHandler(
-				editHandler,
-				options.limiters?.abortController ?? new AbortController(),
-			);
+		DEBUG_LOG?.push(JSON.stringify(wrapper, null, 2));
+		if (wrapper === undefined) {
+			DEBUG_LOG?.push("Failed to get response");
+			return undefined;
+		}
 
-			// eslint-disable-next-line no-void
-			void responseHandler.processResponse(
-				streamFromLlm(systemPrompt, responseHandler.jsonSchema(), options.openAI, tokenUsage),
-			);
-		}).then(async (result): Promise<TreeEdit | undefined> => {
-			if (result === undefined && (options.finalReviewStep ?? false) && !hasReviewed) {
+		if (wrapper.edit === null) {
+			DEBUG_LOG?.push("No more edits.");
+			if ((options.finalReviewStep ?? false) && !hasReviewed) {
 				const reviewResult = await reviewGoal();
-				// eslint-disable-next-line require-atomic-updates
+				if (reviewResult === undefined) {
+					DEBUG_LOG?.push("Failed to get review response");
+					return undefined;
+				}
 				hasReviewed = true;
 				if (reviewResult.goalAccomplished === "yes") {
 					return undefined;
@@ -231,50 +244,36 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 					editLog.length = 0;
 					return getNextEdit();
 				}
-			} else {
-				return result;
 			}
-		});
+		} else {
+			return wrapper.edit;
+		}
 	}
 
-	async function reviewGoal(): Promise<ReviewResult> {
+	async function reviewGoal(): Promise<ReviewResult | undefined> {
 		const systemPrompt = getReviewSystemPrompt(
-			options.prompt.userAsk,
+			options.prompt,
 			idGenerator,
 			options.treeView,
 			originalDecoratedJson ?? fail("Original decorated tree not provided."),
-			options.prompt.systemRoleContext,
+			options.appGuidance,
 		);
 
 		DEBUG_LOG?.push(systemPrompt);
 
-		return new Promise((resolve: (value: ReviewResult) => void) => {
-			const reviewHandler = JsonHandler.object(() => ({
-				properties: {
-					goalAccomplished: JsonHandler.enum({
-						description:
-							'Whether the difference the user\'s goal was met in the "after" tree.',
-						values: ["yes", "no"],
-					}),
-				},
-				complete: (jsonObject: JsonObject) => {
-					// eslint-disable-next-line unicorn/no-null
-					DEBUG_LOG?.push(`Review result: ${JSON.stringify(jsonObject, null, 2)}`);
-					resolve(jsonObject as unknown as ReviewResult);
-				},
-			}))();
-
-			const responseHandler = createResponseHandler(
-				reviewHandler,
-				options.limiters?.abortController ?? new AbortController(),
-			);
-
-			// eslint-disable-next-line no-void
-			void responseHandler.processResponse(
-				streamFromLlm(systemPrompt, responseHandler.jsonSchema(), options.openAI, tokenUsage),
-			);
+		const schema = z.object({
+			goalAccomplished: z
+				.enum(["yes", "no"])
+				.describe('Whether the user\'s goal was met in the "after" tree.'),
 		});
+		return getFromLlm<ReviewResult>(systemPrompt, options.openAIClient, schema);
 	}
+
+	// let edit = await getNextEdit();
+	// while (edit !== undefined) {
+	// 	yield edit;
+	// 	edit = await getNextEdit();
+	// }
 
 	let edit = await getNextEdit();
 	while (edit !== undefined) {
@@ -287,6 +286,43 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		}
 		edit = await getNextEdit();
 	}
+}
+
+async function getFromLlm<T>(
+	prompt: string,
+	openAIClient: OpenAI,
+	structuredOutputSchema: Zod.ZodTypeAny,
+	description?: string,
+): Promise<T | undefined> {
+	const response_format = zodResponseFormat(structuredOutputSchema, "SharedTreeAI", {
+		description,
+	});
+
+	const body: ChatCompletionCreateParams = {
+		messages: [{ role: "system", content: prompt }],
+		model: clientModel.get(openAIClient) ?? "gpt-4o",
+		response_format,
+		max_tokens: 4096,
+	};
+
+	const result = await openAIClient.beta.chat.completions.parse(body);
+	// TODO: fix types so this isn't null and doesn't need a cast
+	// The type should be derived from the zod schema
+	return result.choices[0]?.message.parsed as T | undefined;
+}
+
+async function getStringFromLlm(
+	prompt: string,
+	openAIClient: OpenAI,
+): Promise<string | undefined> {
+	const body: ChatCompletionCreateParams = {
+		messages: [{ role: "system", content: prompt }],
+		model: clientModel.get(openAIClient) ?? "gpt-4o",
+		max_tokens: 4096,
+	};
+
+	const result = await openAIClient.chat.completions.create(body);
+	return result.choices[0]?.message.content ?? undefined;
 }
 
 class TokenLimitExceededError extends Error {}

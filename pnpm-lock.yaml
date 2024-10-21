@@ -455,7 +455,7 @@ importers:
         version: 5.0.0
       typechat:
         specifier: ^0.1.1
-        version: 0.1.1(typescript@5.4.5)
+        version: 0.1.1(typescript@5.4.5)(zod@3.23.8)
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -10440,6 +10440,9 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -10522,6 +10525,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      typechat:
+        specifier: ^0.1.1
+        version: 0.1.1(typescript@5.4.5)(zod@3.23.8)
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -38383,7 +38389,7 @@ packages:
       media-typer: 0.3.0
       mime-types: 2.1.35
 
-  /typechat@0.1.1(typescript@5.4.5):
+  /typechat@0.1.1(typescript@5.4.5)(zod@3.23.8):
     resolution: {integrity: sha512-Sw96vmkYqbAahqam7vCp8P/MjIGsR26Odz17UHpVGniYN5ir2B37nRRkoDuRpA5djwNQB+W5TB7w2xoF6kwbHQ==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -38396,6 +38402,7 @@ packages:
         optional: true
     dependencies:
       typescript: 5.4.5
+      zod: 3.23.8
     dev: true
 
   /typed-array-buffer@1.0.2:
