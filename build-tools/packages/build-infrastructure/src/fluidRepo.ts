@@ -22,15 +22,24 @@ import {
 import { Workspace } from "./workspace.js";
 import { loadWorkspacesFromLegacyConfig } from "./workspaceCompat.js";
 
+/**
+ * {@inheritDoc IFluidRepo}
+ */
 export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	/**
 	 * The absolute path to the root of the FluidRepo. This is the path where the config file is located.
 	 */
 	public readonly root: string;
 
+	/**
+	 * {@inheritDoc IFluidRepo.configuration}
+	 */
 	public readonly configuration: IFluidRepoLayout;
 
-	public readonly configFilePath: string;
+	/**
+	 * The absolute path to the config file.
+	 */
+	protected readonly configFilePath: string;
 
 	/**
 	 * @param searchPath - The path that should be searched for a repo layout config file.
@@ -39,6 +48,10 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	 */
 	public constructor(
 		searchPath: string,
+
+		/**
+		 * {@inheritDoc IFluidRepo.upstreamRemotePartialUrl}
+		 */
 		public readonly upstreamRemotePartialUrl?: string,
 	) {
 		const { config, configFilePath } = getFluidRepoLayout(searchPath);
@@ -81,15 +94,26 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	}
 
 	private readonly _workspaces: Map<WorkspaceName, IWorkspace>;
+
+	/**
+	 * {@inheritDoc IFluidRepo.workspaces}
+	 */
 	public get workspaces(): Map<WorkspaceName, IWorkspace> {
 		return this._workspaces;
 	}
 
 	private readonly _releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
+
+	/**
+	 * {@inheritDoc IFluidRepo.releaseGroups}
+	 */
 	public get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup> {
 		return this._releaseGroups;
 	}
 
+	/**
+	 * {@inheritDoc IFluidRepo.packages}
+	 */
 	public get packages(): Map<PackageName, P> {
 		const pkgs: Map<PackageName, P> = new Map();
 		for (const ws of this.workspaces.values()) {
@@ -106,16 +130,16 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	}
 
 	/**
-	 * Transforms an absolute path to a path relative to the FluidRepo root.
-	 *
-	 * @param p - The path to make relative to the FluidRepo root.
-	 * @returns the relative path.
+	 * {@inheritDoc IFluidRepo.relativeToRepo}
 	 */
 	public relativeToRepo(p: string): string {
 		// Replace \ in result with / in case OS is Windows.
 		return path.relative(this.root, p).replace(/\\/g, "/");
 	}
 
+	/**
+	 * Reload the Fluid repo by calling `reload` on each workspace in the repository.
+	 */
 	public reload(): void {
 		for (const ws of this.workspaces.values()) {
 			ws.reload();
@@ -125,6 +149,9 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	private gitRepository: SimpleGit | undefined;
 	private _checkedForGitRepo = false;
 
+	/**
+	 * {@inheritDoc IFluidRepo.getGitRepository}
+	 */
 	public async getGitRepository(): Promise<Readonly<SimpleGit>> {
 		if (this.gitRepository !== undefined) {
 			return this.gitRepository;
@@ -142,6 +169,9 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 		throw new NotInGitRepository(this.root);
 	}
 
+	/**
+	 * {@inheritDoc IFluidRepo.getPackageReleaseGroup}
+	 */
 	public getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup> {
 		const found = this.releaseGroups.get(pkg.releaseGroup);
 		if (found === undefined) {
@@ -151,6 +181,9 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 		return found;
 	}
 
+	/**
+	 * {@inheritDoc IFluidRepo.getPackageWorkspace}
+	 */
 	public getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace> {
 		const releaseGroup = this.getPackageReleaseGroup(pkg);
 		const found = releaseGroup.workspace;
@@ -174,6 +207,10 @@ export function loadFluidRepo<P extends IPackage>(
 	return repo;
 }
 
+/**
+ * Returns an object containing all the packages, release groups, and workspaces that a given set of packages depends
+ * on. This function only considers packages in the Fluid repo.
+ */
 export function getAllDependenciesInRepo(
 	repo: IFluidRepo,
 	packages: IPackage[],

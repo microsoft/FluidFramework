@@ -25,34 +25,25 @@ export interface FluidPackageJsonFields {
 // @public
 export const FLUIDREPO_CONFIG_VERSION = 1;
 
-// @public (undocumented)
+// @public
 export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
-    constructor(searchPath: string, upstreamRemotePartialUrl?: string | undefined);
-    // (undocumented)
-    readonly configFilePath: string;
-    // (undocumented)
+    constructor(searchPath: string,
+    upstreamRemotePartialUrl?: string | undefined);
+    protected readonly configFilePath: string;
     readonly configuration: IFluidRepoLayout;
-    // (undocumented)
     getGitRepository(): Promise<Readonly<SimpleGit>>;
-    // (undocumented)
     getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-    // (undocumented)
     getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
-    // (undocumented)
     get packages(): Map<PackageName, P>;
     relativeToRepo(p: string): string;
-    // (undocumented)
     get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
-    // (undocumented)
     reload(): void;
     readonly root: string;
-    // (undocumented)
     readonly upstreamRemotePartialUrl?: string | undefined;
-    // (undocumented)
     get workspaces(): Map<WorkspaceName, IWorkspace>;
 }
 
-// @public (undocumented)
+// @public
 export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[]): {
     packages: IPackage[];
     releaseGroups: IReleaseGroup[];
@@ -250,7 +241,6 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 
 // @public
 export interface Reloadable {
-    // (undocumented)
     reload(): void;
 }
 

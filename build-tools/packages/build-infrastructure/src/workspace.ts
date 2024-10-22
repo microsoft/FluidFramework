@@ -21,26 +21,46 @@ import type {
 	WorkspaceName,
 } from "./types.js";
 
+/**
+ * {@inheritDoc IWorkspace}
+ */
 export class Workspace implements IWorkspace {
+	/**
+	 * {@inheritDoc IWorkspace.name}
+	 */
 	public readonly name: WorkspaceName;
+
+	/**
+	 * {@inheritDoc IWorkspace.releaseGroups}
+	 */
 	public readonly releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
+
+	/**
+	 * {@inheritDoc IWorkspace.rootPackage}
+	 */
 	public readonly rootPackage: IPackage;
+
+	/**
+	 * {@inheritDoc IWorkspace.packages}
+	 */
 	public readonly packages: IPackage[];
 
 	/**
-	 * Absolute path to the root of the workspace.
+	 * {@inheritDoc IWorkspace.directory}
 	 */
 	public readonly directory: string;
 
 	private readonly packageManager: IPackageManager;
 
-	private constructor(
-		name: string,
-		definition: WorkspaceDefinition,
-		public readonly root: string,
-	) {
+	/**
+	 * Construct a new workspace object.
+	 *
+	 * @param name - The name of the workspace.
+	 * @param definition - The definition of the workspace.
+	 * @param root - The path to the root of the workspace.
+	 */
+	private constructor(name: string, definition: WorkspaceDefinition, root: string) {
 		this.name = name as WorkspaceName;
-		// const repoRoot = findGitRoot();
 		this.directory = path.resolve(root, definition.directory);
 
 		const {

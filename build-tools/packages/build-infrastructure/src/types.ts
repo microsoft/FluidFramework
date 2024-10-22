@@ -132,6 +132,9 @@ export interface Installable {
  * An interface for things that can be reloaded,
  */
 export interface Reloadable {
+	/**
+	 * Synchronously reload.
+	 */
 	reload(): void;
 }
 
