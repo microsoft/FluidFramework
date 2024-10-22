@@ -23,19 +23,16 @@ import {
 
 import {
 	applyAgentEdit,
-	typeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditReducer.js";
 import {
-	objectIdKey,
+	typeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
-// eslint-disable-next-line import/order
 import type {
 	TreeEdit,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
-
 // eslint-disable-next-line import/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 
@@ -202,7 +199,7 @@ describe("applyAgentEdit", () => {
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
 					type: "objectPlace",
-					[objectIdKey]: vectorId,
+					target: vectorId,
 					place: "after",
 				},
 			};
@@ -214,7 +211,7 @@ describe("applyAgentEdit", () => {
 				content: { [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 				destination: {
 					type: "objectPlace",
-					[objectIdKey]: vectorId,
+					target: vectorId,
 					place: "after",
 				},
 			};
@@ -282,7 +279,7 @@ describe("applyAgentEdit", () => {
 				content: { [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
 				destination: {
 					type: "objectPlace",
-					[objectIdKey]: vectorId,
+					target: vectorId,
 					place: "after",
 				},
 			};
@@ -399,14 +396,14 @@ describe("applyAgentEdit", () => {
 				content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
 				destination: {
 					type: "objectPlace",
-					[objectIdKey]: vectorId,
+					target: vectorId,
 					place: "after",
 				},
 			};
 
 			assert.throws(
 				() => applyAgentEdit(view, insertEdit, idGenerator, simpleSchema.definitions),
-				validateUsageError(/invalid data provided for schema/),
+				validateUsageError(/provided data is incompatible/),
 			);
 		});
 
@@ -436,7 +433,7 @@ describe("applyAgentEdit", () => {
 				content: { [typeField]: Vector.identifier, x: 3, y: 4, z: 5 },
 				destination: {
 					type: "objectPlace",
-					[objectIdKey]: vectorId,
+					target: vectorId,
 					place: "before",
 				},
 			};
@@ -468,7 +465,7 @@ describe("applyAgentEdit", () => {
 		const modifyEdit: TreeEdit = {
 			explanation: "Modify a vector",
 			type: "modify",
-			target: { __fluid_objectId: vectorId },
+			target: { target: vectorId },
 			field: "vectors",
 			modification: [
 				{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
@@ -480,7 +477,7 @@ describe("applyAgentEdit", () => {
 		const modifyEdit2: TreeEdit = {
 			explanation: "Modify a vector",
 			type: "modify",
-			target: { __fluid_objectId: vectorId },
+			target: { target: vectorId },
 			field: "bools",
 			modification: [false],
 		};
@@ -494,7 +491,7 @@ describe("applyAgentEdit", () => {
 		const modifyEdit3: TreeEdit = {
 			explanation: "Modify a vector",
 			type: "modify",
-			target: { __fluid_objectId: vectorId2 },
+			target: { target: vectorId2 },
 			field: "x",
 			modification: 111,
 		};
@@ -554,7 +551,7 @@ describe("applyAgentEdit", () => {
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
 				type: "remove",
-				source: { [objectIdKey]: vectorId1 },
+				source: { target: vectorId1 },
 			};
 			applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions);
 
@@ -595,7 +592,7 @@ describe("applyAgentEdit", () => {
 			const removeEdit: TreeEdit = {
 				explanation: "remove a vector",
 				type: "remove",
-				source: { [objectIdKey]: singleVectorId },
+				source: { target: singleVectorId },
 			};
 			applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions);
 
@@ -634,7 +631,7 @@ describe("applyAgentEdit", () => {
 			const removeEdit: TreeEdit = {
 				explanation: "remove the root",
 				type: "remove",
-				source: { [objectIdKey]: rootId },
+				source: { target: rootId },
 			};
 			applyAgentEdit(view, removeEdit, idGenerator, simpleSchema.definitions);
 			assert.equal(view.root, undefined);
@@ -664,7 +661,7 @@ describe("applyAgentEdit", () => {
 			const removeEdit: TreeEdit = {
 				explanation: "remove the root",
 				type: "remove",
-				source: { [objectIdKey]: rootId },
+				source: { target: rootId },
 			};
 
 			assert.throws(
@@ -705,12 +702,12 @@ describe("applyAgentEdit", () => {
 				type: "remove",
 				source: {
 					from: {
-						[objectIdKey]: vectorId1,
+						target: vectorId1,
 						type: "objectPlace",
 						place: "before",
 					},
 					to: {
-						[objectIdKey]: vectorId2,
+						target: vectorId2,
 						type: "objectPlace",
 						place: "after",
 					},
@@ -759,12 +756,12 @@ describe("applyAgentEdit", () => {
 				type: "remove",
 				source: {
 					from: {
-						[objectIdKey]: vectorId1,
+						target: vectorId1,
 						type: "objectPlace",
 						place: "before",
 					},
 					to: {
-						[objectIdKey]: vectorId2,
+						target: vectorId2,
 						type: "objectPlace",
 						place: "after",
 					},
@@ -808,7 +805,7 @@ describe("applyAgentEdit", () => {
 			const moveEdit: TreeEdit = {
 				explanation: "Move a vector",
 				type: "move",
-				source: { [objectIdKey]: vectorId1 },
+				source: { target: vectorId1 },
 				destination: {
 					type: "arrayPlace",
 					parentId: vectorId2,
@@ -878,12 +875,12 @@ describe("applyAgentEdit", () => {
 				type: "move",
 				source: {
 					from: {
-						[objectIdKey]: vectorId1,
+						target: vectorId1,
 						type: "objectPlace",
 						place: "before",
 					},
 					to: {
-						[objectIdKey]: vectorId2,
+						target: vectorId2,
 						type: "objectPlace",
 						place: "after",
 					},
@@ -965,12 +962,12 @@ describe("applyAgentEdit", () => {
 				explanation: "Move a vector",
 				source: {
 					from: {
-						[objectIdKey]: vectorId1,
+						target: vectorId1,
 						type: "objectPlace",
 						place: "before",
 					},
 					to: {
-						[objectIdKey]: vectorId2,
+						target: vectorId2,
 						type: "objectPlace",
 						place: "after",
 					},
@@ -1019,12 +1016,12 @@ describe("applyAgentEdit", () => {
 				explanation: "Move a vector",
 				source: {
 					from: {
-						[objectIdKey]: vectorId1,
+						target: vectorId1,
 						type: "objectPlace",
 						place: "before",
 					},
 					to: {
-						[objectIdKey]: vectorId2,
+						target: vectorId2,
 						type: "objectPlace",
 						place: "after",
 					},
@@ -1073,7 +1070,7 @@ describe("applyAgentEdit", () => {
 				type: "move",
 				explanation: "Move a vector",
 				source: {
-					[objectIdKey]: strId,
+					target: strId,
 				},
 				destination: {
 					type: "arrayPlace",
@@ -1117,7 +1114,7 @@ describe("applyAgentEdit", () => {
 				type: "move",
 				explanation: "Move a vector",
 				source: {
-					[objectIdKey]: strId,
+					target: strId,
 				},
 				destination: {
 					type: "arrayPlace",
@@ -1159,7 +1156,7 @@ describe("applyAgentEdit", () => {
 			content: { [typeField]: Vector.identifier, x: 2, nonVectorField: "invalid", z: 4 },
 			destination: {
 				type: "objectPlace",
-				[objectIdKey]: "testObjectId",
+				target: "testObjectId",
 				place: "after",
 			},
 		};
@@ -1191,12 +1188,12 @@ describe("applyAgentEdit", () => {
 			explanation: "Move a vector",
 			source: {
 				from: {
-					[objectIdKey]: "testObjectId1",
+					target: "testObjectId1",
 					type: "objectPlace",
 					place: "before",
 				},
 				to: {
-					[objectIdKey]: "testObjectId2",
+					target: "testObjectId2",
 					type: "objectPlace",
 					place: "after",
 				},
@@ -1219,11 +1216,11 @@ describe("applyAgentEdit", () => {
 			type: "move",
 			explanation: "Move a vector",
 			source: {
-				[objectIdKey]: "testObjectId1",
+				target: "testObjectId1",
 			},
 			destination: {
 				type: "objectPlace",
-				[objectIdKey]: "testObjectId2",
+				target: "testObjectId2",
 				place: "before",
 			},
 		};
@@ -1238,7 +1235,7 @@ describe("applyAgentEdit", () => {
 		const modifyEdit: TreeEdit = {
 			explanation: "Modify a vector",
 			type: "modify",
-			target: { __fluid_objectId: "testObjectId" },
+			target: { target: "testObjectId" },
 			field: "x",
 			modification: 111,
 		};

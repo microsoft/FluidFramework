@@ -33,6 +33,8 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
     // (undocumented)
     openAI: OpenAiClientOptions;
     // (undocumented)
+    planningStep?: boolean;
+    // (undocumented)
     prompt: {
         systemRoleContext: string;
         userAsk: string;

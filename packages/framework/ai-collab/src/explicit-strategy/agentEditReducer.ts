@@ -40,8 +40,7 @@ import {
 	typeField,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { JsonValue } from "./json-handler/jsonParser.js";
+import type { JsonValue } from "./jsonTypes.js";
 import { toDecoratedJson } from "./promptGeneration.js";
 import { fail } from "./utils.js";
 

@@ -74,17 +74,17 @@ export function toDecoratedJson(
  * TBD
  */
 export function getPlanningSystemPrompt(
-	userPrompt: string,
 	view: TreeView<ImplicitFieldSchema>,
-	appGuidance?: string,
+	userPrompt: string,
+	systemRoleContext?: string,
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
 	const role = `I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.${
-		appGuidance === undefined
+		systemRoleContext === undefined
 			? ""
 			: `
-			The other agent follows this guidance: ${appGuidance}`
+			The other agent follows this guidance: ${systemRoleContext}`
 	}`;
 
 	const systemPrompt = `

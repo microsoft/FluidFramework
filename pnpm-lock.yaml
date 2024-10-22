@@ -10452,6 +10452,9 @@ importers:
       openai:
         specifier: ^4.67.3
         version: 4.68.0(zod@3.23.8)
+      typechat:
+        specifier: ^0.1.1
+        version: 0.1.1(typescript@5.4.5)(zod@3.23.8)
       zod:
         specifier: ^3.23.8
         version: 3.23.8
@@ -10525,9 +10528,6 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
-      typechat:
-        specifier: ^0.1.1
-        version: 0.1.1(typescript@5.4.5)(zod@3.23.8)
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -30284,6 +30284,7 @@ packages:
   /iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
+    requiresBuild: true
     dependencies:
       safer-buffer: 2.1.2
     dev: true
@@ -38403,7 +38404,6 @@ packages:
     dependencies:
       typescript: 5.4.5
       zod: 3.23.8
-    dev: true
 
   /typed-array-buffer@1.0.2:
     resolution: {integrity: sha512-gEymJYKZtKXzzBzM4jqa9w6Q1Jjm7x2d+sh19AdsD4wqnMPDYyvwpsIc2Q/835kHuo3BEQ7CjelGhfTsoBb2MQ==}

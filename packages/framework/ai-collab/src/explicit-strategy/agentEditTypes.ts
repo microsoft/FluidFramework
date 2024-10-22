@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonPrimitive } from "./json-handler/index.js";
+import type { JsonPrimitive } from "./jsonTypes.js";
 
 /**
  * TODO: The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them.

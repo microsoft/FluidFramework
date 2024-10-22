@@ -28,6 +28,7 @@ export async function aiCollab(
 		prompt: options.prompt,
 		limiters: options.limiters,
 		dumpDebugLog: options.dumpDebugLog,
+		planningStep: options.planningStep,
 		finalReviewStep: options.finalReviewStep,
 	});
 
