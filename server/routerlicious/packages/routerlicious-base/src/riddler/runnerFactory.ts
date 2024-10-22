@@ -47,7 +47,7 @@ export class RiddlerResources implements IResources {
 		public readonly fetchTenantKeyMetricIntervalMs: number,
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
-		public readonly startupCheck: StartupCheck,
+		public readonly startupCheck: IReadinessCheck,
 		public readonly cache: RedisCache,
 		public readonly readinessCheck?: IReadinessCheck,
 	) {
