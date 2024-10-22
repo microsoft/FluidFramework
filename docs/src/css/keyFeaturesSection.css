@@ -102,10 +102,6 @@
 	padding: 0px;
 	gap: 16px;
 
-	/* width: 384px;
-	height: 212px;
- */
-
 	/* Inside auto layout */
 	flex: none;
 	order: 0;
@@ -120,10 +116,6 @@
 	align-items: flex-start;
 	padding: 0px;
 	gap: 16px;
-
-	/* width: 384px;
-	height: 28px; */
-
 
 	/* Inside auto layout */
 	flex: none;
@@ -144,7 +136,6 @@
 
 	/* m365-theme/day/foreground/base/strong */
 	color: #0E1726;
-
 
 	/* Inside auto layout */
 	flex: none;
@@ -194,10 +185,6 @@
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 0px;
-/*
-	width: 384px;
-	height: 32px; */
-
 
 	/* Inside auto layout */
 	flex: none;
@@ -214,10 +201,6 @@
 	padding: 0px;
 	gap: 24px;
 
-	/* width: 115px;
-	height: 32px; */
-
-
 	/* Inside auto layout */
 	flex: none;
 	order: 0;
@@ -232,10 +215,6 @@
 	align-items: center;
 	padding: 0px;
 	gap: 8px;
-
-	/* width: 115px;
-	height: 32px; */
-
 
 	/* Inside auto layout */
 	flex: none;
@@ -271,10 +250,6 @@
 	align-items: flex-start;
 	padding: 0px 0px 2px;
 
-	/* width: 75px;
-	height: 24px; */
-
-
 	/* Inside auto layout */
 	flex: none;
 	order: 1;
@@ -282,9 +257,6 @@
 }
 
 .keyFeatureCardFooterLinkLabelText {
-	/* width: 75px;
-	height: 22px; */
-
 	/* VP4/action/label */
 	font-family: 'Segoe UI';
 	font-style: normal;
