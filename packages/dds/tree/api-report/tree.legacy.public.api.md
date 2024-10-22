@@ -15,6 +15,17 @@ type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> =
 }[Kind];
 
 // @public
+export interface ClonableRevertible extends Revertible {
+    // (undocumented)
+    clone: (forkedView?: TreeView<ImplicitFieldSchema>) => void;
+    // (undocumented)
+    dispose: () => void;
+}
+
+// @public @sealed
+export type ClonableRevertibleFactory = (onRevertibleDisposed?: (revertible: ClonableRevertible) => void) => ClonableRevertible;
+
+// @public
 export enum CommitKind {
     Default = 0,
     Redo = 2,
@@ -534,7 +545,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 
 // @public @sealed
 export interface TreeViewEvents {
-    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory | ClonableRevertibleFactory): void;
     rootChanged(): void;
     schemaChanged(): void;
 }

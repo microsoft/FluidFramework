@@ -29,6 +29,7 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	type RevertibleFactory,
+	type ClonableRevertibleFactory,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
@@ -60,6 +61,7 @@ export {
 	getBranch,
 	type TreeBranch,
 	type TreeBranchFork,
+	type ClonableRevertible,
 } from "./shared-tree/index.js";
 
 export {

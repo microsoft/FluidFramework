@@ -5,10 +5,23 @@
 
 import { type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { getBranch, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
-import { createTestUndoRedoStacks, expectJsonTree, moveWithin } from "../utils.js";
+import {
+	createClonableUndoRedoStacks,
+	createTestUndoRedoStacks,
+	expectJsonTree,
+	moveWithin,
+	testIdCompressor,
+} from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
+import {
+	SchemaFactory,
+	SharedTree,
+	TreeViewConfiguration,
+	type TreeView,
+} from "../../index.js";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -415,4 +428,76 @@ describe("Undo and redo", () => {
 
 		unsubscribe();
 	});
+
+	it.only("can undo / redo", () => {
+		const view: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
+
+		const { undoStack, redoStack, unsubscribe } = createClonableUndoRedoStacks(view.events);
+
+		const originalPropertyTwoBefore = view.root.child?.propertyTwo.itemOne;
+		console.log(originalPropertyTwoBefore);
+
+		// make some edits set x =1
+		if (view.root.child !== undefined) {
+			view.root.child.propertyTwo.itemOne = "newItem";
+			view.root.child.propertyTwo.itemOne = "newItem2";
+		}
+
+		const undo = undoStack.pop(); // "newItem" -> ""
+		undo?.revert();
+
+		const afterFirstRevert = view.root.child?.propertyTwo.itemOne; // "newItem"
+
+		const forkedBranch = getBranch(view).branch();
+		const forkedView = forkedBranch.viewWith(
+			new TreeViewConfiguration({ schema: RootNodeSchema }),
+		);
+
+		const originalPropertyTwoAfter = view.root.child?.propertyTwo.itemOne; // "newItem"
+		const forkedPropertyTwoAfter = forkedView.root.child?.propertyTwo.itemOne; // "newItem2"
+
+		console.log(originalPropertyTwoAfter);
+		console.log(forkedPropertyTwoAfter);
+	});
 });
+
+/**
+ * Schema Builder
+ */
+const builder = new SchemaFactory("shared-tree-test");
+class ChildNodeSchema extends builder.object("child-item", {
+	propertyOne: builder.optional(builder.number),
+	propertyTwo: builder.object("propertyTwo-item", {
+		itemOne: builder.string,
+	}),
+	propertyThree: builder.map("propertyThree-map", builder.number),
+}) {}
+class RootNodeSchema extends builder.object("root-item", {
+	child: builder.optional(ChildNodeSchema),
+}) {}
+
+function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
+	const sharedTree = SharedTree.create(
+		new MockFluidDataStoreRuntime({
+			registry: [SharedTree.getFactory()],
+			idCompressor: testIdCompressor,
+		}),
+		id,
+	);
+
+	const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+
+	view.initialize(
+		new RootNodeSchema({
+			child: {
+				propertyOne: 128,
+				propertyTwo: {
+					itemOne: "",
+				},
+				propertyThree: new Map([["numberOne", 1]]),
+			},
+		}),
+	);
+
+	return view;
+}

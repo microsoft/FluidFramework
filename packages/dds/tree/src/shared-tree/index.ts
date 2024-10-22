@@ -28,6 +28,7 @@ export {
 	type ITreeCheckoutFork,
 	type TreeBranch,
 	type TreeBranchFork,
+	type ClonableRevertible,
 } from "./treeCheckout.js";
 
 export { type TreeStoredContent } from "./schematizeTree.js";

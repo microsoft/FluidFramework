@@ -24,6 +24,8 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ClonableRevertibleFactory } from "../../core/revertible.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  * @system @sealed @public
@@ -537,5 +539,8 @@ export interface TreeViewEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+	commitApplied(
+		data: CommitMetadata,
+		getRevertible?: RevertibleFactory | ClonableRevertibleFactory,
+	): void;
 }

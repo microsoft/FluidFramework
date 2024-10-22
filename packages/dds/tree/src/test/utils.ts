@@ -150,6 +150,10 @@ import { cursorFromInsertable } from "../simple-tree/index.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ClonableRevertible } from "../shared-tree/treeCheckout.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ClonableRevertibleFactory } from "../core/revertible.js";
 
 // Testing utilities
 
@@ -1071,6 +1075,55 @@ export function createTestUndoRedoStacks(
 	}
 
 	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
+		if (getRevertible !== undefined) {
+			const revertible = getRevertible(onDispose);
+			if (commit.kind === CommitKind.Undo) {
+				redoStack.push(revertible);
+			} else {
+				undoStack.push(revertible);
+			}
+		}
+	}
+
+	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
+	const unsubscribe = (): void => {
+		unsubscribeFromCommitApplied();
+		for (const revertible of undoStack) {
+			revertible.dispose();
+		}
+		for (const revertible of redoStack) {
+			revertible.dispose();
+		}
+	};
+	return { undoStack, redoStack, unsubscribe };
+}
+
+export function createClonableUndoRedoStacks(
+	events: Listenable<TreeViewEvents | CheckoutEvents>,
+): {
+	undoStack: ClonableRevertible[];
+	redoStack: ClonableRevertible[];
+	unsubscribe: () => void;
+} {
+	const undoStack: ClonableRevertible[] = [];
+	const redoStack: ClonableRevertible[] = [];
+
+	function onDispose(disposed: ClonableRevertible): void {
+		const redoIndex = redoStack.indexOf(disposed);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
+		} else {
+			const undoIndex = undoStack.indexOf(disposed);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
+			}
+		}
+	}
+
+	function onNewCommit(
+		commit: CommitMetadata,
+		getRevertible?: ClonableRevertibleFactory,
+	): void {
 		if (getRevertible !== undefined) {
 			const revertible = getRevertible(onDispose);
 			if (commit.kind === CommitKind.Undo) {
