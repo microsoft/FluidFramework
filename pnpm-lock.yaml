@@ -7206,7 +7206,7 @@ importers:
         version: 1.8.3
       '@fluid-tools/build-cli':
         specifier: ^0.48.0
-        version: 0.48.0(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.48.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7222,6 +7222,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.54
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -7387,7 +7390,7 @@ importers:
         version: 1.8.3
       '@fluid-tools/build-cli':
         specifier: ^0.48.0
-        version: 0.48.0(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.48.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7403,6 +7406,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.54
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -29534,6 +29540,7 @@ packages:
   /iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
+    requiresBuild: true
     dependencies:
       safer-buffer: 2.1.2
     dev: true

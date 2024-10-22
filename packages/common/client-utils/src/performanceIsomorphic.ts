@@ -9,8 +9,12 @@
  *
  * @internal
  */
-export type IsomorphicPerformance = Partial<Performance> &
-	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+export interface IsomorphicPerformance {
+	clearMarks(markName?: string): void;
+	mark(markName: string): void;
+	measure(measureName: string): void;
+	now(): number;
+}
 
 /**
  * This exported "performance" member masks the built-in globalThis.performance object

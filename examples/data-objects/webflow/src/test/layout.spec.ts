@@ -7,8 +7,8 @@
 import "jsdom-global/register.js";
 
 // 'jsdom-global' does not polyfill mark() and measure().  We stub them ourselves.
-window.performance.mark ??= () => undefined as unknown as PerformanceMark;
-window.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
+globalThis.performance.mark ??= () => undefined as unknown as PerformanceMark;
+globalThis.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
 
 import { strict as assert } from "assert";
 

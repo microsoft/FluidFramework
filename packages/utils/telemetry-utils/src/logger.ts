@@ -742,13 +742,9 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (
-			typeof window === "object" &&
-			window?.performance?.mark !== undefined &&
-			window?.performance?.mark !== null
-		) {
+		if (performance?.mark !== undefined && performance?.mark !== null) {
 			this.startMark = `${event.eventName}-start`;
-			window.performance.mark(this.startMark);
+			performance.mark(this.startMark);
 		}
 	}
 
@@ -777,8 +773,8 @@ export class PerformanceEvent {
 	private performanceEndMark(): void {
 		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
-			window.performance.mark(endMark);
-			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
+			performance.mark(endMark);
+			performance.measure(`${this.event.eventName}`, this.startMark, endMark);
 			this.startMark = undefined;
 		}
 	}
@@ -944,7 +940,6 @@ export const tagData = <
 			// The ternary form is less legible in this case.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (typeof value === "function") {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				pv[key] = () => {
 					return { tag, value: value() };
 				};

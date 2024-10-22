@@ -11,7 +11,7 @@
 declare let process: any;
 
 /**
- * All the chronometer implementations (hrtime, window.performance, and date:
+ * All the chronometer implementations (hrtime, globalThis.performance, and date:
  */
 const implementations = {
 	// Node implementation uses hrtime
@@ -49,9 +49,9 @@ const implementations = {
 			return this._stopTime![0] * 1000000 + this._stopTime![1] / 1000;
 		},
 	},
-	// Browser implementation uses window.performance (if available):
+	// Browser implementation uses globalThis.performance:
 	performance: {
-		name: "window.performance",
+		name: "globalThis.performance",
 		_startTime: 0,
 		_stopTime: 0,
 
@@ -59,10 +59,10 @@ const implementations = {
 		elapsedMilliSec: () => 0,
 
 		_start() {
-			this._startTime = window.performance.now();
+			this._startTime = globalThis.performance.now();
 		},
 		_stop() {
-			this._stopTime = window.performance.now();
+			this._stopTime = globalThis.performance.now();
 		},
 		_elapsedSec(): number {
 			if (!this._stopTime) {
@@ -124,7 +124,7 @@ let impl:
 	| typeof implementations.performance;
 if (typeof process !== "undefined" && typeof process.hrtime !== "undefined") {
 	impl = implementations.node;
-} else if (typeof window?.performance?.now !== "undefined") {
+} else if (typeof globalThis.performance?.now !== "undefined") {
 	impl = implementations.performance;
 } else {
 	impl = implementations.date;

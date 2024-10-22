@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
+import * as crypto from "node:crypto";
+
 import * as base64js from "base64-js";
 
 // Note: See 'Isomorphic Code' section in the package README.md

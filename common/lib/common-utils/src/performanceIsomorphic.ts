@@ -10,8 +10,12 @@
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  * @internal
  */
-export type IsomorphicPerformance = Partial<Performance> &
-	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+export interface IsomorphicPerformance {
+	clearMarks(markName?: string): void;
+	mark(markName: string): void;
+	measure(measureName: string): void;
+	now(): number;
+}
 
 /**
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.

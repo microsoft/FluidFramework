@@ -5,6 +5,7 @@
 		"outDir": "./lib",
 		"baseUrl": ".",
 		"noUncheckedIndexedAccess": false,
+		"types": ["Node"],
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

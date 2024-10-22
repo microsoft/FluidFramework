@@ -4,6 +4,7 @@
 		"composite": true,
 		"rootDir": "./src",
 		"outDir": "./dist",
+		"types": ["DOM"],
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

@@ -100,6 +100,7 @@
 		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@~2.3.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@microsoft/api-extractor": "7.47.8",
+		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
