@@ -254,7 +254,7 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 	logger?: Logger,
 ): {
 	mapKeyToOutput: Map<TOutKey, ExportData>;
-	mapTypesPathToExportPaths: Map<string, Readonly<{ exportPath: string }>[]>;
+	mapDefaultPathToExportPaths: Map<string, Readonly<{ exportPath: string }>[]>;
 } {
 	const mapKeyToOutput = new Map<TOutKey, ExportData>();
 	const mapDefaultPathToExportPaths = new Map<string, Readonly<{ exportPath: string }>[]>();
@@ -311,7 +311,7 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 		}
 	}
 
-	return { mapKeyToOutput, mapTypesPathToExportPaths: mapDefaultPathToExportPaths };
+	return { mapKeyToOutput, mapDefaultPathToExportPaths };
 }
 
 function findDefaultPathsMatching<TOutKey>(
@@ -327,7 +327,7 @@ function findDefaultPathsMatching<TOutKey>(
 		let relPath: string;
 		if (typeof value === "string") {
 			if (emitDeclarationOnly && entry === typesExportCondition) {
-				relPath = value.replace(/(lib|dist)/g, "src");
+				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.d.ts$/, ".ts");
 			} else if (!emitDeclarationOnly && entry === defaultExportCondition) {
 				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.js$/, ".ts");
 			} else {
@@ -362,13 +362,6 @@ function findDefaultPathsMatching<TOutKey>(
 		if (results.length > 0) {
 			return results;
 		}
-	}
-
-	// Throw an error if emitDeclarationOnly is true but no types were found
-	if (emitDeclarationOnly && results.length === 0) {
-		throw new Error(
-			"emitDeclarationOnly is set true in tsconfig.json but no type paths were found in exports.",
-		);
 	}
 
 	return results;

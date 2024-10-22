@@ -124,8 +124,15 @@ async function readPackageJson(): Promise<PackageJson> {
 }
 
 async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfig = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
-	return tsConfig as TsConfigJson;
+	const tsConfigContent = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
+	// Trim content to avoid unexpected whitespace issues
+	const trimmedContent = tsConfigContent.trim();
+
+	// Remove trailing commas before parsing
+	const sanitizedContent = trimmedContent.replace(/,\s*([\]}])/g, "$1");
+
+	// Parse and validate JSON content
+	return JSON.parse(sanitizedContent) as TsConfigJson;
 }
 
 function getOutputConfiguration(
