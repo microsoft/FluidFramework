@@ -217,3 +217,21 @@ function makeFlexNode(context: Context, anchorNode: AnchorNode): FlexTreeNode {
 	cursor.free();
 	return flexNode;
 }
+
+function keyFinder(
+	cursor: ITreeSubscriptionCursor,
+	keyField: FieldKey,
+	index = 0,
+): TreeIndexKey {
+	cursor.enterField(keyField);
+	cursor.enterNode(index);
+	const value = cursor.value;
+	cursor.exitNode();
+	cursor.exitField();
+
+	if (value === undefined) {
+		fail("a value for the key does not exist");
+	}
+
+	return value;
+}

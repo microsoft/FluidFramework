@@ -21,6 +21,21 @@ import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
 import { TreeStatus } from "../flex-tree/index.js";
 
 /**
+ * A function that gets the value to index a node on.
+ * The given cursor should point to the node that will be indexed.
+ *
+ * @returns a value on the node that the index will use as
+ *
+ * @remarks
+ * This function does not own the cursor in any way, it walks the cursor to find the key the node is indexed on
+ * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
+ * and must be disposed elsewhere.
+ *
+ * @alpha
+ */
+export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCursor) => TKey;
+
+/**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
  * A key can map to multiple nodes but each collection of nodes only results in a single value.
  *
@@ -35,6 +50,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	implements TreeIndex<TKey, TValue>
 {
 	/**
+	 * Caches {@link KeyFinder}s for each schema definition. If a schema maps to null, it does not
+	 * need to be considered at all for this index. This allows us to skip subtrees that aren't relevant
+	 * as a performance optimization.
+	 */
+	private readonly keyFinders = new Map<TreeNodeSchemaIdentifier, KeyFinder<TKey> | null>();
+	/**
 	 * The actual index from keys to anchor nodes.
 	 */
 	private readonly nodes = new Map<TKey, AnchorNode[]>();
@@ -45,13 +66,15 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 
 	/**
 	 * @param forest - the forest that is being indexed
-	 * @param keysToIndex - a map of which field to key on for each schema that can be indexed
+	 * @param indexer - a function that retrieves the key finder based on a given schema or undefined if the schema does not have an associated key finder
 	 * @param getValue - a function that returns the value or undefined given at least one anchor node
 	 * @param checkTreeStatus - a function that gets the tree status from an anchor node, used for filtering out detached nodes
 	 */
 	public constructor(
 		private readonly forest: IForestSubscription,
-		private readonly keysToIndex = new Map<TreeNodeSchemaIdentifier, FieldKey>(),
+		private readonly indexer: (
+			schemaId: TreeNodeSchemaIdentifier,
+		) => KeyFinder<TKey> | undefined,
 		private readonly getValue: (anchorNodes: TreeIndexNodes<AnchorNode>) => TValue | undefined,
 		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
 	) {
@@ -185,10 +208,17 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	private indexField(fieldCursor: ITreeSubscriptionCursor): void {
 		forEachNode(fieldCursor, (nodeCursor) => {
-			const keyField = this.keysToIndex.get(nodeCursor.type);
+			const keyFinder = getOrCreate(
+				this.keyFinders,
+				// the node schema type to look up
+				nodeCursor.type,
+				// if the indexer does not return a key finder for this schema, we cache a null value to indicate the indexer
+				// does not need to be called if this schema is encountered in the future
+				(schema) => this.indexer(schema) ?? null,
+			);
 
-			if (keyField !== undefined) {
-				const key = keyFinder<TKey>(nodeCursor, keyField);
+			if (keyFinder !== null) {
+				const key = keyFinder(nodeCursor);
 				const anchor = nodeCursor.buildAnchor();
 				const anchorNode = this.forest.anchors.locate(anchor) ?? fail("expected anchor node");
 
@@ -263,9 +293,4 @@ function filterNodes(
  */
 export function hasElement<T>(array: readonly T[]): array is TreeIndexNodes<T> {
 	return array.length >= 1;
-}
-
-
-function keyFinder<TKey>(tree: ITreeSubscriptionCursor, keyField: FieldKey): TKey {
-
 }
