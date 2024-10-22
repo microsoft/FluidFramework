@@ -363,13 +363,13 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 
 ```
 USAGE
-  $ flub generate source-entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
-    [--outFileSuffix <value>]
+  $ flub generate source-entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outLibDistDir <value>] [--outFilePrefix
+    <value>] [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
+    [--outFileSuffix <value>] [--srcDir <value>] [--node10TypeCompat]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --outDir=<value>          [default: ./src] Directory to emit entrypoint declaration files.
+  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
   --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
@@ -379,6 +379,8 @@ FLAGS
   --outFilePublic=<value>   [default: public] Base file name for public entrypoint declaration files.
   --outFileSuffix=<value>   [default: .ts] File name suffix including extension for emitting entrypoint declaration
                             files.
+  --outLibDistDir=<value>   [default: ./lib] Directory to emit entrypoint declaration files.
+  --srcDir=<value>          [default: src/] Directory to emit source entrypoint declaration files.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -397,13 +399,13 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 
 ```
 USAGE
-  $ flub generate sourceEntrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
-    [--outFileSuffix <value>]
+  $ flub generate sourceEntrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outLibDistDir <value>] [--outFilePrefix
+    <value>] [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
+    [--outFileSuffix <value>] [--srcDir <value>] [--node10TypeCompat]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --outDir=<value>          [default: ./src] Directory to emit entrypoint declaration files.
+  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
   --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
@@ -413,6 +415,8 @@ FLAGS
   --outFilePublic=<value>   [default: public] Base file name for public entrypoint declaration files.
   --outFileSuffix=<value>   [default: .ts] File name suffix including extension for emitting entrypoint declaration
                             files.
+  --outLibDistDir=<value>   [default: ./lib] Directory to emit entrypoint declaration files.
+  --srcDir=<value>          [default: src/] Directory to emit source entrypoint declaration files.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

@@ -16,7 +16,7 @@ import { BaseCommand } from "./base.js";
 
 import { ApiLevel } from "../apiLevel.js";
 import { ApiTag } from "../apiTag.js";
-import type { ExportData } from "../packageExports.js";
+import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryDefaultResolutionPathsFromPackageExports } from "../packageExports.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
@@ -25,13 +25,14 @@ import { unscopedPackageNameString } from "./constants.js";
 
 const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
-	outDir: "./src",
+	outLibDistDir: "./lib",
 	outFilePrefix: "",
 	outFileAlpha: ApiLevel.alpha,
 	outFileBeta: ApiLevel.beta,
 	outFileLegacy: ApiLevel.legacy,
 	outFilePublic: ApiLevel.public,
 	outFileSuffix: ".ts",
+	srcDir: "src/",
 } as const;
 
 /**
@@ -49,9 +50,9 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 			default: optionDefaults.mainEntrypoint,
 			exists: true,
 		}),
-		outDir: Flags.directory({
+		outLibDistDir: Flags.directory({
 			description: "Directory to emit entrypoint declaration files.",
-			default: optionDefaults.outDir,
+			default: optionDefaults.outLibDistDir,
 			exists: true,
 		}),
 		outFilePrefix: Flags.string({
@@ -79,11 +80,19 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 				"File name suffix including extension for emitting entrypoint declaration files.",
 			default: optionDefaults.outFileSuffix,
 		}),
+		srcDir: Flags.string({
+			description: "Directory to emit source entrypoint declaration files.",
+			default: optionDefaults.srcDir,
+			exists: true,
+		}),
+		node10TypeCompat: Flags.boolean({
+			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
+		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint } = this.flags;
+		const { mainEntrypoint, node10TypeCompat } = this.flags;
 
 		const packageJson = await readPackageJson();
 
@@ -142,13 +151,13 @@ async function readTsConfig(): Promise<TsConfigJson> {
  */
 function getOutPathPrefix(
 	{
-		outDir,
+		outLibDistDir,
 		outFilePrefix,
 	}: {
 		/**
-		 * {@link GenerateSourceEntrypointsCommand.flags.outDir}.
+		 * {@link GenerateSourceEntrypointsCommand.flags.outLibDistDir}.
 		 */
-		outDir: string;
+		outLibDistDir: string;
 		/**
 		 * {@link GenerateSourceEntrypointsCommand.flags.outFilePrefix}.
 		 */
@@ -159,11 +168,11 @@ function getOutPathPrefix(
 	if (!outFilePrefix) {
 		// If no other prefix, ensure a trailing path separator.
 		// The join with '.' will effectively trim a trailing / or \ from outDir.
-		return `${path.join(outDir, ".")}${path.sep}`;
+		return `${path.join(outLibDistDir, ".")}${path.sep}`;
 	}
 
 	return path.join(
-		outDir,
+		outLibDistDir,
 		outFilePrefix.includes(unscopedPackageNameString)
 			? outFilePrefix.replace(
 					unscopedPackageNameString,
@@ -197,36 +206,40 @@ function getOutputConfiguration(
 	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>;
 	mapApiTagLevelToOutput: Map<ApiTag, ExportData>;
 } {
-	const { outFileSuffix, outFileAlpha, outFileBeta, outFileLegacy, outFilePublic } = flags;
+	const { outFileSuffix, outFileAlpha, outFileBeta, outFileLegacy, outFilePublic, srcDir } =
+		flags;
 
-	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
-
-	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
-		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
-		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
-		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiTag.public],
+	const mapQuerySrcPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
+		[`${srcDir}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
+		[`${srcDir}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
+		[`${srcDir}${outFilePublic}${outFileSuffix}`, ApiTag.public],
 	]);
 
 	// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
 	// If @alpha is not mapped to same as @legacy, then @legacy can be mapped.
 	if (outFileAlpha !== outFileLegacy) {
-		mapQueryPathToApiTagLevel.set(
-			`${pathPrefix}${outFileLegacy}${outFileSuffix}`,
+		mapQuerySrcPathToApiTagLevel.set(
+			`${srcDir}${outFileLegacy}${outFileSuffix}`,
 			ApiTag.legacy,
 		);
 	}
 
-	const { mapKeyToOutput: mapApiTagLevelToOutput } =
+	let emitDeclarationOnly: boolean = false;
+	if (tsconfig.compilerOptions?.emitDeclarationOnly !== undefined) {
+		emitDeclarationOnly = tsconfig.compilerOptions.emitDeclarationOnly;
+	}
+
+	const { mapKeyToOutput: mapSrcApiTagLevelToOutput } =
 		queryDefaultResolutionPathsFromPackageExports(
 			packageJson,
-			mapQueryPathToApiTagLevel,
-			tsconfig.compilerOptions?.emitDeclarationOnly,
+			mapQuerySrcPathToApiTagLevel,
+			emitDeclarationOnly,
 			logger,
 		);
 
 	return {
-		mapQueryPathToApiTagLevel,
-		mapApiTagLevelToOutput,
+		mapQueryPathToApiTagLevel: mapQuerySrcPathToApiTagLevel,
+		mapApiTagLevelToOutput: mapSrcApiTagLevelToOutput,
 	};
 }
 
@@ -379,6 +392,37 @@ async function generateSourceEntrypoints(
 		}
 
 		fileSavePromises.push(sourceFile.save());
+	}
+
+	await Promise.all(fileSavePromises);
+}
+
+async function generateNode10TypeEntrypoints(
+	mapExportPathToData: Map<string, Node10CompatExportData>,
+	log: CommandLogger,
+): Promise<void> {
+	/**
+	 * List of out file save promises. Used to collect generated file save
+	 * promises so we can await them all at once.
+	 */
+	const fileSavePromises: Promise<void>[] = [];
+
+	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
+		log.info(`\tGenerating ${outFile}`);
+		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
+		fileSavePromises.push(
+			fs.writeFile(
+				outFile,
+				isTypeOnly
+					? `${generatedHeader}export type * from "${relPath}";\n`
+					: `${generatedHeader}export * from "${jsImport}";\n`,
+				"utf8",
+			),
+		);
+	}
+
+	if (fileSavePromises.length === 0) {
+		log.info(`\tNo Node10 compat files generated.`);
 	}
 
 	await Promise.all(fileSavePromises);

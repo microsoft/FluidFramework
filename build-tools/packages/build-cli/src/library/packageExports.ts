@@ -249,21 +249,15 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 
 export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 	packageJson: PackageJson,
-	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
-	emitDeclarationOnly: boolean | undefined,
+	mapSrcQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
+	emitDeclarationOnly: boolean,
 	logger?: Logger,
 ): {
 	mapKeyToOutput: Map<TOutKey, ExportData>;
-	mapTypesPathToExportPaths: Map<
-		string,
-		Readonly<{ exportPath: string; conditions: readonly string[] }>[]
-	>;
+	mapTypesPathToExportPaths: Map<string, Readonly<{ exportPath: string }>[]>;
 } {
 	const mapKeyToOutput = new Map<TOutKey, ExportData>();
-	const mapDefaultPathToExportPaths = new Map<
-		string,
-		Readonly<{ exportPath: string; conditions: readonly string[] }>[]
-	>();
+	const mapDefaultPathToExportPaths = new Map<string, Readonly<{ exportPath: string }>[]>();
 
 	const { exports } = packageJson;
 	if (typeof exports !== "object" || exports === null) {
@@ -292,7 +286,7 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 
 		// fix this
 		const findResults = findDefaultPathsMatching(
-			mapQueryPathToOutKey,
+			mapSrcQueryPathToOutKey,
 			exportValue,
 			emitDeclarationOnly,
 		);
@@ -301,9 +295,9 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 
 			const existingExportsPaths = mapDefaultPathToExportPaths.get(relPath);
 			if (existingExportsPaths === undefined) {
-				mapDefaultPathToExportPaths.set(relPath, [{ exportPath, conditions }]);
+				mapDefaultPathToExportPaths.set(relPath, [{ exportPath }]);
 			} else {
-				existingExportsPaths.push({ exportPath, conditions });
+				existingExportsPaths.push({ exportPath });
 			}
 
 			// Add mapping for using given key, if defined.
@@ -323,19 +317,22 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 function findDefaultPathsMatching<TOutKey>(
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	exports: Readonly<ExportsRecordValue>,
-	emitDeclarationOnly: boolean | undefined,
+	emitDeclarationOnly: boolean,
 ): (ExportData & { outKey: TOutKey | undefined })[] {
 	const results: (ExportData & { outKey: TOutKey | undefined })[] = [];
 
 	const entries = Object.entries(exports);
 	for (const [entry, value] of entries) {
 		// First check if this entry is a leaf; where value is only expected to be a string (a relative file path).
+		let relPath: string;
 		if (typeof value === "string") {
-			// 	if (entry === defaultExportCondition) {
-			const relPath =
-				emitDeclarationOnly === true
-					? value.replace(/lib/g, "src").replace(/\.d.ts$/, ".ts")
-					: value.replace(/lib/g, "src").replace(/\.js$/, ".ts");
+			if (emitDeclarationOnly && entry === typesExportCondition) {
+				relPath = value.replace(/(lib|dist)/g, "src");
+			} else if (!emitDeclarationOnly && entry === defaultExportCondition) {
+				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.js$/, ".ts");
+			} else {
+				continue;
+			}
 
 			const queryResult = valueOfFirstKeyMatching(relPath, mapQueryPathToOutKey);
 			if (queryResult !== undefined) {
@@ -346,10 +343,7 @@ function findDefaultPathsMatching<TOutKey>(
 					isTypeOnly: false,
 				});
 			}
-			// } else {
-			// 	continue;
-			// }
-		} else if (value !== null) {
+		} else if (typeof value !== "string" && value !== null) {
 			// Type constrain away array set that is not supported (and not expected
 			// but non-fatal to known use cases).
 			if (Array.isArray(value)) {
@@ -368,6 +362,13 @@ function findDefaultPathsMatching<TOutKey>(
 		if (results.length > 0) {
 			return results;
 		}
+	}
+
+	// Throw an error if emitDeclarationOnly is true but no types were found
+	if (emitDeclarationOnly && results.length === 0) {
+		throw new Error(
+			"emitDeclarationOnly is set true in tsconfig.json but no type paths were found in exports.",
+		);
 	}
 
 	return results;
