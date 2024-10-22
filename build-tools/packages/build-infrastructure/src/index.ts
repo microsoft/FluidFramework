@@ -62,11 +62,18 @@ export { isIPackage, isIReleaseGroup } from "./types.js";
 // 	type PackageFilterOptions,
 // } from "./filter.js";
 // export {
+// 	FluidRepo as FluidRepoBase,
+// 	getAllDependenciesInRepo,
+// 	loadFluidRepo,
+// } from "./fluidRepo.js";
+// export {
 // 	getFiles,
 // 	findGitRootSync,
 // 	getMergeBaseRemote,
 // 	getRemote,
 // 	getChangedSinceRef,
 // } from "./git.js";
+// export { PackageBase } from "./package.js";
 // export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
+// export { createPackageManager } from "./packageManagers.js";
 // export { setVersion } from "./versions.js";
