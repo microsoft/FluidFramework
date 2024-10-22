@@ -637,7 +637,7 @@ extends:
                     displayName: Publish Artifacts - code-coverage
                     condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                     targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                    artifactName: codeCoverageAnalysis
+                    artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
                     sbomEnabled: false
                     publishLocation: pipeline
 
