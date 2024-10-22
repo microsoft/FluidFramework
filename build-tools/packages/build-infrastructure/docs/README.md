@@ -241,50 +241,10 @@ That should be much easier now.
 
 - Inadequate testing of git-related APIs - can we mock git somehow?
 
-This is the main entrypoint to the build-infrastructure API.
+## Documents
 
-The primary purpose of this package is to provide a common way to organize npm packages into groups called release
-groups, and leverages workspaces functionality provided by package managers like npm, yarn, and pnpm to manage
-interdependencies between packages across a Fluid repo. It then provides APIs to select, filter, and work with those
-package groups.
+- [repo-layout -- the build-infrastructure CLI](documents/repo-layout----the-build-infrastructure-CLI.md)
 
-## Classes
+## Modules
 
-- [NotInGitRepository](classes/NotInGitRepository.md)
-
-## Interfaces
-
-- [FluidPackageJsonFields](interfaces/FluidPackageJsonFields.md)
-- [IFluidBuildDir](interfaces/IFluidBuildDir.md)
-- [IFluidBuildDirs](interfaces/IFluidBuildDirs.md)
-- [IFluidRepo](interfaces/IFluidRepo.md)
-- [IFluidRepoLayout](interfaces/IFluidRepoLayout.md)
-- [Installable](interfaces/Installable.md)
-- [IPackage](interfaces/IPackage.md)
-- [IPackageManager](interfaces/IPackageManager.md)
-- [IReleaseGroup](interfaces/IReleaseGroup.md)
-- [IWorkspace](interfaces/IWorkspace.md)
-- [PackageDependency](interfaces/PackageDependency.md)
-- [ReleaseGroupDefinition](interfaces/ReleaseGroupDefinition.md)
-- [Reloadable](interfaces/Reloadable.md)
-- [WorkspaceDefinition](interfaces/WorkspaceDefinition.md)
-
-## Type Aliases
-
-- [AdditionalPackageProps](type-aliases/AdditionalPackageProps.md)
-- [IFluidBuildDirEntry](type-aliases/IFluidBuildDirEntry.md)
-- [PackageJson](type-aliases/PackageJson.md)
-- [PackageManagerName](type-aliases/PackageManagerName.md)
-- [PackageName](type-aliases/PackageName.md)
-- [ReleaseGroupName](type-aliases/ReleaseGroupName.md)
-- [WorkspaceName](type-aliases/WorkspaceName.md)
-
-## Variables
-
-- [FLUIDREPO\_CONFIG\_VERSION](variables/FLUIDREPO_CONFIG_VERSION.md)
-
-## Functions
-
-- [getFluidRepoLayout](functions/getFluidRepoLayout.md)
-- [isIPackage](functions/isIPackage.md)
-- [isIReleaseGroup](functions/isIReleaseGroup.md)
+- [default entrypoint](default%20entrypoint/README.md)

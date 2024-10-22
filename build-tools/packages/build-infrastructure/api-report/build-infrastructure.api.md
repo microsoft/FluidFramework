@@ -13,12 +13,9 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
-<<<<<<< HEAD
 export function createPackageManager(name: PackageManagerName): IPackageManager;
 
 // @public
-=======
->>>>>>> main
 export interface FluidPackageJsonFields {
     pnpm?: {
         overrides?: Record<string, string>;
@@ -28,7 +25,6 @@ export interface FluidPackageJsonFields {
 // @public
 export const FLUIDREPO_CONFIG_VERSION = 1;
 
-<<<<<<< HEAD
 // @public (undocumented)
 export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
     constructor(searchPath: string, upstreamRemotePartialUrl?: string | undefined);
@@ -63,8 +59,6 @@ export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[])
     workspaces: IWorkspace[];
 };
 
-=======
->>>>>>> main
 // @public
 export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
     config: IFluidRepoLayout;
@@ -178,19 +172,15 @@ export interface IWorkspace extends Installable, Reloadable {
 }
 
 // @public
-<<<<<<< HEAD
 export function loadFluidRepo<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IFluidRepo<P>;
 
 // @public
-=======
->>>>>>> main
 export class NotInGitRepository extends Error {
     constructor(path: string);
     // (undocumented)
     readonly path: string;
 }
 
-<<<<<<< HEAD
 // @public (undocumented)
 export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps extends AdditionalPackageProps = undefined> implements IPackage<J> {
     constructor(packageJsonFilePath: string, packageManager: IPackageManager, workspace: IWorkspace, isWorkspaceRoot: boolean, releaseGroup: ReleaseGroupName, isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
@@ -231,8 +221,6 @@ export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps
     readonly workspace: IWorkspace;
 }
 
-=======
->>>>>>> main
 // @public
 export interface PackageDependency {
     depKind: "prod" | "dev" | "peer";
