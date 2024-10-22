@@ -64,9 +64,6 @@ importers:
       '@group2/pkg-d':
         specifier: 1.0.0
         version: link:../group2/pkg-d
-      '@group3/pkg-g':
-        specifier: 1.0.0
-        version: link:../group3/pkg-g
 
 packages:
 
