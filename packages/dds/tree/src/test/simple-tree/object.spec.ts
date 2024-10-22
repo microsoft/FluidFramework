@@ -34,7 +34,8 @@ function test<T extends ImplicitFieldSchema>(t: TestCase<T>): TestCaseErased {
 /**
  * Map a generic function over an array, assuming that doing so is well defined.
  * @remarks
- * This is useful for when a collection of generic interface value with differing values for their type parameter got collected in a single type erased array, but you want to process them generically.
+ * This is useful for processing arrays of generically parameterized values with differing values for their type parameter.
+ * If the type parameter got type erased when collecting the items into the array, this utility can be used to process the items as iff they each still had the type parameter.
  */
 function unsafeMapErased<E, R>(data: readonly E[], f: <T>(t: never) => R): R[] {
 	return data.map((item) => f(item as never));
