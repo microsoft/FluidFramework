@@ -11,8 +11,8 @@ import type { Engineer, Task, TaskGroup } from "./task";
 const sf = new SchemaFactory("ai-collab-sample-application");
 
 export class SharedTreeTask extends sf.object("Task", {
-	id: sf.identifier,
 	title: sf.string,
+	id: sf.identifier,
 	description: sf.string,
 	priority: sf.string,
 	complexity: sf.number,
@@ -23,8 +23,8 @@ export class SharedTreeTask extends sf.object("Task", {
 export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 
 export class SharedTreeEngineer extends sf.object("Engineer", {
-	id: sf.identifier,
 	name: sf.string,
+	id: sf.identifier,
 	skills: sf.string,
 	maxCapacity: sf.number,
 }) {}
@@ -32,9 +32,9 @@ export class SharedTreeEngineer extends sf.object("Engineer", {
 export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
 
 export class SharedTreeTaskGroup extends sf.object("TaskGroup", {
+	description: sf.string,
 	id: sf.identifier,
 	title: sf.string,
-	description: sf.string,
 	tasks: SharedTreeTaskList,
 	engineers: SharedTreeEngineerList,
 }) {}
@@ -50,58 +50,6 @@ export const INITIAL_APP_STATE = {
 		{
 			title: "My First Task Group",
 			description: "Placeholder for first task group",
-			tasks: [
-				{
-					assignee: "Alice",
-					title: "Task #1",
-					description:
-						"This is the first task. Blah Blah blah Blah Blah blahBlah Blah blahBlah Blah blahBlah Blah blah",
-					priority: "low",
-					complexity: 1,
-					status: "todo",
-				},
-				{
-					assignee: "Bob",
-					title: "Task #2",
-					description:
-						"This is the second task.  Blah Blah blah Blah Blah blahBlah Blah blahBlah Blah blahBlah Blah blah",
-					priority: "medium",
-					complexity: 2,
-					status: "in-progress",
-				},
-				{
-					assignee: "Charlie",
-					title: "Task #3",
-					description:
-						"This is the third task!  Blah Blah blah Blah Blah blahBlah Blah blahBlah Blah blahBlah Blah blah",
-					priority: "high",
-					complexity: 3,
-					status: "done",
-				},
-			],
-			engineers: [
-				{
-					name: "Alice",
-					maxCapacity: 15,
-					skills:
-						"Senior engineer capable of handling complex tasks. Versed in most languages",
-				},
-				{
-					name: "Bob",
-					maxCapacity: 12,
-					skills:
-						"Mid-level engineer capable of handling medium complexity tasks. Versed in React, Node.JS",
-				},
-				{
-					name: "Charlie",
-					maxCapacity: 7,
-					skills: "Junior engineer capable of handling simple tasks. Versed in Node.JS",
-				},
-			],
-		},
-		{
-			title: "My Second Task Group",
-			description: "Placeholder for second task group",
 			tasks: [
 				{
 					assignee: "Alice",

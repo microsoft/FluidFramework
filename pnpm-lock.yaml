@@ -356,6 +356,10 @@ importers:
         version: 5.4.5
 
   examples/apps/ai-collab:
+    dependencies:
+      openai:
+        specifier: ^4.68.0
+        version: 4.68.0(zod@3.23.8)
     devDependencies:
       '@azure/identity':
         specifier: ^4.4.1
