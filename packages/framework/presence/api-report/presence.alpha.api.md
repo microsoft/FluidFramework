@@ -38,9 +38,9 @@ export interface IPresence {
 // @alpha @sealed
 export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
     connectionId(): ClientConnectionId;
+    getStatus(): SessionClientStatus;
     // (undocumented)
     readonly sessionId: SpecificSessionClientId;
-    status(): SessionClientStatus;
 }
 
 // @alpha
@@ -221,7 +221,7 @@ export const SessionClientStatus: {
     readonly Disconnected: "Disconnected";
 };
 
-// @alpha (undocumented)
+// @alpha
 export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
 // @alpha @sealed

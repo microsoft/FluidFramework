@@ -63,7 +63,7 @@ export interface SystemWorkspace
 	/**
 	 * Removes the client connection id from the system workspace.
 	 *
-	 * @param clientConnectionId - The client connection id that was lost.
+	 * @param clientConnectionId - The client connection id to remove.
 	 */
 	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
 }
@@ -92,7 +92,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			connectionId: () => {
 				throw new Error("Client has never been connected");
 			},
-			status: () => SessionClientStatus.Disconnected,
+			getStatus: () => SessionClientStatus.Disconnected,
 		};
 		this.attendees.set(clientSessionId, this.selfAttendee);
 	}
@@ -151,7 +151,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		};
 
 		this.selfAttendee.connectionId = () => clientConnectionId;
-		this.selfAttendee.status = () => SessionClientStatus.Connected;
+		this.selfAttendee.getStatus = () => SessionClientStatus.Connected;
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 	}
 
@@ -165,7 +165,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.connectionId() !== clientConnectionId;
 		if (!attendeeReconnected) {
-			attendee.status = () => SessionClientStatus.Disconnected;
+			attendee.getStatus = () => SessionClientStatus.Disconnected;
 			this.events.emit("attendeeDisconnected", attendee);
 		}
 	}
@@ -211,7 +211,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				sessionId: clientSessionId,
 				order,
 				connectionId,
-				status: () => SessionClientStatus.Connected,
+				getStatus: () => SessionClientStatus.Connected,
 			};
 			this.attendees.set(clientSessionId, attendee);
 			isNew = true;

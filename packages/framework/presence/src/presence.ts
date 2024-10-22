@@ -41,6 +41,8 @@ export const SessionClientStatus = {
 } as const;
 
 /**
+ * Type for the connection status of the {@link ISessionClient}.
+ *
  * @alpha
  */
 export type SessionClientStatus =
@@ -77,7 +79,7 @@ export interface ISessionClient<
 	 * @remarks
 	 * Connection id will change on reconnect.
 	 *
-	 * If {@link ISessionClient.status} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
+	 * If {@link ISessionClient.getStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
 	 */
 	connectionId(): ClientConnectionId;
 
@@ -87,7 +89,7 @@ export interface ISessionClient<
 	 * @returns Status of session client.
 	 *
 	 */
-	status(): SessionClientStatus;
+	getStatus(): SessionClientStatus;
 }
 
 /**
