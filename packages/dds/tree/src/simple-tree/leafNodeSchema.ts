@@ -63,8 +63,27 @@ function makeLeaf<Name extends string, const T extends ValueSchema>(
 }
 
 // Leaf schema shared between all SchemaFactory instances.
+/**
+ * @internal
+ */
 export const stringSchema = makeLeaf("string", ValueSchema.String);
+
+/**
+ * @internal
+ */
 export const numberSchema = makeLeaf("number", ValueSchema.Number);
+
+/**
+ * @internal
+ */
 export const booleanSchema = makeLeaf("boolean", ValueSchema.Boolean);
+
+/**
+ * @internal
+ */
 export const nullSchema = makeLeaf("null", ValueSchema.Null);
+
+/**
+ * @internal
+ */
 export const handleSchema = makeLeaf("handle", ValueSchema.FluidHandle);

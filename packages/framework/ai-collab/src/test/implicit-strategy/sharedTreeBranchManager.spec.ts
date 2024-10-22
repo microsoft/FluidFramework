@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory } from "@fluidframework/tree";
 import * as z from "zod";
 
-import { SharedTreeBranchManager } from "../../shared-tree-diff/index.js";
+import { SharedTreeBranchManager } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
