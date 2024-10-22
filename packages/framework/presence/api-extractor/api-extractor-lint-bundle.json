@@ -1,7 +1,8 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
+	// presence has no alpha/beta APIs but does have a hand-written legacy API; use that for complete bundle analysis
+	"mainEntryPointFilePath": "<projectFolder>/lib/legacy.d.ts",
 	"messages": {
 		"extractorMessageReporting": {
 			// api-extractor does not appear able to resolve self references such as

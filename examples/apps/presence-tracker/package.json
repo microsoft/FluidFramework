@@ -30,6 +30,7 @@
 		"prepack": "npm run webpack",
 		"start": "webpack serve",
 		"start:client:test": "webpack serve --config webpack.test.cjs",
+		"start:tinylicious": "tinylicious",
 		"test": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --passWithNoTests",
@@ -40,6 +41,7 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/data-objects": "workspace:~",
+		"@fluid-experimental/presence": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",

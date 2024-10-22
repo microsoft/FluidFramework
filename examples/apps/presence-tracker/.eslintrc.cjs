@@ -8,5 +8,17 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
 	],
-	rules: {},
+	rules: {
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: [
+					// IndependentMapFactory is internal
+					"@fluid-experimental/*/internal",
+					// Preserve the unfortunate use if internal in examples
+					"@fluidframework/*/internal",
+				],
+			},
+		],
+	},
 };
