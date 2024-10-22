@@ -19,7 +19,6 @@ import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICache, IDenyList, ITenantService } from "./services";
 import * as app from "./app";
-import type { StartupCheck } from "@fluidframework/server-services-shared";
 
 export class HistorianRunner implements IRunner {
 	private server: IWebServer;
@@ -34,7 +33,7 @@ export class HistorianRunner implements IRunner {
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly documentManager: IDocumentManager,
-		private readonly startupCheck: StartupCheck,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly cache?: ICache,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
@@ -70,7 +69,9 @@ export class HistorianRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
-		this.startupCheck.setReady();
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 
