@@ -576,8 +576,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 												revertible.dispose();
 											}
 										},
-										clone: (forkedView?: TreeView<ImplicitFieldSchema>) => {
-											console.log("hello");
+										clone: (newView?: TreeView<ImplicitFieldSchema>): ClonableRevertible => {
+											return this.cloneRevertible(revision, kind, newView);
 										},
 										dispose: () => {
 											if (revertible.status === RevertibleStatus.Disposed) {
@@ -648,6 +648,52 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
+	private cloneRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		view?: TreeView<ImplicitFieldSchema>,
+		onRevertibleDisposed?: (revertible: Revertible) => void,
+	): ClonableRevertible {
+		const commits = this.revertibleCommitBranches.get(revision);
+
+		const revertible: ClonableRevertible = {
+			get status(): RevertibleStatus {
+				const revertibleCommit = commits;
+				return revertibleCommit === undefined
+					? RevertibleStatus.Disposed
+					: RevertibleStatus.Valid;
+			},
+			revert: (release: boolean = true) => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError("Unable to revert a revertible that has been disposed.");
+				}
+
+				const revertMetrics = this.revertRevertible(revision, kind);
+				this.logger?.sendTelemetryEvent({
+					eventName: TreeCheckout.revertTelemetryEventName,
+					...revertMetrics,
+				});
+
+				if (release) {
+					revertible.dispose();
+				}
+			},
+			clone: (newView?: TreeView<ImplicitFieldSchema>) => {
+				return this.cloneRevertible(revision, kind, newView);
+			},
+			dispose: () => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError(
+						"Unable to dispose a revertible that has already been disposed.",
+					);
+				}
+				this.disposeRevertible(revertible, revision);
+				onRevertibleDisposed?.(revertible);
+			},
+		};
+
+		return revertible;
+	}
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): SchematizingSimpleTreeView<TRoot> {
@@ -903,5 +949,5 @@ export function runSynchronous(
  */
 export interface ClonableRevertible extends Revertible {
 	dispose: () => void;
-	clone: (forkedView?: TreeView<ImplicitFieldSchema>) => void;
+	clone: (forkedView?: TreeView<ImplicitFieldSchema>) => ClonableRevertible;
 }

@@ -444,20 +444,16 @@ describe("Undo and redo", () => {
 		}
 
 		const undo = undoStack.pop(); // "newItem" -> ""
-		undo?.revert();
-
-		const afterFirstRevert = view.root.child?.propertyTwo.itemOne; // "newItem"
 
 		const forkedBranch = getBranch(view).branch();
 		const forkedView = forkedBranch.viewWith(
 			new TreeViewConfiguration({ schema: RootNodeSchema }),
 		);
 
-		const originalPropertyTwoAfter = view.root.child?.propertyTwo.itemOne; // "newItem"
-		const forkedPropertyTwoAfter = forkedView.root.child?.propertyTwo.itemOne; // "newItem2"
+		undo?.clone(forkedView).revert();
 
-		console.log(originalPropertyTwoAfter);
-		console.log(forkedPropertyTwoAfter);
+		console.log(view.root.child?.propertyTwo.itemOne);
+		console.log(forkedView.root.child?.propertyTwo.itemOne);
 	});
 });
 
