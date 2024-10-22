@@ -1,7 +1,11 @@
 .serviceSectionContainer {
 	height: 90vh;
-	width: 100vw;
-	position: relative;
+	width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .overlay {
@@ -28,6 +32,7 @@ left:136px;
 border-radius: 24px;
 background-color: #FEFEFE;
 box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
+margin: 1%;
 max-height: 320px;
 max-width: 600px;
 
@@ -186,7 +191,8 @@ color: #000000;
 	flex-direction: row;
 	justify-content: space-evenly;
 	width: 100%;
-	height: 30%;
+	height: 100%;
+	padding: 2%;
 	flex-wrap: wrap;
 }
 

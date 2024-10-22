@@ -2,7 +2,7 @@
 	width: 100%;
 	display: flex;
 	flex-direction: row;
-	justify-content: center;
+	justify-content: space-between;
 	flex-wrap: wrap;
 	padding: 0px;
 	gap: 16px;
@@ -21,7 +21,7 @@
 	padding: 0px;
 	isolation: isolate;
 
-	max-width: 432px;
+	max-width: 32%;
 	max-height: 605px;
 
 	/* day/background/card/normal */

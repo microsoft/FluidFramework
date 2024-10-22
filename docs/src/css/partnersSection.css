@@ -1,17 +1,14 @@
 .partnersSectionContents {
-	/* Grid-Container */
-
-	/* Auto layout */
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	padding: 0px;
-	gap: 160px;
-
-	/* Inside auto layout */
-	flex: none;
-	order: 1;
-	flex-grow: 0;
+	width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0px;
+    /* gap: 160px; */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
 }
 
 /* TODO: better name */
@@ -22,13 +19,11 @@
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
-	justify-content: space-evenly;
+	justify-content: space-between;
 	flex-wrap: wrap;
 	padding: 0px;
-	gap: 48px;
-
-	/* width: 1328px;
-	height: 460px; */
+	width:100%;
+	/* height: 460px; */
 
 	/* Inside auto layout */
 	flex: none;
@@ -47,8 +42,8 @@
 	padding: 0px;
 
 	/* TODO: these were specified as absolute width/height. Presumably we want some min and some max for them */
-	max-width: 378.67px;
-	/* height: 174px; */
+	max-width: 30%;
+	margin: 3% 0%;
 
 	/* Inside auto layout */
 	flex: none;
@@ -240,6 +235,7 @@
 	line-height: 16px;
 	/* or 133% */
 	letter-spacing: -0.03em;
+	margin:0;
 
 	/* reimagine/day/foreground/base(theme)/subtle */
 	color: #17253D;
