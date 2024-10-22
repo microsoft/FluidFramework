@@ -581,10 +581,6 @@ module.exports = {
 					name: "ci:build:docs",
 					body: "api-extractor run",
 				},
-				{
-					name: "build:packlist",
-					body: "flub generate packlist --dir .",
-				},
 			],
 			// All of our public packages should be using api-extractor
 			requiredDevDependencies: ["@microsoft/api-extractor"],
