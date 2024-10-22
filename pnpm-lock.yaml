@@ -1095,6 +1095,12 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      source-map-loader:
+        specifier: ^5.0.0
+        version: 5.0.0(webpack@5.95.0)
+      tinylicious:
+        specifier: ^5.0.0
+        version: 5.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.25.7)(jest@29.7.0)(typescript@5.4.5)
@@ -13525,12 +13531,18 @@ importers:
 
   packages/test/local-server-tests:
     dependencies:
+      '@fluid-experimental/tree':
+        specifier: workspace:~
+        version: link:../../../experimental/dds/tree
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
+      '@fluid-private/test-drivers':
+        specifier: workspace:~
+        version: link:../test-drivers
       '@fluid-private/test-loader-utils':
         specifier: workspace:~
         version: link:../../loader/test-loader-utils
@@ -13636,6 +13648,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3

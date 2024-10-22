@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree, SchemaFactory, TreeViewConfiguration } from "fluid-framework";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "fluid-framework";
 
 import type { Engineer, Task, TaskGroup } from "./task";
 
 // The string passed to the SchemaFactory should be unique
 const sf = new SchemaFactory("ai-collab-sample-application");
+
+// NOTE that there is currently a bug with the ai-collab library that requires us to rearrance the keys of each type to not have the same first key.
 
 export class SharedTreeTask extends sf.object("Task", {
 	title: sf.string,
