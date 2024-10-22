@@ -255,12 +255,10 @@ export async function getPreReleaseDependencies(
 	 */
 	const updateDependenciesOnThesePackages: ReleasePackage[] = [];
 
-	if (releaseGroup instanceof Package) {
-		packagesToCheck.push(releaseGroup);
-		updateDependenciesOnThesePackages.push(
-			...context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name),
-		);
-	} else if (releaseGroup instanceof MonoRepo || isReleaseGroup(releaseGroup)) {
+	if (
+		releaseGroup instanceof MonoRepo ||
+		(typeof releaseGroup === "string" && isReleaseGroup(releaseGroup))
+	) {
 		const monorepo =
 			releaseGroup instanceof MonoRepo
 				? releaseGroup
@@ -277,8 +275,7 @@ export async function getPreReleaseDependencies(
 		updateDependenciesOnThesePackages.push(
 			...context.packagesNotInReleaseGroup(monorepo.name).map((p) => p.name),
 		);
-	} else {
-		assert(typeof releaseGroup === "string");
+	} else if (typeof releaseGroup === "string") {
 		const pkg = context.fullPackageMap.get(releaseGroup);
 		if (pkg === undefined) {
 			throw new Error(`Can't find package in context: ${releaseGroup}`);
@@ -287,6 +284,11 @@ export async function getPreReleaseDependencies(
 		packagesToCheck.push(pkg);
 		updateDependenciesOnThesePackages.push(
 			...context.packagesNotInReleaseGroup(pkg).map((p) => p.name),
+		);
+	} else {
+		packagesToCheck.push(releaseGroup);
+		updateDependenciesOnThesePackages.push(
+			...context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name),
 		);
 	}
 
@@ -373,7 +375,7 @@ export function generateReleaseGitTagName(
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		const kindLowerCase = releaseGroupOrPackage.kind.toLowerCase();
 		tagName = `${kindLowerCase}_v${version ?? releaseGroupOrPackage.version}`;
-	} else if (releaseGroupOrPackage instanceof Package) {
+	} else if (typeof releaseGroupOrPackage === "object") {
 		tagName = `${PackageName.getUnscopedName(releaseGroupOrPackage.name)}_v${
 			version ?? releaseGroupOrPackage.version
 		}`;
@@ -567,7 +569,7 @@ export async function setVersion(
 		}
 	}
 
-	if (releaseGroupOrPackage instanceof Package) {
+	if (!(releaseGroupOrPackage instanceof MonoRepo)) {
 		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.
 		return;
 	}
@@ -918,7 +920,7 @@ export function ensureDevDependencyExists(
  *
  * @see {@link getFullTarballName} for a version of this function that includes the package version and file extension.
  */
-export function getTarballName(pkg: PackageJson | string): string {
+export function getTarballName(pkg: Pick<PackageJson, "name"> | string): string {
 	const pkgName = typeof pkg === "string" ? pkg : pkg.name;
 	const name = pkgName.replaceAll("@", "").replaceAll("/", "-");
 	return name;

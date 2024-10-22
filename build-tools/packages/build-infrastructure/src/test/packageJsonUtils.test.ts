@@ -3,21 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
+import { describe, it } from "mocha";
+
 import {
-	PackageJson,
 	readPackageJsonAndIndent,
 	updatePackageJsonFile,
-} from "../common/npmPackage";
-import { testDataPath } from "./init";
+	updatePackageJsonFileAsync,
+} from "../packageJsonUtils.js";
+import { type PackageJson } from "../types.js";
+
+import { testDataPath } from "./init.js";
 
 /**
  * A transformer function that does nothing.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testTransformer = (json: PackageJson) => {
+const testTransformer = (json: PackageJson): void => {
+	// do nothing
+	return;
+};
+
+/**
+ * A transformer function that does nothing.
+ */
+const testTransformerAsync = async (json: PackageJson): Promise<void> => {
 	// do nothing
 	return;
 };
@@ -53,5 +64,23 @@ describe("updatePackageJsonFile", () => {
 		updatePackageJsonFile(testFile, testTransformer);
 		const [, indent] = readPackageJsonAndIndent(testFile);
 		assert.strictEqual(indent, expectedIndent);
+	});
+
+	describe("updatePackageJsonFileAsync", () => {
+		it("outputs file with spaces", async () => {
+			const testFile = path.resolve(testDataPath, "spaces/_package.json");
+			const expectedIndent = "  ";
+			await updatePackageJsonFileAsync(testFile, testTransformerAsync);
+			const [, indent] = readPackageJsonAndIndent(testFile);
+			assert.strictEqual(indent, expectedIndent);
+		});
+
+		it("outputs file with tabs", async () => {
+			const testFile = path.resolve(testDataPath, "tabs/_package.json");
+			const expectedIndent = "\t";
+			await updatePackageJsonFileAsync(testFile, testTransformerAsync);
+			const [, indent] = readPackageJsonAndIndent(testFile);
+			assert.strictEqual(indent, expectedIndent);
+		});
 	});
 });

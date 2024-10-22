@@ -15,7 +15,7 @@ import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { defaultLogger } from "../../../common/logging";
 import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
-import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
+import { BuildGraphPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 
@@ -46,7 +46,7 @@ export abstract class LeafTask extends Task {
 	}
 
 	constructor(
-		node: BuildPackage,
+		node: BuildGraphPackage,
 		command: string,
 		context: BuildContext,
 		taskName: string | undefined,
@@ -544,7 +544,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 
 export class UnknownLeafTask extends LeafTask {
 	constructor(
-		node: BuildPackage,
+		node: BuildGraphPackage,
 		command: string,
 		context: BuildContext,
 		taskName: string | undefined,
