@@ -20,12 +20,12 @@
 
 export {
 	// @beta APIs
-	IOdspAudience, 
-	IOdspTokenProvider, 
-	OdspClient, 
-	OdspClientProps, 
-	OdspConnectionConfig, 
-	OdspContainerServices, 
-	OdspMember, 
-	TokenResponse
+	IOdspAudience,
+	IOdspTokenProvider,
+	OdspClient,
+	OdspClientProps,
+	OdspConnectionConfig,
+	OdspContainerServices,
+	OdspMember,
+	TokenResponse,
 } from "./index.js";

@@ -524,7 +524,6 @@ module.exports = {
 				["nyc", "nyc"],
 				["oclif", "oclif"],
 				["prettier", "prettier"],
-				["renamer", "renamer"],
 				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
 				["ts2esm", "ts2esm"],

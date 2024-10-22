@@ -17,18 +17,18 @@
 
 export {
 	// @legacy APIs
-	IChannel, 
-	IChannelAttributes, 
-	IChannelFactory, 
-	IChannelServices, 
-	IChannelStorageService, 
-	IDeltaConnection, 
-	IDeltaHandler, 
-	IDeltaManagerErased, 
-	IFluidDataStoreRuntime, 
-	IFluidDataStoreRuntimeEvents, 
-	Internal_InterfaceOfJsonableTypesWith, 
-	Jsonable, 
-	JsonableTypeWith, 
-	Serializable
+	IChannel,
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelServices,
+	IChannelStorageService,
+	IDeltaConnection,
+	IDeltaHandler,
+	IDeltaManagerErased,
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
+	Internal_InterfaceOfJsonableTypesWith,
+	Jsonable,
+	JsonableTypeWith,
+	Serializable,
 } from "./index.js";

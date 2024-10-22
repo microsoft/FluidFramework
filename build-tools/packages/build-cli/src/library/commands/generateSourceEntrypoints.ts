@@ -4,7 +4,6 @@
  */
 
 import fs from "node:fs/promises";
-import path from "node:path";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -16,17 +15,14 @@ import { BaseCommand } from "./base.js";
 
 import { ApiLevel } from "../apiLevel.js";
 import { ApiTag } from "../apiTag.js";
-import type { ExportData, Node10CompatExportData } from "../packageExports.js";
+import type { ExportData } from "../packageExports.js";
 import { queryDefaultResolutionPathsFromPackageExports } from "../packageExports.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
 import type { TsConfigJson } from "type-fest";
-import { unscopedPackageNameString } from "./constants.js";
 
 const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
-	outLibDistDir: "./lib",
-	outFilePrefix: "",
 	outFileAlpha: ApiLevel.alpha,
 	outFileBeta: ApiLevel.beta,
 	outFileLegacy: ApiLevel.legacy,
@@ -49,15 +45,6 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 			description: "Main entrypoint file containing all untrimmed exports.",
 			default: optionDefaults.mainEntrypoint,
 			exists: true,
-		}),
-		outLibDistDir: Flags.directory({
-			description: "Directory to emit entrypoint declaration files.",
-			default: optionDefaults.outLibDistDir,
-			exists: true,
-		}),
-		outFilePrefix: Flags.string({
-			description: `File name prefix for emitting entrypoint declaration files. Pattern of '${unscopedPackageNameString}' within value will be replaced with the unscoped name of this package.`,
-			default: optionDefaults.outFilePrefix,
 		}),
 		outFileAlpha: Flags.string({
 			description: "Base file name for alpha entrypoint declaration files.",
@@ -85,24 +72,20 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 			default: optionDefaults.srcDir,
 			exists: true,
 		}),
-		node10TypeCompat: Flags.boolean({
-			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
-		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint, node10TypeCompat } = this.flags;
+		const { mainEntrypoint } = this.flags;
 
 		const packageJson = await readPackageJson();
 
-		// Check for matched tsconfig with `emitDeclarationOnly: true`
-		const tsconfig = await readTsConfig();
+		const tsConfig = await readTsConfig();
 
 		const { mapQueryPathToApiTagLevel, mapApiTagLevelToOutput } = getOutputConfiguration(
 			this.flags,
 			packageJson,
-			tsconfig,
+			tsConfig,
 			this.logger,
 		);
 
@@ -142,59 +125,7 @@ async function readPackageJson(): Promise<PackageJson> {
 
 async function readTsConfig(): Promise<TsConfigJson> {
 	const tsConfig = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
-	return JSON.parse(tsConfig) as TsConfigJson;
-}
-
-/**
- * Returns the path "prefix" for all of the output files.
- * This is the out path + / + any common file prefix.
- */
-function getOutPathPrefix(
-	{
-		outLibDistDir,
-		outFilePrefix,
-	}: {
-		/**
-		 * {@link GenerateSourceEntrypointsCommand.flags.outLibDistDir}.
-		 */
-		outLibDistDir: string;
-		/**
-		 * {@link GenerateSourceEntrypointsCommand.flags.outFilePrefix}.
-		 */
-		outFilePrefix: string;
-	},
-	packageJson: PackageJson,
-): string {
-	if (!outFilePrefix) {
-		// If no other prefix, ensure a trailing path separator.
-		// The join with '.' will effectively trim a trailing / or \ from outDir.
-		return `${path.join(outLibDistDir, ".")}${path.sep}`;
-	}
-
-	return path.join(
-		outLibDistDir,
-		outFilePrefix.includes(unscopedPackageNameString)
-			? outFilePrefix.replace(
-					unscopedPackageNameString,
-					getLocalUnscopedPackageName(packageJson),
-				)
-			: outFilePrefix,
-	);
-}
-
-function getLocalUnscopedPackageName(packageJson: PackageJson): string {
-	const packageName = packageJson.name;
-	if (typeof packageName !== "string") {
-		// eslint-disable-next-line unicorn/prefer-type-error
-		throw new Error(`unable to read package name`);
-	}
-
-	const unscopedPackageName = /[^/]+$/.exec(packageName)?.[0];
-	if (unscopedPackageName === undefined) {
-		throw new Error(`unable to parse package name`);
-	}
-
-	return unscopedPackageName;
+	return tsConfig as TsConfigJson;
 }
 
 function getOutputConfiguration(
@@ -392,37 +323,6 @@ async function generateSourceEntrypoints(
 		}
 
 		fileSavePromises.push(sourceFile.save());
-	}
-
-	await Promise.all(fileSavePromises);
-}
-
-async function generateNode10TypeEntrypoints(
-	mapExportPathToData: Map<string, Node10CompatExportData>,
-	log: CommandLogger,
-): Promise<void> {
-	/**
-	 * List of out file save promises. Used to collect generated file save
-	 * promises so we can await them all at once.
-	 */
-	const fileSavePromises: Promise<void>[] = [];
-
-	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
-		log.info(`\tGenerating ${outFile}`);
-		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
-		fileSavePromises.push(
-			fs.writeFile(
-				outFile,
-				isTypeOnly
-					? `${generatedHeader}export type * from "${relPath}";\n`
-					: `${generatedHeader}export * from "${jsImport}";\n`,
-				"utf8",
-			),
-		);
-	}
-
-	if (fileSavePromises.length === 0) {
-		log.info(`\tNo Node10 compat files generated.`);
 	}
 
 	await Promise.all(fileSavePromises);

@@ -13,5 +13,4 @@
  * with a data store.
  *
  * @packageDocumentation
- */export {}
-
+ */ export {};
