@@ -35,10 +35,16 @@ export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSes
  *
  * @alpha
  */
-export enum SessionClientStatus {
-	Connected = "Connected",
-	Disconnected = "Disconnected",
-}
+export const SessionClientStatus = {
+	Connected: "Connected",
+	Disconnected: "Disconnected",
+} as const;
+
+/**
+ * @alpha
+ */
+export type SessionClientStatus =
+	(typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
 /**
  * A client within a Fluid session (period of container connectivity to service).
@@ -71,7 +77,7 @@ export interface ISessionClient<
 	 * @remarks
 	 * Connection id will change on reconnect.
 	 *
-	 * If {@link ISessionClient.status} is {@link SessionClientStatus.Disconnected}, this will represent the last known connection id,
+	 * If {@link ISessionClient.status} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
 	 */
 	connectionId(): ClientConnectionId;
 
@@ -81,7 +87,7 @@ export interface ISessionClient<
 	 * @returns Status of session client.
 	 *
 	 */
-	status: SessionClientStatus;
+	status(): SessionClientStatus;
 }
 
 /**
