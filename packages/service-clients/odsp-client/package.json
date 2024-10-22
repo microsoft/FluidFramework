@@ -16,7 +16,7 @@
 		".": {
 			"import": {
 				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
+				"default": "./lib/public.js"
 			},
 			"require": {
 				"types": "./dist/public.d.ts",
@@ -26,7 +26,7 @@
 		"./beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
-				"default": "./lib/index.js"
+				"default": "./lib/beta.js"
 			},
 			"require": {
 				"types": "./dist/beta.d.ts",
@@ -49,8 +49,8 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
-		"build:entrypoints": "flub generate source-entrypoints",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./src --node10TypeCompat",
+		"build:entrypoints": "flub generate source-entrypoints --outDir ./src",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",

@@ -16,8 +16,8 @@ import { BaseCommand } from "./base.js";
 
 import { ApiLevel } from "../apiLevel.js";
 import { ApiTag } from "../apiTag.js";
-import type { ExportData, Node10CompatExportData } from "../packageExports.js";
-import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
+import type { ExportData } from "../packageExports.js";
+import { queryDefaultResolutionPathsFromPackageExports } from "../packageExports.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
 import type { TsConfigJson } from "type-fest";
@@ -79,45 +79,23 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 				"File name suffix including extension for emitting entrypoint declaration files.",
 			default: optionDefaults.outFileSuffix,
 		}),
-		node10TypeCompat: Flags.boolean({
-			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
-		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint, node10TypeCompat } = this.flags;
+		const { mainEntrypoint } = this.flags;
 
 		const packageJson = await readPackageJson();
 
 		// Check for matched tsconfig with `emitDeclarationOnly: true`
 		const tsconfig = await readTsConfig();
 
-		const {
-			mapQueryPathToApiTagLevel,
-			mapApiTagLevelToOutput,
-			mapNode10CompatExportPathToData,
-		} = getOutputConfiguration(this.flags, packageJson, tsconfig, this.logger);
-
-		const promises: Promise<void>[] = [];
-
-		// Requested specific outputs that are not in the output map are explicitly
-		// removed for clean incremental build support.
-		for (const [outputPath, apiLevel] of mapQueryPathToApiTagLevel.entries()) {
-			if (
-				apiLevel !== undefined &&
-				typeof outputPath === "string" &&
-				!mapApiTagLevelToOutput.has(apiLevel)
-			) {
-				promises.push(fs.rm(outputPath, { force: true }));
-			}
-		}
-
-		if (node10TypeCompat && mapNode10CompatExportPathToData.size === 0) {
-			throw new Error(
-				'There are no API level "exports" requiring Node10 type compatibility generation.',
-			);
-		}
+		const { mapQueryPathToApiTagLevel, mapApiTagLevelToOutput } = getOutputConfiguration(
+			this.flags,
+			packageJson,
+			tsconfig,
+			this.logger,
+		);
 
 		if (mapApiTagLevelToOutput.size === 0) {
 			throw new Error(
@@ -127,24 +105,20 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 			);
 		}
 
+		const promises: Promise<void>[] = [];
+
 		// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
 		// When @alpha is mapped to /legacy, @beta should not be included in
 		// @alpha aka /legacy entrypoint.
 		const separateBetaFromAlpha = this.flags.outFileAlpha !== ApiLevel.alpha;
 		promises.push(
-			generateEntrypoints(
+			generateSourceEntrypoints(
 				mainEntrypoint,
 				mapApiTagLevelToOutput,
 				this.logger,
 				separateBetaFromAlpha,
 			),
 		);
-
-		if (node10TypeCompat) {
-			promises.push(
-				generateNode10TypeEntrypoints(mapNode10CompatExportPathToData, this.logger),
-			);
-		}
 
 		// All of the output actions (deletes of stale files or writing of new/updated files)
 		// are all independent and can be done in parallel.
@@ -158,7 +132,7 @@ async function readPackageJson(): Promise<PackageJson> {
 }
 
 async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfig = await fs.readFile("./package.json", { encoding: "utf8" });
+	const tsConfig = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
 	return JSON.parse(tsConfig) as TsConfigJson;
 }
 
@@ -215,23 +189,15 @@ function getLocalUnscopedPackageName(packageJson: PackageJson): string {
 }
 
 function getOutputConfiguration(
-	flags: Readonly<Record<keyof typeof optionDefaults, string>> & { node10TypeCompat: boolean },
+	flags: Readonly<Record<keyof typeof optionDefaults, string>>,
 	packageJson: PackageJson,
 	tsconfig: TsConfigJson,
 	logger?: CommandLogger,
 ): {
 	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>;
 	mapApiTagLevelToOutput: Map<ApiTag, ExportData>;
-	mapNode10CompatExportPathToData: Map<string, Node10CompatExportData>;
 } {
-	const {
-		outFileSuffix,
-		outFileAlpha,
-		outFileBeta,
-		outFileLegacy,
-		outFilePublic,
-		node10TypeCompat,
-	} = flags;
+	const { outFileSuffix, outFileAlpha, outFileBeta, outFileLegacy, outFilePublic } = flags;
 
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
@@ -248,83 +214,20 @@ function getOutputConfiguration(
 			`${pathPrefix}${outFileLegacy}${outFileSuffix}`,
 			ApiTag.legacy,
 		);
-
-		const emitDeclarationOnly = tsconfig?.compilerOptions?.emitDeclarationOnly;
-
-		if (emitDeclarationOnly === true) {
-			const typesPath = tsconfig.compilerOptions?.types;
-			mapQueryPathToApiTagLevel.set(`${pathPrefix}${typesPath}`, undefined);
-		}
 	}
 
-	if (node10TypeCompat) {
-		// question - why????
-		// /internal export may be supported without API level generation; so
-		// add query for such path for Node10 type compat generation.
-		const dirPath = pathPrefix.replace(/\/[^/]*$/, "");
-		const internalPathRegex = new RegExp(`${dirPath}\\/index\\.d\\.?[cm]?ts$`);
-		mapQueryPathToApiTagLevel.set(internalPathRegex, undefined);
-	}
-
-	const { mapKeyToOutput: mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
-		queryTypesResolutionPathsFromPackageExports(
+	const { mapKeyToOutput: mapApiTagLevelToOutput } =
+		queryDefaultResolutionPathsFromPackageExports(
 			packageJson,
 			mapQueryPathToApiTagLevel,
-			{ node10TypeCompat, onlyFirstMatches: true },
+			tsconfig.compilerOptions?.emitDeclarationOnly,
 			logger,
 		);
 
 	return {
 		mapQueryPathToApiTagLevel,
 		mapApiTagLevelToOutput,
-		mapNode10CompatExportPathToData,
 	};
-}
-
-/**
- * Reads command line argument values that are simple value following option like:
- * --optionName value
- *
- * @param commandLine - command line to extract from
- * @param argQuery - record of arguments to read (keys) with default values
- * @returns record of argument values extracted or given default value
- */
-function readArgValues<TQuery extends Readonly<Record<string, string>>>(
-	commandLine: string,
-	argQuery: TQuery,
-): TQuery {
-	const values: Record<string, string> = {};
-	const args = commandLine.split(" ");
-	for (const [argName, defaultValue] of Object.entries(argQuery)) {
-		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
-		values[argName] =
-			0 < indexOfArgValue && indexOfArgValue < args.length
-				? args[indexOfArgValue]
-				: defaultValue;
-	}
-	return values as TQuery;
-}
-
-export function getGenerateSourceEntrypointsOutput(
-	packageJson: PackageJson,
-	tsconfig: TsConfigJson,
-	commandLine: string,
-): IterableIterator<ExportData> {
-	// Determine select output from flub generate entrypoints.
-	// Fluid packages use two import levels: internal and public.
-	// internal is built from tsc and public is generated. It is likely exported
-	// as . (root), but what matters is matching command implementation and
-	// output for public. So, match required logic bits of normal command.
-	// If it were possible, it would be better to use the command code
-	// more directly.
-	const args = readArgValues(commandLine, optionDefaults);
-
-	const { mapApiTagLevelToOutput } = getOutputConfiguration(
-		{ ...args, node10TypeCompat: commandLine.includes("--node10TypeCompat") },
-		packageJson,
-		tsconfig,
-	);
-	return mapApiTagLevelToOutput.values();
 }
 
 function sourceContext(node: Node): string {
@@ -351,7 +254,7 @@ const generatedHeader: string = `/*!
  * @param log - logger
  * @param separateBetaFromAlpha - if true, beta APIs will not be included in alpha outputs
  */
-async function generateEntrypoints(
+async function generateSourceEntrypoints(
 	mainEntrypoint: string,
 	mapApiTagLevelToOutput: Map<ApiTag, ExportData>,
 	log: CommandLogger,
@@ -476,37 +379,6 @@ async function generateEntrypoints(
 		}
 
 		fileSavePromises.push(sourceFile.save());
-	}
-
-	await Promise.all(fileSavePromises);
-}
-
-async function generateNode10TypeEntrypoints(
-	mapExportPathToData: Map<string, Node10CompatExportData>,
-	log: CommandLogger,
-): Promise<void> {
-	/**
-	 * List of out file save promises. Used to collect generated file save
-	 * promises so we can await them all at once.
-	 */
-	const fileSavePromises: Promise<void>[] = [];
-
-	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
-		log.info(`\tGenerating ${outFile}`);
-		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
-		fileSavePromises.push(
-			fs.writeFile(
-				outFile,
-				isTypeOnly
-					? `${generatedHeader}export type * from "${relPath}";\n`
-					: `${generatedHeader}export * from "${jsImport}";\n`,
-				"utf8",
-			),
-		);
-	}
-
-	if (fileSavePromises.length === 0) {
-		log.info(`\tNo Node10 compat files generated.`);
 	}
 
 	await Promise.all(fileSavePromises);

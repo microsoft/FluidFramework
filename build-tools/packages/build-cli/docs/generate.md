@@ -365,11 +365,10 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 USAGE
   $ flub generate source-entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
     [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
-    [--outFileSuffix <value>] [--node10TypeCompat]
+    [--outFileSuffix <value>]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outDir=<value>          [default: ./src] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
@@ -400,11 +399,10 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 USAGE
   $ flub generate sourceEntrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
     [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
-    [--outFileSuffix <value>] [--node10TypeCompat]
+    [--outFileSuffix <value>]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outDir=<value>          [default: ./src] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
