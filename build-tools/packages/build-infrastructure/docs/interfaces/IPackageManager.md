@@ -16,9 +16,11 @@ A package manager, such as "npm" or "pnpm".
 readonly lockfileName: string;
 ```
 
+The name of the lockfile used by the package manager.
+
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:263](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L263)
+[packages/build-infrastructure/src/types.ts:285](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L285)
 
 ***
 
@@ -28,9 +30,11 @@ readonly lockfileName: string;
 readonly name: PackageManagerName;
 ```
 
+The name of the package manager.
+
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:262](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L262)
+[packages/build-infrastructure/src/types.ts:280](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L280)
 
 ## Methods
 
@@ -40,9 +44,16 @@ readonly name: PackageManagerName;
 installCommand(updateLockfile): string
 ```
 
+Returns an install command that can be used to install dependencies using this package manager.
+
 #### Parameters
 
 • **updateLockfile**: `boolean`
+
+If `true`, then the returned command will include flags or arguments necessary to update
+the lockfile during install. If `false`, such flags or arguments should be omitted. Note that the command will
+_not_ include the package manager name istself. For example, the `npm` package manager will return the string
+`"install"`, not `"npm install"`.
 
 #### Returns
 
@@ -50,4 +61,4 @@ installCommand(updateLockfile): string
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:264](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L264)
+[packages/build-infrastructure/src/types.ts:295](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L295)

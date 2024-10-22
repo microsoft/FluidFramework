@@ -9,7 +9,7 @@ import type { PackageJson as PackageJson_2 } from 'type-fest';
 import type { SetRequired } from 'type-fest';
 import { SimpleGit } from 'simple-git';
 
-// @public (undocumented)
+// @public
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
@@ -31,6 +31,8 @@ export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
 // @public @deprecated
 export interface IFluidBuildDir {
     directory: string;
+    // @deprecated
+    ignoredDirs?: string[];
 }
 
 // @public @deprecated (undocumented)
@@ -97,11 +99,8 @@ export interface IPackage<J extends PackageJson = PackageJson> extends Installab
 
 // @public
 export interface IPackageManager {
-    // (undocumented)
     installCommand(updateLockfile: boolean): string;
-    // (undocumented)
     readonly lockfileName: string;
-    // (undocumented)
     readonly name: PackageManagerName;
 }
 
@@ -144,15 +143,12 @@ export class NotInGitRepository extends Error {
 
 // @public
 export interface PackageDependency {
-    // (undocumented)
-    depClass: "prod" | "dev" | "peer";
-    // (undocumented)
+    depKind: "prod" | "dev" | "peer";
     name: PackageName;
-    // (undocumented)
     version: string;
 }
 
-// @public (undocumented)
+// @public
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
 // @public
@@ -161,7 +157,7 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
 // @public
 export type PackageName = Opaque<string, "PackageName">;
 
-// @public (undocumented)
+// @public
 export interface ReleaseGroupDefinition {
     adoPipelineUrl?: string;
     exclude?: string[];
@@ -178,11 +174,9 @@ export interface Reloadable {
     reload(): void;
 }
 
-// @public (undocumented)
+// @public
 export interface WorkspaceDefinition {
-    // (undocumented)
     directory: string;
-    // (undocumented)
     releaseGroups: {
         [name: string]: ReleaseGroupDefinition;
     };

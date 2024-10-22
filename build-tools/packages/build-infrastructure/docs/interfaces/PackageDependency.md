@@ -6,19 +6,26 @@
 
 # Interface: PackageDependency
 
-Information about a package dependency.
+Information about a package dependency. That is, en extry in the "dependencies", "devDependencies", or
+"peerDependencies" fields in package.json.
 
 ## Properties
 
-### depClass
+### depKind
 
 ```ts
-depClass: "prod" | "dev" | "peer";
+depKind: "prod" | "dev" | "peer";
 ```
+
+The kind of dependency, based on the field that the dependency comes from.
+
+- prod corresponds to the dependencies field.
+- dev corresponds to the devDependencies field.
+- peer corresponds to the peerDependencies field.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:272](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L272)
+[packages/build-infrastructure/src/types.ts:320](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L320)
 
 ***
 
@@ -28,9 +35,11 @@ depClass: "prod" | "dev" | "peer";
 name: PackageName;
 ```
 
+The name of the dependency.
+
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:270](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L270)
+[packages/build-infrastructure/src/types.ts:306](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L306)
 
 ***
 
@@ -40,6 +49,8 @@ name: PackageName;
 version: string;
 ```
 
+The version or version range of the dependency.
+
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:271](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L271)
+[packages/build-infrastructure/src/types.ts:311](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L311)

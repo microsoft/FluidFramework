@@ -22,4 +22,4 @@ A type guard that returns `true` if the item is an [IPackage](../interfaces/IPac
 
 ## Defined in
 
-[packages/build-infrastructure/src/types.ts:379](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L379)
+[packages/build-infrastructure/src/types.ts:430](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L430)

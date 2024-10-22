@@ -46,4 +46,4 @@ If a config is not found or if the config version is not supported.
 
 ## Defined in
 
-[packages/build-infrastructure/src/config.ts:198](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L198)
+[packages/build-infrastructure/src/config.ts:218](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L218)

@@ -41,24 +41,42 @@ export interface IFluidRepoLayout {
 	repoLayout?: {
 		workspaces: {
 			/**
-			 * A mapping of workspace name to folder containing a workspace config file (e.g. pnpm-workspace.yaml)
+			 * A mapping of workspace name to folder containing a workspace config file (e.g. pnpm-workspace.yaml).
 			 */
 			[name: string]: WorkspaceDefinition;
 		};
 	};
 }
 
+/**
+ * The definition of a workspace ih configuration.
+ */
 export interface WorkspaceDefinition {
+	/**
+	 * The root directory of the workspace. This folder should contain a workspace config file (e.g. pnpm-workspace.yaml).
+	 */
 	directory: string;
+
+	/**
+	 * Definitions of the release groups within the workspace.
+	 */
 	releaseGroups: {
+		/**
+		 * A mapping of release group name to a definition for the release group.
+		 */
 		[name: string]: ReleaseGroupDefinition;
 	};
 }
 
+/**
+ * The definition of a release group ih configuration.
+ */
 export interface ReleaseGroupDefinition {
 	/**
 	 * An array of scopes or package names that should be included in the release group. Each package must
 	 * belong to a single release group.
+	 *
+	 * To include all packages, set this value to a single element: `["*"]`.
 	 */
 	include: string[];
 
@@ -111,12 +129,14 @@ export interface IFluidBuildDir {
 
 	/**
 	 * An array of paths under `directory` that should be ignored.
+	 *
+	 * @deprecated This field is unused in all known configs and is ignored by the back-compat loading code.
 	 */
-	// ignoredDirs?: string[];
+	ignoredDirs?: string[];
 }
 
 /**
- * Checks if a package matches a given release group definition.
+ * Checks if a package matches a given {@link ReleaseGroupDefinition}.
  *
  * @returns `true` if the package matches the release group definition; `false` otherwise.
  */
@@ -128,7 +148,7 @@ export function matchesReleaseGroupDefinition(
 	let shouldInclude = false;
 
 	if (
-		// Special case: include with a single element, "*", should include all packages.
+		// Special case: an include value with a single element, "*", should include all packages.
 		(include.length === 1 && include[0] === "*") ||
 		// If the package name matches an entry in the include list, it should be included
 		include.includes(name) ||

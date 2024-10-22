@@ -20,6 +20,8 @@ See [IWorkspace](IWorkspace.md) and [IReleaseGroup](IReleaseGroup.md) for more d
 
 • **P** *extends* [`IPackage`](IPackage.md) = [`IPackage`](IPackage.md)
 
+The type of [IPackage](IPackage.md) the repo uses. This can be any type that implements [IPackage](IPackage.md).
+
 ## Properties
 
 ### configuration
@@ -32,7 +34,7 @@ The layout configuration for the repo.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:67](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L67)
+[packages/build-infrastructure/src/types.ts:82](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L82)
 
 ***
 
@@ -46,7 +48,7 @@ A map of all packages in the Fluid repo.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:56](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L56)
+[packages/build-infrastructure/src/types.ts:71](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L71)
 
 ***
 
@@ -60,7 +62,7 @@ A map of all release groups in the Fluid repo.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:51](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L51)
+[packages/build-infrastructure/src/types.ts:66](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L66)
 
 ***
 
@@ -74,7 +76,7 @@ The absolute path to the root of the IFluidRepo. This is the path where the conf
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:41](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L41)
+[packages/build-infrastructure/src/types.ts:56](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L56)
 
 ***
 
@@ -89,7 +91,7 @@ A partial URL to the upstream (remote) repo. This can be set to the name of the 
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:62](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L62)
+[packages/build-infrastructure/src/types.ts:77](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L77)
 
 ***
 
@@ -103,7 +105,7 @@ A map of all workspaces in the Fluid repo.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:46](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L46)
+[packages/build-infrastructure/src/types.ts:61](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L61)
 
 ## Methods
 
@@ -127,7 +129,7 @@ A [NotInGitRepository](../classes/NotInGitRepository.md) error if the path is no
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:84](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L84)
+[packages/build-infrastructure/src/types.ts:99](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L99)
 
 ***
 
@@ -149,7 +151,7 @@ Returns the [IReleaseGroup](IReleaseGroup.md) associated with a package.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:89](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L89)
+[packages/build-infrastructure/src/types.ts:104](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L104)
 
 ***
 
@@ -171,7 +173,7 @@ Returns the [IWorkspace](IWorkspace.md) associated with a package.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:94](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L94)
+[packages/build-infrastructure/src/types.ts:109](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L109)
 
 ***
 
@@ -181,23 +183,23 @@ Returns the [IWorkspace](IWorkspace.md) associated with a package.
 relativeToRepo(p): string
 ```
 
-Transforms an absolute path to a path relative to the FluidRepo root.
+Transforms an absolute path to a path relative to the IFluidRepo root.
 
 #### Parameters
 
 • **p**: `string`
 
-The path to make relative to the FluidRepo root.
+The path to make relative to the IFluidRepo root.
 
 #### Returns
 
 `string`
 
-the relative path.
+The path relative to the IFluidRepo root.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:75](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L75)
+[packages/build-infrastructure/src/types.ts:90](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L90)
 
 ***
 
@@ -217,4 +219,4 @@ reload(): void
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:120](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L120)
+[packages/build-infrastructure/src/types.ts:135](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L135)

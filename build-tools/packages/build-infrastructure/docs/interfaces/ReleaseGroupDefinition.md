@@ -6,6 +6,8 @@
 
 # Interface: ReleaseGroupDefinition
 
+The definition of a release group ih configuration.
+
 ## Properties
 
 ### adoPipelineUrl?
@@ -18,7 +20,7 @@ A URL to the ADO CI pipeline that builds the release group.
 
 #### Defined in
 
-[packages/build-infrastructure/src/config.ts:86](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L86)
+[packages/build-infrastructure/src/config.ts:104](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L104)
 
 ***
 
@@ -33,7 +35,7 @@ this can be used to exclude specific packages in a certain scope.
 
 #### Defined in
 
-[packages/build-infrastructure/src/config.ts:69](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L69)
+[packages/build-infrastructure/src/config.ts:87](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L87)
 
 ***
 
@@ -46,9 +48,11 @@ include: string[];
 An array of scopes or package names that should be included in the release group. Each package must
 belong to a single release group.
 
+To include all packages, set this value to a single element: `["*"]`.
+
 #### Defined in
 
-[packages/build-infrastructure/src/config.ts:63](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L63)
+[packages/build-infrastructure/src/config.ts:81](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L81)
 
 ***
 
@@ -69,4 +73,4 @@ scripts.
 
 #### Defined in
 
-[packages/build-infrastructure/src/config.ts:81](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L81)
+[packages/build-infrastructure/src/config.ts:99](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L99)

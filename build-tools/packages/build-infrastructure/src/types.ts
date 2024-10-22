@@ -9,22 +9,35 @@ import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "ty
 import type { IFluidRepoLayout } from "./config.js";
 
 /**
- * A type representing fluid-build-specific config that may be in package.json.
+ * Extra package.json fields used by pnpm.
+ * See {@link https://pnpm.io/package_json}.
  */
-export interface FluidPackageJsonFields {
+export interface PnpmPackageJsonFields {
 	/**
-	 * pnpm config
+	 * Configuration for pnpm.
+	 * See {@link https://pnpm.io/package_json}.
 	 */
 	pnpm?: {
+		/**
+		 * Instruct pnpm to override any dependency in the dependency graph.
+		 * See {@link https://pnpm.io/package_json#pnpmoverrides}
+		 */
 		overrides?: Record<string, string>;
 	};
 }
 
+/**
+ * All known package.json fields including those that are specific to build-infrastructure.
+ * The `name`, `scripts`, and `version` fields are required, unlike standard package.json.
+ */
 export type PackageJson = SetRequired<
-	StandardPackageJson & FluidPackageJsonFields,
+	StandardPackageJson & PnpmPackageJsonFields,
 	"name" | "scripts" | "version"
 >;
 
+/**
+ * Additional properties that can be added to an {@link IPackage}.
+ */
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 /**
@@ -33,6 +46,8 @@ export type AdditionalPackageProps = Record<string, string> | undefined;
  * represent ways to organize packages in the repo, but their purpose and function are different.
  *
  * See {@link IWorkspace} and {@link IReleaseGroup} for more details.
+ *
+ * @typeParam P - The type of {@link IPackage} the repo uses. This can be any type that implements {@link IPackage}.
  */
 export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
 	/**
@@ -67,10 +82,10 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
 	configuration: IFluidRepoLayout;
 
 	/**
-	 * Transforms an absolute path to a path relative to the FluidRepo root.
+	 * Transforms an absolute path to a path relative to the IFluidRepo root.
 	 *
-	 * @param p - The path to make relative to the FluidRepo root.
-	 * @returns the relative path.
+	 * @param p - The path to make relative to the IFluidRepo root.
+	 * @returns The path relative to the IFluidRepo root.
 	 */
 	relativeToRepo(p: string): string;
 
@@ -259,17 +274,50 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
  * A package manager, such as "npm" or "pnpm".
  */
 export interface IPackageManager {
+	/**
+	 * The name of the package manager.
+	 */
 	readonly name: PackageManagerName;
+
+	/**
+	 * The name of the lockfile used by the package manager.
+	 */
 	readonly lockfileName: string;
+
+	/**
+	 * Returns an install command that can be used to install dependencies using this package manager.
+	 *
+	 * @param updateLockfile - If `true`, then the returned command will include flags or arguments necessary to update
+	 * the lockfile during install. If `false`, such flags or arguments should be omitted. Note that the command will
+	 * _not_ include the package manager name istself. For example, the `npm` package manager will return the string
+	 * `"install"`, not `"npm install"`.
+	 */
 	installCommand(updateLockfile: boolean): string;
 }
+
 /**
- * Information about a package dependency.
+ * Information about a package dependency. That is, en extry in the "dependencies", "devDependencies", or
+ * "peerDependencies" fields in package.json.
  */
 export interface PackageDependency {
+	/**
+	 * The name of the dependency.
+	 */
 	name: PackageName;
+
+	/**
+	 * The version or version range of the dependency.
+	 */
 	version: string;
-	depClass: "prod" | "dev" | "peer";
+
+	/**
+	 * The kind of dependency, based on the field that the dependency comes from.
+	 *
+	 * - prod corresponds to the dependencies field.
+	 * - dev corresponds to the devDependencies field.
+	 * - peer corresponds to the peerDependencies field.
+	 */
+	depKind: "prod" | "dev" | "peer";
 }
 
 /**
@@ -280,6 +328,9 @@ export type PackageName = Opaque<string, "PackageName">;
 /**
  * A common type representing an npm package. A custom type can be used for the package.json schema, which is useful
  * when the package.json has custom keys/values.
+ *
+ * @typeParam J - The package.json type to use. This type must extend the {@link PackageJson} type defined in this
+ * package.
  */
 export interface IPackage<J extends PackageJson = PackageJson>
 	extends Installable,

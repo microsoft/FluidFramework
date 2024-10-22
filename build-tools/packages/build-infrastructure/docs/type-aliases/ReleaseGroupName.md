@@ -14,4 +14,4 @@ A tagged type representing release group names.
 
 ## Defined in
 
-[packages/build-infrastructure/src/types.ts:182](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L182)
+[packages/build-infrastructure/src/types.ts:197](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L197)

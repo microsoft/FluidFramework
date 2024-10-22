@@ -17,6 +17,9 @@ when the package.json has custom keys/values.
 
 • **J** *extends* [`PackageJson`](../type-aliases/PackageJson.md) = [`PackageJson`](../type-aliases/PackageJson.md)
 
+The package.json type to use. This type must extend the [PackageJson](../type-aliases/PackageJson.md) type defined in this
+package.
+
 ## Properties
 
 ### combinedDependencies
@@ -30,7 +33,7 @@ dependencies. This is useful to iterate overall all dependencies of the package.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:371](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L371)
+[packages/build-infrastructure/src/types.ts:422](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L422)
 
 ***
 
@@ -45,7 +48,7 @@ for the package).
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:302](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L302)
+[packages/build-infrastructure/src/types.ts:353](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L353)
 
 ***
 
@@ -60,7 +63,7 @@ does, it will only have one.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:349](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L349)
+[packages/build-infrastructure/src/types.ts:400](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L400)
 
 ***
 
@@ -74,7 +77,7 @@ Whether the package is a workspace root package or not. A workspace will only ha
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:338](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L338)
+[packages/build-infrastructure/src/types.ts:389](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L389)
 
 ***
 
@@ -88,7 +91,7 @@ The name of the package
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:290](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L290)
+[packages/build-infrastructure/src/types.ts:341](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L341)
 
 ***
 
@@ -103,7 +106,7 @@ the same color.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:296](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L296)
+[packages/build-infrastructure/src/types.ts:347](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L347)
 
 ***
 
@@ -117,7 +120,7 @@ The package.json contents of the package.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:307](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L307)
+[packages/build-infrastructure/src/types.ts:358](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L358)
 
 ***
 
@@ -131,7 +134,7 @@ The absolute path to the package.json file for this package.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:354](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L354)
+[packages/build-infrastructure/src/types.ts:405](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L405)
 
 ***
 
@@ -145,7 +148,7 @@ The package manager used to manage this package.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:317](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L317)
+[packages/build-infrastructure/src/types.ts:368](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L368)
 
 ***
 
@@ -160,7 +163,7 @@ returns a boolean value. If the package.json is missing the `private` field, thi
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:328](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L328)
+[packages/build-infrastructure/src/types.ts:379](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L379)
 
 ***
 
@@ -174,7 +177,7 @@ The name of the release group that this package belongs to.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:343](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L343)
+[packages/build-infrastructure/src/types.ts:394](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L394)
 
 ***
 
@@ -188,7 +191,7 @@ The version of the package. This is the same as `packageJson.version`.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:322](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L322)
+[packages/build-infrastructure/src/types.ts:373](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L373)
 
 ***
 
@@ -202,7 +205,7 @@ The workspace that this package belongs to.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:333](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L333)
+[packages/build-infrastructure/src/types.ts:384](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L384)
 
 ## Methods
 
@@ -225,7 +228,7 @@ install.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:105](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L105)
+[packages/build-infrastructure/src/types.ts:120](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L120)
 
 ***
 
@@ -248,7 +251,7 @@ found.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:360](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L360)
+[packages/build-infrastructure/src/types.ts:411](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L411)
 
 ***
 
@@ -277,7 +280,7 @@ may cause the installation to fail.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:113](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L113)
+[packages/build-infrastructure/src/types.ts:128](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L128)
 
 ***
 
@@ -297,7 +300,7 @@ reload(): void
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:120](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L120)
+[packages/build-infrastructure/src/types.ts:135](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L135)
 
 ***
 
@@ -315,7 +318,7 @@ Saves any changes to the packageJson property to the package.json file on disk.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:365](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L365)
+[packages/build-infrastructure/src/types.ts:416](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L416)
 
 ***
 
@@ -333,4 +336,4 @@ Returns a string representation of an object.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:372](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L372)
+[packages/build-infrastructure/src/types.ts:423](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L423)

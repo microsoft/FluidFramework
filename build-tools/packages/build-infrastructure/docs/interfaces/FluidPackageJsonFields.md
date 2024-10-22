@@ -6,7 +6,8 @@
 
 # Interface: FluidPackageJsonFields
 
-A type representing fluid-build-specific config that may be in package.json.
+Extra package.json fields used by pnpm.
+See [https://pnpm.io/package_json](https://pnpm.io/package_json).
 
 ## Properties
 
@@ -16,7 +17,8 @@ A type representing fluid-build-specific config that may be in package.json.
 optional pnpm: object;
 ```
 
-pnpm config
+Configuration for pnpm.
+See [https://pnpm.io/package_json](https://pnpm.io/package_json).
 
 #### overrides?
 
@@ -24,6 +26,9 @@ pnpm config
 optional overrides: Record<string, string>;
 ```
 
+Instruct pnpm to override any dependency in the dependency graph.
+See [https://pnpm.io/package_json#pnpmoverrides](https://pnpm.io/package_json#pnpmoverrides)
+
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:18](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L18)
+[packages/build-infrastructure/src/types.ts:20](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L20)

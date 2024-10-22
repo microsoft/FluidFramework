@@ -43,7 +43,7 @@ The root directory of the workspace. This directory will contain the workspace r
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:159](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L159)
+[packages/build-infrastructure/src/types.ts:174](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L174)
 
 ***
 
@@ -57,7 +57,7 @@ The name of the workspace.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:154](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L154)
+[packages/build-infrastructure/src/types.ts:169](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L169)
 
 ***
 
@@ -72,7 +72,7 @@ constituent packages as well.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:175](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L175)
+[packages/build-infrastructure/src/types.ts:190](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L190)
 
 ***
 
@@ -86,7 +86,7 @@ A map of all the release groups in the workspace.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:169](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L169)
+[packages/build-infrastructure/src/types.ts:184](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L184)
 
 ***
 
@@ -428,13 +428,17 @@ Indicate peer dependencies that are optional.
 optional pnpm: object;
 ```
 
-pnpm config
+Configuration for pnpm.
+See [https://pnpm.io/package_json](https://pnpm.io/package_json).
 
 ##### pnpm.overrides?
 
 ```ts
 optional overrides: Record<string, string>;
 ```
+
+Instruct pnpm to override any dependency in the dependency graph.
+See [https://pnpm.io/package_json#pnpmoverrides](https://pnpm.io/package_json#pnpmoverrides)
 
 ##### ~~preferGlobal?~~
 
@@ -552,7 +556,7 @@ Please note that the top-level `private` property of `package.json` **must** be 
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:164](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L164)
+[packages/build-infrastructure/src/types.ts:179](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L179)
 
 ## Methods
 
@@ -575,7 +579,7 @@ install.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:105](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L105)
+[packages/build-infrastructure/src/types.ts:120](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L120)
 
 ***
 
@@ -604,7 +608,7 @@ may cause the installation to fail.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:113](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L113)
+[packages/build-infrastructure/src/types.ts:128](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L128)
 
 ***
 
@@ -624,7 +628,7 @@ reload(): void
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:120](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L120)
+[packages/build-infrastructure/src/types.ts:135](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L135)
 
 ***
 
@@ -642,4 +646,4 @@ Returns a string representation of an object.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:176](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L176)
+[packages/build-infrastructure/src/types.ts:191](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L191)

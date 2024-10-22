@@ -30,7 +30,7 @@ install.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:105](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L105)
+[packages/build-infrastructure/src/types.ts:120](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L120)
 
 ***
 
@@ -55,4 +55,4 @@ may cause the installation to fail.
 
 #### Defined in
 
-[packages/build-infrastructure/src/types.ts:113](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L113)
+[packages/build-infrastructure/src/types.ts:128](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L128)

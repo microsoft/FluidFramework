@@ -14,4 +14,4 @@ Known package managers supported by build-infrastructure.
 
 ## Defined in
 
-[packages/build-infrastructure/src/types.ts:256](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L256)
+[packages/build-infrastructure/src/types.ts:271](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/types.ts#L271)

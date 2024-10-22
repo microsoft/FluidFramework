@@ -16,4 +16,4 @@ Use repoLayout and associated types instead.
 
 ## Defined in
 
-[packages/build-infrastructure/src/config.ts:99](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L99)
+[packages/build-infrastructure/src/config.ts:117](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/config.ts#L117)
