@@ -20,9 +20,9 @@ These APIs include cases like `TreeView.initialize`.
 This incorrectly allowed some usage like taking a type-erased schema and initial tree pair, creating a view of type `TreeView<ImplicitFieldSchema>`, then initializing it.
 With the typing being partly fixed, some unsafe inputs are still allowed when trying to initialize such a view, but some are now prevented.
 
-While this use-case of modifying in code not strongly typed by the exact schema, was not intended to be supported,
-it did mostly work, and has some real use-cases (like tests looping over test data pairs of schema and tree data).
-To help mitigate the impact of this change, some experimental `@alpha` APis have been introduced.
+This use-case of modifying trees in code not that is not strongly typed by the exact schema was not intended to be supported.
+Despite this, it did mostly work in some cases, and has some real use-cases (like tests looping over test data consisting of pairs of schema and initial trees).
+To help mitigate the impact of this change, some experimental `@alpha` APIs have been introduced to help address these previously unsupported but somewhat working use-cases.
 
 Before this change:
 
@@ -110,8 +110,7 @@ class B extends sf.objectRecursive("B", { x: A }) {}
 }
 ```
 
-Reversing which type is using the recursive utility also works (shown below).
-We do not recommend relying on this: using the recursive variances for all co-recursive types will help ensure your schema are less likely to be impacted by changes like this in the future.
+Note: while the following pattern may still compile, we recommend using the previous pattern instead since the one below may break in the future.
 
 ```typescript
 class B extends sf.objectRecursive("B", { x: [() => A] }) {}
