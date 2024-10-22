@@ -45,7 +45,7 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
-		public startupCheck: StartupCheck,
+		public startupCheck: IReadinessCheck,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,

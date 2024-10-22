@@ -166,7 +166,7 @@
 		"@types/unist": "^3.0.3",
 		"@types/xml2js": "^0.4.11",
 		"c8": "^7.14.0",
-		"chai": "^4.3.7",
+		"chai": "^4.5.0",
 		"chai-arrays": "^2.2.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

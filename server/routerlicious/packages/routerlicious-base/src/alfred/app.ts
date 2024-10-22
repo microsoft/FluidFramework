@@ -37,7 +37,6 @@ import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from 
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import type { StartupCheck } from "@fluidframework/server-services-shared";
 
 export function create(
 	config: Provider,
@@ -51,7 +50,7 @@ export function create(
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	startupCheck: StartupCheck,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
