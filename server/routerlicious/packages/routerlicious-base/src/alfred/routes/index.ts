@@ -23,7 +23,6 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import type { StartupCheck } from "@fluidframework/server-services-shared";
 import type { ITenantRepository } from "../mongoTenantRepository";
 
 export interface IRoutes {
@@ -44,7 +43,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	startupCheck: StartupCheck,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
