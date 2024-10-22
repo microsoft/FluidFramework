@@ -25,7 +25,7 @@ import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { runnerHttpServerStop, type StartupCheck } from "@fluidframework/server-services-shared";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
@@ -53,7 +53,7 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
-		private readonly startupCheck: StartupCheck,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -116,7 +116,9 @@ export class AlfredRunner implements IRunner {
 
 		this.stopped = false;
 
-		this.startupCheck.setReady();
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 
