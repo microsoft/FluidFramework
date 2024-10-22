@@ -162,11 +162,11 @@ export class DeltaStorageService implements IDeltaStorageService {
 			async (event) => {
 				const restWrapper = await this.getRestWrapper();
 				const url = this.getDeltaStorageUrl();
-				fetchReason = fetchReason ?? "No reason provided";
+				const reason = fetchReason ?? "No reason provided";
 				const response = await restWrapper.get<ISequencedDocumentMessage[]>(url, {
 					from: from - 1,
 					to,
-					fetchReason,
+					fetchReason: reason,
 				});
 				event.end({
 					length: response.content.length,
