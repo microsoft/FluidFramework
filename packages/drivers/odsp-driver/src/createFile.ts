@@ -34,6 +34,7 @@ import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import {
 	INewFileInfo,
+	appendNavParam,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
@@ -101,6 +102,14 @@ export async function createNewFluidFile(
 	});
 	fileEntry.docId = odspResolvedUrl.hashedDocumentId;
 	fileEntry.resolvedUrl = odspResolvedUrl;
+
+	if (shareLinkInfo?.createLink?.link) {
+		let newWebUrl = shareLinkInfo.createLink.link.webUrl;
+		if (newWebUrl) {
+			newWebUrl = await appendNavParam(newWebUrl, odspResolvedUrl, "");
+			shareLinkInfo.createLink.link.webUrl = newWebUrl;
+		}
+	}
 
 	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
 
