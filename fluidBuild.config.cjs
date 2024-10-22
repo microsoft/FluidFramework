@@ -569,15 +569,20 @@ module.exports = {
 				{
 					name: "build:docs",
 					body: "api-extractor run --local",
+					// exclude this script from packages which have no exported API.
 					exclusion: true,
 				},
 				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
+					// exclude this script from packages which have no exported API.
+					exclusion: true,
 				},
 			],
 			// All of our public packages should be using api-extractor
 			requiredDevDependencies: ["@microsoft/api-extractor"],
+			// exclude this dependency from packages which have no exported API.
+			devDependencyExclusions: ["@microsoft/api-extractor"],
 		},
 	},
 
