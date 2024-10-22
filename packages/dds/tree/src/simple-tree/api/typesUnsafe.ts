@@ -62,7 +62,7 @@ export type ObjectFromSchemaRecordUnsafe<
 /**
  * {@link Unenforced} version of {@link TreeNodeSchema}.
  * @remarks
- * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @public
  */
 export type TreeNodeSchemaUnsafe<
@@ -79,7 +79,7 @@ export type TreeNodeSchemaUnsafe<
 /**
  * {@link Unenforced} version of {@link TreeNodeSchemaClass}.
  * @remarks
- * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @public
  */
 export interface TreeNodeSchemaClassUnsafe<
@@ -104,7 +104,7 @@ export interface TreeNodeSchemaClassUnsafe<
 /**
  * {@link Unenforced} version of {@link TreeNodeSchemaNonClass}.
  * @remarks
- * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @public
  */
 export interface TreeNodeSchemaNonClassUnsafe<
@@ -145,7 +145,7 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 /**
  * {@link Unenforced} version of {@link AllowedTypes}.
  * @remarks
- * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * Do not use this type directly: it is only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @public
  */
 export type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
