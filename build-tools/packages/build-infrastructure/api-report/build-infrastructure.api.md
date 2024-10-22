@@ -167,48 +167,39 @@ export function loadFluidRepo<P extends IPackage>(searchPath: string, upstreamRe
 
 // @public
 export class NotInGitRepository extends Error {
-    constructor(path: string);
-    // (undocumented)
+    constructor(
+    path: string);
     readonly path: string;
 }
 
-// @public (undocumented)
+// @public
 export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps extends AdditionalPackageProps = undefined> implements IPackage<J> {
-    constructor(packageJsonFilePath: string, packageManager: IPackageManager, workspace: IWorkspace, isWorkspaceRoot: boolean, releaseGroup: ReleaseGroupName, isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
-    // (undocumented)
+    constructor(
+    packageJsonFilePath: string,
+    packageManager: IPackageManager,
+    workspace: IWorkspace,
+    isWorkspaceRoot: boolean,
+    releaseGroup: ReleaseGroupName,
+    isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
     checkInstall(print?: boolean): Promise<boolean>;
-    // (undocumented)
     get combinedDependencies(): Generator<PackageDependency, void>;
-    // (undocumented)
     get directory(): string;
-    // (undocumented)
     getScript(name: string): string | undefined;
     install(updateLockfile: boolean): Promise<boolean>;
-    // (undocumented)
     isReleaseGroupRoot: boolean;
-    // (undocumented)
     readonly isWorkspaceRoot: boolean;
     get name(): PackageName;
     get nameColored(): string;
-    // (undocumented)
     get packageJson(): J;
-    // (undocumented)
     readonly packageJsonFilePath: string;
-    // (undocumented)
     readonly packageManager: IPackageManager;
-    // (undocumented)
     get private(): boolean;
-    // (undocumented)
     readonly releaseGroup: ReleaseGroupName;
-    // (undocumented)
     reload(): void;
-    // (undocumented)
     savePackageJson(): Promise<void>;
     // (undocumented)
     toString(): string;
-    // (undocumented)
     get version(): string;
-    // (undocumented)
     readonly workspace: IWorkspace;
 }
 

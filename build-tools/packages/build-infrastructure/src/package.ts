@@ -25,6 +25,9 @@ import type {
 } from "./types.js";
 import { lookUpDirSync } from "./utils.js";
 
+/**
+ * {@inheritDoc IPackage}
+ */
 export abstract class PackageBase<
 	J extends PackageJson = PackageJson,
 	TAddProps extends AdditionalPackageProps = undefined,
@@ -70,11 +73,34 @@ export abstract class PackageBase<
 	 * useful to augment the package class with additional properties.
 	 */
 	public constructor(
+		/**
+		 * {@inheritDoc IPackage.packageJsonFilePath}
+		 */
 		public readonly packageJsonFilePath: string,
+
+		/**
+		 * {@inheritDoc IPackage.packageManager}
+		 */
 		public readonly packageManager: IPackageManager,
+
+		/**
+		 * {@inheritDoc IPackage.workspace}
+		 */
 		public readonly workspace: IWorkspace,
+
+		/**
+		 * {@inheritDoc IPackage.isWorkspaceRoot}
+		 */
 		public readonly isWorkspaceRoot: boolean,
+
+		/**
+		 * {@inheritDoc IPackage.releaseGroup}
+		 */
 		public readonly releaseGroup: ReleaseGroupName,
+
+		/**
+		 * {@inheritDoc IPackage.isReleaseGroupRoot}
+		 */
 		public isReleaseGroupRoot: boolean,
 		additionalProperties?: TAddProps,
 	) {
@@ -85,44 +111,65 @@ export abstract class PackageBase<
 		}
 	}
 
+	/**
+	 * {@inheritDoc IPackage.combinedDependencies}
+	 */
 	public get combinedDependencies(): Generator<PackageDependency, void> {
 		return iterateDependencies(this.packageJson);
 	}
 
+	/**
+	 * {@inheritDoc IPackage.directory}
+	 */
 	public get directory(): string {
 		return path.dirname(this.packageJsonFilePath);
 	}
 
 	/**
-	 * The name of the package including the scope.
+	 * {@inheritDoc IPackage.name}
 	 */
 	public get name(): PackageName {
 		return this.packageJson.name as PackageName;
 	}
 
 	/**
-	 * The name of the package with a color for terminal output.
+	 * {@inheritDoc IPackage.nameColored}
 	 */
 	public get nameColored(): string {
 		return this.color(this.name);
 	}
 
+	/**
+	 * {@inheritDoc IPackage.packageJson}
+	 */
 	public get packageJson(): J {
 		return this._packageJson;
 	}
 
+	/**
+	 * {@inheritDoc IPackage.private}
+	 */
 	public get private(): boolean {
 		return this.packageJson.private ?? false;
 	}
 
+	/**
+	 * {@inheritDoc IPackage.version}
+	 */
 	public get version(): string {
 		return this.packageJson.version;
 	}
 
+	/**
+	 * {@inheritDoc IPackage.savePackageJson}
+	 */
 	public async savePackageJson(): Promise<void> {
 		writePackageJson(this.packageJsonFilePath, this.packageJson, this._indent);
 	}
 
+	/**
+	 * Reload the package from the on-disk package.json.
+	 */
 	public reload(): void {
 		this._packageJson = readJsonSync(this.packageJsonFilePath) as J;
 	}
@@ -131,10 +178,16 @@ export abstract class PackageBase<
 		return `${this.name} (${this.directory})`;
 	}
 
+	/**
+	 * {@inheritDoc IPackage.getScript}
+	 */
 	public getScript(name: string): string | undefined {
 		return this.packageJson.scripts === undefined ? undefined : this.packageJson.scripts[name];
 	}
 
+	/**
+	 * {@inheritDoc Installable.checkInstall}
+	 */
 	public async checkInstall(print: boolean = true): Promise<boolean> {
 		if (this.combinedDependencies.next().done === true) {
 			// No dependencies

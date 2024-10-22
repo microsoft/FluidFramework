@@ -339,7 +339,7 @@ export interface IPackage<J extends PackageJson = PackageJson>
 	extends Installable,
 		Reloadable {
 	/**
-	 * The name of the package
+	 * The name of the package including the scope.
 	 */
 	readonly name: PackageName;
 
