@@ -24,6 +24,11 @@ export interface ColorModeImageSwitcherProps {
 	 * Image alt text.
 	 */
 	altText?: string;
+
+	/**
+	 * CSS class name.
+	 */
+	className?: string;
 }
 
 /**
@@ -31,8 +36,14 @@ export interface ColorModeImageSwitcherProps {
  * Displays a different source image depending on the active color mode.
  */
 export function ColorModeImageSwitcher(
-	{lightModeImageSource, darkModeImageSource, altText}: ColorModeImageSwitcherProps
+	{lightModeImageSource, darkModeImageSource, altText, className}: ColorModeImageSwitcherProps
 ): React.ReactElement {
 	const { colorMode } = useColorMode();
-	return <img src={colorMode === "dark" ? darkModeImageSource : lightModeImageSource} alt={altText} />;
+	return (
+		<img
+			src={colorMode === "dark" ? darkModeImageSource : lightModeImageSource}
+			alt={altText}
+			className={className}
+		/>
+	);
 }
