@@ -617,6 +617,7 @@ declare type current_as_old_for_TypeAlias_InsertableObjectFromSchemaRecordUnsafe
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitField": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<old.InsertableTreeFieldFromImplicitField>, TypeOnly<current.InsertableTreeFieldFromImplicitField>>
 
 /*
@@ -654,6 +655,7 @@ declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitFieldUn
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes>, TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes>>
 
 /*
@@ -727,6 +729,7 @@ declare type current_as_old_for_TypeAlias_InternalTypes__InlineTrick = requireAs
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_ApplyKind": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InternalTypes_ApplyKind = requireAssignableTo<TypeOnly<old.InternalTypes.ApplyKind<any,any,any>>, TypeOnly<current.InternalTypes.ApplyKind<any,any,any>>>
 
 /*
@@ -736,6 +739,7 @@ declare type old_as_current_for_TypeAlias_InternalTypes_ApplyKind = requireAssig
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_ApplyKind": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InternalTypes_ApplyKind = requireAssignableTo<TypeOnly<current.InternalTypes.ApplyKind<any,any,any>>, TypeOnly<old.InternalTypes.ApplyKind<any,any,any>>>
 
 /*
@@ -844,6 +848,7 @@ declare type current_as_old_for_TypeAlias_InternalTypes_FlexListToUnion = requir
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord = requireAssignableTo<TypeOnly<old.InternalTypes.InsertableObjectFromSchemaRecord<any>>, TypeOnly<current.InternalTypes.InsertableObjectFromSchemaRecord<any>>>
 
 /*
@@ -853,6 +858,7 @@ declare type old_as_current_for_TypeAlias_InternalTypes_InsertableObjectFromSche
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord = requireAssignableTo<TypeOnly<current.InternalTypes.InsertableObjectFromSchemaRecord<any>>, TypeOnly<old.InternalTypes.InsertableObjectFromSchemaRecord<any>>>
 
 /*

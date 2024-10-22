@@ -1521,6 +1521,7 @@ describe("toMapTree", () => {
 			it("Failure", () => {
 				assert.throws(
 					() =>
+						// @ts-expect-error invalid data for schema
 						cursorFromInsertableTreeField(schemaFactory.number, "Hello world", nodeKeyManager),
 					validateUsageError(/incompatible/),
 				);

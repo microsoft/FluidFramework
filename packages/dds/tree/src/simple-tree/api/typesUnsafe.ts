@@ -7,6 +7,7 @@ import type { RestrictiveStringRecord, _InlineTrick } from "../../util/index.js"
 
 import type {
 	ApplyKind,
+	ApplyKindInput,
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
@@ -137,7 +138,7 @@ export type TreeObjectNodeUnsafe<
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
 		: TSchema extends ImplicitAllowedTypes
 			? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
 			: unknown;
@@ -327,7 +328,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
 > = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true>
+	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true>
 	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 /**

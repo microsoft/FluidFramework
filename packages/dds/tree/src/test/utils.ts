@@ -131,7 +131,6 @@ import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
-	type InsertableTreeFieldFromImplicitField,
 	toStoredSchema,
 	type TreeViewEvents,
 	type TreeView,
@@ -1267,17 +1266,9 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
  * Returns a cursor (in nodes mode) for the root node.
  *
  * @privateRemarks
- * Ideally this would work on any node, not just the root,
- * and the schema would come from the unhydrated node.
- * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
+ * TODO: replace use of this with cursorFromInsertable
  */
-export function cursorFromInsertableTreeField(
-	schema: ImplicitFieldSchema,
-	tree: InsertableTreeFieldFromImplicitField,
-	nodeKeyManager: NodeKeyManager,
-): ITreeCursorSynchronous | undefined {
-	return cursorFromInsertable(schema, tree, nodeKeyManager);
-}
+export const cursorFromInsertableTreeField = cursorFromInsertable;
 
 function normalizeNewFieldContent(
 	content: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined,

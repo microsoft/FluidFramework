@@ -137,3 +137,67 @@ export type RestrictiveStringRecord<T> = {
 } & {
 	readonly [P in symbol]?: never;
 };
+
+/**
+ * Returns `true` if T is a union and false if it is not.
+ * @typeparam T - Type to test if it is a union.
+ * @typeparam T2 - Do not specify: default value used as implementation detail.
+ */
+export type IsUnion<T, T2 = T> = T extends unknown
+	? [T2] extends [T]
+		? false
+		: true
+	: "error";
+
+/**
+ * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+ * @privateRemarks
+ * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
+ * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
+ */
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
+	k: infer U,
+) => unknown
+	? U
+	: never;
+
+// Converts union to overloaded function
+type UnionToOverloads<U> = UnionToIntersection<U extends unknown ? (f: U) => void : never>;
+
+/**
+ * Gets the first item of a union type.
+ */
+type PopUnion<U> = UnionToOverloads<U> extends (a: infer A) => void ? A : never;
+
+/**
+ * Converts a union type to a tuple type.
+ *
+ * @typeparam T - The union to convert.
+ * @typeparam A - Implementation detail: do not specify.
+ * @typeparam First - Implementation detail: do not specify.
+ *
+ * @privateRemarks
+ * `A` is a tuple to prepend members of the union to.
+ *
+ * https://www.hacklewayne.com/typescript-convert-union-to-tuple-array-yes-but-how and https://catchts.com/union-array both explain the general approach this uses pretty well.
+ * This implementation is inspired to those, but slightly different in implementation.
+ */
+export type UnionToTuple<
+	T,
+	A extends unknown[] = [],
+	First = PopUnion<T>,
+> = IsUnion<T> extends true ? UnionToTuple<Exclude<T, First>, [First, ...A]> : [T, ...A];
+
+/**
+ * This is unsafe, meaning that the returned value might not match its type.
+ *
+ * For this the result to match its type, T must be a union of the types of each item in `items` in the order that they occur.
+ * For this to be possible, there must be no duplicate or overlapping types.
+ * This is fragile and must be used with care.
+ *
+ * @remarks
+ * Since {@link AllowedTypes} is actually order independent, it is somewhat server when used to produce `AllowedTypes`.
+ */
+export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T> {
+	return items as UnionToTuple<T>;
+}

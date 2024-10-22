@@ -19,7 +19,6 @@ import {
 	type TreeView,
 	SchemaFactory,
 	type InternalTreeNode,
-	type ApplyKind,
 	type FlexListToUnion,
 } from "../../../simple-tree/index.js";
 import type {
@@ -43,6 +42,7 @@ import type {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
+import type { ApplyKindInput } from "../../../simple-tree/schemaTypes.js";
 
 // TODO:
 // Ensure the following have tests:
@@ -123,7 +123,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 				: "Not a FieldSchema";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types
@@ -182,7 +182,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 				: "Not a FieldSchema";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types

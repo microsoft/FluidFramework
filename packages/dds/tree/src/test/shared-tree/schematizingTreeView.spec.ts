@@ -16,7 +16,8 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
+	type InsertableField,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
@@ -40,10 +41,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
-	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
+	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromInsertableTreeField(
+	const initialTree = cursorFromInsertableTreeField<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,

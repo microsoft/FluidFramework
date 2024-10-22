@@ -125,7 +125,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
 	type InsertableField,

@@ -13,8 +13,10 @@ import type {
 	InternalTreeNode,
 	NodeKind,
 	TreeNode,
+	TreeNodeSchema,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
+import type { UnionToTuple } from "../../util/typeUtils.js";
 
 /*
  * This file does two things:
@@ -40,7 +42,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	name: TName,
 ) {
 	class SingletonSchema extends factory.object(name, {}) {
-		public constructor(data?: InternalTreeNode) {
+		public constructor(data?: InternalTreeNode | Record<string, never>) {
 			super(data ?? {});
 		}
 		public get value(): TName {
@@ -48,7 +50,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 		}
 	}
 
-	type NodeType = TreeNode & { readonly value: TName };
+	type SingletonNodeType = TreeNode & { readonly value: TName };
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -58,11 +60,13 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	const toReturn: TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, TName>,
 		NodeKind.Object,
-		NodeType,
-		never,
+		SingletonNodeType,
+		Record<string, never>,
 		true
 	> &
-		(new () => NodeType) = SingletonSchema;
+		(new (
+			data?: InternalTreeNode | Record<string, never>,
+		) => SingletonNodeType) = SingletonSchema;
 
 	return toReturn;
 }
@@ -131,35 +135,36 @@ export function adaptEnum<
 			typeof singletonSchema<TScope, TEnum[Property]>
 		>;
 	};
+
+	type SchemaArray = UnionToTuple<TOut[keyof TEnum]>;
+	const schemaArray: TreeNodeSchema[] = [];
+
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Values>(value: TValue) => {
 		return new out[inverse.get(value) ?? fail("missing enum value")]() as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
 		>;
 	};
-	const out = factoryOut as typeof factoryOut & TOut;
+	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
 	for (const [key, value] of Object.entries(members)) {
+		const schema = singletonSchema(factory, value);
+		schemaArray.push(schema);
 		Object.defineProperty(out, key, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: singletonSchema(factory, value),
+			value: schema,
 		});
 	}
 
-	return out;
-}
+	Object.defineProperty(out, "schema", {
+		enumerable: true,
+		configurable: false,
+		writable: false,
+		value: schemaArray,
+	});
 
-/**
- * `Object.values`, but with more specific types.
- * @remarks
- * Useful with collections of schema, like those returned by {@link adaptEnum} or {@link enumFromStrings}.
- * @alpha
- */
-export function typedObjectValues<TKey extends string, TValues>(
-	object: Record<TKey, TValues>,
-): TValues[] {
-	return Object.values(object);
+	return out;
 }
 
 /**
@@ -183,31 +188,47 @@ export function typedObjectValues<TKey extends string, TValues>(
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function enumFromStrings<TScope extends string, const Members extends string>(
-	factory: SchemaFactory<TScope>,
-	members: readonly Members[],
-) {
+export function enumFromStrings<
+	TScope extends string,
+	const Members extends readonly string[],
+>(factory: SchemaFactory<TScope>, members: Members) {
 	const names = new Set(members);
 	if (names.size !== members.length) {
 		throw new UsageError("All members of enums must have distinct names");
 	}
 
-	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
+	type TOut = Record<
+		Members[number],
+		ReturnType<typeof singletonSchema<TScope, Members[number]>>
+	>;
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	const factoryOut = <TValue extends Members>(value: TValue) => {
+	const factoryOut = <TValue extends Members[number]>(value: TValue) => {
 		return new out[value]() as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
 		>;
 	};
-	const out = factoryOut as typeof factoryOut & TOut;
+
+	type SchemaArray = UnionToTuple<TOut[Members[number]]>;
+	const schemaArray: TreeNodeSchema[] = [];
+
+	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
 	for (const name of members) {
+		const schema = singletonSchema(factory, name);
+		schemaArray.push(schema);
 		Object.defineProperty(out, name, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: singletonSchema(factory, name),
+			value: schema,
 		});
 	}
+
+	Object.defineProperty(out, "schema", {
+		enumerable: true,
+		configurable: false,
+		writable: false,
+		value: schemaArray,
+	});
 
 	return out;
 }

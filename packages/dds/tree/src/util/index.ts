@@ -99,6 +99,8 @@ export type {
 	RestrictiveStringRecord,
 	_InlineTrick,
 	FlattenKeys,
+	IsUnion,
+	UnionToIntersection,
 } from "./typeUtils.js";
 
 export {

@@ -28,6 +28,7 @@ import type { ITreeCheckout, SharedTree, TreeCheckout } from "../../../shared-tr
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 import type {
+	InsertableTreeFieldFromImplicitField,
 	NodeBuilderData,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/schemaTypes.js";
@@ -53,6 +54,10 @@ const initialAllowedTypes = [
 	GUIDNode,
 	() => FuzzNode,
 ] as const;
+
+const initialAllowedTypes2 = [builder.string] as const;
+
+type XXX = InsertableTreeFieldFromImplicitField<typeof initialAllowedTypes2>;
 
 export class ArrayChildren extends builder.arrayRecursive(
 	"arrayChildren",

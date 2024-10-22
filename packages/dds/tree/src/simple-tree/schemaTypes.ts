@@ -8,7 +8,13 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { NodeKeyManager } from "../feature-libraries/index.js";
-import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
+import {
+	type MakeNominal,
+	brand,
+	isReadonlyArray,
+	type IsUnion,
+	type UnionToIntersection,
+} from "../util/index.js";
 import type {
 	Unhydrated,
 	NodeKind,
@@ -40,8 +46,16 @@ export function isTreeNodeSchemaClass<
  * Types for use in fields.
  * @remarks
  * Type constraint used in schema declaration APIs.
+ *
+ * The order of types in the array is not significant.
+ * Additionally it is legal for users of this type to have the runtime and compile time order of items withing this array not match.
+ * Therefor to ensure type safety, this these arrays should not be indexed, and instead just be iterated.
+ *
+ * Ideally this restriction would be modeled in the type itself, but it is not ergonomic to do so as there is no easy (when compared to arrays)
+ * way to declare and manipulate unordered sets of types in TypeScript.
+ *
  * Not intended for direct use outside of package.
- * @public
+ * @system @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -397,20 +411,26 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
 	TSchema extends FieldSchema<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
 		: TSchema extends ImplicitAllowedTypes
 			? TreeNodeFromImplicitAllowedTypes<TSchema>
 			: TreeNode | TreeLeafValue | undefined;
 
+export type schemaIsExact<TSchema extends ImplicitFieldSchema> = IsUnion<TSchema>;
+
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
+ *
+ * @typeparam TSchemaInput - Schema to process.
+ * @typeparam TSchema - Do not specify: default value used as implementation detail.
  * @public
  */
 export type InsertableTreeFieldFromImplicitField<
-	TSchema extends ImplicitFieldSchema = FieldSchema,
-> = TSchema extends FieldSchema<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
-	: TSchema extends ImplicitAllowedTypes
+	TSchemaInput extends ImplicitFieldSchema,
+	TSchema = UnionToIntersection<TSchemaInput>,
+> = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
+	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
+	: [TSchema] extends [ImplicitAllowedTypes]
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
 		: never;
 
@@ -457,21 +477,42 @@ export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchem
  * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
  */
-export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
-	TSchema extends ImplicitFieldSchema
-		? InsertableTreeFieldFromImplicitField<TSchema>
-		: InsertableContent | undefined;
+export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
+	TSchema,
+] extends [ImplicitFieldSchema]
+	? InsertableTreeFieldFromImplicitField<TSchema>
+	: [TSchema] extends [UnsafeUnknownSchema]
+		? InsertableContent | undefined
+		: never;
 
 /**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
  * @system @public
  */
-export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
+export type ApplyKind<T, Kind extends FieldKind> = {
 	[FieldKind.Required]: T;
 	[FieldKind.Optional]: T | undefined;
-	[FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
+	[FieldKind.Identifier]: T;
 }[Kind];
+
+/**
+ * Suitable for input.
+ *
+ * @see Input
+ * @system @public
+ */
+export type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = [
+	Kind,
+] extends [FieldKind.Required]
+	? T
+	: [Kind] extends [FieldKind.Optional]
+		? T | undefined
+		: [Kind] extends [FieldKind.Identifier]
+			? DefaultsAreOptional extends true
+				? T | undefined
+				: T
+			: never;
 
 /**
  * Type of tree node for a field of the given schema.
@@ -487,14 +528,71 @@ export type TreeNodeFromImplicitAllowedTypes<
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
+ *
+ * @typeparam TSchemaInput - Schema to process.
+ * @typeparam T - Do not specify: default value used as implementation detail.
  * @public
  */
-export type InsertableTreeNodeFromImplicitAllowedTypes<
-	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
+export type InsertableTreeNodeFromImplicitAllowedTypesXXXX<
+	TSchemaInput extends ImplicitAllowedTypes,
+	TSchema = UnionToIntersection<TSchemaInput>,
 > = TSchema extends TreeNodeSchema
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
 		? InsertableTypedNode<FlexListToUnion<TSchema>>
+		: never;
+
+/**
+ * Marker for documenting when a type computed from a schema is contravariant
+ * with respect to the schema and thus only suitable for using for "input".
+ *
+ * Generic types which produce "Input" types error on the side of producing overly strict requirements.
+ * Future versions of the API can relax these requirements.
+ *
+ * For example if {@link InsertableField} produced `Input<never>` for some union of schema (ex: `A | OptionalField<A>`),
+ * a future version could instead return a more flexible but still safe type, like `Input<A>`.
+ *
+ * Note that since `Input` is just a genic type, it might not always appear in contexts which simplify or inline types.
+ * Thus "Input" in mainly useful as an annotation visible in type signatures and documentation.
+ *
+ * @privateRemarks
+ * TODO: Actually use this.
+ */
+export type Input<T> = T;
+
+/**
+ * Type of content that can be inserted into the tree for a node of the given schema.
+ *
+ * @see Input
+ *
+ * @typeparam TSchema - Schema to process.
+ * @typeparam TResult - Do not specify: default value used as implementation detail.
+ *
+ * @privateRemarks
+ * This is a bit overly conservative, since cases like `A | [A]` give never and could give `A`.
+ * @public
+ */
+export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> =
+	[TSchema] extends [TreeNodeSchema]
+		? InsertableTypedNode<TSchema>
+		: [TSchema] extends [AllowedTypes]
+			? InsertableTreeNodeFromAllowedTypes<TSchema>
+			: never;
+
+/**
+ * Type of content that can be inserted into the tree for a node of the given schema.
+ *
+ * @see Input
+ *
+ * @typeparam TList - AllowedTypes to process
+ * @system @public
+ */
+export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
+	TList extends readonly [
+		LazyItem<infer TSchema extends TreeNodeSchema>,
+		...infer Rest extends AllowedTypes,
+	]
+		? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes<Rest>
 		: never;
 
 /**
@@ -512,15 +610,29 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 /**
  * Data which can be used as a node to be inserted.
  * Either an unhydrated node, or content to build a new node.
+ *
+ * @typeparam TSchemaInput - Schema to process.
+ * @typeparam T - Do not specify: default value used as implementation detail.
  * @privateRemarks
- * TODO:
- * This should behave contravariantly, but it uses NodeFromSchema which behaves covariantly.
- * This results in unsoundness where, when the schema is less specific, more types are allowed instead of less.
+ * This can't really be fully correct, since TreeNodeSchema's TNode is generally use covariantly but this code uses it contravariantly.
+ * That makes this TreeNodeSchema actually invariant with respect to TNode, but doing that would break all `extends TreeNodeSchema` clauses.
+ * As is, this works correctly in most realistic use-cases.
+ *
+ * One special case this makes is if the result of NodeFromSchema contains TreeNode, this must be an under constrained schema, so the result is set to never.
+ * Note that applying UnionToIntersection on the result of NodeFromSchema<T> does not work since it breaks booleans.
+ *
  * @public
  */
-export type InsertableTypedNode<T extends TreeNodeSchema> =
-	| (T extends { implicitlyConstructable: true } ? NodeBuilderData<T> : never)
-	| Unhydrated<NodeFromSchema<T>>;
+export type InsertableTypedNode<
+	TSchema extends TreeNodeSchema,
+	T = UnionToIntersection<TSchema>,
+> =
+	| (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true>
+			? NodeBuilderData<T>
+			: never)
+	| (T extends TreeNodeSchema
+			? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>>
+			: never);
 
 /**
  * Given a node's schema, return the corresponding object from which the node could be built.

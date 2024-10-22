@@ -35,7 +35,9 @@ import {
 	stringSchema,
 	toStoredSchema,
 	type ImplicitFieldSchema,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -51,7 +53,7 @@ interface TestSimpleTree {
 	/**
 	 * InsertableTreeFieldFromImplicitField<TSchema>
 	 */
-	readonly root: InsertableTreeFieldFromImplicitField;
+	readonly root: InsertableField<UnsafeUnknownSchema>;
 }
 
 interface TestTree {
@@ -66,11 +68,11 @@ function testSimpleTree<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	root: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TestSimpleTree {
-	return { name, schema, root };
+	return { name, schema, root: root as InsertableField<UnsafeUnknownSchema> };
 }
 
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
-	const cursor = cursorFromInsertable(data.schema, data.root);
+	const cursor = cursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root);
 	return test(
 		data.name,
 		toStoredSchema(data.schema),

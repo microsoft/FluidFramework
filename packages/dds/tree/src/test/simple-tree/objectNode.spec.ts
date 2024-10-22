@@ -11,15 +11,46 @@ import {
 	SchemaFactory,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type InsertableObjectFromSchemaRecord,
 	type NodeBuilderData,
 } from "../../simple-tree/index.js";
 
 import { describeHydration, hydrate, pretty } from "./utils.js";
-import type { requireAssignableTo } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../util/index.js";
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
+import type {
+	InsertableTreeFieldFromImplicitField,
+	InsertableTreeNodeFromAllowedTypes,
+	InsertableTypedNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaTypes.js";
 
 const schemaFactory = new SchemaFactory("Test");
+
+// InsertableObjectFromSchemaRecord
+{
+	class Note extends schemaFactory.object("Note", {}) {}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+	type Info = {
+		readonly stuff: readonly [typeof Note];
+	};
+
+	type Desired = InsertableTypedNode<typeof Note>;
+
+	type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
+	type _check1 = requireTrue<areSafelyAssignable<result, Desired>>;
+
+	{
+		type result2 = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
+		type _check2 = requireTrue<areSafelyAssignable<result2, Desired>>;
+	}
+}
 
 describeHydration(
 	"ObjectNode",
@@ -360,6 +391,37 @@ describeHydration(
 		});
 	},
 	() => {
+		it("Construction regression test", () => {
+			class Note extends schemaFactory.object("Note", {}) {}
+
+			class Canvas extends schemaFactory.object("Canvas", { stuff: [Note] }) {}
+
+			const y = new Note({});
+
+			// There was a bug where unions with maps lost implicit contractibility, causing this to not compile:
+			const x = new Canvas({
+				stuff: {},
+			});
+
+			const allowed = [Note] as const;
+			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
+			const test: X = [{}];
+
+			const allowed3 = [Note] as const;
+			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
+			type _check1 = requireTrue<areSafelyAssignable<X3, X4>>;
+
+			const allowed4 = Note;
+			type X4 = InsertableTypedNode<typeof allowed4>;
+
+			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
+			const test2: X5 = [{}];
+
+			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>["stuff"];
+			type _check2 = requireTrue<areSafelyAssignable<X6, X4>>;
+			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
+		});
+
 		describe("shadowing", () => {
 			it("optional shadowing builtin", () => {
 				class Schema extends schemaFactory.object("x", {
