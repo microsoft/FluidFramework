@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 // eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -16,7 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-import { generateSuggestions, generateTreeEdits } from "../../explicit-strategy/index.js";
+import { generateTreeEdits } from "../../explicit-strategy/index.js";
 
 import { initializeOpenAIClient } from "./utils.js";
 
@@ -88,38 +86,6 @@ describe.skip("Agent Editing Integration", () => {
 	process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 	process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
 	process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
-
-	it("Suggestion Test", async () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: Conference }));
-		view.initialize({ name: "Plucky Penguins", sessions: [], days: [], sessionsPerDay: 3 });
-
-		const openAIClient = initializeOpenAIClient("azure");
-		const abortController = new AbortController();
-		const suggestions = await generateSuggestions(
-			{ client: openAIClient, modelName: TEST_MODEL_NAME },
-			view,
-			3,
-		);
-		for (const prompt of suggestions) {
-			const result = await generateTreeEdits({
-				openAI: { client: openAIClient, modelName: TEST_MODEL_NAME },
-				treeView: view,
-				prompt: {
-					userAsk: prompt,
-					systemRoleContext: "",
-				},
-				limiters: {
-					abortController,
-					maxModelCalls: 15,
-				},
-			});
-			assert.equal(result, "success");
-		}
-	});
 
 	it("Roblox Test", async () => {
 		const tree = factory.create(

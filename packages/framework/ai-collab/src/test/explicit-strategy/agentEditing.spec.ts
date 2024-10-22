@@ -67,18 +67,6 @@ describe("toDecoratedJson", () => {
 				y: 2,
 			}),
 		);
-
-		// const vector = new Vector({ x: 1, y: 2 });
-		// // const hydratedObject = hydrate(Vector, vector);
-
-		// assert.equal(
-		// 	toDecoratedJson(idGenerator, hydratedObject),
-		// 	JSON.stringify({
-		// 		[objectIdKey]: "Vector0",
-		// 		x: 1,
-		// 		y: 2,
-		// 	}),
-		// );
 	});
 
 	it("handles nested objects", () => {

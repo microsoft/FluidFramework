@@ -35,6 +35,7 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
 		maxModelCalls?: number;
 		tokenLimits?: TokenUsage;
 	};
+	planningStep?: boolean;
 	finalReviewStep?: boolean;
 	validator?: (newContent: TreeNode) => void;
 	dumpDebugLog?: boolean;

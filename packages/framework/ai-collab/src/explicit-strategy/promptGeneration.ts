@@ -15,15 +15,25 @@ import {
 	type JsonNodeSchema,
 	type JsonSchemaRef,
 	type JsonTreeSchema,
-	type TreeNode,
+	getSimpleSchema,
+	Tree,
 } from "@fluidframework/tree/internal";
+// eslint-disable-next-line import/no-extraneous-dependencies, import/no-internal-modules
+import { createZodJsonValidator } from "typechat/zod";
 
-import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
-import { IdGenerator } from "./idGenerator.js";
+import {
+	objectIdKey,
+	type ObjectTarget,
+	type TreeEdit,
+	type TreeEditValue,
+	type Range,
+} from "./agentEditTypes.js";
+import type { IdGenerator } from "./idGenerator.js";
+import { generateGenericEditTypes } from "./typeGeneration.js";
 import { fail } from "./utils.js";
 
 /**
- * The log of edits produced by an LLM that have been performed on the Shared tree.
+ *
  */
 export type EditLog = {
 	edit: TreeEdit;
@@ -44,8 +54,8 @@ export function toDecoratedJson(
 			// Uncomment this assertion back once we have a typeguard ready.
 			// assert(isTreeNode(node), "Non-TreeNode value in tree.");
 			const objId =
-				idGenerator.getId(value as TreeNode) ??
-				fail("ID of new node should have been assigned.");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
 			assert(
 				!Object.prototype.hasOwnProperty.call(value, objectIdKey),
 				`Collision of object id property.`,
@@ -63,32 +73,35 @@ export function toDecoratedJson(
 /**
  * TBD
  */
-export function getSuggestingSystemPrompt(
+export function getPlanningSystemPrompt(
 	view: TreeView<ImplicitFieldSchema>,
-	suggestionCount: number,
-	userGuidance?: string,
+	userPrompt: string,
+	systemRoleContext?: string,
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
-	const decoratedTreeJson = toDecoratedJson(new IdGenerator(), view.root);
-	const guidance =
-		userGuidance === undefined
+	const role = `I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.${
+		systemRoleContext === undefined
 			? ""
-			: `Additionally, the user has provided some guidance to help you refine your suggestions. Here is that guidance: ${userGuidance}`;
+			: `
+			The other agent follows this guidance: ${systemRoleContext}`
+	}`;
 
-	// TODO: security: user prompt in system prompt
-	return `
-	You are a collaborative agent who suggests possible changes to a JSON tree that follows a specific schema.
-	For example, for a schema of a digital whiteboard application, you might suggest things like "Change the color of all sticky notes to blue" or "Align all the handwritten text vertically".
-	Or, for a schema of a calendar application, you might suggest things like "Move the meeting with Alice to 3pm" or "Add a new event called 'Lunch with Bob' on Friday".
-	The tree that you are suggesting for is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state of the tree is: ${decoratedTreeJson}.
-	${guidance}
-	Please generate exactly ${suggestionCount} suggestions for changes to the tree that you think would be useful.`;
+	const systemPrompt = `
+	${role}
+	The application state tree is a JSON object with the following schema: ${promptFriendlySchema}
+	The current state is: ${JSON.stringify(view.root)}.
+	The user requested that I accomplish the following goal:
+	"${userPrompt}"
+	I've made a plan to accomplish this goal by doing a sequence of edits to the tree.
+	Edits can include setting the root, inserting, modifying, removing, or moving elements in the tree.
+	Here is my plan:`;
+
+	return systemPrompt;
 }
 
 /**
- * Creates a prompt containing unique instructions necessary for the LLM to generate explicit edits to the Shared Tree
+ * TBD
  */
 export function getEditingSystemPrompt(
 	userPrompt: string,
@@ -96,6 +109,7 @@ export function getEditingSystemPrompt(
 	view: TreeView<ImplicitFieldSchema>,
 	log: EditLog,
 	appGuidance?: string,
+	plan?: string,
 ): string {
 	const schema = normalizeFieldSchema(view.schema);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
@@ -107,7 +121,7 @@ export function getEditingSystemPrompt(
 				const error =
 					edit.error === undefined
 						? ""
-						: ` This edit produced an error, and was discarded. The error message was: ${edit.error}`;
+						: ` This edit produced an error, and was discarded. The error message was: "${edit.error}"`;
 				return `${index + 1}. ${JSON.stringify(edit.edit)}${error}`;
 			})
 			.join("\n");
@@ -120,22 +134,19 @@ export function getEditingSystemPrompt(
 			The application that owns the JSON tree has the following guidance about your role: ${appGuidance}`
 	}`;
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+	const treeSchemaString = createZodJsonValidator(
+		...generateGenericEditTypes(getSimpleSchema(schema), false),
+	).getSchemaText();
+
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
 	${role}
-	Edits are composed of the following primitives:
-	- ObjectTarget: a reference to an object (as specified by objectId).
-	- Place: either before or after a ObjectTarget (only makes sense for objects in arrays).
-	- ArrayPlace: either the "start" or "end" of an array, as specified by a "parent" ObjectTarget and a "field" name under which the array is stored.
-	- Range: a range of objects within the same array specified by a "start" and "end" Place. The range MUST be in the same array.
-	- Selection: a ObjectTarget or a Range.
-	The edits you may perform are:
-	- SetRoot: replaces the tree with a specific value. This is useful for initializing the tree or replacing the state entirely if appropriate.
-	- Insert: inserts a new object at a specific Place or ArrayPlace.
-	- Modify: sets a field on a specific ObjectTarget.
-	- Remove: deletes a Selection from the tree.
-	- Move: moves a Selection to a new Place or ArrayPlace.
+	Edits are JSON objects that conform to the following schema.
+	The top level object you produce is an "EditWrapper" object which contains one of "SetRoot", "Insert", "Modify", "Remove", "Move", or null.
+	${treeSchemaString}
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
+	${plan === undefined ? "" : `You have made a plan to accomplish the user's goal. The plan is: "${plan}". You will perform one or more edits that correspond to that plan to accomplish the goal.`}
 	${
 		log.length === 0
 			? ""
@@ -144,16 +155,15 @@ export function getEditingSystemPrompt(
 			This means that the current state of the tree reflects these changes.`
 	}
 	The current state of the tree is: ${decoratedTreeJson}.
-	Before you made the above edits, the user requested you accomplish the following goal:
-	${userPrompt}
-	If the goal is now completed, you should return null.
-	Otherwise, you should create an edit that makes progress towards the goal. It should have an english description ("explanation") of what edit to perform (specifying one of the allowed edit types).`;
+	${log.length > 0 ? "Before you made the above edits t" : "T"}he user requested you accomplish the following goal:
+	"${userPrompt}"
+	If the goal is now completed or is impossible, you should return null.
+	Otherwise, you should create an edit that makes progress towards the goal. It should have an English description ("explanation") of which edit to perform (specifying one of the allowed edit types).`;
 	return systemPrompt;
 }
 
 /**
- * Creates a prompt asking the LLM to confirm whether the edits it has performed has successfully accomplished the user's goal.
- * @remarks This is a form of self-assessment for the LLM to evaluate its work for correctness.
+ * TBD
  */
 export function getReviewSystemPrompt(
 	userPrompt: string,
@@ -221,6 +231,81 @@ export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string 
 	return stringifiedSchema;
 }
 
+function printContent(content: TreeEditValue, idGenerator: IdGenerator): string {
+	switch (typeof content) {
+		case "boolean":
+			return content ? "true" : "false";
+		case "number":
+			return content.toString();
+		case "string":
+			return `"${truncateString(content, 32)}"`;
+		case "object": {
+			if (Array.isArray(content)) {
+				// TODO: Describe the types of the array contents
+				return "a new array";
+			}
+			if (content === null) {
+				return "null";
+			}
+			const id = content[objectIdKey];
+			assert(typeof id === "string", "Object content has no id.");
+			const node = idGenerator.getNode(id) ?? fail("Node not found.");
+			const schema = Tree.schema(node);
+			return `a new ${getFriendlySchemaName(schema.identifier)}`;
+		}
+		default:
+			fail("Unexpected content type.");
+	}
+}
+
+/**
+ * TBD
+ */
+export function describeEdit(edit: TreeEdit, idGenerator: IdGenerator): string {
+	switch (edit.type) {
+		case "setRoot":
+			return `Set the root of the tree to ${printContent(edit.content, idGenerator)}.`;
+		case "insert": {
+			if (edit.destination.type === "arrayPlace") {
+				return `Insert ${printContent(edit.content, idGenerator)} at the ${edit.destination.location} of the array that is under the "${edit.destination.field}" property of ${edit.destination.parentId}.`;
+			} else {
+				const target =
+					idGenerator.getNode(edit.destination.target) ?? fail("Target node not found.");
+				const array = Tree.parent(target) ?? fail("Target node has no parent.");
+				const container = Tree.parent(array);
+				if (container === undefined) {
+					return `Insert ${printContent(edit.content, idGenerator)} into the array at the root of the tree. Insert it ${edit.destination.place} ${edit.destination.target}.`;
+				}
+				return `Insert ${printContent(edit.content, idGenerator)} into the array that is under the "${Tree.key(array)}" property of ${idGenerator.getId(container)}. Insert it ${edit.destination.place} ${edit.destination.target}.`;
+			}
+		}
+		case "modify":
+			return `Set the "${edit.field}" field of ${edit.target.target} to ${printContent(edit.modification, idGenerator)}.`;
+		case "remove":
+			return isObjectTarget(edit.source)
+				? `Remove "${edit.source.target}" from the containing array.`
+				: `Remove all elements from ${edit.source.from.place} ${edit.source.from.target} to ${edit.source.to.place} ${edit.source.to.target} in their containing array.`;
+		case "move":
+			if (edit.destination.type === "arrayPlace") {
+				const suffix = `to the ${edit.destination.location} of the array that is under the "${edit.destination.field}" property of ${edit.destination.parentId}`;
+				return isObjectTarget(edit.source)
+					? `Move ${edit.source.target} ${suffix}.`
+					: `Move all elements from ${edit.source.from.place} ${edit.source.from.target} to ${edit.source.to.place} ${edit.source.to.target} ${suffix}.`;
+			} else {
+				const suffix = `to ${edit.destination.place} ${edit.destination.target}`;
+				return isObjectTarget(edit.source)
+					? `Move ${edit.source.target} ${suffix}.`
+					: `Move all elements from ${edit.source.from.place} ${edit.source.from.target} to ${edit.source.to.place} ${edit.source.to.target} ${suffix}.`;
+			}
+		default:
+			return "Unknown edit type.";
+	}
+}
+
+function isObjectTarget(value: ObjectTarget | Range): value is ObjectTarget {
+	return (value as Partial<ObjectTarget>).target !== undefined;
+}
+
 function getTypeString(
 	defs: Record<string, JsonNodeSchema>,
 	[name, currentDef]: [string, JsonNodeSchema],
@@ -267,11 +352,22 @@ function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSche
 	return nextDef;
 }
 
-function getFriendlySchemaName(schemaName: string): string {
+/**
+ * TBD
+ */
+export function getFriendlySchemaName(schemaName: string): string {
 	const matches = schemaName.match(/[^.]+$/);
 	if (matches === null) {
 		// empty scope
 		return schemaName;
 	}
 	return matches[0];
+}
+
+function truncateString(str: string, maxLength: number): string {
+	if (str.length > maxLength) {
+		// eslint-disable-next-line unicorn/prefer-string-slice
+		return `${str.substring(0, maxLength - 3)}...`;
+	}
+	return str;
 }

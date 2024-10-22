@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	Tree,
@@ -20,6 +21,11 @@ import {
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
 } from "@fluidframework/tree/internal";
 
 import {
@@ -28,18 +34,15 @@ import {
 	type Selection,
 	type Range,
 	type ObjectPlace,
-	objectIdKey,
 	type ArrayPlace,
 	type TreeEditObject,
+	type TreeEditValue,
+	typeField,
 } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { JsonValue } from "./json-handler/jsonParser.js";
+import type { JsonValue } from "./jsonTypes.js";
 import { toDecoratedJson } from "./promptGeneration.js";
 import { fail } from "./utils.js";
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-export const typeField = "__fluid_type";
 
 function populateDefaults(
 	json: JsonValue,
@@ -54,10 +57,52 @@ function populateDefaults(
 				populateDefaults(element, definitionMap);
 			}
 		} else {
-			assert(typeof json[typeField] === "string", "missing or invalid type field");
+			assert(
+				typeof json[typeField] === "string",
+				`${typeField} must be present in new JSON content`,
+			);
 			const nodeSchema = definitionMap.get(json[typeField]);
 			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
 		}
+	}
+}
+
+function getSchemaIdentifier(content: TreeEditValue): string | undefined {
+	switch (typeof content) {
+		case "boolean":
+			return booleanSchema.identifier;
+		case "number":
+			return numberSchema.identifier;
+		case "string":
+			return stringSchema.identifier;
+		case "object": {
+			if (content === null) {
+				return nullSchema.identifier;
+			}
+			if (Array.isArray(content)) {
+				// TODO: Support arrays for setRoot
+				throw new UsageError("Arrays are not currently supported in this context");
+			}
+			if (isFluidHandle(content)) {
+				return handleSchema.identifier;
+			}
+			return content[typeField];
+		}
+		default:
+			throw new UsageError("Unsupported content type");
+	}
+}
+
+function isConstructable(schema: TreeNodeSchema): boolean {
+	switch (schema.identifier) {
+		case booleanSchema.identifier:
+		case numberSchema.identifier:
+		case stringSchema.identifier:
+		case nullSchema.identifier:
+		case handleSchema.identifier:
+			return false;
+		default:
+			return isTreeNodeSchemaClass(schema);
 	}
 }
 
@@ -81,8 +126,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			populateDefaults(treeEdit.content, definitionMap);
 
 			const treeSchema = normalizeFieldSchema(tree.schema);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const schemaIdentifier = (treeEdit.content as any)[typeField];
+			const schemaIdentifier = getSchemaIdentifier(treeEdit.content);
 
 			let insertedObject: TreeNode | undefined;
 			if (treeSchema.kind === FieldKind.Optional && treeEdit.content === undefined) {
@@ -90,7 +134,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			} else {
 				for (const allowedType of treeSchema.allowedTypeSet.values()) {
 					if (schemaIdentifier === allowedType.identifier) {
-						if (isTreeNodeSchemaClass(allowedType)) {
+						if (isConstructable(allowedType)) {
 							const simpleNodeSchema = allowedType as unknown as new (
 								dummy: unknown,
 							) => TreeNode;
@@ -120,8 +164,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 			const parentNodeSchema = Tree.schema(array);
 			populateDefaults(treeEdit.content, definitionMap);
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const schemaIdentifier = (treeEdit.content as any)[typeField];
+			const schemaIdentifier = getSchemaIdentifier(treeEdit.content);
 
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
 			const allowedTypes = [
@@ -340,7 +383,7 @@ function isPrimitive(content: unknown): boolean {
 }
 
 function isObjectTarget(selection: Selection): selection is ObjectTarget {
-	return Object.keys(selection).length === 1 && "__fluid_objectId" in selection;
+	return Object.keys(selection).length === 1 && "target" in selection;
 }
 
 function isRange(selection: Selection): selection is Range {
@@ -409,7 +452,7 @@ function getPlaceInfo(
  * Returns the target node with the matching internal objectId using the provided {@link ObjectTarget}
  */
 function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): TreeNode {
-	const node = idGenerator.getNode(target[objectIdKey]);
+	const node = idGenerator.getNode(target.target);
 	assert(node !== undefined, "objectId does not exist in nodeMap");
 	return node;
 }
@@ -420,10 +463,8 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 			break;
 		case "insert":
 			if (treeEdit.destination.type === "objectPlace") {
-				if (idGenerator.getNode(treeEdit.destination[objectIdKey]) === undefined) {
-					throw new UsageError(
-						`objectIdKey ${treeEdit.destination[objectIdKey]} does not exist`,
-					);
+				if (idGenerator.getNode(treeEdit.destination.target) === undefined) {
+					throw new UsageError(`objectIdKey ${treeEdit.destination.target} does not exist`);
 				}
 			} else {
 				if (idGenerator.getNode(treeEdit.destination.parentId) === undefined) {
@@ -434,8 +475,8 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 		case "remove":
 			if (isRange(treeEdit.source)) {
 				const missingObjectIds = [
-					treeEdit.source.from[objectIdKey],
-					treeEdit.source.to[objectIdKey],
+					treeEdit.source.from.target,
+					treeEdit.source.to.target,
 				].filter((id) => !idGenerator.getNode(id));
 
 				if (missingObjectIds.length > 0) {
@@ -443,14 +484,14 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 				}
 			} else if (
 				isObjectTarget(treeEdit.source) &&
-				idGenerator.getNode(treeEdit.source[objectIdKey]) === undefined
+				idGenerator.getNode(treeEdit.source.target) === undefined
 			) {
-				throw new UsageError(`objectIdKey ${treeEdit.source[objectIdKey]} does not exist`);
+				throw new UsageError(`objectIdKey ${treeEdit.source.target} does not exist`);
 			}
 			break;
 		case "modify":
-			if (idGenerator.getNode(treeEdit.target[objectIdKey]) === undefined) {
-				throw new UsageError(`objectIdKey ${treeEdit.target[objectIdKey]} does not exist`);
+			if (idGenerator.getNode(treeEdit.target.target) === undefined) {
+				throw new UsageError(`objectIdKey ${treeEdit.target.target} does not exist`);
 			}
 			break;
 		case "move": {
@@ -458,8 +499,8 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 			// check the source
 			if (isRange(treeEdit.source)) {
 				const missingObjectIds = [
-					treeEdit.source.from[objectIdKey],
-					treeEdit.source.to[objectIdKey],
+					treeEdit.source.from.target,
+					treeEdit.source.to.target,
 				].filter((id) => !idGenerator.getNode(id));
 
 				if (missingObjectIds.length > 0) {
@@ -467,15 +508,15 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 				}
 			} else if (
 				isObjectTarget(treeEdit.source) &&
-				idGenerator.getNode(treeEdit.source[objectIdKey]) === undefined
+				idGenerator.getNode(treeEdit.source.target) === undefined
 			) {
-				invalidObjectIds.push(treeEdit.source[objectIdKey]);
+				invalidObjectIds.push(treeEdit.source.target);
 			}
 
 			// check the destination
 			if (treeEdit.destination.type === "objectPlace") {
-				if (idGenerator.getNode(treeEdit.destination[objectIdKey]) === undefined) {
-					invalidObjectIds.push(treeEdit.destination[objectIdKey]);
+				if (idGenerator.getNode(treeEdit.destination.target) === undefined) {
+					invalidObjectIds.push(treeEdit.destination.target);
 				}
 			} else {
 				if (idGenerator.getNode(treeEdit.destination.parentId) === undefined) {
