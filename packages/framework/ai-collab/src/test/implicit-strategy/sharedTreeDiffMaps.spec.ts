@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { sharedTreeDiff } from "../../shared-tree-diff/index.js";
+import { sharedTreeDiff } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
@@ -43,6 +43,7 @@ describe("sharedTreeDiff() - Maps - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["stringKey"],
+					objectId: undefined,
 					oldValue: "test",
 					value: "true",
 				},
@@ -61,6 +62,7 @@ describe("sharedTreeDiff() - Maps - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["booleanKey"],
+					objectId: undefined,
 					oldValue: true,
 					value: false,
 				},
@@ -79,6 +81,7 @@ describe("sharedTreeDiff() - Maps - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["numberKey"],
+					objectId: undefined,
 					oldValue: 0,
 					value: 1,
 				},
@@ -105,6 +108,7 @@ describe("sharedTreeDiff() - Maps - Change Diffs", () => {
 			{
 				type: "CHANGE",
 				path: ["objectKey", "stringKey"],
+				objectId: undefined,
 				oldValue: "test",
 				value: "SomethingDifferent",
 			},
@@ -122,6 +126,7 @@ describe("sharedTreeDiff() - Maps - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["arrayKey"],
+					objectId: undefined,
 					oldValue: arrayNode,
 					value: undefined,
 				},

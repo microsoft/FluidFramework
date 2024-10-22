@@ -43,7 +43,9 @@ export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchem
 
 	// Include the "description" property only if it's present on the input.
 	if (normalizedSchema.metadata?.description !== undefined) {
-		output.description = normalizedSchema.metadata.description;
+		output.metadata = {
+			description: normalizedSchema.metadata.description,
+		};
 	}
 
 	return output;
@@ -140,9 +142,9 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 		allowedTypes,
 	};
 
-	// Don't include "description" property at all if it's not present.
-	if (schema.metadata?.description !== undefined) {
-		result.description = schema.metadata.description;
+	// Don't include "metadata" property at all if it's not present.
+	if (schema.metadata !== undefined) {
+		result.metadata = schema.metadata;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
