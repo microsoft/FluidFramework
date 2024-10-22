@@ -57,9 +57,11 @@ export function TaskGroup(props: {
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
 
 	return (
+
 		<Card
 			sx={{
 				p: 7,
+				width: '90%',
 				background: "rgba(255, 255, 255, 0.5)",
 				borderRadius: "16px",
 				boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
@@ -291,7 +293,7 @@ export function TaskGroup(props: {
 			</Stack>
 
 			{/* Render Task Card list */}
-			<Stack spacing={2} sx={{ alignItems: "center" }}>
+			<Stack direction='row' spacing={{ xs: 1, sm: 2 }} useFlexGap sx={{ flexWrap: 'wrap' }}>
 				{props.sharedTreeTaskGroup.tasks.map((task) => {
 					const taskDiffs: Difference[] = [];
 					for (const diff of props.branchDifferences ?? []) {
@@ -323,7 +325,7 @@ export function TaskGroup(props: {
 				Engineers
 			</Typography>
 
-			<Stack spacing={1}>
+			<Stack direction='row' spacing={{ xs: 1, sm: 2 }} sx={{ flexWrap: 'wrap' }}>
 				{props.sharedTreeTaskGroup.engineers.map((engineer) => {
 					const engineerCapacity = props.sharedTreeTaskGroup.tasks
 						.filter((task) => task.assignee === engineer.name)
@@ -332,7 +334,7 @@ export function TaskGroup(props: {
 					const capacityColor = engineerCapacity > engineer.maxCapacity ? "red" : "green";
 
 					return (
-						<Card sx={{ p: 2, width: 600 }} key={engineer.name}>
+						<Card sx={{ p: 2, width: 400 }} key={engineer.name}>
 							<Box mb={2}>
 								<Typography variant="h1" fontSize={24}>
 									{engineer.name}
@@ -361,6 +363,8 @@ export function TaskGroup(props: {
 				})}
 			</Stack>
 		</Card>
+
+
 	);
 }
 

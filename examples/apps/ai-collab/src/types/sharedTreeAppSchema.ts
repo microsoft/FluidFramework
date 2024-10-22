@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree, SchemaFactory, TreeViewConfiguration } from "fluid-framework";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "fluid-framework";
 
 import type { Engineer, Task, TaskGroup } from "./task";
 
@@ -50,58 +51,6 @@ export const INITIAL_APP_STATE = {
 		{
 			title: "My First Task Group",
 			description: "Placeholder for first task group",
-			tasks: [
-				{
-					assignee: "Alice",
-					title: "Task #1",
-					description:
-						"This is the first task. Blah Blah blah Blah Blah blahBlah Blah blahBlah Blah blahBlah Blah blah",
-					priority: "low",
-					complexity: 1,
-					status: "todo",
-				},
-				{
-					assignee: "Bob",
-					title: "Task #2",
-					description:
-						"This is the second task.  Blah Blah blah Blah Blah blahBlah Blah blahBlah Blah blahBlah Blah blah",
-					priority: "medium",
-					complexity: 2,
-					status: "in-progress",
-				},
-				{
-					assignee: "Charlie",
-					title: "Task #3",
-					description:
-						"This is the third task!  Blah Blah blah Blah Blah blahBlah Blah blahBlah Blah blahBlah Blah blah",
-					priority: "high",
-					complexity: 3,
-					status: "done",
-				},
-			],
-			engineers: [
-				{
-					name: "Alice",
-					maxCapacity: 15,
-					skills:
-						"Senior engineer capable of handling complex tasks. Versed in most languages",
-				},
-				{
-					name: "Bob",
-					maxCapacity: 12,
-					skills:
-						"Mid-level engineer capable of handling medium complexity tasks. Versed in React, Node.JS",
-				},
-				{
-					name: "Charlie",
-					maxCapacity: 7,
-					skills: "Junior engineer capable of handling simple tasks. Versed in Node.JS",
-				},
-			],
-		},
-		{
-			title: "My Second Task Group",
-			description: "Placeholder for second task group",
 			tasks: [
 				{
 					assignee: "Alice",
