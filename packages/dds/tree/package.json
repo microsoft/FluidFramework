@@ -171,7 +171,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.16.4",
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
@@ -185,7 +185,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@~2.3.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@~2.4.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
@@ -228,23 +228,23 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAlias_MapNodeInsertableData": {
+			"TypeAlias_InsertableTreeFieldFromImplicitField": {
 				"backCompat": false
 			},
-			"Interface_InternalTypes_TreeNodeSchemaNonClass": {
+			"Interface_TreeArrayNode": {
 				"backCompat": false
 			},
-			"Interface_FieldSchemaUnsafe": {
-				"forwardCompat": false
+			"TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {
+				"backCompat": false
 			},
-			"Interface_ITreeViewConfiguration": {
-				"forwardCompat": false
+			"TypeAlias_NodeFromSchema": {
+				"backCompat": false
 			},
-			"TypeAlias_ImplicitFieldSchema": {
-				"forwardCompat": false
+			"TypeAlias_TreeFieldFromImplicitField": {
+				"backCompat": false
 			},
-			"TypeAlias_ImplicitAllowedTypes": {
-				"forwardCompat": false
+			"TypeAlias_TreeNodeFromImplicitAllowedTypes": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

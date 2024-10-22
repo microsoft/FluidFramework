@@ -53,6 +53,7 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -83,6 +84,7 @@ export class AlfredRunner implements IRunner {
 				this.producer,
 				this.documentRepository,
 				this.documentDeleteService,
+				this.startupCheck,
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
@@ -114,6 +116,9 @@ export class AlfredRunner implements IRunner {
 
 		this.stopped = false;
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 

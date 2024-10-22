@@ -40,6 +40,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -84,6 +85,7 @@ export function create(
 
 	const healthCheckEndpoints = createHealthCheckEndpoints(
 		"alfred",
+		startupCheck,
 		readinessCheck,
 		false /* createLivenessEndpoint */,
 	);
