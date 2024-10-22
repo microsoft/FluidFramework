@@ -43,6 +43,7 @@
 		"build:docs": "api-extractor run --local && typedoc",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:manifest": "oclif manifest",
+		"build:readme": "oclif readme --version 0.0.0 --no-aliases --readme-path src/docs/cli.md",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
