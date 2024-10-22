@@ -447,7 +447,7 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 
 				// Tools packages that are not library packages
-				"^azure/packages/azure-local-service/",
+				// "^azure/packages/azure-local-service/",
 				"^packages/tools/fetch-tool/",
 				"^tools/test-tools/",
 
@@ -569,6 +569,7 @@ module.exports = {
 				{
 					name: "build:docs",
 					body: "api-extractor run --local",
+					exclusion: true,
 				},
 				{
 					name: "ci:build:docs",

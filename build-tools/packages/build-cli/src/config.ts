@@ -316,6 +316,8 @@ export interface ScriptRequirement {
 	 * @defaultValue `false`
 	 */
 	bodyMustMatch?: boolean;
+
+	exclusion?: boolean;
 }
 
 const configName = "flub";

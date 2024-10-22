@@ -120,6 +120,8 @@ export { run }
 export interface ScriptRequirement {
     body: string;
     bodyMustMatch?: boolean;
+    // (undocumented)
+    exclusion?: boolean;
     name: string;
 }
 
