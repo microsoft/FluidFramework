@@ -44,6 +44,7 @@ import {
 	LazyPromise,
 	PromiseCache,
 	delay,
+	checkLayerCompatibility,
 } from "@fluidframework/core-utils/internal";
 import {
 	IClientDetails,
@@ -1527,6 +1528,35 @@ export class ContainerRuntime
 		expiry: { policy: "absolute", durationMs: 60000 },
 	});
 
+	<<<<<<<
+	HEAD;
+	=======
+	/**
+	 * The options to apply to this ContainerRuntime instance (including internal options hidden from the public API)
+	 */
+	private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>;
+	public readonly pkgVersion = pkgVersion;
+	// The current generation of the Runtime layer. This is used to ensure compatibility between the Runtime and
+	// other layers.
+	private readonly generation = 1;
+	// A list of features required by the Runtime layer to be supported by the Loader layer.
+	private readonly requiredFeaturesFromLoader: string[] = [];
+	// A list of features supported by the Runtime layer advertised to the Loader layer.
+	private readonly supportedFeaturesForLoader: ReadonlyMap<string, unknown> = new Map([
+		/* This is the minimum generation of the Loader this Runtime supports. */
+		["minSupportedGeneration", 1],
+	]);
+	public get supportedFeatures(): ReadonlyMap<string, unknown> {
+		return this.supportedFeaturesForLoader;
+	}
+
+	>>>>>>> 32ed194ea6 (
+	Added;
+	generation;
+	and;
+	supported;
+	features;
+	)
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1589,6 +1619,24 @@ export class ContainerRuntime
 			flushMode: defaultFlushMode,
 			...baseRuntimeOptions,
 		};
+		if (
+			supportedFeatures &&
+			!checkLayerCompatibility(
+				this.requiredFeaturesFromLoader,
+				this.generation,
+				supportedFeatures,
+			)
+		) {
+			const error = new UsageError("Runtime version is not compatible with Loader", {
+				runtimeVersion: pkgVersion,
+				loaderVersion: context.pkgVersion,
+				runtimeGeneration: this.generation,
+				minSupportedGeneration: supportedFeatures.get("minSupportedGeneration") as number,
+			});
+			closeFn(error);
+			throw error;
+		}
+
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",

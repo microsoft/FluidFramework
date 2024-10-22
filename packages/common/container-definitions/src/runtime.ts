@@ -112,6 +112,14 @@ export interface IRuntime extends IDisposable {
 	 * @see {@link IContainer.getEntryPoint}
 	 */
 	getEntryPoint(): Promise<FluidObject>;
+
+	/**
+	 * A list of features supported by the runtime across the Loader / Runtime layer boundary. This is used to check
+	 * that the Loader and Runtime layers are compatible with each other.
+	 */
+	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
+
+	readonly pkgVersion?: string;
 }
 
 /**
@@ -206,7 +214,13 @@ export interface IContainerContext {
 
 	updateDirtyContainerState(dirty: boolean): void;
 
+	/**
+	 * A list of features supported by the context across the Loader / Runtime layer boundary. This is used to check
+	 * that the Loader and Runtime layers are compatible with each other.
+	 */
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
+
+	readonly pkgVersion?: string;
 
 	/**
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
