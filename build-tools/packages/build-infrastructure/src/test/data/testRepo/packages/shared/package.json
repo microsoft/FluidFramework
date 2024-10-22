@@ -11,7 +11,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"dependencies": {
-		"@group2/pkg-d": "1.0.0",
-		"@group3/pkg-g": "1.0.0"
+		"@group2/pkg-d": "1.0.0"
 	}
 }
