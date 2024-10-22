@@ -11,9 +11,11 @@ import type { Engineer, Task, TaskGroup } from "./task";
 // The string passed to the SchemaFactory should be unique
 const sf = new SchemaFactory("ai-collab-sample-application");
 
+// NOTE that there is currently a bug with the ai-collab library that requires us to rearrance the keys of each type to not have the same first key.
+
 export class SharedTreeTask extends sf.object("Task", {
-	id: sf.identifier,
 	title: sf.string,
+	id: sf.identifier,
 	description: sf.string,
 	priority: sf.string,
 	complexity: sf.number,
@@ -24,8 +26,8 @@ export class SharedTreeTask extends sf.object("Task", {
 export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 
 export class SharedTreeEngineer extends sf.object("Engineer", {
-	id: sf.identifier,
 	name: sf.string,
+	id: sf.identifier,
 	skills: sf.string,
 	maxCapacity: sf.number,
 }) {}
@@ -33,9 +35,9 @@ export class SharedTreeEngineer extends sf.object("Engineer", {
 export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
 
 export class SharedTreeTaskGroup extends sf.object("TaskGroup", {
+	description: sf.string,
 	id: sf.identifier,
 	title: sf.string,
-	description: sf.string,
 	tasks: SharedTreeTaskList,
 	engineers: SharedTreeEngineerList,
 }) {}
