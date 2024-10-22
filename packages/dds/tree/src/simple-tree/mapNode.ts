@@ -128,6 +128,8 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	): void;
 }
 
+// TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
+// This is not ideal, but no alternatives are possible.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handler: ProxyHandler<TreeMapNode<any>> = {
 	getPrototypeOf: () => {
