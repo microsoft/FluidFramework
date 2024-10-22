@@ -30,7 +30,15 @@ export {
 	getAllDependenciesInRepo,
 	loadFluidRepo,
 } from "./fluidRepo.js";
+export {
+	getFiles,
+	findGitRootSync,
+	getMergeBaseRemote,
+	getRemote,
+	getChangedSinceRef,
+} from "./git.js";
 export { PackageBase } from "./package.js";
+export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,
@@ -60,15 +68,3 @@ export {
 	type PackageSelectionCriteria,
 	type PackageFilterOptions,
 } from "./filter.js";
-
-// export {
-// 	getFiles,
-// 	findGitRootSync,
-// 	getMergeBaseRemote,
-// 	getRemote,
-// 	getChangedSinceRef,
-// } from "./git.js";
-// export { PackageBase } from "./package.js";
-// export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
-// export { createPackageManager } from "./packageManagers.js";
-// export { setVersion } from "./versions.js";
