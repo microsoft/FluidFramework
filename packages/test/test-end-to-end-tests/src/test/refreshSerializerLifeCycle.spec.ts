@@ -162,13 +162,6 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			) {
 				return;
 			}
-			let snapshotRefreshTimeoutMs;
-			if (
-				testConfig.timeoutRefreshInOriginalContainer ||
-				testConfig.timeoutRefreshInLoadedContainer
-			) {
-				snapshotRefreshTimeoutMs = provider.driver.type === "local" ? 100 : 1000;
-			}
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const testContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
@@ -193,7 +186,11 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 						"Fluid.Container.enableOfflineSnapshotRefresh": true,
 						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch":
 							testConfig.useLoadingGroupIdForSnapshotFetch,
-						"Fluid.Container.snapshotRefreshTimeoutMs": snapshotRefreshTimeoutMs,
+						"Fluid.Container.snapshotRefreshTimeoutMs":
+							testConfig.timeoutRefreshInOriginalContainer ||
+							testConfig.timeoutRefreshInLoadedContainer
+								? 100
+								: undefined,
 					}),
 				},
 			};
