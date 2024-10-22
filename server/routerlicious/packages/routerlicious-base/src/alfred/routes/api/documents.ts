@@ -307,13 +307,20 @@ export function create(
 		const privateLinkEnable = true;
 		if (
 			privateLinkEnable &&
+			externalOrdererUrl.includes("https://") &&
 			(externalOrdererUrl.includes("frs.azure") ||
 				externalOrdererUrl.includes("fluidrelay.azure"))
 		) {
 			return {
-				documentOrdererUrl: `${tenantId}.${externalOrdererUrl}`,
-				documentHistorianUrl: `${tenantId}.${externalHistorianUrl}`,
-				documentDeltaStreamUrl: `${tenantId}.${externalDeltaStreamUrl}`,
+				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
+				documentHistorianUrl: externalHistorianUrl.replace(
+					"https://",
+					`https://${tenantId}.`,
+				),
+				documentDeltaStreamUrl: externalDeltaStreamUrl.replace(
+					"https://",
+					`https://${tenantId}.`,
+				),
 			};
 		}
 		return {
