@@ -3,23 +3,23 @@
 	height: 100%;
 }
 
-.titleSectionContainerBase {
+.titleSectionContainer {
 	padding:0;
 	margin: 0;
 	max-width: 100%;
 	overflow: hidden;
 	background-size: cover;
-  	background-position: center;
-  	background-repeat: no-repeat;
+	background-position: center;
+	background-repeat: no-repeat;
 }
 
-.titleSectionContainerLight {
-	@extend .titleSectionContainerBase;
+/* Dark mode override */
+[data-theme='light'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-light.png');
 }
 
-.titleSectionContainerDark {
-	@extend .titleSectionContainerBase;
+/* Dark mode override */
+[data-theme='dark'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-dark.png');
 }
 
