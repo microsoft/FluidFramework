@@ -13,6 +13,9 @@ when the package.json has custom keys/values.
 
 • **J** *extends* [`PackageJson`](../type-aliases/PackageJson.md) = [`PackageJson`](../type-aliases/PackageJson.md)
 
+The package.json type to use. This type must extend the [PackageJson](../type-aliases/PackageJson.md) type defined in this
+package.
+
 • **TAddProps** *extends* [`AdditionalPackageProps`](../type-aliases/AdditionalPackageProps.md) = `undefined`
 
 ## Implements

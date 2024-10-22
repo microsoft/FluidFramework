@@ -16,6 +16,8 @@ See [IWorkspace](../interfaces/IWorkspace.md) and [IReleaseGroup](../interfaces/
 
 • **P** *extends* [`IPackage`](../interfaces/IPackage.md)
 
+The type of [IPackage](../interfaces/IPackage.md) the repo uses. This can be any type that implements [IPackage](../interfaces/IPackage.md).
+
 ## Implements
 
 - [`IFluidRepo`](../interfaces/IFluidRepo.md)\<`P`\>

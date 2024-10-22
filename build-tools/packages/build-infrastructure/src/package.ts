@@ -252,7 +252,7 @@ function* iterateDependencies<T extends PackageJson>(
 		yield {
 			name,
 			version,
-			depClass: "prod",
+			depKind: "prod",
 		} as const;
 	}
 
@@ -264,7 +264,7 @@ function* iterateDependencies<T extends PackageJson>(
 		yield {
 			name,
 			version,
-			depClass: "dev",
+			depKind: "dev",
 		} as const;
 	}
 
@@ -276,7 +276,7 @@ function* iterateDependencies<T extends PackageJson>(
 		yield {
 			name,
 			version,
-			depClass: "peer",
+			depKind: "peer",
 		} as const;
 	}
 }
