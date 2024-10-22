@@ -33,6 +33,9 @@ export interface FilterablePackage {
 export function filterPackages<T extends FilterablePackage>(packages: T[], filters: PackageFilterOptions): Promise<T[]>;
 
 // @public
+export function findGitRootSync(cwd?: string): string;
+
+// @public
 export interface FluidPackageJsonFields {
     pnpm?: {
         overrides?: Record<string, string>;
@@ -67,10 +70,28 @@ export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[])
 };
 
 // @public
+export function getChangedSinceRef<P extends IPackage>(fluidRepo: IFluidRepo<P>, ref: string, remote?: string): Promise<{
+    files: string[];
+    dirs: string[];
+    workspaces: IWorkspace[];
+    releaseGroups: IReleaseGroup[];
+    packages: IPackage[];
+}>;
+
+// @public
+export function getFiles(git: SimpleGit, directory: string): Promise<string[]>;
+
+// @public
 export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
     config: IFluidRepoLayout;
     configFilePath: string;
 };
+
+// @public
+export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string): Promise<string>;
+
+// @public
+export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
 
 // @public
 export type GlobString = string;
@@ -276,6 +297,12 @@ export function selectAndFilterPackages<P extends IPackage>(fluidRepo: IFluidRep
     selected: P[];
     filtered: P[];
 }>;
+
+// @public
+export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;
+
+// @public
+export function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => Promise<void>): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {
