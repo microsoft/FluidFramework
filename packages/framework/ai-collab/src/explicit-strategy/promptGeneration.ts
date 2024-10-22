@@ -63,8 +63,8 @@ export function toDecoratedJson(
 /**
  * TBD
  */
-export function getSuggestingSystemPrompt(
-	view: TreeView<ImplicitFieldSchema>,
+export function getSuggestingSystemPrompt<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
 	suggestionCount: number,
 	userGuidance?: string,
 ): string {
@@ -90,10 +90,10 @@ export function getSuggestingSystemPrompt(
 /**
  * Creates a prompt containing unique instructions necessary for the LLM to generate explicit edits to the Shared Tree
  */
-export function getEditingSystemPrompt(
+export function getEditingSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	userPrompt: string,
 	idGenerator: IdGenerator,
-	view: TreeView<ImplicitFieldSchema>,
+	view: TreeView<TSchema>,
 	log: EditLog,
 	appGuidance?: string,
 ): string {
@@ -155,10 +155,10 @@ export function getEditingSystemPrompt(
  * Creates a prompt asking the LLM to confirm whether the edits it has performed has successfully accomplished the user's goal.
  * @remarks This is a form of self-assessment for the LLM to evaluate its work for correctness.
  */
-export function getReviewSystemPrompt(
+export function getReviewSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	userPrompt: string,
 	idGenerator: IdGenerator,
-	view: TreeView<ImplicitFieldSchema>,
+	view: TreeView<TSchema>,
 	originalDecoratedJson: string,
 	appGuidance?: string,
 ): string {

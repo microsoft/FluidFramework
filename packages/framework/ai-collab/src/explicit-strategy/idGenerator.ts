@@ -59,7 +59,7 @@ export class IdGenerator {
 				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
 				const objId = this.getOrCreateId(node as TreeNode);
 				Object.keys(node).forEach((key) => {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 					this.assignIds((node as unknown as any)[key]);
 				});
 				return objId;
