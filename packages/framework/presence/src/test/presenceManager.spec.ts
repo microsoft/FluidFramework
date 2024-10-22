@@ -176,7 +176,7 @@ describe("Presence", () => {
 							"No attendee was disconnected in beforeEach",
 						);
 						assert.equal(
-							disconnectedAttendee.status,
+							disconnectedAttendee.status(),
 							SessionClientStatus.Disconnected,
 							"Disconnected attendee has wrong status",
 						);
