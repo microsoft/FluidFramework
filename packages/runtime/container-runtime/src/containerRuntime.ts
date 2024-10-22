@@ -2636,7 +2636,7 @@ export class ContainerRuntime
 
 		this._connected = connected;
 
-		if (!connected) {
+		if (changeOfState && connected) {
 			this._signalTracking.signalsLost = 0;
 			this._signalTracking.signalsOutOfOrder = 0;
 			this._signalTracking.signalTimestamp = 0;
@@ -3369,7 +3369,7 @@ export class ContainerRuntime
 	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string) {
 		const isBroadcastSignal = targetClientId === undefined;
 
-		if (isBroadcastSignal && this.connected) {
+		if (isBroadcastSignal) {
 			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
 				.broadcastSignalSequenceNumber;
 			// Stamp with the broadcast signal sequence number.
