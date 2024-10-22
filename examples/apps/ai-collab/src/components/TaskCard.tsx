@@ -129,7 +129,7 @@ export function TaskCard(props: {
 				position: "relative",
 				backgroundColor: cardColor,
 				width: "400px",
-				height: "245px"
+				height: "245px",
 			}}
 			key={`${task.title}`}
 		>
@@ -314,8 +314,7 @@ export function TaskCard(props: {
 					<IconButton
 						onClick={(event) => {
 							setDiffOldValue(
-								fieldDifferences.changes.description
-									?.oldValue as SetStateAction<ReactNode>,
+								fieldDifferences.changes.description?.oldValue as SetStateAction<ReactNode>,
 							);
 							setDiffOldValuePopoverAnchor(event.currentTarget);
 						}}
@@ -325,8 +324,8 @@ export function TaskCard(props: {
 				)}
 			</Stack>
 
-			<Stack direction='row' spacing={2} width='100%'>
-				<Stack spacing={2} width='50%'>
+			<Stack direction="row" spacing={2} width="100%">
+				<Stack spacing={2} width="50%">
 					<Stack direction="row" spacing={1} alignItems="center">
 						<FormControl fullWidth>
 							<InputLabel id="select-priority-label-id">
@@ -415,7 +414,7 @@ export function TaskCard(props: {
 					</Stack>
 				</Stack>
 
-				<Stack spacing={2} width='50%'>
+				<Stack spacing={2} width="50%">
 					<Stack direction="row" spacing={1} alignItems="center">
 						<FormControl fullWidth>
 							<InputLabel id="select-assignee-label-id">
@@ -481,10 +480,6 @@ export function TaskCard(props: {
 					</Stack>
 				</Stack>
 			</Stack>
-
-
-
-
 		</Card>
 	);
 }
