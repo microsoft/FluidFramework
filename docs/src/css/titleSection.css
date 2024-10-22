@@ -13,7 +13,7 @@
 	background-repeat: no-repeat;
 }
 
-/* Dark mode override */
+/* Light mode override */
 [data-theme='light'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-light.png');
 }
