@@ -4,16 +4,13 @@
  */
 
 import React from "react";
-import { useColorMode } from '@docusaurus/theme-common';
 
-import "@site/src/css/titleSection.scss";
+import "@site/src/css/titleSection.css";
 
 export function TitleSection(): React.ReactElement {
-
-	const { colorMode } = useColorMode();
   return (
     <div className="rootContainer">
-      <div className={colorMode === "dark" ? "titleSectionContainerDark" : "titleSectionContainerLight"}>
+      <div className={"titleSectionContainer"}>
         <div className="overlay"/>{/* White overlay */}
         <div className="contentContainer">
             <div className="titleBox">
