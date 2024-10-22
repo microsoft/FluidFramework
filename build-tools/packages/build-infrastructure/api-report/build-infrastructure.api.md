@@ -236,7 +236,7 @@ export interface PackageFilterOptions {
     skipScope?: string[] | undefined;
 }
 
-// @public (undocumented)
+// @public
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
 // @public
@@ -255,7 +255,7 @@ export interface PackageSelectionCriteria {
     workspaces: (GlobString | string)[];
 }
 
-// @public (undocumented)
+// @public
 export interface ReleaseGroupDefinition {
     adoPipelineUrl?: string;
     exclude?: string[];
@@ -277,7 +277,7 @@ export function selectAndFilterPackages<P extends IPackage>(fluidRepo: IFluidRep
     filtered: P[];
 }>;
 
-// @public (undocumented)
+// @public
 export interface WorkspaceDefinition {
     directory: string;
     releaseGroups: {
