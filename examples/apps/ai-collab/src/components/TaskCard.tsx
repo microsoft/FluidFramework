@@ -325,8 +325,8 @@ export function TaskCard(props: {
 				)}
 			</Stack>
 
-			<Stack direction='row' spacing={2}>
-				<Stack spacing={2} >
+			<Stack direction='row' spacing={2} width='100%'>
+				<Stack spacing={2} width='50%'>
 					<Stack direction="row" spacing={1} alignItems="center">
 						<FormControl fullWidth>
 							<InputLabel id="select-priority-label-id">
@@ -415,7 +415,7 @@ export function TaskCard(props: {
 					</Stack>
 				</Stack>
 
-				<Stack spacing={2} >
+				<Stack spacing={2} width='50%'>
 					<Stack direction="row" spacing={1} alignItems="center">
 						<FormControl fullWidth>
 							<InputLabel id="select-assignee-label-id">
