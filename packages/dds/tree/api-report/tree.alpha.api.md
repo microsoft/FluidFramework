@@ -173,9 +173,9 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
 
 // @public
 type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = FlattenKeys<{
-    readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property] & string>;
+    readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 } & {
-    readonly [Property in keyof T as FieldHasDefault<T[Property] & string> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property] & string>;
+    readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 }>;
 
 // @public
@@ -771,7 +771,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 }
 
 // @public @sealed
-export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
+export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;

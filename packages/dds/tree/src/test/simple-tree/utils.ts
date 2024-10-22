@@ -21,12 +21,14 @@ import {
 	SimpleContextSlot,
 	type ImplicitFieldSchema,
 	type InsertableContent,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 import {
 	getTreeNodeForField,
@@ -114,7 +116,7 @@ export function describeHydration(
  *
  * TODO: determine and document if this produces "cooked" or "marinated" nodes.
  */
-export function hydrate<TSchema extends ImplicitFieldSchema>(
+export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
@@ -143,6 +145,16 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	const cursor = cursorForMapTreeNode(mapTree);
 	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
 	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;
+}
+
+/**
+ * {@link hydrate} but unsafe initialTree
+ */
+export function hydrateUnsafe<const TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+	initialTree: InsertableField<UnsafeUnknownSchema>,
+): TreeFieldFromImplicitField<TSchema> {
+	return hydrate(schema, initialTree as InsertableTreeFieldFromImplicitField<TSchema>);
 }
 
 /**
