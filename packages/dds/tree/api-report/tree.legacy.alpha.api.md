@@ -17,7 +17,7 @@ type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> =
 // @public
 export interface ClonableRevertible extends Revertible {
     // (undocumented)
-    clone: (forkedView?: TreeView<ImplicitFieldSchema>) => ClonableRevertible;
+    clone: (forkedBranch?: TreeBranch | TreeBranchFork) => ClonableRevertible;
     // (undocumented)
     dispose: () => void;
 }

@@ -5,7 +5,11 @@
 
 import { type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import { getBranch, type ITreeCheckout } from "../../shared-tree/index.js";
+import {
+	getBranch,
+	type ITreeCheckout,
+	type ITreeCheckoutFork,
+} from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	createClonableUndoRedoStacks,
@@ -437,23 +441,36 @@ describe("Undo and redo", () => {
 		const originalPropertyTwoBefore = view.root.child?.propertyTwo.itemOne;
 		console.log(originalPropertyTwoBefore);
 
-		// make some edits set x =1
+		// make edits to the original view.
 		if (view.root.child !== undefined) {
 			view.root.child.propertyTwo.itemOne = "newItem";
 			view.root.child.propertyTwo.itemOne = "newItem2";
 		}
 
-		const undo = undoStack.pop(); // "newItem" -> ""
-
 		const forkedBranch = getBranch(view).branch();
+
 		const forkedView = forkedBranch.viewWith(
 			new TreeViewConfiguration({ schema: RootNodeSchema }),
 		);
 
-		undo?.clone(forkedView).revert();
+		const { undoStack: forkedUndoStack } = createClonableUndoRedoStacks(forkedView.events);
 
-		console.log(view.root.child?.propertyTwo.itemOne);
-		console.log(forkedView.root.child?.propertyTwo.itemOne);
+		if (forkedView.root.child !== undefined) {
+			forkedView.root.child.propertyTwo.itemOne = "newItem3";
+		}
+
+		forkedUndoStack.pop()?.revert(); // "newItem3" -> "newItem2"
+
+		const forkedEqualTwo = forkedView.root.child?.propertyTwo.itemOne;
+		console.log(forkedEqualTwo);
+
+		undoStack.pop()?.clone(forkedBranch).revert(); // "newItem2" -> "newItem"
+
+		const original = view.root.child?.propertyTwo.itemOne;
+		const forkedEqualOne = forkedView.root.child?.propertyTwo.itemOne;
+
+		console.log(original);
+		console.log(forkedEqualOne);
 	});
 });
 

@@ -576,8 +576,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 												revertible.dispose();
 											}
 										},
-										clone: (newView?: TreeView<ImplicitFieldSchema>): ClonableRevertible => {
-											return this.cloneRevertible(revision, kind, newView);
+										clone: (branch?: TreeBranch | TreeBranchFork): ClonableRevertible => {
+											return this.cloneRevertible(revision, kind, branch);
 										},
 										dispose: () => {
 											if (revertible.status === RevertibleStatus.Disposed) {
@@ -651,7 +651,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private cloneRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
-		view?: TreeView<ImplicitFieldSchema>,
+		branch?: TreeBranch | TreeBranchFork,
 		onRevertibleDisposed?: (revertible: Revertible) => void,
 	): ClonableRevertible {
 		const commits = this.revertibleCommitBranches.get(revision);
@@ -668,7 +668,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
-				const revertMetrics = this.revertRevertible(revision, kind);
+				const revertMetrics = this.revertRevertible(revision, kind, branch ?? undefined);
 				this.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
@@ -678,8 +678,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					revertible.dispose();
 				}
 			},
-			clone: (newView?: TreeView<ImplicitFieldSchema>) => {
-				return this.cloneRevertible(revision, kind, newView);
+			clone: (newBranch?: TreeBranch | TreeBranchFork) => {
+				return this.cloneRevertible(revision, kind, newBranch);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -850,7 +850,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
+	private revertRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		forkedBranch?: TreeBranch | TreeBranchFork,
+	): RevertMetrics {
 		if (this._branch.isTransacting()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
@@ -880,12 +884,23 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			);
 		}
 
-		this._branch.apply(
-			change,
-			kind === CommitKind.Default || kind === CommitKind.Redo
-				? CommitKind.Undo
-				: CommitKind.Redo,
-		);
+		if (forkedBranch !== undefined) {
+			const forkedBranchToCheckout = forkedBranch as unknown as TreeCheckout;
+			const internalBranch = forkedBranchToCheckout._branch;
+			internalBranch.apply(
+				change,
+				kind === CommitKind.Default || kind === CommitKind.Redo
+					? CommitKind.Undo
+					: CommitKind.Redo,
+			);
+		} else {
+			this._branch.apply(
+				change,
+				kind === CommitKind.Default || kind === CommitKind.Redo
+					? CommitKind.Undo
+					: CommitKind.Redo,
+			);
+		}
 
 		// Derive some stats about the reversion to return to the caller.
 		let revertAge = 0;
@@ -949,5 +964,5 @@ export function runSynchronous(
  */
 export interface ClonableRevertible extends Revertible {
 	dispose: () => void;
-	clone: (forkedView?: TreeView<ImplicitFieldSchema>) => ClonableRevertible;
+	clone: (forkedBranch?: TreeBranch | TreeBranchFork) => ClonableRevertible;
 }
