@@ -143,10 +143,10 @@ const makeAfterMiddlewares = (
 
 			options.tenantSecret =
 				options.mode === "docker"
-					? options.tenantSecret ??
+					? (options.tenantSecret ??
 						config.get("fluid:webpack:docker:tenantSecret") ??
-						"create-new-tenants-if-going-to-production"
-					: options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
+						"create-new-tenants-if-going-to-production")
+					: (options.tenantSecret ?? config.get("fluid:webpack:tenantSecret"));
 
 			if (options.mode === "r11s") {
 				options.discoveryEndpoint =

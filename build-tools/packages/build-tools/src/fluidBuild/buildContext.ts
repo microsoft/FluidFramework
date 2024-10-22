@@ -14,7 +14,7 @@ export interface BuildContext {
 	/**
 	 * The fluid-build configuration for the repo.
 	 */
-	readonly fluidBuildConfig: IFluidBuildConfig | undefined;
+	readonly fluidBuildConfig: IFluidBuildConfig;
 
 	/**
 	 * The absolute path to the root of the repo.

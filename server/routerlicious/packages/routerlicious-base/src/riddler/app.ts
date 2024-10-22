@@ -29,6 +29,7 @@ export function create(
 	fetchTenantKeyMetricInterval: number,
 	riddlerStorageRequestMetricInterval: number,
 	tenantKeyGenerator: ITenantKeyGenerator,
+	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	readinessCheck?: IReadinessCheck,
 ) {
@@ -68,7 +69,7 @@ export function create(
 		),
 	);
 
-	const healthEndpoints = createHealthCheckEndpoints("riddler", readinessCheck);
+	const healthEndpoints = createHealthCheckEndpoints("riddler", startupCheck, readinessCheck);
 
 	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler

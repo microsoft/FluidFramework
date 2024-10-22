@@ -448,6 +448,7 @@ describeCompat(
 			);
 		});
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Stick handle of 2 dds(of 2 different dataStores) in each other and then attaching 1 DDS should " +
 				"attach other DDS and dataStore with correct recursion",
@@ -523,6 +524,7 @@ describeCompat(
 			},
 		);
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Stick handle of 2 different dataStores and dds in each other and then attaching 1 dataStore should " +
 				"attach other dataStores and dds with correct recursion",
@@ -595,6 +597,7 @@ describeCompat(
 			},
 		);
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Generate more than 1 dds of a dataStore and then stick handles in different dds and then attaching " +
 				"1 handle should attach entire graph",

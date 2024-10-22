@@ -228,6 +228,21 @@ export async function verifyToken(
 		// Update token cache
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			Lumberjack.verbose("Token cache miss", logProperties);
+
+			// Only cache tokens if it has more than 5 minutes left before expiration
+			const expirationBufferInMs = 5 * 60 * 1000; // 5 minutes
+			if (
+				!options.ensureSingleUseToken &&
+				tokenLifetimeMs !== undefined &&
+				tokenLifetimeMs <= expirationBufferInMs
+			) {
+				Lumberjack.verbose(
+					`Token near expiration: ${tokenLifetimeMs}, skip cache tokens`,
+					logProperties,
+				);
+				return;
+			}
+
 			const tokenCacheKey = token;
 			options.tokenCache
 				.set(
@@ -298,6 +313,7 @@ export function verifyStorageToken(
 		const moreOptions: IVerifyTokenOptions = options;
 		moreOptions.maxTokenLifetimeSec = maxTokenLifetimeSec;
 		moreOptions.requireTokenExpiryCheck = isTokenExpiryEnabled;
+
 		try {
 			await verifyToken(
 				tenantId,
@@ -308,6 +324,7 @@ export function verifyStorageToken(
 			);
 			// Riddler is known to take too long sometimes. Check timeout before continuing.
 			getGlobalTimeoutContext().checkTimeout();
+
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },

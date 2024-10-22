@@ -33,6 +33,9 @@ variables:
 - name: pipelineIdentifierForTelemetry
   value: 'ServiceClientsEndToEndTests'
   readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 stages:
   # Run Azure Client FRS Tests

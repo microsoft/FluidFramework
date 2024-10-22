@@ -34,6 +34,7 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
+	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
@@ -122,6 +123,7 @@ export function create(
 
 	const healthCheckEndpoints = createHealthCheckEndpoints(
 		"historian",
+		startupCheck,
 		readinessCheck,
 		false /* createLivenessEndpoint */,
 	);

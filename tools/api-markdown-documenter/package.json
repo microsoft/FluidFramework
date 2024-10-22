@@ -96,7 +96,7 @@
 		"@types/node": "^18.15.11",
 		"@types/unist": "^2.0.6",
 		"c8": "^8.0.1",
-		"chai": "^4.3.7",
+		"chai": "^4.5.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
@@ -106,7 +106,6 @@
 		"eslint-plugin-chai-friendly": "^0.7.2",
 		"good-fences": "^1.2.0",
 		"mocha": "^10.2.0",
-
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
 		"prettier": "~3.0.3",
