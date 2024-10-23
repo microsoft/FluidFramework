@@ -44,22 +44,12 @@ export function HomePageSection({title, subtitle, image, children}: HomePageSect
 
 	return (
 		<div className="homePageSection" style={imageStyle}>
-			{image ?
-				(
-					<div className='contentBoundary'>
-						<div className="homePageSectionInner">
-							<SectionHeader title={title} subtitle={subtitle} />
-							{children}
-						</div>
-					</div>
-				) :
-				(
-					<div className="homePageSectionInner">
-						<SectionHeader title={title} subtitle={subtitle} />
-						{children}
-					</div>
-				)
-			}
+			<div className='contentBoundary'>
+				<div className="homePageSectionInner">
+					<SectionHeader title={title} subtitle={subtitle} />
+					{children}
+				</div>
+			</div>
 		</div>
 	);
 }
