@@ -12,6 +12,7 @@ export {
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
+	type TreeViewAlpha,
 } from "./tree.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export type {
@@ -62,6 +63,10 @@ export type {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
+	TreeNodeSchemaClassUnsafe,
+	TreeNodeSchemaUnsafe,
+	AllowedTypesUnsafe,
+	TreeNodeSchemaNonClassUnsafe,
 } from "./typesUnsafe.js";
 
 export type {
