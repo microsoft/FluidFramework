@@ -132,6 +132,9 @@
 				"type-fest",
 				"typescript"
 			]
+		},
+		"patchedDependencies": {
+			"jssm-viz@5.101.0": "patches/jssm-viz@5.101.0.patch"
 		}
 	}
 }
