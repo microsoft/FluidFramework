@@ -81,6 +81,7 @@
 	},
 	"dependencies": {
 		"@andrewbranch/untar.js": "^1.0.3",
+		"@fluid-tools/build-cli-bin": "npm:@fluid-tools/build-cli@~0.44.0",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
