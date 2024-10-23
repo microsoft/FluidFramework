@@ -32,29 +32,26 @@ class Dice extends sf.object("Dice", {
 	value: sf.number,
 }) {}
 
-// Here we define the tree schema, which has a single Dice object.
+// Here we define the tree schema, which has a single Dice object starting at 1.
 // We'll call viewWith() on the SharedTree using this schema, which will give us a tree view to work with.
-const treeConfiguration = new TreeViewConfiguration({ schema: Dice });
+// The createContainer call includes the parameter "2" which indicates the version of FluidFramework that
+// the data in the container is compatible with. For this example, we are using version "2".
+// If the tree is new, we'll initialize it with a Dice object with a value of 1.
+const treeViewConfiguration = new TreeViewConfiguration({ schema: Dice });
 
 const createNewDice = async () => {
-	const { container } = await client.createContainer(containerSchema);
-	const view = container.initialObjects.diceTree.viewWith(treeConfiguration);
-	// Because we're creating a new document, the tree must be initialized with some data.
-	// Doing this step before attaching is also a good idea as it ensures other clients will never see the
-	// tree in an uninitialized state.
-	view.initialize(new Dice({ value: 1 }));
-	// Get the root node of the view, which contains the tree's data
-	const dice = view.root;
-	// Attaching the container gives it a backing file and makes it visible to other clients.
+	const { container } = await client.createContainer(containerSchema, "2");
+	const dice = container.initialObjects.diceTree.viewWith(treeViewConfiguration);
+	dice.initialize(new Dice({ value: 1 }));
 	const id = await container.attach();
-	renderDiceRoller(dice, root);
+	renderDiceRoller(dice.root, root);
 	return id;
 };
 
 const loadExistingDice = async (id) => {
-	const { container } = await client.getContainer(id, containerSchema);
-	const dice = container.initialObjects.diceTree.viewWith(treeConfiguration).root;
-	renderDiceRoller(dice, root);
+	const { container } = await client.getContainer(id, containerSchema, "2");
+	const dice = container.initialObjects.diceTree.viewWith(treeViewConfiguration);
+	renderDiceRoller(dice.root, root);
 };
 
 async function start() {
@@ -72,24 +69,25 @@ start().catch((error) => console.error(error));
 const template = document.createElement("template");
 
 template.innerHTML = \`
-<style>
-	.wrapper { text-align: center }
-	.dice { font-size: 200px }
-	.roll { font-size: 50px;}
-</style>
-<div class="wrapper">
-	<div class="dice"></div>
-	<button class="roll"> Roll </button>
-</div>
+  <style>
+    .wrapper { display: flex; flex-direction: column; align-items: center; }
+    .dice { width: 200px; }
+    .rollButton { width: 118px; height: 48px; background: #0078D4; border-style: none; border-radius: 8px; }
+    .rollText { font-size: 20px; color: #FFFFFF; }
+  </style>
+  <div class="wrapper">
+    <img class="dice"/>
+    <button class="rollButton"><span class="rollText">Roll</span></button>
+  </div>
 \`;
 
 const renderDiceRoller = (dice, elem) => {
 	elem.appendChild(template.content.cloneNode(true));
 
-	const rollButton = elem.querySelector(".roll");
+	const rollButton = elem.querySelector(".rollButton");
 	const diceElem = elem.querySelector(".dice");
 
-	// Set the value on the persisted Dice object to a random number between 1 and 6.
+	// Set the value at our dataKey with a random number between 1 and 6.
 	rollButton.onclick = () => {
 		dice.value = Math.floor(Math.random() * 6) + 1;
 	};
@@ -97,16 +95,15 @@ const renderDiceRoller = (dice, elem) => {
 	// Get the current value of the shared data to update the view whenever it changes.
 	const updateDice = () => {
 		const diceValue = dice.value;
-		// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-		diceElem.textContent = String.fromCodePoint(0x267f + diceValue);
-		diceElem.style.color = \`hsl(\${diceValue * 60}, 70%, 30%)\`;
+		diceElem.src = \`/images/dice-\${diceValue}.png\`;
+		diceElem.alt = diceValue.toString();
 	};
 	updateDice();
 
-	// Use the afterChange event to trigger a rerender whenever the value changes.
-	Tree.on(dice, "afterChange", updateDice);
+	// Use the changed event to trigger the rerender whenever the value changes.
+	Tree.on(dice, "nodeChanged", updateDice);
 	// Setting "fluidStarted" is just for our test automation
-	window["fluidStarted"] = true;
+	window.fluidStarted = true;
 };
 `;
 
