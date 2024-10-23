@@ -22,7 +22,6 @@
 	isolation: isolate;
 
 	max-width: 32%;
-	max-height: 605px;
 
 	/* day/background/card/normal */
 	background: #FEFEFE;
@@ -47,7 +46,6 @@
 	width: 100%;
 	height: 242px;
 
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	align-self: stretch;
@@ -56,20 +54,15 @@
 }
 
 .keyFeatureCardImage {
-	/* Auto layout */
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 0px;
 	isolation: isolate;
-
+	object-fit: cover;
 	width: 100%;
 	height: 234px;
-
-	/* background: url(CRM_Msft_FluidF_R04_07.jpg), url(CRM_Msft_FluidF_R01_03.jpg), url(2160x1215 Word.jpg); */
 	border-radius: 16px;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	align-self: stretch;
@@ -131,17 +124,14 @@
 	font-weight: 600;
 	font-size: 20px;
 	line-height: 28px;
-	/* identical to box height, or 140% */
 	letter-spacing: -0.03em;
 
-	/* m365-theme/day/foreground/base/strong */
 	color: #0E1726;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 1;
 	align-self: stretch;
 	flex-grow: 0;
+	width: 100%;
 }
 
 .keyFeatureCardBodyTextContainer {

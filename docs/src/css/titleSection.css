@@ -1,54 +1,53 @@
 
 .rootContainer {
 	height: 100%;
-	width: 100vw;
+	width: 100%;
+	padding: 0% 10%;
+	align-content: center;
 }
 
-.titleSectionContainerBase {
-	display: flex;
-    flex-direction: row;
-	justify-content: center;
-    align-items: center;
-    padding: 72px 0px 0px 0px;
-	height: 40vh;
-    flex: none;
-    order: 0;
-    flex-grow: 0;
-	overflow: hidden;
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
+@media (min-width: 1640px) {
+	.rootContainer{
+		padding: 0% 20%
+	}
 }
+.titleSectionContainer{
+	height: 40vh;
+}
+@media (min-width: 1640px) {
+	.titleSectionContainer{
+		height: 45vh;
+	}
+}
+
 /* Light mode override */
 [data-theme='light'] .titleSectionContainer {
-	background-image: url('../../static/assets/title-background-light.png');
+	background-image: linear-gradient(90.5deg, rgba(255, 255, 255, 0.9) 19.21%, rgba(255, 255, 255, 0.1) 94.15%),url('../../static/assets/title-background-light.png');
 	background-size: cover;
     background-position: center;
 }
 
 /* Dark mode override */
 [data-theme='dark'] .titleSectionContainer {
-	background-image: url('../../static/assets/title-background-dark.png');
+	background-image: linear-gradient(90.5deg, rgba(0, 0, 0, 0.8) 19.21%, rgba(0, 0, 0, 0.3)), url('../../static/assets/title-background-dark.png');
 	background-size: cover;
     background-position: center;
 }
 
 .contentContainer {
-	/* Auto layout */
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	justify-content: space-between;
 	padding: 0px;
 	gap: 16px;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
 }
 
 .videoContainer {
-	height: 75%;
+	width: 50%;
 	aspect-ratio: 1.68;
 	padding: 12px;
 	margin: 50px 0 0 0;
@@ -65,14 +64,6 @@
 	height: 100%;
 }
 
-.overlay {
-	min-width: inherit;
-    min-height: inherit;
-    position: absolute;
-    height: inherit;
-    width: 100%;
-	background: linear-gradient(90.5deg, rgba(248, 248, 248, 0.8) 19.21%, rgba(255, 255, 255, 0.1) 54.15%);
-}
 
 .bgImage {
 	width: 100%;
@@ -82,18 +73,16 @@
 .titleBox {
 	z-index: 2;
     height: 15vh;
-    width: 27vw;
+    width: 50%;
     max-height: 164px;
 }
 .title {
 	color: #0E1726;
 	font-family: 'Segoe UI';
 	font-weight: 600;
-	/* VP4/heading/l */
 	font-family: 'Segoe UI';
 	font-style: normal;
-	font-size: 4em;
-	/* identical to box height, or 117% */
+	font-size: 45px;
 	letter-spacing: -0.05em;
 	flex: none;
 	order: 0;
@@ -101,130 +90,41 @@
 	flex-grow: 0;
 }
 
+@media (min-width: 1640px) {
+	.title {
+		font-size: 60px;
+	}
+}
+
+
 .description {
 	color: #17253D;;
 	font-family: 'Segoe UI';
 	font-weight: 400;
+	font-size: 20px;
 }
 
-@media (max-width: 767px) {
-	.titleSectionContainer {
-		height: 50vh;
-	}
-
-	.description {
-		font-size: 2.68vw;
-	}
-
-	.titleBox {
-		left: 0;
-		width: 80%;
-		text-align: center;
-		margin: 5% 10% 0 10%;
-		top: 10%;
-	}
-
-	/* Change flex direction to column for small screens */
+/* Dark mode override */
+[data-theme='dark'] .title,
+[data-theme='dark'] .description{
+	color: #FEFEFE
+}
+@media (max-width: 768px) {
 	.contentContainer {
 		flex-direction: column;
-		align-items: center;
-		justify-content: normal;
-	}
-
-	.videoContainer {
-		width: 70%;
-		margin: 0; /* Adjust margin for spacing */
-		height: auto;
-		aspect-ratio: 1.68;
-	}
-}
-@media (max-width: 550px) {
-	.titleSectionContainer {
-		height: 40vh;
-	}
-}
-
-@media (max-width: 475px) {
-	.titleSectionContainer {
-		height: 36vh;
 	}
 	.titleBox {
-		margin: 5% 10% -10% 10%;
+		width: 100%;
+		align-content: center;
+        text-align: center;
 	}
-	.videoContainer {
-		width: 80%;
-		padding: 12px;
-	}
-}
-@media (max-width: 400px) {
 	.title {
-		margin: 0;
-	}
-	.titleBox {
-        margin: 5% 10% -20% 10%;
-    }
-	.titleSectionContainer {
-		height: 28vh;
-	}
-}
-
-
-@media (min-width: 768px) {
-
-	.description {
-		font-size: 1.6vw;
-	}
-	.titleSectionContainer {
-		height: 22vh;
-	}
-	.titleBox{
-		margin-top:9%;
-		width: 42vw;
-	}
-}
-
-@media (min-width: 1024px) {
-
-	.description {
-		font-size: 1.39vw;
-	}
-	.titleSectionContainer {
-		height: 25vh;
-	}
-	.titleBox{
-		margin-top:11%;
-	}
-}
-
-@media (min-width: 1440px) {
-
-	.description {
-	  font-size: 1.3vw;
-	}
-	.titleSectionContainer {
-		height: 55vh;
-	}
-	.videoContainer {
-		padding: 14px;
-	}
-	.titleBox {
-		margin-top: 8%;
-	}
-}
-
-@media (min-width: 2560px) {
-
-	.description {
-	  font-size: 0.8vw;
-	}
-	.titleBox{
-		max-width:650px;
-		margin-top: 6%;
-	}
-	.titleSectionContainer {
-		height: 38vh;
-	}
-	.contentContainer {
+		display: flex;
 		justify-content: center;
 	}
+	.videoContainer {
+		margin: 0;
+		width: 75%;
+	}
+
 }
