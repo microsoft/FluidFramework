@@ -167,7 +167,12 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				testConfig.timeoutRefreshInOriginalContainer ||
 				testConfig.timeoutRefreshInLoadedContainer
 			) {
-				snapshotRefreshTimeoutMs = provider.driver.type === "local" ? 100 : 1000;
+				snapshotRefreshTimeoutMs =
+					provider.driver.type === "local" ||
+					provider.driver.type === "t9s" ||
+					provider.driver.type === "tinylicious"
+						? 100
+						: 1000;
 			}
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const testContainerConfig = {
