@@ -19,6 +19,8 @@
 	align-items: center;
 	z-index: 2;
 
+	max-width: 100%;
+
 	/* Inside auto layout */
 	flex: none;
 	order: 0;
