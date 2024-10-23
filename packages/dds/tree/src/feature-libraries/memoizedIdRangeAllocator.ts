@@ -2,16 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import type { ChangesetLocalId, RevisionTag } from "../core/index.js";
-import {
-	type Mutable,
-	type RangeMap,
-	brand,
-	getFirstEntryFromRangeMap,
-	getOrAddEmptyToMap,
-	setInRangeMap,
-} from "../util/index.js";
+import { type Mutable, RangeMap, brand } from "../util/index.js";
 
 /**
  * A unique ID allocator that returns the output ID for the same input ID.
@@ -56,30 +50,34 @@ export const MemoizedIdRangeAllocator = {
 			allocate(key: string | number | undefined, startId: number, length?: number): IdRange[] {
 				let count = length ?? 1;
 				const out: IdRange[] = [];
-				const ranges = getOrAddEmptyToMap(rangeMap, key);
+				let ranges = rangeMap.get(key as RevisionTag);
+				if (ranges === undefined) {
+					ranges = new RangeMap<number>();
+					rangeMap.set(key as RevisionTag, ranges);
+				}
 				let currId = startId;
 				while (count > 0) {
-					const firstRange = getFirstEntryFromRangeMap(ranges, currId, count);
+					const firstRange = ranges.getFirstEntryFromRange(currId, count);
 					if (firstRange === undefined) {
 						const newId = _nextId;
 						_nextId += count;
-						setInRangeMap(ranges, currId, count, newId);
+						ranges.setInRange(currId, count, newId);
 						out.push({ first: brand(newId), count });
 						count = 0;
 					} else {
 						const idRange: Mutable<IdRange> = {
-							first: brand(firstRange.value),
+							first: brand(firstRange.value!),
 							count: firstRange.length,
 						};
-						if (currId < firstRange.start) {
-							const countToAdd = firstRange.start - currId;
-							setInRangeMap(ranges, currId, countToAdd, _nextId);
+						if (currId < firstRange.start!) {
+							const countToAdd = firstRange.start! - currId;
+							ranges.setInRange(currId, countToAdd, _nextId);
 							out.push({ first: brand(_nextId), count: countToAdd });
 							_nextId += countToAdd;
 							currId += countToAdd;
 							count -= countToAdd;
-						} else if (firstRange.start < currId) {
-							const countToTrim = currId - firstRange.start;
+						} else if (firstRange.start! < currId) {
+							const countToTrim = currId - firstRange.start!;
 							idRange.first = brand((idRange.first as number) + countToTrim);
 							idRange.count -= countToTrim;
 						}
@@ -87,7 +85,7 @@ export const MemoizedIdRangeAllocator = {
 							idRange.count = count;
 						} else if (
 							idRange.count < count &&
-							firstRange.value + firstRange.length === _nextId
+							firstRange.value! + firstRange.length === _nextId
 						) {
 							// The existing range can be extended
 							_nextId += count - idRange.count;

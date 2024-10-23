@@ -63,11 +63,11 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeMap,
+	RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
-	getFromRangeMap,
+	// getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
@@ -861,7 +861,9 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			if (addDependency) {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
+			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return rangeMap.getFromRange(id, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -871,10 +873,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			value: T,
 			invalidateDependents: boolean,
 		) => {
-			if (
-				invalidateDependents &&
-				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
-			) {
+			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
+			if (invalidateDependents && rangeMap.getFromRange(id, count) !== undefined) {
 				table.isInvalidated = true;
 			}
 			setInCrossFieldMap(getMap(target), revision, id, count, value);
