@@ -159,6 +159,18 @@ export {
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
+	type SimpleNodeSchemaBase,
+	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
+	normalizeFieldSchema,
+	isTreeNodeSchemaClass,
+	normalizeAllowedTypes,
+	getSimpleSchema,
 	type ReadonlyArrayNode,
 } from "./simple-tree/index.js";
 export {

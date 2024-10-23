@@ -25,4 +25,14 @@ export {
 	createMergableDiffSeries,
 	SharedTreeBranchManager,
 	sharedTreeTraverse,
-} from "./shared-tree-diff/index.js";
+} from "./implicit-strategy/index.js";
+
+export {
+	type AiCollabOptions,
+	type AiCollabSuccessResponse,
+	type AiCollabErrorResponse,
+	type TokenUsage,
+	type OpenAiClientOptions,
+} from "./aiCollabApi.js";
+
+export { aiCollab } from "./aiCollab.js";

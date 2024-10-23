@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { createMergableIdDiffSeries, sharedTreeDiff } from "../../shared-tree-diff/index.js";
+import { createMergableIdDiffSeries, sharedTreeDiff } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
@@ -24,6 +24,7 @@ describe("sharedTreeDiff() - arrays", () => {
 			{
 				type: "REMOVE",
 				path: [1],
+				objectId: undefined,
 				oldValue: "testing",
 			},
 		]);
@@ -68,6 +69,7 @@ describe("sharedTreeDiff() - arrays", () => {
 			{
 				type: "CHANGE",
 				path: ["state", 1, "test"],
+				objectId: undefined,
 				value: false,
 				oldValue: true,
 			},
@@ -76,7 +78,13 @@ describe("sharedTreeDiff() - arrays", () => {
 
 	it("array to object", () => {
 		assert.deepStrictEqual(sharedTreeDiff({ data: [] }, { data: { val: "test" } }), [
-			{ type: "CHANGE", path: ["data"], value: { val: "test" }, oldValue: [] },
+			{
+				type: "CHANGE",
+				path: ["data"],
+				objectId: undefined,
+				value: { val: "test" },
+				oldValue: [],
+			},
 		]);
 	});
 });
@@ -110,12 +118,14 @@ describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 			{
 				type: "CHANGE",
 				path: ["state", 0],
+				objectId: undefined,
 				value: { id: "1", test: true },
 				oldValue: "test",
 			},
 			{
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				newIndex: 0,
 				value: treeNode.state[1],
 			},
@@ -148,12 +158,14 @@ describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				value: treeNode.state[0],
 				newIndex: 1,
 			},
 			{
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				value: treeNode.state[1],
 				newIndex: 0,
 			},
@@ -187,12 +199,14 @@ describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				value: treeNode.state[0],
 				newIndex: 1,
 			},
 			{
 				type: "REMOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				oldValue: treeNode.state[1],
 			},
 			{
@@ -230,18 +244,21 @@ describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				value: treeNode.state[0],
 				newIndex: 1,
 			},
 			{
 				type: "CHANGE",
 				path: ["state", 0, "test"],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				oldValue: true,
 				value: false,
 			},
 			{
 				type: "REMOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				oldValue: treeNode.state[1],
 			},
 			{
@@ -279,18 +296,21 @@ describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				value: treeNode.state[0],
 				newIndex: 1,
 			},
 			{
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				value: treeNode.state[1],
 				newIndex: 0,
 			},
 			{
 				type: "CHANGE",
 				path: ["state", 1, "test"],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				oldValue: true,
 				value: false,
 			},
@@ -337,6 +357,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// good [1, 2] -> [2, 1]
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				value: treeNode.state[0],
 				newIndex: 1,
 			},
@@ -344,6 +365,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// should be removed, as it is redundant due to a swap.
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				value: treeNode.state[1],
 				newIndex: 0,
 			},
@@ -354,6 +376,7 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				value: treeNode.state[0],
 				newIndex: 1,
 			},
@@ -377,12 +400,14 @@ describe("createMergableIdDiffSeries()", () => {
 				// good [1, 2,] -> [2]
 				type: "REMOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				oldValue: treeNode.state[0],
 			},
 			{
 				// Should be removed, 2 will be in the right position after the removal of 1
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				newIndex: 0,
 				value: treeNode.state[1],
 			},
@@ -404,6 +429,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [1, 2] -> [2]
 				type: "REMOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				oldValue: treeNode.state[0],
 			},
 		]);
@@ -440,12 +466,14 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "REMOVE",
 				path: ["state", 2],
+				objectId: (treeNode.state[2] as SimpleObjectTreeNode).id,
 				oldValue: treeNode.state[2],
 			},
 			{
 				// expected to have the path index shifted back due to prior remove.
 				type: "MOVE",
 				path: ["state", 3],
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				newIndex: 4,
 				value: treeNode.state[3],
 			},
@@ -463,6 +491,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// expected to be removed TODO: Potential bug - Why does this diff even get created?
 				type: "MOVE",
 				path: ["state", 4],
+				objectId: "4",
 				newIndex: 4,
 				value: { id: "4", test: true },
 			},
@@ -475,6 +504,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [1, 2, 3, 4] -> [1, 2, 4]
 				type: "REMOVE",
 				path: ["state", 2],
+				objectId: (treeNode.state[2] as SimpleObjectTreeNode).id,
 				oldValue: treeNode.state[2],
 			},
 			{
@@ -493,6 +523,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [1, 2, 4, 6, 5] -> [1, 2, 4, 6, 5, 4]
 				type: "MOVE",
 				path: ["state", 2], // Note the index was shifted back because of the prior remove
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				newIndex: 4,
 				value: treeNode.state[3],
 			},
@@ -529,24 +560,28 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				newIndex: 2,
 				value: treeNode.state[0],
 			},
 			{
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				newIndex: 0,
 				value: treeNode.state[1],
 			},
 			{
 				type: "MOVE",
 				path: ["state", 2],
+				objectId: (treeNode.state[2] as SimpleObjectTreeNode).id,
 				newIndex: 3,
 				value: treeNode.state[2],
 			},
 			{
 				type: "MOVE",
 				path: ["state", 3],
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				newIndex: 1,
 				value: treeNode.state[3],
 			},
@@ -561,6 +596,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// obj at index 0 moves to index 2 so move everything it jumped over, back
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				newIndex: 2,
 				value: treeNode.state[0],
 			},
@@ -570,6 +606,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// obj at index 1 moves to index 3, so move everything < index 3 back. (only applies to index moved over)
 				type: "MOVE",
 				path: ["state", 1], // source index shifted backwards
+				objectId: (treeNode.state[2] as SimpleObjectTreeNode).id,
 				newIndex: 3,
 				value: treeNode.state[2],
 			},
@@ -577,6 +614,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [2, 1, 4, 3] -> [2, 4, 1, 3]
 				type: "MOVE",
 				path: ["state", 2], // source index shifted backwards
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				newIndex: 1,
 				value: treeNode.state[3], // keep in mind we are referencing node locations for eqaulity prior to the moves
 			},
@@ -617,12 +655,14 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				newIndex: 2,
 				value: treeNode.state[0],
 			},
 			{
 				// expected to be reordered to the beginning.
 				path: ["state", 0, "test"],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				type: "CHANGE",
 				value: false,
 				oldValue: true,
@@ -631,24 +671,28 @@ describe("createMergableIdDiffSeries()", () => {
 				// expected to be removed due to other moves placing this in the correct pos.
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				newIndex: 0,
 				value: treeNode.state[1],
 			},
 			{
 				type: "MOVE",
 				path: ["state", 2],
+				objectId: (treeNode.state[2] as SimpleObjectTreeNode).id,
 				newIndex: 3,
 				value: treeNode.state[2],
 			},
 			{
 				type: "MOVE",
 				path: ["state", 3],
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				newIndex: 1,
 				value: treeNode.state[3],
 			},
 			{
 				// expected to be reordered to the beginning.
 				path: ["state", 3, "test"],
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				type: "CHANGE",
 				value: false,
 				oldValue: true,
@@ -661,6 +705,7 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				// reordered to the beginning
 				path: ["state", 0, "test"],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				type: "CHANGE",
 				value: false,
 				oldValue: true,
@@ -668,6 +713,7 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				// reordered to the beginning
 				path: ["state", 3, "test"],
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				type: "CHANGE",
 				value: false,
 				oldValue: true,
@@ -676,6 +722,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [1, 2, 3, 4] -> [2, 3, 1, 4]
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: (treeNode.state[0] as SimpleObjectTreeNode).id,
 				newIndex: 2,
 				value: treeNode.state[0],
 			},
@@ -683,6 +730,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [2, 3, 1, 4] -> [2, 1, 4, 3]
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[2] as SimpleObjectTreeNode).id,
 				newIndex: 3,
 				value: treeNode.state[2],
 			},
@@ -690,6 +738,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [2, 1, 4, 3] -> [2, 4, 1, 3]
 				type: "MOVE",
 				path: ["state", 2],
+				objectId: (treeNode.state[3] as SimpleObjectTreeNode).id,
 				newIndex: 1,
 				value: treeNode.state[3],
 			},
@@ -725,6 +774,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// expected to be reordered to to the end of the array.
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				newIndex: 3,
 				value: treeNode.state[1],
 			},
@@ -742,57 +792,11 @@ describe("createMergableIdDiffSeries()", () => {
 				// Expected to be removed TODO: Potential BUG - Why does this diff even get created?
 				type: "MOVE",
 				path: ["state", 3],
+				objectId: "4",
 				newIndex: 3,
 				value: { id: "4", test: true }, // also records this value as pojo instead of the tree node?
 			},
 		]);
-		// 	{
-		// 		// good [1, 2, 3, 4] -> [2, 1, 3, 4]
-		// 		type: "MOVE",
-		// 		path: ["state", 0],
-		// 		newIndex: 1,
-		// 		value: treeNode.state[0],
-		// 	},
-		// 	{
-		// 		// expected to be removed, unecessary due to swap
-		// 		type: "MOVE",
-		// 		path: ["state", 1],
-		// 		newIndex: 0,
-		// 		value: treeNode.state[1],
-		// 	},
-		// 	{
-		// 		// good [2, 1, 3, 4] -> [2, 1, 4]
-		// 		type: "REMOVE",
-		// 		path: ["state", 2],
-		// 		oldValue: treeNode.state[2],
-		// 	},
-		// 	{
-		// 		// expected to be reordered to the end [2, 1, 4, 6, 5] -> [2, 1, 4, 6, 5, 4]
-		// 		type: "MOVE",
-		// 		path: ["state", 3],
-		// 		newIndex: 4,
-		// 		value: treeNode.state[3],
-		// 	},
-		// 	{
-		// 		// good [2, 1, 4] -> [2, 1, 4, 6]
-		// 		type: "CREATE",
-		// 		path: ["state", 2],
-		// 		value: { id: "6", test: true },
-		// 	},
-		// 	{
-		// 		// good [2, 1, 4, 6] -> [2, 1, 4, 6, 5]
-		// 		type: "CREATE",
-		// 		path: ["state", 3],
-		// 		value: { id: "5", test: true },
-		// 	},
-		// 	{
-		// 		// expected to be removed TODO: Potential bug - Why does this diff even get created?
-		// 		type: "MOVE",
-		// 		path: ["state", 4],
-		// 		newIndex: 4,
-		// 		value: { id: "4", test: true },
-		// 	},
-		// ]);
 
 		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
@@ -813,6 +817,7 @@ describe("createMergableIdDiffSeries()", () => {
 				// [1, 4, 6, 5] -> [1, 6, 5, 4]
 				type: "MOVE",
 				path: ["state", 1],
+				objectId: (treeNode.state[1] as SimpleObjectTreeNode).id,
 				newIndex: 3,
 				value: treeNode.state[1],
 			},
@@ -916,12 +921,14 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0],
+				objectId: treeNode.state[0]?.id,
 				newIndex: 1,
 				value: treeNode.state[0],
 			},
 			{
 				type: "MOVE",
 				path: ["state", 0, "innerArray", 0],
+				objectId: treeNode.state[0]?.innerArray[0]?.id,
 				newIndex: 1,
 				value: treeNode.state[0]?.innerArray[0],
 			},
@@ -933,11 +940,13 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "REMOVE",
 				path: ["state", 2],
+				objectId: (treeNode.state[2] as SimpleObjectTreeNodeWithObjectArray).id,
 				oldValue: treeNode.state[2],
 			},
 			{
 				type: "MOVE",
 				path: ["stateArrayTwo", 0, "innerArray", 0],
+				objectId: treeNode.stateArrayTwo[0]?.innerArray[0]?.id,
 				newIndex: 1,
 				value: treeNode.stateArrayTwo[0]?.innerArray[0],
 			},
@@ -1023,6 +1032,7 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "MOVE",
 				path: ["state", 0, "innerArray", 0],
+				objectId: treeNode.state[0]?.innerArray[0]?.id,
 				newIndex: 1,
 				value: treeNode.state[0]?.innerArray[0],
 			},
@@ -1037,6 +1047,7 @@ describe("createMergableIdDiffSeries()", () => {
 			{
 				type: "MOVE",
 				path: ["stateArrayTwo", 0, "innerArray", 0],
+				objectId: treeNode.stateArrayTwo[0]?.innerArray[0]?.id,
 				newIndex: 1,
 				value: treeNode.stateArrayTwo[0]?.innerArray[0],
 			},

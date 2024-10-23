@@ -77,7 +77,7 @@ export default function TasksListPage(): JSX.Element {
 	return (
 		<Container
 			sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-			maxWidth={"lg"}
+			maxWidth={false}
 		>
 			<Typography variant="h2" sx={{ my: 3 }}>
 				My Work Items
