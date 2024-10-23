@@ -37,6 +37,7 @@ class TestLogger implements ITelemetryBufferedLogger {
 		event.testName = this.testName ?? currentTestName;
 		event.testVariant = testVariant;
 		event.hostName = pkgName;
+		event.displayName = process.env.FLUID_TEST_PIPELINE_IDENTIFIER;
 		this.parentLogger.send({ ...event, ...propsDict });
 	}
 	async flush() {
