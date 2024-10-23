@@ -95,20 +95,12 @@ export function create(
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
-			if (!tenantId) {
-				response.status(400).send(`Missing tenantId in the request.`);
-				return;
-			}
-			const body = request?.body as Record<string, any>;
-			if (!body) {
-				response.status(400).send(`Missing body in the request.`);
-				return;
-			}
 			const authToken = request?.header("Authorization");
 			if (!authToken) {
 				response.status(400).send(`Missing Authorization header in the request.`);
 				return;
 			}
+			const body = request?.body;
 			const baseUri = config.get("tokenator:accessTokenUrl") as string;
 			const uri = `${baseUri}/api/tenants/${tenantId}/accesstoken`;
 			const accessTokenRequest = getAccessToken(uri, body, authToken);

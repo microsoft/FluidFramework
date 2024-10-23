@@ -60,7 +60,6 @@ export class TokenatorResourceFactory implements IResourcesFactory<TokenatorReso
 		const loggerFormat = config.get("logger:morganFormat");
 
 		const startupCheck = new StartupCheck();
-		const readinessCheck = customizations?.readinessCheck ?? customizations.readinessCheck;
 
 		return new TokenatorResources(
 			config,
@@ -69,7 +68,7 @@ export class TokenatorResourceFactory implements IResourcesFactory<TokenatorReso
 			accessTokenGenerator,
 			startupCheck,
 			undefined,
-			readinessCheck,
+			customizations?.readinessCheck,
 		);
 	}
 }
