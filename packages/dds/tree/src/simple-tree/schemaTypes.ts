@@ -524,22 +524,6 @@ export type TreeNodeFromImplicitAllowedTypes<
 		: unknown;
 
 /**
- * Type of content that can be inserted into the tree for a node of the given schema.
- *
- * @typeparam TSchemaInput - Schema to process.
- * @typeparam T - Do not specify: default value used as implementation detail.
- * @public
- */
-export type InsertableTreeNodeFromImplicitAllowedTypesXXXX<
-	TSchemaInput extends ImplicitAllowedTypes,
-	TSchema = UnionToIntersection<TSchemaInput>,
-> = TSchema extends TreeNodeSchema
-	? InsertableTypedNode<TSchema>
-	: TSchema extends AllowedTypes
-		? InsertableTypedNode<FlexListToUnion<TSchema>>
-		: never;
-
-/**
  * Marker for documenting when a type computed from a schema is contravariant
  * with respect to the schema and thus only suitable for using for "input".
  *
