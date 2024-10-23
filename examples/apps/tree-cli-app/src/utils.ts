@@ -28,6 +28,7 @@ import {
 	type JsonCompatible,
 	type VerboseTree,
 	type ViewContent,
+	type ConciseTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
 import { type Static, Type } from "@sinclair/typebox";
@@ -55,7 +56,7 @@ export function loadDocument(source: string | undefined): List {
 
 	switch (parts.at(-2)) {
 		case "concise": {
-			return TreeBeta.importConcise(List, fileData);
+			return TreeBeta.importConcise(List, fileData as ConciseTree);
 		}
 		case "verbose": {
 			return TreeBeta.importVerbose(List, fileData as VerboseTree);

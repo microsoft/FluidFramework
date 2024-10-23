@@ -116,10 +116,10 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 // @alpha
 export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible;
 
-// @alpha
+// @beta
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
 
-// @alpha
+// @beta
 export type FactoryContentObject = {
     readonly [P in string]?: InsertableContent;
 };
@@ -498,13 +498,13 @@ export type InitialObjects<T extends ContainerSchema> = {
 // @public
 type _InlineTrick = 0;
 
-// @alpha
+// @beta
 export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> = TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : InsertableContent;
 
-// @alpha
+// @beta
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
 
-// @alpha
+// @beta
 export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TSchema extends ImplicitFieldSchema ? InsertableTreeFieldFromImplicitField<TSchema> : InsertableContent | undefined;
 
 // @public
@@ -1021,12 +1021,12 @@ export const TreeBeta: {
     clone<TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
     create<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableTreeFieldFromImplicitField | ConciseTree): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    exportConcise<THandle>(node: TreeNode | TreeLeafValue, options?: EncodeOptions<THandle>): ConciseTree<THandle>;
+    importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): ConciseTree;
-    exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
+    exportConcise<THandle>(node: TreeNode | TreeLeafValue, options?: EncodeOptions<THandle>): ConciseTree<THandle>;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
+    exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         oldestCompatibleClient: FluidClientVersion;
         idCompressor?: IIdCompressor;
@@ -1224,10 +1224,10 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 // @public
 export type Unhydrated<T> = T;
 
-// @alpha
+// @beta
 export const UnsafeUnknownSchema: unique symbol;
 
-// @alpha
+// @beta
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 // @public
