@@ -1129,12 +1129,12 @@ describe("treeNodeApi", () => {
 			// Undefined where not allowed
 			assert.throws(
 				() => TreeBeta.create(schema.required([]), undefined as never),
-				validateUsageError("invalid"),
+				validateUsageError(/undefined for non-optional field/),
 			);
 			// Undefined required, not provided
 			assert.throws(
 				() => TreeBeta.create(schema.optional([]), 1 as unknown as undefined),
-				validateUsageError("invalid"),
+				validateUsageError(/incompatible/),
 			);
 		});
 
@@ -1144,7 +1144,7 @@ describe("treeNodeApi", () => {
 			// invalid
 			assert.throws(
 				() => TreeBeta.create([schema.null, schema.number], "x" as unknown as number),
-				validateUsageError("invalid"),
+				validateUsageError(/incompatible/),
 			);
 		});
 
@@ -1152,7 +1152,7 @@ describe("treeNodeApi", () => {
 		it("object", () => {
 			const A = schema.object("A", { x: schema.number });
 			const a = TreeBeta.create(A, { x: 1 });
-			assert.equal(a, { x: 1 });
+			assert.deepEqual(a, { x: 1 });
 		});
 	});
 
@@ -1164,12 +1164,12 @@ describe("treeNodeApi", () => {
 				// Undefined where not allowed
 				assert.throws(
 					() => TreeBeta.importConcise(schema.required([]), undefined),
-					validateUsageError("invalid"),
+					validateUsageError(/Got undefined for non-optional field/),
 				);
 				// Undefined required, not provided
 				assert.throws(
 					() => TreeBeta.importConcise(schema.optional([]), 1),
-					validateUsageError("invalid"),
+					validateUsageError(/incompatible with all of the types allowed/),
 				);
 			});
 
@@ -1179,36 +1179,62 @@ describe("treeNodeApi", () => {
 				// invalid
 				assert.throws(
 					() => TreeBeta.importConcise([schema.null, schema.number], "x"),
-					validateUsageError("invalid"),
+					validateUsageError(/The provided data is incompatible/),
 				);
 			});
 
 			it("object", () => {
 				const A = schema.object("A", { x: schema.number });
 				const a = TreeBeta.importConcise(A, { x: 1 });
-				assert.equal(a, { x: 1 });
+				assert.deepEqual(a, { x: 1 });
 			});
 		});
 
 		describe("roundtrip", () => {
 			for (const testCase of testSimpleTrees) {
-				if (testCase.root !== undefined) {
+				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root);
+						const tree = TreeBeta.create<UnsafeUnknownSchema>(
+							testCase.schema,
+							testCase.root(),
+						);
 						assert(tree !== undefined);
 						const exported = TreeBeta.exportConcise(tree);
-						const imported = TreeBeta.importConcise<UnsafeUnknownSchema>(
+						if (testCase.ambiguous) {
+							assert.throws(
+								() => TreeBeta.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
+								validateUsageError(/compatible with more than one type/),
+							);
+						} else {
+							const imported = TreeBeta.importConcise<UnsafeUnknownSchema>(
+								testCase.schema,
+								exported,
+							);
+							expectTreesEqual(tree, imported);
+						}
+					});
+				}
+			}
+		});
+
+		describe("export-stored", () => {
+			for (const testCase of testSimpleTrees) {
+				if (testCase.root() !== undefined) {
+					it(testCase.name, () => {
+						const tree = TreeBeta.create<UnsafeUnknownSchema>(
 							testCase.schema,
-							exported,
+							testCase.root(),
 						);
-						expectTreesEqual(tree, imported);
+						assert(tree !== undefined);
+						const _exported = TreeBeta.exportConcise(tree, { useStoredKeys: true });
+						// We have nothing that imports concise trees with stored keys, so no validation here.
 					});
 				}
 			}
 		});
 	});
 
-	describe("concise", () => {
+	describe("verbose", () => {
 		describe("importVerbose", () => {
 			it("undefined", () => {
 				// Valid
@@ -1216,12 +1242,12 @@ describe("treeNodeApi", () => {
 				// Undefined where not allowed
 				assert.throws(
 					() => TreeBeta.importVerbose(schema.required([]), undefined),
-					validateUsageError("invalid"),
+					validateUsageError(/non-optional/),
 				);
 				// Undefined required, not provided
 				assert.throws(
 					() => TreeBeta.importVerbose(schema.optional([]), 1),
-					validateUsageError("invalid"),
+					validateUsageError(/does not conform to schema/),
 				);
 			});
 
@@ -1231,30 +1257,48 @@ describe("treeNodeApi", () => {
 				// invalid
 				assert.throws(
 					() => TreeBeta.importVerbose([schema.null, schema.number], "x"),
-					validateUsageError("invalid"),
+					validateUsageError(/does not conform to schema/),
 				);
 			});
 
 			it("object", () => {
 				const A = schema.object("A", { x: schema.number });
 				const a = TreeBeta.importVerbose(A, { type: A.identifier, fields: { x: 1 } });
-				assert.equal(a, { x: 1 });
+				assert.deepEqual(a, { x: 1 });
 			});
 		});
 
 		describe("roundtrip", () => {
 			for (const testCase of testSimpleTrees) {
-				if (testCase.root !== undefined) {
+				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root);
+						const tree = TreeBeta.create<UnsafeUnknownSchema>(
+							testCase.schema,
+							testCase.root(),
+						);
 						assert(tree !== undefined);
-						// TODO: fix typing
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						const exported = TreeBeta.exportVerbose(tree as any);
+						const exported = TreeBeta.exportVerbose(tree);
 						const imported = TreeBeta.importVerbose(testCase.schema, exported);
-						// TODO: fix typing
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						expectTreesEqual(tree as any, imported as any);
+						expectTreesEqual(tree, imported);
+					});
+				}
+			}
+		});
+
+		describe("roundtrip-stored", () => {
+			for (const testCase of testSimpleTrees) {
+				if (testCase.root() !== undefined) {
+					it(testCase.name, () => {
+						const tree = TreeBeta.create<UnsafeUnknownSchema>(
+							testCase.schema,
+							testCase.root(),
+						);
+						assert(tree !== undefined);
+						const exported = TreeBeta.exportVerbose(tree, { useStoredKeys: true });
+						const imported = TreeBeta.importVerbose(testCase.schema, exported, {
+							useStoredKeys: true,
+						});
+						expectTreesEqual(tree, imported);
 					});
 				}
 			}

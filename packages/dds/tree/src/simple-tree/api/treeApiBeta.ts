@@ -14,13 +14,15 @@ import {
 } from "../core/index.js";
 import { treeNodeApi, tryGetSchema } from "./treeNodeApi.js";
 import { createFromCursor, createFromInsertable, cursorFromInsertable } from "./create.js";
-import type {
-	ImplicitFieldSchema,
-	InsertableField,
-	InsertableTreeFieldFromImplicitField,
-	TreeFieldFromImplicitField,
-	TreeLeafValue,
-	UnsafeUnknownSchema,
+import {
+	FieldKind,
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	type TreeLeafValue,
+	type UnsafeUnknownSchema,
 } from "../schemaTypes.js";
 import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
 import {
@@ -49,6 +51,7 @@ import {
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { toStoredSchema } from "../toFlexSchema.js";
 import type { EncodeOptions } from "./customTree.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
@@ -379,7 +382,14 @@ export const TreeBeta: {
 			...options,
 		};
 		const schemalessConfig = applySchemaToParserOptions(schema, config);
-		const cursor = cursorFromVerbose(data, schemalessConfig);
+		if (data === undefined) {
+			const field = normalizeFieldSchema(schema);
+			if (field.kind !== FieldKind.Optional) {
+				throw new UsageError("undefined provided for non-optional field.");
+			}
+			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+		}
+		const cursor = cursorFromVerbose<THandle>(data, schemalessConfig);
 		return createFromCursor(schema, cursor);
 	},
 
