@@ -112,22 +112,23 @@ export function HowItWorksSection(): React.ReactElement {
 		<div className="howItWorksSectionBody">
 			<div className="howItWorksSectionCodeBody">
 				<div className="howItWorksCodeColumn">
-					<div className="howItWorksCodeColumnLabel">
+					<div className="howItWorksColumnLabel">
 						Sample Code
 					</div>
 					<CardWithBlur>
-							<div className="howItWorksCodeCardBody">
-								<CodeBlock
-									language="typescript" className="howItWorksCodeCardText"
-									showLineNumbers
-								>
-									{code}
-								</CodeBlock>
-							</div>
+						<div className="howItWorksCodeCardBody">
+							<CodeBlock
+								language="typescript"
+								className="howItWorksCodeCardText"
+								showLineNumbers
+							>
+								{code}
+							</CodeBlock>
+						</div>
 					</CardWithBlur>
 				</div>
-				<div className="howItWorksCodeColumn">
-					<div className="howItWorksCodeColumnLabel">
+				<div className="howItWorksOutputColumn">
+					<div className="howItWorksColumnLabel">
 						Sample Output
 					</div>
 					<MockDiceRollerSample className="howItWorksDiceCards" />

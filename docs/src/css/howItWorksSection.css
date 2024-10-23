@@ -13,13 +13,22 @@
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	justify-content: center;
-	align-content: stretch;
+	justify-content: space-evenly;
 
 	gap: 10px;
 }
 
 .howItWorksCodeColumn {
+	flex-grow: 2;
+	max-width: 100%;
+
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.howItWorksOutputColumn {
+	flex-grow: 1;
 	max-width: 100%;
 
 	display: flex;
@@ -38,7 +47,7 @@
 }
 
 
-.howItWorksCodeColumnLabel {
+.howItWorksColumnLabel {
 	/* Sample Code */
 
 	font-family: 'Segoe UI';
@@ -56,22 +65,19 @@
 .howItWorksCodeCardBody {
 	/* Rectangle 34647952 */
 
-	/* min-width: 350px; */
-	max-width: 100%;
+	width: 100%;
 
 	box-sizing: border-box;
 
 	background: #FFFFFF;
 	border: 1px solid #E1E1E1;
 	border-radius: 5px;
-
-	flex: 1;
 }
 
 .howItWorksCodeCardText {
 	overflow: auto;
-
 	max-height: 600px;
+	width: 100%;
 
 	font-family: 'Segoe UI';
 	font-style: normal;
