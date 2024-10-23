@@ -21,6 +21,8 @@
 
 	max-width: 100%;
 
+	padding: 10px;
+
 	/* Inside auto layout */
 	flex: none;
 	order: 0;
