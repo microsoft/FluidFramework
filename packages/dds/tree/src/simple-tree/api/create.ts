@@ -44,8 +44,6 @@ import { getUnhydratedContext } from "../createContext.js";
  *
  * Like with {@link TreeNodeSchemaClass}'s constructor, its an error to provide an existing node to this API.
  * For that case, use {@link TreeBeta.clone}.
- * @privateRemarks
- * This could be exposed as a public `Tree.create` function.
  */
 export function createFromInsertable<
 	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,

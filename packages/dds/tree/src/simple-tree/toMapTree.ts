@@ -726,7 +726,7 @@ function tryGetInnerNode(target: unknown): InnerNode | undefined {
  * Content which can be used to build a node.
  * @remarks
  * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
- * @system @alpha
+ * @system @beta
  */
 export type FactoryContent =
 	| IFluidHandle
@@ -745,7 +745,7 @@ export type FactoryContent =
  * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
  *
  * Supports object and map nodes.
- * @system @alpha
+ * @system @beta
  */
 export type FactoryContentObject = {
 	readonly [P in string]?: InsertableContent;
@@ -753,6 +753,6 @@ export type FactoryContentObject = {
 
 /**
  * Content which can be inserted into a tree.
- * @system @alpha
+ * @system @beta
  */
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;

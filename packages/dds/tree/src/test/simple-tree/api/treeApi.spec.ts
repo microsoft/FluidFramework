@@ -25,6 +25,7 @@ import {
 	type TreeLeafValue,
 	type TreeNode,
 	TreeViewConfiguration,
+	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 import { getView, validateUsageError } from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
@@ -1193,15 +1194,14 @@ describe("treeNodeApi", () => {
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create(testCase.schema, testCase.root);
+						const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root);
 						assert(tree !== undefined);
-						// TODO: fix typing
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						const exported = TreeBeta.exportConcise(tree as any);
-						const imported = TreeBeta.importConcise(testCase.schema, exported);
-						// TODO: fix typing
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						expectTreesEqual(tree as any, imported as any);
+						const exported = TreeBeta.exportConcise(tree);
+						const imported = TreeBeta.importConcise<UnsafeUnknownSchema>(
+							testCase.schema,
+							exported,
+						);
+						expectTreesEqual(tree, imported);
 					});
 				}
 			}
@@ -1246,7 +1246,7 @@ describe("treeNodeApi", () => {
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create(testCase.schema, testCase.root);
+						const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root);
 						assert(tree !== undefined);
 						// TODO: fix typing
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1264,7 +1264,15 @@ describe("treeNodeApi", () => {
 	// TODO: test exportCompressed
 });
 
-function expectTreesEqual(a: TreeNode | TreeLeafValue, b: TreeNode | TreeLeafValue): void {
+function expectTreesEqual(
+	a: TreeNode | TreeLeafValue | undefined,
+	b: TreeNode | TreeLeafValue | undefined,
+): void {
+	if (a === undefined || b === undefined) {
+		assert.equal(a === undefined, b === undefined);
+		return;
+	}
+
 	// Validate the same schema objects are used.
 	assert.equal(Tree.schema(a), Tree.schema(b));
 

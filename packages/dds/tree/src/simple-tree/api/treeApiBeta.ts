@@ -16,6 +16,7 @@ import { treeNodeApi, tryGetSchema } from "./treeNodeApi.js";
 import { createFromCursor, createFromInsertable, cursorFromInsertable } from "./create.js";
 import type {
 	ImplicitFieldSchema,
+	InsertableField,
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
 	TreeLeafValue,
@@ -177,18 +178,29 @@ export const TreeBeta: {
 	// ): TreeFieldFromImplicitField<TSchema>;
 
 	/**
-	 * Generic tree constructor.
+	 * Construct tree content that is compatible with the field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content.
 	 * @remarks
-	 * This is equivalent to calling {@link TreeNodeSchemaClass}'s constructor or `TreeNodeSchemaNonClass.create`,
-	 * except that this also handles the case where the root is polymorphic, or optional.
+	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
+	 * This function exists as a generalization that can be used in other cases as well,
+	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
 	 *
-	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
-	 * but for now most invalid inputs will throw a recoverable error.
+	 * Like with {@link TreeNodeSchemaClass}'s constructor, its an error to provide an existing node to this API.
+	 * For that case, use {@link TreeBeta.clone}.
+	 * @privateRemarks
+	 * There should be a way to provide an source for defaulted identifiers, wither via this API or some way to add them to its output later.
 	 */
-	create<TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
-		data: InsertableTreeFieldFromImplicitField<TSchema>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	create<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		schema: UnsafeUnknownSchema extends TSchema
+			? ImplicitFieldSchema
+			: TSchema & ImplicitFieldSchema,
+		data: InsertableField<TSchema>,
+	): Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	>;
 
 	/**
 	 * Less type safe version of {@link TreeBeta.create}, suitable for importing data.
@@ -205,9 +217,26 @@ export const TreeBeta: {
 	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
 	 * but for now most invalid inputs will throw a recoverable error.
 	 */
-	importConcise<TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
+	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		schema: UnsafeUnknownSchema extends TSchema
+			? ImplicitFieldSchema
+			: TSchema & ImplicitFieldSchema,
 		data: InsertableTreeFieldFromImplicitField | ConciseTree,
+	): Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	>;
+
+	/**
+	 * Construct tree content compatible with a field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+	 */
+	importVerbose<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: VerboseTree | undefined,
+		options?: Partial<ParseOptions<IFluidHandle>>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
@@ -224,15 +253,12 @@ export const TreeBeta: {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
-	 * Construct tree content compatible with a field defined by the provided `schema`.
-	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+	 * Same as generic overload, except leaves handles as is.
 	 */
-	importVerbose<TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
-		data: VerboseTree | undefined,
-		options?: Partial<ParseOptions<IFluidHandle>>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	exportConcise(
+		node: TreeNode | TreeLeafValue,
+		options?: Partial<EncodeOptions<IFluidHandle>>,
+	): ConciseTree;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
@@ -243,12 +269,12 @@ export const TreeBeta: {
 	): ConciseTree<THandle>;
 
 	/**
-	 * Same as generic overload, except leaves handles as is.
+	 * Same {@link TreeBeta.(exportVerbose:1)} except leaves handles as is.
 	 */
-	exportConcise(
+	exportVerbose(
 		node: TreeNode | TreeLeafValue,
 		options?: Partial<EncodeOptions<IFluidHandle>>,
-	): ConciseTree;
+	): VerboseTree;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
@@ -265,14 +291,6 @@ export const TreeBeta: {
 	 * 3. When easy access to the type is desired.
 	 */
 	exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
-
-	/**
-	 * Same {@link TreeBeta.(exportVerbose:1)} except leaves handles as is.
-	 */
-	exportVerbose(
-		node: TreeNode | TreeLeafValue,
-		options?: Partial<EncodeOptions<IFluidHandle>>,
-	): VerboseTree;
 
 	/**
 	 * Export the content of the provided `tree` in a compressed JSON compatible format.
@@ -327,21 +345,26 @@ export const TreeBeta: {
 		return clonedNode;
 	},
 
-	create<TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
-		data: InsertableTreeFieldFromImplicitField<TSchema>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		return createFromInsertable(schema, data);
-	},
+	create: createFromInsertable,
 
-	importConcise<TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
+	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		schema: UnsafeUnknownSchema extends TSchema
+			? ImplicitFieldSchema
+			: TSchema & ImplicitFieldSchema,
 		data: InsertableTreeFieldFromImplicitField | ConciseTree,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+	): Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	> {
 		return createFromInsertable<UnsafeUnknownSchema>(
 			schema,
-			data as InsertableTreeFieldFromImplicitField<TSchema>,
-		);
+			data as InsertableField<UnsafeUnknownSchema>,
+		) as Unhydrated<
+			TSchema extends ImplicitFieldSchema
+				? TreeFieldFromImplicitField<TSchema>
+				: TreeNode | TreeLeafValue | undefined
+		>;
 	},
 
 	importVerbose<TSchema extends ImplicitFieldSchema, THandle>(

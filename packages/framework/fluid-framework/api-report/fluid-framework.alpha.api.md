@@ -1018,9 +1018,9 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 // @beta @sealed
 export const TreeBeta: {
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
-<<<<<<< HEAD
-    create<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    importConcise<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField | ConciseTree): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    clone<TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
+    create<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
+    importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableTreeFieldFromImplicitField | ConciseTree): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     exportConcise<THandle>(node: TreeNode | TreeLeafValue, options?: EncodeOptions<THandle>): ConciseTree<THandle>;
@@ -1031,9 +1031,6 @@ export const TreeBeta: {
         oldestCompatibleClient: FluidClientVersion;
         idCompressor?: IIdCompressor;
     }): JsonCompatible<IFluidHandle>;
-=======
-    clone<TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
->>>>>>> 7a8c8d0e0f9eb4cb15516459f34e351a4904606f
 };
 
 // @alpha @sealed

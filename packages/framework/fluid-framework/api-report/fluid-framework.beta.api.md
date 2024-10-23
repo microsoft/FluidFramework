@@ -842,6 +842,18 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 export const TreeBeta: {
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
     clone<TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
+    create<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
+    importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableTreeFieldFromImplicitField | ConciseTree): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
+    importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    exportConcise<THandle>(node: TreeNode | TreeLeafValue, options?: EncodeOptions<THandle>): ConciseTree<THandle>;
+    exportConcise(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): ConciseTree;
+    exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
+    exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
+    exportCompressed(tree: TreeNode | TreeLeafValue, options: {
+        oldestCompatibleClient: FluidClientVersion;
+        idCompressor?: IIdCompressor;
+    }): JsonCompatible<IFluidHandle>;
 };
 
 // @public @sealed
