@@ -23,6 +23,7 @@
 	flex-wrap: wrap;
 	padding: 0px;
 	width:100%;
+	gap: 20px;
 
 	/* Inside auto layout */
 	flex: none;
@@ -40,9 +41,8 @@
 	align-items: flex-start;
 	padding: 0px;
 
-	/* TODO: these were specified as absolute width/height. Presumably we want some min and some max for them */
 	max-width: 30%;
-	margin: 3% 0%;
+	min-width: 250px;
 
 	/* Inside auto layout */
 	flex: none;
