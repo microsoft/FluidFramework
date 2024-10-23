@@ -17,15 +17,11 @@
 /* Light mode override */
 [data-theme='light'] .titleSectionContainer {
 	background-image: linear-gradient(90.5deg, rgba(255, 255, 255, 0.9) 19.21%, rgba(255, 255, 255, 0.1) 94.15%),url('../../static/assets/title-background-light.png');
-	background-size: cover;
-    background-position: center;
 }
 
 /* Dark mode override */
 [data-theme='dark'] .titleSectionContainer {
 	background-image: linear-gradient(90.5deg, rgba(0, 0, 0, 0.8) 19.21%, rgba(0, 0, 0, 0.3)), url('../../static/assets/title-background-dark.png');
-	background-size: cover;
-    background-position: center;
 }
 
 .contentContainer {
