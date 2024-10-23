@@ -7,10 +7,8 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -26,7 +24,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 
 import {
 	clearCacheIfOdsp,
@@ -68,7 +66,7 @@ describeCompat(
 			}
 
 			public get containerRuntime() {
-				return this.context.containerRuntime as ContainerRuntime;
+				return this.context.containerRuntime as IContainerRuntime;
 			}
 
 			public get loadingGroupId() {
@@ -187,7 +185,7 @@ describeCompat(
 		let dataObjectB = {} as unknown as TestDataObject;
 		let dataObjectC = {} as unknown as TestDataObject;
 		let dataObjectD = {} as unknown as TestDataObject;
-		const persistedCache = new TestSnapshotCache();
+		const persistedCache = new TestPersistedCache();
 		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ persistedCache });
 			dataObjectA = {} as unknown as TestDataObject;
@@ -209,7 +207,7 @@ describeCompat(
 		const loadingGroupId2 = "loadingGroupId2";
 		const createDataObjectsWithGroupIds = async (
 			mainObject: TestDataObject,
-			containerRuntime: ContainerRuntime,
+			containerRuntime: IContainerRuntime,
 		) => {
 			dataObjectA = await dataObjectFactory.createInstance(
 				containerRuntime,

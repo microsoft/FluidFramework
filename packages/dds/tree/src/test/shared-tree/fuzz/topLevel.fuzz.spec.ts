@@ -16,7 +16,12 @@ import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.
 
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
+import {
+	createOnCreate,
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	onCreate,
+} from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -42,6 +47,7 @@ describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
+	// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		set: 3,
 		clear: 1,
@@ -53,7 +59,7 @@ describe("Fuzz - Top-Level", () => {
 		commit: 1,
 		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
-		schema: 1,
+		schema: 0,
 		nodeConstraint: 3,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -68,7 +74,7 @@ describe("Fuzz - Top-Level", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

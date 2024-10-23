@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeLeafValue } from "../schemaTypes.js";
 import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
+import type { TreeNode } from "./types.js";
 
 /**
  * The type of a {@link TreeNode}.
@@ -43,6 +45,7 @@ export const typeSchemaSymbol: unique symbol = Symbol("TreeNode Schema");
  *
  * @typeParam TName - Same as {@link TreeNodeSchema}'s "Name" parameter.
  * @typeParam TKind - Same as {@link TreeNodeSchema}'s "Kind" parameter.
+ * @typeParam TInfo - Same as {@link TreeNodeSchema}'s "Info" parameter: format depends on the Kind.
  * @remarks
  * Powers {@link TreeNode}'s strong typing setup.
  * @example Narrow types for overloading based on NodeKind
@@ -75,6 +78,7 @@ export const typeSchemaSymbol: unique symbol = Symbol("TreeNode Schema");
 export interface WithType<
 	out TName extends string = string,
 	out TKind extends NodeKind = NodeKind,
+	out TInfo = unknown,
 > {
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
@@ -85,5 +89,12 @@ export interface WithType<
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind>;
+	get [typeSchemaSymbol](): TreeNodeSchemaClass<
+		TName,
+		TKind,
+		TreeNode | TreeLeafValue,
+		never,
+		boolean,
+		TInfo
+	>;
 }

@@ -80,7 +80,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
-		if (logLevel ?? LogLevel.default >= this.minLogLevel) {
+		if ((logLevel ?? LogLevel.default) >= this.minLogLevel) {
 			this._events.push(event);
 		}
 	}

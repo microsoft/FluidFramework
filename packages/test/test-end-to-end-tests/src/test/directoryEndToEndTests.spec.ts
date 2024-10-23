@@ -10,7 +10,7 @@ import {
 	IContainer,
 	IDeltaManagerInternal,
 } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -823,7 +823,7 @@ describeCompat(
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
 		let sharedDir: ISharedDirectory;
-		let containerRuntime: ContainerRuntime;
+		let containerRuntime: IContainerRuntime;
 		let clearEventCount: number;
 		let changedEventData: IDirectoryValueChanged[];
 		let subDirCreatedEventData: string[];
@@ -848,7 +848,7 @@ describeCompat(
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
-			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			clearEventCount = 0;
 			changedEventData = [];
 			subDirCreatedEventData = [];

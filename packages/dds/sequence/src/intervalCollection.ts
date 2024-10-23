@@ -597,9 +597,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	public next(): IteratorResult<TInterval> {
 		if (this.index < this.results.length) {
 			return {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				value: this.results[this.index++]!,
+				value: this.results[this.index++],
 				done: false,
 			};
 		}

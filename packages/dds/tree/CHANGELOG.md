@@ -1,5 +1,289 @@
 # @fluidframework/tree
 
+## 2.4.0
+
+### Minor Changes
+
+-   ✨ New! Alpha API for providing SharedTree configuration options ([#22701](https://github.com/microsoft/FluidFramework/pull/22701)) [40d3648ddf](https://github.com/microsoft/FluidFramework/commit/40d3648ddfb5223ef6daef49a4f5cab1cfa52b71)
+
+    A new alpha `configuredSharedTree` had been added.
+    This allows providing configuration options, primarily for debugging, testing and evaluation of upcoming features.
+    The resulting configured `SharedTree` object can then be used in-place of the regular `SharedTree` imported from `fluid-framework`.
+
+    ```typescript
+    import {
+    	ForestType,
+    	TreeCompressionStrategy,
+    	configuredSharedTree,
+    	typeboxValidator,
+    } from "@fluid-framework/alpha";
+    // Maximum debuggability and validation enabled:
+    const SharedTree = configuredSharedTree({
+    	forest: ForestType.Expensive,
+    	jsonValidator: typeboxValidator,
+    	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+    });
+    // Opts into the under development optimized tree storage planned to be the eventual default implementation:
+    const SharedTree = configuredSharedTree({
+    	forest: ForestType.Optimized,
+    });
+    ```
+
+-   ✨ New! Alpha API for snapshotting Schema ([#22733](https://github.com/microsoft/FluidFramework/pull/22733)) [920a65f66e](https://github.com/microsoft/FluidFramework/commit/920a65f66e0caad7e1b5e3df1e0afd3475a87c4a)
+
+    `extractPersistedSchema` can now be used to extra a JSON-compatible representation of the subset of a schema that gets stored in documents.
+    This can be used write tests which snapshot an applications schema.
+    Such tests can be used to detect schema changes which could would impact document compatibility,
+    and can be combined with the new `comparePersistedSchema` to measure what kind of compatibility impact the schema change has.
+
+-   Fix reading of `null` from unhydrated trees ([#22748](https://github.com/microsoft/FluidFramework/pull/22748)) [6a75bd0616](https://github.com/microsoft/FluidFramework/commit/6a75bd0616ecd315ae0e9458d88ba1c755dfd785)
+
+    Unhydrated trees containing object nodes with required fields set to `null` used to throw an error.
+    This was a bug: `null` is a valid value in tree's whose schema allow it, and this specific case now correctly returns `null` values when appropriate without erroring.
+
+-   Expose the view schema from the TreeView interface ([#22547](https://github.com/microsoft/FluidFramework/pull/22547)) [2aa29d9a13](https://github.com/microsoft/FluidFramework/commit/2aa29d9a13f099b129ec6834c8cbdaf6a25db114)
+
+    Users of TreeView can now access the type-safe view schema directly on the view object via `TreeView.schema`.
+    This allows users to avoid passing the schema around in addition to the view in scenarios where both are needed.
+    It also avoids scenarios in which code wants to accept both a view and its schema and thus must constrain both to be of the same schema type.
+
+-   Metadata can now be associated with Field Schema ([#22564](https://github.com/microsoft/FluidFramework/pull/22564)) [1d9f4c97ed](https://github.com/microsoft/FluidFramework/commit/1d9f4c97edf3f2bbf23ca30c35b67f0ec38b728d)
+
+    Users of TreeView can now specify metadata when creating Field Schema.
+    This includes system-understood metadata, i.e., `description`.
+
+    Example:
+
+    ```typescript
+    class Point extends schemaFactory.object("Point", {
+    	x: schemaFactory.required(schemaFactory.number, {
+    		metadata: { description: "The horizontal component of the point." },
+    	}),
+    	y: schemaFactory.required(schemaFactory.number, {
+    		metadata: { description: "The vertical component of the point." },
+    	}),
+    }) {}
+    ```
+
+    Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/) (`getJsonSchema`) can leverage such system-understood metadata to generate useful information.
+    In the case of the `description` property, this is mapped directly to the `description` property supported by JSON Schema.
+
+    Custom, user-defined properties can also be specified.
+    These properties will not be leveraged by the system by default, but can be used as a handy means of associating common application-specific properties with Field Schema.
+
+    Example:
+
+    An application is implementing search functionality.
+    By default, the app author wishes for all app content to be indexable by search, unless otherwise specified.
+    They can leverage schema metadata to decorate fields that should be ignored by search, and leverage that information when walking the tree during a search.
+
+    ```typescript
+
+    interface AppMetadata {
+    	/**
+    	 * Whether or not the field should be ignored by search.
+    	 * @defaultValue `false`
+    	 */
+    	searchIgnore?: boolean;
+    }
+
+    class Note extends schemaFactory.object("Note", {
+    	position: schemaFactory.required(Point, {
+    		metadata: {
+    			description: "The position of the upper-left corner of the note."
+    			custom: {
+    				// Search doesn't care where the note is on the canvas.
+    				// It only cares about the text content.
+    				searchIgnore: true
+    			}
+    		}
+    	}),
+    	text: schemaFactory.required(schemaFactory.string, {
+    		metadata: {
+    			description: "The textual contents of the note."
+    		}
+    	}),
+    }) {}
+
+    ```
+
+    Search can then be implemented to look for the appropriate metadata, and leverage it to omit the unwanted position data from search.
+
+-   ✨ New! Alpha SharedTree branching APIs ([#22550](https://github.com/microsoft/FluidFramework/pull/22550)) [8f4587c912](https://github.com/microsoft/FluidFramework/commit/8f4587c912f955c405d7bbbc5b42f3ffc3b497d7)
+
+    Several APIs have been added to allow for creating and coordinating "version-control"-style branches of the SharedTree.
+    Use the `getBranch` entry point function to acquire a branch.
+    For example:
+
+    ```ts
+    function makeEditOnBranch(mainView: TreeView<typeof MySchema>) {
+    	mainView.root.myData = 3;
+    	const mainBranch = getBranch(mainView); // This function accepts either a view of a SharedTree (acquired e.g. via `sharedTree.viewWith(...)`) or a `SharedTree` directly.
+    	const forkBranch = mainBranch.branch(); // This creates a new branch based on the existing branch.
+    	const forkView = forkBranch.viewWith(new TreeViewConfiguration({ schema: MySchema })); // Acquire a view of the forked branch in order to read or edit its tree.
+    	forkView.root.myData = 4; // Set the value on the fork branch to be 4. The main branch still has a value of 3.
+    	mainBranch.merge(forkBranch); // Merging the fork changes into the main branch causes the main branch to have a value of 4.
+
+    	// Note: The main branch (and therefore, also the `forkView`) is automatically disposed by the merge.
+    	// To prevent this, use `mainBranch.merge(forkBranch, false)`.
+    }
+    ```
+
+    Merging any number of commits into a target branch (via the `TreeBranch.merge` method) generates a revertible for each
+    commit on the target branch. See [#22644](https://github.com/microsoft/FluidFramework/pull/22644) for more information
+    about revertible support in the branching APIs.
+
+-   Unhydrated SharedTree nodes now emit change events when edited ([#22661](https://github.com/microsoft/FluidFramework/pull/22661)) [d1eade6547](https://github.com/microsoft/FluidFramework/commit/d1eade65477a4e7fb1f8062cb83dfa03a8b1d800)
+
+    Newly-created SharedTree nodes which have not yet been inserted into the tree will now emit `nodeChanged` and `treeChanged` events when they are mutated via editing operations.
+
+    ```ts
+    const node = new Foo({ foo: 3 });
+    Tree.on(node, "nodeChanged", () => {
+    	console.log("This will fire even before node is inserted!");
+    });
+
+    node.foo = 4; // log: "This will fire even before node is inserted!";
+    ```
+
+-   SharedTree's `RestrictiveReadonlyRecord` is deprecated ([#22479](https://github.com/microsoft/FluidFramework/pull/22479)) [8be73d374d](https://github.com/microsoft/FluidFramework/commit/8be73d374de04ff6226c531ba8b562561572640f)
+
+    `RestrictiveReadonlyRecord` was an attempt to implement a version of TypeScript's built-in `Record<TKey, TValue>` type that would prohibit (instead of leaving unrestricted like Record does) values under keys that do not extend `TKey`.
+
+    The implementation of `RestrictiveReadonlyRecord` failed to accomplish this except for the edge cases where `TKey` was exactly `string` or exactly `symbol`.
+    Fixing this bug appears to be impossible within the current limitation of TypeScript, however this library does not require any case other than `TKey` being exactly `string`.
+
+    To reduce the risk of users of the tree library using the problematic `RestrictiveReadonlyRecord` type, it has been deprecated and replaced with a more specific type that avoids the bug, `RestrictiveStringRecord<TValue>`.
+
+    To highlight that this new type is not intended for direct use by users of tree, and instead is just used as part of the typing of its public API, `RestrictiveStringRecord` has been tagged with `@system`.
+    See [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels) for more details.
+
+-   Fix `.create` on structurally named MapNode and ArrayNode schema ([#22522](https://github.com/microsoft/FluidFramework/pull/22522)) [b3f91ae91c](https://github.com/microsoft/FluidFramework/commit/b3f91ae91cb750a6a7696ab5ea17c00895bb6d92)
+
+    Constructing a structurally named MapNode or ArrayNode schema (using the overload of `SchemaFactory.map` or `SchemaFactory.array` which does not take an explicit name), returned a `TreeNodeSchema` instead of a `TreeNodeSchemaNonClass`, which resulted in the `create` static method not being exposed.
+    This has been fixed, and can now be used as follows:
+
+    ```typescript
+    const MyMap = schemaFactory.map(schemaFactory.number);
+    type MyMap = NodeFromSchema<typeof MyMap>;
+    const _fromMap: MyMap = MyMap.create(new MyMap());
+    const _fromIterable: MyMap = MyMap.create([]);
+    const _fromObject: MyMap = MyMap.create({});
+    ```
+
+    This change causes some types to reference `TreeNodeSchemaNonClass` which did not reference it before.
+    While `TreeNodeSchemaNonClass` is `@system` (See [Fluid Releases and API Support Levels
+    ](https://fluidframework.com/docs/build/releases-and-apitags/) for details) and thus not intended to be referred to by users of Fluid,
+    this change caused the TypeScript compiler to generate references to it in more cases when compiling `d.ts` files.
+    Since the TypeScript compiler is unable to generate references to `TreeNodeSchemaNonClass` with how it was nested in `internalTypes.js`,
+    this change could break the build of packages exporting types referencing structurally named map and array schema.
+    This has been mitigated by moving `TreeNodeSchemaNonClass` out of `internalTypes.js`:
+    any code importing `TreeNodeSchemaNonClass` (and thus disregarding the `@system` restriction) can be fixed by importing it from the top level instead of the `internalTypes.js`
+
+-   Non-leaf field access has been optimized ([#22717](https://github.com/microsoft/FluidFramework/pull/22717)) [6a2b68103c](https://github.com/microsoft/FluidFramework/commit/6a2b68103cc3ad56a9ac0dfcaaa8546978ec29ac)
+
+    When reading non-leaf children which have been read previously, they are retrieved from cache faster.
+    Several operations on subtrees under arrays have been optimized, including reading of non-leaf nodes for the first time.
+    Overall this showed a roughly 5% speed up in a read heavy test application (the BubbleBench example) but gains are expected to vary a lot based on use-case.
+
+-   ✨ New! Alpha APIs for producing SharedTree schema from enums ([#20035](https://github.com/microsoft/FluidFramework/pull/20035)) [5f9bbe011a](https://github.com/microsoft/FluidFramework/commit/5f9bbe011a18ccac08a70340f6d20e60ce30c4a4)
+
+    `adaptEnum` and `enumFromStrings` have been added to `@fluidframework/tree/alpha` and `fluid-framework/alpha`.
+    These unstable alpha APIs are relatively simple helpers on-top of public APIs (source: [schemaCreationUtilities.ts](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/simple-tree/schemaCreationUtilities.ts)):
+    thus if these change or stable alternatives are needed, an application can replicate this functionality using these implementations as an example.
+
+## 2.3.0
+
+### Minor Changes
+
+-   Add /alpha import path to @fluidframework/tree and fluid-framework packages ([#22483](https://github.com/microsoft/FluidFramework/pull/22483)) [12242cfdb5a](https://github.com/microsoft/FluidFramework/commit/12242cfdb5aa4c342cc62f11cbf1c072840bec44)
+
+    `@fluidframework/tree` and `fluid-framework` now have a `/alpha` import path where their `@alpha` APIs are exported.
+
+-   Refactor code for emitting events to make it easier to copy into other projects ([#22275](https://github.com/microsoft/FluidFramework/pull/22275)) [49849bb5f6b](https://github.com/microsoft/FluidFramework/commit/49849bb5f6bf92765bc63e19cdaf4f7d0498bebc)
+
+    Factored event emitting utilities into their own file, `events/emitter.ts`.
+    Applications wishing to use SharedTree's eventing library for custom events can copy this file (and its referenced utility function) as a starting point for defining and emitting their own custom events.
+    See `createEmitter`'s documentation for example usage.
+
+    Currently there are no published or officially supported versions of these utilities, but they are relatively simple, and can be copied and customized as needed.
+
+-   Implicitly constructed object nodes now only consider own properties during validation ([#22453](https://github.com/microsoft/FluidFramework/pull/22453)) [27faa56f5ae](https://github.com/microsoft/FluidFramework/commit/27faa56f5ae334e0b65fdd84c75764645e64f063)
+
+    When determining if some given data is compatible with a particular ObjectNode schema, both inherited and own properties were considered.
+    However, when constructing the node from this data, only own properties were used.
+    This allowed input which provided required values in inherited fields to pass validation.
+    When the node was constructed, it would lack these fields, and end up out of schema.
+    This has been fixed: both validation and node construction now only consider own properties.
+
+    This may cause some cases which previously exhibited data corruption to now throw a usage error reporting the data is incompatible.
+    Such cases may need to copy data from the objects with inherited properties into new objects with own properties before constructing nodes from them.
+
+-   A `@beta` version of `nodeChanged` which includes the list of properties has been added ([#22229](https://github.com/microsoft/FluidFramework/pull/22229)) [aae34dd9fe1](https://github.com/microsoft/FluidFramework/commit/aae34dd9fe1aa6c153c26035f1486f4d8944c810)
+
+    ```typescript
+    const factory = new SchemaFactory("example");
+    class Point2d extends factory.object("Point2d", {
+    	x: factory.number,
+    	y: factory.number,
+    }) {}
+
+    const point = new Point2d({ x: 0, y: 0 });
+
+    TreeBeta.on(point, "nodeChanged", (data) => {
+    	const changed: ReadonlySet<"x" | "y"> = data.changedProperties;
+    	if (changed.has("x")) {
+    		// ...
+    	}
+    });
+    ```
+
+    The payload of the `nodeChanged` event emitted by SharedTree's `TreeBeta` includes a `changedProperties` property that indicates
+    which properties of the node changed.
+
+    For object nodes, the list of properties uses the property identifiers defined in the schema, and not the persisted
+    identifiers (or "stored keys") that can be provided through `FieldProps` when defining a schema.
+    See the documentation for `FieldProps` for more details about the distinction between "property keys" and "stored keys".
+
+    For map nodes, every key that was added, removed, or updated by a change to the tree is included in the list of properties.
+
+    For array nodes, the set of properties will always be undefined: there is currently no API to get details about changes to an array.
+
+    Object nodes revieve strongly types sets of changed keys, allowing compile time detection of incorrect keys:
+
+    ```typescript
+    TreeBeta.on(point, "nodeChanged", (data) => {
+    	// @ts-expect-error Strong typing for changed properties of object nodes detects incorrect keys:
+    	if (data.changedProperties.has("z")) {
+    		// ...
+    	}
+    });
+    ```
+
+    The existing stable "nodeChanged" event's callback now is given a parameter called `unstable` of type `unknown` which is used to indicate that additional data can be provided there.
+    This could break existing code using "nodeChanged" in a particularly fragile way.
+
+    ```typescript
+    function f(optional?: number) {
+    	// ...
+    }
+    Tree.on(point, "nodeChanged", f); // Bad
+    ```
+
+    Code like this which is implicitly discarding an optional argument from the function used as the listener will be broken.
+    It can be fixed by using an inline lambda expression:
+
+    ```typescript
+    function f(optional?: number) {
+    	// ...
+    }
+    Tree.on(point, "nodeChanged", () => f()); // Safe
+    ```
+
+-   Make SharedTree usable with legacy APIs ([#22320](https://github.com/microsoft/FluidFramework/pull/22320)) [bbdf869b8a1](https://github.com/microsoft/FluidFramework/commit/bbdf869b8a1aae266bc8cb6f6016dcd8c22f0f88)
+
+    SharedTree was not previously exported in a way that made it usable with @fluidframework/aqueduct or other lower-level legacy APIs. This fixes that issue by making it consistent with other DDSes: such usages can `import { SharedTree } from "@fluidframework/tree/legacy";`.
+
 ## 2.2.0
 
 ### Minor Changes

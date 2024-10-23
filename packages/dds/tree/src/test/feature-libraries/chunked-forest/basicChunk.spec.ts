@@ -11,7 +11,6 @@ import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import type {
@@ -22,6 +21,7 @@ import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
 	chunkField,
+	type ChunkCompressor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -40,21 +40,26 @@ import {
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
-
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { JsonObject } from "../../utils.js";
+import { JsonObject } from "../../json/index.js";
+import { numberSchema } from "../../../simple-tree/index.js";
+
+const basicOnlyChunkCompressor: ChunkCompressor = {
+	policy: basicOnlyChunkPolicy,
+	idCompressor: undefined,
+};
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = cursorForJsonableTreeNode(data);
-		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
+		const chunk = chunkTree(inputCursor, basicOnlyChunkCompressor);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
 		const chunkCursor = chunk.cursor();
 		chunkCursor.firstNode();
-		const newChunk = chunkTree(chunkCursor, basicOnlyChunkPolicy);
+		const newChunk = chunkTree(chunkCursor, basicOnlyChunkCompressor);
 		assert(
 			newChunk.isShared() && chunk.isShared(),
 			"chunk created off of existing chunk should be shared",
@@ -64,11 +69,11 @@ describe("basic chunk", () => {
 	it("calling chunkField on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = cursorForJsonableTreeNode(data);
-		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
+		const chunk = chunkTree(inputCursor, basicOnlyChunkCompressor);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
 		const chunkCursor = chunk.cursor();
-		const newChunk = chunkField(chunkCursor, basicOnlyChunkPolicy);
+		const newChunk = chunkField(chunkCursor, basicOnlyChunkCompressor);
 		assert(
 			newChunk[0].isShared() && chunk.isShared(),
 			"chunk created off of existing chunk should be shared",
@@ -79,7 +84,7 @@ describe("basic chunk", () => {
 		"basic chunk",
 		(data): ITreeCursor => {
 			const inputCursor = cursorForJsonableTreeNode(data);
-			const chunk = basicChunkTree(inputCursor, basicOnlyChunkPolicy);
+			const chunk = basicChunkTree(inputCursor, basicOnlyChunkCompressor);
 			const cursor: ITreeCursor = chunk.cursor();
 			cursor.enterNode(0);
 			return cursor;
@@ -207,7 +212,7 @@ describe("basic chunk", () => {
 });
 
 function numericBasicChunk(value: number = 0): BasicChunk {
-	return new BasicChunk(leaf.number.name, new Map(), value);
+	return new BasicChunk(brand(numberSchema.identifier), new Map(), value);
 }
 
 /**

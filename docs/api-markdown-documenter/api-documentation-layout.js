@@ -33,25 +33,6 @@ const supportDocsLinkSpan = new SpanNode([
 ]);
 
 /**
- * Checks if the provided API item or any ancestors is tagged with the specified
- * {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tag}.
- *
- * @param apiItem - The API item whose documentation is being queried.
- * @param tagName - The TSDoc tag name being queried for.
- * Must be a valid TSDoc tag (including starting with `@`).
- *
- * @throws If the provided TSDoc tag name is invalid.
- *
- * @privateRemarks import from `@fluid-tools/api-markdown-documenter` once available.
- */
-export function ancestryHasModifierTag(apiItem, tagName) {
-	return (
-		ApiItemUtilities.hasModifierTag(apiItem, tagName) ||
-		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
-	);
-}
-
-/**
  * Creates a special import notice for the provided API item, if one is appropriate.
  *
  * If the item is tagged as "@legacy", displays a legacy notice with import instructions.
@@ -112,7 +93,7 @@ function createImportNotice(apiItem) {
  * If the item is tagged as "@system", displays an internal notice with use notes.
  */
 function createSystemNotice(apiItem) {
-	if (ancestryHasModifierTag(apiItem, "@system")) {
+	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
 		return new AlertNode(
 			[supportDocsLinkSpan],
 			/* alertKind: */ "warning",

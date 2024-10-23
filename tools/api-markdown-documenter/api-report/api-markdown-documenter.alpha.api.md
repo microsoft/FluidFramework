@@ -224,10 +224,16 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly type: string;
 }
 
-// @alpha
-export function documentationNodesToHtml(nodes: DocumentationNode[], context: ToHtmlContext): Nodes[];
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
 
-// @alpha
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+
+// @public
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
@@ -306,7 +312,7 @@ export interface DocumentNodeProps {
     readonly documentPath: string;
 }
 
-// @alpha
+// @public
 export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
@@ -430,35 +436,15 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
     readonly type = DocumentationNodeType.HorizontalRule;
 }
 
-// @alpha
-export interface HtmlRenderConfiguration extends ConfigurationBase {
-    readonly customRenderers?: HtmlRenderers;
-    readonly language?: string;
-    readonly startingHeadingLevel?: number;
-}
-
-// @alpha
-export interface HtmlRenderContext extends TextFormatting {
-    customRenderers?: HtmlRenderers;
-    headingLevel: number;
-    prettyFormatting?: boolean;
-}
-
 declare namespace HtmlRenderer {
     export {
         renderApiModelAsHtml as renderApiModel,
         renderDocumentsAsHtml as renderDocuments,
         renderDocument,
-        renderNode,
-        renderNodes
+        renderHtml
     }
 }
 export { HtmlRenderer }
-
-// @alpha
-export interface HtmlRenderers {
-    [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext) => void;
-}
 
 // @public
 function isDeprecated(apiItem: ApiItem): boolean;
@@ -516,6 +502,28 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
     readonly type = DocumentationNodeType.Link;
 }
 
+// @beta
+export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
+
+// @beta
+export interface LintApiModelConfiguration extends ConfigurationBase {
+    apiModel: ApiModel;
+}
+
+// @beta
+export interface LinterErrors {
+    readonly referenceErrors: ReadonlySet<LinterReferenceError>;
+}
+
+// @beta
+export interface LinterReferenceError {
+    readonly linkText: string | undefined;
+    readonly packageName: string;
+    readonly referenceTarget: string;
+    readonly sourceItem: string;
+    readonly tagName: string;
+}
+
 // @public
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
@@ -555,8 +563,8 @@ declare namespace MarkdownRenderer {
         renderApiModelAsMarkdown as renderApiModel,
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
-        renderNode_2 as renderNode,
-        renderNodes_2 as renderNodes
+        renderNode,
+        renderNodes
     }
 }
 export { MarkdownRenderer }
@@ -605,34 +613,42 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @alpha
-function renderApiModelAsHtml(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderApiModelAsHtml(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
 function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
-// @alpha
-function renderDocument(document: DocumentNode, config: HtmlRenderConfiguration): string;
+// @public
+function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
 
 // @public
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
+// @public @sealed
+export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+}
+
 // @alpha
-function renderDocumentsAsHtml(documents: DocumentNode[], renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderDocumentsAsHtml(documents: DocumentNode[], renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
 function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
-// @alpha
-function renderNode(node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext): void;
+// @public
+function renderHtml(html: Nodes, { prettyFormatting }: {
+    prettyFormatting?: boolean;
+}): string;
+
+// @public @sealed
+export interface RenderHtmlConfig {
+    prettyFormatting?: boolean;
+}
 
 // @public
-function renderNode_2(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
-
-// @alpha
-function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: HtmlRenderContext): void;
+function renderNode(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
 
 // @public
-function renderNodes_2(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -736,23 +752,25 @@ export interface TextFormatting {
     readonly strikethrough?: boolean;
 }
 
-// @alpha
+// @public
 export interface ToHtmlConfig extends ConfigurationBase {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
+    readonly rootFormatting?: TextFormatting;
     readonly startingHeadingLevel?: number;
 }
 
-// @alpha
-export interface ToHtmlContext extends ConfigurationBase {
+// @public
+export interface ToHtmlContext extends TextFormatting {
     readonly headingLevel: number;
+    readonly logger: Logger;
     readonly transformations: ToHtmlTransformations;
 }
 
-// @alpha
+// @public
 export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
 
-// @alpha
+// @public
 export interface ToHtmlTransformations {
     [documentationNodeKind: string]: ToHtmlTransformation;
 }

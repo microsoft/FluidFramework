@@ -14,9 +14,7 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import type { Anchor, UpPath, Value } from "../../../core/index.js";
-import { jsonableTreeFromCursor } from "../../../feature-libraries/index.js";
-import type { TreeContent } from "../../../shared-tree/index.js";
+import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 
 import {
@@ -31,36 +29,29 @@ import {
 	createAnchors,
 	deterministicIdCompressorFactory,
 	failureDirectory,
-	fuzzNode,
-	initialFuzzSchema,
 	validateAnchors,
+	type FuzzNode,
+	createOnCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { typedJsonCursor } from "../../../domains/index.js";
+import type { NodeBuilderData } from "../../../internalTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
 	anchors?: Map<Anchor, [UpPath, Value]>[];
+	initialJsonableTree?: JsonableTree[];
 }
 
-const config = {
-	schema: initialFuzzSchema,
-	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
-	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
-	get initialTree() {
-		return typedJsonCursor({
-			[typedJsonCursor.type]: fuzzNode,
-			sequenceChildren: [1, 2, 3],
-			requiredChild: {
-				[typedJsonCursor.type]: fuzzNode,
-				requiredChild: 0,
-				sequenceChildren: [4, 5, 6],
-			},
-		});
+const initialTreeState: NodeBuilderData<typeof FuzzNode> = {
+	arrayChildren: [1, 2, 3],
+	requiredChild: {
+		requiredChild: 0,
+		arrayChildren: [4, 5, 6],
 	},
-} satisfies TreeContent;
-
-const initialTreeJson = [jsonableTreeFromCursor(config.initialTree)];
+	optionalChild: undefined,
+} as unknown as NodeBuilderData<typeof FuzzNode>;
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
@@ -73,6 +64,7 @@ describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
+		// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,
@@ -86,7 +78,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
-			schema: 1,
+			schema: 0,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -97,7 +89,7 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors",
-			factory: new SharedTreeTestFactory(() => undefined),
+			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
@@ -105,12 +97,10 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = viewFromState(
-				initialState,
-				initialState.clients[0],
-				config.initialTree,
-			).checkout;
+			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
 			tree.transaction.start();
+			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
+			initialState.initialJsonableTree = initialJsonableTree;
 			// These tests are hard coded to a single client, so this is fine.
 			initialState.anchors = [createAnchors(tree)];
 		});
@@ -121,7 +111,8 @@ describe("Fuzz - anchor stability", () => {
 			// aborts any transactions that may still be in progress
 			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
 			tree.transaction.abort();
-			validateTree(tree, initialTreeJson);
+			assert(finalState.initialJsonableTree !== undefined);
+			validateTree(tree, finalState.initialJsonableTree);
 			validateAnchors(tree, anchors[0], true);
 		});
 
@@ -140,6 +131,8 @@ describe("Fuzz - anchor stability", () => {
 		});
 	});
 	describe("Anchors are stable", () => {
+		// TODO: Currently manually disposing the view when applying the schema op is causing a double dispose issue.
+		// Once this issue has been resolved, re-enable schema ops.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,
@@ -156,7 +149,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
-			schema: 1,
+			schema: 0,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -166,7 +159,7 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors-undo-redo",
-			factory: new SharedTreeTestFactory(() => undefined),
+			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
@@ -182,7 +175,7 @@ describe("Fuzz - anchor stability", () => {
 				for (const client of initialState.clients) {
 					// This is a kludge to force the invocation of schematize for each client.
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					viewFromState(initialState, client, config.initialTree).checkout;
+					viewFromState(initialState, client).checkout;
 					// synchronization here (instead of once after this loop) prevents the second client from having to rebase an initialize,
 					// which invalidates its view due to schema change.
 					initialState.containerRuntimeFactory.processAllMessages();
@@ -190,8 +183,7 @@ describe("Fuzz - anchor stability", () => {
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = viewFromState(initialState, client, config.initialTree)
-					.checkout as RevertibleSharedTreeView;
+				const view = viewFromState(initialState, client).checkout as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;

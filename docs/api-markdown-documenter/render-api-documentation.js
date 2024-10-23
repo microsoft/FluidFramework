@@ -19,7 +19,7 @@ import fs from "fs-extra";
 import path from "path";
 
 import { alertNodeType } from "./alert-node.js";
-import { ancestryHasModifierTag, layoutContent } from "./api-documentation-layout.js";
+import { layoutContent } from "./api-documentation-layout.js";
 import { buildNavBar } from "./build-api-nav.js";
 import { renderAlertNode, renderBlockQuoteNode, renderTableNode } from "./custom-renderers.js";
 import { createHugoFrontMatter } from "./front-matter.js";
@@ -58,7 +58,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	// Process API reports
 	logProgress("Loading API model...");
 
-	const apiModel = await loadModel(inputDir);
+	const apiModel = await loadModel({ modelDirectoryPath: inputDir });
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
@@ -83,7 +83,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		createDefaultLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
-			if (ancestryHasModifierTag(apiItem, "@system")) {
+			if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
 				alerts.push("System");
 			} else {
 				if (ApiItemUtilities.isDeprecated(apiItem)) {

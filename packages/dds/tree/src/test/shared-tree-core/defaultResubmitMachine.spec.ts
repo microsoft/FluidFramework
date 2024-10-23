@@ -81,11 +81,10 @@ export class MockChangeEnricher
 	}
 }
 
-export function inverter(
-	{ revision, change }: TaggedChange<MockEnrichableChange>,
-	isRollback: boolean,
-): MockEnrichableChange {
-	assert.equal(isRollback, true);
+export function inverter({
+	revision,
+	change,
+}: TaggedChange<MockEnrichableChange>): MockEnrichableChange {
 	assert.equal(revision, change.outputContext);
 	return {
 		inputContext: change.outputContext,

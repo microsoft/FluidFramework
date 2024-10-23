@@ -52,15 +52,6 @@ declare type old_as_current_for_Interface_ISharedCounterEvents = requireAssignab
 declare type current_as_old_for_Interface_ISharedCounterEvents = requireAssignableTo<TypeOnly<current.ISharedCounterEvents>, TypeOnly<old.ISharedCounterEvents>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_SharedCounter": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_SharedCounter = requireAssignableTo<TypeOnly<typeof current.SharedCounter>, TypeOnly<typeof old.SharedCounter>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -77,3 +68,12 @@ declare type old_as_current_for_TypeAlias_SharedCounter = requireAssignableTo<Ty
  * "TypeAlias_SharedCounter": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_SharedCounter = requireAssignableTo<TypeOnly<current.SharedCounter>, TypeOnly<old.SharedCounter>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_SharedCounter": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_SharedCounter = requireAssignableTo<TypeOnly<typeof current.SharedCounter>, TypeOnly<typeof old.SharedCounter>>

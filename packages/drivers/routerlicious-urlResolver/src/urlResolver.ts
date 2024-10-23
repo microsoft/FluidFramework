@@ -62,17 +62,11 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 			documentId = this.config.documentId;
 			provider = this.config.provider;
 		} else if (path.length >= 4) {
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			tenantId = path[2]!;
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			documentId = path[3]!;
+			tenantId = path[2];
+			documentId = path[3];
 		} else {
 			tenantId = "fluid";
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			documentId = path[2]!;
+			documentId = path[2];
 		}
 
 		const token = await this.getToken();

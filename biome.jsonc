@@ -15,12 +15,14 @@
 			"**/dist/*",
 			"**/lib/*",
 			"**/*.done.build.log",
+			"**/.next", // NextJS
 
 			// test collateral
 			"**/_package.json",
 			"**/fluid-runner/src/test/localOdspSnapshots/**",
 			"**/fluid-runner/src/test/telemetryExpectedOutputs/**",
 			"**/snapshots/*.json",
+			"**/snapshots/content",
 
 			// Generated files
 			"**/src/**/test/types/*.generated.ts",

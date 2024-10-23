@@ -158,6 +158,7 @@ export {
 
 export {
 	areEqualChangeAtomIds,
+	areEqualChangeAtomIdOpts,
 	makeChangeAtomId,
 	asChangeAtomId,
 	type ChangeRebaser,
@@ -205,4 +206,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { type Revertible, RevertibleStatus } from "./revertible/index.js";
+export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";

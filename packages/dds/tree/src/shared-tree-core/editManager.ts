@@ -17,6 +17,7 @@ import {
 	mintCommit,
 	rebaseChange,
 	type RebaseStatsWithDuration,
+	tagChange,
 } from "../core/index.js";
 import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
@@ -51,6 +52,14 @@ export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_IN
 const minimumPossibleSequenceId: SequenceId = {
 	sequenceNumber: minimumPossibleSequenceNumber,
 };
+
+/**
+ * A special revision tag for the initial {@link EditManager.trunkBase} commit.
+ * @remarks This tag is used to supply the _initial_ trunk base with a known revision.
+ * The trunk base may advance over time, after which point the trunk base will have a different revision.
+ * When {@link EditManager.getSummaryData | serializing} and deserializing, peer branches that include the trunk base commit in their history will always use this tag.
+ */
+const rootRevision = "root" as const satisfies RevisionTag;
 
 /**
  * Max number of telemetry log call that may be aggregated before being sent.
@@ -151,7 +160,7 @@ export class EditManager<
 		logger?: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
-			revision: "root",
+			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
@@ -362,11 +371,6 @@ export class EditManager<
 				newTrunkBase,
 				this.trunkBase,
 			).map((c) => c.revision);
-			// Copying the revision of the old trunk base into the new trunk base means we don't need to write out the original
-			// revision to summaries. All clients agree that the trunk base always has the same hardcoded revision.
-			newTrunkBase.revision = this.trunkBase.revision;
-			// Overwriting the change is not strictly necessary, but done here for consistency (so all trunk bases are deeply equal).
-			newTrunkBase.change = this.trunkBase.change;
 			// Dropping the parent field removes (transitively) all references to the evicted commits so they can be garbage collected.
 			delete newTrunkBase.parent;
 			this.trunkBase = newTrunkBase;
@@ -441,6 +445,7 @@ export class EditManager<
 
 		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
 			(c) => {
+				assert(c !== this.trunkBase, "Serialized trunk should not include the trunk base");
 				const metadata =
 					this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 				const commit: SequencedCommit<TChangeset> = {
@@ -463,11 +468,16 @@ export class EditManager<
 					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
 					fail("Expected branch to be based on trunk");
 
+				const base = ancestor === this.trunkBase ? rootRevision : ancestor.revision;
 				return [
 					sessionId,
 					{
-						base: ancestor.revision,
+						base,
 						commits: branchPath.map((c) => {
+							assert(
+								c !== this.trunkBase,
+								"Serialized branch should not include the trunk base",
+							);
 							const commit: Commit<TChangeset> = {
 								change: c.change,
 								revision: c.revision,
@@ -642,7 +652,7 @@ export class EditManager<
 				...newChangeFullyRebased.telemetryProperties,
 			});
 
-			peerLocalBranch.apply(newCommit.change, newCommit.revision);
+			peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
 			this.pushCommitToTrunk(sequenceId, {
 				...newCommit,
 				change: newChangeFullyRebased.change,

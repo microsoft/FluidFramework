@@ -12,13 +12,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
+import type { NodeKeyManager } from "../../feature-libraries/index.js";
 import {
-	type NodeKeyManager,
-	type Unenforced,
-	isLazy,
-} from "../../feature-libraries/index.js";
-import {
-	type RestrictiveReadonlyRecord,
+	type RestrictiveStringRecord,
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
@@ -48,6 +44,8 @@ import type {
 	WithType,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaBoth,
 } from "../core/index.js";
 import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
@@ -71,9 +69,11 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
-} from "../typesUnsafe.js";
+	Unenforced,
+} from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
+import { isLazy } from "../flexList.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -100,7 +100,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
  *
- * @public
+ * @system @public
  */
 export type ScopedSchemaName<
 	TScope extends string | undefined,
@@ -134,17 +134,46 @@ export type ScopedSchemaName<
  * The usage below generalizes this to include array and map like objects as well.
  *
  * There are two ways to use these APIs:
- * |                     | Customizable | POJO Emulation |
- * | ------------------- | ------------ |--------------- |
- * | Declaration         | `class X extends schemaFactory.object("x", {}) {}` | `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>; `
- * | Allows adding "local" (non-persisted) members | Yes. Members (including methods) can be added to class.        | No. Attempting to set non-field members will error. |
- * | Prototype | The user defined class | `Object.prototype`, `Map.prototype` or `Array.prototype` depending on node kind |
- * | Structurally named Schema | Not Supported | Supported |
- * | Explicitly named Objects | Supported | Supported |
- * | Explicitly named Maps and Arrays | Supported: Both declaration approaches can be used | Not Supported |
- * | node.js assert.deepEqual | Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields. | Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different. |
- * | IntelliSense | Shows and links to user defined class by name: `X` | Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">` |
- * | Recursion | Supported with special declaration patterns. | Unsupported: Generated d.ts files replace recursive references with `any`, breaking use of recursive schema across compilation boundaries |
+ *
+ * Customizable Approach:
+ *
+ * 1. Declaration: `class X extends schemaFactory.object("x", {}) {}`
+ *
+ * 2. Allows adding "local" (non-persisted) members: Yes. Members (including methods) can be added to the class.
+ *
+ * 3. Prototype: The user-defined class.
+ *
+ * 4. Structurally named Schema: Not Supported.
+ *
+ * 5. Explicitly named Objects: Supported.
+ *
+ * 6. Explicitly named Maps and Arrays: Supported: Both declaration approaches can be used.
+ *
+ * 7. Node.js `assert.deepEqual`: Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields.
+ *
+ * 8. IntelliSense: Shows and links to user-defined class by name: `X`.
+ *
+ * 9. Recursion: Supported with special declaration patterns.
+ *
+ * POJO Emulation Approach:
+ *
+ * 1. Declaration: `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>;`
+ *
+ * 2. Allows adding "local" (non-persisted) members: No. Attempting to set non-field members will result in an error.
+ *
+ * 3. Prototype: `Object.prototype`, `Map.prototype`, or `Array.prototype` depending on node kind.
+ *
+ * 4. Structurally named Schema: Supported.
+ *
+ * 5. Explicitly named Objects: Supported.
+ *
+ * 6. Explicitly named Maps and Arrays: Not Supported.
+ *
+ * 7. Node.js `assert.deepEqual`: Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different.
+ *
+ * 8. IntelliSense: Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`.
+ *
+ * 9. Recursion: Unsupported: Generated `.d.ts` files replace recursive references with `any`, breaking the use of recursive schema across compilation boundaries.
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
  *
@@ -164,6 +193,8 @@ export type ScopedSchemaName<
  * When doing this, it's still possible to make `instanceof` perform correctly.
  * Allowing (or banning) custom/out-of-schema properties on the class is also possible in both modes: it could be orthogonal.
  * Also for consistency, if keeping the current approach to detecting `POJO Emulation` mode it might make sense to make explicitly named Maps and Arrays do the detection the same as how object does it.
+ *
+ * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
  *
  * @sealed @public
  */
@@ -260,7 +291,7 @@ export class SchemaFactory<
 	 */
 	public object<
 		const Name extends TName,
-		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	>(
 		name: Name,
 		fields: T,
@@ -300,7 +331,7 @@ export class SchemaFactory<
 	 */
 	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
@@ -331,6 +362,12 @@ export class SchemaFactory<
 		T
 	>;
 
+	/**
+	 * @privateRemarks
+	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
+	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
+	 * and the implementation is type safe, and forcing an unsafe typing instead.
+	 */
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
@@ -348,7 +385,7 @@ export class SchemaFactory<
 						false,
 						true,
 					) as TreeNodeSchema,
-			) as TreeNodeSchemaClass<
+			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
 				TreeMapNode<T>,
@@ -357,7 +394,16 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		const out: TreeNodeSchemaBoth<
+			string,
+			NodeKind.Map,
+			TreeMapNode<T>,
+			MapNodeInsertableData<T>,
+			true,
+			T
+		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return out;
 	}
 
 	/**
@@ -374,7 +420,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
@@ -426,7 +472,7 @@ export class SchemaFactory<
 	 */
 	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): TreeNodeSchemaNonClass<
 		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
@@ -459,6 +505,10 @@ export class SchemaFactory<
 		T
 	>;
 
+	/**
+	 * @privateRemarks
+	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
+	 */
 	public array<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
@@ -484,7 +534,15 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		const out: TreeNodeSchemaBoth<
+			ScopedSchemaName<TScope, string>,
+			NodeKind.Array,
+			TreeArrayNode<T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			true,
+			T
+		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return out;
 	}
 
 	/**
@@ -505,7 +563,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
@@ -521,11 +579,14 @@ export class SchemaFactory<
 	 *
 	 * @param t - The types allowed under the field.
 	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public optional<const T extends ImplicitAllowedTypes>(
+	public optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Optional, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
 		});
@@ -544,11 +605,14 @@ export class SchemaFactory<
 	 * @remarks
 	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
 	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
 	 */
-	public required<const T extends ImplicitAllowedTypes>(
+	public required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchema<FieldKind.Required, T> {
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
 
@@ -625,12 +689,12 @@ export class SchemaFactory<
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 	>(name: Name, t: T) {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
-			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
@@ -723,7 +787,7 @@ export class SchemaFactory<
 				>;
 			},
 			// Ideally this would be included, but doing so breaks recursive types.
-			// | RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
 			false,
 			T
 		>;
@@ -748,7 +812,7 @@ export function structuralName<const T extends string>(
 		names.sort();
 		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
 		// Using JSON is a simple way to accomplish this.
-		// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
+		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;

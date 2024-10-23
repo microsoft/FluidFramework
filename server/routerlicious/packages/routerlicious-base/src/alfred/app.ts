@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isIPv4, isIPv6 } from "net";
 import {
 	IDeltaService,
 	IDocumentStorage,
@@ -35,6 +36,7 @@ import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	config: Provider,
@@ -48,11 +50,13 @@ export function create(
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -105,17 +109,9 @@ export function create(
 						additionalProperties.hashedClientIPAddress = hashedClientIP;
 
 						const clientIPAddress = req.ip ? req.ip : "";
-						const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-						const ipv6Regex = /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i;
-						if (
-							ipv4Regex.test(clientIPAddress) &&
-							clientIPAddress.split(".").every((part) => Number(part) <= 255)
-						) {
+						if (isIPv4(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv4";
-						} else if (
-							ipv6Regex.test(clientIPAddress) &&
-							clientIPAddress.split(":").every((part) => part.length <= 4)
-						) {
+						} else if (isIPv6(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv6";
 						} else {
 							additionalProperties.clientIPType = "";
@@ -172,10 +168,12 @@ export function create(
 		appTenants,
 		documentRepository,
 		documentDeleteService,
+		startupCheck,
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
 		clusterDrainingChecker,
+		readinessCheck,
 	);
 
 	app.use(routes.api);

@@ -41,8 +41,6 @@ type IRuntimeMessageMetadata =
  */
 export class ScheduleManager {
 	private readonly deltaScheduler: DeltaScheduler;
-	private batchClientId: string | undefined;
-	private hitError = false;
 
 	constructor(
 		private readonly deltaManager: IDeltaManagerInternal,
@@ -57,47 +55,14 @@ export class ScheduleManager {
 		void new ScheduleManagerCore(deltaManager, getClientId, logger);
 	}
 
-	public beforeOpProcessing(message: ISequencedDocumentMessage) {
-		if (this.batchClientId !== message.clientId) {
-			assert(
-				this.batchClientId === undefined,
-				0x2a2 /* "Batch is interrupted by other client op. Should be caught by trackPending()" */,
-			);
-
-			// This could be the beginning of a new batch or an individual message.
-			this.emitter.emit("batchBegin", message);
-			this.deltaScheduler.batchBegin(message);
-
-			const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-			this.batchClientId = batch ? (message.clientId as string) : undefined;
-		}
+	public batchBegin(message: ISequencedDocumentMessage) {
+		this.emitter.emit("batchBegin", message);
+		this.deltaScheduler.batchBegin(message);
 	}
 
-	public afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage) {
-		// If this is no longer true, we need to revisit what we do where we set this.hitError.
-		assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
-
-		if (error) {
-			// We assume here that loader will close container and stop processing all future ops.
-			// This is implicit dependency. If this flow changes, this code might no longer be correct.
-			this.hitError = true;
-			this.batchClientId = undefined;
-			this.emitter.emit("batchEnd", error, message);
-			this.deltaScheduler.batchEnd(message);
-			return;
-		}
-
-		const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-		// If no batchClientId has been set then we're in an individual batch. Else, if we get
-		// batch end metadata, this is end of the current batch.
-		if (this.batchClientId === undefined || batch === false) {
-			this.batchClientId = undefined;
-			this.emitter.emit("batchEnd", undefined, message);
-			this.deltaScheduler.batchEnd(message);
-			return;
-		}
+	public batchEnd(error: any | undefined, message: ISequencedDocumentMessage) {
+		this.emitter.emit("batchEnd", error, message);
+		this.deltaScheduler.batchEnd(message);
 	}
 }
 
@@ -124,9 +89,7 @@ class ScheduleManagerCore {
 			}
 
 			// First message will have the batch flag set to true if doing a batched send
-			// Non null asserting because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const firstMessageMetadata = messages[0]!.metadata as IRuntimeMessageMetadata;
+			const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
 			if (!firstMessageMetadata?.batch) {
 				return;
 			}
@@ -138,9 +101,7 @@ class ScheduleManagerCore {
 			}
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
-			// Non null asserting here because of the length check at the start of the function
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const lastMessage = messages[messages.length - 1]!;
+			const lastMessage = messages[messages.length - 1];
 			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };

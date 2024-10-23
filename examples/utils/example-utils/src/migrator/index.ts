@@ -4,4 +4,3 @@
  */
 
 export { SameContainerMigrator } from "./sameContainerMigrator.js";
-export { Migrator } from "./migrator.js";

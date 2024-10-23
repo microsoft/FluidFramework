@@ -12,6 +12,7 @@ export interface ITelemetryContextProperties {
 	[BaseTelemetryProperties.tenantId]: string;
 	[BaseTelemetryProperties.documentId]: string;
 	[BaseTelemetryProperties.correlationId]: string;
+	[BaseTelemetryProperties.requestSource]: string;
 }
 
 /**

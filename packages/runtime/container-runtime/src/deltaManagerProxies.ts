@@ -198,10 +198,17 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	public get minimumSequenceNumber(): number {
 		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
-		// There is a chance that minPendingSeqNum is greater than minimum sequence number.
-		// minPendingSeqNum is based on the pending ops, so it's based on ref seq number.
-		// Imagine an op has just be sent while there's another client that has been lagging behind,
-		// it will likely have a ref seq number greater than the minimum seq number.
+		/**
+		 * The reason why the minimum pending sequence number can be less than the delta manager's minimum sequence
+		 * number (DM's msn) is that when we are processing messages in the container runtime/delta manager, the delta
+		 * manager's msn can be updated to continually increase. In the meantime, the pending state manager's op which
+		 * hasn't been sent can still have a lower sequence number than the DM's msn (think about a disconnected
+		 * scenario). To successfully resubmit that pending op it has to be rebased first by the DDS. The DDS still
+		 * needs to keep the local data for that op that has a reference sequence number lower than the DM's msn. To
+		 * achieve this, the msn passed to the DDS needs to be the minimum of the DM's msn and the minimum pending
+		 * sequence number, so that it can keep the relevant local data to generate the right data for the new op
+		 * during resubmission.
+		 */
 		if (
 			minPendingSeqNum !== undefined &&
 			minPendingSeqNum < this.deltaManager.minimumSequenceNumber

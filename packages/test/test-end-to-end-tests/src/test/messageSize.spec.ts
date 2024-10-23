@@ -314,6 +314,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					{ messagesInBatch: 3, messageSize: 51 * bytesPerKB }, // Three large messages (51 KB each)
 					{ messagesInBatch: 1500, messageSize: bytesPerKB }, // Many small messages (1 KB each)
 				].forEach((testConfig) => {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					it(
 						"Large payloads pass when compression enabled, " +
 							"compressed content is over max op size and chunking enabled. " +
@@ -496,6 +497,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						payloadGenerator: generateRandomStringOfSize,
 					}, // Ten large messages with compression and chunking
 				].forEach((config) => {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					it(
 						"Payload size check, " +
 							"Sending " +
@@ -585,8 +587,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
 					(op) =>
-						(op.contents as { type?: unknown } | undefined)?.type ===
-						ContainerMessageType.ChunkedOp,
+						typeof op.contents === "string" &&
+						(JSON.parse(op.contents) as { type?: unknown })?.type ===
+							ContainerMessageType.ChunkedOp,
 					2,
 				);
 
@@ -599,7 +602,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
 					(op) => {
-						const contents = op.contents as any | undefined;
+						const contents =
+							typeof op.contents === "string" ? JSON.parse(op.contents) : undefined;
 						return (
 							contents?.type === ContainerMessageType.ChunkedOp &&
 							contents?.contents?.chunkId === contents?.contents?.totalChunks
@@ -637,8 +641,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			it("Reconnects while sending chunks", async function () {
 				// This is not supported by the local server. See ADO:2690
-				// This test is flaky on tinylicious. See ADO:7669
-				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+				if (provider.driver.type === "local") {
 					this.skip();
 				}
 

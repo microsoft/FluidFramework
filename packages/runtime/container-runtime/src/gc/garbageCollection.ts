@@ -51,7 +51,6 @@ import {
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,
-	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
 	dataStoreNodePathOnly,
 	getGCDataFromSnapshot,
@@ -789,9 +788,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 				} else {
-					// Non null asserting here because we are checking if it is undefined above.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					gcDataSuperSet.gcNodes[sourceNodeId]!.push(...outboundRoutes);
+					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
 				}
 				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
 			},
@@ -898,16 +895,10 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			default: {
-				if (
-					!compatBehaviorAllowsGCMessageType(gcMessageType, message.compatDetails?.behavior)
-				) {
-					const error = DataProcessingError.create(
-						`Garbage collection message of unknown type ${gcMessageType}`,
-						"processMessage",
-					);
-					throw error;
-				}
-				break;
+				throw DataProcessingError.create(
+					`Garbage collection message of unknown type ${gcMessageType}`,
+					"processMessage",
+				);
 			}
 		}
 	}
@@ -1036,7 +1027,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
 	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
-	 * before runnint GC next.
+	 * before running GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
 		// If sweep isn't enabled, auto-recovery isn't needed since its purpose is to prevent this object from being

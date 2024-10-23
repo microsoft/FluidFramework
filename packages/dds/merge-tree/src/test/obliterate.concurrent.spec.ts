@@ -54,6 +54,30 @@ for (const incremental of [true, false]) {
 			MergeTree.options.incrementalUpdate = true;
 		});
 
+		it("obliterate, then insert at the end of the string", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "01234567");
+			helper.processAllOps();
+			helper.obliterateRange("A", 0, 8);
+			helper.insertText("B", 8, "BBB");
+			helper.processAllOps();
+
+			helper.logger.validate({ baseText: "BBB" });
+		});
+
+		it("insert, then obliterate at the end of the string", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "01234567");
+			helper.processAllOps();
+			helper.insertText("B", 8, "BBB");
+			helper.obliterateRange("A", 0, 8);
+			helper.processAllOps();
+
+			helper.logger.validate({ baseText: "BBB" });
+		});
+
 		it("length of children does not differ from parent when overlapping remove+obliterate", () => {
 			const helper = new ReconnectTestHelper();
 
