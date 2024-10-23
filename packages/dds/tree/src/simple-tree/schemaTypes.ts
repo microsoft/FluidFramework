@@ -12,7 +12,6 @@ import {
 	type MakeNominal,
 	brand,
 	isReadonlyArray,
-	type IsUnion,
 	type UnionToIntersection,
 } from "../util/index.js";
 import type {
@@ -415,8 +414,6 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 		: TSchema extends ImplicitAllowedTypes
 			? TreeNodeFromImplicitAllowedTypes<TSchema>
 			: TreeNode | TreeLeafValue | undefined;
-
-export type schemaIsExact<TSchema extends ImplicitFieldSchema> = IsUnion<TSchema>;
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.

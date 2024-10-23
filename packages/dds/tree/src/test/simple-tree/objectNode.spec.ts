@@ -11,10 +11,12 @@ import {
 	SchemaFactory,
 	typeNameSymbol,
 	typeSchemaSymbol,
-	type InsertableObjectFromSchemaRecord,
 	type NodeBuilderData,
 } from "../../simple-tree/index.js";
-
+import type {
+	InsertableObjectFromSchemaRecord,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/objectNode.js";
 import { describeHydration, hydrate, pretty } from "./utils.js";
 import type {
 	areSafelyAssignable,
@@ -43,12 +45,14 @@ const schemaFactory = new SchemaFactory("Test");
 
 	type Desired = InsertableTypedNode<typeof Note>;
 
-	type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
-	type _check1 = requireTrue<areSafelyAssignable<result, Desired>>;
+	{
+		type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
 
 	{
-		type result2 = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
-		type _check2 = requireTrue<areSafelyAssignable<result2, Desired>>;
+		type result = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
 	}
 }
 
@@ -398,28 +402,15 @@ describeHydration(
 
 			const y = new Note({});
 
-			// There was a bug where unions with maps lost implicit contractibility, causing this to not compile:
 			const x = new Canvas({
 				stuff: {},
 			});
 
 			const allowed = [Note] as const;
-			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-			const test: X = [{}];
-
-			const allowed3 = [Note] as const;
-			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
-			type _check1 = requireTrue<areSafelyAssignable<X3, X4>>;
-
-			const allowed4 = Note;
-			type X4 = InsertableTypedNode<typeof allowed4>;
-
-			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
-			const test2: X5 = [{}];
-
-			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>["stuff"];
-			type _check2 = requireTrue<areSafelyAssignable<X6, X4>>;
-			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
+			{
+				type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
+				const test: X = [{}];
+			}
 		});
 
 		describe("shadowing", () => {

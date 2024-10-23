@@ -14,11 +14,6 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 	type InsertableTreeFieldFromImplicitField,
-	type TreeNodeSchema,
-	type LazyItem,
-	type AllowedTypes,
-	type InsertableTreeNodeFromAllowedTypes,
-	type InsertableTypedNode,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
@@ -237,64 +232,11 @@ describe("schemaCreationUtilities", () => {
 
 		//  InsertableTreeFieldFromImplicitField<TRootSchema>
 		{
+			// Regression test for adapted schema working with InsertableTreeFieldFromImplicitField
 			type InsertableImplicit = InsertableTreeFieldFromImplicitField<typeof DayNodes.schema>;
 
-			type Insertable = InsertableTreeNodeFromAllowedTypes<typeof DayNodes.schema>;
-
-			type FirstOption = (typeof DayNodes.schema)[0];
-			type FirstInsertable = InsertableTypedNode<FirstOption>;
-
-			type InsertableTreeNodeFromAllowedTypes2<TList extends AllowedTypes> =
-				TList extends readonly [
-					LazyItem<infer TSchema extends TreeNodeSchema>,
-					...infer Rest extends AllowedTypes,
-				]
-					? InsertableTypedNode<TSchema> | InsertableTreeNodeFromAllowedTypes2<Rest>
-					: never;
-
-			type FirstInsertable2 = InsertableTreeNodeFromAllowedTypes2<typeof DayNodes.schema>;
-
-			type X = [typeof DayNodes] extends [readonly [LazyItem<infer TSchema>, ...AllowedTypes]]
-				? TSchema
-				: 1;
-
-			type X2 = [(typeof DayNodes.schema)[0]] extends [
-				LazyItem<infer TSchema>,
-				...AllowedTypes,
-			]
-				? TSchema
-				: 1;
-
-			type FirstInsertableWhat = What<typeof DayNodes>;
-			type What<TList> = TList extends [infer TSchema, ...unknown[]] ? TSchema : 0;
-
-			type Insertable3 = InsertableTreeNodeFromAllowedTypes3<typeof DayNodes.schema>;
-			type InsertableTreeNodeFromAllowedTypes3<TList> = TList extends readonly [
-				LazyItem<infer TSchema extends TreeNodeSchema>,
-				// ...infer Rest extends AllowedTypes,
-				...unknown[],
-			]
-				?
-						| InsertableTypedNode<TSchema>
-						| (TList extends readonly [unknown, ...infer Rest]
-								? InsertableTreeNodeFromAllowedTypes3<Rest>
-								: never)
-				: never;
-
-			type Insertable4 = InsertableTreeNodeFromAllowedTypes4<typeof DayNodes>;
-			type InsertableTreeNodeFromAllowedTypes4<TList> = TList extends readonly [
-				unknown,
-				...infer Rest,
-			]
-				? Rest
-				: 0;
-
-			type Schema = [typeof DayNodes.Today, typeof DayNodes.Tomorrow];
-			type Schema2 = [(typeof DayNodes.schema)[0], (typeof DayNodes.schema)[1]];
-			type InsertableXX = InsertableTreeNodeFromAllowedTypes<typeof DayNodes & Schema2>;
-
-			const xxxx: Insertable3 = new DayNodes.Today();
-			const xxxx2: Insertable3 = new DayNodes.Tomorrow();
+			const _a: InsertableImplicit = new DayNodes.Today();
+			const _b: InsertableImplicit = new DayNodes.Tomorrow();
 		}
 	});
 });
