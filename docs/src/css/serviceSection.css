@@ -32,7 +32,7 @@
 	display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 1%;
+    padding: 1.5%;
     isolation: isolate;
     max-width: 45%;
     max-height: 605px;
@@ -43,6 +43,11 @@
     order: 0;
     align-self: stretch;
     flex-grow: 0;
+}
+@media (max-width: 1024px) {
+	.service {
+		padding: 2%;
+	}
 }
 
 .serviceContent{
@@ -198,15 +203,12 @@ cursor: pointer;
 width: 73px;
 height: 20px;
 
-/* VP4/label/m */
 font-family: 'Segoe UI';
 font-style: normal;
 font-weight: 600;
 font-size: 14px;
 line-height: 20px;
-/* identical to box height, or 143% */
 
-/* day/foreground/accent-subtle(cta)/normal */
 color: #2A446F;
 border-bottom: 1px solid #2A446F;
 /* Inside auto layout */

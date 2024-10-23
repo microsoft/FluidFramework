@@ -12,7 +12,7 @@ import "@site/src/css/serviceSection.css";
 
 export function ServiceSection(): JSX.Element {
 	return (
-		<HomePageSection title="Fluid Framework in the Cloud" >
+		<HomePageSection title="Fluid Framework in the Cloud" image={ServiceSectionBG}>
 			<div className="serviceContentContainer">
 				<img src={ServicesDiagram} style={{width: "100%"}}/>
 				<div className="services">

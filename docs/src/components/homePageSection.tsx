@@ -23,7 +23,7 @@ export function HomePageSection({title, subtitle, image, children}: HomePageSect
 	const sectionStyle = image
     ? {
 		backgroundImage: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${image})`,
-		backgroundSize: '100%',
+		backgroundSize: 'cover',
 		width: "100vw",
 		backgroundPosition: 'center',
 		backgroundRepeat: 'no-repeat'
@@ -36,7 +36,7 @@ export function HomePageSection({title, subtitle, image, children}: HomePageSect
 			backgroundImage: `linear-gradient(to bottom, rgba(255, 253, 251, 0.8) 10%, rgba(255, 253, 251, 0.8)), url(${image})`,
 			backgroundPosition: 'center',
   			backgroundRepeat: 'no-repeat',
-			backgroundSize: '100%',
+			backgroundSize: 'cover',
 			width: "100vw",
 		}
 	}
@@ -44,10 +44,22 @@ export function HomePageSection({title, subtitle, image, children}: HomePageSect
 
 	return (
 		<div className="homePageSection" style={imageStyle}>
-			<div className="homePageSectionInner">
-				<SectionHeader title={title} subtitle={subtitle} />
-				{children}
-			</div>
+			{image ?
+				(
+					<div className='contentBoundary'>
+						<div className="homePageSectionInner">
+							<SectionHeader title={title} subtitle={subtitle} />
+							{children}
+						</div>
+					</div>
+				) :
+				(
+					<div className="homePageSectionInner">
+						<SectionHeader title={title} subtitle={subtitle} />
+						{children}
+					</div>
+				)
+			}
 		</div>
 	);
 }

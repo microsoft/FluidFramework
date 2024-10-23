@@ -1,11 +1,8 @@
 .homePageSection {
-	/* Auto layout */
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	padding: 72px 0px 0px 0px;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
@@ -13,14 +10,23 @@
 
 /* TODO: better name */
 .homePageSectionInner {
-	/* Auto layout */
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	z-index: 2;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
+}
+
+.contentBoundary {
+	width: 100%;
+	height: 100%;
+	padding: 0% 20%;
+}
+
+@media (max-width: 1440px) {
+	.contentBoundary{
+		padding: 0% 10%
+	}
 }
