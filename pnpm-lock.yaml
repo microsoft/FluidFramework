@@ -15152,9 +15152,6 @@ importers:
       jest:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
-      jest-dev-server:
-        specifier: ^9.0.2
-        version: 9.0.2
       jest-environment-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2(typescript@5.4.5)
@@ -15487,9 +15484,6 @@ importers:
       jest:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
-      jest-dev-server:
-        specifier: ^9.0.2
-        version: 9.0.2
       jest-environment-jsdom:
         specifier: ^29.6.2
         version: 29.7.0
