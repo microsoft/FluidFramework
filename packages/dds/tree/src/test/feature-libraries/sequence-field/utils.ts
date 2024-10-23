@@ -67,7 +67,6 @@ import {
 	brand,
 	fail,
 	fakeIdAllocator,
-	// getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
