@@ -64,36 +64,6 @@
 	flex-grow: 0;
 }
 
-
-.azureImg{
-
-box-sizing: border-box;
-
-/* Auto layout */
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-	align-items: center;
-	padding: 0px;
-
-	width: 48px;
-	height: 48px;
-
-
-	background-image: url('../../static/assets/azure.png');
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
-	/* day/border/card(card)/fade */
-	border: 1px solid #E6F2FB;
-	border-radius: 8px;
-
-	/* Inside auto layout */
-	flex: none;
-	order: 0;
-	flex-grow: 0;
-
-}
 .serviceTitle {
 /* Title */
 
@@ -146,25 +116,7 @@ flex-grow: 0;
 
 }
 
-/* Fluid Framework in the Cloud */
-.ffCloudTitle {
-position: relative;
-width: 90%;
-height: 62px;
-left: 136px;
-
-font-family: 'Segoe UI';
-font-style: normal;
-font-weight: 600;
-font-size: 40px;
-/* or 62% */
-letter-spacing: -0.02em;
-color: #000000;
-}
-
-
-
-.msftLogo {
+.logo {
 	/* Badge */
 
 box-sizing: border-box;
@@ -179,11 +131,6 @@ padding: 0px;
 width: 48px;
 height: 48px;
 
-/* day/background/card(card)/normal */
-background-image: url('../../static/assets/microsoft-logo.png');
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
 /* day/border/card(card)/fade */
 border: 1px solid #E6F2FB;
 border-radius: 8px;
