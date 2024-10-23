@@ -54,8 +54,8 @@ describe("flub test-only-filter", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { selected, filtered } = output;
-			expect(selected).to.be.ofSize(4);
-			expect(filtered).to.be.ofSize(4);
+			expect(selected).to.be.ofSize(5);
+			expect(filtered).to.be.ofSize(5);
 		});
 
 	test

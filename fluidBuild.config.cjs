@@ -106,11 +106,11 @@ module.exports = {
 		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
-			dependsOn: ["build:manifest"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"build:manifest": {
-			dependsOn: ["tsc"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"depcruise": [],
@@ -157,6 +157,71 @@ module.exports = {
 			script: false,
 		},
 	},
+
+	multiCommandExecutables: ["oclif", "syncpack"],
+	declarativeTasks: {
+		"jssm-viz": {
+			inputGlobs: ["src/**/*.fsl"],
+			outputGlobs: ["src/**/*.fsl.svg"],
+		},
+		"oclif manifest": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["oclif.manifest.json"],
+		},
+		"oclif readme": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["README.md", "docs/**"],
+		},
+		"syncpack lint-semver-ranges": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
+		},
+		"syncpack list-mismatches": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
+		},
+	},
+
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
 		// Release groups
@@ -245,8 +310,6 @@ module.exports = {
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
-				"build-tools/packages/readme-command/bin/dev.js",
-				"build-tools/packages/readme-command/bin/run.js",
 				"build-tools/packages/version-tools/bin/dev.js",
 				"build-tools/packages/version-tools/bin/run.js",
 				"common/build/build-common/gen_version.js",
@@ -266,7 +329,6 @@ module.exports = {
 				"packages/test/mocha-test-setup/mocharc-common.js",
 				"packages/test/test-service-load/scripts/usePrereleaseDeps.js",
 				"packages/tools/devtools/devtools-browser-extension/test-setup.js",
-				"scripts/report-parser.js",
 				"tools/changelog-generator-wrapper/src/getDependencyReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/index.js",
@@ -371,6 +433,14 @@ module.exports = {
 				"package.json",
 			],
 			"npm-package-json-script-dep": [],
+			"npm-package-license": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
+			"npm-private-packages": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
 			"npm-public-package-requirements": [
 				// Test packages published only for the purpose of running tests in CI.
 				"^azure/packages/test/",
@@ -399,6 +469,10 @@ module.exports = {
 				"^experimental/framework/data-objects/",
 				"^tools/telemetry-generator/",
 				"^packages/tools/webpack-fluid-loader/",
+			],
+			"pnpm-npm-package-json-preinstall": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 		},
 		packageNames: {
@@ -461,7 +535,6 @@ module.exports = {
 				["nyc", "nyc"],
 				["oclif", "oclif"],
 				["prettier", "prettier"],
-				["renamer", "renamer"],
 				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
 				["ts2esm", "ts2esm"],
@@ -559,6 +632,13 @@ module.exports = {
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
 			other: { heading: "Other Changes" },
+		},
+	},
+
+	// This setting influence `flub release report` behavior. This defines the legacy compat range for release group or independent packages.
+	releaseReport: {
+		legacyCompatInterval: {
+			"client": 10,
 		},
 	},
 };

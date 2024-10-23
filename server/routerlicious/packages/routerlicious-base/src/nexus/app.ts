@@ -16,7 +16,11 @@ import { createHealthCheckEndpoints } from "@fluidframework/server-services-shar
 import type { Provider } from "nconf";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 
-export function create(config: Provider, readinessCheck?: IReadinessCheck) {
+export function create(
+	config: Provider,
+	startupCheck: IReadinessCheck,
+	readinessCheck?: IReadinessCheck,
+) {
 	// Express app configuration
 	const app: express.Express = express();
 
@@ -39,7 +43,7 @@ export function create(config: Provider, readinessCheck?: IReadinessCheck) {
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
 
-	const healthEndpoints = createHealthCheckEndpoints("nexus", readinessCheck);
+	const healthEndpoints = createHealthCheckEndpoints("nexus", startupCheck, readinessCheck);
 
 	app.use("/healthz", healthEndpoints);
 	// Catch 404 and forward to error handler

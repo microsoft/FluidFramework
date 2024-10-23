@@ -66,7 +66,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
 	const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
 	console.log(
-		`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml and nyc/${outputFilePrefix}junit-report.json`,
+		`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
 	);
 	const suiteName =
 		testReportPrefix !== undefined
@@ -76,7 +76,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		`configFile=${path.join(
 			__dirname,
 			"test-config.json",
-		)},cmrOutput=xunit+output+${outputFilePrefix}:mocha-json-output-reporter+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+		)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
 	];
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {

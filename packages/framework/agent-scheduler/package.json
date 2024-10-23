@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/agent-scheduler",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"description": "Built in runtime object for distributing agents across instances of a container",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -102,12 +102,12 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.47.0",
-		"@fluidframework/agent-scheduler-previous": "npm:@fluidframework/agent-scheduler@~2.3.0",
+		"@arethetypeswrong/cli": "^0.16.4",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.49.0",
+		"@fluidframework/agent-scheduler-previous": "npm:@fluidframework/agent-scheduler@~2.4.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.47.0",
+		"@fluidframework/build-tools": "^0.49.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/node": "^18.19.0",

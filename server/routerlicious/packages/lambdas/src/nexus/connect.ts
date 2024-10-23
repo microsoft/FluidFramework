@@ -24,8 +24,8 @@ import {
 	DefaultServiceConfiguration,
 	createCompositeTokenId,
 	type IWebSocket,
-	TokenRevokedError,
 	ICollaborationSessionClient,
+	clusterDrainingRetryTimeInMs,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -361,12 +361,13 @@ async function checkToken(
 				claims.jti,
 			);
 			if (isTokenRevoked) {
-				throw new TokenRevokedError(
-					403,
-					"Permission denied. Token has been revoked",
-					false /* canRetry */,
-					true /* isFatal */,
-				);
+				const error = createFluidServiceNetworkError(403, {
+					message: "Permission denied. Token has been revoked",
+					internalErrorCode: InternalErrorCode.TokenRevoked,
+					canRetry: false,
+					isFatal: true,
+				});
+				throw error;
 			}
 		}
 		await tenantManager.verifyToken(claims.tenantId, token);
@@ -420,6 +421,7 @@ async function checkClusterDraining(
 		const error = createFluidServiceNetworkError(503, {
 			message: "Cluster is not available. Please retry later.",
 			internalErrorCode: InternalErrorCode.ClusterDraining,
+			retryAfterMs: clusterDrainingRetryTimeInMs,
 		});
 		throw error;
 	}

@@ -25,6 +25,9 @@ variables:
 - name: absolutePathToTelemetryGenerator
   value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 parameters:
 - name: packages
@@ -65,3 +68,4 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       packages: ${{ parameters.packages }}
       testWorkspace: ${{ variables.testWorkspace }}
+      stressMode: ${{ parameters.stressMode }}

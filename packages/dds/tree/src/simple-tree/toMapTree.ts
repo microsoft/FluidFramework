@@ -262,14 +262,14 @@ function mapValueWithFallbacks(
 				// Our serialized data format does not support -0.
 				// Map such input to +0.
 				return 0;
-			} else if (Number.isNaN(value) || !Number.isFinite(value)) {
+			} else if (!Number.isFinite(value)) {
 				// Our serialized data format does not support NaN nor +/-∞.
 				// If the schema supports `null`, fall back to that. Otherwise, throw.
 				// This is intended to match JSON's behavior for such values.
 				if (allowedTypes.has(nullSchema)) {
 					return null;
 				} else {
-					throw new TypeError(`Received unsupported numeric value: ${value}.`);
+					throw new UsageError(`Received unsupported numeric value: ${value}.`);
 				}
 			} else {
 				return value;
@@ -287,7 +287,7 @@ function mapValueWithFallbacks(
 			}
 		}
 		default:
-			throw new TypeError(`Received unsupported leaf value: ${value}.`);
+			throw new UsageError(`Received unsupported leaf value: ${value}.`);
 	}
 }
 
@@ -726,6 +726,7 @@ function tryGetInnerNode(target: unknown): InnerNode | undefined {
  * Content which can be used to build a node.
  * @remarks
  * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
+ * @system @alpha
  */
 export type FactoryContent =
 	| IFluidHandle
@@ -744,12 +745,14 @@ export type FactoryContent =
  * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
  *
  * Supports object and map nodes.
+ * @system @alpha
  */
-type FactoryContentObject = {
+export type FactoryContentObject = {
 	readonly [P in string]?: InsertableContent;
 };
 
 /**
  * Content which can be inserted into a tree.
+ * @system @alpha
  */
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;

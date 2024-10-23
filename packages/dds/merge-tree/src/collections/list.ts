@@ -87,6 +87,12 @@ export class DoublyLinkedList<T>
 		// try to match array signature and semantics where possible
 		Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes">
 {
+	constructor(values?: Iterable<T>) {
+		if (values !== undefined) {
+			this.push(...values);
+		}
+	}
+
 	find(
 		predicate: (value: ListNode<T>, obj: DoublyLinkedList<T>) => unknown,
 	): ListNode<T> | undefined {

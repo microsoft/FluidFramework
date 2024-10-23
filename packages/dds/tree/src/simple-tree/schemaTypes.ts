@@ -14,6 +14,7 @@ import type {
 	NodeKind,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNode,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
@@ -25,7 +26,7 @@ import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 export function isTreeNodeSchemaClass<
 	Name extends string,
 	Kind extends NodeKind,
-	TNode,
+	TNode extends TreeNode | TreeLeafValue,
 	TBuild,
 	ImplicitlyConstructable extends boolean,
 	Info,
@@ -381,7 +382,17 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
- * Converts ImplicitFieldSchema to the corresponding tree node's field type.
+ * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.
+ *
+ * @typeparam TSchema - When non-exact schema are provided this errors on the side of returning too general of a type (a conservative union of all possibilities).
+ * This is ideal for "output APIs" - i.e. it converts the schema type to the runtime type that a user will _read_ from the tree.
+ * Examples of such "non-exact" schema include `ImplicitFieldSchema`, `ImplicitAllowedTypes`, and  TypeScript unions of schema types.
+ * @privateRemarks
+ * TODO:
+ * There are two known problematic usages of this type (which produce invalid/unsound results when given non-specific schema):
+ * 1. setters for fields (on object nodes the Tree.view.root).
+ * 2. Indirectly in InsertableTreeFieldFromImplicitField via InsertableTypedNode including NodeFromSchema.
+ * These cases should be mitigated by introducing a way to detect inexact schema and special casing them in these two places.
  * @public
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
@@ -389,7 +400,7 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
 			? TreeNodeFromImplicitAllowedTypes<TSchema>
-			: unknown;
+			: TreeNode | TreeLeafValue | undefined;
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
@@ -401,7 +412,55 @@ export type InsertableTreeFieldFromImplicitField<
 	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: TSchema extends ImplicitAllowedTypes
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-		: unknown;
+		: never;
+
+/**
+ * {@inheritdoc (UnsafeUnknownSchema:type)}
+ * @alpha
+ */
+export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
+
+/**
+ * A special type which can be provided to some APIs as the schema type parameter when schema cannot easily be provided at compile time and an unsafe (instead of disabled) editing API is desired.
+ * @remarks
+ * When used, this means the TypeScript typing should err on the side of completeness (allow all inputs that could be valid).
+ * This introduces the risk that out-of-schema data could be allowed at compile time, and only error at runtime.
+ *
+ * @privateRemarks
+ * This only applies to APIs which input data which is expected to be in schema, since APIs outputting have easy mechanisms to do so in a type safe way even when the schema is unknown.
+ * In most cases that amounts to returning `TreeNode | TreeLeafValue`.
+ *
+ * This can be contrasted with the default behavior of TypeScript, which is to require the intersection of the possible types for input APIs,
+ * which for unknown schema defining input trees results in the `never` type.
+ *
+ * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
+ * or silently accept invalid data.
+ * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
+ * @alpha
+ */
+export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
+
+/**
+ * Content which could be inserted into a tree.
+ * @remarks
+ * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * @alpha
+ */
+export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> =
+	TSchema extends ImplicitAllowedTypes
+		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+		: InsertableContent;
+
+/**
+ * Content which could be inserted into a field within a tree.
+ * @remarks
+ * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * @alpha
+ */
+export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
+	TSchema extends ImplicitFieldSchema
+		? InsertableTreeFieldFromImplicitField<TSchema>
+		: InsertableContent | undefined;
 
 /**
  * Suitable for output.
@@ -453,6 +512,10 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 /**
  * Data which can be used as a node to be inserted.
  * Either an unhydrated node, or content to build a new node.
+ * @privateRemarks
+ * TODO:
+ * This should behave contravariantly, but it uses NodeFromSchema which behaves covariantly.
+ * This results in unsoundness where, when the schema is less specific, more types are allowed instead of less.
  * @public
  */
 export type InsertableTypedNode<T extends TreeNodeSchema> =
@@ -471,7 +534,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,
 	NodeKind,
-	unknown,
+	TreeNode | TreeLeafValue,
 	infer TBuild
 >
 	? TBuild
