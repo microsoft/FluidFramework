@@ -110,7 +110,7 @@
 		"inquirer": "^8.2.5",
 		"issue-parser": "^7.0.1",
 		"json5": "^2.2.3",
-		"jssm": "5.98.2",
+		"jssm": "^5.103.0",
 		"jszip": "^3.10.1",
 		"latest-version": "^9.0.0",
 		"mdast": "^3.0.0",

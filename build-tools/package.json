@@ -125,9 +125,6 @@
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0"
 		},
-		"patchedDependencies": {
-			"jssm@5.98.2": "patches/jssm@5.98.2.patch"
-		},
 		"updateConfig": {
 			"ignoreDependencies": [
 				"latest-version",
