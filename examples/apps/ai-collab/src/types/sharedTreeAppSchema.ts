@@ -35,7 +35,7 @@ export class SharedTreeTask extends sf.object("Task", {
 			description: `The complexity of the task as a fibonacci number`,
 		},
 	}),
-	status: sf.required(sf.number, {
+	status: sf.required(sf.string, {
 		metadata: {
 			description: `The status of the task as either "todo", "in-progress", or "done"`,
 		},
