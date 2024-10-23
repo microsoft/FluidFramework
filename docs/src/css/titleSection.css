@@ -13,6 +13,20 @@
 	background-position: center;
 	background-repeat: no-repeat;
 }
+.rootContainer {
+	height: 100%;
+	width: 100%;
+	padding: 0% 10%;
+	align-content: center;
+}
+@media (min-width: 1640px) {
+	.rootContainer {
+		padding: 0% 20%;
+	}
+	.titleSectionContainer {
+		height: 45vh;
+	}
+}
 
 /* Light mode override */
 [data-theme='light'] .titleSectionContainer {
