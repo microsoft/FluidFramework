@@ -1,10 +1,5 @@
-
-.rootContainer {
-	height: 100%;
-	width: 100vw;
-}
-
 .titleSectionContainer {
+	width: 100%;
 	display: flex;
     flex-direction: row;
 	justify-content: center;
@@ -23,15 +18,11 @@
 /* Light mode override */
 [data-theme='light'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-light.png');
-	background-size: cover;
-	background-position: center;
 }
 
 /* Dark mode override */
 [data-theme='dark'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-dark.png');
-	background-size: cover;
-	background-position: center;
 }
 
 .contentContainer {
