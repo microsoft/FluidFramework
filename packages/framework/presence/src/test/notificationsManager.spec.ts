@@ -13,6 +13,8 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		it("Sends event", () => {});
 	});
 });
 
@@ -39,28 +41,29 @@ export function checkCompiles(): void {
 	// TODO: inferences for Notifications additions are not working.
 	// They allow incorrect listener signatures and no named events
 	// produced after `add`.
-	const NF = Notifications({
-		newId: (client: ISessionClient, id: number): void => {
-			console.log(`${client.sessionId} has a new id: ${id}`);
-		},
-	});
+	// const NF = Notifications({
+	// 	newId: (client: ISessionClient, id: number): void => {
+	// 		console.log(`${client.sessionId} has a new id: ${id}`);
+	// 	},
+	// });
 
-	notifications.add("my_events", NF);
-	// Below explicit generic specifaction should not be required.
-	// 	Notifications<
-	// 		{
-	// 			newId: (id: number) => void;
-	// 		},
-	// 		"events"
-	// 	>({
-	// 		newId: (client: ISessionClient, id: number) => {
-	// 			console.log(`${client.sessionId} has a new id: ${id}`);
-	// 		},
-	// 	}),
-	// );
+	notifications.add(
+		"my_events", // NF);
+		// Below explicit generic specifaction should not be required.
+		Notifications<
+			{
+				newId: (id: number) => void;
+			},
+			"my_events"
+		>({
+			newId: (client: ISessionClient, id: number) => {
+				console.log(`${client.sessionId} has a new id: ${id}`);
+			},
+		}),
+	);
 
 	// "newId" should be allowed as a named event.
-	// map.my_events.emit.broadcast("newId", 42);
+	notifications.my_events.emit.broadcast("newId", 42);
 
 	function logUnattended(name: string, client: ISessionClient, ...content: unknown[]): void {
 		console.log(
@@ -69,7 +72,7 @@ export function checkCompiles(): void {
 		);
 	}
 
-	const chat = notifications.chat;
+	const { chat } = notifications;
 
 	chat.emit.broadcast("msg", "howdy");
 

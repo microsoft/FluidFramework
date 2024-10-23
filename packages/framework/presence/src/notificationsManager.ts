@@ -155,8 +155,8 @@ class NotificationsManagerImpl<
 			);
 		},
 	};
-
 	// @ts-expect-error TODO
+
 	public readonly notifications: NotificationSubscribable<T> =
 		// @ts-expect-error TODO
 		createEmitter<NotificationSubscriptions<T>>();
