@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { NetworkError } from "@fluidframework/server-services-client";
 import type {
 	IFluidAccessTokenGenerator,
