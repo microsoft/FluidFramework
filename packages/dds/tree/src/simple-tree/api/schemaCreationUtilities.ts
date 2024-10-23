@@ -88,15 +88,14 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * // Define the schema for each member of the enum using a nested scope to group them together.
  * const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
  * // Defined the types of the nodes which correspond to this the schema.
- * type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+ * type ModeNodes = NodeFromSchema<(typeof ModeNodes.schema)[number]>;
  * // An example schema which has an enum as a child.
  * class Parent extends schemaFactory.object("Parent", {
- * 	// typedObjectValues extracts a list of all the fields of ModeNodes, which are the schema for each enum member.
- * 	// This means any member of the enum is allowed in this field.
- * 	mode: typedObjectValues(ModeNodes),
+ * 	// adaptEnum's return value has a ".schema" property can be use as an `AllowedTypes` array allowing any of the members of the enum.
+ * 	mode: ModeNodes.schema,
  * }) {}
  *
- * // Example usage of enum-based nodes, showing what type to use and that `.value` can be used to read out the enum value.
+ * // Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
  * function getValue(node: ModeNodes): Mode {
  * 	return node.value;
  * }
@@ -176,13 +175,16 @@ export function adaptEnum<
  * The produced nodes use the provided strings as their `name`, and don't store any data beyond that.
  * @example
  * ```typescript
+ * const schemaFactory = new SchemaFactory("com.myApp");
  * const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
- * type Mode = NodeFromSchema<(typeof Mode)[keyof typeof Mode]>;
+ * type Mode = NodeFromSchema<(typeof Mode.schema)[number]>;
  * const nodeFromString: Mode = Mode("Fun");
  * const nodeFromSchema: Mode = new Mode.Fun();
- * const nameFromNode = nodeFromSchema.value;
  *
- * class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
+ * // Schema nodes have a strongly typed `.value` property.
+ * const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
+ *
+ * class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
  * ```
  * @see {@link adaptEnum} for a similar function that works on enums instead of arrays of strings.
  * @alpha

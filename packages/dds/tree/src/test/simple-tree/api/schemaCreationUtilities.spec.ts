@@ -61,16 +61,14 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enumFromStrings example", () => {
-		const schemaFactory = new SchemaFactory("x");
+		const schemaFactory = new SchemaFactory("com.myApp");
 		const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
 		type Mode = NodeFromSchema<(typeof Mode.schema)[number]>;
 		const nodeFromString: Mode = Mode("Fun");
 		const nodeFromSchema: Mode = new Mode.Fun();
-		// eslint-disable-next-line no-constant-condition
-		if (false) {
-			// Check this compiles, but don't run it since node is unhydrated
-			const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
-		}
+
+		// Schema nodes have a strongly typed `.value` property.
+		const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
 
 		class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
 	});
@@ -88,7 +86,7 @@ describe("schemaCreationUtilities", () => {
 		type ModeNodes = NodeFromSchema<(typeof ModeNodes.schema)[number]>;
 		// An example schema which has an enum as a child.
 		class Parent extends schemaFactory.object("Parent", {
-			// adaptEnum's return value can be use as an `AllowedTypes` array allowing any of the members of the enum.
+			// adaptEnum's return value has a ".schema" property can be use as an `AllowedTypes` array allowing any of the members of the enum.
 			mode: ModeNodes.schema,
 		}) {}
 
@@ -115,11 +113,9 @@ describe("schemaCreationUtilities", () => {
 		type ModeNodes = NodeFromSchema<(typeof ModeNodes.schema)[number]>;
 		const nodeFromString: ModeNodes = ModeNodes(Mode.a);
 		const nodeFromSchema: ModeNodes = new ModeNodes.a();
-		// eslint-disable-next-line no-constant-condition
-		if (false) {
-			// Check this compiles, but don't run it since node is unhydrated
-			const nameFromNode: Mode = nodeFromSchema.value;
-		}
+
+		const nameFromNode: Mode = nodeFromSchema.value;
+
 		class Parent extends schemaFactory.object("Parent", {
 			mode: ModeNodes.schema,
 		}) {}
