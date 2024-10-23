@@ -42,3 +42,9 @@ export {
 	handleError,
 	IPlugin,
 } from "./utils";
+export {
+	TokenatorResourceFactory,
+	TokenatorResources,
+	TokenatorRunner,
+	TokenatorRunnerFactory,
+} from "./tokenator";
