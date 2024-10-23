@@ -29,21 +29,21 @@ function KeyFeaturesCardGrid(): JSX.Element {
 	return <div className="keyFeaturesCardGrid">
 		<KeyFeatureCard
 			imageSrc={EasyToUseImage}
-			imageAltText='TODO'
+			imageAltText='Easy to use'
 			bodyLabel="Easy to use"
 			bodyText={easyToUseText}
 			footerHref='/docs'
 		/>
 		<KeyFeatureCard
 			imageSrc={OpenSourecImage}
-			imageAltText='TODO'
+			imageAltText='Open source'
 			bodyLabel="Open Source"
 			bodyText={openSourceText}
 			footerHref='/docs'
 		/>
 		<KeyFeatureCard
 			imageSrc={PerformanceImage}
-			imageAltText='TODO'
+			imageAltText='Industry-leading speed and performance'
 			bodyLabel="Industry-leading speed & performance"
 			bodyText={performanceText}
 			footerHref='/docs'
