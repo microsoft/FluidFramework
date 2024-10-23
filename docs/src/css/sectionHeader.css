@@ -82,3 +82,8 @@
 	align-self: stretch;
 	flex-grow: 0;
 }
+
+[data-theme='dark'] .sectionHeaderTitle,
+[data-theme='dark'] .sectionHeaderSubtitle {
+	color: #FEFEFE
+}
