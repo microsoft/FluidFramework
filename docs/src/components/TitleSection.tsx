@@ -11,7 +11,7 @@ export function TitleSection(): React.ReactElement {
   return (
     <div className="rootContainer">
       <div className={"titleSectionContainer"}>
-        <div className="overlay"/>{/* White overlay */}
+        <div className="overlay"/>
         <div className="contentContainer">
             <div className="titleBox">
               <h3 className="title">Fluid Framework</h3>
