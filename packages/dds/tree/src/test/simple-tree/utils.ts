@@ -148,7 +148,9 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * {@link hydrate} but unsafe initialTree
+ * {@link hydrate} but unsafe initialTree.
+ * This may be required when the schema is not entirely statically typed, for example when looping over multiple test cases and thus using a imprecise schema type.
+ * In such cases the "safe" version of hydrate may require `never` for the initial tree.
  */
 export function hydrateUnsafe<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,

@@ -13,6 +13,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
+	cursorFromInsertable,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
@@ -24,7 +25,6 @@ import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
-	cursorFromInsertableTreeField,
 	validateUsageError,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
@@ -44,7 +44,7 @@ function checkoutWithInitialTree(
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromInsertableTreeField<UnsafeUnknownSchema>(
+	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,
