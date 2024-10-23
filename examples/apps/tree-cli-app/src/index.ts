@@ -12,6 +12,12 @@ const args = process.argv.slice(2);
 
 console.log(`Requires arguments: [<source>] [<destination>] [<edit>]`);
 console.log(`Example arguments: default data/large.concise.json string:10,item:100`);
+console.log(
+	`File formats are specified by extension, for example ".verbose.json" uses the "verbose" format.`,
+);
+console.log(
+	`See implementation for supported formats and edit syntax: this is just a demon, not a nice app!`,
+);
 console.log(`Running with augments: ${args}`);
 
 if (args.length > 3) {
