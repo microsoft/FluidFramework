@@ -1,0 +1,4 @@
+@fluid-internal/historian-base
+@fluid-internal/historian
+@fluid-internal/gitrest-base
+@fluid-internal/gitrest
