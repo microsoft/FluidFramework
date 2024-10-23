@@ -6,7 +6,6 @@
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
 		"noUncheckedIndexedAccess": false,
-		"types": ["Node"],
 	},
 	"include": ["src/**/*"],
 }

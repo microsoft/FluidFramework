@@ -13,6 +13,17 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
 import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
+interface Storage {
+	// eslint-disable-next-line @rushstack/no-new-null
+	getItem(keyName: string): string | null;
+}
+
+declare global {
+	// eslint-disable-next-line no-var
+	var sessionStorage: Storage;
+	// #endregion Storage
+}
+
 /**
  * Explicitly typed interface for reading configurations.
  *
