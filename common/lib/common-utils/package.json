@@ -157,25 +157,25 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedClass_EventForwarder": {
+			"Class_EventForwarder": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"RemovedClass_TelemetryNullLogger": {
+			"Class_TelemetryNullLogger": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"RemovedClass_BaseTelemetryNullLogger": {
+			"Class_BaseTelemetryNullLogger": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"RemovedClassStatics_BaseTelemetryNullLogger": {
+			"ClassStatics_BaseTelemetryNullLogger": {
 				"backCompat": false
 			},
-			"RemovedClassStatics_EventForwarder": {
+			"ClassStatics_EventForwarder": {
 				"backCompat": false
 			},
-			"RemovedClassStatics_TelemetryNullLogger": {
+			"ClassStatics_TelemetryNullLogger": {
 				"backCompat": false
 			}
 		}

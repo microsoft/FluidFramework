@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_BaseTelemetryNullLogger": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_BaseTelemetryNullLogger = requireAssignableTo<TypeOnly<old.BaseTelemetryNullLogger>, TypeOnly<current.BaseTelemetryNullLogger>>
 
 /*
@@ -31,6 +32,7 @@ declare type old_as_current_for_Class_BaseTelemetryNullLogger = requireAssignabl
  * typeValidation.broken:
  * "Class_BaseTelemetryNullLogger": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_BaseTelemetryNullLogger = requireAssignableTo<TypeOnly<current.BaseTelemetryNullLogger>, TypeOnly<old.BaseTelemetryNullLogger>>
 
 /*
@@ -76,6 +78,7 @@ declare type current_as_old_for_Class_Deferred = requireAssignableTo<TypeOnly<cu
  * typeValidation.broken:
  * "Class_EventForwarder": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_EventForwarder = requireAssignableTo<TypeOnly<old.EventForwarder>, TypeOnly<current.EventForwarder>>
 
 /*
@@ -85,6 +88,7 @@ declare type old_as_current_for_Class_EventForwarder = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_EventForwarder": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_EventForwarder = requireAssignableTo<TypeOnly<current.EventForwarder>, TypeOnly<old.EventForwarder>>
 
 /*
@@ -220,6 +224,7 @@ declare type current_as_old_for_Class_RateLimiter = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_TelemetryNullLogger": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TelemetryNullLogger = requireAssignableTo<TypeOnly<old.TelemetryNullLogger>, TypeOnly<current.TelemetryNullLogger>>
 
 /*
@@ -229,6 +234,7 @@ declare type old_as_current_for_Class_TelemetryNullLogger = requireAssignableTo<
  * typeValidation.broken:
  * "Class_TelemetryNullLogger": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TelemetryNullLogger = requireAssignableTo<TypeOnly<current.TelemetryNullLogger>, TypeOnly<old.TelemetryNullLogger>>
 
 /*
@@ -292,6 +298,7 @@ declare type current_as_old_for_Class_TypedEventEmitter = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_BaseTelemetryNullLogger": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_BaseTelemetryNullLogger = requireAssignableTo<TypeOnly<typeof current.BaseTelemetryNullLogger>, TypeOnly<typeof old.BaseTelemetryNullLogger>>
 
 /*
@@ -319,6 +326,7 @@ declare type current_as_old_for_ClassStatics_Deferred = requireAssignableTo<Type
  * typeValidation.broken:
  * "ClassStatics_EventForwarder": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_EventForwarder = requireAssignableTo<TypeOnly<typeof current.EventForwarder>, TypeOnly<typeof old.EventForwarder>>
 
 /*
@@ -391,6 +399,7 @@ declare type current_as_old_for_ClassStatics_RateLimiter = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_TelemetryNullLogger": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TelemetryNullLogger = requireAssignableTo<TypeOnly<typeof current.TelemetryNullLogger>, TypeOnly<typeof old.TelemetryNullLogger>>
 
 /*
