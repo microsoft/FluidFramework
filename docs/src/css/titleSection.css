@@ -1,23 +1,17 @@
-
-.rootContainer {
-	height: 100%;
+.titleSectionContainer {
 	width: 100%;
-	padding: 0% 10%;
-	align-content: center;
-}
-
-@media (min-width: 1640px) {
-	.rootContainer{
-		padding: 0% 20%
-	}
-}
-.titleSectionContainer{
+	display: flex;
+    flex-direction: row;
+	justify-content: center;
+    align-items: center;
 	height: 40vh;
-}
-@media (min-width: 1640px) {
-	.titleSectionContainer{
-		height: 45vh;
-	}
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+	overflow: hidden;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
 }
 
 /* Light mode override */
