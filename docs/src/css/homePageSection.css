@@ -22,11 +22,11 @@
 .contentBoundary {
 	width: 100%;
 	height: 100%;
-	padding: 0% 20%;
+	padding: 0% 10%;
 }
 
-@media (max-width: 1440px) {
+@media (min-width: 1640px) {
 	.contentBoundary{
-		padding: 0% 10%
+		padding: 0% 20%
 	}
 }
