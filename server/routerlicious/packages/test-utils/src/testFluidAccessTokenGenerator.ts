@@ -1,5 +1,8 @@
 import { NetworkError } from "@fluidframework/server-services-client";
-import type { IFluidAccessToken, IFluidAccessTokenGenerator } from "@fluidframework/server-services-core";
+import type {
+	IFluidAccessToken,
+	IFluidAccessTokenGenerator,
+} from "@fluidframework/server-services-core";
 
 export class TestFluidAccessTokenGenerator implements IFluidAccessTokenGenerator {
 	private failSignatureValidation: boolean = false;
@@ -13,41 +16,29 @@ export class TestFluidAccessTokenGenerator implements IFluidAccessTokenGenerator
 		this.failAuthorizationValidation = true;
 	}
 
-	public async generateFluidToken(tenantId: string, bearerAuthToken: string, requestBody?: Record<string, any>): Promise<IFluidAccessToken> {
+	public async generateFluidToken(
+		tenantId: string,
+		bearerAuthToken: string,
+		requestBody?: Record<string, any>,
+	): Promise<IFluidAccessToken> {
 		const tokenRegex = /Bearer (.+)/;
 		const tokenMatch = tokenRegex.exec(bearerAuthToken); // Returns null if there is no match
 		if (tokenMatch === null) {
-			throw new NetworkError(
-				400,
-				"Invalid bearer access token",
-				false /* canRetry */,
-			);
+			throw new NetworkError(400, "Invalid bearer access token", false /* canRetry */);
 		}
 		const token = tokenMatch[1];
 		if (!token || typeof token !== "string") {
-			throw new NetworkError(
-				400,
-				"Invalid bearer access token",
-				false /* canRetry */,
-			);
+			throw new NetworkError(400, "Invalid bearer access token", false /* canRetry */);
 		}
 		if (this.failSignatureValidation) {
-			throw new NetworkError(
-				401,
-				"Token user is not authorized",
-				false /* canRetry */,
-			);
+			throw new NetworkError(401, "Token user is not authorized", false /* canRetry */);
 		}
 		if (this.failAuthorizationValidation) {
-			throw new NetworkError(
-				403,
-				"Token user does not have access",
-				false /* canRetry */,
-			);
+			throw new NetworkError(403, "Token user does not have access", false /* canRetry */);
 		}
 		const dummyToken: IFluidAccessToken = {
 			fluidAccessToken: "12345",
-		}
+		};
 		return dummyToken;
 	}
 }

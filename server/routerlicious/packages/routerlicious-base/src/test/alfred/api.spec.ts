@@ -29,10 +29,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
 import { TestCache, TestFluidAccessTokenGenerator } from "@fluidframework/server-test-utils";
-import {
-	DeltaService,
-	DocumentDeleteService,
-} from "../../alfred/services";
+import { DeltaService, DocumentDeleteService } from "../../alfred/services";
 import * as SessionHelper from "../../utils/sessionHelper";
 import Sinon from "sinon";
 import { Constants } from "../../utils";
@@ -234,8 +231,8 @@ describe("Routerlicious", () => {
 							`/api/v1/tenants/${appTenant1.id}/accesstoken`,
 							"Bearer 12345", // Dummy bearer token
 							null,
-							"post"
-						)
+							"post",
+						);
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertThrottle(
@@ -642,8 +639,8 @@ describe("Routerlicious", () => {
 					it("/tenants/:tenantid/accesstoken", async () => {
 						await assertCorrelationId(
 							`/api/v1/tenants/${appTenant1.id}/accesstoken`,
-							"post"
-						)
+							"post",
+						);
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertCorrelationId(
@@ -968,7 +965,7 @@ describe("Routerlicious", () => {
 							customClaims: {
 								claim1: "value1",
 								claim2: "value2",
-							}
+							},
 						};
 
 						await supertest

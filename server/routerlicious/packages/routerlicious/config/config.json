@@ -128,10 +128,6 @@
 	"riddler": {
 		"useNodeCluster": false
 	},
-	"tokenator": {
-		"useNodeCluster": false,
-		"accessTokenUrl": "http://tokenator:3000"
-	},
 	"nexus": {
 		"kafkaClientId": "nexus",
 		"maxMessageSize": "16KB",
