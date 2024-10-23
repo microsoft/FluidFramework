@@ -19,7 +19,13 @@
 	background-position: center;
 	background-repeat: no-repeat;
 }
-
+.overlay {
+	background: linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2));
+	top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
 /* Light mode override */
 [data-theme='light'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-light.png');

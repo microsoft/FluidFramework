@@ -20,7 +20,7 @@ export function TitleSection(): React.ReactElement {
             </div>
             <div className="videoContainer">
               <div className="roundedVideo">
-                <iframe width="100%" height="100%"  src="https://www.youtube.com/embed/uL2nMYk6WTQ" title="Fluid Framework 2.0 Beta - Build collaborative apps fast!"  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <iframe width="100%" height="100%"  src="https://www.youtube.com/embed/uL2nMYk6WTQ" title="Fluid Framework 2.0 Beta - Build collaborative apps fast!"  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
               </div>
             </div>
           </div>

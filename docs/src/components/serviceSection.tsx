@@ -16,7 +16,7 @@ export function ServiceSection(): JSX.Element {
 
 
 				<div className="serviceContentContainer">
-				<ServicesDiagram />
+				<img src={ServicesDiagram}/>
 					<div className="services">
 							<div className="service">{/*AFR*/}
 								<div className="serviceContent">
@@ -38,18 +38,6 @@ export function ServiceSection(): JSX.Element {
 										Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.
 									</div>
 									<a className="learnMore" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview" target="_blank" rel="noopener noreferrer">
-									Learn more
-								</a>
-							</div>
-						</div>
-						<div className="service">{/*SPE*/}
-							<div className="serviceContent">
-								<div className="msftLogo"></div>
-								<div className="serviceTitle">Sharepoint Embedded</div>
-								<div className="serviceDescription">
-								Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.
-								</div>
-								<a className="learnMore" href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview" target="_blank" rel="noopener noreferrer">
 									Learn more
 								</a>
 							</div>

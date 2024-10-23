@@ -1,12 +1,4 @@
-.serviceSectionContainer {
-	height: 90vh;
-	width: 100%;
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-}
+
 
 .overlay {
 	background: linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2));
@@ -17,54 +9,33 @@
 }
 
 .serviceContentContainer{
-	z-index: 2;
-	display: flex;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-bottom: 2%;
+    gap: 15px;
 }
 
 .service {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 24px;
 
-/* Auto layout */
-display: flex;
-flex-direction: column;
-align-items: flex-start;
-padding: 24px;
-left:136px;
-border-radius: 24px;
-background-color: #FEFEFE;
-box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
-margin: 1%;
-max-height: 320px;
-max-width: 600px;
+	border-radius: 24px;
+	background-color: #FEFEFE;
+	box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
+	margin: 1%;
+	max-height: 320px;
+	max-width: 600px;
 
-
-/* Inside auto layout */
-flex: none;
-order: 1;
-align-self: stretch;
-flex-grow: 0;
-z-index: 4;
-
-
-}
-
-.serviceContentContainer {
-	/* Content */
-
-/* Auto layout */
-display: flex;
-flex-direction: column;
-align-items: center;
-padding: 0px;
-
-width: inherit;
-height: 100%;
-
-
-/* Inside auto layout */
-flex: none;
-order: 0;
-flex-grow: 1;
-
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	align-self: stretch;
+	flex-grow: 0;
+	z-index: 4;
 }
 
 .serviceContent{
@@ -189,11 +160,11 @@ color: #000000;
 .services {
 	display: flex;
 	flex-direction: row;
-	justify-content: space-evenly;
-	width: 100%;
-	height: 100%;
+	justify-content: space-between;
 	padding: 2%;
 	flex-wrap: wrap;
+	width: 100%;
+    justify-content: space-between;
 }
 
 .msftLogo {
