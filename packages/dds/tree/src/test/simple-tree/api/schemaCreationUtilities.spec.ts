@@ -16,6 +16,9 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TreeNodeSchema,
 	type LazyItem,
+	type AllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTypedNode,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
@@ -24,12 +27,7 @@ import {
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import { testIdCompressor } from "../../utils.js";
-import type {
-	AllowedTypes,
-	InsertableTreeNodeFromAllowedTypes,
-	InsertableTypedNode,
-} from "../../../simple-tree/schemaTypes.js";
-import { unsafeArrayToTuple } from "../../../util/typeUtils.js";
+import { unsafeArrayToTuple } from "../../../util/index.js";
 
 const schema = new SchemaFactory("test");
 

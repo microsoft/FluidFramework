@@ -16,7 +16,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { UnionToTuple } from "../../util/typeUtils.js";
+import type { UnionToTuple } from "../../util/index.js";
 
 /*
  * This file does two things:

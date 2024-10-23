@@ -20,6 +20,7 @@ import {
 	SchemaFactory,
 	type InternalTreeNode,
 	type FlexListToUnion,
+	type ApplyKindInput,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
@@ -42,7 +43,6 @@ import type {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import type { ApplyKindInput } from "../../../simple-tree/schemaTypes.js";
 
 // TODO:
 // Ensure the following have tests:

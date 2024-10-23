@@ -120,6 +120,8 @@ export {
 	type InsertableField,
 	type Insertable,
 	type UnsafeUnknownSchema,
+	type ApplyKindInput,
+	type InsertableTreeNodeFromAllowedTypes,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

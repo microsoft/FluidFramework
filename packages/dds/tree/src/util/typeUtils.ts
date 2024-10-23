@@ -142,6 +142,7 @@ export type RestrictiveStringRecord<T> = {
  * Returns `true` if T is a union and false if it is not.
  * @typeparam T - Type to test if it is a union.
  * @typeparam T2 - Do not specify: default value used as implementation detail.
+ * @system @alpha
  */
 export type IsUnion<T, T2 = T> = T extends unknown
 	? [T2] extends [T]
@@ -154,6 +155,7 @@ export type IsUnion<T, T2 = T> = T extends unknown
  * @privateRemarks
  * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
  * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
+ * @system @public
  */
 export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
 	k: infer U,
@@ -161,13 +163,19 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 	? U
 	: never;
 
-// Converts union to overloaded function
-type UnionToOverloads<U> = UnionToIntersection<U extends unknown ? (f: U) => void : never>;
-
 /**
  * Gets the first item of a union type.
+ *
+ * @typeparam Union - The union to convert.
+ * @typeparam AsOverloadedFunction - Implementation detail: do not specify.
+ * @system @alpha
  */
-type PopUnion<U> = UnionToOverloads<U> extends (a: infer A) => void ? A : never;
+export type PopUnion<
+	Union,
+	AsOverloadedFunction = UnionToIntersection<
+		Union extends unknown ? (f: Union) => void : never
+	>,
+> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
 /**
  * Converts a union type to a tuple type.
@@ -181,12 +189,15 @@ type PopUnion<U> = UnionToOverloads<U> extends (a: infer A) => void ? A : never;
  *
  * https://www.hacklewayne.com/typescript-convert-union-to-tuple-array-yes-but-how and https://catchts.com/union-array both explain the general approach this uses pretty well.
  * This implementation is inspired to those, but slightly different in implementation.
+ * @alpha
  */
 export type UnionToTuple<
-	T,
+	Union,
 	A extends unknown[] = [],
-	First = PopUnion<T>,
-> = IsUnion<T> extends true ? UnionToTuple<Exclude<T, First>, [First, ...A]> : [T, ...A];
+	First = PopUnion<Union>,
+> = IsUnion<Union> extends true
+	? UnionToTuple<Exclude<Union, First>, [First, ...A]>
+	: [Union, ...A];
 
 /**
  * This is unsafe, meaning that the returned value might not match its type.
@@ -197,6 +208,7 @@ export type UnionToTuple<
  *
  * @remarks
  * Since {@link AllowedTypes} is actually order independent, it is somewhat server when used to produce `AllowedTypes`.
+ * @alpha
  */
 export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T> {
 	return items as UnionToTuple<T>;
