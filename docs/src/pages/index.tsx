@@ -11,6 +11,7 @@ import { KeyFeaturesSection } from "@site/src/components/keyFeaturesSection";
 import { PartnersSection } from "@site/src/components/partnersSection";
 import { HowItWorksSection } from "@site/src/components/howItWorksSection";
 import { ServiceSection } from "@site/src/components/serviceSection";
+
 import "@site/src/css/index.css";
 
 
