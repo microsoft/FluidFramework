@@ -412,6 +412,8 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
  *
+ * @see {@link Input}
+ *
  * @typeparam TSchemaInput - Schema to process.
  * @typeparam TSchema - Do not specify: default value used as implementation detail.
  * @public
@@ -453,6 +455,8 @@ export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 /**
  * Content which could be inserted into a tree.
+ *
+ * @see {@link Input}
  * @remarks
  * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
@@ -464,6 +468,8 @@ export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchem
 
 /**
  * Content which could be inserted into a field within a tree.
+ *
+ * @see {@link Input}
  * @remarks
  * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
@@ -490,7 +496,7 @@ export type ApplyKind<T, Kind extends FieldKind> = {
 /**
  * Suitable for input.
  *
- * @see Input
+ * @see {@link Input}
  * @system @public
  */
 export type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = [
@@ -518,27 +524,62 @@ export type TreeNodeFromImplicitAllowedTypes<
 		: unknown;
 
 /**
- * Marker for documenting when a type computed from a schema is contravariant
- * with respect to the schema and thus only suitable for using for "input".
+ * This type exists only to be linked from documentation to provide a single linkable place to document some details of
+ * "Input" types and how they handle schema.
  *
- * Generic types which produce "Input" types error on the side of producing overly strict requirements.
- * Future versions of the API can relax these requirements.
+ * When a schema is used to describe data which is an input into an API, the API is [contravariant](https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)) over the schema.
+ * (See also, [TypeScript Variance Annotations](https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations)).
  *
- * For example if {@link InsertableField} produced `Input<never>` for some union of schema (ex: `A | OptionalField<A>`),
- * a future version could instead return a more flexible but still safe type, like `Input<A>`.
+ * Since these schema are expressed using TypeScript types, its possible for the user of the API to provide non-exact values of these types which has implications that depended ont eh variance.
  *
- * Note that since `Input` is just a genic type, it might not always appear in contexts which simplify or inline types.
- * Thus "Input" in mainly useful as an annotation visible in type signatures and documentation.
+ * Consider a field with schema type of `A | B` (where A and B are types of schema).
+ *
+ * - Reading the field behaves covariantly so {@link NodeFromSchema} of `<A | B>` is the same as `NodeFromSchema<A> | NodeFromSchema<B>`, indicating that either type of node can be read from the field.
+ * - Writing to the field behaves contravariantly. Since its unknown if the node actually has a schema `A` or a schema `B`, the only legal values (known to be in schema regardless of which schema the underlying node has) are values which are legal for both `A & B`.
+ *
+ * Note that this is distinct from the case where the schema is `[A, B]`.
+ * In this case is it known that the field allows both A and B (the field can be set to an A or a B value).
+ * When `A | B` is used, the field might allow
+ * A but not B (so assigning a B value would be out of schema),
+ * B but not A (so assigning an A value would be out of schema)
+ * or both A and B.
+ *
+ * This gets more extreme when given completely unspecified schema.
+ * For example if a field is just provided {@link ImplicitFieldSchema}, nothing is known about the content of the field.
+ * This means reading the field (via {@link TreeFieldFromImplicitField}) can give any valid tree field content,
+ * but there are no safe values which could be written to the field (since its unknown what values would be out of schema) so {@link InsertableTreeFieldFromImplicitField} gives `never`.
+ *
+ * To implement this variance correctly, computing of types for input and output have to use separate utilities
+ * which take very different approaches when encountering non-exact schema like unions or `ImplicitFieldSchema`.
+ * The utilities which behave contravariantly as required to handle input correctly link this documentation to indicate that this is how they behave.
+ *
+ * In addition to behaving contravariantly these input type computation utilities often have further limitations.
+ * This is due to TypeScript making it difficult to implement this contravariance exactly.
+ * When faced with these implementation limitations these contravariant type computation utilities error on the side of producing overly strict requirements.
+ * For example in the above case of `A | B`, the utilities might compute an allowed insertable type as `never` even if there happens to be a common value accepted by both `A` and `B`.
+ * Future versions of the API can relax these requirements as the type computations are made more accurate.
+ *
+ * For a more concrete example: if {@link InsertableTreeFieldFromImplicitField} produced `never` for a schema `A | OptionalField<A>`,
+ * a future version could instead return a more flexible but still safe type, like `A`.
+ *
+ * More generally: try and avoid providing non-exact schema, especially for the fields of other schema.
+ * While these APIs attempt to handle such cases correctly, there are limitations and known bugs in this handling.
+ * Code using non-exact schema is much more likely to have its compilation break due to updates of this package or even TypeScript,
+ * and thus compilation breaks to edge cases of non-exact schema handling, especially with recursive schema, are not considered breaking changes.
+ * This may change as the API become more stable.
  *
  * @privateRemarks
- * TODO: Actually use this.
+ * There likely is a better way to share this documentation, but none was found at the time of writing.
+ *
+ * TODO: Once {@link InsertableField} is public, consider using it in the examples above.
+ * @system @public
  */
-export type Input<T> = T;
+export type Input<T extends never> = T;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
  *
- * @see Input
+ * @see {@link Input}
  *
  * @typeparam TSchema - Schema to process.
  * @typeparam TResult - Do not specify: default value used as implementation detail.
@@ -557,7 +598,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitA
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
  *
- * @see Input
+ * @see {@link Input}
  *
  * @typeparam TList - AllowedTypes to process
  * @system @public
@@ -585,6 +626,8 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 /**
  * Data which can be used as a node to be inserted.
  * Either an unhydrated node, or content to build a new node.
+ *
+ * @see {@link Input}
  *
  * @typeparam TSchemaInput - Schema to process.
  * @typeparam T - Do not specify: default value used as implementation detail.

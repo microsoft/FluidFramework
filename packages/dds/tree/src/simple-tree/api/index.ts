@@ -66,6 +66,7 @@ export type {
 	TreeNodeSchemaUnsafe,
 	AllowedTypesUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
+	InsertableTreeNodeFromAllowedTypesUnsafe,
 } from "./typesUnsafe.js";
 
 export type {

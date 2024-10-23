@@ -207,7 +207,8 @@ export type UnionToTuple<
  * This is fragile and must be used with care.
  *
  * @remarks
- * Since {@link AllowedTypes} is actually order independent, it is somewhat server when used to produce `AllowedTypes`.
+ * The main use-case for this is recovering lost information from {@link AllowedTypes} which is necessary to preserve when using them with {@link Input} APIs.
+ * Since {@link AllowedTypes} is actually order independent, it is somewhat safer when used to produce `AllowedTypes`.
  *
  * @example
  * ```typescript

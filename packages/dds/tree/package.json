@@ -255,6 +255,12 @@
 			"TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"TypeAlias_InsertableTreeFieldFromImplicitFieldUnsafe": {
+				"forwardCompat": false
+			},
+			"TypeAlias_InternalTypes_InsertableTreeFieldFromImplicitFieldUnsafe": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"

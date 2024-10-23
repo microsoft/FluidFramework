@@ -637,6 +637,7 @@ declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField =
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitFieldUnsafe": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitFieldUnsafe = requireAssignableTo<TypeOnly<old.InsertableTreeFieldFromImplicitFieldUnsafe<any>>, TypeOnly<current.InsertableTreeFieldFromImplicitFieldUnsafe<any>>>
 
 /*
@@ -886,6 +887,7 @@ declare type current_as_old_for_TypeAlias_InternalTypes_InsertableObjectFromSche
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_InsertableTreeFieldFromImplicitFieldUnsafe": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InternalTypes_InsertableTreeFieldFromImplicitFieldUnsafe = requireAssignableTo<TypeOnly<old.InternalTypes.InsertableTreeFieldFromImplicitFieldUnsafe<any>>, TypeOnly<current.InternalTypes.InsertableTreeFieldFromImplicitFieldUnsafe<any>>>
 
 /*
