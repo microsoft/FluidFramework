@@ -1,4 +1,5 @@
 .howItWorksSectionBody {
+	width: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -8,6 +9,7 @@
 }
 
 .howItWorksSectionCodeBody {
+	width: 100%;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
@@ -17,20 +19,12 @@
 	gap: 10px;
 }
 
-.sampleCodeColumn {
-	display: flex;
-	flex-direction: column;
-	gap: 15px;
-}
 .howItWorksCodeColumn {
+	max-width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	gap: 15px;
-}
-@media (max-width: 1024px) {
-	.howItWorksCodeColumn {
-		flex-direction: row;
-	}
 }
 
 .howItWorksDiceCards {
@@ -62,7 +56,8 @@
 .howItWorksCodeCardBody {
 	/* Rectangle 34647952 */
 
-	min-width: 350px;
+	/* min-width: 350px; */
+	max-width: 100%;
 
 	box-sizing: border-box;
 
