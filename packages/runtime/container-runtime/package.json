@@ -276,6 +276,9 @@
 			},
 			"Interface_ILocalDetachedFluidDataStoreContextProps": {
 				"backCompat": false
+			},
+			"Interface_LoadContainerRuntimeParams": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "legacy"
