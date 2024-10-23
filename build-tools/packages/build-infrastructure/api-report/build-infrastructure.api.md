@@ -100,7 +100,7 @@ export interface IFluidRepoLayout {
 
 // @public
 export interface Installable {
-    checkInstall(): Promise<boolean>;
+    checkInstall(): Promise<true | string[]>;
     install(updateLockfile: boolean): Promise<boolean>;
 }
 
@@ -181,7 +181,7 @@ export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps
     isWorkspaceRoot: boolean,
     releaseGroup: ReleaseGroupName,
     isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
-    checkInstall(print?: boolean): Promise<boolean>;
+    checkInstall(): Promise<true | string[]>;
     get combinedDependencies(): Generator<PackageDependency, void>;
     get directory(): string;
     getScript(name: string): string | undefined;
