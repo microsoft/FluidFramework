@@ -4,19 +4,19 @@
  */
 
 /**
- * Interface for a fluid access token.
+ * Interface for a Fluid access token.
  */
 export interface IFluidAccessToken {
 	fluidAccessToken: string;
 }
 
 /**
- * Interface to generate a fluid access token. This is need to provide keyless access
+ * Interface to generate a Fluid access token. This is need to provide keyless access
  * to the service.
  */
 export interface IFluidAccessTokenGenerator {
 	/**
-	 * Generate a fluid access token.
+	 * Generate a Fluid access token.
 	 * @param tenantId - The tenant id.
 	 * @param bearerAuthToken - The bearer token.
 	 * @param requestBody - The request body.
