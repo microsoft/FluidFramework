@@ -208,6 +208,16 @@ export type UnionToTuple<
  *
  * @remarks
  * Since {@link AllowedTypes} is actually order independent, it is somewhat server when used to produce `AllowedTypes`.
+ *
+ * @example
+ * ```typescript
+ * // Gives imprecise type (typeof A | typeof B)[]
+ * const schemaBad = [A, B];
+ * // Fixes the type to be [typeof A, typeof B]
+ * const schema = unsafeArrayToTuple(schemaBad);
+ *
+ * const config = new TreeViewConfiguration({ schema });
+ * ```
  * @alpha
  */
 export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T> {
