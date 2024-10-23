@@ -15,6 +15,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -51,6 +52,7 @@ export function create(
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	startupCheck: IReadinessCheck,
+	fluidAccessTokenGenerator: IFluidAccessTokenGenerator,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -169,6 +171,7 @@ export function create(
 		documentRepository,
 		documentDeleteService,
 		startupCheck,
+		fluidAccessTokenGenerator,
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,

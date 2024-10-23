@@ -49,6 +49,7 @@ export function create(
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
+	fluidAccessTokenGenerator: core.IFluidAccessTokenGenerator,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -95,16 +96,17 @@ export function create(
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
-			const authToken = request?.header("Authorization");
-			if (!authToken) {
+			const bearerAuthToken = request?.header("Authorization");
+			if (!bearerAuthToken) {
 				response.status(400).send(`Missing Authorization header in the request.`);
 				return;
 			}
-			const body = request?.body;
-			const baseUri = config.get("tokenator:accessTokenUrl") as string;
-			const uri = `${baseUri}/api/tenants/${tenantId}/accesstoken`;
-			const accessTokenRequest = getAccessToken(uri, body, authToken);
-			handleResponse(accessTokenRequest, response, undefined, undefined, 201);
+			const fluidAccessTokenRequest = fluidAccessTokenGenerator.generateFluidToken(
+				tenantId,
+				bearerAuthToken,
+				request?.body,
+			);
+			handleResponse(fluidAccessTokenRequest, response, undefined, undefined, 201);
 		},
 	);
 
@@ -383,28 +385,5 @@ const uploadBlob = async (
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",
-	});
-};
-
-const getAccessToken = async (
-	uri: string,
-	body: Record<string, any>,
-	authToken: string,
-): Promise<core.IAccessToken> => {
-	const restWrapper = new BasicRestWrapper(
-		undefined /* baseUrl */,
-		undefined /* defaultQueryString */,
-		undefined /* maxBodyLength */,
-		undefined /* maxContentLength */,
-		undefined /* defaultHeaders */,
-		undefined /* axios */,
-		undefined /* refreshDefaultQureyString */,
-		undefined /* refreshDefaultHeaders */,
-		() => getGlobalTelemetryContext().getProperties().correlationId,
-		() => getGlobalTelemetryContext().getProperties(),
-	);
-	return restWrapper.post(uri, body, undefined, {
-		"Content-Type": "application/json",
-		"Authorization": authToken,
 	});
 };

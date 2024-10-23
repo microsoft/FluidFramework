@@ -104,21 +104,6 @@ services:
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
-  tokenator:
-    platform: linux/amd64
-    build:
-      context: .
-      target: runner
-      additional_contexts:
-        root: ../..
-    expose:
-      - "3000"
-    command: node packages/routerlicious/dist/tokenator/www.js
-    environment:
-      - DEBUG=fluid:*
-      - NODE_ENV=development
-      - IS_FLUID_SERVER=true
-    restart: always
   historian:
     image: mcr.microsoft.com/fluidframework/routerlicious/historian:latest
     expose:

@@ -15,6 +15,7 @@ import {
 	IThrottler,
 	ITokenRevocationManager,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
@@ -41,6 +42,7 @@ export function create(
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	startupCheck: IReadinessCheck,
+	fluidAccessTokenGenerator: IFluidAccessTokenGenerator,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -78,6 +80,7 @@ export function create(
 		tenantManager,
 		storage,
 		tenantThrottlers,
+		fluidAccessTokenGenerator,
 		singleUseTokenCache,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,

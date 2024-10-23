@@ -27,7 +27,3 @@ services:
     ports:
       - "5866:5858"
     command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/nexus/www.js
-  tokenator:
-    ports:
-      - "5867:5858"
-    command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/tokenator/www.js

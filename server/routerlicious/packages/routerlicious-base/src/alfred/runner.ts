@@ -19,6 +19,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -54,6 +55,7 @@ export class AlfredRunner implements IRunner {
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly startupCheck: IReadinessCheck,
+		private readonly fluidAccessTokenGenerator: IFluidAccessTokenGenerator,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -85,6 +87,7 @@ export class AlfredRunner implements IRunner {
 				this.documentRepository,
 				this.documentDeleteService,
 				this.startupCheck,
+				this.fluidAccessTokenGenerator,
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,

@@ -23,7 +23,3 @@ services:
     volumes:
       - .:/usr/src/server
       - /usr/src/server/node_modules
-  tokenator:
-    volumes:
-      - .:/usr/src/server
-      - /usr/src/server/node_modules

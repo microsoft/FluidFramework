@@ -6,3 +6,4 @@
 export { DeltaService } from "./deltaService";
 export { IDocumentDeleteService, DocumentDeleteService } from "./documentDeleteService";
 export { StorageNameAllocator } from "./storageNameAllocator";
+export { FluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";
