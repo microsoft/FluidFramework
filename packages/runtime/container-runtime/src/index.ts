@@ -10,7 +10,8 @@ export {
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
-	isRuntimeMessage,
+	loadContainerRuntime,
+	LoadContainerRuntimeParams,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,
@@ -25,20 +26,18 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
-	ContainerRuntimeMessage,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-export { IBlobManagerLoadInfo } from "./blobManager.js";
+export { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
 	RuntimeHeaders,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 } from "./channelCollection.js";
 export {
 	GCNodeType,

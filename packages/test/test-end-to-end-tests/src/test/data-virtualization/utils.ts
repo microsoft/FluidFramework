@@ -3,17 +3,33 @@
  * Licensed under the MIT License.
  */
 
+import { versionToComparisonNumber } from "@fluid-private/test-version-utils";
 import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
-import type { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { pkgVersion } from "../../packageVersion.js";
+import type { TestPersistedCache } from "../../testPersistedCache.js";
 
 export function supportsDataVirtualization(provider: ITestObjectProvider) {
-	return provider.driver.type === "local" || provider.driver.endpointName === "odsp-df";
+	return provider.driver.type === "local" || provider.driver.type === "odsp";
 }
 
-// TODO: enable for Odsp Prod endpoint
-export function clearCacheIfOdsp(provider: ITestObjectProvider, persistedCache: TestSnapshotCache) {
-	if (provider.driver.endpointName === "odsp-df") {
+export function clearCacheIfOdsp(
+	provider: ITestObjectProvider,
+	persistedCache: TestPersistedCache,
+) {
+	if (provider.driver.type === "odsp") {
 		persistedCache.clearCache();
 	}
+}
+
+export function isSupportedLoaderVersion(loaderVersion: string): boolean {
+	const loaderComparisonVersion = versionToComparisonNumber(loaderVersion);
+	const oldestSupportedVersion = versionToComparisonNumber("2.0.0-internal.3");
+	return loaderVersion === pkgVersion || loaderComparisonVersion >= oldestSupportedVersion;
+}
+
+export function isGroupIdLoaderVersion(loaderVersion: string): boolean {
+	const loaderComparisonVersion = versionToComparisonNumber(loaderVersion);
+	const oldestSupportedVersion = versionToComparisonNumber("2.0.0-rc.5");
+	return loaderVersion === pkgVersion || loaderComparisonVersion >= oldestSupportedVersion;
 }

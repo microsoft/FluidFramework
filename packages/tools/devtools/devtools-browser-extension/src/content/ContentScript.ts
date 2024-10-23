@@ -48,7 +48,9 @@ if (window === undefined) {
 
 // Only establish messaging when activated by the Background Worker.
 browser.runtime.onConnect.addListener((backgroundPort: Port) => {
-	console.log(formatContentScriptMessageForLogging("Connection added from Background Worker."));
+	console.log(
+		formatContentScriptMessageForLogging("Connection added from Background Worker."),
+	);
 	const allowedMessageSources = new Set([
 		extensionViewMessageSource,
 		extensionPopupMessageSource,

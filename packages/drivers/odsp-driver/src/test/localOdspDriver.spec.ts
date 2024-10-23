@@ -12,7 +12,10 @@ import {
 	IStream,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	IOdspResolvedUrl,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import/no-internal-modules */
@@ -281,10 +284,7 @@ describe("Local Odsp driver", () => {
 					localSnapshot,
 				);
 				for (let i = 0; i < 3; i++) {
-					assert.deepStrictEqual(
-						await storageService.getVersions(null, 1),
-						snapshotVersion,
-					);
+					assert.deepStrictEqual(await storageService.getVersions(null, 1), snapshotVersion);
 				}
 			});
 		});

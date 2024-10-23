@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 

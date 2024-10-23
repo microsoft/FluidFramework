@@ -1,5 +1,9 @@
 # @fluidframework/server-services
 
+## 5.0.0
+
+Dependency updates only.
+
 ## 4.0.0
 
 Dependency updates only.

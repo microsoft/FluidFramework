@@ -8,7 +8,10 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import { IMember } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
-export const waitForMember = async (audience: IAzureAudience, id: string): Promise<AzureMember> => {
+export const waitForMember = async (
+	audience: IAzureAudience,
+	id: string,
+): Promise<AzureMember> => {
 	const allMembers = audience.getMembers();
 	const member = allMembers.get(id);
 	if (member !== undefined) {
@@ -45,7 +48,9 @@ export const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
 	});
 };
 
-export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+export const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 

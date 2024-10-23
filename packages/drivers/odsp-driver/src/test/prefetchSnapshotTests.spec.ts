@@ -9,7 +9,11 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { FetchSource, ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	FetchSource,
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICacheEntry,
 	IOdspResolvedUrl,
@@ -163,7 +167,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				GetHostStoragePolicyInternal(),
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
@@ -494,7 +498,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				hostPolicy,
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, true));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
@@ -639,7 +643,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				GetHostStoragePolicyInternal(),
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
@@ -881,7 +885,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				hostPolicy,
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,

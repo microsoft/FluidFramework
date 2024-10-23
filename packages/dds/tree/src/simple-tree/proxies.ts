@@ -3,117 +3,60 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
-	IForestSubscription,
-	MapTree,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	UpPath,
+	type IForestSubscription,
+	type MapTree,
+	type TreeValue,
+	type UpPath,
 } from "../core/index.js";
 
 import {
 	FieldKinds,
-	FlexFieldSchema,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeNodeEvents,
-	FlexTreeTypedField,
-	MapTreeNode,
-	onNodeChanged,
-	onTreeChanged,
-	tryGetMapTreeNode,
-	typeNameSymbol,
+	type FlexTreeField,
+	isFlexTreeNode,
+	type FlexTreeRequiredField,
+	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
-import { Mutable, fail, isReadonlyArray } from "../util/index.js";
-
-import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import { TreeNode, Unhydrated } from "./types.js";
-import { Off } from "../events/index.js";
+import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
+import {
+	getKernel,
+	type TreeNode,
+	tryGetTreeNodeFromMapNode,
+	getOrCreateNodeFromInnerNode,
+	tryUnhydratedFlexTreeNode,
+} from "./core/index.js";
 
 /**
- * Detects if the given 'candidate' is a TreeNode.
- *
- * @remarks
- * Supports both Hydrated and {@link Unhydrated} TreeNodes, both of which return true.
- *
- * Because the common usage is to check if a value being inserted/set is a TreeNode,
- * this function permits calling with primitives as well as objects.
- *
- * Primitives will always return false (as they are copies of data, not references to nodes).
- *
- * @param candidate - Value which may be a TreeNode
- * @returns true if the given 'candidate' is a hydrated TreeNode.
+ * Retrieve the associated {@link TreeNode} for the given field's content.
  */
-export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrated<TreeNode> {
-	return tryGetFlexNode(candidate) !== undefined;
-}
-
-/**
- * Retrieve the associated proxy for the given field.
- * */
-export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
-	switch (field.schema.kind) {
-		case FieldKinds.required: {
-			const asValue = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.required>
-			>;
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(asValue.boxedContent);
+export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
+	function tryToUnboxLeaves(
+		flexField: FlexTreeOptionalField | FlexTreeRequiredField,
+	): TreeNode | TreeValue | undefined {
+		const maybeContent = flexField.content;
+		return isFlexTreeNode(maybeContent)
+			? getOrCreateNodeFromInnerNode(maybeContent)
+			: maybeContent;
+	}
+	switch (field.schema) {
+		case FieldKinds.required.identifier: {
+			const typedField = field as FlexTreeRequiredField;
+			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.optional: {
-			const asValue = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.optional>
-			>;
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-
-			const maybeContent = asValue.boxedContent;
-
-			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
-			// root field is a special case where the field is always present (even if empty).
-			return maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent);
+		case FieldKinds.optional.identifier: {
+			const typedField = field as FlexTreeOptionalField;
+			return tryToUnboxLeaves(typedField);
 		}
-		// TODO: Remove if/when 'FieldNode' is removed.
-		case FieldKinds.sequence: {
-			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
-			// this case unreachable as long as users follow the 'array recipe'.
-			fail("'sequence' field is unexpected.");
-		}
-		case FieldKinds.identifier: {
-			const identifier = field.boxedAt(0);
-			assert(identifier !== undefined, 0x91a /* identifier must exist */);
-			return getOrCreateNodeProxy(identifier);
+		case FieldKinds.identifier.identifier: {
+			// Identifier fields are just value fields that hold strings
+			return (field as FlexTreeRequiredField).content as string;
 		}
 
 		default:
 			fail("invalid field kind");
-	}
-}
-
-export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
-	const cachedProxy = tryGetProxy(flexNode);
-	if (cachedProxy !== undefined) {
-		return cachedProxy;
-	}
-
-	const schema = flexNode.schema;
-	const classSchema = tryGetSimpleNodeSchema(schema);
-	assert(classSchema !== undefined, 0x91b /* node without schema */);
-	if (typeof classSchema === "function") {
-		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-		return new simpleSchema(flexNode);
-	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
 	}
 }
 
@@ -122,7 +65,6 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 /** The path of a proxy, relative to the root of the content tree that the proxy belongs to */
 interface RelativeProxyPath {
 	readonly path: UpPath;
-	readonly mapTreeNode: MapTreeNode;
 	readonly proxy: TreeNode;
 }
 
@@ -156,8 +98,8 @@ export function prepareContentForHydration(
 			proxyPaths: [],
 		};
 
-		walkMapTree(content, proxies.rootPath, (p, mapTreeNode, proxy) => {
-			proxies.proxyPaths.push({ path: p, mapTreeNode, proxy });
+		walkMapTree(content, proxies.rootPath, (p, proxy) => {
+			proxies.proxyPaths.push({ path: p, proxy });
 		});
 
 		bindProxies([proxies], forest);
@@ -168,48 +110,59 @@ function prepareArrayContentForHydration(
 	content: readonly MapTree[],
 	forest: IForestSubscription,
 ): void {
-	const proxies: RootedProxyPaths[] = [];
-	for (let i = 0; i < content.length; i++) {
-		proxies.push({
+	const proxyPaths: RootedProxyPaths[] = [];
+	for (const item of content) {
+		const proxyPath: RootedProxyPaths = {
 			rootPath: {
 				parent: undefined,
 				parentField: EmptyKey,
 				parentIndex: 0,
 			},
 			proxyPaths: [],
-		});
-		walkMapTree(content[i], proxies[i].rootPath, (p, mapTreeNode, proxy) => {
-			proxies[i].proxyPaths.push({ path: p, mapTreeNode, proxy });
+		};
+		proxyPaths.push(proxyPath);
+		walkMapTree(item, proxyPath.rootPath, (p, proxy) => {
+			proxyPath.proxyPaths.push({ path: p, proxy });
 		});
 	}
 
-	bindProxies(proxies, forest);
+	bindProxies(proxyPaths, forest);
 }
 
 function walkMapTree(
 	mapTree: MapTree,
 	path: UpPath,
-	onVisitTreeNode: (path: UpPath, mapTreeNode: MapTreeNode, treeNode: TreeNode) => void,
+	onVisitTreeNode: (path: UpPath, treeNode: TreeNode) => void,
 ): void {
-	const mapTreeNode = tryGetMapTreeNode(mapTree);
-	if (mapTreeNode !== undefined) {
-		const treeNode = tryGetProxy(mapTreeNode);
-		if (treeNode !== undefined) {
-			onVisitTreeNode(path, mapTreeNode, treeNode);
-		}
+	if (tryUnhydratedFlexTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
+		throw new UsageError(
+			"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
+		);
 	}
 
-	for (const [key, field] of mapTree.fields) {
-		for (let i = 0; i < field.length; i++) {
-			walkMapTree(
-				field[i],
-				{
-					parent: path,
-					parentField: key,
-					parentIndex: i,
-				},
-				onVisitTreeNode,
-			);
+	type Next = [path: UpPath, tree: MapTree];
+	const nexts: Next[] = [];
+	for (let next: Next | undefined = [path, mapTree]; next !== undefined; next = nexts.pop()) {
+		const [p, m] = next;
+		const mapTreeNode = tryUnhydratedFlexTreeNode(m);
+		if (mapTreeNode !== undefined) {
+			const treeNode = tryGetTreeNodeFromMapNode(mapTreeNode);
+			if (treeNode !== undefined) {
+				onVisitTreeNode(p, treeNode);
+			}
+		}
+
+		for (const [key, field] of m.fields) {
+			for (const [i, child] of field.entries()) {
+				nexts.push([
+					{
+						parent: p,
+						parentField: key,
+						parentIndex: i,
+					},
+					child,
+				]);
+			}
 		}
 	}
 }
@@ -220,30 +173,13 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
-			(proxies[i].rootPath as Mutable<UpPath>).parentField = fieldKey;
-			for (const { path, mapTreeNode, proxy } of proxies[i].proxyPaths) {
-				const anchorNode = anchorProxy(forest.anchors, path, proxy);
-				mapTreeNode.forwardEvents({
-					on<K extends keyof FlexTreeNodeEvents>(
-						eventName: K,
-						listener: FlexTreeNodeEvents[K],
-					): Off {
-						switch (eventName) {
-							case "nodeChanged":
-								return onNodeChanged(
-									anchorNode,
-									listener as FlexTreeNodeEvents["nodeChanged"],
-								);
-							case "treeChanged":
-								return onTreeChanged(
-									anchorNode,
-									listener as FlexTreeNodeEvents["treeChanged"],
-								);
-							default:
-								fail("Unexpected event subscription");
-						}
-					},
-				});
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			(proxies[i]!.rootPath as Mutable<UpPath>).parentField = fieldKey;
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			for (const { path, proxy } of proxies[i]!.proxyPaths) {
+				getKernel(proxy).anchorProxy(forest.anchors, path);
 			}
 			if (++i === proxies.length) {
 				off();
@@ -253,33 +189,3 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 }
 
 // #endregion Content insertion and proxy binding
-
-/**
- * Content which can be used to build a node.
- * @remarks
- * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
- */
-export type FactoryContent =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| ReadonlyMap<string, InsertableContent>
-	| readonly InsertableContent[]
-	| {
-			readonly [P in string]?: InsertableContent;
-	  };
-
-/**
- * Content which can be inserted into a tree.
- */
-export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
-
-/**
- * Brand `copy` with the type (under {@link typeNameSymbol}) to avoid ambiguity when inferring types from this data.
- */
-export function markContentType(typeName: TreeNodeSchemaIdentifier, copy: object): void {
-	Object.defineProperty(copy, typeNameSymbol, { value: typeName });
-}

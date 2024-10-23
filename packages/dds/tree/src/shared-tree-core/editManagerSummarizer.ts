@@ -5,22 +5,26 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { IJsonCodec } from "../codec/index.js";
-import { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
-import { JsonCompatibleReadOnly } from "../util/index.js";
+import type { IJsonCodec } from "../codec/index.js";
+import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
-import { EditManager, SummaryData } from "./editManager.js";
-import { EditManagerEncodingContext } from "./editManagerCodecs.js";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { EditManager, SummaryData } from "./editManager.js";
+import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
+import type {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "./sharedTreeCore.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 const stringKey = "String";
 

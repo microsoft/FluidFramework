@@ -34,8 +34,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory:
-				props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
@@ -78,9 +77,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 		},
 		benchmarkFnAsync: async () => {
 			const container = await loader.createDetachedContainer(codeDetails);
-			await container.attach(
-				provider.driver.createCreateNewRequest("newAttachedContainerId"),
-			);
+			await container.attach(provider.driver.createCreateNewRequest("newAttachedContainerId"));
 			container.close();
 		},
 	});

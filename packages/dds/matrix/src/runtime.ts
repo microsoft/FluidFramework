@@ -17,6 +17,7 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMatrix}.
+ * @legacy
  * @alpha
  * @deprecated - Use `SharedMatrix.getFactory` instead.
  */
@@ -29,11 +30,11 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return SharedMatrixFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return SharedMatrixFactory.Attributes;
 	}
 
@@ -60,6 +61,7 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 
 /**
  * Entrypoint for {@link ISharedMatrix} creation.
+ * @legacy
  * @alpha
  */
 export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
@@ -67,8 +69,12 @@ export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFa
 /**
  * Convenience alias for {@link ISharedMatrix}. Prefer to use {@link ISharedMatrix} when referring to
  * SharedMatrix as a type.
+ * @legacy
  * @alpha
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMatrix class was exported as public.
  */
+// Changing this to `unknown` would be a breaking change.
+// TODO: if possible, transition SharedMatrix to not use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SharedMatrix<T = any> = ISharedMatrix<T>;

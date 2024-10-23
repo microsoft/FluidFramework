@@ -11,7 +11,11 @@ module.exports = {
 		"import/no-extraneous-dependencies": "warn",
 
 		// Incompatible with prettier
-		// TODO: remove this override once config dependency has been updated to a version with this rule disabled..
+		// TODO: this can be removed once the eslint config is updated to version 5.4.0 or greater.
 		"unicorn/number-literal-case": "off",
+
+		// Incompatible with formatter
+		// TODO: this can be removed once the eslint config is updated to version 5.4.0 or greater.
+		"@typescript-eslint/brace-style": "off",
 	},
 };

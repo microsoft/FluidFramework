@@ -7,13 +7,18 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FieldKey, initializeForest, moveToDetachedField, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import {
+	type FieldKey,
+	initializeForest,
+	moveToDetachedField,
+	rootFieldKey,
+} from "../../core/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
-import { JsonCompatible, brand } from "../../util/index.js";
+import { type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 

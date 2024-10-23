@@ -8,7 +8,10 @@ export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob.js";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
 export { UsageError } from "./error.js";
 export { InsecureUrlResolver } from "./insecureUrlResolver.js";
-export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition.js";
+export {
+	canBeCoalescedByService,
+	isRuntimeMessage,
+} from "./messageRecognition.js";
 export {
 	AuthorizationError,
 	canRetryOnError,

@@ -27,10 +27,14 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 /**
+ * @legacy
  * @alpha
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
@@ -136,7 +140,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		throw new Error("Method not implemented.");
 	}
 
@@ -144,7 +150,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
 		throw new Error("Method not implemented.");
 	}
 }

@@ -5,18 +5,18 @@
 
 import { strict as assert, fail } from "assert";
 
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
-	LocalNodeKey,
-	NodeKeyManager,
-	StableNodeKey,
+	type LocalNodeKey,
+	type NodeKeyManager,
+	type StableNodeKey,
 	compareLocalNodeKeys,
 	createNodeKeyManager,
 	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
-import { ISharedTree } from "../../../shared-tree/index.js";
+import type { ISharedTree } from "../../../shared-tree/index.js";
 import { TestTreeProvider } from "../../utils.js";
 
 /**

@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import {
-	RangeEntry,
-	RangeMap,
+	type RangeEntry,
+	type RangeMap,
 	deleteFromRangeMap,
 	getFirstEntryFromRangeMap,
 	setInRangeMap,

@@ -27,6 +27,7 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
+import { Excerpt } from '@microsoft/api-extractor-model';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -35,6 +36,9 @@ import type { Parent } from 'unist';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
+
+// @public
+function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -76,16 +80,21 @@ declare namespace ApiItemUtilities {
         getHeadingForApiItem,
         getLinkForApiItem,
         shouldItemBeIncluded,
+        ancestryHasModifierTag,
+        getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
         getModifiers,
+        getModifierTags,
         getQualifiedApiItemName,
         getReleaseTag,
         getReturnsBlock,
         getSeeBlocks,
+        getSingleLineExcerptText,
         getThrowsBlocks,
         getUnscopedPackageName,
+        hasModifierTag,
         isDeprecated,
         isOptional,
         isReadonly,
@@ -179,6 +188,7 @@ export const defaultConsoleLogger: Logger;
 export namespace DefaultDocumentationSuiteOptions {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
+    export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
     export function defaultGetFileNameForItem(apiItem: ApiItem): string;
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
@@ -213,6 +223,18 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly singleLine: boolean;
     readonly type: string;
 }
+
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
+
+// @public
+export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+
+// @public
+export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
 export enum DocumentationNodeType {
@@ -259,6 +281,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteOptions {
     documentBoundaries?: DocumentBoundaries;
+    getAlertsForItem?: (apiItem: ApiItem) => string[];
     getFileNameForItem?: (apiItem: ApiItem) => string;
     getHeadingTextForItem?: (apiItem: ApiItem) => string;
     getLinkTextForItem?: (apiItem: ApiItem) => string;
@@ -288,6 +311,9 @@ export interface DocumentNodeProps {
     readonly children: SectionNode[];
     readonly documentPath: string;
 }
+
+// @public
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
 export interface DocumentWriter {
@@ -332,13 +358,16 @@ function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTrans
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
+function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]>;
+
+// @public
 function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | undefined;
 
 // @public
 function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
 function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
@@ -350,6 +379,9 @@ function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformat
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
 
 // @public
+function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
+
+// @public
 function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
@@ -359,13 +391,19 @@ function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
 function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getSeeBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
-function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getSingleLineExcerptText(excerpt: Excerpt): string;
+
+// @public
+function getThrowsBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
 function getUnscopedPackageName(apiPackage: ApiPackage): string;
+
+// @public
+function hasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
 // @public
 export interface Heading {
@@ -403,8 +441,7 @@ declare namespace HtmlRenderer {
         renderApiModelAsHtml as renderApiModel,
         renderDocumentsAsHtml as renderDocuments,
         renderDocument,
-        renderNode,
-        renderNodes
+        renderHtml
     }
 }
 export { HtmlRenderer }
@@ -465,8 +502,35 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
     readonly type = DocumentationNodeType.Link;
 }
 
+// @beta
+export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
+
+// @beta
+export interface LintApiModelConfiguration extends ConfigurationBase {
+    apiModel: ApiModel;
+}
+
+// @beta
+export interface LinterErrors {
+    readonly referenceErrors: ReadonlySet<LinterReferenceError>;
+}
+
+// @beta
+export interface LinterReferenceError {
+    readonly linkText: string | undefined;
+    readonly packageName: string;
+    readonly referenceTarget: string;
+    readonly sourceItem: string;
+    readonly tagName: string;
+}
+
 // @public
-export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
+export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
+
+// @public
+export interface LoadModelOptions extends ConfigurationBase {
+    readonly modelDirectoryPath: string;
+}
 
 // @public
 export interface Logger {
@@ -499,8 +563,8 @@ declare namespace MarkdownRenderer {
         renderApiModelAsMarkdown as renderApiModel,
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
-        renderNode_2 as renderNode,
-        renderNodes_2 as renderNodes
+        renderNode,
+        renderNodes
     }
 }
 export { MarkdownRenderer }
@@ -552,16 +616,33 @@ export { ReleaseTag }
 function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
+function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
+
+// @public
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
+
+// @public @sealed
+export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+}
 
 // @public
 function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
-function renderNode_2(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+function renderHtml(html: Nodes, { prettyFormatting }: {
+    prettyFormatting?: boolean;
+}): string;
+
+// @public @sealed
+export interface RenderHtmlConfig {
+    prettyFormatting?: boolean;
+}
 
 // @public
-function renderNodes_2(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+function renderNode(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+
+// @public
+function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -663,6 +744,29 @@ export interface TextFormatting {
     readonly bold?: boolean;
     readonly italic?: boolean;
     readonly strikethrough?: boolean;
+}
+
+// @public
+export interface ToHtmlConfig extends ConfigurationBase {
+    readonly customTransformations?: ToHtmlTransformations;
+    readonly language?: string;
+    readonly rootFormatting?: TextFormatting;
+    readonly startingHeadingLevel?: number;
+}
+
+// @public
+export interface ToHtmlContext extends TextFormatting {
+    readonly headingLevel: number;
+    readonly logger: Logger;
+    readonly transformations: ToHtmlTransformations;
+}
+
+// @public
+export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
+
+// @public
+export interface ToHtmlTransformations {
+    [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

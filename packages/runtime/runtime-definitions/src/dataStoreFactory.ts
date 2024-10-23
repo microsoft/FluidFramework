@@ -6,11 +6,14 @@
 import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStoreContext.js";
 
 /**
+ * @legacy
  * @alpha
  */
-export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
+export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory =
+	"IFluidDataStoreFactory";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideFluidDataStoreFactory {
@@ -20,6 +23,7 @@ export interface IProvideFluidDataStoreFactory {
 /**
  * IFluidDataStoreFactory create data stores.  It is associated with an identifier (its `type` member)
  * and usually provided to consumers using this mapping through a data store registry.
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {

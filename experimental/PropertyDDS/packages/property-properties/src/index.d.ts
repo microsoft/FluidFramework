@@ -858,10 +858,7 @@ declare module "@fluid-experimental/property-properties" {
 			 *  and shifts remaining values to the left.
 			 * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
 			 */
-			removeRange(
-				in_offset: number,
-				in_deleteCount: number,
-			): Array<any> | Array<BaseProperty>;
+			removeRange(in_offset: number, in_deleteCount: number): Array<any> | Array<BaseProperty>;
 			/**
 			 * Sets the array properties elements to the content of the given array
 			 * All changed elements must already exist. This will overwrite existing elements.

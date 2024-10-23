@@ -9,11 +9,11 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	ITree,
+	type ITree,
 	SchemaFactory,
 	treeNodeApi as Tree,
-	TreeConfiguration,
-	TreeView,
+	TreeViewConfiguration,
+	type TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 
@@ -71,31 +71,18 @@ function f(n: NodeMap): Note[] {
 
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-const config1 = new TreeConfiguration(
-	Canvas,
-	() =>
+const config = new TreeViewConfiguration({ schema: Canvas });
+
+function setup(tree: ITree): Note[] {
+	const view: TreeView<typeof Canvas> = tree.viewWith(config);
+	view.initialize(
 		new Canvas({
 			stuff: new NodeList([
 				{ text: "a", location: undefined },
 				new Note({ text: "b", location: undefined }),
 			]),
 		}),
-);
-
-const config2 = new TreeConfiguration(
-	Canvas,
-	() =>
-		new Canvas({
-			stuff: [
-				// Trees of insertable data can mix inline insertable content and unhydrated nodes:
-				{ text: "a", location: undefined },
-				new Note({ text: "b", location: undefined }),
-			],
-		}),
-);
-
-function setup(tree: ITree): Note[] {
-	const view: TreeView<typeof Canvas> = tree.schematize(config1);
+	);
 	const stuff = view.root.stuff;
 	if (stuff instanceof NodeMap) {
 		return f(stuff);
@@ -122,13 +109,22 @@ describe("Class based end to end example", () => {
 		setup(theTree);
 	});
 
-	// Confirm that the alternative syntax for the config from the example above (config2) actually works.
-	it("config2", () => {
+	// Confirm that the alternative syntax for initialTree from the example above actually works.
+	it("using a mix of insertible content and nodes", () => {
 		const factory = new TreeFactory({});
 		const theTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof Canvas> = theTree.schematize(config2);
+		const view: TreeView<typeof Canvas> = theTree.viewWith(config);
+		view.initialize(
+			new Canvas({
+				stuff: [
+					// Trees of insertable data can mix inline insertable content and unhydrated nodes:
+					{ text: "a", location: undefined },
+					new Note({ text: "b", location: undefined }),
+				],
+			}),
+		);
 	});
 });

@@ -119,7 +119,10 @@ export class TransactionView extends TreeView {
 	 * Detaches a range of nodes from their parent. The detached nodes remain in the view.
 	 * @param rangeToDetach - the range of nodes to detach
 	 */
-	public detachRange(rangeToDetach: TreeViewRange): { view: TransactionView; detached: readonly NodeId[] } {
+	public detachRange(rangeToDetach: TreeViewRange): {
+		view: TransactionView;
+		detached: readonly NodeId[];
+	} {
 		const { start, end } = rangeToDetach;
 		const { trait: traitLocation } = start;
 		const { parent, label } = traitLocation;

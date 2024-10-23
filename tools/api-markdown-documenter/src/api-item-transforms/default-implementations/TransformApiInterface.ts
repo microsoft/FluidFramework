@@ -18,7 +18,7 @@ import type { SectionNode } from "../../documentation-domain/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
-import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
+import { getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 
 /**
  * Default documentation transform for `Interface` items.

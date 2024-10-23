@@ -28,6 +28,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
+      set -eu -o pipefail
       echo Generating .npmrc for ${{ parameters.feedUrl }}
       echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc
@@ -35,7 +36,7 @@ steps:
 - task: npmAuthenticate@0
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:
-    workingFile: $(Pipeline.Workspace)/pack//${{ parameters.artifactPath }}/.npmrc
+    workingFile: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}/.npmrc
     customEndPoint: ${{ parameters.customEndPoint }}
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
@@ -43,6 +44,8 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
+      set -eu -o pipefail
+
       echo "Artifact path: ${{ parameters.artifactPath }}"
       tag="--tag rc"
       if [[ "$(release)" == "release" ]]; then
@@ -53,114 +56,39 @@ steps:
         tag="--tag dev"
       fi
       echo Tag: $tag
+
       cp .npmrc ~/.npmrc
+
       maximumRetryIfNetworkError=3
-      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
-        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
-        sorted=true
-      else
-        packages=*.tgz
-        sorted=false
-      fi
-      for packageName in $packages
-      do
-        if [[ $sorted == true ]]; then
-          f=$(find -name "${packageName}-[0-9]*.tgz")
-        else
-          f=$packageName
-        fi
-        if [[ $f != "" ]]; then
-          for i in $( seq 1 $maximumRetryIfNetworkError )
-          do
-            npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+      tarballsDir=$(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
+      orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
 
-            if grep -q "npm ERR!" "publish_log"
-            then
-                if grep -q "code ENOTFOUND" "publish_log"
-                then
-                  if ! $i -eq $maximumRetryIfNetworkError
-                  then
-                    echo "Network Error Detected"
-                    continue
-                  else
-                    echo "Final Network Error"
-                    exit 1
-                  fi
-                else
-                  if grep -q "You cannot publish over the previously published versions" "publish_log"
-                  then
-                    echo Package has already been published.
-                    local_f="${f}_local"
-                    mv "$f" "$local_f"
-                    package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
-                    npm pack $package_name
-                    if cmp -s "$f" "$local_f"
-                    then
-                      echo Continuing as published package matches the current one that was attempting to be released.
-                      rm "$f"
-                      mv "$local_f" "$f"
-                      break
-                    else
-                      echo ERROR: Published package does not match the current one attempting to be released for the same version.
-                    fi
-                  fi
-                  rm "$f"
-                  mv "$local_f" "$f"
-                  exit 1
-                fi
-            else
-              feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
-              echo "Feed Name: $feedName"
+      # execute the publish command
+      flub publish tarballs \
+      --dir $tarballsDir \
+      --orderFile $orderFile \
+      --publishArgs "$tag" \
+      --retry $maximumRetryIfNetworkError \
+      --verbose
 
-              if [[ "$(release)" == "release" && $feedName == "build" ]]; then
-                packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
-
-                if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
-                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
-                  for scope in "${scopes[@]}"; do
-                      if [[ "$packageName" == "$scope"* ]]; then
-                          packageName="@${packageName/$scope-/$scope/}"
-                      fi
-                  done
-                fi
-
-                feedPromotionUrl="$(ado-feeds-api-base)/packaging/feeds/${feedName}/npm/${packageName}/versions/${packageVersion}?api-version=7.1-preview.1"
-
-                echo "Promoting ${packageName} to release view using: ${feedPromotionUrl}"
-                response=$(curl -f -s -X PATCH \
-                  -H "Content-Type: application/json" \
-                  -H "Accept: application/json" \
-                  -u ":$(System.AccessToken)" \
-                  -d '{
-                        "views": {
-                          "op": "add",
-                          "path": "/views/-",
-                          "value": "Release"
-                        }
-                      }' \
-                      "$feedPromotionUrl"
-                  )
-
-                curlExitStatus=$?
-
-                if echo "$response" | grep -q '"success":"false"'; then
-                  reason="${response#*\"reason\":\"}"
-                  reason="${reason%%\"*}"
-                  echo "Failed to promote package to Release view"
-                  echo "Error reason: $reason"
-                  exit 1
-                elif [ $curlExitStatus -ne 0 ]; then
-                  echo "Failed to promote package due to curl error"
-                  exit 1
-                fi
-              fi
-
-              rm publish_log
-              break
-            fi
-            rm publish_log
-          done
-        fi
-      done
+      # Clean up; remove the npmrc
       rm ~/.npmrc
+      exit 0
+- task: Bash@3
+  displayName: Promote Packages for ${{ parameters.artifactPath }}
+  condition: and(succeeded(), eq(variables['release'], 'release'), eq('${{ parameters.feedKind }}', 'internal-build'))
+  env:
+    ADO_API_TOKEN: $(System.AccessToken)
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
+    script: |
+      set -eu -o pipefail
+      echo "Artifact path: ${{ parameters.artifactPath }}"
+      orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
+
+      flub promote package \
+      --version "$(version)" \
+      --orderFile $orderFile \
+      --verbose
       exit 0

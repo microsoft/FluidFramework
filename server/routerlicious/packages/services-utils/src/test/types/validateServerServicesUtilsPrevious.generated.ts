@@ -12,34 +12,16 @@ import type * as old from "@fluidframework/server-services-utils-previous";
 import type * as current from "../../index.js";
 
 
-type ValueOf<T> = T[keyof T];
-type OnlySymbols<T> = T extends symbol ? T : never;
-type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
-/**
- * Omit (replace with never) a key if it is a custom symbol,
- * not just symbol or a well known symbol from the global Symbol.
- */
-type SkipUniqueSymbols<Key> = symbol extends Key
-	? Key // Key is symbol or a generalization of symbol, so leave it as is.
-	: Key extends symbol
-		? Key extends WellKnownSymbols
-			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
-/**
- * Remove details of T which are incompatible with type testing while keeping as much as is practical.
- *
- * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
- */
+// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
 type TypeOnly<T> = T extends number
 	? number
-	: T extends boolean | bigint | string
-		? T
-		: T extends symbol
-			? SkipUniqueSymbols<T>
-			: {
-					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-				};
+	: T extends string
+	? string
+	: T extends boolean | bigint | symbol
+	? T
+	: {
+			[P in keyof T]: TypeOnly<T[P]>;
+	  };
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -236,6 +218,30 @@ use_old_InterfaceDeclaration_IApiCounters(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRedisClientConnectionManager": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRedisClientConnectionManager():
+    TypeOnly<old.IRedisClientConnectionManager>;
+declare function use_current_InterfaceDeclaration_IRedisClientConnectionManager(
+    use: TypeOnly<current.IRedisClientConnectionManager>): void;
+use_current_InterfaceDeclaration_IRedisClientConnectionManager(
+    get_old_InterfaceDeclaration_IRedisClientConnectionManager());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRedisClientConnectionManager": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRedisClientConnectionManager():
+    TypeOnly<current.IRedisClientConnectionManager>;
+declare function use_old_InterfaceDeclaration_IRedisClientConnectionManager(
+    use: TypeOnly<old.IRedisClientConnectionManager>): void;
+use_old_InterfaceDeclaration_IRedisClientConnectionManager(
+    get_current_InterfaceDeclaration_IRedisClientConnectionManager());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRedisParameters": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRedisParameters():
@@ -280,6 +286,30 @@ declare function use_old_InterfaceDeclaration_ISimpleThrottleConfig(
     use: TypeOnly<old.ISimpleThrottleConfig>): void;
 use_old_InterfaceDeclaration_ISimpleThrottleConfig(
     get_current_InterfaceDeclaration_ISimpleThrottleConfig());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITenantKeyGenerator": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITenantKeyGenerator():
+    TypeOnly<old.ITenantKeyGenerator>;
+declare function use_current_InterfaceDeclaration_ITenantKeyGenerator(
+    use: TypeOnly<current.ITenantKeyGenerator>): void;
+use_current_InterfaceDeclaration_ITenantKeyGenerator(
+    get_old_InterfaceDeclaration_ITenantKeyGenerator());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITenantKeyGenerator": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITenantKeyGenerator():
+    TypeOnly<current.ITenantKeyGenerator>;
+declare function use_old_InterfaceDeclaration_ITenantKeyGenerator(
+    use: TypeOnly<old.ITenantKeyGenerator>): void;
+use_old_InterfaceDeclaration_ITenantKeyGenerator(
+    get_current_InterfaceDeclaration_ITenantKeyGenerator());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -380,6 +410,30 @@ use_old_ClassDeclaration_InMemoryApiCounters(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_RedisClientConnectionManager": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_RedisClientConnectionManager():
+    TypeOnly<old.RedisClientConnectionManager>;
+declare function use_current_ClassDeclaration_RedisClientConnectionManager(
+    use: TypeOnly<current.RedisClientConnectionManager>): void;
+use_current_ClassDeclaration_RedisClientConnectionManager(
+    get_old_ClassDeclaration_RedisClientConnectionManager());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_RedisClientConnectionManager": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_RedisClientConnectionManager():
+    TypeOnly<current.RedisClientConnectionManager>;
+declare function use_old_ClassDeclaration_RedisClientConnectionManager(
+    use: TypeOnly<old.RedisClientConnectionManager>): void;
+use_old_ClassDeclaration_RedisClientConnectionManager(
+    get_current_ClassDeclaration_RedisClientConnectionManager());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ScheduledJob": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ScheduledJob():
@@ -400,6 +454,30 @@ declare function use_old_ClassDeclaration_ScheduledJob(
     use: TypeOnly<old.ScheduledJob>): void;
 use_old_ClassDeclaration_ScheduledJob(
     get_current_ClassDeclaration_ScheduledJob());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TenantKeyGenerator": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_TenantKeyGenerator():
+    TypeOnly<old.TenantKeyGenerator>;
+declare function use_current_ClassDeclaration_TenantKeyGenerator(
+    use: TypeOnly<current.TenantKeyGenerator>): void;
+use_current_ClassDeclaration_TenantKeyGenerator(
+    get_old_ClassDeclaration_TenantKeyGenerator());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TenantKeyGenerator": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_TenantKeyGenerator():
+    TypeOnly<current.TenantKeyGenerator>;
+declare function use_old_ClassDeclaration_TenantKeyGenerator(
+    use: TypeOnly<old.TenantKeyGenerator>): void;
+use_old_ClassDeclaration_TenantKeyGenerator(
+    get_current_ClassDeclaration_TenantKeyGenerator());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1000,18 +1078,6 @@ declare function use_old_FunctionDeclaration_getRandomName(
     use: TypeOnly<typeof old.getRandomName>): void;
 use_old_FunctionDeclaration_getRandomName(
     get_current_FunctionDeclaration_getRandomName());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getRedisClient": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getRedisClient": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

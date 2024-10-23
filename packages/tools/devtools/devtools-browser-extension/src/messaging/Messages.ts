@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ISourcedDevtoolsMessage } from "@fluidframework/devtools-core/internal";
+import type { ISourcedDevtoolsMessage } from "@fluidframework/devtools-core/internal";
 
 /**
  * {@link DevToolsInitMessage} {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage."type"}

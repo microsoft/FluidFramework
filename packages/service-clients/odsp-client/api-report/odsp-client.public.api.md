@@ -4,14 +4,4 @@
 
 ```ts
 
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import type { IMember } from '@fluidframework/fluid-static';
-import type { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { TokenResponse } from '@fluidframework/odsp-driver-definitions/internal';
-
-export { TokenResponse }
-
 ```

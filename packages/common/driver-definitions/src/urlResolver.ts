@@ -6,6 +6,7 @@
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IResolvedUrl {
@@ -21,6 +22,7 @@ export interface IResolvedUrl {
 
 /**
  * Container package info handed off to resolver.
+ * @legacy
  * @alpha
  */
 export interface IContainerPackageInfo {
@@ -31,6 +33,7 @@ export interface IContainerPackageInfo {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IUrlResolver {
@@ -56,6 +59,7 @@ export interface IUrlResolver {
 /**
  * Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
  * for driver compatibility and preload information.
+ * @legacy
  * @alpha
  */
 export interface DriverPreCheckInfo {
@@ -73,6 +77,7 @@ export interface DriverPreCheckInfo {
 
 /**
  * Additional key in the loader request header
+ * @legacy
  * @alpha
  */
 export enum DriverHeader {

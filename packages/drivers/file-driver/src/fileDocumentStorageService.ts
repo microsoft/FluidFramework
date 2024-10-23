@@ -173,7 +173,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		// eslint-disable-next-line @rushstack/no-new-null
 		public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 			// If we already saved document, that means we are getting here because of snapshot generation.
-			// Not returning tree ensures that ContainerRuntime.snapshot() would regenerate subtrees for
+			// Not returning tree ensures that IContainerRuntime.snapshot() would regenerate subtrees for
 			// each unchanged data store.
 			// If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
 			// when latest is requested.
@@ -216,8 +216,8 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		public async buildTree(snapshotTree: ISnapshotTree): Promise<ITree> {
 			const tree: ITree = { entries: [] };
 
-			for (const subTreeId of Object.keys(snapshotTree.trees)) {
-				const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);
+			for (const [subTreeId, subTreeValue] of Object.entries(snapshotTree.trees)) {
+				const subTree = await this.buildTree(subTreeValue);
 				tree.entries.push({
 					mode: FileMode.Directory,
 					path: subTreeId,
@@ -226,8 +226,8 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 				});
 			}
 
-			for (const blobName of Object.keys(snapshotTree.blobs)) {
-				const buffer = await this.readBlob(snapshotTree.blobs[blobName]);
+			for (const [blobName, blobValue] of Object.keys(snapshotTree.blobs)) {
+				const buffer = await this.readBlob(blobValue);
 				const contents = bufferToString(buffer, "utf8");
 				const blob: IBlob = {
 					contents,
@@ -260,4 +260,5 @@ function removeNullTreeIds(tree: ITree) {
 /**
  * @internal
  */
-export const FluidFetchReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(FluidFetchReader);
+export const FluidFetchReaderFileSnapshotWriter =
+	FileSnapshotWriterClassFactory(FluidFetchReader);

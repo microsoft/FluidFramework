@@ -20,8 +20,12 @@ export async function createDocument(
 ) {
 	const pathName = new URL(resolvedUrl.url).pathname;
 	const pathArr = pathName.split("/");
-	const tenantId = pathArr[pathArr.length - 2];
-	const id = pathArr[pathArr.length - 1];
+	// TODO Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const tenantId = pathArr[pathArr.length - 2]!;
+	// TODO Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const id = pathArr[pathArr.length - 1]!;
 	const documentStorage = (localDeltaConnectionServer as LocalDeltaConnectionServer)
 		.documentStorage;
 	if (!isCombinedAppAndProtocolSummary(summary)) {

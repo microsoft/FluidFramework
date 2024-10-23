@@ -5,12 +5,18 @@
 
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
 /** @internal */
-export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
+export class DataStoreContexts
+	implements Iterable<[string, FluidDataStoreContext]>, IDisposable
+{
 	private readonly notBoundContexts = new Set<string>();
 
 	/** Attached and loaded context proxies */
@@ -35,7 +41,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 				.catch((contextError) => {
 					this._logger.sendErrorEvent(
 						{
-							eventName: "FluidDataStoreContextDisposeError",
+							eventName: "DisposeError",
 							fluidDataStoreId,
 						},
 						contextError,
@@ -47,7 +53,10 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	private readonly _logger: ITelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
-		this._logger = createChildLogger({ logger: baseLogger });
+		this._logger = createChildLogger({
+			namespace: "FluidDataStoreContexts",
+			logger: baseLogger,
+		});
 	}
 
 	[Symbol.iterator](): Iterator<[string, FluidDataStoreContext]> {
@@ -135,11 +144,20 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	): Promise<FluidDataStoreContext | undefined> {
 		const deferredContext = this.ensureDeferred(id);
 
-		if (!wait && !deferredContext.isCompleted) {
-			return undefined;
-		}
-
-		return deferredContext.promise;
+		const existing = deferredContext.isCompleted;
+		return PerformanceEvent.timedExecAsync(
+			this._logger,
+			{
+				eventName: "GetBoundOrRemoted",
+				wait,
+				existing,
+			},
+			async () => (!wait && !existing ? undefined : deferredContext.promise),
+			{
+				start: true,
+				end: true,
+			},
+		);
 	}
 
 	private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {

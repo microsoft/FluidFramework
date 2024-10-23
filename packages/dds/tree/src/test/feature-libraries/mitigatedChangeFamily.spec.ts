@@ -5,14 +5,16 @@
 
 import { strict as assert } from "assert";
 
-import {
+import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	TaggedChange,
-	type ChangeEncodingContext,
+	ChangeEncodingContext,
+	RevisionTag,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 import type { ICodecFamily } from "../../codec/index.js";
+import { mintRevisionTag } from "../utils.js";
 
 const fallback = "Fallback";
 
@@ -24,7 +26,10 @@ const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
-	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
+	buildEditor: (
+		mintRevisionTagThrow: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<string>) => void,
+	): ChangeFamilyEditor => {
 		assert.equal(changeReceiver, arg1);
 		throw new Error("buildEditor");
 	},
@@ -50,7 +55,10 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
-	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
+	buildEditor: (
+		mintRevisionTagRet: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<string>) => void,
+	): ChangeFamilyEditor => {
 		assert.equal(changeReceiver, arg1);
 		return "buildEditor" as unknown as ChangeFamilyEditor;
 	},
@@ -87,14 +95,18 @@ const returningRebaser = returningFamily.rebaser;
 
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
-		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
+		assert.equal(
+			mitigatedReturningFamily.buildEditor(mintRevisionTag, arg1),
+			returningFamily.buildEditor(mintRevisionTag, arg1),
+		);
 		assert.equal(
 			mitigatedReturningRebaser.rebase(arg1, arg2, arg3),
 			returningRebaser.rebase(arg1, arg2, arg3),
 		);
+		const revision = mintRevisionTag();
 		assert.equal(
-			mitigatedReturningRebaser.invert(arg1, arg2),
-			returningRebaser.invert(arg1, arg2),
+			mitigatedReturningRebaser.invert(arg1, arg2, revision),
+			returningRebaser.invert(arg1, arg2, revision),
 		);
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
 	});
@@ -106,7 +118,7 @@ describe("makeMitigatedChangeFamily", () => {
 		});
 		it("invert", () => {
 			errorLog.length = 0;
-			assert.equal(mitigatedThrowingRebaser.invert(arg1, arg2), fallback);
+			assert.equal(mitigatedThrowingRebaser.invert(arg1, arg2, mintRevisionTag()), fallback);
 			assert.deepEqual(errorLog, ["invert"]);
 		});
 		it("compose", () => {
@@ -117,7 +129,10 @@ describe("makeMitigatedChangeFamily", () => {
 	});
 	it("does not catch errors from buildEditor", () => {
 		errorLog.length = 0;
-		assert.throws(() => mitigatedThrowingFamily.buildEditor(arg1), new Error("buildEditor"));
+		assert.throws(
+			() => mitigatedThrowingFamily.buildEditor(mintRevisionTag, arg1),
+			new Error("buildEditor"),
+		);
 		assert.deepEqual(errorLog, []);
 	});
 	it("does affect codecs", () => {

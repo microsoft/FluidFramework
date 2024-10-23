@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
@@ -49,9 +49,9 @@ describe("container-loader utils", () => {
 			assert.strictEqual(await p1, 5);
 			await p2
 				.then(() => assert.fail("should fail"))
-				.catch((e: Error) =>
+				.catch((error: Error) =>
 					assert.strictEqual(
-						e.message,
+						error.message,
 						"Subsequent calls cannot use different arguments.",
 					),
 				);

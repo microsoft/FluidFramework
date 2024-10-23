@@ -13,6 +13,7 @@ import { handlers as lockfileHandlers } from "./lockfiles.js";
 import { handler as noJsFileHandler } from "./noJsFiles.js";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages.js";
 import { handlers as pnpmHandlers } from "./pnpm.js";
+import { handler as yamlTabsHandler } from "./spacesOverTabsInYaml.js";
 
 /**
  * declared file handlers
@@ -27,6 +28,7 @@ export const policyHandlers: Handler[] = [
 	...pnpmHandlers,
 	...fluidBuildTasks,
 	noJsFileHandler,
+	yamlTabsHandler,
 ];
 
 export { type Handler } from "./common.js";

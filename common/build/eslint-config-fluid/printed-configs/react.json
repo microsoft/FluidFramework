@@ -74,11 +74,7 @@
             "off"
         ],
         "@typescript-eslint/brace-style": [
-            "error",
-            "1tbs",
-            {
-                "allowSingleLine": true
-            }
+            "off"
         ],
         "@typescript-eslint/class-literal-property-style": [
             "error"
@@ -607,6 +603,11 @@
             "error",
             {
                 "allow": [
+                    "@fluid-example/*/internal",
+                    "@fluid-experimental/*/internal",
+                    "@fluid-internal/*/internal",
+                    "@fluid-private/*/internal",
+                    "@fluid-tools/*/internal",
                     "@fluidframework/*/internal",
                     "@fluid-experimental/**",
                     "*/index.js"
@@ -1476,7 +1477,7 @@
             "error"
         ],
         "unicorn/no-useless-spread": [
-            "error"
+            "off"
         ],
         "unicorn/no-useless-switch-case": [
             "error"

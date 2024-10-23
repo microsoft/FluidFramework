@@ -10,8 +10,8 @@ import { compareArrays } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
-	ChunkDecoder,
-	StreamCursor,
+	type ChunkDecoder,
+	type StreamCursor,
 	readStream,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
@@ -29,7 +29,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
-	EncodedChunkShape,
+	type EncodedChunkShape,
 	SpecialField,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
@@ -40,8 +40,8 @@ import {
 } from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
-import { TreeChunk } from "../../../../feature-libraries/index.js";
-import { ReferenceCountedBase, brand } from "../../../../util/index.js";
+import type { TreeChunk } from "../../../../feature-libraries/index.js";
+import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 import { testIdCompressor } from "../../../utils.js";
 
@@ -74,7 +74,10 @@ function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): 
 		},
 	};
 }
-
+const idDecodingContext = {
+	idCompressor: testIdCompressor,
+	originatorId: testIdCompressor.localSessionId,
+};
 describe("chunkDecoding", () => {
 	describe("decode", () => {
 		// Smoke test for top level decode function.
@@ -87,7 +90,7 @@ describe("chunkDecoding", () => {
 					shapes: [{ a: 0 }],
 					data: [[0, []]],
 				},
-				testIdCompressor,
+				idDecodingContext,
 			);
 			assert.deepEqual(result, [emptyChunk]);
 		});
@@ -96,25 +99,25 @@ describe("chunkDecoding", () => {
 	describe("readValue", () => {
 		it("unknown shape", () => {
 			const stream: StreamCursor = { data: [false, true, "x", true, 1], offset: 0 };
-			assert.equal(readValue(stream, undefined, testIdCompressor), undefined);
-			assert.equal(readValue(stream, undefined, testIdCompressor), "x");
-			assert.equal(readValue(stream, undefined, testIdCompressor), 1);
+			assert.equal(readValue(stream, undefined, idDecodingContext), undefined);
+			assert.equal(readValue(stream, undefined, idDecodingContext), "x");
+			assert.equal(readValue(stream, undefined, idDecodingContext), 1);
 			assert.equal(stream.offset, 5);
 		});
 
 		it("boolean shape", () => {
 			const stream: StreamCursor = { data: [1, 2, 3], offset: 0 };
-			assert.equal(readValue(stream, true, testIdCompressor), 1);
+			assert.equal(readValue(stream, true, idDecodingContext), 1);
 			assert.equal(stream.offset, 1);
-			assert.equal(readValue(stream, false, testIdCompressor), undefined);
+			assert.equal(readValue(stream, false, idDecodingContext), undefined);
 			assert.equal(stream.offset, 1);
-			assert.equal(readValue(stream, true, testIdCompressor), 2);
+			assert.equal(readValue(stream, true, idDecodingContext), 2);
 			assert.equal(stream.offset, 2);
 		});
 
 		it("constant shape", () => {
 			const stream: StreamCursor = { data: [1, 2, 3], offset: 0 };
-			assert.equal(readValue(stream, ["x"], testIdCompressor), "x");
+			assert.equal(readValue(stream, ["x"], idDecodingContext), "x");
 			assert.equal(stream.offset, 0);
 		});
 
@@ -123,10 +126,7 @@ describe("chunkDecoding", () => {
 				const compressedId = testIdCompressor.generateCompressedId();
 				const stableId = testIdCompressor.decompress(compressedId);
 				const stream: StreamCursor = { data: [compressedId], offset: 0 };
-				assert.equal(
-					readValue(stream, SpecialField.Identifier, testIdCompressor),
-					stableId,
-				);
+				assert.equal(readValue(stream, SpecialField.Identifier, idDecodingContext), stableId);
 				assert.equal(stream.offset, 1);
 			});
 		});
@@ -280,7 +280,7 @@ describe("chunkDecoding", () => {
 
 	describe("TreeDecoder", () => {
 		it("empty node", () => {
-			const cache = new DecoderContext([], [], testIdCompressor);
+			const cache = new DecoderContext([], [], idDecodingContext);
 			const decoder = new TreeDecoder(
 				{
 					value: false,
@@ -294,7 +294,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("typed node", () => {
-			const cache = new DecoderContext([], [], testIdCompressor);
+			const cache = new DecoderContext([], [], idDecodingContext);
 			const decoder = new TreeDecoder(
 				{
 					type: "baz",
@@ -311,7 +311,7 @@ describe("chunkDecoding", () => {
 		it("identifier node", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
-			const cache = new DecoderContext([], [], testIdCompressor);
+			const cache = new DecoderContext([], [], idDecodingContext);
 
 			const decoder = new TreeDecoder(
 				{
@@ -327,7 +327,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new DecoderContext(["b", "d"], [], testIdCompressor);
+			const cache = new DecoderContext(["b", "d"], [], idDecodingContext);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
@@ -339,13 +339,7 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = {
-				data: [
-					"type",
-					true,
-					"value",
-					["a", "l1", 0, "l2"],
-					["c", "g1", 1, "g2", "e", "g3"],
-				],
+				data: ["type", true, "value", ["a", "l1", 0, "l2"], ["c", "g1", 1, "g2", "e", "g3"]],
 				offset: 0,
 			};
 			const result = decoder.decode(decoders, stream);
@@ -367,7 +361,7 @@ describe("chunkDecoding", () => {
 				["key"],
 				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
 				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],
-				testIdCompressor,
+				idDecodingContext,
 			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());

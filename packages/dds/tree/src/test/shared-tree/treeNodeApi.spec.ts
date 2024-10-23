@@ -5,24 +5,33 @@
 
 import { strict as assert } from "node:assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	CheckoutFlexTreeView,
-	TransactionConstraint,
+	type TransactionConstraint,
 	Tree,
-	rollback,
+	type rollback,
 } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	TreeConfiguration,
-	ValidateRecursiveSchema,
-	TreeView,
-	InsertableTypedNode,
+	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
+	type TreeView,
+	type InsertableTypedNode,
+	type TreeNodeSchema,
+	type NodeFromSchema,
 } from "../../simple-tree/index.js";
-import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
+import {
+	TestTreeProviderLite,
+	createTestUndoRedoStacks,
+	getView,
+	validateUsageError,
+} from "../utils.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { runTransaction } from "../../shared-tree/treeApi.js";
 
@@ -36,18 +45,18 @@ describe("treeApi", () => {
 		}) {}
 
 		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			return getView(
-				new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child,
-				})),
-			);
+			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+			view.initialize({
+				content: 42,
+				child,
+			});
+			return view;
 		}
 
 		/**
 		 * Runs a set of transaction tests, either passing the TreeView or the root node to the `runTransaction` function depending on the configuration.
 		 * @remarks This allows for code coverage of both of those variants of the `runTransaction` API without duplicating these tests entirely.
-		 * */
+		 */
 		function runCommonTransactionTests(inputType: "view" | "root"): void {
 			function run<TResult>(
 				view: TreeView<typeof TestObject>,
@@ -101,7 +110,7 @@ describe("treeApi", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getViewOrError();
+				const checkoutView = view.getView();
 				assert(checkoutView instanceof CheckoutFlexTreeView);
 				const { undoStack, redoStack } = createTestUndoRedoStacks(
 					checkoutView.checkout.events,
@@ -140,14 +149,15 @@ describe("treeApi", () => {
 
 			it("respects a violated node existence constraint after sequencing", () => {
 				// Create two connected trees with child nodes
-				const config = new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child: {},
-				}));
+				const config = new TreeViewConfiguration({ schema: TestObject });
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
-				const viewA = treeA.schematize(config);
-				const viewB = treeB.schematize(config);
+				const viewA = treeA.viewWith(config);
+				const viewB = treeB.viewWith(config);
+				viewA.initialize({
+					content: 42,
+					child: {},
+				});
 				provider.processMessages();
 
 				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
@@ -195,10 +205,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -210,10 +217,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}
@@ -223,24 +227,70 @@ describe("treeApi", () => {
 			// TODO: Either enable when afterBatch is implemented, or delete if no longer relevant
 			it.skip("emits change events", () => {
 				const view = getTestObjectView();
-				let event = false;
-				view.events.on("afterBatch", () => (event = true));
+				let eventCount = 0;
+				view.events.on("rootChanged", () => (eventCount += 1));
 				view.root.content = 44;
+				assert.equal(eventCount, 1);
 				Tree.runTransaction(view, (root) => {
 					root.content = 43;
 				});
-				assert.equal(event, true);
+				assert.equal(eventCount, 2);
 			});
 
 			it.skip("emits change events on rollback", () => {
 				const view = getTestObjectView();
 				let eventCount = 0;
-				view.events.on("afterBatch", () => (eventCount += 1));
+				view.events.on("rootChanged", () => (eventCount += 1));
 				Tree.runTransaction(view, (r) => {
 					r.content = 43;
+					assert.equal(eventCount, 1);
 					return Tree.runTransaction.rollback;
 				});
 				assert.equal(eventCount, 2);
+			});
+
+			describe("unhydrated", () => {
+				it("transaction on unhydrated throws", () => {
+					assert.throws(
+						() => {
+							Tree.runTransaction(new ChildObject({}), (r) => {});
+						},
+						validateUsageError(/Transactions cannot be run on Unhydrated nodes/),
+					);
+				});
+
+				it("transaction on view modifies unhydrated - not rolled back", () => {
+					const view = getTestObjectView();
+					const node = new TestObject({ content: 5 });
+					Tree.runTransaction(view, (root) => {
+						node.content = 6;
+						return Tree.runTransaction.rollback;
+					});
+					// Changes to other tree, and unhydrated nodes are not rolled back.
+					assert.equal(node.content, 6);
+				});
+			});
+		});
+
+		describe("schema", () => {
+			it("leaf", () => {
+				assert.equal(Tree.schema(null), schemaFactory.null);
+				assert.equal(Tree.schema(0), schemaFactory.number);
+				assert.equal(Tree.schema(false), schemaFactory.boolean);
+				assert.equal(Tree.schema(""), schemaFactory.string);
+				assert.equal(Tree.schema(new MockHandle(0)), schemaFactory.handle);
+
+				// Inferring the node type from the node in Tree.schema can incorrectly over-narrow.
+				// Ensure this does not happen:
+				const schema = Tree.schema(0);
+				type _check1 = requireAssignableTo<2, NodeFromSchema<typeof schema>>;
+			});
+
+			it("node", () => {
+				class Test extends schemaFactory.object("Test", {}) {}
+
+				const schema: TreeNodeSchema = Tree.schema(new Test({}));
+				assert.equal(schema, Test);
 			});
 		});
 
@@ -267,10 +317,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -282,10 +329,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}
@@ -318,7 +362,7 @@ describe("treeApi", () => {
 				// One firing of events during the initial change and another during rollback, plus 'treeChanged' fires twice
 				// each time (detach and attach passes).
 				assert.equal(shallowEventCount, 2);
-				assert.equal(deepEventCount, 4);
+				assert.equal(deepEventCount, 2);
 			});
 
 			// TODO: When SchematizingSimpleTreeView supports forking, add test coverage to ensure that transactions work properly on forks

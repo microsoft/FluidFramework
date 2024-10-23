@@ -6,31 +6,32 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	Anchor,
+	type Anchor,
 	AnchorSet,
-	CursorLocationType,
-	DeltaVisitor,
-	DetachedField,
-	FieldAnchor,
-	FieldKey,
-	FieldUpPath,
-	ForestEvents,
-	IEditableForest,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
+	type CursorLocationType,
+	type DeltaVisitor,
+	type DetachedField,
+	type FieldAnchor,
+	type FieldKey,
+	type FieldUpPath,
+	type ForestEvents,
+	type IEditableForest,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	MapTree,
-	PathRootPrefix,
-	PlaceIndex,
-	ProtoNodes,
-	Range,
+	type MapTree,
+	type PathRootPrefix,
+	type PlaceIndex,
+	type ProtoNodes,
+	type Range,
 	TreeNavigationResult,
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchemaSubscription,
-	UpPath,
-	Value,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchemaSubscription,
+	type UpPath,
+	type Value,
 	aboveRootPlaceholder,
+	deepCopyMapTree,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
 import {
@@ -39,10 +40,9 @@ import {
 	assertValidRange,
 	brand,
 	fail,
-	mapIterable,
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
+import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -59,18 +59,6 @@ function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTre
 	const newField: MutableMapTree[] = [];
 	mapTree.fields.set(key, newField);
 	return newField;
-}
-
-function deepCopyMapTree(mapTree: MapTree): MutableMapTree {
-	return {
-		...mapTree,
-		fields: new Map(
-			mapIterable(mapTree.fields.entries(), ([key, field]) => [
-				key,
-				field.map(deepCopyMapTree),
-			]),
-		),
-	};
 }
 
 /**
@@ -94,6 +82,7 @@ export class ObjectForest implements IEditableForest {
 
 	public constructor(
 		public readonly anchors: AnchorSet = new AnchorSet(),
+		public readonly additionalAsserts: boolean = false,
 		roots?: MapTree,
 	) {
 		this.#roots =
@@ -102,19 +91,22 @@ export class ObjectForest implements IEditableForest {
 				: {
 						type: aboveRootPlaceholder,
 						fields: new Map(),
-				  };
+					};
 	}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
 	}
 
-	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+	public on<K extends keyof ForestEvents>(
+		eventName: K,
+		listener: ForestEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
 	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		return new ObjectForest(anchors, this.roots);
+		return new ObjectForest(anchors, this.additionalAsserts, this.roots);
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -142,10 +134,13 @@ export class ObjectForest implements IEditableForest {
 		 */
 		const preEdit = (): void => {
 			this.events.emit("beforeChange");
-			assert(this.currentCursors.has(cursor), "missing visitor cursor while editing");
+			assert(
+				this.currentCursors.has(cursor),
+				0x995 /* missing visitor cursor while editing */,
+			);
 			if (this.currentCursors.size > 1) {
 				const unexpectedSources = [...this.currentCursors].flatMap((c) =>
-					c === cursor ? [] : c.source ?? null,
+					c === cursor ? [] : (c.source ?? null),
 				);
 
 				throw new Error(
@@ -223,9 +218,7 @@ export class ObjectForest implements IEditableForest {
 			private detachEdit(source: Range, destination: FieldKey | undefined): void {
 				const [parent, key] = cursor.getParent();
 				assert(
-					destination === undefined ||
-						parent !== this.forest.roots ||
-						key !== destination,
+					destination === undefined || parent !== this.forest.roots || key !== destination,
 					0x7b9 /* Detach destination field must be different from current field */,
 				);
 				const currentField = getOrCreateField(parent, key);
@@ -550,6 +543,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(anchors?: AnchorSet): ObjectForest {
-	return new ObjectForest(anchors);
+export function buildForest(
+	anchors?: AnchorSet,
+	additionalAsserts: boolean = false,
+): ObjectForest {
+	return new ObjectForest(anchors, additionalAsserts);
 }

@@ -13,7 +13,9 @@
  * where x is a lowercase hex digit.
  * @alpha
  */
-export type UuidString = string & { readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465' };
+export type UuidString = string & {
+	readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
+};
 
 /**
  * An identifier associated with a session for the purpose of attributing its created content to some user/entity.
@@ -22,16 +24,20 @@ export type UuidString = string & { readonly UuidString: '9d40d0ae-90d9-44b1-948
 export type AttributionId = UuidString;
 
 /**
- * A version 4, variant 2 uuid (https://datatracker.ietf.org/doc/html/rfc4122).
+ * A {@link https://datatracker.ietf.org/doc/html/rfc4122 | version 4, variant 2 uuid}.
  * @internal
  */
-export type StableId = UuidString & { readonly StableId: '53172b0d-a3d5-41ea-bd75-b43839c97f5a' };
+export type StableId = UuidString & {
+	readonly StableId: '53172b0d-a3d5-41ea-bd75-b43839c97f5a';
+};
 
 /**
  * A StableId which is suitable for use as a session identifier
  * @internal
  */
-export type SessionId = StableId & { readonly SessionId: '4498f850-e14e-4be9-8db0-89ec00997e58' };
+export type SessionId = StableId & {
+	readonly SessionId: '4498f850-e14e-4be9-8db0-89ec00997e58';
+};
 
 /**
  * Edit identifier
@@ -47,7 +53,9 @@ export type EditId = UuidString & { readonly EditId: '56897beb-53e4-4e66-85da-4b
  * If this is violated, the Edit is considered malformed.
  * @alpha
  */
-export type DetachedSequenceId = number & { readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d' };
+export type DetachedSequenceId = number & {
+	readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d';
+};
 
 /**
  * An identifier (UUID) that has been shortened by a distributed compression algorithm.
@@ -59,7 +67,9 @@ export type CompressedId = FinalCompressedId | LocalCompressedId;
  * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the original string.
  * @internal
  */
-export type InternedStringId = number & { readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c' };
+export type InternedStringId = number & {
+	readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c';
+};
 
 /**
  * A brand for identity types that are unique within a particular session (SharedTree instance).
@@ -137,21 +147,27 @@ export type OpSpaceNodeId = number & OpSpaceCompressedId & NodeIdBrand;
  * Uniquely identifies a node within and across documents. Can be used across SharedTree instances.
  * @alpha
  */
-export type StableNodeId = string & { readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151' };
+export type StableNodeId = string & {
+	readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151';
+};
 
 /**
  * Definition.
  * A full (Uuid) persistable definition.
  * @alpha
  */
-export type Definition = UuidString & { readonly Definition: 'c0ef9488-2a78-482d-aeed-37fba996354c' };
+export type Definition = UuidString & {
+	readonly Definition: 'c0ef9488-2a78-482d-aeed-37fba996354c';
+};
 
 /**
  * Definition.
  * A full (Uuid) persistable label for a trait.
  * @alpha
  */
-export type TraitLabel = UuidString & { readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3' };
+export type TraitLabel = UuidString & {
+	readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3';
+};
 
 /**
  * Determine if a node is a DetachedSequenceId.

@@ -4,12 +4,17 @@
  */
 
 import { render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 
-import { AudienceHistoryTable, type TransformedAudienceHistoryData } from "../components/index.js";
+import {
+	AudienceHistoryTable,
+	type TransformedAudienceHistoryData,
+} from "../components/index.js";
+
+import { assertNoAccessibilityViolations } from "./utils/index.js";
 
 describe("AudienceHistoryTable component tests", () => {
 	async function getTableBodyRows(): Promise<HTMLCollection> {
@@ -50,5 +55,20 @@ describe("AudienceHistoryTable component tests", () => {
 
 		const tableBodyRows = await getTableBodyRows();
 		expect(tableBodyRows).toHaveLength(3);
+	});
+});
+
+describe("AudienceHistoryTable Accessibility Check", () => {
+	it("AudienceHistoryTable is accessible", async () => {
+		const { container } = render(<AudienceHistoryTable audienceHistoryItems={[]} />);
+		await assertNoAccessibilityViolations(container);
+	});
+
+	it("Can tab/arrow navigate through AudienceHistoryTable", async () => {
+		render(<AudienceHistoryTable audienceHistoryItems={[]} />);
+		const user = userEvent.setup();
+		await user.tab();
+		const tooltip = screen.getByRole("button", { name: /client id/i });
+		expect(tooltip).toHaveFocus();
 	});
 });

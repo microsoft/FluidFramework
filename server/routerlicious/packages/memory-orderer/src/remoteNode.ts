@@ -72,6 +72,10 @@ class ProxySocketConnection implements IOrdererConnection {
 	public once(event: "error", listener: (...args: any[]) => void) {
 		return;
 	}
+
+	public off(event: "error", listener: (...args: any[]) => void) {
+		return;
+	}
 }
 
 class ProxySocketThing implements IOrdererConnectionFactory {

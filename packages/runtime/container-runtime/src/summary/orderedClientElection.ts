@@ -24,12 +24,12 @@ export type ImmutablePrimitives = undefined | null | boolean | string | number |
 export type Immutable<T> = T extends ImmutablePrimitives
 	? T
 	: T extends (infer A)[]
-	? readonly Immutable<A>[]
-	: T extends Map<infer K, infer V>
-	? ReadonlyMap<Immutable<K>, Immutable<V>>
-	: T extends Set<infer V>
-	? ReadonlySet<Immutable<V>>
-	: { readonly [K in keyof T]: Immutable<T[K]> };
+		? readonly Immutable<A>[]
+		: T extends Map<infer K, infer V>
+			? ReadonlyMap<Immutable<K>, Immutable<V>>
+			: T extends Set<infer V>
+				? ReadonlySet<Immutable<V>>
+				: { readonly [K in keyof T]: Immutable<T[K]> };
 
 /** Minimum information for a client tracked for election consideration. */
 export interface ITrackedClient {
@@ -68,7 +68,8 @@ export interface IOrderedClientCollectionEvents extends IEvent {
 }
 
 /** Contract for a sorted collection of all clients in the quorum. */
-export interface IOrderedClientCollection extends IEventProvider<IOrderedClientCollectionEvents> {
+export interface IOrderedClientCollection
+	extends IEventProvider<IOrderedClientCollectionEvents> {
 	/** Count of clients in the collection. */
 	readonly count: number;
 	/** Pointer to the oldest client in the collection. */
@@ -230,6 +231,7 @@ export interface IOrderedClientElectionEvents extends IEvent {
 
 /**
  * Serialized state of IOrderedClientElection.
+ * @legacy
  * @alpha
  */
 export interface ISerializedElection {
@@ -268,8 +270,6 @@ export interface IOrderedClientElection extends IEventProvider<IOrderedClientEle
 	readonly electedParent: ITrackedClient | undefined;
 	/** Sequence number of most recent election. */
 	readonly electionSequenceNumber: number;
-	/** Marks the currently elected client as invalid, and elects the next eligible client. */
-	incrementElectedClient(sequenceNumber: number): void;
 	/** Resets the currently elected client back to the oldest eligible client. */
 	resetElectedClient(sequenceNumber: number): void;
 	/** Peeks at what the next elected client would be if incrementElectedClient were called. */
@@ -375,7 +375,9 @@ export class OrderedClientElection
 			}
 		}
 		orderedClientCollection.on("addClient", (client, seq) => this.addClient(client, seq));
-		orderedClientCollection.on("removeClient", (client, seq) => this.removeClient(client, seq));
+		orderedClientCollection.on("removeClient", (client, seq) =>
+			this.removeClient(client, seq),
+		);
 
 		if (typeof initialState === "number") {
 			this._electionSequenceNumber = initialState;
@@ -487,7 +489,9 @@ export class OrderedClientElection
 	 * @param client - client to start checking
 	 * @returns oldest eligible client starting with passed in client or undefined if none.
 	 */
-	private findFirstEligibleParent(client: ILinkedClient | undefined): ILinkedClient | undefined {
+	private findFirstEligibleParent(
+		client: ILinkedClient | undefined,
+	): ILinkedClient | undefined {
 		let candidateClient = client;
 		while (
 			candidateClient !== undefined &&
@@ -576,28 +580,13 @@ export class OrderedClientElection
 	}
 
 	/**
-	 * Advance election to the next-oldest client. This is called if the current parent is leaving the quorum,
-	 * or if the current summarizer is not responsive and we want to stop it and spawn a new one.
-	 */
-	public incrementElectedClient(sequenceNumber: number): void {
-		const nextClient =
-			this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
-			this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
-		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
-			this.tryElectingClient(nextClient, sequenceNumber, "IncrementElectedClient");
-		} else {
-			// The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
-			// Changing the _electedParent will stop the summarizer.
-			this.tryElectingParent(nextClient, sequenceNumber, "IncrementElectedClient");
-		}
-	}
-
-	/**
 	 * (Re-)start election with the oldest client in the quorum. This is called if we need to summarize
 	 * and no client has been elected.
 	 */
 	public resetElectedClient(sequenceNumber: number): void {
-		const firstClient = this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
+		const firstClient = this.findFirstEligibleParent(
+			this.orderedClientCollection.oldestClient,
+		);
 		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
 			this.tryElectingClient(firstClient, sequenceNumber, "ResetElectedClient");
 		} else {

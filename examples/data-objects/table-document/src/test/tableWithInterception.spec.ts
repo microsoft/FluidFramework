@@ -208,11 +208,7 @@ describeCompat("Table Document with Interception", "LoaderCompat", (getTestObjec
 			function recursiveInterceptionCb(properties?: PropertySet) {
 				const ss = useWrapper ? tableDocumentWithInterception : tableDocument;
 				// Annotate the first row and column.
-				ss.setCellValue(
-					cellInRecursiveCb.row,
-					cellInRecursiveCb.col,
-					cellInRecursiveCb.value,
-				);
+				ss.setCellValue(cellInRecursiveCb.row, cellInRecursiveCb.col, cellInRecursiveCb.value);
 				return { ...properties, ...userAttributes };
 			}
 

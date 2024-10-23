@@ -13,6 +13,7 @@ packages:
   - "examples/**"
   - "experimental/**"
   - "packages/**"
+  - "tools/markdown-magic"
 
   # exclude any package.json files that are inside src or output directories
   - "!**/dist/**"

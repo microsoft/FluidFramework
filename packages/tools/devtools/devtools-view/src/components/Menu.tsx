@@ -12,10 +12,10 @@ import {
 	Tooltip,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
-import {
-	type HasContainerKey,
-	type DevtoolsFeatureFlags,
-	type ContainerKey,
+import type {
+	HasContainerKey,
+	DevtoolsFeatureFlags,
+	ContainerKey,
 } from "@fluidframework/devtools-core/internal";
 import { GetContainerList } from "@fluidframework/devtools-core/internal";
 import React from "react";
@@ -156,7 +156,7 @@ interface OpLatencyMenuSelection {
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection =
+export type MenuSelection =
 	| TelemetryMenuSelection
 	| ContainerMenuSelection
 	| SettingsMenuSelection
@@ -276,7 +276,13 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
 
 	return (
-		<div className={style} onClick={onClick} onKeyDown={handleKeyDown} tabIndex={0}>
+		<div
+			role="button"
+			className={style}
+			onClick={onClick}
+			onKeyDown={handleKeyDown}
+			tabIndex={0}
+		>
 			{text}
 		</div>
 	);
@@ -285,11 +291,11 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 /**
  * {@link Menu} input props.
  */
-interface MenuProps {
+export interface MenuProps {
 	/**
 	 * The current menu selection (if any).
 	 */
-	currentSelection?: MenuSelection;
+	currentSelection?: MenuSelection | undefined;
 
 	/**
 	 * Sets the menu selection to the specified value.

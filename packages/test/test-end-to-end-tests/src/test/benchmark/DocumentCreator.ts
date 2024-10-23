@@ -19,7 +19,10 @@ import {
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { DocumentMap } from "./DocumentMap.js";

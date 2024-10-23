@@ -8,6 +8,11 @@
  */
 const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
+	"@fluid-example/*/internal",
+	"@fluid-experimental/*/internal",
+	"@fluid-internal/*/internal",
+	"@fluid-private/*/internal",
+	"@fluid-tools/*/internal",
 	"@fluidframework/*/internal",
 
 	// Experimental package APIs and exports are unknown, so allow any imports from them.
@@ -249,13 +254,8 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		"@typescript-eslint/brace-style": [
-			"error",
-			"1tbs",
-			{
-				allowSingleLine: true,
-			},
-		],
+		// Disabled because it conflicts with formatter rules
+		"@typescript-eslint/brace-style": "off",
 		"@typescript-eslint/comma-spacing": "error",
 		"@typescript-eslint/func-call-spacing": "error",
 		"@typescript-eslint/keyword-spacing": "error",

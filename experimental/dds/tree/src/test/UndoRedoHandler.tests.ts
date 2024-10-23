@@ -42,6 +42,14 @@ describe('SharedTreeUndoRedoHandler', () => {
 		testOutOfOrderRevert: false,
 	};
 
-	runSharedTreeUndoRedoTestSuite({ localMode: true, title: 'in local mode', ...undoRedoOptions });
-	runSharedTreeUndoRedoTestSuite({ localMode: false, title: 'in connected mode', ...undoRedoOptions });
+	runSharedTreeUndoRedoTestSuite({
+		localMode: true,
+		title: 'in local mode',
+		...undoRedoOptions,
+	});
+	runSharedTreeUndoRedoTestSuite({
+		localMode: false,
+		title: 'in connected mode',
+		...undoRedoOptions,
+	});
 });

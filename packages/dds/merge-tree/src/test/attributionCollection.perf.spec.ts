@@ -25,7 +25,7 @@ interface IAttributionCollectionCtor {
 	): SerializedAttributionCollection;
 
 	populateAttributionCollections(
-		segments: Iterable<ISegment>,
+		segments: Iterable<Partial<ISegment>>,
 		summary: SerializedAttributionCollection,
 	): void;
 }
@@ -139,10 +139,12 @@ function runAttributionCollectionSuite(
 	});
 
 	const summary = ctor.serializeAttributionCollections(segmentsToSerialize);
-	const segments: ISegment[] = Array.from({ length: 9 }, () => ({
+	const segments: Partial<ISegment>[] = Array.from({ length: 9 }, () => ({
 		cachedLength: Math.floor(summary.length / 10),
 	})) as ISegment[];
-	segments.push({ cachedLength: summary.length - 9 * Math.floor(summary.length / 10) } as any);
+	segments.push({
+		cachedLength: summary.length - 9 * Math.floor(summary.length / 10),
+	} satisfies Partial<ISegment>);
 	benchmark({
 		title: "deserialize into 10 segments",
 		benchmarkFn: () => {

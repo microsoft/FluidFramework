@@ -15,9 +15,15 @@ import { Loader } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IUser } from "@fluidframework/driver-definitions";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 import {
 	HostStoragePolicy,
@@ -29,7 +35,10 @@ import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import { Port } from "webpack-dev-server";
 
-import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory.js";
+import {
+	deltaConnectionServer,
+	getDocumentServiceFactory,
+} from "./getDocumentServiceFactory.js";
 import { getUrlResolver } from "./getUrlResolver.js";
 import { OdspPersistentCache } from "./odspPersistantCache.js";
 import { OdspUrlResolver } from "./odspUrlResolver.js";
@@ -300,7 +309,11 @@ interface IFluidMountableViewEntryPoint {
 	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
 }
 
-async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
+async function getFluidObjectAndRender(
+	container: IContainer,
+	url: string,
+	div: HTMLDivElement,
+) {
 	const entryPoint = await container.getEntryPoint();
 
 	let fluidObject: FluidObject<IFluidMountableView>;
@@ -408,9 +421,7 @@ async function attachContainer(
 				const snapshot = summaryList.value;
 				currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 				const newLeftDiv =
-					rightDiv !== undefined
-						? makeSideBySideDiv(uuid())
-						: document.createElement("div");
+					rightDiv !== undefined ? makeSideBySideDiv(uuid()) : document.createElement("div");
 				currentLeftDiv.replaceWith(newLeftDiv);
 				currentLeftDiv = newLeftDiv;
 				// Load and render the component.

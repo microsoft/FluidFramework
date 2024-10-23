@@ -74,7 +74,9 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				return null;
 			}
 
-			requestVersion = versions[0];
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			requestVersion = versions[0]!;
 		}
 
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
@@ -91,12 +93,16 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				throw new Error("No versions for the document!");
 			}
 
-			versionId = versions[0].treeId;
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			versionId = versions[0]!.treeId;
 		}
 		const rawTree = await this.manager.getTree(versionId);
 		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
-		const attributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+		// TODO Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const attributesBlobId = snapshotTree.trees[".protocol"]!.blobs.attributes!;
 		// Only populate contents for the blobs which are supposed to be returned.
 		const blobContents = new Map<string, ArrayBuffer>();
 		const attributesBlobData = await this.readBlob(attributesBlobId);
@@ -104,11 +110,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			// If the root is in the groupIds, we don't need to filter the tree.
 			// We can just strip the  of all groupIds as in collect the blobIds so that we can
 			// return blob contents only for those ids.
-			await this.collectBlobContentsForUngroupedSnapshot(
-				snapshotTree,
-				groupIds,
-				blobContents,
-			);
+			await this.collectBlobContentsForUngroupedSnapshot(snapshotTree, groupIds, blobContents);
 		} else {
 			const hasFoundTree = await this.filterTreeByLoadingGroupIds(
 				snapshotTree,
@@ -195,7 +197,8 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const groupIdInLoadingGroupIds = groupId !== undefined && loadingGroupIds.has(groupId);
 
 		// Keep tree if it has an ancestor that has a groupId that is in loadingGroupIds and it doesn't have groupId
-		const isChildOfAncestorWithGroupId = ancestorGroupIdInLoadingGroup && groupId === undefined;
+		const isChildOfAncestorWithGroupId =
+			ancestorGroupIdInLoadingGroup && groupId === undefined;
 
 		// Collect blobsIds so that we can return blob contents only for these blobs.
 		if (groupIdInLoadingGroupIds || isChildOfAncestorWithGroupId) {
@@ -299,7 +302,9 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			}
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 			const version = await this.getVersions(this.id, 1);
-			return version[0].id;
+			// TODO Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return version[0]!.id;
 		}
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,
@@ -327,7 +332,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 					// Clear the cache as the getSnapshotTree call will fill the cache.
 					this.blobsShaCache.clear();
 					return this.getSnapshotTree(versions[0]);
-			  })
+				})
 			: undefined;
 	}
 }

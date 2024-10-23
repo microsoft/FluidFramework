@@ -57,4 +57,5 @@ module.exports = {
 	moduleFileExtensions: ["ts", "tsx", "cts", "mts", "js", "cjs", "mjs", "jsx", "json", "node"],
 	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/", "/dist/test/", "/lib/test/"],
 	testEnvironment: "jsdom",
+	setupFilesAfterEnv: ["<rootDir>/jest.setup.cjs"],
 };

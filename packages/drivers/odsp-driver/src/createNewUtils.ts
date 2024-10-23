@@ -4,7 +4,7 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	ISummaryBlob,
 	ISummaryTree,
@@ -18,7 +18,10 @@ import {
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -28,7 +31,7 @@ import {
 	OdspSummaryTreeValue,
 } from "./contracts.js";
 import { EpochTracker, FetchType } from "./epochTracker.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
 
@@ -146,6 +149,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
+		assert(!key.includes("/"), 0x9cc /* id should not include slashes */);
 		const summaryObject = summary.tree[key];
 
 		let value: OdspSummaryTreeValue;
@@ -185,7 +189,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 		}
 
 		const entry: OdspSummaryTreeEntry = {
-			path: encodeURIComponent(key),
+			path: key,
 			type: getGitType(summaryObject),
 			value,
 			unreferenced,
@@ -199,7 +203,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 
 export async function createNewFluidContainerCore<T>(args: {
 	containerSnapshot: IOdspSummaryPayload;
-	getStorageToken: InstrumentedStorageTokenFetcher;
+	getAuthHeader: InstrumentedStorageTokenFetcher;
 	logger: ITelemetryLoggerExt;
 	initialUrl: string;
 	forceAccessTokenViaAuthorizationHeader: boolean;
@@ -210,10 +214,9 @@ export async function createNewFluidContainerCore<T>(args: {
 }): Promise<T> {
 	const {
 		containerSnapshot,
-		getStorageToken,
+		getAuthHeader,
 		logger,
 		initialUrl,
-		forceAccessTokenViaAuthorizationHeader,
 		epochTracker,
 		telemetryName,
 		fetchType,
@@ -221,8 +224,6 @@ export async function createNewFluidContainerCore<T>(args: {
 	} = args;
 
 	return getWithRetryForTokenRefresh(async (options) => {
-		const storageToken = await getStorageToken(options, telemetryName);
-
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: telemetryName },
@@ -232,31 +233,44 @@ export async function createNewFluidContainerCore<T>(args: {
 				let headers: { [index: string]: string };
 				let addInBody = false;
 				const formBoundary = uuid();
-				let postBody = `--${formBoundary}\r\n`;
-				postBody += `Authorization: Bearer ${storageToken}\r\n`;
-				postBody += `X-HTTP-Method-Override: POST\r\n`;
-				postBody += `Content-Type: application/json\r\n`;
-				postBody += `_post: 1\r\n`;
-				postBody += `\r\n${snapshotBody}\r\n`;
-				postBody += `\r\n--${formBoundary}--`;
+				const urlObj = new URL(initialUrl);
+				urlObj.searchParams.set("ump", "1");
+				const authInBodyUrl = urlObj.href;
+				const method = "POST";
+				const authHeader = await getAuthHeader(
+					{ ...options, request: { url: authInBodyUrl, method } },
+					telemetryName,
+				);
+				const postBodyWithAuth =
+					`--${formBoundary}\r\n` +
+					`Authorization: ${authHeader}\r\n` +
+					`X-HTTP-Method-Override: POST\r\n` +
+					`Content-Type: application/json\r\n` +
+					`_post: 1\r\n` +
+					`\r\n${snapshotBody}\r\n` +
+					`\r\n--${formBoundary}--`;
 
-				if (postBody.length <= maxUmpPostBodySize) {
-					const urlObj = new URL(initialUrl);
-					urlObj.searchParams.set("ump", "1");
-					url = urlObj.href;
+				let postBody = snapshotBody;
+				// We use the byte length of the post body to determine if we should use the multipart/form-data or not. This helps
+				// in cases where the body contains data with different language where 1 char could be multiple code points.
+				if (
+					new TextEncoder().encode(postBodyWithAuth).length <= maxUmpPostBodySize &&
+					authHeader?.startsWith("Bearer")
+				) {
+					url = authInBodyUrl;
 					headers = {
 						"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
 					};
 					addInBody = true;
+					postBody = postBodyWithAuth;
 				} else {
-					const parts = getUrlAndHeadersWithAuth(
-						initialUrl,
-						storageToken,
-						forceAccessTokenViaAuthorizationHeader,
+					url = initialUrl;
+					const authHeaderNoUmp = await getAuthHeader(
+						{ ...options, request: { url, method } },
+						telemetryName,
 					);
-					url = parts.url;
 					headers = {
-						...parts.headers,
+						...getHeadersWithAuth(authHeaderNoUmp),
 						"Content-Type": "application/json",
 					};
 					postBody = snapshotBody;
@@ -269,7 +283,7 @@ export async function createNewFluidContainerCore<T>(args: {
 							{
 								body: postBody,
 								headers,
-								method: "POST",
+								method,
 							},
 							fetchType,
 							addInBody,

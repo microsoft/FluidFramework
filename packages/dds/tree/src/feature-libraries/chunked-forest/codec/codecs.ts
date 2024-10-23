@@ -5,21 +5,26 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
-import { CursorLocationType, SchemaAndPolicy } from "../../../core/index.js";
-import { JsonCompatibleReadOnly } from "../../../util/index.js";
+import {
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../../codec/index.js";
+import { CursorLocationType, type SchemaAndPolicy } from "../../../core/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
-import { FieldBatch } from "./fieldBatch.js";
+import type { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
+	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
 }
 /**
@@ -33,12 +38,18 @@ export type FieldBatchCodec = IJsonCodec<
 	FieldBatchEncodingContext
 >;
 
-export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number): FieldBatchCodec {
+export function makeFieldBatchCodec(
+	options: ICodecOptions,
+	writeVersion: number,
+): FieldBatchCodec {
 	// Note: it's important that the decode function is schema-agnostic for this strategy/layering to work, since
 	// the schema that an op was encoded in doesn't necessarily match the current schema for the document (e.g. if
 	// decode is being run on a client that just submitted a schema change, but the op is from another client who has
 	// yet to receive that change).
-	assert(validVersions.has(writeVersion), 0x935 /* Invalid write version for FieldBatch codec */);
+	assert(
+		validVersions.has(writeVersion),
+		0x935 /* Invalid write version for FieldBatch codec */,
+	);
 
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
@@ -77,7 +88,10 @@ export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number
 		},
 		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data, context.idCompressor).map((chunk) => chunk.cursor());
+			return decode(data, {
+				idCompressor: context.idCompressor,
+				originatorId: context.originatorId,
+			}).map((chunk) => chunk.cursor());
 		},
 	});
 }

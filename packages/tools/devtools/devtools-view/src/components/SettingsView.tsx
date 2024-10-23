@@ -111,6 +111,8 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.section}>
 				<h4 className={styles.sectionHeader}>Theme</h4>
 				<Dropdown
+					title="ThemeDropdown"
+					aria-label="Theme Selection Dropdown"
 					value={themeInfo.name}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
@@ -123,6 +125,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.section}>
 				<h4 className={styles.sectionHeader}>Usage telemetry</h4>
 				<Link
+					aria-label="Microsoft Privacy Statement"
 					href="https://go.microsoft.com/fwlink/?LinkId=521839"
 					target="_blank"
 					rel="noreferrer"
@@ -131,6 +134,8 @@ export function SettingsView(): React.ReactElement {
 					Microsoft Privacy Statement
 				</Link>
 				<Switch
+					aria-label="Usage Telemetry Toggle"
+					aria-checked={optedIn}
 					label="Send usage telemetry to Microsoft"
 					checked={optedIn}
 					onChange={(ev, data): void => setOptedIn(data.checked)}

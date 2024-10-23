@@ -5,11 +5,11 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
-import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -114,6 +114,7 @@ export class AppData extends DataObject {
 				emojiMatrix.setCell(row, col, emojiCell.handle);
 			}
 		}
+		this.populateSharedTree(sharedTree);
 
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 		this.root.set(this.sharedTextKey, text.handle);
@@ -149,7 +150,6 @@ export class AppData extends DataObject {
 		if (sharedTree === undefined) {
 			throw new Error("SharedTree was not initialized");
 		} else {
-			this.populateSharedTree(sharedTree);
 			this._sharedTree = sharedTree;
 
 			// We will always load the initial objects so they are available to the developer
@@ -194,7 +194,9 @@ export class AppData extends DataObject {
 			childrenTwo: builder.number,
 		}) {}
 
-		const config = new TreeConfiguration(RootNodeSchema, () => ({
+		const config = new TreeViewConfiguration({ schema: RootNodeSchema });
+		const view = sharedTree.viewWith(config);
+		view.initialize({
 			childrenOne: [
 				{
 					childField: "Hello world!",
@@ -210,8 +212,6 @@ export class AppData extends DataObject {
 				},
 			],
 			childrenTwo: 32,
-		}));
-
-		sharedTree.schematize(config);
+		});
 	}
 }

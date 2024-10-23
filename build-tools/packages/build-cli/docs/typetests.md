@@ -17,12 +17,13 @@ Updates configuration for type tests in package.json files. If the previous vers
 USAGE
   $ flub typetests [-v | --quiet] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
     [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all | --dir <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> | --skipScope <value>]
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   -n, --normalize
-      Removes any unrecognized data from "typeValidation" in the package.json
+      Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.
 
   -p, --previous
       Use the version immediately before the current version.
@@ -48,10 +49,10 @@ FLAGS
       [default: 25] The number of tasks to execute concurrently.
 
   --disable
-      Set the "typeValidation.disabled" setting to "true" in the package.json
+      Set the "typeValidation.disabled" setting to "true" in the package.json.
 
   --enable
-      Remove the "typeValidation.disabled" setting in the package.json
+      Remove the "typeValidation.disabled" setting in the package.json.
 
   --exact=<value>
       An exact string to use as the previous version constraint. The string will be used as-is.

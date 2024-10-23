@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
@@ -25,7 +25,10 @@ import * as ws from "ws";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
-import { INexusResourcesCustomizations } from ".";
+import { INexusResourcesCustomizations } from "./customizations";
+import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -40,47 +43,6 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 	public close(): Promise<void> {
 		this.webSocketServer.close();
 		return Promise.resolve();
-	}
-}
-
-/**
- * @internal
- */
-export class OrdererManager implements core.IOrdererManager {
-	constructor(
-		private readonly globalDbEnabled: boolean,
-		private readonly ordererUrl: string,
-		private readonly tenantManager: core.ITenantManager,
-		private readonly localOrderManager: LocalOrderManager,
-		private readonly kafkaFactory: KafkaOrdererFactory,
-	) {}
-
-	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		if (!this.globalDbEnabled) {
-			const messageMetaData = { documentId, tenantId };
-			Lumberjack.info(`Global db is disabled, checking orderer URL`, messageMetaData);
-			const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-
-			Lumberjack.info(
-				`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-				getLumberBaseProperties(documentId, tenantId),
-			);
-
-			if (tenant.orderer.url !== this.ordererUrl) {
-				Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-				throw new Error("Invalid ordering service endpoint");
-			}
-
-			if (tenant.orderer.type !== "kafka") {
-				Lumberjack.info(
-					`Using local orderer`,
-					getLumberBaseProperties(documentId, tenantId),
-				);
-				return this.localOrderManager.get(tenantId, documentId);
-			}
-		}
-		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
-		return this.kafkaFactory.create(tenantId, documentId);
 	}
 }
 
@@ -105,6 +67,7 @@ export class NexusResources implements core.IResources {
 		public port: any,
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
+		public startupCheck: IReadinessCheck,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
@@ -114,6 +77,8 @@ export class NexusResources implements core.IResources {
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
+		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
+		public readinessCheck?: IReadinessCheck,
 	) {}
 
 	public async dispose(): Promise<void> {
@@ -200,6 +165,46 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			redisClientConnectionManager,
 			redisParams2,
 		);
+
+		/**
+		 * Whether to enable collaboration session tracking.
+		 */
+		const enableCollaborationSessionTracking: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionTracking",
+		);
+		/**
+		 * Whether to enable pruning of collaboration session tracking information on an interval.
+		 */
+		const enableCollaborationSessionPruning: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionPruning",
+		);
+		const redisCollaborationSessionManagerOptions: Partial<services.IRedisCollaborationSessionManagerOptions> =
+			config.get("nexus:redisCollaborationSessionManagerOptions") ?? {};
+		const collaborationSessionManager =
+			enableCollaborationSessionTracking === true
+				? new services.RedisCollaborationSessionManager(
+						redisClientConnectionManager,
+						redisParams2,
+						redisCollaborationSessionManagerOptions,
+				  )
+				: undefined;
+		const collaborationSessionTracker =
+			enableCollaborationSessionTracking === true
+				? new services.CollaborationSessionTracker(
+						clientManager,
+						collaborationSessionManager,
+						// Same as Deli close on inactivity, which signals session end.
+						core.DefaultServiceConfiguration.documentLambda.partitionActivityTimeout,
+				  )
+				: undefined;
+		if (
+			enableCollaborationSessionPruning === true &&
+			collaborationSessionTracker !== undefined
+		) {
+			setInterval(() => {
+				collaborationSessionTracker.pruneInactiveSessions();
+			}, core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval);
+		}
 
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
@@ -380,6 +385,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+			| number
+			| undefined;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
@@ -391,6 +399,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableWholeSummaryUpload,
 			opsCollection,
 			storageNameAllocator,
+			ephemeralDocumentTTLSec,
 		);
 
 		const maxSendMessageSize = bytes.parse(config.get("nexus:maxMessageSize"));
@@ -439,12 +448,16 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 		const serverUrl = config.get("worker:serverUrl");
 
+		const ordererManagerOptions: Partial<IOrdererManagerOptions> | undefined = config.get(
+			"nexus:ordererManagerOptions",
+		);
 		const orderManager = new OrdererManager(
 			globalDbEnabled,
 			serverUrl,
 			tenantManager,
 			localOrderManager,
 			kafkaOrdererFactory,
+			ordererManagerOptions,
 		);
 
 		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
@@ -525,6 +538,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					customizations?.customCreateSocketIoAdapter,
 			  );
 
+		const startupCheck = new StartupCheck();
+
 		return new NexusResources(
 			config,
 			webServerFactory,
@@ -542,6 +557,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			port,
 			documentsCollectionName,
 			metricClientConfig,
+			startupCheck,
 			redisThrottleAndUsageStorageManager,
 			verifyMaxMessageSize,
 			redisCache,
@@ -551,6 +567,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
+			collaborationSessionTracker,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -573,6 +591,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.storage,
 			resources.clientManager,
 			resources.metricClientConfig,
+			resources.startupCheck,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
@@ -581,6 +600,8 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
 			resources.clusterDrainingChecker,
+			resources.collaborationSessionTracker,
+			resources.readinessCheck,
 		);
 	}
 }

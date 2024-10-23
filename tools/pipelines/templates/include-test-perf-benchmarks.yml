@@ -40,6 +40,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
+      set -eu -o pipefail
       echo "
       Variables:
         artifactBuildId=${{ parameters.artifactBuildId }}
@@ -62,6 +63,7 @@ steps:
 # Download artifact with test files
 - task: DownloadPipelineArtifact@2
   displayName: Download test files
+  retryCountOnTaskFailure: 1
   inputs:
     # It seems there's a bug and preferTriggeringPipeline is not respected.
     # We force the behavior by explicitly specifying:
@@ -91,6 +93,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.testWorkspace }}
     script: |
+      set -eu -o pipefail
+
       echo Initialize package
       npm init --yes
 
@@ -111,6 +115,7 @@ steps:
 # Auth to internal feed
 - task: npmAuthenticate@0
   displayName: 'npm authenticate (internal feed)'
+  retryCountOnTaskFailure: 1
   inputs:
     workingFile: ${{ parameters.testWorkspace }}/.npmrc
 

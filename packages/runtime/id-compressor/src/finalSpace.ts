@@ -6,7 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { FinalCompressedId } from "./identifiers.js";
-import { IdCluster, clustersEqual, lastAllocatedFinal, lastFinalizedFinal } from "./sessions.js";
+import {
+	IdCluster,
+	clustersEqual,
+	lastAllocatedFinal,
+	lastFinalizedFinal,
+} from "./sessions.js";
 
 /**
  * All IDs that have been finalized (acked), grouped into clusters sorted by their base final IDs.
@@ -58,11 +63,12 @@ export class FinalSpace {
 	}
 
 	public equals(other: FinalSpace): boolean {
-		for (let i = 0; i < this.clusterList.length; i++) {
-			if (!clustersEqual(this.clusterList[i], other.clusterList[i])) {
+		for (const [index, value] of Object.entries(this.clusterList)) {
+			if (!clustersEqual(value, other.clusterList[index])) {
 				return false;
 			}
 		}
+
 		return this.clusterList.length === other.clusterList.length;
 	}
 }

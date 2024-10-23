@@ -13,7 +13,7 @@ import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-import { type Globals } from "../Globals.js";
+import type { Globals } from "../Globals.js";
 import { extensionViewMessageSource } from "../messaging/index.js";
 
 import { awaitListener, stubGlobals, stubPort } from "./Utilities.js";
@@ -106,7 +106,10 @@ describe("Content Script unit tests", () => {
 		expect(typeof connectFromBackground).to.equal("function");
 
 		// Wait for the Content script to register `onMessage`  listener with the Background port.
-		const backgroundOnMessageListenerPromise = awaitListener(sandbox, backgroundPort.onMessage);
+		const backgroundOnMessageListenerPromise = awaitListener(
+			sandbox,
+			backgroundPort.onMessage,
+		);
 
 		// Simulate background script connection init from the devtools
 		connectFromBackground(backgroundPort);

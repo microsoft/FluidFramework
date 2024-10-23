@@ -1,5 +1,5 @@
 ---
-title: Types of distributed data structures
+title: Overview
 menuPosition: 1
 ---
 
@@ -39,64 +39,30 @@ DDSes vary from each other by three characteristics:
 
 Below we've enumerated the data structures and described when they may be most useful.
 
-## Key-value data
+## SharedTree
 
-These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy. Although
-the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
+[SharedTree](./tree.md) is a hierarchical data structure that looks and feels like simple JavaScript objects.
+It is a tree of data with complex nodes, including maps that work similarly to [SharedMap](#sharedmap), and several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
--   [SharedMap][] -- a basic key-value data structure.
--   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+This is the recommended data structure for any new development.
 
-### Key Value Scenarios
+## SharedMap
 
-Key-value data structures are the most common choice for many scenarios.
+[SharedMap](./map.md) is a basic key-value data structure.
+It is optimistic and uses a last-writer-wins merge policy.
+Although the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
--   User preference data.
--   Current state of a survey.
--   The configuration of a view.
+### Common Problems
 
-### Common issues and best practices for key-value DDSes
+-   Storing a lot of data in one key-value entry may cause performance or merge issues.
+  Each update will update the entire value rather than merging two updates.
+  Try splitting the data across multiple keys.
+-   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't collaboratively modify parts of one entry.
+  Instread, try storing the data in an array node in a [SharedTree](#sharedtree).
 
--   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't
-  collaboratively modify parts of one entry. Try storing the data in an array node of a [SharedTree][].
--   Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
-  value rather than merging two updates. Try splitting the data across multiple keys.
+## SharedString
 
-### Sequence scenarios
-
--   Tabular data
--   Timelines
--   Lists
-
-### Common issues and best practices for sequence DDSes
-
--   Store only immutable data as an item in a sequence. The only way to change the value of an item is to first remove it
-  from the sequence and then insert a new value at the position where the old value was. But because other clients can
-  insert and remove, there's no reliable way of getting the new value into the the desired position.
-
-## Hierarchical data
-
-FluidFramework 2.0 preview provides a DDS can be used for hierarchical data structures. It is optimistic and uses a last-writer-wins merge policy.
-
--   [SharedTree][] -- a tree of data with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
-
-## Strings
-
-The SharedString DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
-
--   [SharedString][] -- a data structure for handling collaborative text.
-
-### String scenarios
-
--   Text editor
-
-## Specialized data structures
-
--   [SharedCounter][] -- a counter. (Deprecated in Fluid Framework 2.0.)
-    -   `SharedCounter` is useful to keep track of increments/decrements of integer values.
-    While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues]({{< relref "counter.md/#why-a-specialized-dds" >}}).
-    By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
-    It is optimistic.
+The [SharedString](./string.md) DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
 
 ## Consensus data structures
 
@@ -116,6 +82,20 @@ Typical scenarios require the connected clients to "agree" on some course of act
 
 -   Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
 -   Upgrade a data schema. (All clients agree to simultaneously make the change.)
+
+## DDS Deprecation
+
+[SharedTree](./tree.md) is an incredibly flexible DDS that allows developers to represent a variety of data models (primitives, objects, lists, maps in any nested orientation).
+Due to this flexibility, it can also support features of various other DDSes in the Fluid repertoire.
+As SharedTree becomes more feature-rich, we plan to start reducing support for other DDSes that offer a sub-set of the functionality.
+This process takes the form of a deprecation journey for some of our existing DDSes, but rest assured, we will provide enough runway and support to migrate away from deprecated DDSes.
+
+DDS deprecation will follow these steps:
+
+-   **Provide alternative** - The recommended DDS will offer the same or better functionality than the deprecated DDS.
+-   **Migration path to the recommended DDS** - Before we deprecate a DDS, we will provide the ability for developers to migrate their data from their existing data model to the new data model. This will allow you to convert existing Fluid data to your new data model.
+-   **Deprecation of DDSes** - Deprecated DDSes will be marked deprecated in our APIs.
+-   **Deprecated DDS becomes read-only** - Deprecated DDSes will always be readable but we will remove the write APIs for them.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
 

@@ -236,6 +236,7 @@ export function OpLatencyView(): React.ReactElement {
 					As you make changes in your Fluid-based application, you'll see this graph update in real time with latency data for any ops your client produces.`}
 								&nbsp;
 								<Link
+									aria-label="Fluid Framework Ops Documentation"
 									target="_blank"
 									rel="noreferrer"
 									href="https://fluidframework.com/docs/concepts/tob/"
@@ -253,24 +254,22 @@ export function OpLatencyView(): React.ReactElement {
 								</li>
 								<li>
 									<Body1>
-										Op is sent to service. Note: we do not know for sure when
-										the op is actually sent on the network, we only track when
-										it is added to a local outbound queue.
+										Op is sent to service. Note: we do not know for sure when the op is
+										actually sent on the network, we only track when it is added to a local
+										outbound queue.
 									</Body1>
 								</li>
 								<li>
 									<Body1>(Sequenced) Op is received from service.</Body1>
 								</li>
 								<li>
-									<Body1>
-										(Sequenced) Op is processed and passed to the application.
-									</Body1>
+									<Body1>(Sequenced) Op is processed and passed to the application.</Body1>
 								</li>
 							</ol>
 						</div>
 						<Body1Strong>
-							With the above four phases in mind, these are the definitions for the
-							metrics in the graph above:
+							With the above four phases in mind, these are the definitions for the metrics in
+							the graph above:
 						</Body1Strong>
 						<ol>
 							<li>

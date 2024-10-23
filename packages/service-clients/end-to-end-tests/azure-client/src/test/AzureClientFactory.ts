@@ -57,12 +57,12 @@ export function createAzureClient(
 				tokenProvider: createAzureTokenProvider(id ?? "foo", name ?? "bar", scopes),
 				endpoint: endPoint,
 				type: "remote",
-		  }
+			}
 		: {
 				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
 				endpoint: "http://localhost:7071",
 				type: "local",
-		  };
+			};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
@@ -111,12 +111,12 @@ export function createAzureClientLegacy(
 					tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
 					endpoint: endPoint,
 					type: "remote",
-			  }
+				}
 			: {
 					tokenProvider: new InsecureTokenProvider("fooBar", user),
 					endpoint: "http://localhost:7071",
 					type: "local",
-			  };
+				};
 	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
