@@ -224,10 +224,28 @@ export abstract class PackageBase<
 	}
 }
 
-export class Package<
-	TAddProps extends AdditionalPackageProps = undefined,
+/**
+ * A concrete class that is used internally within build-infrastructure as the concrete {@link IPackage} implementation.
+ *
+ * @typeParam J - The package.json type to use. This type must extend the {@link PackageJson} type defined in this
+ * package.
+ * @typeParam TAddProps - Additional typed props that will be added to the package object.
+ */
+class Package<
 	J extends PackageJson = PackageJson,
+	TAddProps extends AdditionalPackageProps = undefined,
 > extends PackageBase<J, TAddProps> {
+	/**
+	 * Loads an {@link IPackage} from a {@link WorkspaceDefinition}.
+	 *
+	 * @param packageJsonFilePath - The path to the package.json for the package being loaded.
+	 * @param packageManager - The package manager to use.
+	 * @param isWorkspaceRoot - Set to `true` if the package is a workspace root package.
+	 * @param workspaceDefinition - The workspace definition.
+	 * @param workspace - The workspace that this package belongs to.
+	 * @param additionalProperties - Additional properties that will be added to the package object.
+	 * @returns A loaded {@link IPackage} instance.
+	 */
 	public static loadFromWorkspaceDefinition<
 		T extends typeof Package,
 		J extends PackageJson = PackageJson,
@@ -277,6 +295,16 @@ export class Package<
 	}
 }
 
+/**
+ * Loads an {@link IPackage} from a {@link WorkspaceDefinition}.
+ *
+ * @param packageJsonFilePath - The path to the package.json for the package being loaded.
+ * @param packageManager - The package manager to use.
+ * @param isWorkspaceRoot - Set to `true` if the package is a workspace root package.
+ * @param workspaceDefinition - The workspace definition.
+ * @param workspace - The workspace that this package belongs to.
+ * @returns A loaded {@link IPackage} instance.
+ */
 export function loadPackageFromWorkspaceDefinition(
 	packageJsonFilePath: string,
 	packageManager: IPackageManager,
@@ -293,6 +321,11 @@ export function loadPackageFromWorkspaceDefinition(
 	);
 }
 
+/**
+ * A generator function that returns all production, dev, and peer dependencies in package.json.
+ *
+ * @param packageJson - The package.json whose dependencies should be iterated.
+ */
 function* iterateDependencies<T extends PackageJson>(
 	packageJson: T,
 ): Generator<PackageDependency, void> {
