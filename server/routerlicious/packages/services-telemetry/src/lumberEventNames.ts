@@ -31,6 +31,7 @@ export enum LumberEventName {
 	ServiceSummary = "ServiceSummary",
 	SummaryReader = "SummaryReader",
 	ScriptoriumProcessBatch = "ScriptoriumProcessBatch",
+	TokenatorRunner = "TokenatorRunner",
 
 	// Retries
 	RunWithRetry = "RunWithRetry",

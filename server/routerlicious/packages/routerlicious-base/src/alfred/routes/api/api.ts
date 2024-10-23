@@ -88,6 +88,34 @@ export function create(
 		},
 	);
 
+	router.post(
+		"/tenants/:tenantId/accesstoken",
+		validateRequestParams("tenantId"),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		async (request, response) => {
+			const tenantId = getParam(request.params, "tenantId");
+			if (!tenantId) {
+				response.status(400).send(`Missing tenantId in the request.`);
+				return;
+			}
+			const body = request?.body as Record<string, any>;
+			if (!body) {
+				response.status(400).send(`Missing body in the request.`);
+				return;
+			}
+			const authToken = request?.header("Authorization");
+			if (!authToken) {
+				response.status(400).send(`Missing Authorization header in the request.`);
+				return;
+			}
+			const baseUri = config.get("tokenator:accessTokenUrl") as string;
+			const uri = `${baseUri}/api/tenants/${tenantId}/accesstoken`;
+			const accessTokenRequest = getAccessToken(uri, body, authToken);
+			handleResponse(accessTokenRequest, response, undefined, undefined, 201);
+		},
+	);
+
 	router.patch(
 		"/:tenantId/:id/root",
 		validateRequestParams("tenantId", "id"),
@@ -363,5 +391,28 @@ const uploadBlob = async (
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",
+	});
+};
+
+const getAccessToken = async (
+	uri: string,
+	body: Record<string, any>,
+	authToken: string,
+): Promise<core.IAccessToken> => {
+	const restWrapper = new BasicRestWrapper(
+		undefined /* baseUrl */,
+		undefined /* defaultQueryString */,
+		undefined /* maxBodyLength */,
+		undefined /* maxContentLength */,
+		undefined /* defaultHeaders */,
+		undefined /* axios */,
+		undefined /* refreshDefaultQureyString */,
+		undefined /* refreshDefaultHeaders */,
+		() => getGlobalTelemetryContext().getProperties().correlationId,
+		() => getGlobalTelemetryContext().getProperties(),
+	);
+	return restWrapper.post(uri, body, undefined, {
+		"Content-Type": "application/json",
+		"Authorization": authToken,
 	});
 };
