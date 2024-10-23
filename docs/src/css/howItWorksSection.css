@@ -128,7 +128,18 @@
 	flex-grow: 0;
 }
 
-.howItWorksTryOtherSamplesButtonLabel {
+.howItWorksTrySamplesRow {
+	width: 100%;
+
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+
+	padding-top: 15px;
+}
+
+.howItWorksTrySamplesLink {
 	/* Label */
 
 	/* VP4/action/button */
@@ -142,7 +153,7 @@
 	letter-spacing: -0.02em;
 
 	/* reimagine/day/foreground/accent-strong(cta)/normal */
-	color: #FFFFFF;
+	/* color: #FFFFFF; */
 
 	/* Inside auto layout */
 	flex: none;
