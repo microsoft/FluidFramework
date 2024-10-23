@@ -153,29 +153,31 @@ export class Workspace implements IWorkspace {
 		}
 	}
 
-	public async checkInstall(): Promise<boolean> {
-		let succeeded = true;
+	public async checkInstall(): Promise<true | string[]> {
+		const errors: string[] = [];
 		for (const buildPackage of this.packages) {
-			if (!(await buildPackage.checkInstall())) {
-				succeeded = false;
+			const installed = await buildPackage.checkInstall();
+			if (installed !== true) {
+				errors.push(...installed);
 			}
 		}
-		return succeeded;
+
+		if (errors.length > 0) {
+			return errors;
+		}
+		return true;
 	}
 
 	public async install(updateLockfile: boolean): Promise<boolean> {
 		const command = this.packageManager.installCommand(updateLockfile);
 
-		try {
-			const output = await execa(this.packageManager.name, command.split(" "), {
-				cwd: this.directory,
-			});
-			console.debug(output);
-		} catch (error) {
-			console.error(`Error during install: ${(error as Error).message}`);
+		const output = await execa(this.packageManager.name, command.split(" "), {
+			cwd: this.directory,
+		});
+
+		if (output.exitCode !== 0) {
 			return false;
 		}
-
 		return true;
 	}
 

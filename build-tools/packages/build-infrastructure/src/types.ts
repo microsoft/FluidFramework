@@ -114,16 +114,17 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
  */
 export interface Installable {
 	/**
-	 * Returns `true` if the item is installed. If this returns `false`, then the `install` function can be called to
-	 * install.
+	 * Returns `true` if the item is installed. If the item is not installed, an array of error strings will be returned.
 	 */
-	checkInstall(): Promise<boolean>;
+	checkInstall(): Promise<true | string[]>;
 
 	/**
 	 * Installs the item.
 	 *
 	 * @param updateLockfile - If true, the lockfile will be updated. Otherwise, the lockfile will not be updated. This
-	 * may cause the installation to fail.
+	 * may cause the installation to fail and this function to throw an error.
+	 *
+	 * @throws An error if `updateLockfile` is false and the lockfile is outdated.
 	 */
 	install(updateLockfile: boolean): Promise<boolean>;
 }

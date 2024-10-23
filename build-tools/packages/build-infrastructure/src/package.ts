@@ -192,19 +192,17 @@ export abstract class PackageBase<
 	/**
 	 * {@inheritDoc Installable.checkInstall}
 	 */
-	public async checkInstall(print: boolean = true): Promise<boolean> {
+	public async checkInstall(): Promise<true | string[]> {
 		if (this.combinedDependencies.next().done === true) {
 			// No dependencies
 			return true;
 		}
 
 		if (!existsSync(path.join(this.directory, "node_modules"))) {
-			if (print) {
-				console.error(`${this.nameColored}: node_modules not installed in ${this.directory}`);
-			}
-			return false;
+			return [`${this.nameColored}: node_modules not installed in ${this.directory}`];
 		}
-		let succeeded = true;
+
+		const errors: string[] = [];
 		for (const dep of this.combinedDependencies) {
 			const found = lookUpDirSync(this.directory, (currentDir) => {
 				// TODO: check semver as well
@@ -212,13 +210,10 @@ export abstract class PackageBase<
 			});
 
 			if (found === undefined) {
-				succeeded = false;
-				if (print) {
-					console.error(`${this.nameColored}: dependency ${dep.name} not found`);
-				}
+				errors.push(`${this.nameColored}: dependency ${dep.name} not found`);
 			}
 		}
-		return succeeded;
+		return errors.length === 0 ? true : errors;
 	}
 
 	/**
