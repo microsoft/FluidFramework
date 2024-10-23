@@ -18,12 +18,12 @@ export function ServiceSection(): JSX.Element {
 				<div className="services">
 						<div className="service">{/*AFR*/}
 							<div className="serviceContent">
-									<div className="azureImg"></div>
-									<div className="serviceTitle">Azure Fluid Relay</div>
-									<div className="serviceDescription">
-										Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.
-									</div>
-									<a className="learnMore" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview" target="_blank" rel="noopener noreferrer">
+								<div className="azureImg"></div>
+								<div className="serviceTitle">Azure Fluid Relay</div>
+								<div className="serviceDescription">
+									Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.
+								</div>
+								<a className="learnMore" href="https://azure.microsoft.com/en-us/products/fluid-relay/#overview" target="_blank" rel="noopener noreferrer">
 									Learn more
 								</a>
 							</div>
