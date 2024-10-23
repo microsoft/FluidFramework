@@ -27,12 +27,13 @@ import "@site/src/css/mockDiceRoller.css";
 
 export interface MockDiceRollerSampleProps {
 	className?: string;
+	style?: React.CSSProperties;
 }
 
 /**
  * Here be lies. All lies.
  */
-export function MockDiceRollerSample({className}: MockDiceRollerSampleProps): React.ReactElement {
+export function MockDiceRollerSample({className, style}: MockDiceRollerSampleProps): React.ReactElement {
 	const [containerId] = React.useState(Date.now().toString());
 	const [diceValue, setDiceValue] = React.useState(1);
 
@@ -40,7 +41,7 @@ export function MockDiceRollerSample({className}: MockDiceRollerSampleProps): Re
 		setDiceValue(Math.floor(Math.random() * 6) + 1);
 	}
 
-	return <div className={className}>
+	return <div className={className} style={style}>
 		<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
 		<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
 	</div>
