@@ -4,7 +4,7 @@
 	width: 100vw;
 }
 
-.titleSectionContainerBase {
+.titleSectionContainer {
 	display: flex;
     flex-direction: row;
 	justify-content: center;
@@ -19,18 +19,19 @@
 	background-position: center;
 	background-repeat: no-repeat;
 }
+
 /* Light mode override */
 [data-theme='light'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-light.png');
 	background-size: cover;
-    background-position: center;
+	background-position: center;
 }
 
 /* Dark mode override */
 [data-theme='dark'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-dark.png');
 	background-size: cover;
-    background-position: center;
+	background-position: center;
 }
 
 .contentContainer {
