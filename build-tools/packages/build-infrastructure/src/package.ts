@@ -26,7 +26,12 @@ import type {
 import { lookUpDirSync } from "./utils.js";
 
 /**
- * {@inheritDoc IPackage}
+ * A base class for npm packages. A custom type can be used for the package.json schema, which is useful
+ * when the package.json has custom keys/values.
+ *
+ * @typeParam J - The package.json type to use. This type must extend the {@link PackageJson} type defined in this
+ * package.
+ * @typeParam TAddProps - Additional typed props that will be added to the package object.
  */
 export abstract class PackageBase<
 	J extends PackageJson = PackageJson,
@@ -105,7 +110,6 @@ export abstract class PackageBase<
 		additionalProperties?: TAddProps,
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFilePath);
-		// this.reload();
 		if (additionalProperties !== undefined) {
 			Object.assign(this, additionalProperties);
 		}

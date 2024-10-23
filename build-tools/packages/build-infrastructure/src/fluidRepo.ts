@@ -194,6 +194,7 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 /**
  * Searches for a Fluid repo config file and loads the repo layout from the config if found.
  *
+ * @typeParam P - The type to use for Packages.
  * @param searchPath - The path to start searching for a Fluid repo config.
  * @param upstreamRemotePartialUrl - A partial URL to the upstream repo. This is used to find the local git remote that
  * corresponds to the upstream repo.
