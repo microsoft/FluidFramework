@@ -43,69 +43,58 @@ describe("flub test-only-filter", () => {
 		expect(pkg.directory).to.equal("build-tools/packages/build-cli");
 	});
 
-			expect(selected.length).to.equal(1);
-			expect(filtered.length).to.equal(1);
-		});
+	it(`--releaseGroup selector`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { selected, filtered } = output;
+		expect(selected.length).to.equal(5);
+		expect(filtered.length).to.equal(5);
+	});
 
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"])
-		.it(`--releaseGroup selector`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { selected, filtered } = output;
-			expect(selected).to.be.ofSize(5);
-			expect(filtered).to.be.ofSize(5);
-		});
+	it(`--private filter`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--all", "--private"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { filtered } = output;
 
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--all", "--private"])
-		.it(`--private filter`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { filtered } = output;
+		const names = filtered.map((p) => p.name);
+		expect(names).to.be.containing("@fluid-private/changelog-generator-wrapper");
+		expect(names).to.be.containing("@fluid-example/example-utils");
+	});
 
-			const names = filtered.map((p) => p.name);
-			expect(names).to.be.containingAllOf([
-				"@fluid-private/changelog-generator-wrapper",
-				"@fluid-example/example-utils",
-			]);
-		});
+	it(`--no-private filter`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--all", "--no-private"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { filtered } = output;
 
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--all", "--no-private"])
-		.it(`--no-private filter`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { filtered } = output;
+		const names = filtered.map((p) => p.name);
+		expect(names).not.to.be.containing("@fluid-private/changelog-generator-wrapper");
+	});
 
-			const names = filtered.map((p) => p.name);
-			expect(names).to.not.be.containingAnyOf(["@fluid-private/changelog-generator-wrapper"]);
-		});
+	it(`--scope filter`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--all", "--skipScope", "@fluidframework"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { filtered } = output;
 
-	test
-		.stdout()
-		.command([
-			"test-only-filter",
-			"--quiet",
-			"--json",
-			"--all",
-			"--skipScope",
-			"@fluidframework",
-		])
-		.it(`--scope filter`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { filtered } = output;
-
-			const names = filtered.map((p) => p.name);
-			expect(names).to.be.containingAllOf([
-				"@fluid-private/changelog-generator-wrapper",
-				"@fluid-tools/build-cli",
-				"fluid-framework",
-			]);
+		const names = filtered.map((p) => p.name);
+		[
+			"@fluid-private/changelog-generator-wrapper",
+			"@fluid-tools/build-cli",
+			"fluid-framework",
+			// eslint-disable-next-line unicorn/no-array-for-each
+		].forEach((item) => {
+			expect(names).to.be.containing(item);
 		});
 	});
 });
