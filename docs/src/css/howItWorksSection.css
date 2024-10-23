@@ -12,6 +12,7 @@
 	flex-direction: row;
 	flex-wrap: wrap;
 	justify-content: center;
+	align-content: stretch;
 
 	gap: 10px;
 }
@@ -31,6 +32,17 @@
 		flex-direction: row;
 	}
 }
+
+.howItWorksDiceCards {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+
+	height: 100%;
+	gap: 15px;
+}
+
 
 .howItWorksCodeColumnLabel {
 	/* Sample Code */
