@@ -11,6 +11,8 @@ import { KeyFeaturesSection } from "@site/src/components/keyFeaturesSection";
 import { PartnersSection } from "@site/src/components/partnersSection";
 import { HowItWorksSection } from "@site/src/components/howItWorksSection";
 import { ServiceSection } from "@site/src/components/serviceSection";
+import "@site/src/css/index.css";
+
 
 // TODO: ideally the sections should be aligned horizontally.
 // Currently, each is centered and scales independently.
@@ -24,11 +26,13 @@ export default function(): React.ReactElement {
 		<Layout
 			title={`Hello from ${siteConfig.title}`}
 			description="Description will go into a meta tag in <head />">
-			<TitleSection />
-			<KeyFeaturesSection />
-			<PartnersSection />
-			<HowItWorksSection />
-			<ServiceSection />
+				<div className="widthContainer">
+					<TitleSection />
+					<KeyFeaturesSection />
+					<PartnersSection />
+					<HowItWorksSection />
+					<ServiceSection />
+				</div>
 		</Layout>
 	)
 }

@@ -17,11 +17,20 @@
 	gap: 10px;
 }
 
+.sampleCodeColumn {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
 .howItWorksCodeColumn {
 	display: flex;
 	flex-direction: column;
-
 	gap: 15px;
+}
+@media (max-width: 1024px) {
+	.howItWorksCodeColumn {
+		flex-direction: row;
+	}
 }
 
 .howItWorksDiceCards {

@@ -1,35 +1,50 @@
 
 .rootContainer {
 	height: 100%;
+	width: 100vw;
 }
 
-.titleSectionContainer {
-	padding:0;
-	margin: 0;
-	max-width: 100%;
+.titleSectionContainerBase {
+	display: flex;
+    flex-direction: row;
+	justify-content: center;
+    align-items: center;
+    padding: 72px 0px 0px 0px;
+	height: 40vh;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
 	overflow: hidden;
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
 }
-
 /* Light mode override */
 [data-theme='light'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-light.png');
+	background-size: cover;
+    background-position: center;
 }
 
 /* Dark mode override */
 [data-theme='dark'] .titleSectionContainer {
 	background-image: url('../../static/assets/title-background-dark.png');
+	background-size: cover;
+    background-position: center;
 }
 
 .contentContainer {
-	width: inherit;
-	height: 100%;
+	/* Auto layout */
 	display: flex;
 	flex-direction: row;
-	z-index: 2;
-	justify-content: space-evenly;
+	align-items: center;
+	padding: 0px;
+	gap: 16px;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
 }
 
 .videoContainer {
@@ -56,7 +71,7 @@
     position: absolute;
     height: inherit;
     width: 100%;
-	background: linear-gradient(90.5deg, rgba(248, 248, 248, 0.25) 19.21%, rgba(255, 255, 255, 0) 54.15%);
+	background: linear-gradient(90.5deg, rgba(248, 248, 248, 0.8) 19.21%, rgba(255, 255, 255, 0.1) 54.15%);
 }
 
 .bgImage {
@@ -74,7 +89,18 @@
 	color: #0E1726;
 	font-family: 'Segoe UI';
 	font-weight: 600;
+	/* VP4/heading/l */
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-size: 4em;
+	/* identical to box height, or 117% */
+	letter-spacing: -0.05em;
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
 }
+
 .description {
 	color: #17253D;;
 	font-family: 'Segoe UI';
@@ -84,10 +110,6 @@
 @media (max-width: 767px) {
 	.titleSectionContainer {
 		height: 50vh;
-	}
-
-	.title {
-		font-size: 6vw; /* Adapt for mobile phones */
 	}
 
 	.description {
@@ -148,9 +170,6 @@
 
 
 @media (min-width: 768px) {
-	.title {
-		font-size: 4vw;
-	}
 
 	.description {
 		font-size: 1.6vw;
@@ -165,9 +184,6 @@
 }
 
 @media (min-width: 1024px) {
-	.title {
-		font-size: 3.35vw; /* Larger font for smaller screens */
-	}
 
 	.description {
 		font-size: 1.39vw;
@@ -181,9 +197,6 @@
 }
 
 @media (min-width: 1440px) {
-	.title {
-	  font-size: 3vw; /* Slightly smaller font size for larger screens */
-	}
 
 	.description {
 	  font-size: 1.3vw;
@@ -200,9 +213,6 @@
 }
 
 @media (min-width: 2560px) {
-	.title {
-	  font-size: 1.9vw;
-	}
 
 	.description {
 	  font-size: 0.8vw;

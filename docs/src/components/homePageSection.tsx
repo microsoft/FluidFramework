@@ -21,10 +21,13 @@ export type HomePageSectionProps = React.PropsWithChildren<{
  */
 export function HomePageSection({title, subtitle, image, children}: HomePageSectionProps): JSX.Element {
 	const sectionStyle = image
-    ? { backgroundImage: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${image})`, backgroundSize: '150%',
-  	backgroundPosition: 'center',
-  	backgroundRepeat: 'no-repeat' }
-    : {};
+    ? {
+		backgroundImage: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${image})`,
+		backgroundSize: '100%',
+		width: "100vw",
+		backgroundPosition: 'center',
+		backgroundRepeat: 'no-repeat'
+	} : {};
 	let imageStyle;
 	if (title === "Fluid Framework in the Cloud") {
 		imageStyle = sectionStyle;
@@ -32,7 +35,9 @@ export function HomePageSection({title, subtitle, image, children}: HomePageSect
 		imageStyle = {
 			backgroundImage: `linear-gradient(to bottom, rgba(255, 253, 251, 0.8) 10%, rgba(255, 253, 251, 0.8)), url(${image})`,
 			backgroundPosition: 'center',
-  			backgroundRepeat: 'no-repeat'
+  			backgroundRepeat: 'no-repeat',
+			backgroundSize: '100%',
+			width: "100vw",
 		}
 	}
 

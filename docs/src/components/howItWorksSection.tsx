@@ -111,7 +111,7 @@ export function HowItWorksSection(): React.ReactElement {
 	return <HomePageSection title="See how it works" subtitle="Open Source" image={ServiceSectionBG}>
 		<div className="howItWorksSectionBody">
 			<div className="howItWorksSectionCodeBody">
-				<div className="howItWorksCodeColumn">
+				<div className="sampleCodeColumn">
 					<div className="howItWorksCodeColumnLabel">
 						Sample Code
 					</div>
