@@ -2225,7 +2225,7 @@ describeCompat(
 						},
 						pendingLocalState,
 					);
-					await container.deltaManager.outbound.pause();
+					await (container.deltaManager as IDeltaManagerInternal).outbound.pause();
 					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
@@ -2234,7 +2234,7 @@ describeCompat(
 						reject: true,
 						errorMsg: `${loggingId} didn't connect in time`,
 					});
-					await container.deltaManager.inbound.pause();
+					await (container.deltaManager as IDeltaManagerInternal).inbound.pause();
 
 					// Now this container should submit the op when we resume the outbound queue
 					return container;
@@ -2255,22 +2255,28 @@ describeCompat(
 				const allSentP = Promise.all([
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container2.deltaManager.outbound.once("idle", resolve);
+							(container2.deltaManager as IDeltaManagerInternal).outbound.once(
+								"idle",
+								resolve,
+							);
 						},
 						{ errorMsg: "container2 outbound queue never reached idle state" },
 					),
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container3.deltaManager.outbound.once("idle", resolve);
+							(container3.deltaManager as IDeltaManagerInternal).outbound.once(
+								"idle",
+								resolve,
+							);
 						},
 						{ errorMsg: "container3 outbound queue never reached idle state" },
 					),
 				]);
-				container2.deltaManager.outbound.resume();
-				container3.deltaManager.outbound.resume();
+				(container2.deltaManager as IDeltaManagerInternal).outbound.resume();
+				(container3.deltaManager as IDeltaManagerInternal).outbound.resume();
 				await allSentP;
-				container2.deltaManager.inbound.resume();
-				container3.deltaManager.inbound.resume();
+				(container2.deltaManager as IDeltaManagerInternal).inbound.resume();
+				(container3.deltaManager as IDeltaManagerInternal).inbound.resume();
 
 				// At this point, both rehydrated containers should have submitted the same Counter op.
 				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
