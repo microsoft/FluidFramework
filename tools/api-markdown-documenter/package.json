@@ -96,7 +96,7 @@
 		"@types/node": "^18.15.11",
 		"@types/unist": "^2.0.6",
 		"c8": "^8.0.1",
-		"chai": "^4.3.7",
+		"chai": "^4.5.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
