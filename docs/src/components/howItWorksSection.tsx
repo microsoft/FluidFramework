@@ -7,7 +7,7 @@ import React from "react";
 import CodeBlock from '@theme/CodeBlock';
 
 import { CardWithBlur } from "@site/src/components/card";
-import { FluidAppPanel, useFluidBundle } from "@site/src/components/fluidBundleLoader";
+import {MockDiceRollerSample} from "@site/src/components/mockDiceRoller";
 import { HomePageSection } from '@site/src/components/homePageSection';
 
 import "@site/src/css/howItWorksSection.css";
@@ -110,15 +110,7 @@ const renderDiceRoller = (dice, elem) => {
 };
 `;
 
-// Note: the naming here is important.
-// The injected script looks for elements with these specific IDs to attach to.
-const diceRoller1ElementIdPrefix = "dice-roller-left";
-const diceRoller2ElementIdPrefix = "dice-roller-right";
-
 export function HowItWorksSection(): React.ReactElement {
-	useFluidBundle("dice-roller.2021-09-24.js");
-	const containerId = Date.now().toString();
-
 	return <HomePageSection title="See how it works" subtitle="Open Source" image={ServiceSectionBG}>
 		<div className="howItWorksSectionBody">
 			<div className="howItWorksSectionCodeBody">
@@ -141,8 +133,7 @@ export function HowItWorksSection(): React.ReactElement {
 					<div className="howItWorksCodeColumnLabel">
 						Sample Output
 					</div>
-					<DiceRollerCard containerId={containerId} elementId={diceRoller1ElementIdPrefix}/>
-					<DiceRollerCard containerId={containerId} elementId={diceRoller2ElementIdPrefix}/>
+					<MockDiceRollerSample className="howItWorksDiceCards" />
 				</div>
 			</div>
 			<div className="howItWorksTryOtherSamplesButton">
@@ -152,15 +143,4 @@ export function HowItWorksSection(): React.ReactElement {
 			</div>
 		</div>
 	</HomePageSection>;
-}
-
-interface DiceRollerCardProps {
-	containerId: string;
-	elementId: string;
-}
-
-function DiceRollerCard({containerId, elementId}: DiceRollerCardProps): React.ReactElement {
-	return <CardWithBlur>
-		<FluidAppPanel containerId={containerId} elementId={elementId}/>
-	</CardWithBlur>;
 }
