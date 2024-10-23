@@ -6,7 +6,6 @@
 import { Router, RequestHandler, Request, Response } from "express";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IReadinessCheck, IReadinessStatus } from "@fluidframework/server-services-core";
-import type { StartupCheck } from "./startupChecker";
 
 function runProbe(probeType: string, probeCheck: IReadinessCheck, probeProps): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -32,7 +31,7 @@ function runProbe(probeType: string, probeCheck: IReadinessCheck, probeProps): R
  */
 export function createHealthCheckEndpoints(
 	serviceName: string,
-	startupCheck: StartupCheck,
+	startupCheck: IReadinessCheck,
 	readinessCheck?: IReadinessCheck,
 	createLivenessEndpoint = true,
 ): Router {

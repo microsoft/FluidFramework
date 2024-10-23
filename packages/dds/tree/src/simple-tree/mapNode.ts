@@ -128,7 +128,10 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	): void;
 }
 
-const handler: ProxyHandler<TreeMapNode> = {
+// TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
+// This is not ideal, but no alternatives are possible.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handler: ProxyHandler<TreeMapNode<any>> = {
 	getPrototypeOf: () => {
 		return Map.prototype;
 	},
@@ -177,7 +180,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const node = this.innerNode;
 		return node.keys();
 	}
-	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
+	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
 		const node = this.innerNode;
 		const mapTree = mapTreeFromNodeData(
@@ -244,7 +247,7 @@ export function mapSchema<
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			if (useMapPrototype) {
-				return new Proxy<Schema>(instance as Schema, handler);
+				return new Proxy<Schema>(instance as Schema, handler as ProxyHandler<Schema>);
 			}
 			return instance;
 		}
