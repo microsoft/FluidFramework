@@ -135,7 +135,7 @@ export function HowItWorksSection(): React.ReactElement {
 				</div>
 			</div>
 			<div className="howItWorksTrySamplesRow">
-				<a className="howItWorksTrySamplesLink" href="https://github.com/microsoft/FluidHelloWorld">Try the dice roller yourself</a>
+				<a className="howItWorksTrySamplesLink" href="https://github.com/microsoft/FluidHelloWorld">Try the dice-roller sample</a>
 				<a className="howItWorksTrySamplesLink" href="https://github.com/Microsoft/FluidExamples">Try the other samples</a>
 			</div>
 		</div>
