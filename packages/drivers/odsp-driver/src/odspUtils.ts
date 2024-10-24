@@ -574,14 +574,14 @@ const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
  * @param appName - Name of the application that of the URL
  * @returns The provided base URL appended with odsp-specific locator information
  */
-export async function appendNavParam(
+export function appendNavParam(
 	baseUrl: string,
 	resolvedUrl: IResolvedUrl,
 	dataStorePath: string,
 	packageInfoSource?: IContainerPackageInfo,
 	context?: string,
 	appName?: string,
-): Promise<string> {
+): string {
 	const url = new URL(baseUrl);
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
