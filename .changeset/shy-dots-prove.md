@@ -8,7 +8,7 @@
 
 Improve strictness of input tree types when non-exact schema are provided
 
-When the type of the schema is not exactly specified, for example:
+Consider the following code where the type of the schema is not exactly specified:
 
 ```typescript
 const schemaFactory = new SchemaFactory("com.myApp");
@@ -25,7 +25,7 @@ const view = sharedTree.viewWith(config);
 view.root = [];
 ```
 
-This is disallowed since the same schema type could be produced either of:
+The assignment of `view.root` is disallowed since the same schema type could be either of:
 
 ```typescript
 const schema: (typeof A | typeof B)[] = [A];
@@ -35,7 +35,7 @@ const schema: (typeof A | typeof B)[] = [A];
 const schema: (typeof A | typeof B)[] = [B];
 ```
 
-To avoid this ambiguity use one of:
+To avoid this ambiguity, use one of the following patterns:
 
 ```typescript
 const schema = [A, B] as const;
@@ -46,8 +46,8 @@ const config = new TreeViewConfiguration({ schema });
 const config = new TreeViewConfiguration({ schema: [A, B] });
 ```
 
-To help update existing code which accidentally depended on this bug an `@alpha` API `unsafeArrayToTuple` has been provided.
-Many usages of this API will produce incorrectly types outputs, but when given `AllowedTypes` arrays which should not contain any unions, but accidentally got flatted to a single union, it can fix them:
+To help update existing code which accidentally depended on this bug, an `@alpha` API `unsafeArrayToTuple` has been added.
+Many usages of this API will produce incorrectly typed outputs. However, when given `AllowedTypes` arrays which should not contain any unions, but that were accidentally flattened to a single union, it can fix them:
 
 ```typescript
 // Gives imprecise type (typeof A | typeof B)[]
