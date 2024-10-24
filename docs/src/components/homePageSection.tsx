@@ -26,7 +26,7 @@ export function HomePageSection({title, subtitle, image, children}: HomePageSect
     ? {
 		backgroundImage: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${image})`,
 		backgroundSize: 'cover',
-		width: "100vw",
+		// width: "100vw",
 		backgroundPosition: 'center',
 		backgroundRepeat: 'no-repeat'
 	} : {};
@@ -39,7 +39,7 @@ export function HomePageSection({title, subtitle, image, children}: HomePageSect
 			backgroundPosition: 'center',
   			backgroundRepeat: 'no-repeat',
 			backgroundSize: 'cover',
-			width: "100vw",
+			// width: "100vw",
 		}
 	}
 
