@@ -15,6 +15,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -57,6 +58,7 @@ export function create(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
 	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -174,6 +176,7 @@ export function create(
 		collaborationSessionEventEmitter,
 		clusterDrainingChecker,
 		readinessCheck,
+		fluidAccessTokenGenerator,
 	);
 
 	app.use(routes.api);

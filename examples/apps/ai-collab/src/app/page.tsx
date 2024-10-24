@@ -87,7 +87,7 @@ export default function TasksListPage(): JSX.Element {
 	return (
 		<Container
 			sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-			maxWidth={"lg"}
+			maxWidth={false}
 		>
 			{userPresenceGroup && <UserProfilePhoto userPresenceGroup={userPresenceGroup} />}
 			<Typography variant="h2" sx={{ my: 3 }}>

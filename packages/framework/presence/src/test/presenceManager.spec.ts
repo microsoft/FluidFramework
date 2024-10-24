@@ -9,7 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
-import type { ISessionClient } from "../presence.js";
+import { SessionClientStatus, type ISessionClient } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -125,10 +125,62 @@ describe("Presence", () => {
 						"Attendee has wrong session id",
 					);
 					assert.equal(
-						newAttendee.currentConnectionId(),
+						newAttendee.connectionId(),
 						initialAttendeeConnectionId,
 						"Attendee has wrong client connection id",
 					);
+				});
+
+				describe("disconnects", () => {
+					let disconnectedAttendee: ISessionClient | undefined;
+					beforeEach(() => {
+						disconnectedAttendee = undefined;
+						afterCleanUp.push(
+							presence.events.on("attendeeDisconnected", (attendee) => {
+								assert(
+									disconnectedAttendee === undefined,
+									"Only one attendee should be disconnected",
+								);
+								disconnectedAttendee = attendee;
+							}),
+						);
+						// Setup - simulate join message from client
+						presence.processSignal("", initialAttendeeSignal, false);
+
+						// Act - remove client connection id
+						presence.removeClientConnectionId(initialAttendeeConnectionId);
+					});
+
+					it("is announced via `attendeeDisconnected` when audience member leaves", () => {
+						// Verify
+						assert(
+							disconnectedAttendee !== undefined,
+							"No attendee was disconnected in beforeEach",
+						);
+						assert.equal(
+							disconnectedAttendee.sessionId,
+							newAttendeeSessionId,
+							"Disconnected attendee has wrong session id",
+						);
+						assert.equal(
+							disconnectedAttendee.connectionId(),
+							initialAttendeeConnectionId,
+							"Disconnected attendee has wrong client connection id",
+						);
+					});
+
+					it("changes the session client status to `Disconnected`", () => {
+						// Verify
+						assert(
+							disconnectedAttendee !== undefined,
+							"No attendee was disconnected in beforeEach",
+						);
+						assert.equal(
+							disconnectedAttendee.getStatus(),
+							SessionClientStatus.Disconnected,
+							"Disconnected attendee has wrong status",
+						);
+					});
 				});
 
 				describe("already known", () => {
@@ -199,7 +251,7 @@ describe("Presence", () => {
 						);
 						// Current connection id is updated
 						assert(
-							newAttendee.currentConnectionId() === updatedClientConnectionId,
+							newAttendee.connectionId() === updatedClientConnectionId,
 							"Attendee does not have updated client connection id",
 						);
 						// Attendee is available via new connection id
