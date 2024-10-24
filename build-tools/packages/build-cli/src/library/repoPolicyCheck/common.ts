@@ -14,7 +14,12 @@ export interface Handler {
 	name: string;
 	match: RegExp;
 	handler: (file: string, root: string) => Promise<string | undefined>;
-	resolver?: (file: string, root: string) => { resolved: boolean; message?: string };
+	resolver?: (
+		file: string,
+		root: string,
+	) =>
+		| Promise<{ resolved: boolean; message?: string }>
+		| { resolved: boolean; message?: string };
 	final?: (root: string, resolve: boolean) => { error?: string } | undefined;
 }
 

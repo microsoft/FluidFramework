@@ -7,6 +7,16 @@ import * as BufferBrowser from "../../bufferBrowser.js";
 import * as BufferNode from "../../bufferNode.js";
 
 describe("Buffer isomorphism", () => {
+	test("returns the expected implementation", () => {
+		// BufferNode should create a native Node.js Buffer instance
+		const nodeBuffer = BufferNode.IsoBuffer.from("", "utf8");
+		expect(nodeBuffer.constructor.name).toEqual("Buffer");
+
+		// BufferBrowser should create our partial Buffer polyfil.
+		const browserBuffer = BufferBrowser.IsoBuffer.from("", "utf8");
+		expect(browserBuffer.constructor.name).toEqual("IsoBuffer");
+	});
+
 	test("from string utf-8/16 is compatible", () => {
 		const testArray = [
 			"",
@@ -135,7 +145,7 @@ describe("Buffer isomorphism", () => {
 
 			const encodedWithoutView = new TextEncoder().encode(item).buffer;
 			const nodeBufferWithoutView = BufferNode.IsoBuffer.from(encodedWithoutView);
-			const browserBufferWithoutView = BufferNode.IsoBuffer.from(encodedWithoutView);
+			const browserBufferWithoutView = BufferBrowser.IsoBuffer.from(encodedWithoutView);
 
 			expect(nodeBufferWithoutView.toString("base64")).toEqual(nodeBuffer.toString("base64"));
 			expect(browserBufferWithoutView.toString("base64")).toEqual(
@@ -253,14 +263,14 @@ describe("Buffer isomorphism", () => {
 	test("bufferToString working with IsoBuffer", () => {
 		const test = "aGVsbG90aGVyZQ==";
 
-		const buffer = BufferBrowser.IsoBuffer.from(test, "base64");
-		expect(BufferBrowser.bufferToString(buffer, "base64")).toEqual(test);
+		const browserBuffer = BufferBrowser.IsoBuffer.from(test, "base64");
+		expect(BufferBrowser.bufferToString(browserBuffer, "base64")).toEqual(test);
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-		expect(BufferBrowser.bufferToString(buffer, "utf-8")).toEqual("hellothere");
+		expect(BufferBrowser.bufferToString(browserBuffer, "utf-8")).toEqual("hellothere");
 
-		const buffer2 = BufferNode.IsoBuffer.from(test, "base64");
-		expect(BufferNode.bufferToString(buffer2, "base64")).toEqual(test);
+		const nodeBuffer = BufferNode.IsoBuffer.from(test, "base64");
+		expect(BufferNode.bufferToString(nodeBuffer, "base64")).toEqual(test);
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-		expect(BufferNode.bufferToString(buffer2, "utf-8")).toEqual("hellothere");
+		expect(BufferNode.bufferToString(nodeBuffer, "utf-8")).toEqual("hellothere");
 	});
 });

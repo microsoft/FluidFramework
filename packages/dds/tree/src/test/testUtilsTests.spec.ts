@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { JsonableTree } from "../core/index.js";
+import type { JsonableTree } from "../core/index.js";
 import { brand } from "../util/index.js";
 
 import { prepareTreeForCompare } from "./utils.js";

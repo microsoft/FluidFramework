@@ -13,13 +13,17 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import { ISegment } from "./mergeTreeNodes.js";
+import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import {
 	IJSONSegmentWithMergeInfo,
@@ -28,6 +32,7 @@ import {
 	MergeTreeHeaderMetadata,
 	serializeAsMaxSupportedVersion,
 	toLatestVersion,
+	type VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 
@@ -146,7 +151,7 @@ export class SnapshotV1 {
 		headerChunk.headerMetadata = this.header;
 		headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
 		const blobs: [key: string, content: string][] = [];
-		chunks.forEach((chunk, index) => {
+		for (const [index, chunk] of chunks.entries()) {
 			const id = `${SnapshotLegacy.body}_${index}`;
 			this.header.orderedChunkMetadata.push({ id });
 			blobs.push([
@@ -160,7 +165,7 @@ export class SnapshotV1 {
 					bind,
 				),
 			]);
-		});
+		}
 
 		const builder = new SummaryTreeBuilder();
 		builder.addBlob(
@@ -174,14 +179,14 @@ export class SnapshotV1 {
 				bind,
 			),
 		);
-		blobs.forEach((value) => {
+		for (const value of blobs) {
 			builder.addBlob(value[0], value[1]);
-		});
+		}
 
 		return builder.getSummaryTree();
 	}
 
-	extractSync() {
+	extractSync(): JsonSegmentSpecs[] {
 		const mergeTree = this.mergeTree;
 		const minSeq = this.header.minSequenceNumber;
 
@@ -193,7 +198,7 @@ export class SnapshotV1 {
 			json: JsonSegmentSpecs,
 			length: number,
 			attribution: IAttributionCollection<AttributionKey> | undefined,
-		) => {
+		): void => {
 			segmentsAfterCombine += 1;
 			this.segments.push(json);
 			this.segmentLengths.push(length);
@@ -203,21 +208,21 @@ export class SnapshotV1 {
 		};
 
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
-		const pushSeg = (segment?: ISegment) => {
+		const pushSeg = (segment?: ISegment): void => {
 			if (segment) {
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
-					segment.propertyManager = undefined;
 				}
-				pushSegRaw(segment.toJSONObject(), segment.cachedLength, segment.attribution);
+				pushSegRaw(
+					segment.toJSONObject() as JsonSegmentSpecs,
+					segment.cachedLength,
+					segment.attribution,
+				);
 			}
 		};
 
 		let prev: ISegment | undefined;
-		const extractSegment = (segment: ISegment) => {
+		const extractSegment = (segment: ISegment): boolean => {
 			// Elide segments that do not need to be included in the snapshot.  A segment may be elided if
 			// either condition is true:
 			//   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because
@@ -274,15 +279,11 @@ export class SnapshotV1 {
 				pushSeg(prev);
 				prev = undefined;
 
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
-					segment.propertyManager = undefined;
 				}
 				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
-					json: segment.toJSONObject(),
+					json: segment.toJSONObject() as IJSONSegment,
 				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -294,17 +295,16 @@ export class SnapshotV1 {
 				// sequence numbers.  Any remaining removal info should be preserved.
 				if (segment.removedSeq !== undefined) {
 					assert(
-						segment.removedSeq !== UnassignedSequenceNumber &&
-							segment.removedSeq > minSeq,
+						segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
 					raw.removedSeq = segment.removedSeq;
 
 					// back compat for when we split overlap and removed client
 					raw.removedClient =
-						segment.removedClientIds !== undefined
-							? this.getLongClientId(segment.removedClientIds[0])
-							: undefined;
+						segment.removedClientIds === undefined
+							? undefined
+							: this.getLongClientId(segment.removedClientIds[0]);
 
 					raw.removedClientIds = segment.removedClientIds?.map((id) =>
 						this.getLongClientId(id),
@@ -318,9 +318,7 @@ export class SnapshotV1 {
 					);
 					raw.movedSeq = segment.movedSeq;
 					raw.movedSeqs = segment.movedSeqs;
-					raw.movedClientIds = segment.movedClientIds?.map((id) =>
-						this.getLongClientId(id),
-					);
+					raw.movedClientIds = segment.movedClientIds?.map((id) => this.getLongClientId(id));
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.
@@ -379,7 +377,9 @@ export class SnapshotV1 {
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {
-		const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
+		const chunkObj: VersionedMergeTreeChunk = serializer
+			? (serializer.parse(chunk) as VersionedMergeTreeChunk)
+			: (JSON.parse(chunk) as VersionedMergeTreeChunk);
 		return toLatestVersion(path, chunkObj, logger, options);
 	}
 }

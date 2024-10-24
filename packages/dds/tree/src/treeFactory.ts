@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
-	ISharedObjectKind,
+	type ISharedObjectKind,
 	createSharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
-import { ITree } from "./simple-tree/index.js";
+import { SharedTree as SharedTreeImpl, type SharedTreeOptions } from "./shared-tree/index.js";
+import type { ITree } from "./simple-tree/index.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
@@ -56,6 +56,7 @@ export class TreeFactory implements IChannelFactory<ITree> {
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
+ * @legacy
  * @alpha
  */
 export const SharedTree = configuredSharedTree({});
@@ -80,6 +81,7 @@ export const SharedTree = configuredSharedTree({});
  * });
  * ```
  * @privateRemarks
+ * This should be legacy, but has to be internal due to limitations of API tagging preventing it from being both alpha and alpha+legacy.
  * TODO:
  * Expose Ajv validator for better error message quality somehow.
  * Maybe as part of a test utils or dev-tool package?

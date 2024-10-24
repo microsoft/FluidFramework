@@ -341,9 +341,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			</div>
 			<div className={styles.actions}>
 				<ActionsBar
-					isContainerConnected={
-						containerState.connectionState === ConnectionState.Connected
-					}
+					isContainerConnected={containerState.connectionState === ConnectionState.Connected}
 					containerState={containerState}
 					tryConnect={tryConnect}
 					forceDisconnect={forceDisconnect}

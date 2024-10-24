@@ -21,6 +21,7 @@ import {
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IFluidSerializer {
@@ -63,11 +64,7 @@ export interface IFluidSerializer {
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
 
-	public constructor(
-		private readonly context: IFluidHandleContext,
-		// To be called whenever a handle is parsed by this serializer.
-		private readonly handleParsedCb: (handle: IFluidHandle) => void = () => {},
-	) {
+	public constructor(private readonly context: IFluidHandleContext) {
 		this.root = this.context;
 		while (this.root.routeContext !== undefined) {
 			this.root = this.root.routeContext;
@@ -144,9 +141,7 @@ export class FluidSerializer implements IFluidSerializer {
 				? value.url
 				: generateHandleContextPath(value.url, this.context);
 
-			const parsedHandle = new RemoteFluidObjectHandle(absolutePath, this.root);
-			this.handleParsedCb(parsedHandle);
-			return parsedHandle;
+			return new RemoteFluidObjectHandle(absolutePath, this.root);
 		} else {
 			return value;
 		}

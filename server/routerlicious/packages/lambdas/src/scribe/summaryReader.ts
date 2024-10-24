@@ -293,7 +293,6 @@ export class SummaryReader implements ISummaryReader {
 			expHash1: "",
 			lastSentMSN: undefined,
 			nackMessages: undefined,
-			successfullyStartedLambdas: [],
 			checkpointTimestamp: undefined,
 		};
 	}

@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import child_process from "child_process";
-
+import {
+	InteractiveBrowserCredential,
+	useIdentityPlugin,
+	type AuthenticationRecord,
+} from "@azure/identity";
+import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	IPublicClientConfig,
@@ -13,57 +17,93 @@ import {
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
-	getOdspRefreshTokenFn,
+	getAadTenant,
+	getOdspScope,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	IOdspTokenManagerCacheKey,
-	OdspTokenConfig,
-	OdspTokenManager,
-	getMicrosoftConfiguration,
-	odspTokensCache,
-} from "@fluidframework/tool-utils/internal";
 
-import { getForceTokenReauth } from "./fluidFetchArgs.js";
+import { loginHint } from "./fluidFetchArgs.js";
+
+// Note: the following page may be helpful for debugging auth issues:
+// https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/TROUBLESHOOTING.md
+// See e.g. the section on setting 'AZURE_LOG_LEVEL'.
+useIdentityPlugin(cachePersistencePlugin);
+
+export const fetchToolClientConfig: IPublicClientConfig = {
+	get clientId(): string {
+		const clientId = process.env.fetch__tool__clientId;
+		if (clientId === undefined) {
+			throw new Error(
+				"Client ID environment variable not set: fetch__tool__clientId. Use the getkeys tool to populate it.",
+			);
+		}
+		return clientId;
+	},
+};
+
+// Local token cache for resolveWrapper.
+// @azure/identity-cache-persistence does not behave well in response to large numbers of parallel requests, which can happen for documents
+// with lots of blobs. We work around this for now by including a simple in-memory cache.
+// See more information here:
+// https://github.com/Azure/azure-sdk-for-js/issues/31307
+const tokensByServer = new Map<string, string>();
+
+// If the persisted cache has multiple accounts, InteractiveBrowserCredential ignores it unless it is passed an explicit authentication record.
+// We keep the auth record around for a single run in memory, so that at worst we only have to authenticate once per server/user.
+const authRecordPerServer = new Map<string, AuthenticationRecord | undefined>();
 
 export async function resolveWrapper<T>(
 	callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
 	server: string,
 	clientConfig: IPublicClientConfig,
 	forceTokenReauth = false,
-	forToken = false,
 ): Promise<T> {
 	try {
-		const odspTokenManager = new OdspTokenManager(odspTokensCache);
-		const tokenConfig: OdspTokenConfig = {
-			type: "browserLogin",
-			navigator: fluidFetchWebNavigator,
-		};
-		const tokens = await odspTokenManager.getOdspTokens(
-			server,
-			clientConfig,
-			tokenConfig,
-			undefined /* forceRefresh */,
-			forceTokenReauth || getForceTokenReauth(),
-		);
-
-		const result = await callback({
-			accessToken: tokens.accessToken,
-			refreshTokenFn: getOdspRefreshTokenFn(server, clientConfig, tokens),
+		const authenticationRecord = authRecordPerServer.get(server);
+		const credential = new InteractiveBrowserCredential({
+			clientId: fetchToolClientConfig.clientId,
+			tenantId: getAadTenant(server),
+			// NOTE: fetch-tool flows using multiple sets of user credentials haven't been well-tested.
+			// Some of the @azure/identity docs suggest we may need to manage authentication records and choose
+			// which one to use explicitly here if we have such scenarios.
+			// If we start doing this, it may be worth considering using disableAutomaticAuthentication here so we
+			// have better control over when interactive auth may be triggered.
+			// For now, fetch-tool doesn't work against personal accounts anyway so the only flow that might necessitate this
+			// would be grabbing documents using several identities (e.g. test accounts we use for stress testing).
+			// In that case, a simple workaround is to delete the cache that @azure/identity uses before running the tool.
+			// See docs on `tokenCachePersistenceOptions.name` for information on where this cache is stored.
+			loginHint,
+			authenticationRecord,
+			tokenCachePersistenceOptions: {
+				enabled: true,
+				name: "fetch-tool",
+			},
 		});
-		// If this is used for getting a token, then refresh the cache with new token.
-		if (forToken) {
-			const key: IOdspTokenManagerCacheKey = { isPush: false, userOrServer: server };
-			await odspTokenManager.updateTokensCache(key, {
-				accessToken: result as any as string,
-				refreshToken: tokens.refreshToken,
-			});
-			return result;
+
+		const scope = getOdspScope(server);
+		if (authenticationRecord === undefined) {
+			// Cache this authentication record for subsequent token requests.
+			authRecordPerServer.set(server, await credential.authenticate(scope));
 		}
-		return result;
+		let cachedToken = tokensByServer.get(server);
+		if (cachedToken === undefined || forceTokenReauth) {
+			const result = await credential.getToken(scope);
+			cachedToken = result.token;
+			tokensByServer.set(server, cachedToken);
+		}
+
+		return await callback({
+			accessToken: cachedToken,
+			refreshTokenFn: async () => {
+				await credential.authenticate(scope);
+				const { token } = await credential.getToken(scope);
+				tokensByServer.set(server, token);
+				return token;
+			},
+		});
 	} catch (e: any) {
 		if (e.errorType === DriverErrorTypes.authorizationError && !forceTokenReauth) {
 			// Re-auth
-			return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
+			return resolveWrapper<T>(callback, server, clientConfig, true);
 		}
 		throw e;
 	}
@@ -101,12 +141,10 @@ export async function getSharepointFiles(
 	serverRelativePath: string,
 	recurse: boolean,
 ) {
-	const clientConfig = getMicrosoftConfiguration();
-
 	const fileInfo = await resolveDriveItemByServerRelativePath(
 		server,
 		serverRelativePath,
-		clientConfig,
+		fetchToolClientConfig,
 	);
 	console.log(fileInfo);
 	const pendingFolder: { path: string; folder: IOdspDriveItem }[] = [];
@@ -124,7 +162,7 @@ export async function getSharepointFiles(
 			break;
 		}
 		const { path, folder } = folderInfo;
-		const children = await resolveChildrenByDriveItem(server, folder, clientConfig);
+		const children = await resolveChildrenByDriveItem(server, folder, fetchToolClientConfig);
 		for (const child of children) {
 			const childPath = `${path}/${child.name}`;
 			if (child.isFolder) {
@@ -140,22 +178,10 @@ export async function getSharepointFiles(
 }
 
 export async function getSingleSharePointFile(server: string, drive: string, item: string) {
-	const clientConfig = getMicrosoftConfiguration();
-
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		(authRequestInfo) => getDriveItemFromDriveAndItem(server, drive, item, authRequestInfo),
 		server,
-		clientConfig,
+		fetchToolClientConfig,
 	);
 }
-
-const fluidFetchWebNavigator = (url: string) => {
-	let message = "Please open browser and navigate to this URL:";
-	if (process.platform === "win32") {
-		child_process.exec(`start "fluid-fetch" /B "${url}"`);
-		message =
-			"Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
-	}
-	console.log(`${message}\n  ${url}`);
-};

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ModularChangeset, SchemaChange } from "../feature-libraries/index.js";
+import type { ModularChangeset, SchemaChange } from "../feature-libraries/index.js";
 
 export type SharedTreeInnerChange =
 	| { readonly type: "data"; readonly innerChange: ModularChangeset }

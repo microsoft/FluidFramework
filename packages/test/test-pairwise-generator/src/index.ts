@@ -52,9 +52,7 @@ function applyPairToPartial<T extends Record<string, any>>(
 				(pair.iKey in partial &&
 					!(pair.jKey in partial) &&
 					partial[pair.iKey] === pair.iVal) ||
-				(pair.jKey in partial &&
-					!(pair.iKey in partial) &&
-					partial[pair.jKey] === pair.jVal)
+				(pair.jKey in partial && !(pair.iKey in partial) && partial[pair.jKey] === pair.jVal)
 			) {
 				matchingPartials.push(partial);
 			}

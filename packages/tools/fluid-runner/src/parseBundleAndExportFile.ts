@@ -49,9 +49,7 @@ export async function parseBundleAndExportFile(
 				// explicit file: protocol for absolute paths. Otherwise, path starting with
 				// a driver letter like 'c:" will have drive interpreted as URL protocol.
 				// file:// URLs are always absolute so prepend file:// exactly when absolute.
-				const codeLoaderSpec = `${
-					path.isAbsolute(codeLoader) ? "file://" : ""
-				}${codeLoader}`;
+				const codeLoaderSpec = `${path.isAbsolute(codeLoader) ? "file://" : ""}${codeLoader}`;
 				const codeLoaderBundle = await import(codeLoaderSpec);
 				if (!isCodeLoaderBundle(codeLoaderBundle)) {
 					const eventName = clientArgsValidationError;

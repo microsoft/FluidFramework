@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PathVisitor, UpPath } from "../../core/index.js";
+import type { PathVisitor, UpPath } from "../../core/index.js";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -28,8 +28,6 @@ import { PathVisitor, UpPath } from "../../core/index.js";
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
  * - Consider removing this and just using AnchorEvents and simple-tree's events (and extending them as needed).
- *
- * @internal
  */
 export interface FlexTreeNodeEvents {
 	/**
@@ -48,4 +46,14 @@ export interface FlexTreeNodeEvents {
 	 * @returns a visitor to traverse the subtree or `void`.
 	 */
 	subtreeChanging(upPath: UpPath): PathVisitor | void;
+
+	/**
+	 * This has the same contract as {@link TreeChangeEvents.nodeChanged}
+	 */
+	nodeChanged(): void;
+
+	/**
+	 * This has the same contract as {@link TreeChangeEvents.treeChanged}
+	 */
+	treeChanged(): void;
 }

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
+import type { ITree, ISignalMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
  * An envelope wraps the contents with the intended target
+ * @legacy
  * @alpha
  */
 export interface IEnvelope {
@@ -22,40 +23,18 @@ export interface IEnvelope {
 }
 
 /**
- * @internal
- * @deprecated - This interface is now moved to `@fluidframework/container-definitions` package. Please import from that package.
- */
-export interface ISignalEnvelope {
-	/**
-	 * The target for the envelope, undefined for the container
-	 */
-	address?: string;
-
-	/**
-	 * Identifier for the signal being submitted.
-	 */
-	clientSignalSequenceNumber: number;
-
-	/**
-	 * The contents of the envelope
-	 */
-	contents: {
-		type: string;
-		content: any;
-	};
-}
-
-/**
  * Represents ISignalMessage with its type.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IInboundSignalMessage extends ISignalMessage {
-	type: string;
+	readonly type: string;
 }
 
 /**
  * Message send by client attaching local data structure.
  * Contains snapshot of data structure which is the current state of this data structure.
+ * @legacy
  * @alpha
  */
 export interface IAttachMessage {
@@ -80,6 +59,7 @@ export interface IAttachMessage {
  * but it should not be used when creating a new attach op.
  * Older versions of attach messages could have null snapshots,
  * so this gives correct typings for writing backward compatible code.
+ * @legacy
  * @alpha
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {

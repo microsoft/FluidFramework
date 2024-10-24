@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import isEqual from "lodash/isEqual.js";
 
 import { ChangeSet } from "./changeset.js";
@@ -78,9 +78,7 @@ export function rebaseToRemoteChanges(
 			loop(
 				makePromise(getUnrebasedChange(change.localBranchStart)),
 				(currentRebasedChange) => {
-					if (
-						currentRebasedChange.remoteHeadGuid === currentRebasedChange.referenceGuid
-					) {
+					if (currentRebasedChange.remoteHeadGuid === currentRebasedChange.referenceGuid) {
 						return null;
 					}
 					return makePromise(getUnrebasedChange(currentRebasedChange.referenceGuid)).then(
@@ -130,9 +128,7 @@ export function rebaseToRemoteChanges(
 								cloneDeep(alreadyRebasedChanges[0].changeSet),
 							);
 							invertedChange.toInverseChangeSet();
-							invertedChange.applyChangeSet(
-								rebaseBaseChangeSetForAlreadyRebasedChanges,
-							);
+							invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
 							applyAfterMetaInformation = new Map();
 							const conflicts2 = [];
 							changeset = cloneDeep(alreadyRebasedChanges[0].changeSet);

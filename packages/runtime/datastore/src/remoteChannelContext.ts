@@ -4,11 +4,16 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	IChannel,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
@@ -52,7 +57,6 @@ export class RemoteChannelContext implements IChannelContext {
 		storageService: IDocumentStorageService,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
-		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly id: string,
 		baseSnapshot: ISnapshotTree,
 		registry: ISharedObjectRegistry,
@@ -71,7 +75,6 @@ export class RemoteChannelContext implements IChannelContext {
 			dataStoreContext.connected,
 			submitFn,
 			() => dirtyFn(this.id),
-			addedGCOutboundReferenceFn,
 			() => runtime.attachState !== AttachState.Detached,
 			storageService,
 			this.subLogger,
@@ -100,11 +103,7 @@ export class RemoteChannelContext implements IChannelContext {
 			// Send all pending messages to the channel
 			assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
 			for (const message of this.pending) {
-				this.services.deltaConnection.process(
-					message,
-					false,
-					undefined /* localOpMetadata */,
-				);
+				this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
 			}
 			this.thresholdOpsCounter.send("ProcessPendingOps", this.pending.length);
 

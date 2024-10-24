@@ -7,6 +7,7 @@ import { useTree } from "@fluid-experimental/tree-react-api";
 import * as React from "react";
 
 import { Inventory } from "../schema.js";
+
 import { Counter } from "./counter.js";
 
 export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => {

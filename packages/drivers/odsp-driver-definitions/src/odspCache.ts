@@ -20,10 +20,18 @@ export const maximumCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
  * @internal
  */
 export const snapshotKey = "snapshot";
+
 /**
+ * Describes key for partial snapshot with loading GroupId in cache entry.
+ * @internal
+ */
+export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
+
+/**
+ * @legacy
  * @alpha
  */
-export type CacheContentType = "snapshot" | "ops";
+export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 /*
  * File / container identifier.
@@ -31,6 +39,7 @@ export type CacheContentType = "snapshot" | "ops";
  * to implement storage / identify files.
  */
 /**
+ * @legacy
  * @alpha
  */
 export interface IFileEntry {
@@ -50,6 +59,7 @@ export interface IFileEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
+ * @legacy
  * @alpha
  */
 export interface IEntry {
@@ -73,6 +83,7 @@ export interface IEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
+ * @legacy
  * @alpha
  */
 export interface ICacheEntry extends IEntry {
@@ -88,6 +99,7 @@ export interface ICacheEntry extends IEntry {
  * cache implementation that does not survive across sessions. Snapshot entires stored in the
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
+ * @legacy
  * @alpha
  */
 export interface IPersistedCache {

@@ -46,10 +46,10 @@ module.exports = (env) =>
 			? {
 					mode: "production",
 					devtool: "source-map",
-			  }
+				}
 			: {
 					mode: "development",
 					devtool: "inline-source-map",
-			  },
+				},
 		fluidRoute.devServerConfig(__dirname, env),
 	);

@@ -1,26 +1,5 @@
 {
-	"currentTree": [
-		0,
-		0,
-		[
-			10,
-			[
-				[
-					4,
-					12,
-					[
-						5,
-						[
-							[7, [99]],
-							[1, 10, [2, [[3, ["payload"]]]]]
-						],
-						6,
-						[[8, 14]]
-					]
-				]
-			]
-		]
-	],
+	"currentTree": [0, 0, [10, [[4, 12, [5, [[7, [99]], [1, 10, [2, [[3, ["payload"]]]]]], 6, [[8, 14]]]]]]],
 	"editHistory": {
 		"editChunks": [
 			{
@@ -30,10 +9,17 @@
 						"id": "89483af1-a533-5667-8e9c-2d318600cf09",
 						"changes": [
 							{ "destination": 0, "source": [[1, 10, [2, [[3, ["payload"]]]]]], "type": 5 },
-							{ "destination": 1, "source": [[4, 12, [5, [[7]], 6, [[8], 0, [9]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[4, 12, [5, [[7]], 6, [[8], 0, [9]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
-								"destination": { "side": 1, "referenceTrait": { "label": "root", "parent": 0 } },
+								"destination": {
+									"side": 1,
+									"referenceTrait": { "label": "root", "parent": 0 }
+								},
 								"type": 0
 							}
 						]

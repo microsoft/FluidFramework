@@ -14,7 +14,7 @@ import {
 	shorthands,
 	tokens,
 } from "@fluentui/react-components";
-import { type Serializable } from "@fluidframework/datastore-definitions/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	DataEdit,
 	type EditData,
@@ -26,7 +26,7 @@ import React from "react";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
-import { type HasLabel } from "./CommonInterfaces.js";
+import type { HasLabel } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
 
 /**
@@ -136,7 +136,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 		// This checks if the selected option was the current option, if so it the value stays the same. If not then it clears it.
 		let newValue: Serializable<unknown> | undefined;
 		if (activeEdit === undefined) {
-			newValue = data.optionText === typeof node.value ? node.value ?? undefined : "";
+			newValue = data.optionText === typeof node.value ? (node.value ?? undefined) : "";
 		} else {
 			newValue = data.optionText === activeEdit.type ? activeEdit.value : "";
 		}
@@ -146,7 +146,8 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 		});
 	};
 
-	const options = node.editProps?.editTypes === undefined ? allEdits : node.editProps?.editTypes;
+	const options =
+		node.editProps?.editTypes === undefined ? allEdits : node.editProps?.editTypes;
 
 	// Returns the proper type, mainly fixing te issue of null being type "object"
 	function getEditType(): string {

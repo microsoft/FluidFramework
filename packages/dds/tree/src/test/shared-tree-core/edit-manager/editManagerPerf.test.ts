@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { TaggedChange } from "../../../core/index.js";
+import type { TaggedChange } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	ConstrainedTestChangeRebaser,
@@ -288,8 +288,8 @@ export function testPerf() {
 							//   They therefore undergo no inverting.
 							// As part of rebasing P+, we invert...
 							//   - each of the phase-1 peer edits: P
-							// Adding both terms and simplifying:
-							inverted: P,
+							//     However, all but the last of these had their inverse already cached
+							inverted: 1,
 							// As part of rebasing the peer branch that contains the phase-1 edits,
 							//   none of the peer edits need to be rebased,
 							//   so we don't compose the changes they would need to rebase over.
@@ -329,12 +329,7 @@ export function testPerf() {
 					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
-						rebasePeerEditsOverTrunkEdits(
-							P,
-							T + 1,
-							manager,
-							() => TestChange.emptyChange,
-						);
+						rebasePeerEditsOverTrunkEdits(P, T + 1, manager, () => TestChange.emptyChange);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;
@@ -375,14 +370,15 @@ export function testPerf() {
 							//   we invert...
 							//     - each of the phase-1 peer edits: P
 							//       (these are based on commit 0)
-							//   This adds up P inverts.
+							//       However, all but the last of these had their inverse already cached
+							//   This adds up 1 invert.
 							// As part of rebasing P+ to the tip of the trunk,
 							//   we invert...
 							//     - each of the phase-1 peer edits: P
 							//       (these are based on commit Tc)
 							//   This adds up P inverts.
 							// Adding both terms:
-							inverted: 2 * P,
+							inverted: P + 1,
 							// As part of rebasing the peer branch that contains the phase-1 edits, we compose...
 							//   - the trunk edits: T
 							//   then for the Ith local edit on the branch we compose...

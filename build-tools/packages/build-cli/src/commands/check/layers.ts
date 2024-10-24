@@ -9,7 +9,7 @@ import path from "node:path";
 import { Timer } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
-import { BaseCommand, LayerGraph } from "../../library";
+import { BaseCommand, LayerGraph } from "../../library/index.js";
 
 const packagesMdFileName = "PACKAGES.md";
 

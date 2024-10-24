@@ -84,7 +84,10 @@ function runTasks(
 }
 
 // Runs all the tasks in the task queue
-function idleTaskCallback(deadline: { timeRemaining: () => number; readonly didTimeout: boolean }) {
+function idleTaskCallback(deadline: {
+	timeRemaining: () => number;
+	readonly didTimeout: boolean;
+}) {
 	// Minimum time that must be available on deadline to run any more tasks
 	const minTaskTime = 10;
 	runTasks(undefined, () => deadline.timeRemaining() > minTaskTime);

@@ -4,34 +4,40 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	blobHeadersBlobName as blobNameForBlobHeaders,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
 import {
 	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 
+import { blobsTreeName } from "../blobManager/index.js";
 import { IGCMetadata } from "../gc/index.js";
 
 import { IDocumentSchema } from "./documentSchema.js";
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
-export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
+export type OmitAttributesVersions<T> = Omit<
+	T,
+	"snapshotFormatVersion" | "summaryFormatVersion"
+>;
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreAttributes0 {
@@ -48,6 +54,7 @@ export interface IFluidDataStoreAttributes0 {
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreAttributes1
@@ -58,6 +65,7 @@ export interface IFluidDataStoreAttributes1
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreAttributes2
@@ -80,6 +88,7 @@ export interface IFluidDataStoreAttributes2
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  *
  */
@@ -87,7 +96,9 @@ export type ReadFluidDataStoreAttributes =
 	| IFluidDataStoreAttributes0
 	| IFluidDataStoreAttributes1
 	| IFluidDataStoreAttributes2;
-export type WriteFluidDataStoreAttributes = IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
+export type WriteFluidDataStoreAttributes =
+	| IFluidDataStoreAttributes1
+	| IFluidDataStoreAttributes2;
 
 export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttributes): number {
 	if (attributes.summaryFormatVersion) {
@@ -115,6 +126,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
@@ -134,6 +146,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICreateContainerMetadata {
@@ -145,6 +158,7 @@ export interface ICreateContainerMetadata {
 
 /**
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
+ * @legacy
  * @alpha
  */
 export type ISummaryMetadataMessage = Pick<
@@ -175,7 +189,7 @@ export const extractSummaryMetadataMessage = (
 				sequenceNumber: message.sequenceNumber,
 				timestamp: message.timestamp,
 				type: message.type,
-		  };
+			};
 
 export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
 	/**
@@ -195,7 +209,6 @@ export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
-export const blobsTreeName = ".blobs";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
 

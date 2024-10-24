@@ -14,7 +14,7 @@ import {
 import { type IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
@@ -112,7 +112,10 @@ export class SignalerTestDataObjectClass extends DataObject<{ Events: IErrorEven
 		return this;
 	}
 
-	public offSignal<T>(signalName: string, listener: SignalListener<T>): SignalerTestDataObject {
+	public offSignal<T>(
+		signalName: string,
+		listener: SignalListener<T>,
+	): SignalerTestDataObject {
 		this.emitter.off(signalName, listener);
 		return this;
 	}

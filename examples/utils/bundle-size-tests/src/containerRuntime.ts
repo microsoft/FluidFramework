@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 
 export function apisToBundle() {
 	// Pass through dummy parameters, this file is only used for bundle analysis
 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	ContainerRuntime.loadRuntime(undefined as any);
+	loadContainerRuntime(undefined as any);
 }

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidObjectTreeNode, HasContainerKey } from "@fluidframework/devtools-core/internal";
+import type {
+	FluidObjectTreeNode,
+	HasContainerKey,
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";

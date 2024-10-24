@@ -58,7 +58,11 @@ describe("EnumArrayProperty", function () {
 	it("Should be able to getEnumStrings", function () {
 		let property = PropertyFactory.create("autodesk.enum:enums-1.0.0");
 
-		expect(property.get("enumArray").getEnumStrings(0, 3)).to.deep.equal(["dos", "uno", "dos"]);
+		expect(property.get("enumArray").getEnumStrings(0, 3)).to.deep.equal([
+			"dos",
+			"uno",
+			"dos",
+		]);
 	});
 
 	it("Should be able to set a value using an Enum number", function () {

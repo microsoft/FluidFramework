@@ -6,23 +6,21 @@
 import { strict as assert } from "assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { ICodecOptions } from "../../codec/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
 import {
-	DeltaDetachedNodeId,
-	TreeStoredSchema,
+	type DeltaDetachedNodeId,
+	type TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
-	ModularChangeset,
-	TreeChunk,
-	cursorForJsonableTreeNode,
+	type ModularChangeset,
+	type TreeChunk,
 	fieldKinds,
 	type SchemaChange,
 } from "../../feature-libraries/index.js";
@@ -31,13 +29,14 @@ import {
 	updateRefreshers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeFamily.js";
-import {
+import type {
 	SharedTreeChange,
 	SharedTreeInnerChange,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
+import { failCodecFamily, mintRevisionTag, testRevisionTagCodec } from "../utils.js";
+import { singleJsonCursor } from "../json/index.js";
 
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
@@ -47,18 +46,17 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
-
-const nodeX = { type: leaf.string.name, value: "X" };
-const nodeY = { type: leaf.string.name, value: "Y" };
+const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
+	dataChanges.push(taggedChange.change),
+);
 
 // Side effects results in `dataChanges` being populated
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(cursorForJsonableTreeNode(nodeX));
+	.set(singleJsonCursor("X"));
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(cursorForJsonableTreeNode(nodeY));
+	.set(singleJsonCursor("Y"));
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];
@@ -72,6 +70,7 @@ const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: {
 		kind: forbidden.identifier,
+		types: new Set(),
 	},
 };
 const stSchemaChange: SharedTreeChange = {
@@ -226,8 +225,9 @@ describe("SharedTreeChangeFamily", () => {
 
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
+				const tag = mintRevisionTag();
 				assert.deepEqual(
-					sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback),
+					sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback, tag),
 					{
 						changes: [
 							{
@@ -235,6 +235,7 @@ describe("SharedTreeChangeFamily", () => {
 								innerChange: modularFamily.invert(
 									makeAnonChange(dataChange1),
 									isRollback,
+									tag,
 								),
 							},
 						],

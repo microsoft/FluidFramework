@@ -23,7 +23,7 @@ import {
 	getParam,
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
-	getCorrelationIdWithHttpFallback,
+	getTelemetryContextPropertiesWithHttpInfo,
 } from "@fluidframework/server-services-utils";
 import {
 	getBooleanParam,
@@ -40,11 +40,17 @@ import {
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 } from "@fluidframework/server-services-client";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	LumberEventName,
+	Lumberjack,
+	type Lumber,
+} from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, getSession } from "../../../utils";
+import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
+import type { RequestHandler } from "express-serve-static-core";
 
 export function create(
 	storage: IDocumentStorage,
@@ -74,6 +80,9 @@ export function create(
 			: undefined;
 	const sessionStickinessDurationMs: number | undefined = config.get(
 		"alfred:sessionStickinessDurationMs",
+	);
+	const ephemeralDocumentTTLSec: number | undefined = config.get(
+		"storage:ephemeralDocumentTTLSec",
 	);
 
 	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
@@ -264,6 +273,27 @@ export function create(
 		},
 	);
 
+	function verifyStorageTokenForGetSession(
+		...args: Parameters<typeof verifyStorageToken>
+	): RequestHandler {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		return async (request, res, next) => {
+			const VerifyStorageTokenMetric = Lumberjack.newLumberMetric(
+				LumberEventName.VerifyStorageToken,
+				undefined,
+			);
+
+			try {
+				const result = verifyStorageToken(...args)(request, res, next);
+				VerifyStorageTokenMetric.success("Token verified successfully.");
+				return result;
+			} catch (error) {
+				VerifyStorageTokenMetric.error("Failed to verify token.", error);
+				throw error;
+			}
+		};
+	}
+
 	/**
 	 * Get the session information.
 	 */
@@ -279,11 +309,20 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
+
+			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
+				LumberEventName.GetSession,
+				lumberjackProperties,
+			);
+			// Tracks the different stages of getSessionMetric
+			const connectionTrace = new StageTrace<string>("GetSession");
+
 			const session = getSession(
 				externalOrdererUrl,
 				externalHistorianUrl,
@@ -294,8 +333,21 @@ export function create(
 				sessionStickinessDurationMs,
 				messageBrokerId,
 				clusterDrainingChecker,
+				ephemeralDocumentTTLSec,
+				connectionTrace,
 			);
-			handleResponse(session, response, false);
+
+			const onSuccess = (result: ISession): void => {
+				getSessionMetric.setProperty("connectTrace", connectionTrace);
+				getSessionMetric.success("GetSession succeeded.");
+			};
+
+			const onError = (error: any): void => {
+				getSessionMetric.setProperty("connectTrace", connectionTrace);
+				getSessionMetric.error("GetSession failed.", error);
+			};
+
+			handleResponse(session, response, false, undefined, undefined, onSuccess, onError);
 		},
 	);
 
@@ -345,7 +397,10 @@ export function create(
 				);
 			}
 			if (tokenRevocationManager) {
-				const correlationId = getCorrelationIdWithHttpFallback(request, response);
+				const correlationId = getTelemetryContextPropertiesWithHttpInfo(
+					request,
+					response,
+				).correlationId;
 				const options: IRevokeTokenOptions = {
 					correlationId,
 				};

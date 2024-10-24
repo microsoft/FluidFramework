@@ -1,0 +1,29 @@
+[
+  {
+    "count": 1,
+    "cellId": [
+      0,
+      0
+    ],
+    "changes": {
+      "fieldChanges": [
+        {
+          "fieldKey": "",
+          "fieldKind": "",
+          "change": {
+            "localId": 2,
+            "testChange": {
+              "inputContext": [],
+              "intentions": [
+                1
+              ],
+              "outputContext": [
+                1
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+]

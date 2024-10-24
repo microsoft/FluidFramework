@@ -13,9 +13,12 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
@@ -57,8 +60,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 
 				const { stats, summary } = await containerRuntime.summarize({
 					runGC: false,
-					fullTree: false,
-					trackState: false,
+					fullTree: true,
 				});
 
 				// Validate stats
@@ -105,10 +107,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 					defaultDataStoreNode?.type === SummaryType.Tree,
 					"Expected default data store tree in summary.",
 				);
-				assert(
-					!defaultDataStoreNode.unreferenced,
-					"Default data store should be referenced.",
-				);
+				assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
 				assert(
 					defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
 					"Expected .component blob in default data store summary tree.",

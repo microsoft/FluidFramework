@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+/* eslint-disable unicorn/no-null */
+
+import { strict as assert } from "node:assert";
 
 import {
 	Generator,
@@ -20,12 +22,19 @@ import {
 	SerializedAttributionCollection,
 } from "../attributionCollection.js";
 import { BaseSegment, ISegment } from "../mergeTreeNodes.js";
+import type { PropertySet } from "../properties.js";
 
 const opKey = (seq: number): AttributionKey => ({ type: "op", seq });
 const detachedKey: AttributionKey = { type: "detached", id: 0 };
 
 describe("AttributionCollection", () => {
-	const makeCollectionWithChannel = ({ length, seq }: { length: number; seq: number }) => {
+	const makeCollectionWithChannel = ({
+		length,
+		seq,
+	}: {
+		length: number;
+		seq: number;
+	}): AttributionCollection => {
 		const collection = new AttributionCollection(length, null);
 		collection.update("foo", new AttributionCollection(length, opKey(seq)));
 		return collection;
@@ -66,6 +75,87 @@ describe("AttributionCollection", () => {
 			for (const offset of [0, 1, 2]) {
 				assert.deepEqual(collection.getAtOffset(offset, "foo"), opKey(300));
 			}
+		});
+	});
+
+	describe(".getKeysInOffsetRange", () => {
+		describe("on a collection with a single entry", () => {
+			const collection = new AttributionCollection(5, opKey(100));
+
+			it("returns the entry for offsets within the length range", () => {
+				assert.deepEqual(
+					collection.getKeysInOffsetRange(1),
+					[{ offset: 0, key: opKey(100) }],
+					"first",
+				);
+				assert.deepEqual(
+					collection.getKeysInOffsetRange(4),
+					[{ offset: 0, key: opKey(100) }],
+					"second",
+				);
+				assert.deepEqual(
+					collection.getKeysInOffsetRange(1, 4),
+					[{ offset: 0, key: opKey(100) }],
+					"third",
+				);
+				assert.deepEqual(
+					collection.getKeysInOffsetRange(0, 4),
+					[{ offset: 0, key: opKey(100) }],
+					"fourth",
+				);
+			});
+
+			it("throws for queries outside the range", () => {
+				assert.throws(() => collection.getKeysInOffsetRange(-1));
+				assert.throws(() => collection.getKeysInOffsetRange(7));
+				assert.throws(() => collection.getKeysInOffsetRange(0, -1));
+				assert.throws(() => collection.getKeysInOffsetRange(1, 7));
+				assert.throws(() => collection.getKeysInOffsetRange(2, 1));
+			});
+		});
+
+		describe("on a collection with multiple entries", () => {
+			const collection = new AttributionCollection(10, opKey(10));
+			collection.append(new AttributionCollection(10, opKey(20)));
+			collection.append(new AttributionCollection(10, opKey(30)));
+			collection.append(new AttributionCollection(10, opKey(40)));
+			collection.append(new AttributionCollection(10, opKey(50)));
+
+			it("returns the correct entries", () => {
+				assert.deepEqual(collection.getKeysInOffsetRange(15, 25), [
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
+				]);
+				assert.deepEqual(collection.getKeysInOffsetRange(15, 19), [
+					{ offset: 10, key: { type: "op", seq: 20 } },
+				]);
+				assert.deepEqual(collection.getKeysInOffsetRange(15, 49), [
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
+					{ offset: 30, key: { type: "op", seq: 40 } },
+					{ offset: 40, key: { type: "op", seq: 50 } },
+				]);
+				assert.deepEqual(collection.getKeysInOffsetRange(15, 40), [
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
+					{ offset: 30, key: { type: "op", seq: 40 } },
+					{ offset: 40, key: { type: "op", seq: 50 } },
+				]);
+				assert.deepEqual(collection.getKeysInOffsetRange(0), [
+					{ offset: 0, key: { type: "op", seq: 10 } },
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
+					{ offset: 30, key: { type: "op", seq: 40 } },
+					{ offset: 40, key: { type: "op", seq: 50 } },
+				]);
+			});
+		});
+
+		it("works on collections with entries in channels", () => {
+			const collection = makeCollectionWithChannel({ length: 3, seq: 300 });
+			assert.deepEqual(collection.getKeysInOffsetRange(1, undefined, "foo"), [
+				{ offset: 0, key: opKey(300) },
+			]);
 		});
 	});
 
@@ -477,7 +567,10 @@ describe("AttributionCollection", () => {
 				this.cachedLength = length;
 			}
 
-			public toJSONObject() {
+			public toJSONObject(): {
+				length: number;
+				props: PropertySet | undefined;
+			} {
 				return { length: this.cachedLength, props: this.properties };
 			}
 
@@ -500,11 +593,7 @@ describe("AttributionCollection", () => {
 			const segmentCount = 100;
 			it(`with randomly generated segments, seed ${seed}`, () => {
 				const generateAttributionKey = (random: IRandom): AttributionKey | null =>
-					random.bool(0.8)
-						? opKey(random.integer(0, 10))
-						: random.bool()
-						? detachedKey
-						: null;
+					random.bool(0.8) ? opKey(random.integer(0, 10)) : random.bool() ? detachedKey : null;
 
 				const channelNamePool = ["ch1", "ch2", "ch3"];
 				const insertGenerator: Generator<InsertAction, State> = take(
@@ -520,10 +609,7 @@ describe("AttributionCollection", () => {
 								if (random.bool()) {
 									collection.update(
 										channel,
-										new AttributionCollection(
-											length,
-											generateAttributionKey(random),
-										),
+										new AttributionCollection(length, generateAttributionKey(random)),
 									);
 								}
 							}
@@ -579,7 +665,7 @@ describe("AttributionCollection", () => {
 						// introduce acceptance criteria here for split.
 						createWeightedGenerator<SplitAction | AppendAction, State>([
 							[split, 1],
-							[append, 1, ({ segments }) => segments.length > 1],
+							[append, 1, ({ segments }): boolean => segments.length > 1],
 						]),
 					),
 					{

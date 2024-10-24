@@ -4,6 +4,7 @@
 		"outDir": "./lib",
 		"rootDir": "./src",
 		"types": ["react"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

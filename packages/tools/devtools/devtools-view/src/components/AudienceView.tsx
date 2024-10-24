@@ -12,7 +12,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
@@ -104,9 +104,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 			return {
 				clientId: entry.clientId,
-				time: wasChangeToday
-					? changeTimeStamp.toTimeString()
-					: changeTimeStamp.toDateString(),
+				time: wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString(),
 				changeKind: entry.changeKind,
 			};
 		})

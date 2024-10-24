@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { MigrationTool, MigrationToolInstantiationFactory } from "./migrationTool.js";
 export {
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,

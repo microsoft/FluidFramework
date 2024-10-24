@@ -5,10 +5,11 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
 import type { SnapshotWithBlobs } from "./serializedStateManager.js";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
@@ -94,7 +95,8 @@ export interface AttachProcessProps {
 	 * attachment data, and perform any other operations necessary
 	 * for dealing with attachment state changes, like emitting events
 	 *
-	 * @param attachmentData - the updated attachment data	 */
+	 * @param attachmentData - the updated attachment data
+	 */
 	readonly setAttachmentData: (attachmentData: AttachmentData) => void;
 
 	/**
@@ -110,7 +112,11 @@ export interface AttachProcessProps {
 	/**
 	 * The detached blob storage if it exists.
 	 */
-	readonly detachedBlobStorage?: Pick<IDetachedBlobStorage, "getBlobIds" | "readBlob" | "size">;
+	readonly detachedBlobStorage?: Pick<
+		// eslint-disable-next-line import/no-deprecated
+		IDetachedBlobStorage,
+		"getBlobIds" | "readBlob" | "size"
+	>;
 
 	/**
 	 * The caller should create the attachment summary for the container.
@@ -157,12 +163,12 @@ export const runRetriableAttachProcess = async ({
 					state: AttachState.Detached,
 					blobs: "outstanding",
 					redirectTable: new Map<string, string>(),
-			  }
+				}
 			: {
 					state: AttachState.Attaching,
 					summary: createAttachmentSummary(),
 					blobs: "none",
-			  };
+				};
 		setAttachmentData(currentData);
 	}
 

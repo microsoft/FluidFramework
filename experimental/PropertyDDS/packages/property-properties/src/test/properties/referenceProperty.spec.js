@@ -543,9 +543,7 @@ describe("Reference Properties", function () {
 			// Test creation via a template
 			var prop = PropertyFactory.create("autodesk.test:referencePropertyTest-1.0.0");
 			expect(prop._properties.refMap_anon).to.be.instanceof(ReferenceMapProperty);
-			expect(prop._properties.refMap_anon.getReferenceTargetTypeId()).to.equal(
-				"BaseProperty",
-			);
+			expect(prop._properties.refMap_anon.getReferenceTargetTypeId()).to.equal("BaseProperty");
 			expect(prop._properties.refMap).to.be.instanceof(ReferenceMapProperty);
 			expect(prop._properties.refMap.getReferenceTargetTypeId()).to.equal("NodeProperty");
 		});

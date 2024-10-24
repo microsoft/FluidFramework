@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	IClient,
 	IConnect,
 	IDocumentMessage,
 	INack,
@@ -45,6 +46,7 @@ import {
 import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
+import { isValidConnectionMessage } from "./protocol";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -112,6 +114,7 @@ export function configureWebSocketServices(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
+	collaborationSessionTracker?: core.ICollaborationSessionTracker,
 ): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
@@ -129,6 +132,7 @@ export function configureWebSocketServices(
 		revokedTokenChecker,
 		clusterDrainingChecker,
 		collaborationSessionEventEmitter,
+		collaborationSessionTracker,
 	};
 	const lambdaSettings: INexusLambdaSettings = {
 		maxTokenLifetimeSec,
@@ -155,6 +159,9 @@ export function configureWebSocketServices(
 		// Map from client Ids to scope
 		const scopeMap = new Map<string, string[]>();
 
+		// Map from client Ids to client details
+		const clientMap = new Map<string, IClient>();
+
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 
@@ -171,6 +178,7 @@ export function configureWebSocketServices(
 			connectionsMap,
 			roomMap,
 			scopeMap,
+			clientMap,
 			connectionTimeMap,
 			expirationTimer,
 			disconnectedOrdererConnections,
@@ -182,9 +190,50 @@ export function configureWebSocketServices(
 		let connectDocumentP: Promise<void> | undefined;
 		let disconnectDocumentP: Promise<void> | undefined;
 
+		const disposers: ((() => void) | undefined)[] = [socket.dispose?.bind(socket)];
+
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		socket.on("connect_document", async (connectionMessage: IConnect) => {
+		socket.on("connect_document", async (connectionMessage: unknown) => {
+			if (!isValidConnectionMessage(connectionMessage)) {
+				// If the connection message is invalid, emit an error and return.
+				// This will prevent the connection from being established, but more importantly
+				// it will provent the service from crashing due to an unhandled exception such as a type error.
+				const error = new NetworkError(400, "Invalid connection message");
+				// Attempt to log the connection message properties if they are available.
+				// Be cautious to not log any sensitive information, such as message.token or message.user.
+				const safeTelemetryProperties: Record<string, any> =
+					typeof connectionMessage === "object" &&
+					connectionMessage !== null &&
+					typeof (connectionMessage as IConnect).id === "string" &&
+					typeof (connectionMessage as IConnect).tenantId === "string"
+						? getLumberBaseProperties(
+								(connectionMessage as IConnect).id,
+								(connectionMessage as IConnect).tenantId,
+						  )
+						: {};
+				if (
+					typeof (connectionMessage as IConnect | undefined)?.driverVersion === "string"
+				) {
+					safeTelemetryProperties.driverVersion = (
+						connectionMessage as IConnect
+					).driverVersion;
+				} else if (
+					typeof (connectionMessage as IConnect | undefined)?.relayUserAgent === "string"
+				) {
+					safeTelemetryProperties.driverVersion = parseRelayUserAgent(
+						(connectionMessage as IConnect).relayUserAgent,
+					).driverVersion;
+				}
+				Lumberjack.warning(
+					"Received invalid connection message",
+					safeTelemetryProperties,
+					error,
+				);
+				socket.emit("connect_document_error", error);
+				return;
+			}
+
 			const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
 			const driverVersion: string | undefined = userAgentInfo.driverVersion;
 			const baseLumberjackProperties = getLumberBaseProperties(
@@ -214,6 +263,7 @@ export function configureWebSocketServices(
 					)
 						.then((message) => {
 							socket.emit("connect_document_success", message.connection);
+							disposers.push(message.dispose);
 						})
 						.catch((error) => {
 							socket.emit("connect_document_error", error);
@@ -536,7 +586,7 @@ export function configureWebSocketServices(
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		socket.on("disconnect", async () => {
+		socket.on("disconnect", async (reason: unknown) => {
 			if (!connectDocumentComplete && connectDocumentP) {
 				Lumberjack.warning(
 					`Socket connection disconnected before ConnectDocument completed.`,
@@ -551,6 +601,10 @@ export function configureWebSocketServices(
 				[CommonProperties.connectionCount]: connectionsMap.size,
 				[CommonProperties.connectionClients]: JSON.stringify([...connectionsMap.keys()]),
 				[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
+				// Socket.io provides disconnect reason as a string. If it is not a string, it might not be a socket.io socket, so don't log anything.
+				// A list of possible reasons can be found here: https://socket.io/docs/v4/server-socket-instance/#disconnect
+				[CommonProperties.disconnectReason]:
+					typeof reason === "string" ? reason : undefined,
 			});
 
 			if (roomMap.size > 0) {
@@ -574,6 +628,14 @@ export function configureWebSocketServices(
 			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
 			}
+
+			// Dispose all resources and clear list.
+			for (const dispose of disposers) {
+				if (dispose) {
+					dispose();
+				}
+			}
+			disposers.splice(0, disposers.length);
 		});
 	});
 }

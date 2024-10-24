@@ -7,9 +7,10 @@ import { strict as assert } from "assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import path from "path";
 
-import { JsonCompatibleReadOnly } from "../../util/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";
 
+// Use `pnpm run test:snapshots:regen` to set this flag.
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
 export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = ""): void {

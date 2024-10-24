@@ -4,6 +4,7 @@
  */
 
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import {
 	FluidRepo,
@@ -11,15 +12,20 @@ import {
 	PackageJson,
 	TscUtils,
 	getEsLintConfigFilePath,
+	getFluidBuildConfig,
 	getTaskDefinitions,
-	loadFluidBuildConfig,
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
-import * as JSON5 from "json5";
+import JSON5 from "json5";
+import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
-import { Handler, readFile } from "./common";
-import { FluidBuildDatabase } from "./fluidBuildDatabase";
+import { getFlubConfig } from "../../config.js";
+import { Handler, readFile } from "./common.js";
+import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
+
+const require = createRequire(import.meta.url);
 
 /**
  * Get and cache the tsc check ignore setting
@@ -30,8 +36,7 @@ const getFluidBuildTasksTscIgnore = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray =
-			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray = getFlubConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -46,7 +51,8 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = FluidRepo.create(rootDir);
+		const fluidBuildConfig = getFluidBuildConfig(rootDir);
+		const repo = new FluidRepo(rootDir, fluidBuildConfig.repoPackages);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -100,27 +106,6 @@ function findScript(json: Readonly<PackageJson>, command: string): string | unde
 }
 
 /**
- * Find the script name for the tsc-multi command in a npm package.json
- *
- * @param json - the package.json content to search script in
- * @param config - the tsc-multi config to check for
- * @returns first script name found to match the command
- *
- * @remarks
- */
-function findTscMultiScript(json: PackageJson, config: string): string | undefined {
-	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
-		if (scriptCommands === undefined) {
-			continue;
-		}
-
-		if (scriptCommands.startsWith("tsc-multi") && scriptCommands.includes(config)) {
-			return script;
-		}
-	}
-}
-
-/**
  * Find the script name for the fluid-tsc command in a package.json
  *
  * @param json - the package.json content to search script in
@@ -165,12 +150,9 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 	if (project === "./tsconfig.json") {
 		addIfDefined(findScript(json, "tsc"));
 		addIfDefined(findFluidTscScript(json, undefined));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.cjs.json"));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.node16.cjs.json"));
 	}
 	addIfDefined(findScript(json, `tsc --project ${project}`));
 	addIfDefined(findFluidTscScript(json, project));
-	addIfDefined(findTscMultiScript(json, project));
 	if (tscScripts.length === 1) {
 		return tscScripts[0];
 	}
@@ -202,11 +184,11 @@ interface EslintConfig {
  * @param json - content of the package.json
  * @returns list of build script names that the eslint depends on
  */
-function eslintGetScriptDependencies(
+async function eslintGetScriptDependencies(
 	packageDir: string,
 	root: string,
 	json: Readonly<PackageJson>,
-): (string | string[])[] {
+): Promise<(string | string[])[]> {
 	if (json.scripts?.eslint === undefined) {
 		return [];
 	}
@@ -220,12 +202,16 @@ function eslintGetScriptDependencies(
 	let config: EslintConfig;
 	try {
 		const { ext } = path.parse(eslintConfig);
+		if (ext === ".mjs") {
+			throw new Error(`Eslint config '${eslintConfig}' is ESM; only CommonJS is supported.`);
+		}
+
 		if (ext !== ".js" && ext !== ".cjs") {
 			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
-			// eslint-disable-next-line  @typescript-eslint/no-require-imports, unicorn/prefer-module, @typescript-eslint/no-var-requires
+			// This code assumes that the eslint config will be in CommonJS, because if it's ESM the require call will fail.
 			config = require(path.resolve(eslintConfig)) as EslintConfig;
 			if (config === undefined) {
 				throw new Error(`Exports not found in ${eslintConfig}`);
@@ -326,7 +312,7 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: readonly string[],
 ): boolean {
-	const rootConfig = loadFluidBuildConfig(root);
+	const rootConfig = getFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	// Searched deps that are package specific (e.g. <packageName>#<taskName>)
@@ -336,16 +322,12 @@ function hasTaskDependency(
 	const packageSpecificSearchDeps = searchDeps.filter((d) => d.includes("#"));
 	/**
 	 * Set of package dependencies
-	 * True dependencies would include peer dependencies as well. Here we are
-	 * matching {@link Package.combinedDependencies} that is used in
-	 * {@link @fluidframework/build-tools/src/fluidBuild/buildGraph.ts#BuildGraph.initializePackages}
-	 * Being more conservative is not terrible as it would just look like a miss
-	 * from ^ specification and could be fixed with an explicit dependency.
 	 */
 	const packageDependencies = new Set([
 		...Object.keys(json.dependencies ?? {}),
 		// devDeps are not regular task deps, but might happen for internal type only packages.
 		...Object.keys(json.devDependencies ?? {}),
+		...Object.keys(json.peerDependencies ?? {}),
 	]);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
@@ -449,7 +431,7 @@ function patchTaskDeps(
 			let tasks: Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>;
 			if (json.fluidBuild === undefined) {
 				tasks = {};
-				json.fluidBuild = { tasks };
+				json.fluidBuild = { tasks, version: 1 };
 			} else if (json.fluidBuild.tasks === undefined) {
 				tasks = {};
 				json.fluidBuild.tasks = tasks;
@@ -549,10 +531,37 @@ function getTscCommandDependencies(
 		}
 	}
 
+	const curPkgRepoGroup = packageMap.get(json.name)?.group;
 	const tscPredecessors = fluidBuildDatabaseCache.getPossiblePredecessorTasks(
 		packageMap,
 		json.name,
 		script,
+		// ignore filter function
+		(depSpec: { name: string; version: string }) => {
+			// Never ignore workspace linked dependencies
+			if (depSpec.version.includes("workspace:")) {
+				return false;
+			}
+			// Historically, a semantic version check was also considered sufficient
+			// to indicate a possible dependency. This was probably the case for lerna
+			// managed repo. The check is preserved here, but only allowed when the
+			// packages are within the same release group.
+			// Note: packages may be symlinked across workspace boundaries and in those
+			// situations, it is up to the user to build in the correct order. To enact
+			// a full repo ordering, support would be needed to recognize tooling
+			// dependencies used to run scripts apart from compile time dependencies,
+			// especially since the module type is irrelevant for execution dependencies.
+			const depPackage = packageMap.get(depSpec.name);
+			if (depPackage === undefined) {
+				// Not known to repo, can be ignored.
+				return true;
+			}
+			if (depPackage.group !== curPkgRepoGroup) {
+				return true;
+			}
+			const satisfied = semver.satisfies(depPackage.version, depSpec.version);
+			return !satisfied;
+		},
 	);
 
 	// eslint-disable-next-line unicorn/prefer-spread
@@ -647,20 +656,23 @@ export const handlers: Handler[] = [
 				return;
 			}
 			try {
-				const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+				const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 				return checkTaskDeps(root, json, "eslint", scriptDeps);
 			} catch (error: unknown) {
 				return (error as Error).message;
 			}
 		},
-		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
+		resolver: async (
+			file: string,
+			root: string,
+		): Promise<{ resolved: boolean; message?: string }> => {
 			let result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			await updatePackageJsonFileAsync(path.dirname(file), async (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
 				}
 				try {
-					const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+					const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 					patchTaskDeps(root, json, "eslint", scriptDeps);
 				} catch (error: unknown) {
 					result = { resolved: false, message: (error as Error).message };
@@ -679,7 +691,6 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const projectMap = new Map<string, string>();
-			// Note: this does not check tsc-multi commands which do very likely reuse project files
 			return buildDepsHandler(
 				file,
 				root,

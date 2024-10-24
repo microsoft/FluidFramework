@@ -6,8 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 const defaultNoopTimeFrequency = 2000;
 const defaultNoopCountFrequency = 50;
@@ -44,7 +44,7 @@ export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
 		private readonly NoopCountFrequency: number = defaultNoopCountFrequency,
 	) {
 		super();
-		if (NoopTimeFrequency !== Infinity) {
+		if (NoopTimeFrequency !== Number.POSITIVE_INFINITY) {
 			this.timer = new Timer(NoopTimeFrequency, () => {
 				// We allow the timer to expire even if an op is sent or we disconnect.
 				// This condition is to guard against trying to send a noop anyway in that case.

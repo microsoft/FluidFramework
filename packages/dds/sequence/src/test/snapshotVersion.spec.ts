@@ -15,8 +15,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
-
 import { SharedStringClass } from "../sharedString.js";
+
 import { _dirname } from "./dirname.cjs";
 import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
@@ -77,7 +77,10 @@ describe("SharedString Snapshot Version", () => {
 		fileBase = path.join(_dirname, `../../${LocationBase}`);
 	});
 
-	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
+	async function loadSharedString(
+		id: string,
+		serializedSnapshot: string,
+	): Promise<SharedString> {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);

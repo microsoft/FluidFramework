@@ -2,12 +2,13 @@
 	"params": {
 		"currentVersion": "v2",
 		"ltsVersion": "v1",
-		"previousVersions": ["v1"],
+		"previousVersions": ["v1", "local"],
 		"downloadVersions": ["v1"]
 	},
 	"apiDocsDirectory": "/docs/api/",
 	"apiVersionOptionName": {
-		"Fluid Framework 1.0": "v1",
-		"Fluid Framework 2.0 (BETA)": "v2"
+		"Fluid Framework local": "local",
+		"Fluid Framework v1": "v1",
+		"Fluid Framework v2": "v2"
 	}
 }

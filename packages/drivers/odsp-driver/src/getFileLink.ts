@@ -11,10 +11,15 @@ import {
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
+	type IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -39,10 +44,10 @@ const fileLinkCache = new Map<string, Promise<string>>();
  */
 export async function getFileLink(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-	odspUrlParts: IOdspUrlParts,
+	resolvedUrl: IOdspResolvedUrl,
 	logger: ITelemetryLoggerExt,
 ): Promise<string> {
-	const cacheKey = `${odspUrlParts.siteUrl}_${odspUrlParts.driveId}_${odspUrlParts.itemId}`;
+	const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
 	const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
 	if (maybeFileLinkCacheEntry !== undefined) {
 		return maybeFileLinkCacheEntry;
@@ -55,7 +60,8 @@ export async function getFileLink(
 			fileLinkCore = await runWithRetry(
 				async () =>
 					runWithRetryForCoherencyAndServiceReadOnlyErrors(
-						async () => getFileLinkCore(getToken, odspUrlParts, logger),
+						async () =>
+							getFileLinkWithLocationRedirectionHandling(getToken, resolvedUrl, logger),
 						"getFileLinkCore",
 						logger,
 					),
@@ -95,13 +101,70 @@ export async function getFileLink(
 	return fileLink;
 }
 
+/**
+ * Handles location redirection while fulfilling the getFilelink call. We don't want browser to handle
+ * the redirection as the browser will retry with same auth token which will not work as we need app
+ * to regenerate tokens for the new site domain. So when we will make the network calls below we will set
+ * the redirect:manual header to manually handle these redirects.
+ * Refer: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
+ * @param getToken - token fetcher to fetch the token.
+ * @param odspUrlParts - parts of odsp resolved url.
+ * @param logger - logger to send events.
+ * @returns Response from the API call.
+ * @legacy
+ * @alpha
+ */
+async function getFileLinkWithLocationRedirectionHandling(
+	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	resolvedUrl: IOdspResolvedUrl,
+	logger: ITelemetryLoggerExt,
+): Promise<string> {
+	// We can have chains of location redirection one after the other, so have a for loop
+	// so that we can keep handling the same type of error. Set max number of redirection to 5.
+	let lastError: unknown;
+	let locationRedirected = false;
+	for (let count = 1; count <= 5; count++) {
+		try {
+			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger, true);
+			// Sometimes the siteUrl in the actual file is different from the siteUrl in the resolvedUrl due to location
+			// redirection. This creates issues in the getSharingInformation call. So we need to update the siteUrl in the
+			// resolvedUrl to the siteUrl in the fileItem which is the updated siteUrl.
+			const oldSiteDomain = new URL(resolvedUrl.siteUrl).origin;
+			const newSiteDomain = new URL(fileItem.sharepointIds.siteUrl).origin;
+			if (oldSiteDomain !== newSiteDomain) {
+				locationRedirected = true;
+				logger.sendTelemetryEvent({
+					eventName: "LocationRedirectionErrorForGetOdspFileLink",
+					retryCount: count,
+				});
+				renameTenantInOdspResolvedUrl(resolvedUrl, newSiteDomain);
+			}
+			return await getFileLinkCore(getToken, resolvedUrl, logger, fileItem);
+		} catch (error: unknown) {
+			lastError = error;
+			// If the getSharingLink call fails with the 401/403/404 error, then it could be due to that the file has moved
+			// to another location. This could occur in case we have more than 1 tenant rename. In that case, we should retry
+			// the getFileItemLite call to get the updated fileItem.
+			if (
+				isFluidError(error) &&
+				locationRedirected &&
+				(error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError ||
+					error.errorType === OdspErrorTypes.authorizationError)
+			) {
+				continue;
+			}
+			throw error;
+		}
+	}
+	throw lastError;
+}
+
 async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
 	logger: ITelemetryLoggerExt,
+	fileItem: FileItemLite,
 ): Promise<string> {
-	const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, true);
-
 	// ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
 	return PerformanceEvent.timedExecAsync(
 		logger,
@@ -111,12 +174,11 @@ async function getFileLinkCore(
 			let additionalProps;
 			const fileLink = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
-				const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
+				const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
 				);
-				const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
 
 				// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
 				// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
@@ -124,17 +186,19 @@ async function getFileLinkCore(
 				// where webDavUrl is constructed using legacy ODC format for backward compatibility reasons.
 				// GetFileByUrl() does not understand that format and thus fails. GetFileById() relies on file item
 				// unique guid (sharepointIds.listItemUniqueId) and it works uniformly across Consumer and Commercial.
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					`${
-						odspUrlParts.siteUrl
-					}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
-						`'${fileItem.sharepointIds.listItemUniqueId}'`,
-					)}`,
-					storageToken,
-					true,
+				const url = `${
+					odspUrlParts.siteUrl
+				}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
+					`'${fileItem.sharepointIds.listItemUniqueId}'`,
+				)}`;
+				const method = "POST";
+				const authHeader = await getAuthHeader(
+					{ ...options, request: { url, method } },
+					"GetFileLinkCore",
 				);
+				const headers = getHeadersWithAuth(authHeader);
 				const requestInit = {
-					method: "POST",
+					method,
 					headers: {
 						"Content-Type": "application/json;odata=verbose",
 						"Accept": "application/json;odata=verbose",
@@ -207,19 +271,24 @@ async function getFileItemLite(
 			const fileItem = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
 				const { siteUrl, driveId, itemId } = odspUrlParts;
-				const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
+				const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
 				);
-				const storageToken = await storageTokenFetcher(options, "GetFileItemLite");
-
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					`${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
+				const url = `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`;
+				const method = "GET";
+				const authHeader = await getAuthHeader(
+					{ ...options, request: { url, method } },
+					"GetFileItemLite",
 				);
-				const requestInit = { method: "GET", headers };
+				assert(
+					authHeader !== null,
+					0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */,
+				);
+
+				const headers = getHeadersWithAuth(authHeader);
+				const requestInit = { method, headers };
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 
@@ -238,4 +307,30 @@ async function getFileItemLite(
 			return fileItem;
 		},
 	);
+}
+
+/**
+ * It takes a resolved url with old siteUrl and patches resolved url with updated site url domain.
+ * @param odspResolvedUrl - Previous odsp resolved url with older site url.
+ * @param newSiteDomain - New site domain after the tenant rename.
+ */
+function renameTenantInOdspResolvedUrl(
+	odspResolvedUrl: IOdspResolvedUrl,
+	newSiteDomain: string,
+): void {
+	const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
+	odspResolvedUrl.siteUrl = newSiteUrl;
+
+	if (odspResolvedUrl.endpoints.attachmentGETStorageUrl) {
+		odspResolvedUrl.endpoints.attachmentGETStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.attachmentGETStorageUrl).pathname}`;
+	}
+	if (odspResolvedUrl.endpoints.attachmentPOSTStorageUrl) {
+		odspResolvedUrl.endpoints.attachmentPOSTStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.attachmentPOSTStorageUrl).pathname}`;
+	}
+	if (odspResolvedUrl.endpoints.deltaStorageUrl) {
+		odspResolvedUrl.endpoints.deltaStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.deltaStorageUrl).pathname}`;
+	}
+	if (odspResolvedUrl.endpoints.snapshotStorageUrl) {
+		odspResolvedUrl.endpoints.snapshotStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.snapshotStorageUrl).pathname}`;
+	}
 }

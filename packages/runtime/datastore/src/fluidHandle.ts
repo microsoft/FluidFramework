@@ -3,16 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import { generateHandleContextPath, FluidHandleBase } from "@fluidframework/runtime-utils/internal";
+import {
+	generateHandleContextPath,
+	FluidHandleBase,
+} from "@fluidframework/runtime-utils/internal";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
+ * @legacy
  * @alpha
  */
-export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
+export class FluidObjectHandle<
+	T extends FluidObject = FluidObject,
+> extends FluidHandleBase<T> {
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	/**

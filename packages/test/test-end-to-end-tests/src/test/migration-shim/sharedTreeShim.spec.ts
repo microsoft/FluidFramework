@@ -16,7 +16,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
@@ -27,9 +27,7 @@ class RootType extends builder.object("abc", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<typeof RootType> {
-	return tree.schematize(new TreeConfiguration(RootType, () => ({ quantity: 0 })));
-}
+const treeConfig = new TreeViewConfiguration({ schema: RootType });
 
 const testValue = 5;
 
@@ -106,10 +104,11 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
 		const tree1 = shim1.currentTree;
 		const tree2 = shim2.currentTree;
 
-		// Schematize our tree, this sends an op since we are a live container
-		const view1 = getNewTreeView(tree1);
+		const view1 = tree1.viewWith(treeConfig);
+		// Initialize our tree, this sends an op since we are a live container
+		view1.initialize({ quantity: 0 });
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(tree2);
+		const view2 = tree2.viewWith(treeConfig);
 
 		// This does some typing and gives us the root node.
 		const rootNode1: RootType = view1.root;
@@ -139,7 +138,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		const shim3 = await testObj3.getTree();
 		const tree3 = shim3.currentTree;
-		const view3 = getNewTreeView(tree3);
+		const view3 = tree3.viewWith(treeConfig);
 		const rootNode3: RootType = view3.root;
 
 		// Verify that it matches the previous node

@@ -6,7 +6,10 @@
 import * as fs from "node:fs";
 import path from "node:path";
 
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import * as yaml from "js-yaml";
 import { v4 as uuid } from "uuid";
 

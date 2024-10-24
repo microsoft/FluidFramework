@@ -11,9 +11,8 @@ import {
 	IPromiseTimerResult,
 	Timer,
 } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
+import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import {
 	isFluidError,
 	ITelemetryLoggerExt,
@@ -319,8 +318,7 @@ export class SummaryGenerator {
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
 				opsSinceLastAttempt: referenceSequenceNumber - lastAttemptRefSeqNum,
 				opsSinceLastSummary:
-					referenceSequenceNumber -
-					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+					referenceSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				stage: summaryData.stage,
 			};
 			summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(
@@ -347,7 +345,7 @@ export class SummaryGenerator {
 			 * state change of multiple data stores. So, the total number of data stores that are summarized should not
 			 * exceed the number of ops since last summary + number of data store whose reference state changed.
 			 */
-			if (!submitSummaryOptions.fullTree && !summaryData.forcedFullTree) {
+			if (!submitSummaryOptions.fullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
@@ -490,13 +488,9 @@ export class SummaryGenerator {
 				const errorCode: SummarizeErrorCode = "summaryNack";
 
 				// pre-0.58 error message prefix: summaryNack
-				const error = new RetriableSummaryError(
-					getFailMessage(errorCode),
-					retryAfterSeconds,
-					{
-						errorMessage,
-					},
-				);
+				const error = new RetriableSummaryError(getFailMessage(errorCode), retryAfterSeconds, {
+					errorMessage,
+				});
 
 				assert(
 					getRetryDelaySecondsFromError(error) === retryAfterSeconds,
