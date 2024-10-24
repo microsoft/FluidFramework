@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
+import { describe, it } from "mocha";
 
 import { VersionDetails } from "../../library/index.js";
-
-import type { PackageJson } from "@fluidframework/build-tools";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
