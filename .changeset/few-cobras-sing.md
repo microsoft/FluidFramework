@@ -19,3 +19,11 @@ const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
 type Mode = NodeFromSchema<(typeof Mode.schema)[number]>;
 class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
 ```
+
+
+Previously the last two lines would have been:
+
+```typescript
+type Mode = NodeFromSchema<(typeof Mode)[keyof typeof Mode]>; // This no longer works
+class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {} // This no longer works
+```
