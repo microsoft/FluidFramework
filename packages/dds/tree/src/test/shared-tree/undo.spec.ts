@@ -2,14 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { strict as assert } from "node:assert";
 import { type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import {
-	getBranch,
-	type ITreeCheckout,
-	type ITreeCheckoutFork,
-} from "../../shared-tree/index.js";
+import { getBranch, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	createClonableUndoRedoStacks,
@@ -433,7 +429,7 @@ describe("Undo and redo", () => {
 		unsubscribe();
 	});
 
-	it.only("can undo / redo", () => {
+	it("can undo / redo", () => {
 		const view: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
 
 		const { undoStack, redoStack, unsubscribe } = createClonableUndoRedoStacks(view.events);
@@ -453,7 +449,8 @@ describe("Undo and redo", () => {
 			new TreeViewConfiguration({ schema: RootNodeSchema }),
 		);
 
-		const { undoStack: forkedUndoStack } = createClonableUndoRedoStacks(forkedView.events);
+		const { undoStack: forkedUndoStack, redoStack: forkedRedoStack } =
+			createClonableUndoRedoStacks(forkedView.events);
 
 		if (forkedView.root.child !== undefined) {
 			forkedView.root.child.propertyTwo.itemOne = "newItem3";
@@ -464,13 +461,140 @@ describe("Undo and redo", () => {
 		const forkedEqualTwo = forkedView.root.child?.propertyTwo.itemOne;
 		console.log(forkedEqualTwo);
 
-		undoStack.pop()?.clone(forkedBranch).revert(); // "newItem2" -> "newItem"
+		undoStack[1].clone(forkedBranch).revert(); // "newItem2" -> "newItem"
 
 		const original = view.root.child?.propertyTwo.itemOne;
 		const forkedEqualOne = forkedView.root.child?.propertyTwo.itemOne;
 
 		console.log(original);
 		console.log(forkedEqualOne);
+
+		undoStack[1].revert();
+
+		const originalPrime = view.root.child?.propertyTwo.itemOne;
+		const forkedEqualOnePrime = forkedView.root.child?.propertyTwo.itemOne;
+
+		console.log(originalPrime);
+		console.log(forkedEqualOnePrime);
+	});
+
+	it("can undo / redo with multiple branches", () => {
+		const originalView: TreeView<typeof RootNodeSchema> =
+			createLocalSharedTree("testSharedTree");
+
+		const forkedBranch = getBranch(originalView).branch();
+		const forkedView = forkedBranch.viewWith(
+			new TreeViewConfiguration({ schema: RootNodeSchema }),
+		);
+
+		const {
+			undoStack: undoStack1,
+			redoStack: redoStack1,
+			unsubscribe: unsubscribe1,
+		} = createClonableUndoRedoStacks(originalView.events);
+		const {
+			undoStack: undoStack2,
+			redoStack: redoStack2,
+			unsubscribe: unsubscribe2,
+		} = createClonableUndoRedoStacks(forkedView.events);
+
+		if (originalView.root.child !== undefined) {
+			originalView.root.child.propertyTwo.itemOne = "newItem";
+		}
+
+		undoStack2.push(undoStack1[undoStack1.length - 1].clone(forkedBranch));
+
+		console.log(undoStack1, undoStack2);
+
+		undoStack2.pop()?.revert();
+
+		let originalData = originalView.root.child?.propertyTwo.itemOne;
+		let forkedData = forkedView.root.child?.propertyTwo.itemOne;
+
+		console.log(originalData, forkedData);
+
+		undoStack1.pop()?.revert();
+
+		originalData = originalView.root.child?.propertyTwo.itemOne;
+		forkedData = forkedView.root.child?.propertyTwo.itemOne;
+
+		console.log(originalData, forkedData);
+	});
+
+	it.only("revert the original and forked revertibles separately", () => {
+		const originalView: TreeView<typeof RootNodeSchema> =
+			createLocalSharedTree("testSharedTree");
+
+		const forkedBranch = getBranch(originalView).branch();
+		const forkedView = forkedBranch.viewWith(
+			new TreeViewConfiguration({ schema: RootNodeSchema }),
+		);
+
+		const {
+			undoStack: undoStack1,
+			redoStack: redoStack1,
+			unsubscribe: unsubscribe1,
+		} = createClonableUndoRedoStacks(originalView.events);
+		const {
+			undoStack: undoStack2,
+			redoStack: redoStack2,
+			unsubscribe: unsubscribe2,
+		} = createClonableUndoRedoStacks(forkedView.events);
+
+		if (originalView.root.child !== undefined) {
+			originalView.root.child.propertyTwo.itemOne = "newItem";
+		}
+
+		if (forkedView.root.child !== undefined) {
+			forkedView.root.child.propertyOne = 256;
+		}
+
+		undoStack1.pop()?.revert();
+		undoStack2.pop()?.revert();
+
+		let originalData = originalView.root.child?.propertyTwo.itemOne;
+		let forkedData = forkedView.root.child?.propertyOne;
+
+		redoStack1.pop()?.revert();
+		redoStack2.pop()?.revert();
+
+		originalData = originalView.root.child?.propertyTwo.itemOne;
+		forkedData = forkedView.root.child?.propertyOne;
+	});
+
+	it.only("revert the original and forked revertibles separately", () => {
+		const originalView: TreeView<typeof RootNodeSchema> =
+			createLocalSharedTree("testSharedTree");
+
+		const {
+			undoStack: undoStack1,
+			redoStack: redoStack1,
+			unsubscribe: unsubscribe1,
+		} = createClonableUndoRedoStacks(originalView.events);
+
+		if (originalView.root.child !== undefined) {
+			originalView.root.child.propertyOne = 256; // 128 -> 256
+			originalView.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
+		}
+
+		const forkedBranch = getBranch(originalView).branch();
+		const forkedView = forkedBranch.viewWith(
+			new TreeViewConfiguration({ schema: RootNodeSchema }),
+		);
+
+		const propertyTwoUndo = undoStack1.pop();
+		const clonedPropertyTwoUndo = propertyTwoUndo?.clone(forkedBranch);
+
+		propertyTwoUndo?.revert();
+
+		assert(originalView.root.child?.propertyTwo.itemOne === "");
+		assert(forkedView.root.child?.propertyTwo.itemOne === "newItem");
+
+		clonedPropertyTwoUndo?.revert();
+
+		const check = forkedView.root.child?.propertyTwo.itemOne;
+
+		console.log(check);
 	});
 });
 
@@ -483,7 +607,6 @@ class ChildNodeSchema extends builder.object("child-item", {
 	propertyTwo: builder.object("propertyTwo-item", {
 		itemOne: builder.string,
 	}),
-	propertyThree: builder.map("propertyThree-map", builder.number),
 }) {}
 class RootNodeSchema extends builder.object("root-item", {
 	child: builder.optional(ChildNodeSchema),
@@ -507,7 +630,6 @@ function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
 				propertyTwo: {
 					itemOne: "",
 				},
-				propertyThree: new Map([["numberOne", 1]]),
 			},
 		}),
 	);

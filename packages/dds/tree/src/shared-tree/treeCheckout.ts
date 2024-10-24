@@ -572,9 +572,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 												...revertMetrics,
 											});
 
-											if (release) {
-												revertible.dispose();
-											}
+											// if (release) {
+											// 	revertible.dispose();
+											// }
 										},
 										clone: (branch?: TreeBranch | TreeBranchFork): ClonableRevertible => {
 											return this.cloneRevertible(revision, kind, branch);
@@ -654,11 +654,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch?: TreeBranch | TreeBranchFork,
 		onRevertibleDisposed?: (revertible: Revertible) => void,
 	): ClonableRevertible {
-		const commits = this.revertibleCommitBranches.get(revision);
+		const commitBranches = this.revertibleCommitBranches;
 
 		const revertible: ClonableRevertible = {
 			get status(): RevertibleStatus {
-				const revertibleCommit = commits;
+				const revertibleCommit = commitBranches.get(revision);
 				return revertibleCommit === undefined
 					? RevertibleStatus.Disposed
 					: RevertibleStatus.Valid;
@@ -869,7 +869,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revisionForInvert,
 		);
 
-		const headCommit = this._branch.getHead();
+		const headCommit =
+			forkedBranch !== undefined
+				? (forkedBranch as unknown as TreeCheckout)._branch.getHead()
+				: this._branch.getHead();
+
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
 			change = tagChange(
