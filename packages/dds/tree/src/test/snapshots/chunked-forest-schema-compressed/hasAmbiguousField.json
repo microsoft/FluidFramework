@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "test.hasAmbiguousField",
+        "value": false,
+        "fields": [
+          [
+            "field",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.minimal",
+        "value": false
+      }
+    },
+    {
+      "d": 0
+    }
+  ],
+  "data": [
+    [
+      0,
+      1
+    ]
+  ]
+}

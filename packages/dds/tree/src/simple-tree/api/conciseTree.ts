@@ -16,13 +16,14 @@ import { getUnhydratedContext } from "../createContext.js";
  * @remarks
  * This is "concise" meaning that explicit type information is omitted.
  * If the schema is compatible with {@link ITreeConfigurationOptions.preventAmbiguity},
- * types will be lossless and compatible with {@link TreeBeta.create} (unless the options are used to customize it).
+ * types will be lossless and compatible with {@link TreeAlpha.create} (unless the options are used to customize it).
  *
  * Every {@link TreeNode} is an array or object.
  * Any IFluidHandle values have been replaced by `THandle`.
  * @privateRemarks
  * This can store all possible simple trees,
  * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
+ * @alpha
  */
 export type ConciseTree<THandle = IFluidHandle> =
 	| Exclude<TreeLeafValue, IFluidHandle>
