@@ -28,7 +28,7 @@ interface TestCaseErased {
 }
 
 function test<T extends ImplicitFieldSchema>(t: TestCase<T>): TestCaseErased {
-	return t;
+	return t as TestCaseErased;
 }
 
 /**

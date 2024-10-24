@@ -321,8 +321,12 @@ class SocketIoServer implements core.IWebSocketServer {
 			}
 		}
 
-		this.io.close();
-		await sleep(3000); // Give time for any  disconnect handlers to execute before closing Redis resources
+		await this.io.close();
+		// Give time for any disconnect handlers to execute before closing Redis resources
+		// Note: on 2024-10-18, with the update to socket.io@4.8.0, the close() call above became async.
+		// Maybe this sleep can be removed now? Not familiar enough with server to try to do it.
+		// See https://github.com/socketio/socket.io/pull/4971 for details on the change.
+		await sleep(3000);
 		await Promise.all([
 			this.redisClientConnectionManagerForPub.getRedisClient().quit(),
 			this.redisClientConnectionManagerForSub.getRedisClient().quit(),

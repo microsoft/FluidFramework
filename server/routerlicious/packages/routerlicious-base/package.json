@@ -83,7 +83,7 @@
 		"sillyname": "^0.1.0",
 		"uuid": "^9.0.0",
 		"winston": "^3.6.0",
-		"ws": "^7.4.6"
+		"ws": "^7.5.10"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.38.0",

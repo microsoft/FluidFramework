@@ -193,8 +193,9 @@ export interface ITreeViewConfiguration<
  * Configuration for {@link ViewableTree.viewWith}.
  * @sealed @public
  */
-export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
-	implements Required<ITreeViewConfiguration<TSchema>>
+export class TreeViewConfiguration<
+	const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> implements Required<ITreeViewConfiguration<TSchema>>
 {
 	protected _typeCheck!: MakeNominal;
 
