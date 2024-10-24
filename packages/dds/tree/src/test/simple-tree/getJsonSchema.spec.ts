@@ -76,7 +76,7 @@ describe("getJsonSchema", () => {
 
 	it("Union root", async () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = [schemaFactory.number, schemaFactory.string];
+		const Schema = [schemaFactory.number, schemaFactory.string] as const;
 
 		const actual = getJsonSchema(Schema);
 
