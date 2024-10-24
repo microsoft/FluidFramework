@@ -89,7 +89,7 @@ export class Workspace implements IWorkspace {
 				break;
 			}
 			default: {
-				throw new Error(`Unknown package manager ${tool.type}`);
+				throw new Error(`Unknown package manager '${tool.type}'`);
 			}
 		}
 
