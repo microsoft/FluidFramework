@@ -582,7 +582,6 @@ export type Input<T extends never> = T;
  * @see {@link Input}
  *
  * @typeparam TSchema - Schema to process.
- * @typeparam TResult - Do not specify: default value used as implementation detail.
  *
  * @privateRemarks
  * This is a bit overly conservative, since cases like `A | [A]` give never and could give `A`.
