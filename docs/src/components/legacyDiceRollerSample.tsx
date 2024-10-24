@@ -13,6 +13,8 @@ import "@site/src/css/legacyDiceRollerSample.css";
  * @remarks
  * Leverages an old app bundle to render a Fluid-backed dice roller.
  * Used by the v1 docs, but should not be used by newer docs.
+ *
+ * Newer docs should use the {@link MockDiceRollerSample} component instead.
  */
 export function LegacyDiceRollerSample(): JSX.Element {
 	React.useEffect(() => {
