@@ -29,6 +29,7 @@ import {
 	type ChannelFactoryRegistry,
 	type ITestContainerConfig,
 	type ITestObjectProvider,
+	waitForSummaryOps,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -119,25 +120,6 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			},
 			enableRuntimeIdCompressor: idCompressorEnabled,
 		};
-	};
-
-	const waitForSummary = async (container) => {
-		let summarized = false;
-		await timeoutPromise((resolve, reject) => {
-			container.on("op", (op: { type: string }) => {
-				if (op.type === "summarize") {
-					summarized = true;
-				} else if (summarized && op.type === "summaryAck") {
-					resolve();
-				} else if (op.type === "summaryNack") {
-					reject(new Error("summaryNack"));
-				} else if (op.type === "summaryAck") {
-					throw new Error("Unexpected summaryAck while waiting for summary");
-				}
-			});
-		}).catch((error) => {
-			throw new Error(`Error waiting for summary: ${error}. Summarized: ${summarized}`);
-		});
 	};
 
 	const createDataStoreWithGroupId = async (dataObject: ITestFluidObject, groupId: string) => {
@@ -240,7 +222,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					map.set(`${i}`, i++);
 					groupIdDataObject.root.set(`${j}`, j++);
 				}
-				await waitForSummary(container1);
+				await waitForSummaryOps(container1);
 				if (testConfig.timeoutRefreshInOriginalContainer) {
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
@@ -269,7 +251,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 
 			if (testConfig.summaryWhileOffline) {
 				map.set(`${i}`, i++);
-				await waitForSummary(container);
+				await waitForSummaryOps(container);
 			}
 
 			// container loaded from previous pending state. The snapshot should refresh
@@ -301,7 +283,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			if (testConfig.savedOps2 && !testConfig.loadOffline) {
 				map2.set(`${i}`, i++);
 				groupIdDataObject2.root.set(`${j}`, j++);
-				await waitForSummary(container2);
+				await waitForSummaryOps(container2, pendingOps);
 				await provider.ensureSynchronized();
 			}
 
@@ -330,7 +312,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				map.set(`${i}`, i++);
 				groupIdDataObject.root.set(`${j}`, j++);
 			}
-			await waitForSummary(container3);
+			await waitForSummaryOps(container3, pendingOps2);
 			await provider.opProcessingController.pauseProcessing(container3);
 			map3.set(`${i}`, i++);
 			map3.set(`${i}`, i++);
