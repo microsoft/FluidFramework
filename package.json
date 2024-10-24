@@ -369,8 +369,6 @@
 			"socket.io-client has an issue with 4.8.0 which breaks the build, so avoid it: https://github.com/socketio/socket.io/issues/5202"
 		],
 		"overrides": {
-			"@fluid-tools/build-cli": "link:build-tools/packages/build-cli",
-			"@fluidframework/build-tools": "link:build-tools/packages/build-tools",
 			"@types/node@<18": "^18.19.0",
 			"get-tsconfig": "^4.7.3",
 			"node-fetch": "^2.6.9",

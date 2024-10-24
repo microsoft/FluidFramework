@@ -123,10 +123,18 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		// generate only node10 compat entrypoints
-		if (!node10TypeCompat) {
-			promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger));
-		}
+		// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
+		// When @alpha is mapped to /legacy, @beta should not be included in
+		// @alpha aka /legacy entrypoint.
+		const separateBetaFromAlpha = this.flags.outFileAlpha !== ApiLevel.alpha;
+		promises.push(
+			generateEntrypoints(
+				mainEntrypoint,
+				mapApiTagLevelToOutput,
+				this.logger,
+				separateBetaFromAlpha,
+			),
+		);
 
 		if (node10TypeCompat) {
 			promises.push(
@@ -221,8 +229,16 @@ function getOutputConfiguration(
 		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
 		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
 		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiTag.public],
-		[`${pathPrefix}${outFileLegacy}${outFileSuffix}`, ApiTag.legacy],
 	]);
+
+	// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
+	// If @alpha is not mapped to same as @legacy, then @legacy can be mapped.
+	if (outFileAlpha !== outFileLegacy) {
+		mapQueryPathToApiTagLevel.set(
+			`${pathPrefix}${outFileLegacy}${outFileSuffix}`,
+			ApiTag.legacy,
+		);
+	}
 
 	if (node10TypeCompat) {
 		// /internal export may be supported without API level generation; so
@@ -313,11 +329,13 @@ const generatedHeader: string = `/*!
  * @param mainEntrypoint - path to main entrypoint file
  * @param mapApiTagLevelToOutput - level oriented ApiTag to output file mapping
  * @param log - logger
+ * @param separateBetaFromAlpha - if true, beta APIs will not be included in alpha outputs
  */
 async function generateEntrypoints(
 	mainEntrypoint: string,
 	mapApiTagLevelToOutput: Map<ApiTag, ExportData>,
 	log: CommandLogger,
+	separateBetaFromAlpha: boolean,
 ): Promise<void> {
 	/**
 	 * List of out file save promises. Used to collect generated file save
@@ -401,7 +419,7 @@ async function generateEntrypoints(
 			// Additionally, if beta should not accumulate to alpha (alpha may be
 			// treated specially such as mapped to /legacy) then skip beta too.
 			// eslint-disable-next-line unicorn/no-lonely-if
-			if (apiTagLevel !== "beta") {
+			if (!separateBetaFromAlpha || apiTagLevel !== "beta") {
 				// update common set
 				commonNamedExports = namedExports;
 			}
