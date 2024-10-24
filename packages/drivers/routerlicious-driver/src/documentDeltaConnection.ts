@@ -11,10 +11,10 @@ import {
 	IConnect,
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import type { io as SocketIOClientStatic } from "socket.io-client";
 
 import { IR11sSocketError, errorObjectFromSocketError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
