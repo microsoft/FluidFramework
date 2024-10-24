@@ -40,7 +40,7 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
-		"build:docs": "api-extractor run --local && typedoc",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:manifest": "oclif manifest",
 		"build:readme": "oclif readme --version 0.0.0 --no-aliases --readme-path src/docs/cli.md",
