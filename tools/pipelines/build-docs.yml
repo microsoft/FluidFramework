@@ -100,13 +100,11 @@ resources:
   pipelines:
     - pipeline: build-tools
       source: Build - build-tools
-      branch: test/michaelzhen-1.0
-      trigger:
-        branches:
-        - test/michaelzhen-1.0
-  # repositories:
-  #   - repository: self
-  #     ref: test/michaelzhen
+      branch: refs/heads/test/michaelzhen-1.0
+      trigger: true
+  repositories:
+    - repository: self
+      ref: refs/heads/test/michaelzhen
 
 stages:
 - stage: check_branch_version
