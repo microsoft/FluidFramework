@@ -17,10 +17,12 @@ export function Homepage(): React.ReactElement {
 	return (
 		<div className='ffcom_homepage'>
 			<TitleSection />
-			<KeyFeaturesSection />
-			<PartnersSection />
-			<HowItWorksSection />
-			<ServiceSection />
+			<div className="ffcom_homepage_body">
+				<KeyFeaturesSection />
+				<PartnersSection />
+				<HowItWorksSection />
+				<ServiceSection />
+			</div>
 		</div>
 	);
 }
