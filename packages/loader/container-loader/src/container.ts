@@ -1319,7 +1319,7 @@ export class Container
 					) => {
 						try {
 							assert(
-								this.deltaManager.inbound.length === 0,
+								this._deltaManager.inbound.length === 0,
 								0x0d6 /* "Inbound queue should be empty when attaching" */,
 							);
 							return combineAppAndProtocolSummary(
@@ -1523,13 +1523,13 @@ export class Container
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
 		await Promise.all([
-			this.deltaManager.inbound.pause(),
-			this.deltaManager.inboundSignal.pause(),
+			this._deltaManager.inbound.pause(),
+			this._deltaManager.inboundSignal.pause(),
 		]);
 
 		if ((await this.satisfies(codeDetails)) === true) {
-			this.deltaManager.inbound.resume();
-			this.deltaManager.inboundSignal.resume();
+			this._deltaManager.inbound.resume();
+			this._deltaManager.inboundSignal.resume();
 			return;
 		}
 

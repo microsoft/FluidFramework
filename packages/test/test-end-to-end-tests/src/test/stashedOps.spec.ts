@@ -10,12 +10,16 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
+	IDeltaManagerInternal,
 	IHostLoader,
 	LoaderHeader,
 	type ILoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import {
+	IContainerExperimental,
+	isIDeltaManagerInternal,
+} from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
@@ -115,7 +119,10 @@ const getPendingOps = async (
 
 	await testObjectProvider.ensureSynchronized();
 	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+	const deltaManagerInternal = toDeltaManagerInternal(dataStore.runtime.deltaManager);
+	if (isIDeltaManagerInternal(deltaManagerInternal)) {
+		assert(deltaManagerInternal.outbound.paused);
+	}
 
 	await cb(container, dataStore);
 
@@ -1272,7 +1279,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+			const deltaManagerInternal = toDeltaManagerInternal(dataStore.runtime.deltaManager);
+			if (isIDeltaManagerInternal(deltaManagerInternal)) {
+				assert(deltaManagerInternal.outbound.paused);
+			}
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1475,7 +1485,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
+			const deltaManagerInternal = toDeltaManagerInternal(dataStore2.runtime.deltaManager);
+			if (isIDeltaManagerInternal(deltaManagerInternal)) {
+				assert(deltaManagerInternal.outbound.paused);
+			}
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();
@@ -1910,7 +1923,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		)) as IContainerExperimental;
 
 		// pause outgoing ops so we can detect dropped stashed changes
-		await container.deltaManager.outbound.pause();
+		await (container.deltaManager as IDeltaManagerInternal).outbound.pause();
 		let pendingState: string | undefined;
 		let pendingStateP;
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -2212,7 +2225,7 @@ describeCompat(
 						},
 						pendingLocalState,
 					);
-					await container.deltaManager.outbound.pause();
+					await (container.deltaManager as IDeltaManagerInternal).outbound.pause();
 					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
@@ -2221,7 +2234,7 @@ describeCompat(
 						reject: true,
 						errorMsg: `${loggingId} didn't connect in time`,
 					});
-					await container.deltaManager.inbound.pause();
+					await (container.deltaManager as IDeltaManagerInternal).inbound.pause();
 
 					// Now this container should submit the op when we resume the outbound queue
 					return container;
@@ -2242,22 +2255,28 @@ describeCompat(
 				const allSentP = Promise.all([
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container2.deltaManager.outbound.once("idle", resolve);
+							(container2.deltaManager as IDeltaManagerInternal).outbound.once(
+								"idle",
+								resolve,
+							);
 						},
 						{ errorMsg: "container2 outbound queue never reached idle state" },
 					),
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container3.deltaManager.outbound.once("idle", resolve);
+							(container3.deltaManager as IDeltaManagerInternal).outbound.once(
+								"idle",
+								resolve,
+							);
 						},
 						{ errorMsg: "container3 outbound queue never reached idle state" },
 					),
 				]);
-				container2.deltaManager.outbound.resume();
-				container3.deltaManager.outbound.resume();
+				(container2.deltaManager as IDeltaManagerInternal).outbound.resume();
+				(container3.deltaManager as IDeltaManagerInternal).outbound.resume();
 				await allSentP;
-				container2.deltaManager.inbound.resume();
-				container3.deltaManager.inbound.resume();
+				(container2.deltaManager as IDeltaManagerInternal).inbound.resume();
+				(container3.deltaManager as IDeltaManagerInternal).inbound.resume();
 
 				// At this point, both rehydrated containers should have submitted the same Counter op.
 				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:

@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	type IDeltaManagerInternal,
+} from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
@@ -72,7 +75,10 @@ describeCompat(
 				sendOps("A");
 				const opsSent = await timeoutPromise<number>(
 					(resolve) => {
-						containerRuntime.deltaManager.outbound.once("idle", resolve);
+						(containerRuntime.deltaManager as IDeltaManagerInternal).outbound.once(
+							"idle",
+							resolve,
+						);
 					},
 					{ errorMsg: "container2 outbound queue never reached idle state" },
 				);

@@ -11,6 +11,7 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
+	IDeltaManagerInternal,
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
@@ -115,7 +116,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		);
 		assert.strictEqual(container.closed, false, "Container should be open");
 		assert.strictEqual(
-			container.deltaManager.inbound.length,
+			(container.deltaManager as IDeltaManagerInternal).inbound.length,
 			0,
 			"Inbound queue should be empty",
 		);
@@ -156,7 +157,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		);
 		assert.strictEqual(container.closed, false, "Container should be open");
 		assert.strictEqual(
-			container.deltaManager.inbound.length,
+			(container.deltaManager as IDeltaManagerInternal).inbound.length,
 			0,
 			"Inbound queue should be empty",
 		);
@@ -931,7 +932,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		);
 		assert.strictEqual(container.closed, false, "Container should be open");
 		assert.strictEqual(
-			container.deltaManager.inbound.length,
+			(container.deltaManager as IDeltaManagerInternal).inbound.length,
 			0,
 			"Inbound queue should be empty",
 		);
