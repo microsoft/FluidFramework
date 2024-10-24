@@ -16,21 +16,21 @@
 		".": {
 			"import": {
 				"types": "./lib/public.d.ts",
-				"default": "./lib/public.js"
+				"default": "./lib/entrypoints/public.js"
 			},
 			"require": {
 				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
+				"default": "./dist/entrypoints/public.js"
 			}
 		},
 		"./beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
-				"default": "./lib/beta.js"
+				"default": "./lib/entrypoints/beta.js"
 			},
 			"require": {
 				"types": "./dist/beta.d.ts",
-				"default": "./dist/index.js"
+				"default": "./dist/entrypoints/beta.js"
 			}
 		},
 		"./internal": {
