@@ -5,23 +5,21 @@
 
 import React from "react";
 
-import "@site/src/css/fluidBundleLoader.css";
+import "@site/src/css/legacyDiceRollerSample.css";
 
 /**
- * {@link FluidBundleLoader} input props.
+ * Legacy dice roller sample component.
+ *
+ * @remarks
+ * Leverages an old app bundle to render a Fluid-backed dice roller.
+ * Used by the v1 docs, but should not be used by newer docs.
+ *
+ * Newer docs should use the {@link MockDiceRollerSample} component instead.
  */
-export interface FluidBundleLoaderProps {
-	idPrefix: string;
-	bundleName: string;
-}
-
-/**
- * TODO
- */
-export function FluidBundleLoader({ idPrefix, bundleName }: FluidBundleLoaderProps): JSX.Element {
+export function LegacyDiceRollerSample(): JSX.Element {
 	React.useEffect(() => {
 		const script = document.createElement("script");
-		script.src = `https://storage.fluidframework.com/static/js/${bundleName}`;
+		script.src = `https://storage.fluidframework.com/static/js/dice-roller.2021-09-24.js`;
 		script.async = true;
 
 		document.body.appendChild(script);
@@ -29,18 +27,15 @@ export function FluidBundleLoader({ idPrefix, bundleName }: FluidBundleLoaderPro
 		return () => {
 			document.body.removeChild(script);
 		};
-	}, [bundleName]);
-
-	const leftPanelId = `${idPrefix}-left`;
-	const rightPanelId = `${idPrefix}-right`;
+	}, []);
 
 	const containerId = Date.now().toString();
 
 	return (
 		<>
 			<div id="content" style={{ minHeight: "200px" }}>
-				<Panel containerId={containerId} elementId={leftPanelId} />
-				<Panel containerId={containerId} elementId={rightPanelId} />
+				<Panel containerId={containerId} elementId={"dice-roller-left"} />
+				<Panel containerId={containerId} elementId={"dice-roller-right"} />
 			</div>
 		</>
 	);
