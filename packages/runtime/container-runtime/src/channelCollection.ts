@@ -105,8 +105,6 @@ import {
  * @internal
  */
 export enum RuntimeHeaders {
-	/** True to wait for a data store to be created and loaded before returning it. */
-	wait = "wait",
 	/** True if the request is coming from an IFluidHandle. */
 	viaHandle = "viaHandle",
 }
@@ -913,7 +911,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 		originalRequest: IRequest,
 	): Promise<IFluidDataStoreContextInternal> {
-		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
 		if (
 			this.checkAndLogIfDeleted(
 				id,
@@ -933,7 +930,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			);
 		}
 
-		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
+		const context = this.contexts.get(id);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
 			const request: IRequest = { url: id };
@@ -947,7 +944,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public async getDataStoreIfAvailable(
 		id: string,
-		requestHeaderData: RuntimeHeaderData,
 	): Promise<IFluidDataStoreContextInternal | undefined> {
 		// If the data store has been deleted, log an error and return undefined.
 		if (
@@ -956,13 +952,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				this.contexts.get(id),
 				"Requested",
 				"getDataStoreIfAvailable",
-				requestHeaderData,
 			)
 		) {
 			return undefined;
 		}
-		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
-		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
+		const context = this.contexts.get(id);
 		if (context === undefined) {
 			return undefined;
 		}
@@ -1441,9 +1435,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const requestForChild = !requestParser.isLeaf(1);
 
 		const headerData: RuntimeHeaderData = {};
-		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
-			headerData.wait = request.headers[RuntimeHeaders.wait];
-		}
+
 		if (typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean") {
 			headerData.viaHandle = request.headers[RuntimeHeaders.viaHandle];
 		}
