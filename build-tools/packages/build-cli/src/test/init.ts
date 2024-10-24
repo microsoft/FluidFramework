@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { test as oclifTest } from "@oclif/test";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Initializes the oclif command test environment. \@oclif/test cannot find the path to the project in some
@@ -19,4 +24,11 @@ export function initializeCommandTestFunction(
 ): ReturnType<typeof oclifTest.loadConfig> {
 	// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
 	return oclifTest.loadConfig({ root: moduleUrl });
+}
+
+/**
+ * The absolute path to the test data for this package.
+ */
+export function getTestDataPath(): string {
+	return path.resolve(__dirname, "../../src/test/data");
 }
