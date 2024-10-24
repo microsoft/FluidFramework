@@ -29,7 +29,7 @@ const links: CommunityLinkItem[] = [
 	},
 	{
 		title: "Ask Technical Questions",
-		Icon: require("@site/static/assets/community-discussion.svg").default,
+		Icon: require("@site/static/assets/community/discussion.svg").default,
 		description: (
 			<>
 				Our GitHub Discussions are a great way to participate. Feel free to ask questions
@@ -40,7 +40,7 @@ const links: CommunityLinkItem[] = [
 	},
 	{
 		title: "Report Issues",
-		Icon: require("@site/static/assets/community-report-issues.svg").default,
+		Icon: require("@site/static/assets/community/report-issues.svg").default,
 		description: (
 			<>
 				Found something not working as expected? Please file a GitHub issue, so we can take
