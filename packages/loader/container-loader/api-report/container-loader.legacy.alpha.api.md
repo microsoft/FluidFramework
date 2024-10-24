@@ -12,6 +12,12 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
+// @alpha
+export function createDetachedContainer(codeDetails: IFluidCodeDetails, loaderProps: ILoaderProps, createDetachedProps?: {
+    canReconnect?: boolean;
+    clientDetailsOverride?: IClientDetails;
+}): Promise<IContainer>;
+
 // @alpha (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
@@ -150,6 +156,15 @@ export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
 };
+
+// @alpha
+export function rehydrateDetachedContainerFromSnapshot(snapshot: string, loaderProps: ILoaderProps, createDetachedProps?: {
+    canReconnect?: boolean;
+    clientDetailsOverride?: IClientDetails;
+}): Promise<IContainer>;
+
+// @alpha
+export function resolve(request: IRequest, loaderProps: ILoaderProps, pendingLocalState?: string): Promise<IContainer>;
 
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

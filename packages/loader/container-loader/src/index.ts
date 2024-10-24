@@ -6,6 +6,7 @@
 export { ConnectionState } from "./connectionState.js";
 export { IContainerExperimental, waitContainerToCatchUp } from "./container.js";
 export {
+	createDetachedContainer,
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
 	IFluidModuleWithDetails,
@@ -13,6 +14,8 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
+	rehydrateDetachedContainerFromSnapshot,
+	resolve,
 } from "./loader.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {

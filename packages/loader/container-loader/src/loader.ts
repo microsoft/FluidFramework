@@ -428,3 +428,51 @@ export class Loader implements IHostLoader {
 		);
 	}
 }
+
+/**
+ * {@inheritDoc @fluidframework/container-definitions#IHostLoader.createDetachedContainer}
+ * @legacy
+ * @alpha
+ */
+export async function createDetachedContainer(
+	codeDetails: IFluidCodeDetails,
+	loaderProps: ILoaderProps,
+	createDetachedProps?: {
+		canReconnect?: boolean;
+		clientDetailsOverride?: IClientDetails;
+	},
+): Promise<IContainer> {
+	const loader = new Loader(loaderProps);
+	return loader.createDetachedContainer(codeDetails, createDetachedProps);
+}
+
+/**
+ * {@inheritDoc @fluidframework/container-definitions#IHostLoader.rehydrateDetachedContainerFromSnapshot}
+ * @legacy
+ * @alpha
+ */
+export async function rehydrateDetachedContainerFromSnapshot(
+	snapshot: string,
+	loaderProps: ILoaderProps,
+	createDetachedProps?: {
+		canReconnect?: boolean;
+		clientDetailsOverride?: IClientDetails;
+	},
+): Promise<IContainer> {
+	const loader = new Loader(loaderProps);
+	return loader.rehydrateDetachedContainerFromSnapshot(snapshot, createDetachedProps);
+}
+
+/**
+ * {@inheritDoc @fluidframework/container-definitions#ILoader.resolve}
+ * @legacy
+ * @alpha
+ */
+export async function resolve(
+	request: IRequest,
+	loaderProps: ILoaderProps,
+	pendingLocalState?: string,
+): Promise<IContainer> {
+	const loader = new Loader(loaderProps);
+	return loader.resolve(request, pendingLocalState);
+}
