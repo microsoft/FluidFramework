@@ -28,4 +28,4 @@ export {
 	OdspContainerServices,
 	OdspMember,
 	TokenResponse,
-} from "./index.js";
+} from "../index.js";

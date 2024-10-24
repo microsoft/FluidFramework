@@ -15,7 +15,7 @@
  * @packageDocumentation
  */
 
-export {
+export type {
 	// @legacy APIs
 	IChannel,
 	IChannelAttributes,
@@ -31,4 +31,4 @@ export {
 	Jsonable,
 	JsonableTypeWith,
 	Serializable,
-} from "./index.js";
+} from "../index.js";

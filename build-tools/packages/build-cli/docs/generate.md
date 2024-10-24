@@ -12,7 +12,6 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
 * [`flub generate source-entrypoints`](#flub-generate-source-entrypoints)
-* [`flub generate sourceEntrypoints`](#flub-generate-sourceentrypoints)
 * [`flub generate typetests`](#flub-generate-typetests)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
@@ -363,18 +362,10 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 
 ```
 USAGE
-  $ flub generate source-entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outFileAlpha <value>] [--outFileBeta <value>]
-    [--outFileLegacy <value>] [--outFilePublic <value>] [--outFileSuffix <value>] [--srcDir <value>]
+  $ flub generate source-entrypoints [-v | --quiet] [--mainEntrypoint <value>]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
-  --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
-  --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
-  --outFilePublic=<value>   [default: public] Base file name for public entrypoint declaration files.
-  --outFileSuffix=<value>   [default: .ts] File name suffix including extension for emitting entrypoint declaration
-                            files.
-  --srcDir=<value>          [default: src/] Directory to emit source entrypoint declaration files.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -386,36 +377,6 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/generate/source-entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/source-entrypoints.ts)_
-
-## `flub generate sourceEntrypoints`
-
-Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
-
-```
-USAGE
-  $ flub generate sourceEntrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outFileAlpha <value>] [--outFileBeta <value>]
-    [--outFileLegacy <value>] [--outFilePublic <value>] [--outFileSuffix <value>] [--srcDir <value>]
-
-FLAGS
-  --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
-  --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
-  --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
-  --outFilePublic=<value>   [default: public] Base file name for public entrypoint declaration files.
-  --outFileSuffix=<value>   [default: .ts] File name suffix including extension for emitting entrypoint declaration
-                            files.
-  --srcDir=<value>          [default: src/] Directory to emit source entrypoint declaration files.
-
-LOGGING FLAGS
-  -v, --verbose  Enable verbose logging.
-      --quiet    Disable all logging.
-
-DESCRIPTION
-  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
-  "exports"
-```
-
-_See code: [src/commands/generate/sourceEntrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/sourceEntrypoints.ts)_
 
 ## `flub generate typetests`
 

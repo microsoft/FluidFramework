@@ -28,7 +28,7 @@ const optionDefaults = {
 	outFileLegacy: ApiLevel.legacy,
 	outFilePublic: ApiLevel.public,
 	outFileSuffix: ".ts",
-	srcDir: "src/",
+	srcDir: "src/entrypoints/",
 } as const;
 
 /**
@@ -46,32 +46,6 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 			default: optionDefaults.mainEntrypoint,
 			exists: true,
 		}),
-		outFileAlpha: Flags.string({
-			description: "Base file name for alpha entrypoint declaration files.",
-			default: optionDefaults.outFileAlpha,
-		}),
-		outFileBeta: Flags.string({
-			description: "Base file name for beta entrypoint declaration files.",
-			default: optionDefaults.outFileBeta,
-		}),
-		outFileLegacy: Flags.string({
-			description: "Base file name for legacy entrypoint declaration files.",
-			default: optionDefaults.outFileLegacy,
-		}),
-		outFilePublic: Flags.string({
-			description: "Base file name for public entrypoint declaration files.",
-			default: optionDefaults.outFilePublic,
-		}),
-		outFileSuffix: Flags.string({
-			description:
-				"File name suffix including extension for emitting entrypoint declaration files.",
-			default: optionDefaults.outFileSuffix,
-		}),
-		srcDir: Flags.string({
-			description: "Directory to emit source entrypoint declaration files.",
-			default: optionDefaults.srcDir,
-			exists: true,
-		}),
 		...BaseCommand.flags,
 	};
 
@@ -83,7 +57,6 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 		const tsConfig = await readTsConfig();
 
 		const { mapQueryPathToApiTagLevel, mapApiTagLevelToOutput } = getOutputConfiguration(
-			this.flags,
 			packageJson,
 			tsConfig,
 			this.logger,
@@ -98,18 +71,8 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 		}
 
 		const promises: Promise<void>[] = [];
-
-		// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
-		// When @alpha is mapped to /legacy, @beta should not be included in
-		// @alpha aka /legacy entrypoint.
-		const separateBetaFromAlpha = this.flags.outFileAlpha !== ApiLevel.alpha;
 		promises.push(
-			generateSourceEntrypoints(
-				mainEntrypoint,
-				mapApiTagLevelToOutput,
-				this.logger,
-				separateBetaFromAlpha,
-			),
+			generateSourceEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger),
 		);
 
 		// All of the output actions (deletes of stale files or writing of new/updated files)
@@ -136,7 +99,6 @@ async function readTsConfig(): Promise<TsConfigJson> {
 }
 
 function getOutputConfiguration(
-	flags: Readonly<Record<keyof typeof optionDefaults, string>>,
 	packageJson: PackageJson,
 	tsconfig: TsConfigJson,
 	logger?: CommandLogger,
@@ -145,22 +107,14 @@ function getOutputConfiguration(
 	mapApiTagLevelToOutput: Map<ApiTag, ExportData>;
 } {
 	const { outFileSuffix, outFileAlpha, outFileBeta, outFileLegacy, outFilePublic, srcDir } =
-		flags;
+		optionDefaults;
 
 	const mapQuerySrcPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
 		[`${srcDir}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
 		[`${srcDir}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
 		[`${srcDir}${outFilePublic}${outFileSuffix}`, ApiTag.public],
+		[`${srcDir}${outFileLegacy}${outFileSuffix}`, ApiTag.legacy],
 	]);
-
-	// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
-	// If @alpha is not mapped to same as @legacy, then @legacy can be mapped.
-	if (outFileAlpha !== outFileLegacy) {
-		mapQuerySrcPathToApiTagLevel.set(
-			`${srcDir}${outFileLegacy}${outFileSuffix}`,
-			ApiTag.legacy,
-		);
-	}
 
 	let emitDeclarationOnly: boolean = false;
 	if (tsconfig.compilerOptions?.emitDeclarationOnly !== undefined) {
@@ -203,13 +157,11 @@ const generatedHeader: string = `/*!
  * @param mainEntrypoint - path to main entrypoint file
  * @param mapApiTagLevelToOutput - level oriented ApiTag to output file mapping
  * @param log - logger
- * @param separateBetaFromAlpha - if true, beta APIs will not be included in alpha outputs
  */
 async function generateSourceEntrypoints(
 	mainEntrypoint: string,
 	mapApiTagLevelToOutput: Map<ApiTag, ExportData>,
 	log: CommandLogger,
-	separateBetaFromAlpha: boolean,
 ): Promise<void> {
 	/**
 	 * List of out file save promises. Used to collect generated file save
@@ -293,7 +245,7 @@ async function generateSourceEntrypoints(
 			// Additionally, if beta should not accumulate to alpha (alpha may be
 			// treated specially such as mapped to /legacy) then skip beta too.
 			// eslint-disable-next-line unicorn/no-lonely-if
-			if (!separateBetaFromAlpha || apiTagLevel !== "beta") {
+			if (apiTagLevel !== "beta") {
 				// update common set
 				commonNamedExports = namedExports;
 			}
@@ -317,10 +269,11 @@ async function generateSourceEntrypoints(
 			sourceFile.insertText(0, newFileHeader);
 			sourceFile.addExportDeclaration({
 				leadingTrivia: "\n",
-				moduleSpecifier: `./${mainSourceFile
+				moduleSpecifier: `../${mainSourceFile
 					.getBaseName()
 					.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
 				namedExports,
+				isTypeOnly: mapApiTagLevelToOutput.get(apiTagLevel)?.isTypeOnly,
 			});
 		} else {
 			// At this point we already know that package "export" has a request

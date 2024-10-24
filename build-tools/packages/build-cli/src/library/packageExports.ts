@@ -289,6 +289,9 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 			mapSrcQueryPathToOutKey,
 			exportValue,
 			emitDeclarationOnly,
+			{
+				conditions: [],
+			},
 		);
 		for (const findResult of findResults) {
 			const { outKey, relPath, conditions, isTypeOnly } = findResult;
@@ -318,6 +321,10 @@ function findDefaultPathsMatching<TOutKey>(
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	exports: Readonly<ExportsRecordValue>,
 	emitDeclarationOnly: boolean,
+	previous: Readonly<{
+		conditions: readonly string[];
+		isTypeOnly?: boolean;
+	}>,
 ): (ExportData & { outKey: TOutKey | undefined })[] {
 	const results: (ExportData & { outKey: TOutKey | undefined })[] = [];
 
@@ -325,11 +332,13 @@ function findDefaultPathsMatching<TOutKey>(
 	for (const [entry, value] of entries) {
 		// First check if this entry is a leaf; where value is only expected to be a string (a relative file path).
 		let relPath: string;
+		let isTypeOnly: boolean = false;
 		if (typeof value === "string") {
 			if (emitDeclarationOnly && entry === typesExportCondition) {
-				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.d.ts$/, ".ts");
+				relPath = value.replace(/(lib|dist)/g, "src/entrypoints").replace(/\.d.ts$/, ".ts");
+				isTypeOnly = true;
 			} else if (!emitDeclarationOnly && entry === defaultExportCondition) {
-				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.js$/, ".ts");
+				relPath = value.replace(/(lib|dist)/g, "src/entrypoints").replace(/\.js$/, ".ts");
 			} else {
 				continue;
 			}
@@ -340,7 +349,7 @@ function findDefaultPathsMatching<TOutKey>(
 					outKey: queryResult.value,
 					relPath,
 					conditions: [],
-					isTypeOnly: false,
+					isTypeOnly,
 				});
 			}
 		} else if (typeof value !== "string" && value !== null) {
@@ -353,6 +362,9 @@ function findDefaultPathsMatching<TOutKey>(
 				mapQueryPathToOutKey,
 				value,
 				emitDeclarationOnly,
+				{
+					conditions: [],
+				},
 			);
 			if (deepFind !== undefined) {
 				results.push(...deepFind);
