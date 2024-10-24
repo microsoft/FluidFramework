@@ -202,7 +202,7 @@ export type UnionToTuple<
 /**
  * This is unsafe, meaning that the returned value might not match its type.
  *
- * For this the result to match its type, T must be a union of the types of each item in `items` in the order that they occur.
+ * For the result to match its type, T must be a union of the types of each item in `items` in the order that they occur.
  * For this to be possible, there must be no duplicate or overlapping types.
  * This is fragile and must be used with care.
  *

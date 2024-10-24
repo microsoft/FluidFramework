@@ -47,8 +47,8 @@ export function isTreeNodeSchemaClass<
  * Type constraint used in schema declaration APIs.
  *
  * The order of types in the array is not significant.
- * Additionally it is legal for users of this type to have the runtime and compile time order of items withing this array not match.
- * Therefor to ensure type safety, this these arrays should not be indexed, and instead just be iterated.
+ * Additionally, it is legal for users of this type to have the runtime and compile time order of items within this array not match.
+ * Therefor to ensure type safety, these arrays should not be indexed, and instead just be iterated.
  *
  * Ideally this restriction would be modeled in the type itself, but it is not ergonomic to do so as there is no easy (when compared to arrays)
  * way to declare and manipulate unordered sets of types in TypeScript.
@@ -530,15 +530,15 @@ export type TreeNodeFromImplicitAllowedTypes<
  * When a schema is used to describe data which is an input into an API, the API is [contravariant](https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)) over the schema.
  * (See also, [TypeScript Variance Annotations](https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations)).
  *
- * Since these schema are expressed using TypeScript types, its possible for the user of the API to provide non-exact values of these types which has implications that depended ont eh variance.
+ * Since these schema are expressed using TypeScript types, it is possible for the user of the API to provide non-exact values of these types which has implications that depended on the variance.
  *
  * Consider a field with schema type of `A | B` (where A and B are types of schema).
  *
  * - Reading the field behaves covariantly so {@link NodeFromSchema} of `<A | B>` is the same as `NodeFromSchema<A> | NodeFromSchema<B>`, indicating that either type of node can be read from the field.
- * - Writing to the field behaves contravariantly. Since its unknown if the node actually has a schema `A` or a schema `B`, the only legal values (known to be in schema regardless of which schema the underlying node has) are values which are legal for both `A & B`.
+ * - Writing to the field behaves contravariantly. Since it is unknown if the node actually has a schema `A` or a schema `B`, the only legal values (known to be in schema regardless of which schema the underlying node has) are values which are legal for both `A & B`.
  *
  * Note that this is distinct from the case where the schema is `[A, B]`.
- * In this case is it known that the field allows both A and B (the field can be set to an A or a B value).
+ * In this case it is known that the field allows both A and B (the field can be set to an A or a B value).
  * When `A | B` is used, the field might allow
  * A but not B (so assigning a B value would be out of schema),
  * B but not A (so assigning an A value would be out of schema)
@@ -546,14 +546,14 @@ export type TreeNodeFromImplicitAllowedTypes<
  *
  * This gets more extreme when given completely unspecified schema.
  * For example if a field is just provided {@link ImplicitFieldSchema}, nothing is known about the content of the field.
- * This means reading the field (via {@link TreeFieldFromImplicitField}) can give any valid tree field content,
- * but there are no safe values which could be written to the field (since its unknown what values would be out of schema) so {@link InsertableTreeFieldFromImplicitField} gives `never`.
+ * This means that reading the field (via {@link TreeFieldFromImplicitField}) can give any valid tree field content,
+ * but there are no safe values which could be written to the field (since it is unknown what values would be out of schema) so {@link InsertableTreeFieldFromImplicitField} gives `never`.
  *
- * To implement this variance correctly, computing of types for input and output have to use separate utilities
+ * To implement this variance correctly, the computation of types for input and output have to use separate utilities
  * which take very different approaches when encountering non-exact schema like unions or `ImplicitFieldSchema`.
- * The utilities which behave contravariantly as required to handle input correctly link this documentation to indicate that this is how they behave.
+ * The utilities which behave contravariantly (as required to handle input correctly) link this documentation to indicate that this is how they behave.
  *
- * In addition to behaving contravariantly these input type computation utilities often have further limitations.
+ * In addition to behaving contravariantly, these input type computation utilities often have further limitations.
  * This is due to TypeScript making it difficult to implement this contravariance exactly.
  * When faced with these implementation limitations these contravariant type computation utilities error on the side of producing overly strict requirements.
  * For example in the above case of `A | B`, the utilities might compute an allowed insertable type as `never` even if there happens to be a common value accepted by both `A` and `B`.
@@ -562,10 +562,10 @@ export type TreeNodeFromImplicitAllowedTypes<
  * For a more concrete example: if {@link InsertableTreeFieldFromImplicitField} produced `never` for a schema `A | OptionalField<A>`,
  * a future version could instead return a more flexible but still safe type, like `A`.
  *
- * More generally: try and avoid providing non-exact schema, especially for the fields of other schema.
+ * More generally: try to avoid providing non-exact schema, especially for the fields of other schema.
  * While these APIs attempt to handle such cases correctly, there are limitations and known bugs in this handling.
  * Code using non-exact schema is much more likely to have its compilation break due to updates of this package or even TypeScript,
- * and thus compilation breaks to edge cases of non-exact schema handling, especially with recursive schema, are not considered breaking changes.
+ * and thus compilation breaks due to edge cases of non-exact schema handling, especially with recursive schema, are not considered breaking changes.
  * This may change as the API become more stable.
  *
  * @privateRemarks
