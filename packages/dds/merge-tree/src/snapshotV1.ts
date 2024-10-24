@@ -212,7 +212,6 @@ export class SnapshotV1 {
 			if (segment) {
 				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
-					segment.propertyManager = undefined;
 				}
 				pushSegRaw(
 					segment.toJSONObject() as JsonSegmentSpecs,
@@ -282,7 +281,6 @@ export class SnapshotV1 {
 
 				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
-					segment.propertyManager = undefined;
 				}
 				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
 					json: segment.toJSONObject() as IJSONSegment,

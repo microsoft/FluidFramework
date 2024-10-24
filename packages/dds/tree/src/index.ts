@@ -40,9 +40,7 @@ export {
 } from "./events/index.js";
 
 export {
-	type LazyItem,
 	TreeStatus,
-	type Unenforced,
 	TreeCompressionStrategy,
 } from "./feature-libraries/index.js";
 
@@ -58,6 +56,7 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
+	type ForestOptions,
 	getBranch,
 	type TreeBranch,
 	type TreeBranchFork,
@@ -115,18 +114,25 @@ export {
 	type InsertableObjectFromSchemaRecordUnsafe,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
+	type TreeNodeSchemaClassUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
-	// experimental @internal APIs:
+	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-	type EmptyObject,
+	type UnsafeUnknownSchema,
+	type TreeViewAlpha,
+	type InsertableField,
+	type Insertable,
+	type InsertableContent,
+	type FactoryContent,
+	type FactoryContentObject,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -134,6 +140,8 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	extractPersistedSchema,
+	comparePersistedSchema,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
@@ -149,10 +157,20 @@ export {
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
 	getJsonSchema,
+	type LazyItem,
+	type Unenforced,
+	type ReadonlyArrayNode,
 } from "./simple-tree/index.js";
-export { SharedTree, configuredSharedTree } from "./treeFactory.js";
+export {
+	SharedTree,
+	configuredSharedTree,
+} from "./treeFactory.js";
 
-export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
+export type {
+	ICodecOptions,
+	JsonValidator,
+	SchemaValidationFunction,
+} from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
@@ -177,3 +195,5 @@ export {
 // These would be put in `internalTypes` except doing so tents to cause errors like:
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
+
+export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";

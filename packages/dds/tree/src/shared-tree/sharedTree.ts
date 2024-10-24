@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -16,10 +16,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type IEditableForest,
 	type JsonableTree,
 	RevisionTagCodec,
+	type TaggedChange,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
+	type TreeStoredSchemaSubscription,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -66,6 +69,7 @@ import {
 	createTreeCheckout,
 } from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -150,6 +154,30 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 }
 
 /**
+ * Build and return a forest of the requested type.
+ */
+export function buildConfiguredForest(
+	type: ForestType,
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+): IEditableForest {
+	switch (type) {
+		case ForestType.Optimized:
+			return buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy),
+				undefined,
+				idCompressor,
+			);
+		case ForestType.Reference:
+			return buildForest();
+		case ForestType.Expensive:
+			return buildForest(undefined, true);
+		default:
+			unreachableCase(type);
+	}
+}
+
+/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
  * TODO: detail compatibility requirements.
@@ -181,16 +209,7 @@ export class SharedTree
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest =
-			options.forest === ForestType.Optimized
-				? buildChunkedForest(
-						makeTreeChunker(schema, defaultSchemaPolicy),
-						undefined,
-						runtime.idCompressor,
-					)
-				: options.forest === ForestType.Reference
-					? buildForest()
-					: buildForest(undefined, true);
+		const forest = buildConfiguredForest(options.forest, schema, runtime.idCompressor);
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
@@ -263,7 +282,8 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(change: TaggedChange<SharedTreeChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			),
 			changeEnricher,
@@ -333,11 +353,13 @@ export function getBranch(tree: ITree): TreeBranch;
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  */
-export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
-export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): TreeBranch {
+export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): TreeBranch;
+export function getBranch<T extends ImplicitFieldSchema>(
+	treeOrView: ITree | TreeView<T>,
+): TreeBranch {
 	assert(
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
-		"Unsupported implementation",
+		0xa48 /* Unsupported implementation */,
 	);
 	const checkout: TreeCheckout = treeOrView.checkout;
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
@@ -348,7 +370,7 @@ export function getBranch(treeOrView: ITree | TreeView<ImplicitFieldSchema>): Tr
  * Format versions supported by SharedTree.
  *
  * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @internal
+ * @alpha
  */
 export const SharedTreeFormatVersion = {
 	/**
@@ -374,26 +396,38 @@ export const SharedTreeFormatVersion = {
  * Format versions supported by SharedTree.
  *
  * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @internal
+ * @alpha
  * @privateRemarks
  * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
+ *
+ * TODO: Before this gets promoted past Alpha,
+ * a separate abstraction more suited for use in the public API should be adopted rather than reusing the same types used internally.
+ * Such an abstraction should probably be in the form of a Fluid-Framework wide compatibility enum.
  */
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 /**
- * @internal
+ * Configuration options for SharedTree.
+ * @alpha
  */
 export type SharedTreeOptions = Partial<ICodecOptions> &
-	Partial<SharedTreeFormatOptions> & {
-		/**
-		 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
-		 */
-		forest?: ForestType;
-	};
+	Partial<SharedTreeFormatOptions> &
+	ForestOptions;
+
+/**
+ * Configuration options for SharedTree's internal tree storage.
+ * @alpha
+ */
+export interface ForestOptions {
+	/**
+	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 */
+	readonly forest?: ForestType;
+}
 
 /**
  * Options for configuring the persisted format SharedTree uses.
- * @internal
+ * @alpha
  */
 export interface SharedTreeFormatOptions {
 	/**
@@ -417,7 +451,7 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
- * @internal
+ * @alpha
  */
 export enum ForestType {
 	/**

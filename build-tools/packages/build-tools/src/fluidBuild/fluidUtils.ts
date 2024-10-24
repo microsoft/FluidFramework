@@ -14,7 +14,11 @@ import { readJson } from "fs-extra";
 
 import { defaultLogger } from "../common/logging";
 import { commonOptions } from "./commonOptions";
-import { FLUIDBUILD_CONFIG_VERSION, type IFluidBuildConfig } from "./fluidBuildConfig";
+import {
+	DEFAULT_FLUIDBUILD_CONFIG,
+	FLUIDBUILD_CONFIG_VERSION,
+	type IFluidBuildConfig,
+} from "./fluidBuildConfig";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
@@ -141,28 +145,36 @@ const configExplorer = cosmiconfigSync(configName, {
 });
 
 /**
+ * Set to true when the default config is returned by getFluidBuildConfig so that repeated calls to the function don't
+ * result in repeated searches for config.
+ */
+let defaultConfigLoaded = false;
+
+/**
  * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
  *
- * @param rootDir - The path to the root package.json to load.
- * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
- * @returns The fluidBuild section of the package.json, or undefined if not found
+ * @param searchDir - The path to search for the config. The search will look up the folder hierarchy for a config in
+ * either a standalone file or package.json
+ * @returns The the loaded fluidBuild config, or the default config if one is not found.
  */
 export function getFluidBuildConfig(
-	rootDir: string,
-	noCache = false,
+	searchDir: string,
 	log = defaultLogger,
 ): IFluidBuildConfig {
-	if (noCache === true) {
-		configExplorer.clearCaches();
+	if (defaultConfigLoaded) {
+		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
-	const configResult = configExplorer.search(rootDir);
-	const config = configResult?.config as IFluidBuildConfig | undefined;
-
-	if (config === undefined) {
-		throw new Error("No fluidBuild configuration found.");
+	const configResult = configExplorer.search(searchDir);
+	if (configResult?.config === undefined) {
+		log.warning(
+			`No fluidBuild config found when searching ${searchDir}; default configuration loaded. Packages and tasks will be inferred.`,
+		);
+		defaultConfigLoaded = true;
+		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
+	const config = configResult.config;
 	if (config.version === undefined) {
 		log.warning(
 			"fluidBuild config has no version field. This field will be required in a future release.",

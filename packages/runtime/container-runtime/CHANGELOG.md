@@ -1,5 +1,17 @@
 # @fluidframework/container-runtime
 
+## 2.4.0
+
+### Minor Changes
+
+-   The `op.contents` member on ContainerRuntime's `batchBegin`/`batchEnd` event args is deprecated ([#22750](https://github.com/microsoft/FluidFramework/pull/22750)) [de6928b528](https://github.com/microsoft/FluidFramework/commit/de6928b528ceb115b12cdf7a4183077cbaa80a71)
+
+    The `batchBegin`/`batchEnd` events on ContainerRuntime indicate when a batch is beginning/finishing being processed.
+    The events include an argument of type `ISequencedDocumentMessage` which is the first or last message of the batch.
+
+    The `contents` property of the `op` argument should not be used when reasoning over the begin/end of a batch.
+    If you want to look at the `contents` of an op, wait for the `op` event.
+
 ## 2.3.0
 
 ### Minor Changes

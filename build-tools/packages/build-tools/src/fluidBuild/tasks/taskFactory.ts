@@ -9,9 +9,10 @@ import { BuildPackage } from "../buildGraph";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
+import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
-import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
+import { UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
@@ -23,25 +24,19 @@ import {
 	TypeValidationTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
-import { RenameTypesTask } from "./leaf/renamerTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
-import { TscMultiTask, TscTask } from "./leaf/tscTask";
+import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { Task } from "./task";
+import { type TaskHandler, isConstructorFunction } from "./taskHandlers";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
-	[key: string]: new (
-		node: BuildPackage,
-		command: string,
-		context: BuildContext,
-		taskName?: string,
-	) => LeafTask;
+	[key: string]: TaskHandler;
 } = {
 	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"fluid-tsc": TscTask,
-	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
 	"webpack": WebpackTask,
@@ -70,12 +65,34 @@ const executableToLeafTask: {
 	"flub list server": FlubListTask,
 	"flub list gitrest": FlubListTask,
 	"flub list historian": FlubListTask,
+} as const;
 
-	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
-	// pipeline then this mapping will have to be updated.
-	"renamer": RenameTypesTask,
-	"flub rename-types": RenameTypesTask,
-};
+/**
+ * Given a command executable, attempts to find a matching `TaskHandler` that will handle the task. If one is found, it
+ * is returned; otherwise, it returns `UnknownLeafTask` as the default handler.
+ *
+ * Any DeclarativeTasks that are defined in the fluid-build config are checked first, followed by the built-in
+ * executableToLeafTask constant.
+ *
+ * @param executable The command executable to find a matching task handler for.
+ * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
+ */
+function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
+	const config = context.fluidBuildConfig;
+	const declarativeTasks = config?.declarativeTasks;
+	const taskMatch = declarativeTasks?.[executable];
+
+	if (taskMatch !== undefined) {
+		return createDeclarativeTaskHandler(taskMatch);
+	}
+
+	// No declarative task found matching the executable, so look it up in the built-in list.
+	const builtInHandler: TaskHandler | undefined = executableToLeafTask[executable];
+
+	// If no handler is found, return the UnknownLeafTask as the default handler. The task won't support incremental
+	// builds.
+	return builtInHandler ?? UnknownLeafTask;
+}
 
 /**
  * Regular expression to parse `concurrently` arguments that specify package scripts.
@@ -166,13 +183,21 @@ export class TaskFactory {
 			return new GroupTask(node, command, context, [subTask], taskName);
 		}
 
-		// Leaf task
-		const executable = getExecutableFromCommand(command).toLowerCase();
-		const ctor = executableToLeafTask[executable];
-		if (ctor) {
-			return new ctor(node, command, context, taskName);
+		// Leaf tasks; map the executable to a known task type. If none is found, the UnknownLeafTask is used.
+		const executable = getExecutableFromCommand(
+			command,
+			context.fluidBuildConfig?.multiCommandExecutables ?? [],
+		).toLowerCase();
+
+		// Will return a task-specific handler or the UnknownLeafTask
+		const handler = getTaskForExecutable(executable, context);
+
+		// Invoke the function or constructor to create the task handler
+		if (isConstructorFunction(handler)) {
+			return new handler(node, command, context, taskName);
+		} else {
+			return handler(node, command, context, taskName);
 		}
-		return new UnknownLeafTask(node, command, context, taskName);
 	}
 
 	/**

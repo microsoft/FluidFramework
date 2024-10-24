@@ -394,7 +394,7 @@ export class Container
 					// to return container, so ignore this value and use undefined for opsBeforeReturn
 					const mode: IContainerLoadMode = pendingLocalState
 						? { ...(loadMode ?? defaultMode), opsBeforeReturn: undefined }
-						: loadMode ?? defaultMode;
+						: (loadMode ?? defaultMode);
 
 					const onClosed = (err?: ICriticalContainerError): void => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -1045,8 +1045,7 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError): void {
-		this._deltaManager.dispose(error);
-		this.verifyClosed();
+		this.verifyClosedAfter(() => this._deltaManager.dispose(error));
 	}
 
 	public close(error?: ICriticalContainerError): void {
@@ -1054,20 +1053,30 @@ export class Container
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		this._deltaManager.close(error);
-		this.verifyClosed();
+		this.verifyClosedAfter(() => this._deltaManager.close(error));
 	}
 
-	private verifyClosed(): void {
-		assert(
-			this.connectionState === ConnectionState.Disconnected,
-			0x0cf /* "disconnect event was not raised!" */,
-		);
+	private verifyClosedAfterCalls = 0;
+	private verifyClosedAfter(callback: () => void): void {
+		this.verifyClosedAfterCalls++;
+		try {
+			callback();
+		} finally {
+			this.verifyClosedAfterCalls--;
+		}
 
-		assert(
-			this._lifecycleState === "closed" || this._lifecycleState === "disposed",
-			0x314 /* Container properly closed */,
-		);
+		// We only want to verify connectionState and lifecycleState after close/dispose has fully finished
+		if (this.verifyClosedAfterCalls === 0) {
+			assert(
+				this.connectionState === ConnectionState.Disconnected,
+				0x0cf /* "disconnect event was not raised!" */,
+			);
+
+			assert(
+				this._lifecycleState === "closed" || this._lifecycleState === "disposed",
+				0x314 /* Container properly closed */,
+			);
+		}
 	}
 
 	private closeCore(error?: ICriticalContainerError): void {
@@ -1710,7 +1719,7 @@ export class Container
 			codeDetails,
 			baseSnapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
-			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
+			pendingLocalState ? (pendingLocalState?.pendingRuntimeState ?? {}) : undefined,
 			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 
