@@ -92,6 +92,11 @@ export {
 	type NodeBuilderDataUnsafe,
 	type NodeFromSchemaUnsafe,
 	type ReadonlyMapInlined,
+	type TreeNodeSchemaClassUnsafe,
+	type TreeNodeSchemaUnsafe,
+	type AllowedTypesUnsafe,
+	type TreeNodeSchemaNonClassUnsafe,
+	type TreeViewAlpha,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -113,6 +118,9 @@ export {
 	normalizeFieldSchema,
 	type ApplyKind,
 	type FieldSchemaMetadata,
+	type InsertableField,
+	type Insertable,
+	type UnsafeUnknownSchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -122,6 +130,7 @@ export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
 	type TreeArrayNodeBase,
+	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {
 	type FieldHasDefault,
@@ -131,7 +140,12 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
+export {
+	mapTreeFromNodeData,
+	type InsertableContent,
+	type FactoryContent,
+	type FactoryContentObject,
+} from "./toMapTree.js";
 export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
 export {
 	numberSchema,

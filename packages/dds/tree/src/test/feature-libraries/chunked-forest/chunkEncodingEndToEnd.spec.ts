@@ -57,13 +57,13 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
-	cursorFromInsertableTreeField,
 	forestWithContent,
 	mintRevisionTag,
 	testIdCompressor,
 	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
 import {
+	cursorFromInsertable,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
@@ -108,7 +108,7 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromInsertableTreeField(
+	const initialTree = cursorFromInsertable(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
 		new MockNodeKeyManager(),

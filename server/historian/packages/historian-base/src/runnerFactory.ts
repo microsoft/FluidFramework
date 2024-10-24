@@ -26,7 +26,7 @@ export class HistorianResources implements core.IResources {
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly documentManager: core.IDocumentManager,
-		public readonly startupCheck: StartupCheck,
+		public readonly startupCheck: core.IReadinessCheck,
 		public readonly cache?: historianServices.RedisCache,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public readonly denyList?: historianServices.IDenyList,
