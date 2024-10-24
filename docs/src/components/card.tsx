@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import React from "react";
 
 import "@site/src/css/card.css";
@@ -13,7 +12,7 @@ export type CardWithBlurProps = React.PropsWithChildren<{
 }>;
 
 export function CardWithBlur({children}: CardWithBlurProps): React.ReactElement {
-	return <div className="cardWithBlur">
+	return <div className="ffcom-card-with-blur">
 		{children}
 	</div>
 }
