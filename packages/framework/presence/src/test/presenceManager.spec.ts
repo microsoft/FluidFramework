@@ -113,7 +113,7 @@ describe("Presence", () => {
 					});
 				});
 
-				it("is announced via `attendeeJoined` when new", () => {
+				it('is announced via `attendeeJoined`  with status "Connected" when new', () => {
 					// Act - simulate join message from client
 					presence.processSignal("", initialAttendeeSignal, false);
 
@@ -129,7 +129,22 @@ describe("Presence", () => {
 						initialAttendeeConnectionId,
 						"Attendee has wrong client connection id",
 					);
+					assert.equal(
+						newAttendee.getStatus(),
+						SessionClientStatus.Connected,
+						"Attendee has wrong status",
+					)
 				});
+
+				it("is not announced via attendeeDisconnected when unknown connection is removed", () => {
+					// Setup
+					presence.events.on("attendeeDisconnected", () => {
+						assert.fail("No attendee should be disconnected in beforeEach");
+					});
+
+					// Act & Verify - remove unknown connection id
+					presence.removeClientConnectionId("unknownConnectionId");
+				})
 
 				describe("disconnects", () => {
 					let disconnectedAttendee: ISessionClient | undefined;
@@ -184,7 +199,18 @@ describe("Presence", () => {
 				});
 
 				describe("already known", () => {
+					let disconnectedAttendee: ISessionClient | undefined;
 					beforeEach(() => {
+						disconnectedAttendee = undefined;
+						afterCleanUp.push(
+							presence.events.on("attendeeDisconnected", (attendee) => {
+								assert(
+									disconnectedAttendee === undefined,
+									"Only one attendee should be disconnected",
+								);
+								disconnectedAttendee = attendee;
+							}),
+						);
 						// Setup - simulate join message from client
 						presence.processSignal("", initialAttendeeSignal, false);
 						assert(newAttendee !== undefined, "No attendee was announced in setup");
@@ -194,21 +220,75 @@ describe("Presence", () => {
 						["connection id", initialAttendeeConnectionId] as const,
 						["session id", newAttendeeSessionId] as const,
 					]) {
-						it(`is available from \`getAttendee\` by ${desc}`, () => {
-							// Act
-							const attendee = presence.getAttendee(id);
-							// Verify
-							assert.equal(attendee, newAttendee, "getAttendee returned wrong attendee");
+						describe(`is available from \`getAttendee\` by ${desc}`, () => {
+							it('with status "Connected"', () => {
+								// Act
+								const attendee = presence.getAttendee(id);
+								// Verify
+								assert.equal(attendee, newAttendee, "getAttendee returned wrong attendee");
+								assert.equal(attendee.getStatus(), SessionClientStatus.Connected, "getAttendee returned attendee with wrong status");
+							});
+
+							it('with status "Disconnected" after disconnect', () => {
+								// Act - remove client connection id
+								presence.removeClientConnectionId(initialAttendeeConnectionId);
+								const attendee = presence.getAttendee(id);
+
+								// Verify
+								assert.equal(attendee, newAttendee, "getAttendee returned wrong attendee");
+								assert.equal(attendee.getStatus(), SessionClientStatus.Disconnected, "getAttendee returned attendee with wrong status");
+							});
 						});
 					}
 
-					it("is available from `getAttendees`", () => {
-						// Setup
-						assert(newAttendee !== undefined, "No attendee was set in beforeEach");
+					describe("is available from `getAttendees`", () => {
+						it('with status "Connected"', () => {
+							// Setup
+							assert(newAttendee !== undefined, "No attendee was set in beforeEach");
 
-						// Act
-						const attendees = presence.getAttendees();
-						assert(attendees.has(newAttendee), "getAttendees set does not contain attendee");
+							// Act
+							const attendees = presence.getAttendees();
+							assert(attendees.has(newAttendee), "getAttendees set does not contain attendee");
+							assert.equal(newAttendee.getStatus(), SessionClientStatus.Connected, "getAttendees set contains attendee with wrong status");
+						});
+						it('with status "Disconnected"', () => {
+							// Setup
+							assert(newAttendee !== undefined, "No attendee was set in beforeEach");
+
+							// Act - remove client connection id
+							presence.removeClientConnectionId(initialAttendeeConnectionId);
+
+							// Verify
+							const attendees = presence.getAttendees();
+							assert(attendees.has(newAttendee), "getAttendees set does not contain attendee");
+							assert.equal(newAttendee.getStatus(), SessionClientStatus.Disconnected, "getAttendees set contains attendee with wrong status");
+						});
+					});
+
+					it("is announced via `attendeeDisconnected` when its connection is removed", () => {
+						// Act - remove client connection id
+						presence.removeClientConnectionId(initialAttendeeConnectionId);
+
+						// Verify
+						assert(
+							disconnectedAttendee !== undefined,
+							"No attendee was disconnected in beforeEach",
+						);
+						assert.equal(
+							disconnectedAttendee.sessionId,
+							newAttendeeSessionId,
+							"Disconnected attendee has wrong session id",
+						);
+						assert.equal(
+							disconnectedAttendee.connectionId(),
+							initialAttendeeConnectionId,
+							"Disconnected attendee has wrong client connection id",
+						);
+						assert.equal(
+							disconnectedAttendee.getStatus(),
+							SessionClientStatus.Disconnected,
+							"Disconnected attendee has wrong status",
+						);
 					});
 
 					it("is NOT announced when rejoined with same connection (duplicate signal)", () => {
