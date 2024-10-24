@@ -38,7 +38,7 @@ module.exports = {
 		},
 		"build": {
 			dependsOn: [
-				// "check:format",
+				"check:format",
 				"compile",
 				"lint",
 				"build:api-reports",
@@ -88,12 +88,7 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": [
-			"typetests:gen",
-			"tsc",
-			"build:entrypoints:commonjs",
-			"build:entrypoints:esnext",
-		],
+		"build:test": ["typetests:gen", "tsc"],
 		"build:test:cjs": ["typetests:gen", "tsc", "build:entrypoints:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "build:entrypoints:esnext"],
 		"api": {
