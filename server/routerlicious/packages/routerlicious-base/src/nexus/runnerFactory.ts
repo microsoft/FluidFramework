@@ -67,7 +67,7 @@ export class NexusResources implements core.IResources {
 		public port: any,
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
-		public startupCheck: StartupCheck,
+		public startupCheck: IReadinessCheck,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,

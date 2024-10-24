@@ -37,6 +37,7 @@ steps:
         targetType: 'inline'
         workingDirectory: $(Build.SourcesDirectory)/build-tools
         script: |
+          set -eu -o pipefail
           pnpm i --frozen-lockfile
           pnpm build:compile
           cd packages/build-cli
@@ -54,6 +55,7 @@ steps:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
+          set -eu -o pipefail
           echo "${{ parameters.buildToolsVersionToInstall }}"
           npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
 
@@ -64,6 +66,7 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
+        set -eu -o pipefail
         # Output the help and full command list for debugging purposes
         echo "which flub: $(which flub)"
         flub --help
