@@ -103,7 +103,7 @@ resources:
       branch: test/michaelzhen-1.0
       trigger:
         branches:
-          - test/michaelzhen-1.0
+        - test/michaelzhen-1.0
   repositories:
     - repository: self
       ref: test/michaelzhen
