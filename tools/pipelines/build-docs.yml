@@ -105,8 +105,8 @@ resources:
     - repository: self
       ref: test/michaelzhen
 
-trigger: none
-pr: none
+# trigger: none
+# pr: none
 
 stages:
 - stage: check_branch_version
