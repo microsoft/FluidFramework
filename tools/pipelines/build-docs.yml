@@ -92,18 +92,19 @@ variables:
 # the release branches and main is causing the website to change unexpectedly we can
 # move the release/* trigger after separating the deploy step to another pipeline
 # no PR triggers
-trigger: none
-pr: none
 
 resources:
   pipelines:
-    - pipeline: 14
-      source: build-build-tools
+    - pipeline: build-tools
+      source: Build build-tools
       trigger: true
       branch: test/michaelzhen-1.0
   repositories:
-    - repository: FluidFramework
-      ref: refs/heads/test/michaelzhen
+    - repository: self
+      ref: test/michaelzhen
+
+trigger: none
+pr: none
 
 stages:
 - stage: check_branch_version
