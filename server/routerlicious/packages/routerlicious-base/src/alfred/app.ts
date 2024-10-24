@@ -36,6 +36,7 @@ import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	config: Provider,
@@ -49,11 +50,13 @@ export function create(
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -165,10 +168,12 @@ export function create(
 		appTenants,
 		documentRepository,
 		documentDeleteService,
+		startupCheck,
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
 		clusterDrainingChecker,
+		readinessCheck,
 	);
 
 	app.use(routes.api);

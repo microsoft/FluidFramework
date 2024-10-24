@@ -16,7 +16,6 @@ import {
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -39,6 +38,7 @@ import {
 	type TreeNode,
 	type Context,
 	UnhydratedFlexTreeNode,
+	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
@@ -107,13 +107,13 @@ export type InsertableObjectFromSchemaRecord<
 > = FlattenKeys<
 	{
 		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
-			T[Property] & string
+			T[Property & string]
 		>;
 	} & {
 		// Field does not have a known default, make it required:
-		readonly [Property in keyof T as FieldHasDefault<T[Property] & string> extends false
+		readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
 			? Property
-			: never]: InsertableTreeFieldFromImplicitField<T[Property] & string>;
+			: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 	}
 >;
 

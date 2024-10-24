@@ -32,7 +32,6 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	combineVisitors,
-	makeAnonChange,
 	makeDetachedFieldIndex,
 	rebaseChange,
 	rootFieldKey,
@@ -517,6 +516,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					event.type === "append" ||
 					(event.type === "replace" && getChangeReplaceType(event) === "transactionCommit")
 				) {
+					// TODO:#20949: When the SharedTree is detached, these commits will already have been garbage collected.
+					//       Figure out a way to generate revertibles before the commits are garbage collected.
 					for (const commit of event.newCommits) {
 						const kind = event.type === "append" ? event.kind : CommitKind.Default;
 						const { change, revision } = commit;
@@ -785,15 +786,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
 		const commitToRevert = revertibleBranch.getHead();
+		const revisionForInvert = this.mintRevisionTag();
 
-		let change = makeAnonChange(
-			this.changeFamily.rebaser.invert(tagChange(commitToRevert.change, revision), false),
+		let change = tagChange(
+			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			revisionForInvert,
 		);
 
 		const headCommit = this._branch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
-			change = makeAnonChange(
+			change = tagChange(
 				rebaseChange(
 					this.changeFamily.rebaser,
 					change,
@@ -801,12 +804,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					headCommit,
 					this.mintRevisionTag,
 				).change,
+				revisionForInvert,
 			);
 		}
 
 		this._branch.apply(
-			change.change,
-			this.mintRevisionTag(),
+			change,
 			kind === CommitKind.Default || kind === CommitKind.Redo
 				? CommitKind.Undo
 				: CommitKind.Redo,
