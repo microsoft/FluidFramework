@@ -160,9 +160,34 @@ module.exports = {
 
 	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
+		"flub check buildVersion": {
+			inputGlobs: [
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: ["package.json"],
+			gitignore: ["input", "output"],
+		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
 			outputGlobs: ["src/**/*.fsl.svg"],
+		},
+		"markdown-magic": {
+			inputGlobs: [],
+			outputGlobs: [
+				"{azure,examples,experimental,packages}/*/*/*.md",
+				"{azure,examples,experimental,packages}/*/*/*/*.md",
+				"{azure,examples,experimental,packages}/*/*/*/*/*.md",
+				"tools/markdown-magic/**/*.md",
+			],
+			gitignore: ["input", "output"],
 		},
 		"oclif manifest": {
 			inputGlobs: ["package.json", "src/**"],

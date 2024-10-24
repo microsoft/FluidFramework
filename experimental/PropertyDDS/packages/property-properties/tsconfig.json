@@ -3,8 +3,8 @@
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"strict": false,
-		"allowJs": true,
-		"checkJs": false,
+		// "allowJs": true,
+		// "checkJs": false,
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,

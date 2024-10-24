@@ -2,8 +2,9 @@
 	"extends": "../../../../../../common/build/build-common/ts-common-config.json",
 	"compilerOptions": {
 		"strict": false,
-		"allowJs": true,
-		"checkJs": false,
+
+		// "allowJs": true,
+		// "checkJs": false,
 
 		"rootDir": "./",
 		"outDir": "../../dist/test",
