@@ -108,7 +108,13 @@ const renderDiceRoller = (dice, elem) => {
 `;
 
 export function HowItWorksSection(): React.ReactElement {
-	return <HomePageSection title="See how it works" subtitle="Open Source" image={ServiceSectionBG}>
+	const backgroundStyle: React.CSSProperties = {
+		background: `linear-gradient(to bottom, rgba(255, 253, 251, 0.8) 10%, rgba(255, 253, 251, 0.8)), url(${ServiceSectionBG})`,
+		backgroundPosition: 'center',
+		backgroundRepeat: 'no-repeat',
+		backgroundSize: 'cover',
+	};
+	return <HomePageSection title="See how it works" subtitle="Open Source" backgroundStyle={backgroundStyle}>
 		<div className="howItWorksSectionBody">
 			<div className="howItWorksSectionCodeBody">
 				<div className="howItWorksCodeColumn">
