@@ -16,8 +16,8 @@
 	box-sizing: border-box;
 
 	color: black;
-	background: #FFFFFF;
-	border: 1px solid #E1E1E1;
+	background: #ffffff;
+	border: 1px solid #e1e1e1;
 	border-radius: 5px;
 	padding: 5px;
 }
@@ -29,12 +29,12 @@
 .ffcom-roll-button {
 	width: 118px;
 	height: 48px;
-	background: #0078D4;
+	background: #0078d4;
 	border-style: none;
 	border-radius: 8px;
 }
 
 .ffcom-roll-button-label {
 	font-size: 15px;
-	color: #FFFFFF;
+	color: #ffffff;
 }

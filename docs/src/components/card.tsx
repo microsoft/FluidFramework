@@ -11,8 +11,6 @@ export type CardWithBlurProps = React.PropsWithChildren<{
 	// TODO: custom props as needed
 }>;
 
-export function CardWithBlur({children}: CardWithBlurProps): React.ReactElement {
-	return <div className="ffcom-card-with-blur">
-		{children}
-	</div>
+export function CardWithBlur({ children }: CardWithBlurProps): React.ReactElement {
+	return <div className="ffcom-card-with-blur">{children}</div>;
 }

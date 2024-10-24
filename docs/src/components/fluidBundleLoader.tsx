@@ -18,10 +18,7 @@ export interface FluidBundleLoaderProps {
 /**
  * TODO
  */
-export function FluidBundleLoader({
-	idPrefix,
-	bundleName,
-}: FluidBundleLoaderProps): JSX.Element {
+export function FluidBundleLoader({ idPrefix, bundleName }: FluidBundleLoaderProps): JSX.Element {
 	React.useEffect(() => {
 		const script = document.createElement("script");
 		script.src = `https://storage.fluidframework.com/static/js/${bundleName}`;
