@@ -9,10 +9,6 @@
 	gap: 16px;
 
 	width: 100%;
-	/* height: 72px; */
-
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
@@ -27,14 +23,7 @@
 	flex-direction: column;
 	align-items: center;
 	padding: 0px;
-
 	width: 100%;
-
-	/* width: 880px;
-	height: 72px; */
-
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 1;
@@ -64,21 +53,33 @@
 
 /* TODO: allow wrapping */
 .sectionHeaderTitle {
-	/* VP4/heading/m */
 	font-family: 'Segoe UI';
 	font-style: normal;
 	font-weight: 600;
 	font-size: 40px;
 	line-height: 48px;
-	/* identical to box height, or 120% */
 	letter-spacing: -0.05em;
-
-	/* m365-theme/day/foreground/base/strong */
 	color: #0E1726;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	align-self: stretch;
 	flex-grow: 0;
+}
+
+@media (max-width: 768px) {
+	.sectionHeaderTitle{
+		font-size: 28px;
+	}
+	.sectionHeaderSubtitle {
+		font-size: 10px;
+	}
+}
+
+@media (max-width: 425px) {
+	.sectionHeaderTitle{
+		font-size: 24px;
+	}
+	.sectionHeaderSubtitle {
+		font-size: 10px;
+	}
 }
