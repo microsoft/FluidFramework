@@ -142,4 +142,6 @@ describe("DocumentService", () => {
 		assert.equal(documentService.policies?.summarizeProtocolTree, true);
 		stubbedDeltaConnectionCreate.restore();
 	});
+
+	it("DocumentDeltaStorageService sends fetchReason along with fetchMessages", async () => {});
 });
