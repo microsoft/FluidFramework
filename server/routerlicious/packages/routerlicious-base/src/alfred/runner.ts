@@ -55,13 +55,13 @@ export class AlfredRunner implements IRunner {
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly startupCheck: IReadinessCheck,
-		private readonly fluidAccessTokenGenerator: IFluidAccessTokenGenerator,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -87,13 +87,13 @@ export class AlfredRunner implements IRunner {
 				this.documentRepository,
 				this.documentDeleteService,
 				this.startupCheck,
-				this.fluidAccessTokenGenerator,
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.enableClientIPLogging,
 				this.readinessCheck,
+				this.fluidAccessTokenGenerator,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);

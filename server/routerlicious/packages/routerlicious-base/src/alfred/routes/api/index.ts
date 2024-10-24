@@ -42,12 +42,12 @@ export function create(
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	startupCheck: IReadinessCheck,
-	fluidAccessTokenGenerator: IFluidAccessTokenGenerator,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -80,10 +80,10 @@ export function create(
 		tenantManager,
 		storage,
 		tenantThrottlers,
-		fluidAccessTokenGenerator,
 		singleUseTokenCache,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
+		fluidAccessTokenGenerator,
 	);
 
 	const healthCheckEndpoints = createHealthCheckEndpoints(

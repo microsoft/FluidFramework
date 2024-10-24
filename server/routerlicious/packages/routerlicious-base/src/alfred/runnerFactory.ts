@@ -18,7 +18,6 @@ import {
 	StorageNameAllocator,
 	IDocumentDeleteService,
 	DocumentDeleteService,
-	FluidAccessTokenGenerator,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
@@ -47,13 +46,13 @@ export class AlfredResources implements core.IResources {
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
 		public startupCheck: IReadinessCheck,
-		public fluidAccessTokenGenerator: core.IFluidAccessTokenGenerator,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
 		public readinessCheck?: IReadinessCheck,
+		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -376,8 +375,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 		const startupCheck = new StartupCheck();
-		const fluidAccessTokenGenerator =
-			customizations?.fluidAccessTokenGenerator ?? new FluidAccessTokenGenerator();
 
 		return new AlfredResources(
 			config,
@@ -396,13 +393,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentRepository,
 			documentDeleteService,
 			startupCheck,
-			fluidAccessTokenGenerator,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
 			customizations?.readinessCheck,
+			customizations?.fluidAccessTokenGenerator,
 		);
 	}
 }
@@ -427,13 +424,13 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.documentRepository,
 			resources.documentDeleteService,
 			resources.startupCheck,
-			resources.fluidAccessTokenGenerator,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			null,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
+			resources.fluidAccessTokenGenerator,
 		);
 	}
 }

@@ -43,12 +43,12 @@ export function create(
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	startupCheck: IReadinessCheck,
-	fluidAccessTokenGenerator: IFluidAccessTokenGenerator,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ) {
 	return {
 		api: api.create(
@@ -64,12 +64,12 @@ export function create(
 			documentRepository,
 			documentDeleteService,
 			startupCheck,
-			fluidAccessTokenGenerator,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			collaborationSessionEventEmitter,
 			clusterDrainingChecker,
 			readinessCheck,
+			fluidAccessTokenGenerator,
 		),
 	};
 }

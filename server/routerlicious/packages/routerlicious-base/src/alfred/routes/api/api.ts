@@ -49,10 +49,10 @@ export function create(
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
-	fluidAccessTokenGenerator: core.IFluidAccessTokenGenerator,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();
 
@@ -89,26 +89,28 @@ export function create(
 		},
 	);
 
-	router.post(
-		"/tenants/:tenantId/accesstoken",
-		validateRequestParams("tenantId"),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (request, response) => {
-			const tenantId = getParam(request.params, "tenantId");
-			const bearerAuthToken = request?.header("Authorization");
-			if (!bearerAuthToken) {
-				response.status(400).send(`Missing Authorization header in the request.`);
-				return;
-			}
-			const fluidAccessTokenRequest = fluidAccessTokenGenerator.generateFluidToken(
-				tenantId,
-				bearerAuthToken,
-				request?.body,
-			);
-			handleResponse(fluidAccessTokenRequest, response, undefined, undefined, 201);
-		},
-	);
+	if (fluidAccessTokenGenerator) {
+		router.post(
+			"/tenants/:tenantId/accesstoken",
+			validateRequestParams("tenantId"),
+			throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			async (request, response) => {
+				const tenantId = getParam(request.params, "tenantId");
+				const bearerAuthToken = request?.header("Authorization");
+				if (!bearerAuthToken) {
+					response.status(400).send(`Missing Authorization header in the request.`);
+					return;
+				}
+				const fluidAccessTokenRequest = fluidAccessTokenGenerator.generateFluidToken(
+					tenantId,
+					bearerAuthToken,
+					request?.body,
+				);
+				handleResponse(fluidAccessTokenRequest, response, undefined, undefined, 201);
+			},
+		);
+	}
 
 	router.patch(
 		"/:tenantId/:id/root",

@@ -191,10 +191,13 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						testFluidAccessTokenGenerator,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
@@ -404,10 +407,13 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						testFluidAccessTokenGenerator,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
@@ -610,10 +616,13 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						testFluidAccessTokenGenerator,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
@@ -743,6 +752,12 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
 						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
@@ -829,6 +844,12 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
 						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
@@ -950,10 +971,13 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						testFluidAccessTokenGenerator,
 						null,
 						null,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
