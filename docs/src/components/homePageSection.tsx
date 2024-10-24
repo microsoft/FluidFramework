@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import React from 'react';
+
 import { SectionHeader } from '@site/src/components/sectionHeader';
 
 import "@site/src/css/homePageSection.css";

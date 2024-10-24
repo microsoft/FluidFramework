@@ -154,6 +154,7 @@ flex: none;
 order: 1;
 flex-grow: 0;
 }
+
 .learnMore:hover {
 	text-decoration: none;
 	color: inherit;
