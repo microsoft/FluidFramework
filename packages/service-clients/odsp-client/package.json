@@ -15,22 +15,22 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/entrypoints/public.d.ts",
-				"default": "./lib/entrypoints/public.js"
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/entrypoints/public.d.ts",
-				"default": "./dist/entrypoints/public.js"
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
 			"import": {
-				"types": "./lib/entrypoints/beta.d.ts",
-				"default": "./lib/entrypoints/beta.js"
+				"types": "./lib/beta.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/entrypoints/beta.d.ts",
-				"default": "./dist/entrypoints/beta.js"
+				"types": "./dist/beta.d.ts",
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
@@ -48,16 +48,13 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:node10:entrypoints": "flub generate entrypoints --outDir ./lib/entrypoints --node10TypeCompat",
-		"build:entrypoints": "flub generate source-entrypoints",
-		"build:entrypoints:esnext:cjs": "npm run build:entrypoints:esnext && npm run build:entrypoints:cjs",
-		"build:entrypoints:cjs": "tsc --project ./src/entrypoints/tsconfig.cjs.json",
-		"build:entrypoints:esnext": "tsc --project ./src/entrypoints/tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",

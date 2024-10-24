@@ -7,7 +7,7 @@
 // See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
 // @ts-check
 
-const tscDependsOn = ["^tsc", "build:entrypoints", "^api", "build:genver", "ts2esm"];
+const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
@@ -48,19 +48,8 @@ module.exports = {
 			],
 			script: false,
 		},
-		"build:entrypoints": ["^build:esnext"],
-		"build:entrypoints:esnext:cjs": ["build:esnext", "build:entrypoints"],
-		"build:node10:entrypoints": ["build:entrypoints:esnext:cjs"],
 		"compile": {
-			dependsOn: [
-				"commonjs",
-				"build:esnext",
-				"api",
-				"build:test",
-				"build:entrypoints:esnext:cjs",
-				"build:node10:entrypoints",
-				"build:copy",
-			],
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -88,30 +77,29 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc"],
-		"build:test:cjs": ["typetests:gen", "tsc", "build:entrypoints:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "build:entrypoints:esnext"],
+		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["build:entrypoints:esnext:cjs"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
-		"build:entrypoints:commonjs": ["tsc", "build:entrypoints"],
-		"build:entrypoints:esnext": {
-			dependsOn: ["build:esnext", "build:entrypoints"],
+		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:esnext": {
+			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		// new entry for entrypoints + tsc + esnext
 		// build:api-reports may be handled in one step with build:docs when a
 		// package only uses api-extractor supported exports, which is a single
 		// export/entrypoint. For packages with /legacy exports, we need to
 		// generate reports from legacy entrypoint as well as the "current" one.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports:current": ["build:entrypoints:esnext"],
-		"build:api-reports:legacy": ["build:entrypoints:esnext"],
-		"ci:build:api-reports:current": ["build:entrypoints:esnext"],
-		"ci:build:api-reports:legacy": ["build:entrypoints:esnext"],
+		"build:api-reports:current": ["api-extractor:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
