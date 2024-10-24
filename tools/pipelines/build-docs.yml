@@ -104,9 +104,9 @@ resources:
       trigger:
         branches:
         - test/michaelzhen-1.0
-  repositories:
-    - repository: self
-      ref: test/michaelzhen
+  # repositories:
+  #   - repository: self
+  #     ref: test/michaelzhen
 
 stages:
 - stage: check_branch_version
