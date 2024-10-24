@@ -122,8 +122,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 	};
 
 	const waitForSummary = async (container) => {
+		let summarized = false;
 		await timeoutPromise((resolve, reject) => {
-			let summarized = false;
 			container.on("op", (op: { type: string }) => {
 				if (op.type === "summarize") {
 					summarized = true;
@@ -131,8 +131,12 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					resolve();
 				} else if (op.type === "summaryNack") {
 					reject(new Error("summaryNack"));
+				} else if (op.type === "summaryAck") {
+					throw new Error("Unexpected summaryAck while waiting for summary");
 				}
 			});
+		}).catch((error) => {
+			throw new Error(`Error waiting for summary: ${error}. Summarized: ${summarized}`);
 		});
 	};
 
@@ -322,8 +326,10 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			await provider.ensureSynchronized();
 
 			// last case with both saved and pending ops
-			map3.set(`${i}`, i++);
-			groupIdDataObject3.root.set(`${j}`, j++);
+			for (let k = 0; k < 10; k++) {
+				map.set(`${i}`, i++);
+				groupIdDataObject.root.set(`${j}`, j++);
+			}
 			await waitForSummary(container3);
 			await provider.opProcessingController.pauseProcessing(container3);
 			map3.set(`${i}`, i++);

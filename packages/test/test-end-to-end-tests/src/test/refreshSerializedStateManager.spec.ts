@@ -59,17 +59,21 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 	};
 
 	const waitForSummary = async (container) => {
+		let summarized = false;
 		await timeoutPromise((resolve, reject) => {
-			let summarized = false;
-			container.on("op", (op) => {
+			container.on("op", (op: { type: string }) => {
 				if (op.type === "summarize") {
 					summarized = true;
 				} else if (summarized && op.type === "summaryAck") {
 					resolve();
 				} else if (op.type === "summaryNack") {
 					reject(new Error("summaryNack"));
+				} else if (op.type === "summaryAck") {
+					throw new Error("Unexpected summaryAck while waiting for summary");
 				}
 			});
+		}).catch((error) => {
+			throw new Error(`Error waiting for summary: ${error}. Summarized: ${summarized}`);
 		});
 	};
 
