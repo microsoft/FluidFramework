@@ -4,6 +4,7 @@
 		"rootDir": "./",
 		"outDir": "../../lib/entrypoints",
 		"exactOptionalPropertyTypes": false,
+		"declaration": true,
 	},
 	"include": ["./**/*"],
 	"references": [

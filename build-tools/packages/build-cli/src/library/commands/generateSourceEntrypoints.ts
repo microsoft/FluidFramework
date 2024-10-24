@@ -279,7 +279,7 @@ async function generateSourceEntrypoints(
 			// At this point we already know that package "export" has a request
 			// for this entrypoint. Warn of emptiness, but make it valid for use.
 			log.warning(`no exports for ${outFile} using API level tag ${apiTagLevel}`);
-			sourceFile.insertText(0, `${newFileHeader}export {}\n\n`);
+			sourceFile.insertText(0, `${newFileHeader} export {};\n\n`);
 		}
 
 		fileSavePromises.push(sourceFile.save());

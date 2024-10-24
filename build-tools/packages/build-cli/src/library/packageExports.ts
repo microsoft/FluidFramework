@@ -335,10 +335,10 @@ function findDefaultPathsMatching<TOutKey>(
 		let isTypeOnly: boolean = false;
 		if (typeof value === "string") {
 			if (emitDeclarationOnly && entry === typesExportCondition) {
-				relPath = value.replace(/(lib|dist)/g, "src/entrypoints").replace(/\.d.ts$/, ".ts");
+				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.d.ts$/, ".ts");
 				isTypeOnly = true;
 			} else if (!emitDeclarationOnly && entry === defaultExportCondition) {
-				relPath = value.replace(/(lib|dist)/g, "src/entrypoints").replace(/\.js$/, ".ts");
+				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.js$/, ".ts");
 			} else {
 				continue;
 			}
