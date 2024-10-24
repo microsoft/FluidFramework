@@ -26,8 +26,8 @@ import {
 	createAndAttachContainer,
 	createDocumentId,
 	waitForContainerConnection,
-	timeoutPromise,
 	timeoutAwait,
+	waitForSummaryOps,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -56,21 +56,6 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			},
 		},
 		enableRuntimeIdCompressor: "on",
-	};
-
-	const waitForSummary = async (container) => {
-		await timeoutPromise((resolve, reject) => {
-			let summarized = false;
-			container.on("op", (op) => {
-				if (op.type === "summarize") {
-					summarized = true;
-				} else if (summarized && op.type === "summaryAck") {
-					resolve();
-				} else if (op.type === "summaryNack") {
-					reject(new Error("summaryNack"));
-				}
-			});
-		});
 	};
 
 	it("snapshot was refreshed", async function () {
@@ -120,7 +105,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
-		await waitForSummary(container);
+		await waitForSummaryOps(container);
 		const pendingOps = await container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with seqnum === 0,
@@ -187,7 +172,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
-		await waitForSummary(container);
+		await waitForSummaryOps(container);
 		await provider.ensureSynchronized();
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
