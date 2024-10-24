@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { ExperimentalPresenceManager } from "@fluid-experimental/presence";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "fluid-framework";
