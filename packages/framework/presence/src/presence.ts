@@ -81,7 +81,7 @@ export interface ISessionClient<
 	 *
 	 * If {@link ISessionClient.getStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
 	 */
-	connectionId(): ClientConnectionId;
+	getConnectionId(): ClientConnectionId;
 
 	/**
 	 * Get status of session client.
