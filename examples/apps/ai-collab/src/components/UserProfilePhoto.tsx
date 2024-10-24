@@ -25,6 +25,7 @@ const UserProfilePhoto: React.FC<UserProfilePhotoProps> = ({
 	const [photoUrls, setPhotoUrls] = useState<string[]>([]);
 	const [isPhotoFetched, setIsPhotoFetched] = useState<boolean>(false);
 
+	// this effect will run when the userPresenceGroup changes and will update the photoUrls state
 	useEffect(() => {
 		const allPhotos: string[] = [];
 		for (const element of [...userPresenceGroup.onlineUsers.clientValues()]) {
@@ -35,11 +36,19 @@ const UserProfilePhoto: React.FC<UserProfilePhotoProps> = ({
 		setPhotoUrls(allPhotos);
 	}, [userPresenceGroup]);
 
+	/**
+	 * this effect will run once when the component mounts and will fetch the user's photo if it's spe client,
+	 * for the tinylicious client, it will use the default photo.
+	 * */
 	useEffect(() => {
 		const fetchPhoto = async (): Promise<void> => {
 			const clientId = process.env.NEXT_PUBLIC_SPE_CLIENT_ID;
 			const tenantId = process.env.NEXT_PUBLIC_SPE_ENTRA_TENANT_ID;
 			if (tenantId === undefined || clientId === undefined) {
+				// add a default photo for tinylicious client
+				userPresenceGroup.onlineUsers.local.set(`id-${uuid()}`, {
+					value: { photo: "" },
+				});
 				return;
 			}
 
@@ -59,10 +68,7 @@ const UserProfilePhoto: React.FC<UserProfilePhotoProps> = ({
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				const photoUrl = URL.createObjectURL(photoBlob);
 				setPhotoUrls((prevPhotos) => {
-					if (!prevPhotos.includes(photoUrl)) {
-						return [...prevPhotos, photoUrl];
-					}
-					return prevPhotos;
+					return [...prevPhotos, photoUrl];
 				});
 				userPresenceGroup.onlineUsers.local.set(`id-${uuid()}`, {
 					value: { photo: photoUrl },
