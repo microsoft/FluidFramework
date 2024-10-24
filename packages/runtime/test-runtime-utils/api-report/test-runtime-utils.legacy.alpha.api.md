@@ -446,8 +446,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
-    // (undocumented)
+    // @deprecated (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    processMessages(message: ISequencedRuntimeMessageCore, messageContents: IRuntimeMessageContents[], local: boolean): void;
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)
