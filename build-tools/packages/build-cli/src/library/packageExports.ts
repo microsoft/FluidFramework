@@ -106,8 +106,7 @@ function findTypesPathsMatching<TOutKey>(
 		// First check if this entry is a leaf; where value is only
 		// expected to be a string (a relative file path).
 		if (typeof value === "string") {
-			// always entry this loop with entry is default.
-			const relPath = value; // src/beta.ts and src/public.ts
+			const relPath = value;
 			// At the leaf level, look for "types" entries which either is the current
 			// condition (entry) or is an inherited condition, both of which have been
 			// combined into local conditions.
@@ -201,7 +200,6 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 			continue;
 		}
 
-		// fix this
 		const findResults = findTypesPathsMatching(
 			mapQueryPathToOutKey,
 			exportValue,
