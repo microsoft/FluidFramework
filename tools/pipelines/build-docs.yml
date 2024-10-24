@@ -93,18 +93,18 @@ variables:
 # move the release/* trigger after separating the deploy step to another pipeline
 # no PR triggers
 
+trigger: none
+pr: none
+
 resources:
   pipelines:
     - pipeline: build-tools
-      source: Build build-tools
-      trigger: true
+      source: Build - build-tools
       branch: test/michaelzhen-1.0
+      trigger: true
   repositories:
     - repository: self
       ref: test/michaelzhen
-
-trigger: none
-pr: none
 
 stages:
 - stage: check_branch_version
