@@ -5,11 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { SessionId } from "@fluidframework/id-compressor";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
-import { Commit, EditManager, SharedTreeBranch } from "../../../shared-tree-core/index.js";
+import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
+import type {
+	Commit,
+	EditManager,
+	SharedTreeBranch,
+} from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
@@ -69,14 +73,11 @@ export function testCorrectness() {
 				{ seq: 3, type: "Pull", ref: 0, from: peer1 },
 			]);
 
-			runUnitTestScenario(
-				"Can handle non-concurrent peer changes partially sequenced later",
-				[
-					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 3, type: "Pull", ref: 1, from: peer1 },
-				],
-			);
+			runUnitTestScenario("Can handle non-concurrent peer changes partially sequenced later", [
+				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+				{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+			]);
 
 			runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
 				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
@@ -276,11 +277,7 @@ export function testCorrectness() {
 					expectedTrimmedRevisions.add(commit1.revision);
 					manager.addSequencedChange(commit1, brand(1), brand(0));
 					manager.advanceMinimumSequenceNumber(brand(2));
-					manager.addSequencedChange(
-						applyLocalCommit(manager, [1], 2),
-						brand(3),
-						brand(2),
-					);
+					manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(3), brand(2));
 					checkChangeList(manager, [2]);
 
 					assert.deepEqual(trimmedCommits, expectedTrimmedRevisions);
@@ -571,9 +568,14 @@ export function testCorrectness() {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
-					manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
-					manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+					manager.localBranch.apply({
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+					});
+					const revision1 = mintRevisionTag();
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
+					const revision2 = mintRevisionTag();
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision2 });
 					manager.addSequencedChange(
 						{
 							change: TestChange.emptyChange,
@@ -599,8 +601,12 @@ export function testCorrectness() {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
-					manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+					manager.localBranch.apply({
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+					});
+					const revision1 = mintRevisionTag();
+					manager.localBranch.apply({ change: TestChange.emptyChange, revision: revision1 });
 					manager.addSequencedChange(
 						{
 							change: TestChange.emptyChange,
@@ -642,10 +648,10 @@ export function testCorrectness() {
 		 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
-		describeStress("Combinatorial exhaustive", function ({ isStress }) {
-			const NUM_STEPS = isStress ? 5 : 4;
-			const NUM_PEERS = isStress ? 3 : 2;
-			if (isStress) {
+		describeStress("Combinatorial exhaustive", function ({ stressMode }) {
+			const NUM_STEPS = stressMode !== StressMode.Short ? 5 : 4;
+			const NUM_PEERS = stressMode !== StressMode.Short ? 3 : 2;
+			if (stressMode !== StressMode.Short) {
 				this.timeout(60_000);
 			}
 
@@ -686,10 +692,11 @@ function applyLocalCommit(
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
-	const [_, commit] = manager.localBranch.apply(
-		TestChange.mint(inputContext, intention),
-		mintRevisionTag(),
-	);
+	const revision = mintRevisionTag();
+	const [_, commit] = manager.localBranch.apply({
+		change: TestChange.mint(inputContext, intention),
+		revision,
+	});
 	return {
 		change: commit.change,
 		revision: commit.revision,

@@ -5,13 +5,13 @@
 
 /**
  * Bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client
- * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
+ * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluidframework/odsp-client (BETA)`).
  *
  * @packageDocumentation
  */
 
 // ===============================================================
-// #region Public exports
+// #region Public, Beta and Alpha (non-legacy) exports
 // #region Basic re-exports
 
 export type {
@@ -34,15 +34,36 @@ export type {
 	Myself,
 } from "@fluidframework/fluid-static";
 export type { SharedObjectKind } from "@fluidframework/shared-object-base";
+export type {
+	IErrorBase,
+	IEventProvider,
+	IDisposable,
+	IEvent,
+	IEventThisPlaceHolder,
+	IErrorEvent,
+	ErasedType,
+	IFluidHandle,
+	IFluidLoadable,
+	ITelemetryBaseProperties,
+	IEventTransformer,
+	IProvideFluidLoadable,
+	IFluidHandleErased,
+	TransformedEvent,
+	TelemetryBaseEventPropertyType,
+	Tagged,
+	ReplaceIEventThisPlaceHolder,
+	FluidObject, // Linked in doc comment
+	FluidObjectProviderKeys, // Used by FluidObject
+} from "@fluidframework/core-interfaces";
 
-// Let the tree package manage its own API surface, we will simply reflect it here.
-// Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
-// desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree
-// alpha` to surface everything `@alpha` and higher).
-// eslint-disable-next-line no-restricted-syntax, import/export
-export * from "@fluidframework/tree";
+export type { isFluidHandle } from "@fluidframework/runtime-utils";
 
-// End of basic public exports - nothing above this line should
+// Let the tree package manage its own API surface.
+// Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
+// eslint-disable-next-line no-restricted-syntax, import/no-internal-modules
+export * from "@fluidframework/tree/alpha";
+
+// End of basic public+beta+alpha exports - nothing above this line should
 // depend on an /internal path.
 // #endregion Basic re-exports
 // ---------------------------------------------------------------
@@ -50,7 +71,11 @@ export * from "@fluidframework/tree";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
-import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
+import {
+	SharedTree as OriginalSharedTree,
+	configuredSharedTree as originalConfiguredSharedTree,
+	type SharedTreeOptions,
+} from "@fluidframework/tree/internal";
 
 /**
  * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
@@ -62,12 +87,34 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
  * This package however is not intended for use by users of the encapsulated API, and therefor it can discard that interface.
  * @public
  */
-// Remove this and above lint disable after using @fluidframework/eslint-config-fluid ^5.3.0
-// eslint-disable-next-line import/export
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
+/**
+ * {@link SharedTree} but allowing a non-default configuration.
+ * @remarks
+ * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * @example
+ * ```typescript
+ * import {
+ * 	ForestType,
+ * 	TreeCompressionStrategy,
+ * 	configuredSharedTree,
+ * 	typeboxValidator,
+ * } from "@fluid-framework/alpha";
+ * const SharedTree = configuredSharedTree({
+ * 	forest: ForestType.Reference,
+ * 	jsonValidator: typeboxValidator,
+ * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+ * });
+ * ```
+ * @alpha
+ */
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree> {
+	return originalConfiguredSharedTree(options);
+}
+
 // #endregion Custom re-exports
-// #endregion Public exports
+// #endregion
 
 // ===============================================================
 // #region Legacy exports
@@ -118,5 +165,11 @@ export type {
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
+
+export type {
+	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
+	IBranchOrigin, // Required for ISequencedDocumentMessage
+	ITrace, // Required for ISequencedDocumentMessage
+} from "@fluidframework/driver-definitions/internal";
 
 // #endregion Legacy exports

@@ -99,7 +99,8 @@ module.exports = {
 			bannedModules: [
 				{
 					moduleName: "assert",
-					reason: "This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
+					reason:
+						"This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
 				},
 			],
 		}),
@@ -129,4 +130,7 @@ module.exports = {
 			file: path.resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
 		}),
 	],
+	// Enabling source maps allows using source-map-explorer to investigate bundle contents,
+	// which provides more fine grained details than BundleAnalyzerPlugin, so its nice for manual investigations.
+	devtool: "source-map",
 };

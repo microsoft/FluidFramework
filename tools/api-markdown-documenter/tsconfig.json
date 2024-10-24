@@ -4,6 +4,8 @@
 		"rootDir": "src",
 		"outDir": "lib",
 		"types": ["mocha", "node"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src"],
 }

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { Button, Checkbox, makeStyles, shorthands, tokens } from "@fluentui/react-components";
+import React from "react";
+
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
 
 const useStyles = makeStyles({
@@ -68,8 +69,8 @@ export function TelemetryConsentModal(props: ModalProps): React.ReactElement {
 				<div className={styles.optOut}>
 					<h2>Opt in to usage telemetry</h2>
 					<p>
-						We collect usage telemetry to improve the developer experience. <br /> You
-						can opt out of this telemetry collection at any time in the Settings screen.
+						We collect usage telemetry to improve the developer experience. <br /> You can opt
+						out of this telemetry collection at any time in the Settings screen.
 					</p>
 					<Checkbox
 						label={

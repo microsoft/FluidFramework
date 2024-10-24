@@ -21,7 +21,10 @@ export {
 	FluidHandleBase,
 } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
-export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils.js";
+export {
+	getNormalizedObjectStoragePathParts,
+	listBlobsAtTreePath,
+} from "./objectstorageutils.js";
 export { RequestParser } from "./requestParser.js";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
 export {

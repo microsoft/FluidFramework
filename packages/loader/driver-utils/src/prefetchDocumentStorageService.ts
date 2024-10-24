@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	IDocumentStorageServicePolicies,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 import { LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
 import { canRetryOnError } from "./network.js";
@@ -17,7 +21,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
 	private prefetchEnabled = true;
 
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		const policies = this.internalStorageService.policies;
 		if (policies) {
 			return { ...policies, caching: LoaderCachingPolicy.NoCaching };

@@ -1,0 +1,39 @@
+[
+  {
+    "count": 1,
+    "effect": {
+      "remove": {
+        "revision": 0,
+        "idOverride": [
+          0,
+          0
+        ],
+        "id": 0
+      }
+    },
+    "cellId": [
+      0,
+      0
+    ],
+    "changes": {
+      "fieldChanges": [
+        {
+          "fieldKey": "",
+          "fieldKind": "",
+          "change": {
+            "localId": 2,
+            "testChange": {
+              "inputContext": [],
+              "intentions": [
+                1
+              ],
+              "outputContext": [
+                1
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+]

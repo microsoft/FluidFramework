@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag } from "../core/index.js";
+import type { RevisionTag } from "../core/index.js";
 import { fail } from "../util/index.js";
 
 /**

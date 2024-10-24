@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { type ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -81,7 +81,9 @@ async function loadFromAnotherDirectory(
 	// Load a new SharedDirectory in connected state from the summary of the source
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services = MockSharedObjectServices.createFromSummary(source.getAttachSummary().summary);
+	const services = MockSharedObjectServices.createFromSummary(
+		source.getAttachSummary().summary,
+	);
 	services.deltaConnection = dataStoreRuntime.createDeltaConnection();
 
 	const factory = SharedDirectory.getFactory();
@@ -137,11 +139,7 @@ describe("Directory", () => {
 				directory.set("testKey", "testValue");
 				directory.set("testKey2", "testValue2");
 				assert.equal(directory.get("testKey"), "testValue", "could not retrieve set key 1");
-				assert.equal(
-					directory.get("testKey2"),
-					"testValue2",
-					"could not retrieve set key 2",
-				);
+				assert.equal(directory.get("testKey2"), "testValue2", "could not retrieve set key 2");
 			});
 
 			it("should fire correct directory events", async () => {
@@ -243,16 +241,8 @@ describe("Directory", () => {
 					assert.equal(clearExpected, true, "clear event not expected");
 					clearExpected = false;
 
-					assert.equal(
-						local,
-						true,
-						"local should be true for local action for clear event",
-					);
-					assert.equal(
-						target,
-						directory,
-						"target should be the directory for clear event",
-					);
+					assert.equal(local, true, "local should be true for local action for clear event");
+					assert.equal(target, directory, "target should be the directory for clear event");
 				});
 				directory.on("error", (error) => {
 					// propagate error in the event handlers
@@ -325,11 +315,7 @@ describe("Directory", () => {
 				let directoryDeletionExpected2 = false;
 				directory.on("subDirectoryDeleted", (relativePath, local, target) => {
 					directoryDeletionExpected = true;
-					assert.equal(
-						relativePath,
-						"rock/rockChild/rockChildChild",
-						"Path should match",
-					);
+					assert.equal(relativePath, "rock/rockChild/rockChildChild", "Path should match");
 				});
 				subDirectory.on("subDirectoryDeleted", (relativePath, local, target) => {
 					directoryDeletionExpected1 = true;
@@ -659,29 +645,17 @@ describe("Directory", () => {
 
 				const blob0 = summaryTree.tree.blob0 as ISummaryBlob;
 				assert(blob0 !== undefined, "blob0 not present in summary");
-				assert.strictEqual(
-					blob0.type,
-					SummaryType.Blob,
-					"blob0 is not of SummaryType.Blob",
-				);
+				assert.strictEqual(blob0.type, SummaryType.Blob, "blob0 is not of SummaryType.Blob");
 				assert(blob0.content.length >= 1024, "blob0's length is incorrect");
 
 				const blob1 = summaryTree.tree.blob1 as ISummaryBlob;
 				assert(blob1 !== undefined, "blob1 not present in summary");
-				assert.strictEqual(
-					blob1.type,
-					SummaryType.Blob,
-					"blob1 is not of SummaryType.Blob",
-				);
+				assert.strictEqual(blob1.type, SummaryType.Blob, "blob1 is not of SummaryType.Blob");
 				assert(blob1.content.length >= 1024, "blob1's length is incorrect");
 
 				const header = summaryTree.tree.header as ISummaryBlob;
 				assert(header !== undefined, "header not present in summary");
-				assert.strictEqual(
-					header.type,
-					SummaryType.Blob,
-					"header is not of SummaryType.Blob",
-				);
+				assert.strictEqual(header.type, SummaryType.Blob, "header is not of SummaryType.Blob");
 				assert(header.content.length >= 200, "header's length is incorrect");
 
 				const storage = MockSharedObjectServices.createFromSummary(summarizeResult.summary);
@@ -840,16 +814,8 @@ describe("Directory", () => {
 				directory.connect(services1);
 
 				// Verify that both the directories have the key.
-				assert.equal(
-					directory.get(key),
-					value,
-					"The first directory does not have the key",
-				);
-				assert.equal(
-					directory2.get(key),
-					value,
-					"The second directory does not have the key",
-				);
+				assert.equal(directory.get(key), value, "The first directory does not have the key");
+				assert.equal(directory2.get(key), value, "The second directory does not have the key");
 
 				// Set a new value for the same key in the second SharedDirectory.
 				const newValue = "newValue";
@@ -997,20 +963,14 @@ describe("Directory", () => {
 
 				// Verify the local SharedDirectory
 				assert.equal(directory1.getWorkingDirectory("/foo/")?.get("testKey"), "testValue");
-				assert.equal(
-					directory1.getWorkingDirectory("./foo")?.get("testKey2"),
-					"testValue2",
-				);
+				assert.equal(directory1.getWorkingDirectory("./foo")?.get("testKey2"), "testValue2");
 				assert.equal(directory1.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
 				assert.equal(directory1.get("testKey"), undefined);
 				assert.equal(directory1.get("testKey2"), undefined);
 
 				// Verify the remote SharedDirectory
 				assert.equal(directory2.getWorkingDirectory("/foo/")?.get("testKey"), "testValue");
-				assert.equal(
-					directory2.getWorkingDirectory("./foo")?.get("testKey2"),
-					"testValue2",
-				);
+				assert.equal(directory2.getWorkingDirectory("./foo")?.get("testKey2"), "testValue2");
 				assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
 				assert.equal(directory2.get("testKey"), undefined);
 				assert.equal(directory2.get("testKey2"), undefined);
@@ -1146,36 +1106,20 @@ describe("Directory", () => {
 
 				// Verify the SharedDirectory with processed message
 				assert.equal(directory1.has("test"), true, "could not find the set key");
-				assert.equal(
-					directory1.get("test"),
-					"directory1value1",
-					"could not get the set key",
-				);
+				assert.equal(directory1.get("test"), "directory1value1", "could not get the set key");
 
 				// Verify the SharedDirectory with 2 pending clears
-				assert.equal(
-					directory2.has("test"),
-					false,
-					"found the set key in pending directory",
-				);
+				assert.equal(directory2.has("test"), false, "found the set key in pending directory");
 
 				// directory2.set(key, "directory2value2");
 				containerRuntimeFactory.processSomeMessages(1);
 
 				// Verify the SharedDirectory gets updated from remote
 				assert.equal(directory1.has("test"), true, "could not find the set key");
-				assert.equal(
-					directory1.get("test"),
-					"directory2value2",
-					"could not get the set key",
-				);
+				assert.equal(directory1.get("test"), "directory2value2", "could not get the set key");
 
 				// Verify the SharedDirectory with 2 pending clears
-				assert.equal(
-					directory2.has("test"),
-					false,
-					"found the set key in pending directory",
-				);
+				assert.equal(directory2.has("test"), false, "found the set key in pending directory");
 
 				// directory2.clear();
 				containerRuntimeFactory.processSomeMessages(1);
@@ -1184,29 +1128,17 @@ describe("Directory", () => {
 				assert.equal(directory1.has("test"), false, "found the set key");
 
 				// Verify the SharedDirectory with 1 pending clear
-				assert.equal(
-					directory2.has("test"),
-					false,
-					"found the set key in pending directory",
-				);
+				assert.equal(directory2.has("test"), false, "found the set key in pending directory");
 
 				// directory2.set(key, "directory2value3");
 				containerRuntimeFactory.processSomeMessages(1);
 
 				// Verify the SharedDirectory gets updated from remote
 				assert.equal(directory1.has("test"), true, "could not find the set key");
-				assert.equal(
-					directory1.get("test"),
-					"directory2value3",
-					"could not get the set key",
-				);
+				assert.equal(directory1.get("test"), "directory2value3", "could not get the set key");
 
 				// Verify the SharedDirectory with 1 pending clear
-				assert.equal(
-					directory2.has("test"),
-					false,
-					"found the set key in pending directory",
-				);
+				assert.equal(directory2.has("test"), false, "found the set key in pending directory");
 
 				// directory2.clear();
 				containerRuntimeFactory.processSomeMessages(1);
@@ -1215,30 +1147,18 @@ describe("Directory", () => {
 				assert.equal(directory1.has("test"), false, "found the set key");
 
 				// Verify the SharedDirectory with no more pending clear
-				assert.equal(
-					directory2.has("test"),
-					false,
-					"found the set key in pending directory",
-				);
+				assert.equal(directory2.has("test"), false, "found the set key in pending directory");
 
 				directory1.set(key, "directory1value4");
 				containerRuntimeFactory.processSomeMessages(1);
 
 				// Verify the SharedDirectory gets updated from local
 				assert.equal(directory1.has("test"), true, "could not find the set key");
-				assert.equal(
-					directory1.get("test"),
-					"directory1value4",
-					"could not get the set key",
-				);
+				assert.equal(directory1.get("test"), "directory1value4", "could not get the set key");
 
 				// Verify the SharedDirectory gets updated from remote
 				assert.equal(directory1.has("test"), true, "could not find the set key");
-				assert.equal(
-					directory1.get("test"),
-					"directory1value4",
-					"could not get the set key",
-				);
+				assert.equal(directory1.get("test"), "directory1value4", "could not get the set key");
 			});
 
 			it("Directories should ensure eventual consistency using LWW approach 1: Test 1", async () => {
@@ -1385,16 +1305,10 @@ describe("Directory", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local sub directory1
-				assert.equal(
-					directory1.getWorkingDirectory("foo")?.get("fromSubDir"),
-					"testValue4",
-				);
+				assert.equal(directory1.getWorkingDirectory("foo")?.get("fromSubDir"), "testValue4");
 
 				// Verify the remote sub directory1
-				assert.equal(
-					directory2.getWorkingDirectory("foo")?.get("fromSubDir"),
-					"testValue4",
-				);
+				assert.equal(directory2.getWorkingDirectory("foo")?.get("fromSubDir"), "testValue4");
 			});
 
 			it("raises the containedValueChanged event when keys are set and deleted from a subDirectory", () => {
@@ -1897,21 +1811,9 @@ describe("Directory", () => {
 				fooDirectory.set("testKey", "testValue");
 				const fooDirectory2 = directory1.createSubDirectory("foo");
 				fooDirectory2.set("testKey2", "testValue2");
-				assert.strictEqual(
-					fooDirectory,
-					fooDirectory2,
-					"Created two separate subdirectories",
-				);
-				assert.strictEqual(
-					fooDirectory.get("testKey2"),
-					"testValue2",
-					"Value 2 not present",
-				);
-				assert.strictEqual(
-					fooDirectory2.get("testKey"),
-					"testValue",
-					"Value 1 not present",
-				);
+				assert.strictEqual(fooDirectory, fooDirectory2, "Created two separate subdirectories");
+				assert.strictEqual(fooDirectory.get("testKey2"), "testValue2", "Value 2 not present");
+				assert.strictEqual(fooDirectory2.get("testKey"), "testValue", "Value 1 not present");
 			});
 		});
 	});
@@ -1926,14 +1828,8 @@ describe("Directory", () => {
 
 			public constructor() {
 				this.containerRuntimeFactory = new MockContainerRuntimeFactory();
-				this.directory1 = createConnectedDirectory(
-					"directory1",
-					this.containerRuntimeFactory,
-				);
-				this.directory2 = createConnectedDirectory(
-					"directory2",
-					this.containerRuntimeFactory,
-				);
+				this.directory1 = createConnectedDirectory("directory1", this.containerRuntimeFactory);
+				this.directory2 = createConnectedDirectory("directory2", this.containerRuntimeFactory);
 			}
 
 			/**
@@ -1961,8 +1857,7 @@ describe("Directory", () => {
 				this._expectedRoutes.push(toFluidHandleInternal(subMap1.handle).absolutePath);
 
 				const fooDirectory =
-					this.directory1.getSubDirectory("foo") ??
-					this.directory1.createSubDirectory("foo");
+					this.directory1.getSubDirectory("foo") ?? this.directory1.createSubDirectory("foo");
 				const subMapId2 = `subMap-${++this.subMapCount}`;
 				const subMap2 = createLocalMap(subMapId2);
 				fooDirectory.set(subMapId2, subMap2.handle);
@@ -1998,8 +1893,7 @@ describe("Directory", () => {
 			 */
 			public async addNestedHandles(): Promise<void> {
 				const fooDirectory =
-					this.directory1.getSubDirectory("foo") ??
-					this.directory1.createSubDirectory("foo");
+					this.directory1.getSubDirectory("foo") ?? this.directory1.createSubDirectory("foo");
 				const subMapId1 = `subMap-${++this.subMapCount}`;
 				const subMapId2 = `subMap-${++this.subMapCount}`;
 				const subMap = createLocalMap(subMapId1);

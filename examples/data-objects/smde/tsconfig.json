@@ -1,9 +1,9 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
-		"target": "es6",
 		"outDir": "./lib",
 		"types": ["react"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

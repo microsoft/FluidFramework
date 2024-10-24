@@ -1,5 +1,112 @@
 # @fluidframework/container-runtime
 
+## 2.4.0
+
+### Minor Changes
+
+-   The `op.contents` member on ContainerRuntime's `batchBegin`/`batchEnd` event args is deprecated ([#22750](https://github.com/microsoft/FluidFramework/pull/22750)) [de6928b528](https://github.com/microsoft/FluidFramework/commit/de6928b528ceb115b12cdf7a4183077cbaa80a71)
+
+    The `batchBegin`/`batchEnd` events on ContainerRuntime indicate when a batch is beginning/finishing being processed.
+    The events include an argument of type `ISequencedDocumentMessage` which is the first or last message of the batch.
+
+    The `contents` property of the `op` argument should not be used when reasoning over the begin/end of a batch.
+    If you want to look at the `contents` of an op, wait for the `op` event.
+
+## 2.3.0
+
+### Minor Changes
+
+-   Restored old op processing behavior around batched ops to avoid potential regression ([#22508](https://github.com/microsoft/FluidFramework/pull/22508)) [709f085c580](https://github.com/microsoft/FluidFramework/commit/709f085c5802bb4ad80145911ca3b05e457e9d6e)
+
+    There's a theoretical risk of indeterminate behavior due to a recent change to how batches of ops are processed.
+    This fix reverses that change.
+
+    Pull Request #21785 updated the ContainerRuntime to hold onto the messages in an incoming batch until they've all arrived, and only then process the set of messages.
+
+    While the batch is being processed, the DeltaManager and ContainerRuntime's view of the latest sequence numbers will be
+    out of sync. This may have unintended side effects, so out of an abundance of caution we're reversing this behavior until
+    we can add the proper protections to ensure the system stays properly in sync.
+
+## 2.2.0
+
+### Minor Changes
+
+-   gcThrowOnTombstoneUsage and gcTombstoneEnforcementAllowed are deprecated ([#21992](https://github.com/microsoft/FluidFramework/pull/21992)) [b2bfed3a62](https://github.com/microsoft/FluidFramework/commit/b2bfed3a624d590d776c64a3317c60400b4b3e81)
+
+    These properties `gcThrowOnTombstoneUsage` and `gcTombstoneEnforcementAllowed` have been deprecated in
+    `IFluidParentContext` and `ContainerRuntime`. These were included in certain garbage collection (GC) telemetry to
+    identify whether the corresponding features have been enabled. These features are now enabled by default and this
+    information is added to the "GarbageCollectorLoaded" telemetry.
+
+    Also, the following Garbage collection runtime options and configs have been removed. They were added during GC feature
+    development to roll out and control functionalities. The corresponding features are on by default and can no longer be
+    disabled or controlled:
+
+    GC runtime options removed:
+
+    -   `gcDisableThrowOnTombstoneLoad`
+    -   `disableDataStoreSweep`
+
+    GC configs removed:
+
+    -   `"Fluid.GarbageCollection.DisableTombstone"`
+    -   `"Fluid.GarbageCollection.ThrowOnTombstoneUsage"`
+    -   `"Fluid.GarbageCollection.DisableDataStoreSweep"`
+
+-   InactiveResponseHeaderKey header is deprecated ([#22107](https://github.com/microsoft/FluidFramework/pull/22107)) [2e4e9b2cfc](https://github.com/microsoft/FluidFramework/commit/2e4e9b2cfcdd7f5d2aa460ab9dedabd6dc2b20ba)
+
+    The header `InactiveResponseHeaderKey` is deprecated and will be removed in the future. It was part of an experimental feature where loading an inactive data store would result in returning a 404 with this header set to true. This feature is no longer supported.
+
+## 2.1.0
+
+Dependency updates only.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   fluid-framework: Type Erase ISharedObjectKind ([#21081](https://github.com/microsoft/FluidFramework/pull/21081)) [78f228e370](https://github.com/microsoft/FluidFramework/commit/78f228e37055bd4d9a8f02b3a1eefebf4da9c59c)
+
+    A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
+
+    This type fills the role of both `ISharedObjectKind` and `DataObjectClass` in the `@public` "declarative API" exposed in the `fluid-framework` package.
+
+    This allows several types referenced by `ISharedObjectKind` to be made `@alpha` as they should only need to be used by legacy code and users of the unstable/alpha/legacy "encapsulated API".
+
+    Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
+    The full list of such types is:
+
+    -   `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
+    -   `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
+        `ISharedObject`
+    -   `IChannel`
+    -   `IChannelAttributes`
+    -   `IChannelFactory`
+    -   `IExperimentalIncrementalSummaryContext`
+    -   `IGarbageCollectionData`
+    -   `ISummaryStats`
+    -   `ISummaryTreeWithStats`
+    -   `ITelemetryContext`
+    -   `IDeltaManagerErased`
+    -   `IFluidDataStoreRuntimeEvents`
+    -   `IFluidHandleContext`
+    -   `IProvideFluidHandleContext`
+
+    Removed APIs:
+
+    -   `DataObjectClass`: Usages replaced with `SharedObjectKind`.
+    -   `LoadableObjectClass`: Replaced with `SharedObjectKind`.
+    -   `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
+    -
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
 ## 2.0.0-rc.4.0.0
 
 ### Major Changes

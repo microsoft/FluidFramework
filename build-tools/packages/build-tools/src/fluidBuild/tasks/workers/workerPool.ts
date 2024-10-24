@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ChildProcess, fork } from "child_process";
-import { EventEmitter } from "events";
-import { Readable } from "stream";
-import { Worker } from "worker_threads";
+import { ChildProcess, fork } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { freemem } from "node:os";
+import { Readable } from "node:stream";
+import { Worker } from "node:worker_threads";
 
 import { WorkerExecResult, WorkerMessage } from "./worker";
 
@@ -36,7 +37,7 @@ export class WorkerPool {
 		if (!worker) {
 			worker = fork(
 				`${__dirname}/worker.js`,
-				this.memoryUsageLimit !== -1 ? ["--memoryUsage"] : undefined,
+				this.memoryUsageLimit !== Number.POSITIVE_INFINITY ? ["--memoryUsage"] : undefined,
 				{ silent: true },
 			);
 		}
@@ -107,11 +108,21 @@ export class WorkerPool {
 					worker.send(workerMessage);
 				});
 
+				// Workers accumulate memory use over time.
+				// Since recreating workers fixes this, but takes time,
+				// recreate them only when the memory use becomes too high.
+
+				// As a heuristic to avoid memory pressure, lower threshold if running out of memory.
+				const currentMemoryLimit = Math.min(this.memoryUsageLimit, freemem());
+
 				if (
-					this.memoryUsageLimit >= 0 &&
-					(res.memoryUsage?.rss ?? 0) > this.memoryUsageLimit
+					// Don't keep worker if using more than currentMemoryLimit bytes of memory.
+					(res.memoryUsage?.rss ?? 0) > currentMemoryLimit ||
+					// In case memoryUsage is not available,
+					// or as a last result when something other than this worker is using up all the memory
+					// kill the worker if there is less than 2 GB of memory free.
+					freemem() < 2 * 1024 * 1024 * 1024
 				) {
-					// Don't keep worker using more then 1GB of memory
 					worker.kill();
 				} else {
 					this.processWorkerPool.push(worker);

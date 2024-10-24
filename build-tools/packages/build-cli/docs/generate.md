@@ -10,6 +10,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
+* [`flub generate releaseNotes`](#flub-generate-releasenotes)
 * [`flub generate typetests`](#flub-generate-typetests)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
@@ -19,9 +20,10 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--all | --dir <value> | --packages
-    | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |  | 
+    |  | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -33,6 +35,11 @@ PACKAGE SELECTION FLAGS
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
       --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
@@ -172,7 +179,7 @@ FLAGS
   -b, --branch=<value>         [default: main] The branch to compare the current changes against. The current changes
                                will be compared with this branch to populate the list of changed packages. You must have
                                a valid remote pointing to the microsoft/FluidFramework repo.
-  -g, --releaseGroup=<option>  Name of a release group.
+  -g, --releaseGroup=<option>  [default: client] Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
       --all                    Include ALL packages, including examples and other unpublished packages.
       --empty                  Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
@@ -223,8 +230,8 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 ```
 USAGE
   $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileSuffix <value>]
-    [--node10TypeCompat]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
+    [--outFileSuffix <value>] [--node10TypeCompat]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
@@ -232,6 +239,7 @@ FLAGS
   --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
+  --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
   --outFilePrefix=<value>   File name prefix for emitting entrypoint declaration files. Pattern of
                             '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
                             package.
@@ -256,9 +264,10 @@ Outputs a list of files that will be included in a package based on its 'files' 
 
 ```
 USAGE
-  $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--all | --dir <value> | --packages |
-    -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--branch <value> [--changed |  |  | 
+    | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -272,6 +281,11 @@ PACKAGE SELECTION FLAGS
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
       --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
@@ -299,26 +313,70 @@ DESCRIPTION
 
 _See code: [src/commands/generate/packlist.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/packlist.ts)_
 
+## `flub generate releaseNotes`
+
+Generates release notes from individual changeset files.
+
+```
+USAGE
+  $ flub generate releaseNotes -g client|server|azure|build-tools|gitrest|historian -t major|minor --outFile <value>
+    [--json] [-v | --quiet] [--includeUnknown] [--headingLinks] [--excludeH1]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  -t, --releaseType=<option>   (required) The type of release for which the release notes are being generated.
+                               <options: major|minor>
+      --excludeH1              Pass this flag to omit the top H1 heading. This is useful when the Markdown output will
+                               be used as part of another document.
+      --headingLinks           Pass this flag to output HTML anchor anchor tags inline for every heading. This is useful
+                               when the Markdown output will be used in places like GitHub Releases, where headings
+                               don't automatically get links.
+      --includeUnknown         Pass this flag to include changesets in unknown sections in the generated release notes.
+                               By default, these are excluded.
+      --outFile=<value>        (required) [default: RELEASE_NOTES.md] Output the results to this file.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+EXAMPLES
+  Generate release notes for a minor release of the client release group.
+
+    $ flub generate releaseNotes -g client -t minor
+
+  You can output a different file using the --out flag.
+
+    $ flub generate releaseNotes -g client -t minor --out RELEASE_NOTES/2.1.0.md
+```
+
+_See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/releaseNotes.ts)_
+
 ## `flub generate typetests`
 
 Generates type tests for a package or group of packages.
 
 ```
 USAGE
-  $ flub generate typetests [-v | --quiet] [--level public|alpha|beta|internal|legacy] [--outDir <value>] [--outFile
-    <value>] [--publicFallback] [--concurrency <value>] [--all | --dir <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacy] [--outDir <value>]
+    [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all |
+    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
-  --level=<option>       [default: internal] What API level to generate tests for.
+  --entrypoint=<option>  What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is
+                         provided it will override the typeValidation.entrypoint setting in the package's package.json.
                          <options: public|alpha|beta|internal|legacy>
   --outDir=<value>       [default: ./src/test/types] Where to emit the type tests file.
   --outFile=<value>      [default: validate{@unscopedPackageName}Previous.generated.ts] File name for the generated type
                          tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped
                          name of this package in PascalCase.
-  --publicFallback       Use the public entrypoint as a fallback if the API at the requested level is not found.
+  --publicFallback       Use the public entrypoint as a fallback if the requested entrypoint is not found.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
@@ -327,6 +385,11 @@ PACKAGE SELECTION FLAGS
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
       --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,

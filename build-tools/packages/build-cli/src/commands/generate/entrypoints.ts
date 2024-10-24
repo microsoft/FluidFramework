@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { GenerateEntrypointsCommand } from "../../library";
+import { GenerateEntrypointsCommand } from "../../library/index.js";
 
 export default class GenerateEntrypointsCommand_ extends GenerateEntrypointsCommand {}

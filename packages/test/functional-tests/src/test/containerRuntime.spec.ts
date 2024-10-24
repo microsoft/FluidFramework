@@ -5,9 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
-import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
+import {
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-private/test-loader-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
 // eslint-disable-next-line import/no-internal-modules
@@ -19,13 +20,15 @@ import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
 import { ScheduleManager } from "@fluidframework/container-runtime/internal/test/scheduleManager";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IClient,
-	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 
 describe("Container Runtime", () => {
 	/**
@@ -41,6 +44,7 @@ describe("Container Runtime", () => {
 		const docId = "docId";
 		let batchBegin: number = 0;
 		let batchEnd: number = 0;
+		let batchClientId: string | undefined;
 
 		const startDeltaManager = async (): Promise<void> =>
 			new Promise((resolve) => {
@@ -78,14 +82,41 @@ describe("Container Runtime", () => {
 
 		// Function to process an inbound op. It adds delay to simulate time taken in processing an op.
 		function processOp(message: ISequencedDocumentMessage): void {
-			scheduleManager.beforeOpProcessing(message);
+			// Simulate batch accumulation by container runtime's remote message processor.
+			// It saves batch messages until the entire batch is received. It calls batch begin
+			// and end on schedule manager accordingly.
+			const batchMetadataFlag = (message.metadata as { batch?: boolean } | undefined)?.batch;
+			let batchStart: boolean = false;
+			let batchComplete: boolean = false;
+			if (batchMetadataFlag === true) {
+				assert(
+					batchClientId === undefined,
+					"Received batch message while another batch is in progress",
+				);
+				batchClientId = message.clientId ?? undefined;
+				batchStart = true;
+			} else if (batchMetadataFlag === false) {
+				assert(batchClientId !== undefined, "Received batch end message without batch");
+				batchClientId = undefined;
+				batchComplete = true;
+			} else if (batchClientId === undefined) {
+				batchStart = true;
+				batchComplete = true;
+			}
+
+			if (batchStart) {
+				scheduleManager.batchBegin(message);
+			}
 
 			// Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
 			const processingDelay = DeltaScheduler.processingTime + 10;
 			const startTime = Date.now();
 			while (Date.now() - startTime < processingDelay) {}
 
-			scheduleManager.afterOpProcessing(undefined, message);
+			if (batchComplete) {
+				scheduleManager.batchEnd(undefined /* error */, message);
+			}
+
 			deltaManager.emit("op", message);
 		}
 

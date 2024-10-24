@@ -5,13 +5,13 @@
 
 import type { Static, TSchema } from "@sinclair/typebox";
 
-import { JsonValidator } from "./codec.js";
+import type { JsonValidator } from "./codec.js";
 
 /**
  * A {@link JsonValidator} implementation which performs no validation and accepts all data as valid.
  * @privateRemarks Having this as an option unifies opting out of validation with selection of
  * validators, simplifying code performing validation.
- * @internal
+ * @alpha
  */
 export const noopValidator: JsonValidator = {
 	compile: <Schema extends TSchema>() => ({ check: (data): data is Static<Schema> => true }),

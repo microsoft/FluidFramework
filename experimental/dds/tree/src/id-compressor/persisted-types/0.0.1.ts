@@ -19,7 +19,6 @@ export type SerializedSessionData = readonly [
 	 * The ID of the session.
 	 */
 	sessionId: SessionId,
-
 	/**
 	 * Index into the serialized AttributionIDs array; points to the attribution ID provided for this session
 	 */
@@ -44,19 +43,16 @@ export type SerializedCluster = readonly [
 	 * If negative, then this cluster was created by the local session.
 	 */
 	sessionIndex: number,
-
 	/**
 	 * The capacity of the cluster.
 	 */
 	capacity: number,
-
 	/**
 	 * The number of IDs in the cluster. Omitted if count === capacity.
 	 * --OR--
 	 * The overrides in this cluster. Omitted if no overrides exist in the cluster.
 	 */
 	countOrOverrides?: number | SerializedClusterOverrides,
-
 	/**
 	 * Overrides in this cluster. Omitted if no overrides exist in the cluster.
 	 */

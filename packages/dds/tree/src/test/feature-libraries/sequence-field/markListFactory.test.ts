@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ChangesetLocalId, RevisionTag } from "../../../core/index.js";
+import type { ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";

@@ -8,11 +8,12 @@ import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Casts the public API for delta manager into the internal one,
  * exposing access to APIs needed by the implementation of Fluid Framework but not its users.
+ * @legacy
  * @alpha
  */
 export function toDeltaManagerInternal(

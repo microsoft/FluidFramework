@@ -1,5 +1,98 @@
 # @fluidframework/shared-object-base
 
+## 2.4.0
+
+Dependency updates only.
+
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+Dependency updates only.
+
+## 2.1.0
+
+### Minor Changes
+
+-   Type guards for DDS types ([#21850](https://github.com/microsoft/FluidFramework/pull/21850)) [6bdec1ac07](https://github.com/microsoft/FluidFramework/commit/6bdec1ac07d6f95ef2fbcbd66c12bf0dc53de1ad)
+
+    In the 2.0 release of Fluid, the concrete class implementations for DDSes were hidden from Fluid's API surface.
+    This made `instanceof` checks fail to work correctly.
+    There were ways to work around this in application code, but they involved boilerplate which required more understanding of Fluid internals than should be necessary.
+
+    There is now a drop-in replacement to `instanceof`: the static `.is()` method to `SharedObjectKind`, which is available
+    on all DDSes.
+    For example:
+
+    ```typescript
+    // Works in Fluid Framework 1.0 but not in the initial release of Fluid Framework 2.0:
+    if (myObject instanceof SharedString) {
+    	// do something
+    }
+
+    // In Fluid Framework 2.0 and beyond, that code can now be written like so:
+    if (SharedString.is(myObject)) {
+    	// do something
+    }
+    ```
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   fluid-framework: Type Erase ISharedObjectKind ([#21081](https://github.com/microsoft/FluidFramework/pull/21081)) [78f228e370](https://github.com/microsoft/FluidFramework/commit/78f228e37055bd4d9a8f02b3a1eefebf4da9c59c)
+
+    A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
+
+    This type fills the role of both `ISharedObjectKind` and `DataObjectClass` in the `@public` "declarative API" exposed in the `fluid-framework` package.
+
+    This allows several types referenced by `ISharedObjectKind` to be made `@alpha` as they should only need to be used by legacy code and users of the unstable/alpha/legacy "encapsulated API".
+
+    Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
+    The full list of such types is:
+
+    -   `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
+    -   `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
+        `ISharedObject`
+    -   `IChannel`
+    -   `IChannelAttributes`
+    -   `IChannelFactory`
+    -   `IExperimentalIncrementalSummaryContext`
+    -   `IGarbageCollectionData`
+    -   `ISummaryStats`
+    -   `ISummaryTreeWithStats`
+    -   `ITelemetryContext`
+    -   `IDeltaManagerErased`
+    -   `IFluidDataStoreRuntimeEvents`
+    -   `IFluidHandleContext`
+    -   `IProvideFluidHandleContext`
+
+    Removed APIs:
+
+    -   `DataObjectClass`: Usages replaced with `SharedObjectKind`.
+    -   `LoadableObjectClass`: Replaced with `SharedObjectKind`.
+    -   `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
+    -
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   fluid-framework: Remove several types from `@public` scope ([#21142](https://github.com/microsoft/FluidFramework/pull/21142)) [983e9f09f7](https://github.com/microsoft/FluidFramework/commit/983e9f09f7b10fef9ffa1e9af86166f0ccda7e14)
+
+    The following types have been moved from `@public` to `@alpha`:
+
+    -   `IFluidSerializer`
+    -   `ISharedObjectEvents`
+    -   `IChannelServices`
+    -   `IChannelStorageService`
+    -   `IDeltaConnection`
+    -   `IDeltaHandler`
+
+    These should not be needed by users of the declarative API, which is what `@public` is targeting.
+
 ## 2.0.0-rc.4.0.0
 
 ### Minor Changes

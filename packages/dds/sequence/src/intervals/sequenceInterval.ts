@@ -7,6 +7,7 @@
 /* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
 	ISegment,
@@ -23,15 +24,15 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
+	SequencePlace,
+	Side,
+	endpointPosAndSide,
+	addProperties,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	SequencePlace,
-	Side,
 	computeStickinessFromSide,
-	endpointPosAndSide,
 	reservedIntervalIdKey,
 	sidesFromStickiness,
 } from "../intervalCollection.js";
@@ -100,6 +101,7 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
  * of the interval that are exclusive will have the ability to slide to these
  * special endpoint segments.
+ * @legacy
  * @alpha
  */
 export class SequenceInterval implements ISerializableInterval {
@@ -125,6 +127,9 @@ export class SequenceInterval implements ISerializableInterval {
 		);
 	}
 
+	/**
+	 * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		private readonly client: Client,
 		/**
@@ -143,7 +148,7 @@ export class SequenceInterval implements ISerializableInterval {
 		public readonly endSide: Side = Side.Before,
 	) {
 		if (props) {
-			this.addProperties(props);
+			this.properties = addProperties(this.properties, props);
 		}
 	}
 
@@ -198,7 +203,10 @@ export class SequenceInterval implements ISerializableInterval {
 		};
 
 		if (this.properties) {
-			serializedInterval.properties = { ...this.properties };
+			serializedInterval.properties = addProperties(
+				serializedInterval.properties,
+				this.properties,
+			);
 		}
 
 		return serializedInterval;

@@ -7,5 +7,7 @@
 		"outDir": "./lib",
 		"types": ["node"],
 		"noUnusedLocals": false,
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
 	},
 }

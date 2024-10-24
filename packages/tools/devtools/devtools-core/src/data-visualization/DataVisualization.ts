@@ -7,18 +7,19 @@
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	type IDisposable,
-	type IEvent,
-	type IFluidHandle,
-	type IFluidLoadable,
+import type {
+	IDisposable,
+	IEvent,
+	IFluidHandle,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { type IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import/no-deprecated
+import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
-import { type FluidObjectId } from "../CommonInterfaces.js";
+import type { FluidObjectId } from "../CommonInterfaces.js";
 
-import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing.js";
+import type { Edit, EditSharedObject, SharedObjectEdit } from "./DataEditing.js";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
 import {
 	type FluidObjectNode,
@@ -224,9 +225,7 @@ export class DataVisualizerGraph
 				} else {
 					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
 					result[key] =
-						fluidObjectId === undefined
-							? unknownObjectNode
-							: createHandleNode(fluidObjectId);
+						fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
 				}
 			}),
 		);
@@ -336,7 +335,10 @@ export class DataVisualizerGraph
  * Additionally, whenever the associated `ISharedObject` is updated (i.e. whenever its "op" event is emitted),
  * an updated visual tree will be emitted via this object's {@link SharedObjectListenerEvents | "update" event}.
  */
-export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> implements IDisposable {
+export class VisualizerNode
+	extends TypedEventEmitter<DataVisualizerEvents>
+	implements IDisposable
+{
 	/**
 	 * Handler for {@link VisualizerNode.sharedObject}'s "op" event.
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
@@ -498,6 +500,7 @@ export async function visualizeChildData(
 		};
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;
@@ -531,5 +534,7 @@ export async function visualizeChildData(
  * @remarks Implemented by checking for the particular properties / methods we use in this module.
  */
 function isSharedObject(value: Partial<ISharedObject>): value is ISharedObject {
-	return value.id !== undefined && value.attributes?.type !== undefined && value.on !== undefined;
+	return (
+		value.id !== undefined && value.attributes?.type !== undefined && value.on !== undefined
+	);
 }

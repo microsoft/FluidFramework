@@ -58,6 +58,8 @@ export async function deliCreate(
 	const enableLeaveOpNoClientServerMetadata =
 		(config.get("deli:enableLeaveOpNoClientServerMetadata") as boolean) ?? false;
 
+	const noOpConsolidationTimeout = config.get("deli:noOpConsolidationTimeout");
+
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
@@ -187,6 +189,7 @@ export async function deliCreate(
 			restartOnCheckpointFailure,
 			kafkaCheckpointOnReprocessingOp,
 			enableLeaveOpNoClientServerMetadata,
+			noOpConsolidationTimeout,
 		},
 	};
 

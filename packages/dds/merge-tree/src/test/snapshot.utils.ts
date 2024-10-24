@@ -5,10 +5,11 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { IMergeTreeOptions } from "../mergeTree.js";
@@ -22,7 +23,10 @@ import { createClientsAtInitialState } from "./testClientLogger.js";
 import { TestSerializer } from "./testSerializer.js";
 
 // Reconstitutes a MergeTree client from a summary
-export async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
+export async function loadSnapshot(
+	summary: ISummaryTree,
+	options?: IMergeTreeOptions,
+): Promise<TestClient> {
 	const services = MockStorage.createFromSummary(summary);
 	const client2 = new TestClient(options);
 	const runtime: Partial<IFluidDataStoreRuntime> = {
@@ -55,22 +59,22 @@ export class TestString {
 		this.client.startOrUpdateCollaboration(id);
 	}
 
-	public insert(pos: number, text: string, increaseMsn: boolean) {
+	public insert(pos: number, text: string, increaseMsn: boolean): void {
 		this.queue(
 			this.client.insertTextLocal(pos, text, { segment: this.pending.length })!,
 			increaseMsn,
 		);
 	}
 
-	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
+	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean): void {
 		this.queue(this.client.annotateRangeLocal(start, end, props)!, increaseMsn);
 	}
 
-	public append(text: string, increaseMsn: boolean) {
+	public append(text: string, increaseMsn: boolean): void {
 		this.insert(this.client.getLength(), text, increaseMsn);
 	}
 
-	public insertMarker(pos: number, increaseMsn: boolean) {
+	public insertMarker(pos: number, increaseMsn: boolean): void {
 		this.queue(
 			this.client.insertMarkerLocal(pos, ReferenceType.Simple, {
 				segment: this.pending.length,
@@ -79,22 +83,22 @@ export class TestString {
 		);
 	}
 
-	public appendMarker(increaseMsn: boolean) {
+	public appendMarker(increaseMsn: boolean): void {
 		this.insertMarker(this.client.getLength(), increaseMsn);
 	}
 
-	public removeRange(start: number, end: number, increaseMsn: boolean) {
+	public removeRange(start: number, end: number, increaseMsn: boolean): void {
 		this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
 	}
 
-	public obliterateRange(start: number, end: number, increaseMsn: boolean) {
+	public obliterateRange(start: number, end: number, increaseMsn: boolean): void {
 		this.queue(this.client.obliterateRangeLocal(start, end)!, increaseMsn);
 	}
 
 	// Ensures the client's text matches the `expected` string and round-trips through a snapshot
 	// into a new client.  The current client is then replaced with the loaded client in the hope
 	// that it will help detect corruption bugs as further ops are applied.
-	public async expect(expected: string) {
+	public async expect(expected: string): Promise<void> {
 		assert.equal(
 			this.client.getText(),
 			expected,
@@ -105,7 +109,7 @@ export class TestString {
 	}
 
 	// Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
-	public async checkSnapshot(options?: IMergeTreeOptions) {
+	public async checkSnapshot(options?: IMergeTreeOptions): Promise<void> {
 		this.applyPendingOps();
 		const expectedAttributionKeys = this.client.getAllAttributionSeqs();
 		const summary = this.getSummary();
@@ -144,18 +148,18 @@ export class TestString {
 		return snapshot.emit(TestClient.serializer, undefined!).summary;
 	}
 
-	public getText() {
+	public getText(): string {
 		return this.client.getText();
 	}
 
-	public applyPendingOps() {
+	public applyPendingOps(): void {
 		for (const msg of this.pending) {
 			this.client.applyMsg(msg);
 		}
 		this.pending.splice(0, this.pending.length);
 	}
 
-	private queue(op: IMergeTreeOp, increaseMsn: boolean) {
+	private queue(op: IMergeTreeOp, increaseMsn: boolean): void {
 		const refSeq = this.seq;
 		const seq = ++this.seq;
 

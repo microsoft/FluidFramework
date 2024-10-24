@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -42,7 +42,9 @@ function createConnectedDirectory(
 
 class TestSharedDirectory extends SharedDirectoryInternal {
 	private lastMetadata?: DirectoryLocalOpMetadata;
-	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata | undefined {
+	public testApplyStashedOp(
+		content: IDirectoryOperation,
+	): DirectoryLocalOpMetadata | undefined {
 		this.lastMetadata = undefined;
 		this.applyStashedOp(content);
 		return this.lastMetadata;
@@ -221,26 +223,27 @@ describe("Directory Iteration Order", () => {
 			assertDirectoryIterationOrder(directory2, ["b", "a", "d"]);
 
 			assert.notEqual(directory1.getWorkingDirectory("/d"), undefined);
-			assertDirectoryIterationOrder(
-				directory1.getWorkingDirectory("/d") as ISharedDirectory,
-				["d-b", "d-a"],
-			);
+			assertDirectoryIterationOrder(directory1.getWorkingDirectory("/d") as ISharedDirectory, [
+				"d-b",
+				"d-a",
+			]);
 
 			assert.notEqual(directory2.getWorkingDirectory("/d"), undefined);
-			assertDirectoryIterationOrder(
-				directory2.getWorkingDirectory("/d") as ISharedDirectory,
-				["d-b", "d-a"],
-			);
+			assertDirectoryIterationOrder(directory2.getWorkingDirectory("/d") as ISharedDirectory, [
+				"d-b",
+				"d-a",
+			]);
 
 			directory1.deleteSubDirectory("d");
 			directory2.getWorkingDirectory("/d")?.createSubDirectory("d-c");
 
 			assertDirectoryIterationOrder(directory1, ["b", "a"]);
 			assertDirectoryIterationOrder(directory2, ["b", "a", "d"]);
-			assertDirectoryIterationOrder(
-				directory2.getWorkingDirectory("/d") as ISharedDirectory,
-				["d-b", "d-a", "d-c"],
-			);
+			assertDirectoryIterationOrder(directory2.getWorkingDirectory("/d") as ISharedDirectory, [
+				"d-b",
+				"d-a",
+				"d-c",
+			]);
 
 			containerRuntimeFactory.processAllMessages();
 			assertDirectoryIterationOrder(directory1, ["b", "a"]);
@@ -372,10 +375,10 @@ describe("Directory Iteration Order", () => {
 
 			assertDirectoryIterationOrder(directory1, ["c", "b", "a"]);
 			assert(directory1.getWorkingDirectory("/c"));
-			assertDirectoryIterationOrder(
-				directory1.getWorkingDirectory("/c") as ISharedDirectory,
-				["c_b", "c_a"],
-			);
+			assertDirectoryIterationOrder(directory1.getWorkingDirectory("/c") as ISharedDirectory, [
+				"c_b",
+				"c_a",
+			]);
 		});
 
 		it("serialize the contents, load it into another directory and maintain the order", async () => {

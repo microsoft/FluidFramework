@@ -16,6 +16,8 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 } from "@fluidframework/tree/internal";
+
+import type { VisualizeChildData } from "./DataVisualization.js";
 import type {
 	SharedTreeLeafNode,
 	VisualSharedTreeNode,
@@ -30,7 +32,6 @@ import {
 	type FluidHandleNode,
 	type UnknownObjectNode,
 } from "./VisualTree.js";
-import type { VisualizeChildData } from "./DataVisualization.js";
 
 /**
  * Returns VisualNodeKind that is compatible to {@link FluidObjectNode} based on the `visualTree`'s node kind.

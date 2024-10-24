@@ -505,10 +505,7 @@ describe('IdCompressor', () => {
 			assert.throws(
 				() => compressor1.finalizeCreationRange(largeRange2),
 				(e: Error) =>
-					validateAssertionError(
-						e,
-						'The number of allocated final IDs must not exceed the JS maximum safe integer.'
-					)
+					validateAssertionError(e, 'The number of allocated final IDs must not exceed the JS maximum safe integer.')
 			);
 		});
 	});
@@ -1267,27 +1264,22 @@ describe('IdCompressor', () => {
 			}
 		);
 
-		itNetwork(
-			'when a new cluster is allocated whose base UUID collides with an existing override',
-			2,
-			(network) => {
-				network.allocateAndSendIds(Client.Client1, 1);
-				network.deliverOperations(DestinationClient.All);
-				const compressor1 = network.getCompressor(Client.Client1);
-				const id = network.getIdLog(Client.Client1)[0].id;
-				const uuid = assertIsStableId(compressor1.decompress(id));
-				const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 2);
-				network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid });
-				network.allocateAndSendIds(Client.Client2, 1);
-				network.deliverOperations(DestinationClient.All);
-				network.allocateAndSendIds(Client.Client1, 1); // new cluster
-				assert.throws(
-					() => network.deliverOperations(Client.Client1),
-					(e: Error) =>
-						validateAssertionError(e, `Override '${nextUuid}' collides with another allocated UUID.`)
-				);
-			}
-		);
+		itNetwork('when a new cluster is allocated whose base UUID collides with an existing override', 2, (network) => {
+			network.allocateAndSendIds(Client.Client1, 1);
+			network.deliverOperations(DestinationClient.All);
+			const compressor1 = network.getCompressor(Client.Client1);
+			const id = network.getIdLog(Client.Client1)[0].id;
+			const uuid = assertIsStableId(compressor1.decompress(id));
+			const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 2);
+			network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid });
+			network.allocateAndSendIds(Client.Client2, 1);
+			network.deliverOperations(DestinationClient.All);
+			network.allocateAndSendIds(Client.Client1, 1); // new cluster
+			assert.throws(
+				() => network.deliverOperations(Client.Client1),
+				(e: Error) => validateAssertionError(e, `Override '${nextUuid}' collides with another allocated UUID.`)
+			);
+		});
 
 		itNetwork('detects colliding override UUIDs when expanding a cluster', 1, (network) => {
 			// This is a glass box test in that it is testing cluster expansion
@@ -1514,12 +1506,8 @@ describe('IdCompressor', () => {
 			expect(compressor2.tryRecompress(override)).to.equal(id2);
 
 			expect(compressor3.normalizeToSessionSpace(finalId1, compressor1.localSessionId)).to.equal(finalId1);
-			expect(compressor3.normalizeToSessionSpace(opNormalizedLocal1, compressor1.localSessionId)).to.equal(
-				finalId1
-			);
-			expect(compressor3.normalizeToSessionSpace(opNormalizedLocal2, compressor2.localSessionId)).to.equal(
-				finalId1
-			);
+			expect(compressor3.normalizeToSessionSpace(opNormalizedLocal1, compressor1.localSessionId)).to.equal(finalId1);
+			expect(compressor3.normalizeToSessionSpace(opNormalizedLocal2, compressor2.localSessionId)).to.equal(finalId1);
 			expect(compressor3.decompress(finalId1)).to.equal(override);
 			expect(compressor3.recompress(override)).to.equal(finalId1);
 		});
@@ -1709,20 +1697,17 @@ describe('IdCompressor', () => {
 		});
 
 		describe('Serialization', () => {
-			itNetwork(
-				'prevents attempts to resume a session from a serialized compressor with no session',
-				(network) => {
-					const compressor = network.getCompressor(Client.Client1);
-					network.allocateAndSendIds(Client.Client2, 1);
-					network.allocateAndSendIds(Client.Client3, 1);
-					network.deliverOperations(Client.Client1);
-					const serializedWithoutLocalState = compressor.serialize(false);
-					assert.throws(
-						() => IdCompressor.deserialize(serializedWithoutLocalState, sessionIds.get(Client.Client2)),
-						(e: Error) => validateAssertionError(e, 'Cannot resume existing session.')
-					);
-				}
-			);
+			itNetwork('prevents attempts to resume a session from a serialized compressor with no session', (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				network.allocateAndSendIds(Client.Client2, 1);
+				network.allocateAndSendIds(Client.Client3, 1);
+				network.deliverOperations(Client.Client1);
+				const serializedWithoutLocalState = compressor.serialize(false);
+				assert.throws(
+					() => IdCompressor.deserialize(serializedWithoutLocalState, sessionIds.get(Client.Client2)),
+					(e: Error) => validateAssertionError(e, 'Cannot resume existing session.')
+				);
+			});
 
 			itNetwork('round-trips local state', 3, (network) => {
 				network.allocateAndSendIds(Client.Client1, 2);
@@ -1734,9 +1719,7 @@ describe('IdCompressor', () => {
 				network.deliverOperations(Client.Client1);
 				// Some un-acked locals at the end
 				network.allocateAndSendIds(Client.Client1, 4);
-				const [serializedNoSession, serializedWithSession] = expectSerializes(
-					network.getCompressor(Client.Client1)
-				);
+				const [serializedNoSession, serializedWithSession] = expectSerializes(network.getCompressor(Client.Client1));
 				expect(hasOngoingSession(serializedWithSession)).to.be.true;
 				expect(hasOngoingSession(serializedNoSession)).to.be.false;
 			});
@@ -1787,24 +1770,20 @@ describe('IdCompressor', () => {
 				expectSerializes(network.getCompressor(Client.Client3));
 			});
 
-			itNetwork(
-				'packs IDs into a single cluster when a single client generates non-overridden ids',
-				3,
-				(network) => {
-					network.allocateAndSendIds(Client.Client1, 20);
-					network.deliverOperations(DestinationClient.All);
-					const [serialized1WithNoSession, serialized1WithSession] = expectSerializes(
-						network.getCompressor(Client.Client1)
-					);
-					expect(serialized1WithNoSession.clusters.length).to.equal(1);
-					expect(serialized1WithSession.clusters.length).to.equal(1);
-					const [serialized3WithNoSession, serialized3WithSession] = expectSerializes(
-						network.getCompressor(Client.Client3)
-					);
-					expect(serialized3WithNoSession.clusters.length).to.equal(1);
-					expect(serialized3WithSession.clusters.length).to.equal(1);
-				}
-			);
+			itNetwork('packs IDs into a single cluster when a single client generates non-overridden ids', 3, (network) => {
+				network.allocateAndSendIds(Client.Client1, 20);
+				network.deliverOperations(DestinationClient.All);
+				const [serialized1WithNoSession, serialized1WithSession] = expectSerializes(
+					network.getCompressor(Client.Client1)
+				);
+				expect(serialized1WithNoSession.clusters.length).to.equal(1);
+				expect(serialized1WithSession.clusters.length).to.equal(1);
+				const [serialized3WithNoSession, serialized3WithSession] = expectSerializes(
+					network.getCompressor(Client.Client3)
+				);
+				expect(serialized3WithNoSession.clusters.length).to.equal(1);
+				expect(serialized3WithSession.clusters.length).to.equal(1);
+			});
 
 			itNetwork('serializes correctly after unifying duplicate overrides', 3, (network) => {
 				const override = 'override';

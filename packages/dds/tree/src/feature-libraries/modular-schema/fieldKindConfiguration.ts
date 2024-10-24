@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier } from "../../core/index.js";
+import type { FieldKindIdentifier } from "../../core/index.js";
 
-import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
+import type { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 
 /**
  * Configuration for a single field kind.
@@ -21,4 +21,7 @@ export interface FieldKindConfigurationEntry {
 /**
  * Configuration for a set of field kinds.
  */
-export type FieldKindConfiguration = ReadonlyMap<FieldKindIdentifier, FieldKindConfigurationEntry>;
+export type FieldKindConfiguration = ReadonlyMap<
+	FieldKindIdentifier,
+	FieldKindConfigurationEntry
+>;

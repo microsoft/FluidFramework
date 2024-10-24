@@ -6,13 +6,13 @@
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
+import { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
-import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
+	MonitoringContext,
 	PerformanceEvent,
-	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -28,29 +28,44 @@ const JoinOpTimeoutMs = 45000;
 // Timeout waiting for "self" join signal, before giving up
 const JoinSignalTimeoutMs = 10000;
 
-/** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
+/**
+ * Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler
+ */
 export interface IConnectionStateHandlerInputs {
 	logger: ITelemetryLoggerExt;
-	/** Log to telemetry any change in state, included to Connecting */
+	mc: MonitoringContext;
+	/**
+	 * Log to telemetry any change in state, included to Connecting
+	 */
 	connectionStateChanged: (
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: IConnectionStateChangeReason,
 	) => void;
-	/** Whether to expect the client to join in write mode on next connection */
+	/**
+	 * Whether to expect the client to join in write mode on next connection
+	 */
 	shouldClientJoinWrite: () => boolean;
-	/** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
+	/**
+	 * (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again
+	 */
 	maxClientLeaveWaitTime: number | undefined;
-	/** Log an issue encountered while in the Connecting state. details will be logged as a JSON string */
+	/**
+	 * Log an issue encountered while in the Connecting state. details will be logged as a JSON string
+	 */
 	logConnectionIssue: (
 		eventName: string,
 		category: TelemetryEventCategory,
 		details?: ITelemetryBaseProperties,
 	) => void;
-	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
+	/**
+	 * Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid
+	 */
 	clientShouldHaveLeft: (clientId: string) => void;
 
-	/** Some critical error was hit. Container should be closed and error logged. */
+	/**
+	 * Some critical error was hit. Container should be closed and error logged.
+	 */
 	onCriticalError: (error: unknown) => void;
 }
 
@@ -89,13 +104,13 @@ export interface IConnectionStateHandler {
 
 export function createConnectionStateHandler(
 	inputs: IConnectionStateHandlerInputs,
-	deltaManager: IDeltaManager<any, any>,
+	deltaManager: IDeltaManager<unknown, unknown>,
 	clientId?: string,
-) {
-	const mc = loggerToMonitoringContext(inputs.logger);
+): ConnectionStateHandler | ConnectionStateCatchup {
+	const config = inputs.mc.config;
 	return createConnectionStateHandlerCore(
-		mc.config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
-		mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
+		config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
+		config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
 		inputs,
 		deltaManager,
 		clientId,
@@ -106,10 +121,10 @@ export function createConnectionStateHandlerCore(
 	connectedRaisedWhenCaughtUp: boolean,
 	readClientsWaitForJoinSignal: boolean,
 	inputs: IConnectionStateHandlerInputs,
-	deltaManager: IDeltaManager<any, any>,
+	deltaManager: IDeltaManager<unknown, unknown>,
 	clientId?: string,
-) {
-	const factory = (handler: IConnectionStateHandlerInputs) =>
+): ConnectionStateCatchup | ConnectionStateHandler {
+	const factory = (handler: IConnectionStateHandlerInputs): ConnectionStateHandler =>
 		new ConnectionStateHandler(handler, readClientsWaitForJoinSignal, clientId);
 
 	return connectedRaisedWhenCaughtUp
@@ -144,98 +159,102 @@ class ConnectionStateHandlerPassThrough
 		this.pimpl = pimplFactory(this);
 	}
 
-	/**
-	 * IConnectionStateHandler
-	 */
-	public get connectionState() {
+	// #region IConnectionStateHandler
+
+	public get connectionState(): ConnectionState {
 		return this.pimpl.connectionState;
 	}
-	public get pendingClientId() {
+	public get pendingClientId(): string | undefined {
 		return this.pimpl.pendingClientId;
 	}
-	public get clientId() {
+	public get clientId(): string | undefined {
 		return this.pimpl.clientId;
 	}
 
-	public containerSaved() {
+	public containerSaved(): void {
 		return this.pimpl.containerSaved();
 	}
-	public dispose() {
+	public dispose(): void {
 		return this.pimpl.dispose();
 	}
-	public initProtocol(protocol: IProtocolHandler) {
+	public initProtocol(protocol: IProtocolHandler): void {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>): void {
 		return this.pimpl.receivedDisconnectEvent(reason);
 	}
 
-	public establishingConnection(reason: IConnectionStateChangeReason) {
+	public establishingConnection(reason: IConnectionStateChangeReason): void {
 		return this.pimpl.establishingConnection(reason);
 	}
 
-	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
+	public cancelEstablishingConnection(reason: IConnectionStateChangeReason): void {
 		return this.pimpl.cancelEstablishingConnection(reason);
 	}
 
-	public receivedConnectEvent(details: IConnectionDetailsInternal) {
+	public receivedConnectEvent(details: IConnectionDetailsInternal): void {
 		return this.pimpl.receivedConnectEvent(details);
 	}
 
-	/**
-	 * IConnectionStateHandlerInputs
-	 */
+	// #endregion
 
-	public get logger() {
+	// #region IConnectionStateHandlerInputs
+
+	public get logger(): ITelemetryLoggerExt {
 		return this.inputs.logger;
+	}
+	public get mc(): MonitoringContext {
+		return this.inputs.mc;
 	}
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: IConnectionStateChangeReason,
-	) {
+	): void {
 		return this.inputs.connectionStateChanged(value, oldState, reason);
 	}
-	public shouldClientJoinWrite() {
+	public shouldClientJoinWrite(): boolean {
 		return this.inputs.shouldClientJoinWrite();
 	}
-	public get maxClientLeaveWaitTime() {
+	public get maxClientLeaveWaitTime(): number | undefined {
 		return this.inputs.maxClientLeaveWaitTime;
 	}
 	public logConnectionIssue(
 		eventName: string,
 		category: TelemetryEventCategory,
 		details?: ITelemetryBaseProperties,
-	) {
+	): void {
 		return this.inputs.logConnectionIssue(eventName, category, details);
 	}
-	public clientShouldHaveLeft(clientId: string) {
+	public clientShouldHaveLeft(clientId: string): void {
 		return this.inputs.clientShouldHaveLeft(clientId);
 	}
 
-	public onCriticalError(error: unknown) {
+	public onCriticalError(error: unknown): void {
 		return this.inputs.onCriticalError(error);
 	}
+
+	// #endregion
 }
 
 /**
  * Implementation of IConnectionStateHandler pass-through adapter that waits for specific sequence number
  * before raising connected event
  */
-class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
+export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	private catchUpMonitor: ICatchUpMonitor | undefined;
 
 	constructor(
 		inputs: IConnectionStateHandlerInputs,
 		pimplFactory: (handler: IConnectionStateHandlerInputs) => IConnectionStateHandler,
-		private readonly deltaManager: IDeltaManager<any, any>,
+		private readonly deltaManager: IDeltaManager<unknown, unknown>,
 	) {
 		super(inputs, pimplFactory);
 		this._connectionState = this.pimpl.connectionState;
 	}
 
 	private _connectionState: ConnectionState;
-	public get connectionState() {
+	public get connectionState(): ConnectionState {
 		return this._connectionState;
 	}
 
@@ -243,9 +262,9 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: IConnectionStateChangeReason<IAnyDriverError>,
-	) {
+	): void {
 		switch (value) {
-			case ConnectionState.Connected:
+			case ConnectionState.Connected: {
 				assert(
 					this._connectionState === ConnectionState.CatchingUp,
 					0x3e1 /* connectivity transitions */,
@@ -256,40 +275,41 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				// In addition to that, in its current form, doing this in ConnectionState.CatchingUp is dangerous as
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
-				assert(
-					this.catchUpMonitor === undefined,
-					0x3eb /* catchUpMonitor should be gone */,
-				);
+				assert(this.catchUpMonitor === undefined, 0x3eb /* catchUpMonitor should be gone */);
 				this.catchUpMonitor = new CatchUpMonitor(
 					this.deltaManager,
 					this.transitionToConnectedState,
 				);
 				return;
-			case ConnectionState.Disconnected:
+			}
+			case ConnectionState.Disconnected: {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
 				break;
+			}
 			// ConnectionState.EstablishingConnection state would be set when we start establishing connection
 			// during container.connect() or reconnect because of an error.
-			case ConnectionState.EstablishingConnection:
+			case ConnectionState.EstablishingConnection: {
 				assert(
 					this._connectionState === ConnectionState.Disconnected,
 					0x6d2 /* connectivity transition to establishing connection */,
 				);
 				break;
-			case ConnectionState.CatchingUp:
+			}
+			case ConnectionState.CatchingUp: {
 				assert(
 					this._connectionState === ConnectionState.EstablishingConnection,
 					0x3e3 /* connectivity transitions */,
 				);
 				break;
+			}
 			default:
 		}
 		this._connectionState = value;
 		this.inputs.connectionStateChanged(value, oldState, reason);
 	}
 
-	private readonly transitionToConnectedState = () => {
+	private readonly transitionToConnectedState = (): void => {
 		// Defensive measure, we should always be in Connecting state when this is called.
 		const state = this.pimpl.connectionState;
 		assert(state === ConnectionState.Connected, 0x3e5 /* invariant broken */);
@@ -330,7 +350,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
  *
  * For (c) this is optional behavior, controlled by the parameters of receivedConnectEvent
  */
-class ConnectionStateHandler implements IConnectionStateHandler {
+export class ConnectionStateHandler implements IConnectionStateHandler {
 	private _connectionState = ConnectionState.Disconnected;
 	private _pendingClientId: string | undefined;
 
@@ -351,7 +371,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private connection?: IConnectionDetailsInternal;
 	private _clientId?: string;
 
-	/** Track how long we waited to see "leave" op for previous clientId */
+	/**
+	 * Track how long we waited to see "leave" op for previous clientId
+	 */
 	private waitEvent: PerformanceEvent | undefined;
 
 	public get connectionState(): ConnectionState {
@@ -372,7 +394,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		clientIdFromPausedSession?: string,
 	) {
 		this._clientId = clientIdFromPausedSession;
-		const errorHandler = (error) => this.handler.onCriticalError(error);
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const errorHandler = (error): void => this.handler.onCriticalError(error);
 		this.prevClientLeftTimer = new Timer(
 			// Default is 5 min for which we are going to wait for its own "leave" message. This is same as
 			// the max time on server after which leave op is sent.
@@ -411,7 +434,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		);
 	}
 
-	private startjoinTimer() {
+	private startjoinTimer(): void {
 		assert(!this.joinTimer.hasTimer, 0x234 /* "has joinTimer" */);
 		assert(this.connection !== undefined, 0x4b3 /* have connection */);
 		this.joinTimer.start(
@@ -419,21 +442,21 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		);
 	}
 
-	private stopjoinTimer() {
+	private stopjoinTimer(): void {
 		assert(this.joinTimer.hasTimer, 0x235 /* "no joinTimer" */);
 		this.joinTimer.clear();
 	}
 
-	private get waitingForLeaveOp() {
+	private get waitingForLeaveOp(): boolean {
 		return this.prevClientLeftTimer.hasTimer;
 	}
 
-	public dispose() {
+	public dispose(): void {
 		assert(!this.joinTimer.hasTimer, 0x2a5 /* "join timer" */);
 		this.prevClientLeftTimer.clear();
 	}
 
-	public containerSaved() {
+	public containerSaved(): void {
 		// If we were waiting for moving to Connected state, then only apply for state change. Since the container
 		// is now saved and we don't have any ops to roundtrip, we can clear the timer and apply for connected state.
 		if (this.waitingForLeaveOp) {
@@ -442,7 +465,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	private receivedAddMemberEvent(clientId: string) {
+	private receivedAddMemberEvent(clientId: string): void {
 		// This is the only one that requires the pending client ID
 		if (clientId === this.pendingClientId) {
 			if (this.joinTimer.hasTimer) {
@@ -469,24 +492,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				});
 			}
 			this.applyForConnectedState("addMemberEvent");
-		} else if (clientId === this.clientId) {
-			// If we see our clientId and it's not also our pending ID, it's our own join op
-			// being replayed, so start the timer in case our previous client is still in quorum
-			assert(
-				!this.waitingForLeaveOp,
-				0x5d2 /* Unexpected join op with current clientId while waiting */,
-			);
-			assert(
-				this.connectionState !== ConnectionState.Connected,
-				0x5d3 /* Unexpected join op with current clientId while connected */,
-			);
-			this.prevClientLeftTimer.restart();
 		}
 	}
 
 	private applyForConnectedState(
 		source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved",
-	) {
+	): void {
 		assert(
 			this.protocol !== undefined,
 			0x236 /* "In all cases it should be already installed" */,
@@ -526,20 +537,20 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	private receivedRemoveMemberEvent(clientId: string) {
+	private receivedRemoveMemberEvent(clientId: string): void {
 		// If the client which has left was us, then finish the timer.
-		if (this.clientId === clientId) {
+		if (this.clientId === clientId && this.waitingForLeaveOp) {
 			this.prevClientLeftTimer.clear();
 			this.applyForConnectedState("removeMemberEvent");
 		}
 	}
 
-	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>): void {
 		this.connection = undefined;
 		this.setConnectionState(ConnectionState.Disconnected, reason);
 	}
 
-	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
+	public cancelEstablishingConnection(reason: IConnectionStateChangeReason): void {
 		assert(
 			this._connectionState === ConnectionState.EstablishingConnection,
 			0x6d3 /* Connection state should be EstablishingConnection */,
@@ -550,7 +561,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
 	}
 
-	public establishingConnection(reason: IConnectionStateChangeReason) {
+	public establishingConnection(reason: IConnectionStateChangeReason): void {
 		const oldState = this._connectionState;
 		this._connectionState = ConnectionState.EstablishingConnection;
 		this.handler.connectionStateChanged(ConnectionState.EstablishingConnection, oldState, {
@@ -564,7 +575,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	 * @returns - true if we should wait for "self" to appear in audience.
 	 * false is returned only for "read" connections, and only if this.readClientsWaitForJoinSignal is false.
 	 */
-	private shouldWaitForSelf() {
+	private shouldWaitForSelf(): boolean {
 		assert(
 			this.connection !== undefined,
 			0x4b4 /* all callers call here with active connection */,
@@ -580,7 +591,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	 * @param deltaManager - DeltaManager to be used for delaying Connected transition until caught up.
 	 * If it's undefined, then don't delay and transition to Connected as soon as Leave/Join op are accounted for
 	 */
-	public receivedConnectEvent(details: IConnectionDetailsInternal) {
+	public receivedConnectEvent(details: IConnectionDetailsInternal): void {
 		this.connection = details;
 
 		const oldState = this._connectionState;
@@ -706,7 +717,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		return this.readClientsWaitForJoinSignal ? this.protocol?.audience : this.protocol?.quorum;
 	}
 
-	public initProtocol(protocol: IProtocolHandler) {
+	public initProtocol(protocol: IProtocolHandler): void {
 		this.protocol = protocol;
 
 		this.membership?.on("addMember", (clientId, details) => {
@@ -741,13 +752,29 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			this.receivedAddMemberEvent(this.pendingClientId!);
 		}
 
+		assert(
+			!this.waitingForLeaveOp,
+			0x99d /* leave timer can't be set as we have not had access to quorum */,
+		);
+
+		// This check is required for scenario of loading container from pending state, and ensuring there is no way
+		// old clientId is still in the quorum (very unlikely, but you never know)
 		// if we have a clientId from a previous container we need to wait for its leave message
-		if (this.clientId !== undefined && this.hasMember(this.clientId)) {
+		// This mimicks check in setConnectionState()
+		// Note that we are not consulting this.handler.shouldClientJoinWrite() here
+		// It could produce wrong results for stashed ops were never sent to Loader yet, and if this check
+		// makes determination only on that (and not uses "dirty" events), then it can produce wrong result.
+		// In most cases it does not matter, as this client already left quorum. But in really unfortunate case,
+		// we might wait even if we could avoid such wait.
+		if (
+			this._clientId !== undefined &&
+			protocol.quorum?.getMember(this._clientId) !== undefined
+		) {
 			this.prevClientLeftTimer.restart();
 		}
 	}
 
-	protected hasMember(clientId?: string) {
+	protected hasMember(clientId?: string): boolean {
 		return this.membership?.getMember(clientId ?? "") !== undefined;
 	}
 }

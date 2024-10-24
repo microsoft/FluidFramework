@@ -18,6 +18,7 @@ export interface IFileLogger extends ITelemetryBaseLogger {
 
 /**
  * Desired output format for the telemetry
+ * @legacy
  * @alpha
  */
 export enum OutputFormat {

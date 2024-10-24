@@ -20,6 +20,8 @@ import {
 	DocumentDeleteService,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -43,11 +45,13 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
+		public startupCheck: IReadinessCheck,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
+		public readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -317,6 +321,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+			| number
+			| undefined;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
@@ -328,6 +335,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableWholeSummaryUpload,
 			opsCollection,
 			storageNameAllocator,
+			ephemeralDocumentTTLSec,
 		);
 
 		const enableClientIPLogging = config.get("alfred:enableClientIPLogging") ?? false;
@@ -365,6 +373,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				Lumberjack.error("Failed to initialize token revocation manager", undefined, error);
 			});
 		}
+		const startupCheck = new StartupCheck();
 
 		return new AlfredResources(
 			config,
@@ -382,11 +391,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentsCollectionName,
 			documentRepository,
 			documentDeleteService,
+			startupCheck,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -410,11 +421,13 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.documentRepository,
 			resources.documentDeleteService,
+			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			null,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
+			resources.readinessCheck,
 		);
 	}
 }

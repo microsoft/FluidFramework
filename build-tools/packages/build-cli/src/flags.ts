@@ -7,7 +7,7 @@ import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
 // eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "./library";
+import { MonoRepoKind } from "./library/index.js";
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
@@ -29,8 +29,8 @@ import {
 	isVersionScheme,
 } from "@fluid-tools/version-tools";
 
-import type { DependencyUpdateType } from "./library";
-import { ReleaseGroup, isReleaseGroup } from "./releaseGroups";
+import type { DependencyUpdateType } from "./library/index.js";
+import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
 /**
  * A re-usable CLI flag to parse release groups.
@@ -76,6 +76,21 @@ export const packageSelectorFlag = Flags.custom({
 	description:
 		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/benchmark and benchmark are valid.",
 	multiple: false,
+});
+
+/**
+ * A re-usable CLI flag to parse semver version strings. Values are verified to be valid semvers during flag parsing.
+ */
+export const semverFlag = Flags.custom<semver.SemVer, { loose?: boolean }>({
+	description:
+		"A semantic versioning (semver) version string. Values are verified to be valid semvers during flag parsing.",
+	parse: async (input, _, opts) => {
+		const parsed = semver.parse(input, opts.loose);
+		if (parsed === null) {
+			throw new Error(`Invalid semver: ${input}`);
+		}
+		return parsed;
+	},
 });
 
 /**
@@ -269,6 +284,37 @@ export const selectionFlags = {
 		char: undefined,
 		aliases: ["releaseGroupRoots"],
 	}),
+	changed: Flags.boolean({
+		description:
+			"Select only packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with other options.",
+		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all", "packages"],
+		required: false,
+		default: false,
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	branch: Flags.string({
+		description:
+			"Select only packages that have been changed when compared to this base branch. Can only be used with --changed.",
+		dependsOn: ["changed"],
+		relationships: [
+			{
+				type: "all",
+				flags: [
+					{
+						name: "changed",
+						// Only make the "branch" flag required if the "changed" flag is passed. This enables us to have a default
+						// value on the flag without oclif complaining that "--changed must be passed if --branch is used."
+						when: async (flags): Promise<boolean> => {
+							return !(flags.changed === undefined);
+						},
+					},
+				],
+			},
+		],
+		required: false,
+		default: "main",
+		helpGroup: "PACKAGE SELECTION",
+	}),
 };
 
 /**
@@ -284,6 +330,8 @@ export interface selectionFlags {
 	readonly packages: boolean;
 	readonly releaseGroup: string[] | undefined;
 	readonly releaseGroupRoot: string[] | undefined;
+	readonly changed: boolean;
+	readonly branch: string;
 }
 
 export const defaultSelectionKinds = ["dir", "all"] as const;
@@ -333,3 +381,22 @@ export interface filterFlags {
 	readonly scope: string[] | undefined;
 	readonly skipScope: string[] | undefined;
 }
+
+/**
+ * A reusable flag for GitHub tokens.
+ */
+export const githubTokenFlag = Flags.custom({
+	description:
+		"GitHub access token. This parameter should be passed using the GITHUB_TOKEN environment variable for security purposes.",
+	env: "GITHUB_TOKEN",
+});
+
+/**
+ * A reusable flag to indicate the command is running in the GitHub Actions environment. This value is typically parsed
+ * from the GITHUB_ACTIONS environment variable but can be set manually for testing.
+ */
+export const githubActionsFlag = Flags.boolean({
+	description:
+		"Set to true to output logs in a GitHub Actions-compatible format. This value will be set to true automatically when running in GitHub Actions.",
+	env: "GITHUB_ACTIONS",
+});

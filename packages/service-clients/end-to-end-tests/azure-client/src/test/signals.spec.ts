@@ -11,7 +11,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-
 import type { AxiosResponse } from "axios";
 
 import {
@@ -19,8 +18,8 @@ import {
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
-import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { configProvider, getTestMatrix } from "./utils.js";
 
 async function createSignalListenerPromise<T>(
@@ -106,14 +105,14 @@ for (const testOpts of testMatrix) {
 							"test-user-name-1",
 						);
 					containerId = getContainerIdFromPayloadResponse(containerResponse);
-					({ container, services } = await client.getContainer(containerId, schema));
+					({ container, services } = await client.getContainer(containerId, schema, "2"));
 				} else {
-					({ container, services } = await client.createContainer(schema));
+					({ container, services } = await client.createContainer(schema, "2"));
 					containerId = await container.attach();
 				}
 			} else {
 				containerId = id;
-				({ container, services } = await client.getContainer(containerId, schema));
+				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
@@ -190,12 +189,6 @@ for (const testOpts of testMatrix) {
 		 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
 		 */
 		it("can send and receive read-only client signals", async function () {
-			// TODO: Fix tests when ran against local service - ADO:7876
-			const useAzure = process.env.FLUID_CLIENT === "azure";
-			if (!useAzure) {
-				this.skip();
-			}
-
 			const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
 				undefined,
 				user1,

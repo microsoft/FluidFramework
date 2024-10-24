@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
-
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
@@ -36,7 +36,11 @@ export async function assertConsistent(clients: Client[]): Promise<void> {
 }
 
 export async function assertEquivalentSharedStrings(a: SharedString, b: SharedString) {
-	assert.equal(a.getText(), b.getText(), `Non-equal text between strings ${a.id} and ${b.id}.`);
+	assert.equal(
+		a.getText(),
+		b.getText(),
+		`Non-equal text between strings ${a.id} and ${b.id}.`,
+	);
 	assert.equal(a.getLength(), b.getLength());
 	await assertPropertiesEqual(a, b);
 	const firstLabels = Array.from(a.getIntervalCollectionLabels()).sort();

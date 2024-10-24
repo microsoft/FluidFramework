@@ -7,22 +7,20 @@ import { strict as assert } from "assert";
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
-import { averageTwoValues, sumDirect } from "./benchmarks.js";
-import { Canada, generateCanada } from "./canada.js";
+import { averageValues, sumDirect } from "./benchmarks.js";
+import { type Canada, generateCanada } from "./canada.js";
 import { clone } from "./jsObjectUtil.js";
-import { Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
+import { type Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 /**
  * Performance test suite that measures a variety of access patterns using the direct JS objects to compare its performance when using ITreeCursor.
  */
-export function jsObjectBench(
+export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 	data: {
 		name: string;
-		// TODO: Use something other than `any`
-		/* eslint-disable @typescript-eslint/no-explicit-any */
-		getJson: () => any;
-		dataConsumer: (directObj: any, calculate: (...operands: any[]) => void) => any;
-		/* eslint-enable @typescript-eslint/no-explicit-any */
+		getJson: () => T;
+		dataConsumer: (directObj: T, calculate: (x: number) => void) => unknown;
 	}[],
 ) {
 	for (const { name, getJson, dataConsumer } of data) {
@@ -52,10 +50,10 @@ export function jsObjectBench(
 
 		benchmark({
 			type: BenchmarkType.Measurement,
-			title: `averageTwoValues JS Object: '${name}'`,
+			title: `averageValues JS Object: '${name}'`,
 			before: () => {},
 			benchmarkFn: () => {
-				averageTwoValues(json, dataConsumer);
+				averageValues(json, dataConsumer);
 			},
 		});
 	}
@@ -63,12 +61,13 @@ export function jsObjectBench(
 
 function extractCoordinatesFromCanadaDirect(
 	directObj: Canada,
-	calculate: (x: number, y: number) => void,
+	calculate: (value: number) => void,
 ): void {
 	for (const feature of directObj.features) {
 		for (const coordinates of feature.geometry.coordinates) {
 			for (const [x, y] of coordinates) {
-				calculate(x, y);
+				calculate(x);
+				calculate(y);
 			}
 		}
 	}
@@ -76,10 +75,10 @@ function extractCoordinatesFromCanadaDirect(
 
 function extractAvgValsFromTwitterDirect(
 	directObj: Twitter,
-	calculate: (x: number, y: number) => void,
+	calculate: (x: number) => void,
 ): void {
 	for (const status of directObj.statuses) {
-		calculate(status.retweet_count, status.favorite_count);
+		calculate(status.retweet_count + status.favorite_count);
 	}
 }
 
@@ -89,11 +88,18 @@ const canada = generateCanada(
 );
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+const twitter = generateTwitterJsonByByteSize(
+	isInPerformanceTestingMode ? 2500000 : 466906,
+	true,
+);
 
 describe("Direct Object", () => {
 	jsObjectBench([
-		{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanadaDirect },
+		{
+			name: "canada",
+			getJson: () => canada,
+			dataConsumer: extractCoordinatesFromCanadaDirect,
+		},
 	]);
 	jsObjectBench([
 		{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },

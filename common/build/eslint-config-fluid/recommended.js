@@ -57,6 +57,13 @@ module.exports = {
 		"unicorn/no-nested-ternary": "off",
 
 		/**
+		 * Disabled due to false positives / disruptive behavior of auto-fix.
+		 * See {@link https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2018}.
+		 * We may consider re-enabling once the above issue has been resolved.
+		 */
+		"unicorn/no-useless-spread": "off",
+
+		/**
 		 * Disabled due to the sheer number of false positives it detects, and because it is sometimes valuable to
 		 * explicitly denote `undefined`.
 		 */
@@ -105,8 +112,19 @@ module.exports = {
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
 		 * When `any` is used, all compiler type checks around that value are ignored.
+		 *
+		 * @see https://typescript-eslint.io/rules/no-explicit-any
 		 */
-		"@typescript-eslint/no-explicit-any": "error",
+		"@typescript-eslint/no-explicit-any": [
+			"error",
+			{
+				/**
+				 * For certain cases, like rest parameters, any is required to allow arbitrary argument types.
+				 * @see https://typescript-eslint.io/rules/no-explicit-any/#ignorerestargs
+				 */
+				ignoreRestArgs: true,
+			},
+		],
 
 		/**
 		 * Requires explicit typing for anything exported from a module. Explicit types for function return
@@ -182,6 +200,9 @@ module.exports = {
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
+				// We run most of our tests in a Node.js environment, so this rule is not important and makes
+				// file-system logic more cumbersome.
+				"unicorn/prefer-module": "off",
 			},
 		},
 		{

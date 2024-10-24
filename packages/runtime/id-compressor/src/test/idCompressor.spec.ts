@@ -31,7 +31,13 @@ import {
 	roundtrip,
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
-import { LocalCompressedId, fail, incrementStableId, isFinalId, isLocalId } from "./testCommon.js";
+import {
+	LocalCompressedId,
+	fail,
+	incrementStableId,
+	isFinalId,
+	isLocalId,
+} from "./testCommon.js";
 
 describe("IdCompressor", () => {
 	it("reports the proper session ID", () => {
@@ -267,14 +273,7 @@ describe("IdCompressor", () => {
 				compressor.finalizeCreationRange(range2);
 
 				// All generated IDs should have aligned finals (even though range3 has not been finalized)
-				const allIds: SessionSpaceCompressedId[] = [
-					id1_1,
-					id1_2,
-					id2_1,
-					id2_2,
-					id2_3,
-					id3_1,
-				];
+				const allIds: SessionSpaceCompressedId[] = [id1_1, id1_2, id2_1, id2_2, id2_3, id3_1];
 				allIds.forEach((id) => assert(isFinalId(compressor.normalizeToOpSpace(id))));
 
 				compressor.finalizeCreationRange(range3);
@@ -699,8 +698,7 @@ describe("IdCompressor", () => {
 			const normalized = compressor1.normalizeToOpSpace(compressor1.generateCompressedId());
 			assert.throws(
 				() => compressor2.normalizeToSessionSpace(normalized, compressor1.localSessionId),
-				(e: Error) =>
-					e.message === "No IDs have ever been finalized by the supplied session.",
+				(e: Error) => e.message === "No IDs have ever been finalized by the supplied session.",
 			);
 		});
 
@@ -1380,7 +1378,7 @@ function createNetworkTestFunction(
 			const hasCapacity = typeof testOrCapacity === "number";
 			const capacity = hasCapacity ? testOrCapacity : undefined;
 			const network = new IdCompressorTestNetwork(capacity);
-			(hasCapacity ? test ?? fail("test must be defined") : testOrCapacity)(network);
+			(hasCapacity ? (test ?? fail("test must be defined")) : testOrCapacity)(network);
 			if (validateAfter) {
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();

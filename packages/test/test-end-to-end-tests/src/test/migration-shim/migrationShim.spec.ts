@@ -27,13 +27,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
@@ -43,22 +37,14 @@ const builder = new SchemaFactory("test");
 class RootType extends builder.object("abc", {
 	quantity: builder.number,
 }) {}
-function getNewTreeView(tree: ITree): TreeView<typeof RootType> {
-	return tree.schematize(
-		new TreeConfiguration(RootType, () => ({
-			quantity: 0,
-		})),
-	);
-}
+
+const treeConfig = new TreeViewConfiguration({ schema: RootType });
+
 const migrate = (legacyTree: LegacySharedTree, newTree: ITree): void => {
 	const quantity = getQuantity(legacyTree);
-	newTree
-		.schematize(
-			new TreeConfiguration(RootType, () => ({
-				quantity,
-			})),
-		)
-		[disposeSymbol]();
+	const view = newTree.viewWith(treeConfig);
+	view.initialize({ quantity });
+	view.dispose();
 };
 
 // Useful for modifying the legacy tree
@@ -264,7 +250,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider, apis) => {
 		await promise;
 
 		const newTree1 = shim1.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		const rootNode1: RootType = view1.root;
 
 		// Summarize
@@ -285,7 +271,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		const shim3 = await testObj3.getShim();
 		const tree3 = shim3.currentTree as ITree;
-		const view3 = getNewTreeView(tree3);
+		const view3 = tree3.viewWith(treeConfig);
 		const rootNode3: RootType = view3.root;
 
 		// Verify that the value loaded from the summary matches the one loaded from a different summary

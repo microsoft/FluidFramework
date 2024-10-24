@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -39,7 +41,11 @@ export interface IChannelContext {
 
 	setConnectionState(connected: boolean, clientId?: string);
 
-	processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
+	processOp(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata?: unknown,
+	): void;
 
 	summarize(
 		fullTree?: boolean,
@@ -78,7 +84,6 @@ export function createChannelServiceEndpoints(
 	connected: boolean,
 	submitFn: (content: any, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
-	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	isAttachedAndVisible: () => boolean,
 	storageService: IDocumentStorageService,
 	logger: ITelemetryLoggerExt,
@@ -89,7 +94,6 @@ export function createChannelServiceEndpoints(
 		connected,
 		(message, localOpMetadata) => submitFn(message, localOpMetadata),
 		dirtyFn,
-		addedGCOutboundReferenceFn,
 		isAttachedAndVisible,
 	);
 	const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);

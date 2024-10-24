@@ -6,5 +6,7 @@
 		"types": ["mocha", "@fluid-internal/test-driver-definitions"],
 		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory,
 		"resolvePackageJsonExports": true,
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 }

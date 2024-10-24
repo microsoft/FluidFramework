@@ -1,0 +1,34 @@
+{
+	"$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
+	"access": "public",
+	"baseBranch": "main",
+	"changelog": [
+		"@fluid-private/changelog-generator-wrapper",
+		{
+			"repoBaseUrl": "https://github.com/microsoft/FluidFramework",
+			"issueTemplate": " ([#$issue]($repoBaseUrl/pull/$issue))",
+			"commitTemplate": " [$abbrevHash]($repoBaseUrl/commit/$hash)"
+		}
+	],
+	"commit": false,
+	"fixed": [
+		[
+			"pkg-a",
+			"pkg-b",
+			"@private/pkg-c",
+			"@shared/shared"
+		],
+		[
+			"@group2/pkg-d",
+			"@group2/pkg-e"
+		],
+		[
+			"@group3/pkg-f",
+			"@group3/pkg-g"
+		]
+	],
+	"ignore": [],
+	"linked": [],
+	"updateInternalDependencies": "minor",
+	"bumpVersionsWithWorkspaceProtocolOnly": true
+}

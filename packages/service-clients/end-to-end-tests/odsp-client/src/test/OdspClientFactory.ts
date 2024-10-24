@@ -3,17 +3,43 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClient, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
-import { IConfigProviderBase, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	IConfigProviderBase,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
 
 /**
+ * Interface representing the range of login credentials for a tenant.
+ */
+interface LoginTenantRange {
+	prefix: string;
+	start: number;
+	count: number;
+	password: string;
+}
+
+/**
+ * Interface representing a collection of tenants with their respective login ranges.
+ * @example
+ * ```string
+ * {"tenantName":{"range":{"prefix":"prefixName","password":"XYZ","start":0,"count":2}}}
+ * ```
+ */
+export interface LoginTenants {
+	[tenant: string]: {
+		range: LoginTenantRange;
+	};
+}
+
+/**
  * Interface representing the odsp-client login account credentials.
  */
 export interface IOdspLoginCredentials {
-	username: string;
+	email: string;
 	password: string;
 }
 
@@ -23,6 +49,60 @@ export interface IOdspLoginCredentials {
  */
 export interface IOdspCredentials extends IOdspLoginCredentials {
 	clientId: string;
+}
+
+/**
+ * Get set of credential to use from env variable.
+ */
+export function getCredentials(): IOdspLoginCredentials[] {
+	const creds: IOdspLoginCredentials[] = [];
+	const loginTenants = process.env.login__odspclient__spe__test__tenants as string;
+
+	if (loginTenants === "" || loginTenants === undefined) {
+		throw new Error("Login tenant is missing");
+	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const tenants: LoginTenants = JSON.parse(loginTenants);
+	const tenantKey = Object.keys(tenants);
+	const tenantName = tenantKey[0];
+	if (tenantName === undefined) {
+		throw new Error("Tenant is undefined");
+	}
+	const tenantInfo = tenants[tenantName];
+
+	if (tenantInfo === undefined) {
+		throw new Error("Tenant info is undefined");
+	}
+
+	const range = tenantInfo.range;
+
+	if (range === undefined) {
+		throw new Error("range is undefined");
+	}
+
+	for (let i = 0; i < range.count; i++) {
+		creds.push({
+			email: `${range.prefix}${range.start + i}@${tenantName}`,
+			password: range.password,
+		});
+	}
+
+	const [client1Creds, client2Creds] = creds;
+
+	if (client1Creds === undefined || client2Creds === undefined || creds.length < 2) {
+		throw new Error("Insufficient number of login credentials");
+	}
+
+	if (
+		client1Creds.email === undefined ||
+		client1Creds.password === undefined ||
+		client2Creds.email === undefined ||
+		client2Creds.password === undefined
+	) {
+		throw new Error("Email or password is missing for login account");
+	}
+
+	return creds;
 }
 
 /**
@@ -41,15 +121,11 @@ export function createOdspClient(
 		throw new Error("site url is missing");
 	}
 	if (driveId === "" || driveId === undefined) {
-		throw new Error("RaaS drive id is missing");
+		throw new Error("SharePoint Embedded container id is missing");
 	}
 
 	if (clientId === "" || clientId === undefined) {
 		throw new Error("client id is missing");
-	}
-
-	if (creds.username === undefined || creds.password === undefined) {
-		throw new Error("username or password is missing for login account");
 	}
 
 	const credentials: IOdspCredentials = {

@@ -13,7 +13,7 @@ import {
 import { MapFactory, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 
-import { type ContainerSchema } from "../types.js";
+import type { ContainerSchema } from "../types.js";
 import { parseDataObjectsFromSharedObjects } from "../utils.js";
 
 class TestDataObjectClass extends DataObject {

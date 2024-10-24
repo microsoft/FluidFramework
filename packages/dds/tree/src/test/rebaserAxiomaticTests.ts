@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	tagChange,
@@ -19,10 +19,10 @@ import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-sch
 import { fail } from "../util/index.js";
 
 import {
-	BoundFieldChangeRebaser,
-	ChildStateGenerator,
-	FieldStateTree,
-	NamedChangeset,
+	type BoundFieldChangeRebaser,
+	type ChildStateGenerator,
+	type FieldStateTree,
+	type NamedChangeset,
 	generatePossibleSequenceOfEdits,
 	makeIntentionMinter,
 } from "./exhaustiveRebaserUtils.js";
@@ -170,9 +170,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					),
 				);
 				for (const namedSourceEdits of localEdits) {
-					for (const [
-						{ description: name, changeset: namedEditToRebaseOver },
-					] of trunkEdits) {
+					for (const [{ description: name, changeset: namedEditToRebaseOver }] of trunkEdits) {
 						const title = `Rebase ${JSON.stringify(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
@@ -181,9 +179,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
 
-							const rollbacks = sourceEdits.map((change) =>
-								invert(fieldRebaser, change),
-							);
+							const rollbacks = sourceEdits.map((change) => rollback(fieldRebaser, change));
 							rollbacks.reverse();
 
 							const rebasedEditsWithoutCompose = sandwichRebaseWithoutCompose(
@@ -201,10 +197,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							);
 
 							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
-								assertDeepEqual(
-									rebasedEditsWithoutCompose[i],
-									rebasedEditsWithCompose[i],
-								);
+								assertDeepEqual(rebasedEditsWithoutCompose[i], rebasedEditsWithCompose[i]);
 							}
 
 							// TODO: consider testing the compose associativity with the `rebasedEditsWithoutCompose` as well.
@@ -580,7 +573,11 @@ function rebaseOverSinglesVsRebaseOverCompositions<TChangeset>(
 	const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
 
 	// Rebase over each base edit individually
-	const rebaseWithoutCompose = rebaseTagged(fieldRebaser.rebase, edit, editsToRebaseOver).change;
+	const rebaseWithoutCompose = rebaseTagged(
+		fieldRebaser.rebase,
+		edit,
+		editsToRebaseOver,
+	).change;
 
 	// Rebase over the composition of base edits
 	const metadata = rebaseRevisionMetadataFromInfo(
@@ -647,7 +644,7 @@ function verifyComposeWithInverseEqualsEmpty<TChangeset>(
 	const metadata = defaultRevisionMetadataFromChanges([edit]);
 
 	const change = tagChange(edit.change, edit.revision);
-	const changeset = fieldRebaser.compose(change, invert(fieldRebaser, change), metadata);
+	const changeset = fieldRebaser.compose(change, rollback(fieldRebaser, change), metadata);
 	assert(fieldRebaser.isEmpty !== undefined);
 	fieldRebaser.isEmpty(changeset);
 }
@@ -726,11 +723,8 @@ function verifyRebaseRightDistributivity<TChangeset>(
 	);
 
 	const editRebasedOverC = rebaseTagged(fieldRebaser.rebase, editA, [editC]);
-	const invertedEdit = tagRollbackInverse(
-		fieldRebaser.invert(editA, true),
-		undefined,
-		editA.revision,
-	);
+	const invertedEdit = rollback(fieldRebaser, editA);
+
 	// (A ↷ C) ○ (B ↷ (A⁻¹ ○ C ○ (A ↷ C)))
 	const expectedChange = makeAnonChange(
 		fieldRebaser.compose(
@@ -757,7 +751,7 @@ function verifyRebaseOverUndoRedoPair<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	const editB = namedEditToRebaseOver.changeset;
 
-	const inverseEditB = fieldRebaser.invert(editB, true);
+	const inverseEditB = rollback(fieldRebaser, editB);
 
 	// ((A ↷ B) ↷ B⁻¹) ↷ B
 	const actualChange = tagChange(
@@ -766,11 +760,7 @@ function verifyRebaseOverUndoRedoPair<TChangeset>(
 				edit,
 				fieldRebaser.rebase(
 					mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
-					tagRollbackInverse(
-						inverseEditB,
-						`rollback-${editB.revision}` as unknown as RevisionTag,
-						editB.revision,
-					),
+					inverseEditB,
 				),
 			),
 			editB,
@@ -791,12 +781,12 @@ function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	const editB = namedEditToRebaseOver.changeset;
 
-	const invertedEditB = fieldRebaser.invert(editB, true);
+	const invertedEditB = rollback(fieldRebaser, editB);
 	// (A ↷ B) ↷ B⁻¹
 	const actualChange = tagChange(
 		fieldRebaser.rebase(
 			mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
-			tagChange(invertedEditB, editB.revision),
+			invertedEditB,
 		),
 		edit.revision,
 	);
@@ -830,7 +820,9 @@ function verifyRebaseEmpty<TChangeset>(
 	assert(fieldRebaser.isEmpty(actualChange.change));
 }
 
-function getDefaultedEqualityAssert<TChangeset>(fieldRebaser: BoundFieldChangeRebaser<TChangeset>) {
+function getDefaultedEqualityAssert<TChangeset>(
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
 	return fieldRebaser.assertEqual ?? ((a, b) => assert.deepEqual(a, b));
 }
 
@@ -847,13 +839,13 @@ function composeArray<TChangeset>(
 	return composed;
 }
 
-function invert<TChangeset>(
+function rollback<TChangeset>(
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 	change: TaggedChange<TChangeset>,
 ): TaggedChange<TChangeset> {
 	const revision = `rollback-${change.revision}` as unknown as RevisionTag;
 	return tagRollbackInverse(
-		fieldRebaser.inlineRevision(fieldRebaser.invert(change, true), revision),
+		fieldRebaser.inlineRevision(fieldRebaser.invert(change, revision, true), revision),
 		revision,
 		change.revision,
 	);

@@ -15,10 +15,16 @@ export {
 	mergeKArrays,
 	mergeSortedArrays,
 } from "./array";
-export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } from "./constants";
+export {
+	CorrelationIdHeaderName,
+	DriverVersionHeaderName,
+	LatestSummaryId,
+	TelemetryContextHeaderName,
+} from "./constants";
 export {
 	createFluidServiceNetworkError,
 	INetworkErrorDetails,
+	InternalErrorCode,
 	isNetworkError,
 	NetworkError,
 	throwFluidServiceNetworkError,

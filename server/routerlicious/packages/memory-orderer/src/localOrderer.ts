@@ -69,7 +69,6 @@ const DefaultDeli: IDeliState = {
 	signalClientConnectionNumber: 0,
 	lastSentMSN: 0,
 	nackMessages: undefined,
-	successfullyStartedLambdas: [],
 	checkpointTimestamp: undefined,
 };
 
@@ -242,7 +241,7 @@ export class LocalOrderer implements IOrderer {
 			this.scriptoriumContext,
 			async (lambdaSetup, context) => {
 				const deltasCollection = await lambdaSetup.deltaCollectionP();
-				return new ScriptoriumLambda(deltasCollection, context, undefined);
+				return new ScriptoriumLambda(deltasCollection, context, undefined, undefined);
 			},
 		);
 
@@ -292,7 +291,6 @@ export class LocalOrderer implements IOrderer {
 					undefined,
 					this.rawDeltasKafka,
 					this.serviceConfiguration,
-					undefined,
 					undefined,
 					checkpointService,
 				);

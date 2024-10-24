@@ -5,15 +5,15 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { ISubscribable, createEmitter } from "../../events/index.js";
+import { type Listenable, createEmitter } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
 
-import { TreeNodeSchemaIdentifier } from "./format.js";
+import type { TreeNodeSchemaIdentifier } from "./format.js";
 import {
-	StoredSchemaCollection,
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type StoredSchemaCollection,
+	type TreeFieldStoredSchema,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "./schema.js";
 
@@ -21,7 +21,6 @@ import {
  * Events for {@link TreeStoredSchemaSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @internal
  */
 export interface SchemaEvents {
 	/**
@@ -37,15 +36,13 @@ export interface SchemaEvents {
 
 /**
  * A collection of stored schema that fires events in response to changes.
- * @internal
  */
 export interface TreeStoredSchemaSubscription
-	extends ISubscribable<SchemaEvents>,
+	extends Listenable<SchemaEvents>,
 		TreeStoredSchema {}
 
 /**
  * Mutable collection of stored schema.
- * @internal
  */
 export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
@@ -95,7 +92,10 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		}
 	}
 
-	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
+	public on<K extends keyof SchemaEvents>(
+		eventName: K,
+		listener: SchemaEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -133,6 +133,8 @@ function cloneNodeSchemaData(
 	nodeSchema: StoredSchemaCollection["nodeSchema"],
 ): BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 	// Schema objects are immutable (unlike stored schema repositories), so this shallow copy is fine.
-	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [...nodeSchema.entries()];
+	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [
+		...nodeSchema.entries(),
+	];
 	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
 }

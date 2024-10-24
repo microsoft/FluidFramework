@@ -50,15 +50,13 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 				url: this.absolutePath,
 				headers: { [RuntimeHeaders.viaHandle]: true },
 			};
-			this.objectP = this.routeContext
-				.resolveHandle(request)
-				.then<FluidObject>((response) => {
-					if (response.mimeType === "fluid/object") {
-						const fluidObject: FluidObject = response.value;
-						return fluidObject;
-					}
-					throw responseToException(response, request);
-				});
+			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
+				if (response.mimeType === "fluid/object") {
+					const fluidObject: FluidObject = response.value;
+					return fluidObject;
+				}
+				throw responseToException(response, request);
+			});
 		}
 		return this.objectP;
 	}

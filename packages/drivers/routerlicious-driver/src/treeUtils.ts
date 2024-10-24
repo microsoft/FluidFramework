@@ -5,12 +5,8 @@
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	ISnapshotTree,
-	ISummaryTree,
-	SummaryObject,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 import { INormalizedWholeSnapshot } from "./contracts.js";
 

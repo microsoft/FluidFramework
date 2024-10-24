@@ -40,9 +40,7 @@ export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProp
 				<PlotCoordinateView model={props.simpleCoordinate} />
 			</div>
 			<div>
-				<h2 className="scenario-header">
-					Scenario 2: Using multiple models in a single view
-				</h2>
+				<h2 className="scenario-header">Scenario 2: Using multiple models in a single view</h2>
 				<SliderCoordinateView model={props.triangleCoordinate1} label="Triangle pt1" />
 				<SliderCoordinateView model={props.triangleCoordinate2} label="Triangle pt2" />
 				<SliderCoordinateView model={props.triangleCoordinate3} label="Triangle pt3" />

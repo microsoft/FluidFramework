@@ -131,8 +131,7 @@ export function convertTreeNodes<
 			if (!isKnownType(child, isPlaceholder)) {
 				convertedChild = convert(child) as TOut;
 				if (child.traits !== undefined) {
-					const childTraits =
-						(child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
+					const childTraits = (child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
 					pendingNodes.push({
 						childIterator: iterateChildren(childTraits)[Symbol.iterator](),
 						newNode: convertedChild,
@@ -171,7 +170,10 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+		| {
+				nodeVisitor?: (node: TIn) => void;
+				placeholderVisitor?: (placeholder: TPlaceholder) => void;
+		  },
 	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void;
 
@@ -179,7 +181,10 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+		| {
+				nodeVisitor?: (node: TIn) => void;
+				placeholderVisitor?: (placeholder: TPlaceholder) => void;
+		  },
 	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void {
 	const nodeVisitor = typeof visitors === 'function' ? visitors : visitors.nodeVisitor;
@@ -429,7 +434,11 @@ export function validateStableRange(
 	view: TreeView,
 	range: StableRangeInternal
 ):
-	| { result: RangeValidationResultKind.Valid; start: StablePlaceInternal; end: StablePlaceInternal }
+	| {
+			result: RangeValidationResultKind.Valid;
+			start: StablePlaceInternal;
+			end: StablePlaceInternal;
+	  }
 	| { result: Exclude<RangeValidationResult, RangeValidationResultKind.Valid> } {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
@@ -441,13 +450,23 @@ export function validateStableRange(
 	const validatedStart = validateStablePlace(view, start);
 	if (validatedStart.result !== PlaceValidationResult.Valid) {
 		return {
-			result: { kind: RangeValidationResultKind.BadPlace, place: start, placeFailure: validatedStart.result },
+			result: {
+				kind: RangeValidationResultKind.BadPlace,
+				place: start,
+				placeFailure: validatedStart.result,
+			},
 		};
 	}
 
 	const validatedEnd = validateStablePlace(view, end);
 	if (validatedEnd.result !== PlaceValidationResult.Valid) {
-		return { result: { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: validatedEnd.result } };
+		return {
+			result: {
+				kind: RangeValidationResultKind.BadPlace,
+				place: end,
+				placeFailure: validatedEnd.result,
+			},
+		};
 	}
 
 	const startTraitLocation = validatedStart.referenceTrait ?? view.getTraitLocation(validatedStart.referenceSibling);

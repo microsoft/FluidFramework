@@ -9,10 +9,12 @@ import {
 	DetachedAttributionKey,
 	OpAttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ISegment } from "./mergeTreeNodes.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface SequenceOffsets {
@@ -34,6 +36,7 @@ export interface SequenceOffsets {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface SerializedAttributionCollection extends SequenceOffsets {
@@ -43,6 +46,7 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IAttributionCollectionSpec<T> {
@@ -54,6 +58,7 @@ export interface IAttributionCollectionSpec<T> {
 }
 
 /**
+ * @legacy
  * @alpha
  * @sealed
  */
@@ -76,6 +81,7 @@ export interface IAttributionCollectionSerializer {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IAttributionCollection<T> {
@@ -84,6 +90,24 @@ export interface IAttributionCollection<T> {
 	 * @param channel - When specified, gets an attribution key associated with a particular channel.
 	 */
 	getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
+
+	/**
+	 * Retrieves all the [Offset, Attribution key] pairs for the provided offset range. Note:
+	 * The returned array is sorted by offset.
+	 * The first offset in response could be lower than the startOffset as the Attribution Key for the startOffset
+	 * could start at a lower offset than the startOffset in case where Attribution key offset boundaries don't
+	 * align exactly with startOffset.
+	 * Example: If the Attribution Offsets in the segment is [0, 10, 20, 30, 40] and request is for (startOffset: 5, endOffset: 25),
+	 * then result would be [(offset: 0, key: key1), (offset:10, key: key2), (offset:20, key: key3)].
+	 * @param channel - When specified, gets attribution keys associated with a particular channel.
+	 * @returns - undefined if the provided channel is not found or list of attribution keys along with
+	 * the corresponding offset start boundary.
+	 */
+	getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): { offset: number; key: AttributionKey }[] | undefined;
 
 	/**
 	 * Total length of all attribution keys in this collection.
@@ -140,14 +164,18 @@ export function areEqualAttributionKeys(
 
 	// Note: TS can't narrow the type of b inside this switch statement, hence the need for casting.
 	switch (a.type) {
-		case "op":
+		case "op": {
 			return a.seq === (b as OpAttributionKey).seq;
-		case "detached":
+		}
+		case "detached": {
 			return a.id === (b as DetachedAttributionKey).id;
-		case "local":
+		}
+		case "local": {
 			return true;
-		default:
+		}
+		default: {
 			unreachableCase(a, "Unhandled AttributionKey type");
+		}
 	}
 }
 
@@ -185,6 +213,52 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		}
 		assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
 		return this.get(this.findIndex(offset));
+	}
+
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+	): { offset: number; key: AttributionKey }[];
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): { offset: number; key: AttributionKey }[] | undefined;
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): { offset: number; key: AttributionKey }[] | undefined {
+		if (startOffset < 0 || startOffset >= this._length) {
+			throw new UsageError("startOffset should be valid and in range");
+		}
+		if (
+			endOffset !== undefined &&
+			(endOffset < 0 || endOffset >= this._length || startOffset > endOffset)
+		) {
+			throw new UsageError("endOffset should be valid and in range");
+		}
+
+		if (channel !== undefined) {
+			const subCollection = this.channels?.[channel];
+			return subCollection?.getKeysInOffsetRange(startOffset, endOffset);
+		}
+		const result: { offset: number; key: AttributionKey }[] = [];
+		let index = this.findIndex(startOffset);
+		let attributionKey = this.get(index);
+		if (attributionKey !== undefined) {
+			result.push({ offset: this.offsets[index], key: attributionKey });
+		}
+		index++;
+		const endOffsetVal = endOffset ?? Number.MAX_SAFE_INTEGER;
+		while (index < this.offsets.length && endOffsetVal >= this.offsets[index]) {
+			attributionKey = this.get(index);
+			if (attributionKey !== undefined) {
+				result.push({ offset: this.offsets[index], key: attributionKey });
+			}
+			index++;
+		}
+		return result;
 	}
 
 	private findIndex(offset: number): number {
@@ -246,12 +320,15 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			for (const [key, collection] of other.channelEntries) {
 				const thisCollection = (this.channels[key] ??= new AttributionCollection(
 					this.length,
+					// Null is needed as null and undefined have different meanings in the context of attribution collections.
+					// eslint-disable-next-line unicorn/no-null
 					null,
 				));
 				thisCollection.append(collection);
 			}
 			for (const [key, collection] of this.channelEntries) {
 				if (other.channels?.[key] === undefined) {
+					// eslint-disable-next-line unicorn/no-null
 					collection.append(new AttributionCollection(other.length, null));
 				}
 			}
@@ -262,7 +339,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
 		type ExtractGeneric<T> = T extends Iterable<infer Q> ? Q : unknown;
 		const root: ExtractGeneric<IAttributionCollectionSpec<AttributionKey>["root"]>[] =
-			new Array(this.keys.length);
+			Array.from({ length: this.keys.length });
 		for (let i = 0; i < this.keys.length; i++) {
 			root[i] = { offset: this.offsets[i], key: this.keys[i] };
 		}
@@ -281,8 +358,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	public clone(): AttributionCollection {
 		const copy = new AttributionCollection(this.length);
-		copy.keys = this.keys.slice();
-		copy.offsets = this.offsets.slice();
+		copy.keys = [...this.keys];
+		copy.offsets = [...this.offsets];
 		if (this.channels !== undefined) {
 			const channelsCopy: Record<string, AttributionCollection> = {};
 			for (const [key, collection] of this.channelEntries) {
@@ -293,7 +370,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return copy;
 	}
 
-	public update(name: string | undefined, channel: AttributionCollection) {
+	public update(name: string | undefined, channel: AttributionCollection): void {
 		assert(
 			channel.length === this.length,
 			0x5c0 /* AttributionCollection channel update should have consistent segment length */,
@@ -303,10 +380,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			this.keys = [...channel.keys];
 		} else {
 			this.channels ??= {};
-			if (this.channels[name] !== undefined) {
-				this.channels[name].update(undefined, channel);
-			} else {
+			if (this.channels[name] === undefined) {
 				this.channels[name] = channel;
+			} else {
+				this.channels[name]?.update(undefined, channel);
 			}
 		}
 	}
@@ -320,6 +397,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	): void {
 		const { channels } = summary;
 		assert(
+			// Destructuring here would require renaming the variables, since seqs is declared below
+			// eslint-disable-next-line unicorn/consistent-destructuring
 			summary.seqs.length === summary.posBreakpoints.length,
 			0x445 /* Invalid attribution summary blob provided */,
 		);
@@ -327,15 +406,25 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const extractOntoSegments = (
 			{ seqs, posBreakpoints }: SequenceOffsets,
 			assignToSegment: (collection: AttributionCollection, segment: ISegment) => void,
-		) => {
+		): void => {
+			if (seqs.length === 0) {
+				assert(
+					posBreakpoints.length === 0,
+					0x9e1 /* seqs and posBreakpoints length should match */,
+				);
+				return;
+			}
 			let curIndex = 0;
 			let cumulativeSegPos = 0;
 
 			for (const segment of segments) {
 				const attribution = new AttributionCollection(segment.cachedLength);
-				const pushEntry = (offset: number, seq: AttributionKey | number | null) => {
+				// This function is defined here to allow for the creation of a new collection for each segment.
+				// eslint-disable-next-line unicorn/consistent-function-scoping
+				const pushEntry = (offset: number, seq: AttributionKey | number | null): void => {
 					attribution.offsets.push(offset);
 					attribution.keys.push(
+						// eslint-disable-next-line unicorn/no-null
 						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },
 					);
 				};
@@ -364,9 +453,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		if (channels) {
 			for (const [name, collectionSpec] of Object.entries(channels)) {
 				extractOntoSegments(collectionSpec, (collection, segment) => {
-					// Cast is valid as we just assigned this field above
-					((segment.attribution as AttributionCollection).channels ??= {})[name] =
-						collection;
+					if (segment.attribution !== undefined) {
+						// Cast is valid as we just assigned this field above
+						((segment.attribution as AttributionCollection).channels ??= {})[name] =
+							collection;
+					}
 				});
 			}
 		}
@@ -389,6 +480,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const allChannelNames = new Set<string>();
 		for (const segment of segments) {
 			const collection =
+				// eslint-disable-next-line unicorn/no-null
 				segment.attribution ?? new AttributionCollection(segment.cachedLength, null);
 			const spec = collection.getAll();
 			allCollectionSpecs.push(spec);
@@ -420,7 +512,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
-						seqs.push(!key ? null : key.type === "op" ? key.seq : key);
+						// eslint-disable-next-line unicorn/no-null
+						seqs.push(key ? (key.type === "op" ? key.seq : key) : null);
 					}
 					mostRecentAttributionKey = key;
 				}
@@ -436,6 +529,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			const channels: { [name: string]: SequenceOffsets } = {};
 			for (const name of allChannelNames) {
 				const { posBreakpoints, seqs } = extractSequenceOffsets(
+					// eslint-disable-next-line unicorn/no-null
 					(spec) => spec.channels?.[name] ?? [{ offset: 0, key: null }],
 				);
 				channels[name] = { posBreakpoints, seqs };

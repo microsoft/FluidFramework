@@ -7,6 +7,7 @@ import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedMap } from "@fluidframework/map/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -14,7 +15,6 @@ import {
 	ITestFluidObject,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const mapId = "map";
 

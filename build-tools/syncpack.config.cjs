@@ -72,7 +72,7 @@ module.exports = {
 
 		{
 			label: "Must use exact dependency ranges",
-			dependencies: ["sort-package-json"],
+			dependencies: ["jssm", "jssm-viz-cli", "sort-package-json"],
 			packages: ["**"],
 			range: "",
 		},
@@ -82,6 +82,7 @@ module.exports = {
 		{
 			label: "Must use tilde dependency ranges",
 			dependencies: [
+				"@biomejs/biome",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",
@@ -99,7 +100,6 @@ module.exports = {
 			label:
 				"Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
-				"@fluid-private/readme-command",
 				"@fluid-tools/build-cli",
 				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",
@@ -126,6 +126,12 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		{
+			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
+			dependencies: ["chalk"],
+			packages: ["@fluidframework/build-tools", "@fluid-tools/version-tools"],
+		},
+
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [

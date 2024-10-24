@@ -7,5 +7,6 @@
 		"outDir": "./lib",
 		"strict": false,
 		"types": ["node"],
+		"exactOptionalPropertyTypes": false,
 	},
 }

@@ -6,13 +6,13 @@
 import fs from "fs";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IClient,
-	ISequencedDocumentMessage,
+	IDocumentService,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import { printMessageStats } from "./fluidAnalyzeMessages.js";
 import {
@@ -96,27 +96,43 @@ async function* loadAllSequencedMessages(
 	let requests = 0;
 	let opsStorage = 0;
 
+	console.log("fetching cached messages");
 	// reading only 1 op to test if there is mismatch
 	const teststream = deltaStorage.fetchMessages(lastSeq + 1, lastSeq + 2);
-
-	let statusCode;
-	let innerMostErrorCode;
-	let response;
 
 	try {
 		await teststream.read();
 	} catch (error: any) {
-		statusCode = error.getTelemetryProperties().statusCode;
-		innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
-		// if there is gap between ops, catch the error and check it is the error we need
+		const statusCode = error.getTelemetryProperties().statusCode;
+		const innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
 		if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
 			throw error;
 		}
-		// get firstAvailableDelta from the error response, and set current sequence number to that
-		response = JSON.parse(error.getTelemetryProperties().response);
-		firstAvailableDelta = response.error.firstAvailableDelta;
-		lastSeq = firstAvailableDelta - 1;
+
+		// This indicates we tried to fetch ops from storage that have been deleted (because they are past some retention policy).
+		// In that case, the error message should indicate the first sequence number that is available.
+		// We make a best-effort attempt for the original query (fetch all ops) by starting from that sequence number.
+		const props = error.getTelemetryProperties();
+		const { responseMessage } = props;
+		const [_, seq] =
+			typeof responseMessage === "string"
+				? (responseMessage.match(/GenesisSequenceNumber '(\d+)'/) ?? [])
+				: [];
+		if (seq !== undefined) {
+			lastSeq = parseInt(seq, 10);
+			firstAvailableDelta = lastSeq + 1;
+			console.log(
+				`Not all ops are available (older ops may have been deleted from storage). Starting from sequenceNumber: ${firstAvailableDelta}.`,
+			);
+		} else {
+			console.log(props);
+			throw new Error(
+				`Unexpected structure for 410 error: ${error.message}. Further error properties were logged above. This indicates a problem with fetch-tool.`,
+			);
+		}
 	}
+
+	console.log("fetching remaining messages from delta storage");
 
 	// continue reading rest of the ops
 	const stream = deltaStorage.fetchMessages(
@@ -268,7 +284,10 @@ async function* saveOps(
 	}
 }
 
-export async function fluidFetchMessages(documentService?: IDocumentService, saveDir?: string) {
+export async function fluidFetchMessages(
+	documentService?: IDocumentService,
+	saveDir?: string,
+) {
 	const messageStats = dumpMessageStats || dumpMessages;
 	if (!messageStats && (saveDir === undefined || documentService === undefined)) {
 		return;

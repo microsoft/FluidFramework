@@ -9,7 +9,7 @@ import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
-import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
+import { chainAsync, done, StressMode, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -33,6 +33,7 @@ import type {
 } from "../ddsFuzzHarness.js";
 import {
 	defaultDDSFuzzSuiteOptions,
+	generateTestSeeds,
 	mixinAttach,
 	mixinClientSelection,
 	mixinNewClient,
@@ -199,8 +200,7 @@ describe("DDS Fuzz Harness", () => {
 				);
 				await runTestForSeed(model, options, 0);
 				assert.equal(
-					generatedOperations.filter((op) => op !== done && op.type === "synchronize")
-						.length,
+					generatedOperations.filter((op) => op !== done && op.type === "synchronize").length,
 					2,
 				);
 				assert.deepEqual(generatedOperations[2], synchronize);
@@ -605,8 +605,12 @@ describe("DDS Fuzz Harness", () => {
 			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 3);
 
 			// client loaded from stash
-			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
-			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
+			assert.strictEqual(
+				clientCreates[2].channel.applyStashedOpCalls,
+				2,
+				"3 should be saved, and 2 should be stashed",
+			);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 7);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
 		});
 	});
@@ -917,10 +921,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[
-						"workload: 2: .only via options seed: 4",
-						"workload: 2: .only via options seed: 7",
-					],
+					["workload: 2: .only via options seed: 4", "workload: 2: .only via options seed: 7"],
 				);
 			});
 
@@ -959,9 +960,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 4, 5, 6, 7, 8, 9].map(
-						(i) => `workload: 1: .skip via function seed: ${i}`,
-					),
+					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `workload: 1: .skip via function seed: ${i}`),
 				);
 			});
 
@@ -971,9 +970,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 2, 3, 5, 6, 8, 9].map(
-						(i) => `workload: 2: .skip via options seed: ${i}`,
-					),
+					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `workload: 2: .skip via options seed: ${i}`),
 				);
 			});
 
@@ -1016,9 +1013,7 @@ describe("DDS Fuzz Harness", () => {
 					],
 				);
 				assert(
-					runResults.failures.every((test) =>
-						test.err.message.includes("Injected failure"),
-					),
+					runResults.failures.every((test) => test.err.message.includes("Injected failure")),
 				);
 			});
 
@@ -1060,6 +1055,51 @@ describe("DDS Fuzz Harness", () => {
 			it("successfully references the replay file", () => {
 				assert.equal(runResults.stats.passes, 1);
 				assert.equal(runResults.stats.failures, 0);
+			});
+		});
+
+		describe("generateTestSeeds", () => {
+			const testCount = 100;
+
+			it("should generate seeds for short stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Short);
+				assert.strictEqual(seeds.length, testCount);
+				assert.deepStrictEqual(
+					seeds,
+					Array.from({ length: testCount }, (_, i) => i),
+				);
+			});
+
+			it("should generate seeds for normal stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Normal);
+				assert.strictEqual(seeds.length, testCount);
+				assert.deepStrictEqual(
+					seeds,
+					Array.from({ length: testCount }, (_, i) => i),
+				);
+			});
+
+			it("should generate seeds for long stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Long);
+				assert.strictEqual(seeds.length, testCount * 2);
+				// Check that seeds are incrementing
+				for (let i = 1; i < seeds.length; i++) {
+					assert.strictEqual(seeds[i], seeds[i - 1] + 1);
+				}
+			});
+
+			it("should generate different seeds for different runs of long stress mode", () => {
+				const seeds1 = generateTestSeeds(testCount, StressMode.Long);
+				const seeds2 = generateTestSeeds(testCount, StressMode.Long);
+				// If this test is ever flaky, consider running multiple trials (as the starting seed is random, sometimes they could be legitimately the same)
+				assert.notDeepStrictEqual(seeds1, seeds2);
+			});
+
+			it("should have all seeds within valid range for long stress mode", () => {
+				const seeds = generateTestSeeds(testCount, StressMode.Long);
+				for (const seed of seeds) {
+					assert.ok(seed >= 0 && seed <= Number.MAX_SAFE_INTEGER);
+				}
 			});
 		});
 	});

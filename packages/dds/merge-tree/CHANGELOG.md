@@ -1,5 +1,77 @@
 # @fluidframework/merge-tree
 
+## 2.4.0
+
+### Minor Changes
+
+-   Several MergeTree `Client` Legacy APIs are now deprecated ([#22629](https://github.com/microsoft/FluidFramework/pull/22629)) [0b59ae89e0](https://github.com/microsoft/FluidFramework/commit/0b59ae89e0aefefad0ccef198adf99929bc4d783)
+
+    To reduce exposure of the `Client` class in the merge-tree package, several types have been deprecated. These types directly or indirectly expose the merge-tree `Client` class.
+
+    Most of these types are not meant to be used directly, and direct use is not supported:
+
+    -   AttributionPolicy
+    -   IClientEvents
+    -   IMergeTreeAttributionOptions
+    -   SharedSegmentSequence
+    -   SharedStringClass
+
+    Some of the deprecations are class constructors. In those cases, we plan to replace the class with an interface which has an equivalent API. Direct instantiation of these classes is not currently supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
+
+    -   SequenceInterval
+    -   SequenceEvent
+    -   SequenceDeltaEvent
+    -   SequenceMaintenanceEvent
+
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+### Minor Changes
+
+-   The PropertyManager class and related functions and properties are deprecated ([#22183](https://github.com/microsoft/FluidFramework/pull/22183)) [cbba69554f](https://github.com/microsoft/FluidFramework/commit/cbba69554fc5026f562f44683a902474fabd6e81)
+
+    The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.
+    These elements will be removed in a future release for the following reasons:
+
+    -   There are no scenarios where they need to be used directly.
+    -   Using them directly will cause eventual consistency problems.
+    -   Upcoming features will require modifications to these mechanisms.
+
+-   Deprecate segmentGroups and ack on ISegment ([#22212](https://github.com/microsoft/FluidFramework/pull/22212)) [2b0199dae3](https://github.com/microsoft/FluidFramework/commit/2b0199dae3d73cc7d4fab0f4848614b42e212220)
+
+    The `SegmentGroupCollection` class, along with the `segmentGroups` property and `ack` function on segments, are not intended for external use.
+    These elements will be removed in a future release for the following reasons:
+
+    -   There are no scenarios where they need to be used directly.
+    -   Using them directly will cause eventual consistency problems.
+    -   Upcoming features will require modifications to these mechanisms.
+
+## 2.1.0
+
+### Minor Changes
+
+-   The Marker.fromJSONObject and TextSegment.fromJSONObject argument types have been corrected ([#21684](https://github.com/microsoft/FluidFramework/pull/21684)) [d2d472bd88](https://github.com/microsoft/FluidFramework/commit/d2d472bd88d8360bb77303079eebef16d5a69131)
+
+    Previously, the arguments of `Marker.fromJSONObject` and `TextSegment.fromJSONObject` were of type `any`. However, at
+    runtime only certain types were expected and using other types would cause errors.
+
+    Now, the argument for the Marker implementation is of type `IJSONSegment` and the argument for the TextSegment
+    implementation is of type `string | IJSONSegment`. This reflects actual runtime support.
+
+    This change should have no impact on existing code unless the code is using incorrect types. Such code already does not
+    function and should be corrected.
+
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
 ## 2.0.0-rc.4.0.0
 
 Dependency updates only.

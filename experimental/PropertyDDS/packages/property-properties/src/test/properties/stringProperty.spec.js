@@ -708,9 +708,7 @@ describe("StringProperty", function () {
 					if (!_.isString(combinedChangeSetString)) {
 						combinedChangeSetString = combinedChangeSetString.insert[0][1];
 					}
-					expect(combinedChangeSetString).to.deep.equal(
-						finalChangeSet.String.stringProperty,
-					);
+					expect(combinedChangeSetString).to.deep.equal(finalChangeSet.String.stringProperty);
 				}
 			}
 
@@ -858,9 +856,7 @@ describe("StringProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(
-						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
-					);
+					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
 					expect(changeSet.String.stringProperty).to.have.all.keys("remove", "insert");
 				},
@@ -1009,14 +1005,8 @@ describe("StringProperty", function () {
 			expect(testChangeSet(CS2.getSerializedChangeSet())).to.equal("AA-AA-AA");
 
 			var conflicts = [];
-			var rebasedCS1 = CS2._rebaseChangeSet(
-				deepCopy(CS1.getSerializedChangeSet()),
-				conflicts,
-			);
-			var rebasedCS2 = CS1._rebaseChangeSet(
-				deepCopy(CS2.getSerializedChangeSet()),
-				conflicts,
-			);
+			var rebasedCS1 = CS2._rebaseChangeSet(deepCopy(CS1.getSerializedChangeSet()), conflicts);
+			var rebasedCS2 = CS1._rebaseChangeSet(deepCopy(CS2.getSerializedChangeSet()), conflicts);
 
 			expect(rebasedCS1.modify.String.str.remove.length).to.equal(1);
 			expect(testChangeSet(CS2.getSerializedChangeSet(), rebasedCS1)).to.equal("AA--AA");

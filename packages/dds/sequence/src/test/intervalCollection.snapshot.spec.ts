@@ -6,15 +6,15 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ReferenceType, SlidingPreference, Side } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
+import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection.js";
 import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass, type ISharedString } from "../sharedString.js";
@@ -104,7 +104,9 @@ describe("IntervalCollection snapshotting", () => {
 		assert.equal(intervals.length, 1);
 		const interval = intervals[0] ?? assert.fail();
 		/* eslint-disable no-bitwise */
-		assert(interval.start.refType === (ReferenceType.RangeBegin | ReferenceType.SlideOnRemove));
+		assert(
+			interval.start.refType === (ReferenceType.RangeBegin | ReferenceType.SlideOnRemove),
+		);
 		assert(interval.end.refType === (ReferenceType.RangeEnd | ReferenceType.SlideOnRemove));
 		/* eslint-enable no-bitwise */
 	});

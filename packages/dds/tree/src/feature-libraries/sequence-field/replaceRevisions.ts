@@ -4,9 +4,20 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { RevisionTag, replaceAtomRevisions } from "../../core/index.js";
+import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 import { MarkListFactory } from "./markListFactory.js";
-import { Changeset, HasRevisionTag, Mark, MarkEffect, NoopMarkType } from "./types.js";
+import {
+	type Changeset,
+	type Detach,
+	type HasMoveFields,
+	type HasRevisionTag,
+	type Mark,
+	type MarkEffect,
+	NoopMarkType,
+	type Rename,
+} from "./types.js";
+import type { MoveMarkEffect } from "./helperTypes.js";
+import { isDetach, isRename } from "./utils.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -40,12 +51,17 @@ function updateMark(
 }
 
 function updateEffect<TMark extends MarkEffect>(
-	mark: TMark,
+	input: TMark,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TMark {
+	const mark =
+		isDetach(input) || isRename(input)
+			? updateIdOverride(input, revisionsToReplace, newRevision)
+			: input;
 	const type = mark.type;
 	switch (type) {
+		case "Rename":
 		case NoopMarkType:
 			return mark;
 		case "AttachAndDetach":
@@ -54,31 +70,69 @@ function updateEffect<TMark extends MarkEffect>(
 				attach: updateEffect(mark.attach, revisionsToReplace, newRevision),
 				detach: updateEffect(mark.detach, revisionsToReplace, newRevision),
 			};
-		case "Insert":
 		case "MoveIn":
 		case "MoveOut":
+			return updateMoveEffect<TMark & MoveMarkEffect>(
+				// For some reason, TypeScript is not able to infer that `mark` cannot be a `NoopMark` here.
+				mark as MoveMarkEffect,
+				revisionsToReplace,
+				newRevision,
+			);
+		case "Insert":
 		case "Remove":
-			return updateEffectRevision(mark, revisionsToReplace, newRevision);
+			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
 		default:
 			unreachableCase(type);
 	}
 }
 
-function updateEffectRevision<TMark extends MarkEffect & HasRevisionTag>(
-	effect: TMark,
+function updateIdOverride<TEffect extends Detach | Rename>(
+	effect: TEffect,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
-): TMark {
-	return revisionsToReplace.has(effect.revision)
-		? effectWithRevision(effect, newRevision)
-		: effect;
+): TEffect {
+	if (effect.idOverride !== undefined) {
+		const idOverride = replaceAtomRevisions(
+			effect.idOverride,
+			revisionsToReplace,
+			newRevision,
+		);
+		return { ...effect, idOverride };
+	} else {
+		return effect;
+	}
 }
 
-function effectWithRevision<TEffect extends MarkEffect & HasRevisionTag>(
+function updateMoveEffect<TEffect extends HasMoveFields>(
 	effect: TEffect,
-	revision: RevisionTag | undefined,
+	revisionsToReplace: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
 ): TEffect {
-	const updated = { ...effect, revision };
+	return effect.finalEndpoint !== undefined
+		? updateRevision(
+				{
+					...effect,
+					finalEndpoint: updateRevision(effect.finalEndpoint, revisionsToReplace, newRevision),
+				},
+				revisionsToReplace,
+				newRevision,
+			)
+		: updateRevision(effect, revisionsToReplace, newRevision);
+}
+
+function updateRevision<T extends HasRevisionTag>(
+	input: T,
+	revisionsToReplace: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): T {
+	return revisionsToReplace.has(input.revision) ? withRevision(input, newRevision) : input;
+}
+
+function withRevision<T extends HasRevisionTag>(
+	input: T,
+	revision: RevisionTag | undefined,
+): T {
+	const updated = { ...input, revision };
 	if (revision === undefined) {
 		delete updated.revision;
 	}

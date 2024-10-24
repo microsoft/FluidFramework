@@ -106,6 +106,14 @@ export class KafkaNodeProducer implements IProducer {
 		return this;
 	}
 
+	public off(
+		event: "connected" | "produced" | "error",
+		listener: (...args: any[]) => void,
+	): this {
+		this.events.off(event, listener);
+		return this;
+	}
+
 	/**
 	 * Notifies of the need to send pending messages. We defer sending messages to batch together messages
 	 * to the same partition.

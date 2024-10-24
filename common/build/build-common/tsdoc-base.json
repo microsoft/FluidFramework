@@ -1,0 +1,26 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+
+	// Include the definitions that are required for API Extractor
+	"extends": ["@microsoft/api-extractor/extends/tsdoc-base.json"],
+
+	"tagDefinitions": [
+		{
+			// This tag indicates API is part of a legacy API set.
+			"tagName": "@legacy",
+			"syntaxKind": "modifier"
+		},
+		{
+			// This tag indicates API is part of reserved system types
+			// and should not be inspected by external parties. It may
+			// change version to version.
+			"tagName": "@system",
+			"syntaxKind": "modifier"
+		}
+	],
+
+	"supportForTags": {
+		"@legacy": true,
+		"@system": true
+	}
+}

@@ -160,7 +160,9 @@ export const odspEndpointName = nconf.get("fluid:test:odspEndpointName") as Odsp
 /**
  * @internal
  */
-export const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as RouterliciousEndpoint;
+export const r11sEndpointName = nconf.get(
+	"fluid:test:r11sEndpointName",
+) as RouterliciousEndpoint;
 /**
  * @internal
  */

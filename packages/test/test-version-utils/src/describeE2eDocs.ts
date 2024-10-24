@@ -214,7 +214,9 @@ export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMa
 /**
  * @internal
  */
-export function isDocumentMatrixPlainInfo(info: DocumentTypeInfo): info is DocumentMatrixPlainInfo {
+export function isDocumentMatrixPlainInfo(
+	info: DocumentTypeInfo,
+): info is DocumentMatrixPlainInfo {
 	return (info as DocumentMatrixPlainInfo).rowSize !== undefined;
 }
 
@@ -313,7 +315,9 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 	return d;
 }
 
-function createE2EDocsDescribeWithType(testType: BenchmarkTypeDescription): DescribeE2EDocSuite {
+function createE2EDocsDescribeWithType(
+	testType: BenchmarkTypeDescription,
+): DescribeE2EDocSuite {
 	const config = getE2EConfigFile();
 
 	const d: DescribeE2EDocSuite = (title, tests, docTypes) => {
@@ -350,10 +354,7 @@ function createE2EDocCompatSuite(
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
 					const dataRuntimeApi = getDataRuntimeApi(
-						getRequestedVersion(
-							testBaseVersion(config.dataRuntime),
-							config.dataRuntime,
-						),
+						getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
 					);
 					const apis: CompatApis = {
 						containerRuntime: getContainerRuntimeApi(
@@ -402,9 +403,7 @@ function createE2EDocCompatSuite(
 						(options?: ITestObjectProviderOptions) => {
 							resetAfterEach = options?.resetAfterEach ?? true;
 							if (options?.syncSummarizer === true) {
-								provider.resetLoaderContainerTracker(
-									true /* syncSummarizerClients */,
-								);
+								provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 							}
 							return provider;
 						},
@@ -464,7 +463,7 @@ export function isMemoryTest(): boolean {
 		}
 	}
 	const isMemTest: boolean =
-		process.env.FLUID_E2E_MEMORY !== undefined ? true : isMemoryUsageTest ?? false;
+		process.env.FLUID_E2E_MEMORY !== undefined ? true : (isMemoryUsageTest ?? false);
 	return isMemTest;
 }
 

@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import {
-	RangeMap,
-	RangeQueryResult,
+	type RangeMap,
+	type RangeQueryResult,
 	getFromRangeMap,
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util/index.js";
+import type { NodeId } from "./modularChangeTypes.js";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
@@ -44,7 +45,6 @@ export function getFirstFromCrossFieldMap<T>(
 }
 
 /**
- * @internal
  */
 export enum CrossFieldTarget {
 	Source,
@@ -54,7 +54,6 @@ export enum CrossFieldTarget {
 /**
  * Used by {@link FieldChangeHandler} implementations for exchanging information across other fields
  * while rebasing, composing, or inverting a change.
- * @internal
  */
 export interface CrossFieldManager<T = unknown> {
 	/**
@@ -81,5 +80,22 @@ export interface CrossFieldManager<T = unknown> {
 		count: number,
 		newValue: T,
 		invalidateDependents: boolean,
+	): void;
+
+	/**
+	 * This must be called whenever a new node is moved into this field as part of the current rebase, compose, or invert.
+	 * Calling this for a node which was already in the field is tolerated.
+	 */
+	onMoveIn(id: NodeId): void;
+
+	/**
+	 * This must be called whenever a new cross field key is moved into this field as part of the current rebase or compose.
+	 * Calling this for a key which was already in the field is tolerated.
+	 */
+	moveKey(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
 	): void;
 }

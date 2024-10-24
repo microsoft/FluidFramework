@@ -6,6 +6,6 @@ area: "libraries"
 children:
   - 'fluid-framework'
   - '@fluidframework/azure-client'
-  - '@fluid-experimental/odsp-client'
+  - '@fluidframework/odsp-client'
 layout: aggPackage
 ---

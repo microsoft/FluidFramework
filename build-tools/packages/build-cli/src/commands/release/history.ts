@@ -13,14 +13,14 @@ import {
 	getDisplayDate,
 	getDisplayDateRelative,
 	sortVersions,
-} from "../../library";
+} from "../../library/index.js";
 
 import { detectBumpType } from "@fluid-tools/version-tools";
 
-import { findPackageOrReleaseGroup } from "../../args";
-import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
-import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
-import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
+import { findPackageOrReleaseGroup } from "../../args.js";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
+import { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
+import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report.js";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 
@@ -76,12 +76,12 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 
 	public async run(): Promise<{ reports: ReleaseReport[] }> {
 		const context = await this.getContext();
-		const { defaultMode, flags, releaseData, releaseGroupName } = this;
+		const { defaultMode, flags } = this;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const releaseGroup = flags.releaseGroup ?? flags.package!;
 		this.releaseGroupName = findPackageOrReleaseGroup(releaseGroup, context)?.name;
-		if (releaseGroupName === undefined) {
+		if (this.releaseGroupName === undefined) {
 			this.error(`Can't find release group or package with name: ${releaseGroup}`, {
 				exit: 1,
 			});
@@ -90,16 +90,16 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 		this.releaseData = await this.collectReleaseData(
 			context,
 			defaultMode,
-			releaseGroupName,
+			this.releaseGroupName,
 			false,
 		);
-		if (releaseData === undefined) {
-			this.error(`No releases found for ${releaseGroupName}`);
+		if (this.releaseData === undefined) {
+			this.error(`No releases found for ${this.releaseGroupName}`);
 		}
 
 		const reports: ReleaseReport[] = [];
 
-		for (const [pkgOrReleaseGroup, data] of Object.entries(releaseData)) {
+		for (const [pkgOrReleaseGroup, data] of Object.entries(this.releaseData)) {
 			const versions = sortVersions([...data.versions], "version");
 			const releaseTable = this.generateAllReleasesTable(pkgOrReleaseGroup, versions);
 

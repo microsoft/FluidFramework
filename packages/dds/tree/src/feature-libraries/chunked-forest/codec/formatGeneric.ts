@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TSchema, Type } from "@sinclair/typebox";
+import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
 /**
  * Identifier OR Index of an identifier in the identifier list.

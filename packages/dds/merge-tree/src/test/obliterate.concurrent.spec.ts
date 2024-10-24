@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
@@ -52,6 +52,30 @@ for (const incremental of [true, false]) {
 
 		afterEach(() => {
 			MergeTree.options.incrementalUpdate = true;
+		});
+
+		it("obliterate, then insert at the end of the string", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "01234567");
+			helper.processAllOps();
+			helper.obliterateRange("A", 0, 8);
+			helper.insertText("B", 8, "BBB");
+			helper.processAllOps();
+
+			helper.logger.validate({ baseText: "BBB" });
+		});
+
+		it("insert, then obliterate at the end of the string", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "01234567");
+			helper.processAllOps();
+			helper.insertText("B", 8, "BBB");
+			helper.obliterateRange("A", 0, 8);
+			helper.processAllOps();
+
+			helper.logger.validate({ baseText: "BBB" });
 		});
 
 		it("length of children does not differ from parent when overlapping remove+obliterate", () => {
@@ -129,9 +153,9 @@ for (const incremental of [true, false]) {
 			try {
 				helper.obliterateRange("C", 0, 2);
 				assert.fail("should not be possible to obliterate outside local range");
-			} catch (e) {
-				assert(e instanceof LoggingError);
-				assert.equal(e.message, "RangeOutOfBounds");
+			} catch (error) {
+				assert(error instanceof LoggingError);
+				assert.equal(error.message, "RangeOutOfBounds");
 			}
 		});
 

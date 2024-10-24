@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { writeFileSync } from "node:fs";
 import path from "node:path";
-import { MonoRepo, Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
+import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { mkdirpSync, writeFileSync } from "fs-extra";
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
-import { filterPackages, parsePackageFilterFlags } from "../filter";
-import { filterFlags, releaseGroupFlag } from "../flags";
-import { BaseCommand, getTarballName } from "../library";
+import { mkdirpSync } from "fs-extra";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
+import { filterPackages, parsePackageFilterFlags } from "../filter.js";
+import { filterFlags, releaseGroupFlag } from "../flags.js";
+import { BaseCommand, getTarballName } from "../library/index.js";
 import {
 	type Feed,
 	feeds,
 	isFeed,
 	packagePublishesToFeed,
 	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
-} from "../library/repoPolicyCheck/npmPackages";
-import { PnpmListEntry, pnpmList } from "../pnpm";
+} from "../library/repoPolicyCheck/npmPackages.js";
+import { PnpmListEntry, pnpmList } from "../pnpm.js";
 
 interface ListItem extends PnpmListEntry {
 	tarball?: string;
@@ -102,13 +103,14 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 
 		const filterOptions = parsePackageFilterFlags(this.flags);
 		const packageList = await pnpmList(rgOrPackage.repoPath);
-		const filtered = filterPackages(packageList, filterOptions)
+		const filteredPackages = await filterPackages(packageList, filterOptions);
+		const filtered = filteredPackages
 			.reverse()
 			.filter((item): item is ListItem => {
-				const config = context.rootFluidBuildConfig?.policy?.packageNames;
+				const config = context.flubConfig?.policy?.packageNames;
 				if (config === undefined) {
 					// exits the process
-					this.error(`No fluid-build package name policy config found.`);
+					this.error(`No package name policy config found.`);
 				}
 
 				if (feed === undefined) {
@@ -159,32 +161,4 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			writeFileSync(outFile, output);
 		}
 	}
-}
-
-/**
- * Calculates the packages that should be published to a feed and returns a map of Feed to the packages that should be
- * published there.
- */
-export function FeedsForPackages(
-	packages: Package[],
-	config: PackageNamePolicyConfig,
-): Map<Feed, Package[]> {
-	const mapping = new Map<Feed, Package[]>();
-	for (const pkg of packages) {
-		for (const feed of feeds) {
-			let pkgList = mapping.get(feed);
-			if (pkgList === undefined) {
-				pkgList = [];
-			}
-
-			if (!mapping.has(feed)) {
-				mapping.set(feed, []);
-			}
-
-			if (packagePublishesToFeed(pkg.name, config, feed)) {
-				mapping.get(feed)?.push(pkg);
-			}
-		}
-	}
-	return mapping;
 }
