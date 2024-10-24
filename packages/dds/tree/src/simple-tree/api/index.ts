@@ -80,6 +80,12 @@ export type { EncodeOptions } from "./customTree.js";
 export type { ConciseTree } from "./conciseTree.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
+export {
+	createSimpleTreeIndex,
+	createIdentifierIndex,
+	type IdentifierIndex,
+	type SimpleTreeIndex,
+} from "./identifierIndex.js";
 
 export {
 	extractPersistedSchema,

@@ -40,6 +40,15 @@ export interface CommitMetadata {
 }
 
 // @alpha
+export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex;
+
+// @alpha
+export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(context: FlexTreeContext, indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue): SimpleTreeIndex<TKey, TValue>;
+
+// @alpha
+export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(context: FlexTreeContext, indexer: (schema: TSchema) => KeyFinder<TKey> | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
+
+// @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: JsonCompatible, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
 
 // @public @sealed
@@ -147,6 +156,9 @@ export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): Tre
 
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
+
+// @alpha
+export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
 
 // @alpha
 export interface ICodecOptions {
@@ -536,6 +548,9 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha
+export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey, TValue>;
+
+//@alpha
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
@@ -649,6 +664,16 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 
 // @public
 type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
+
+// @alpha
+export interface TreeIndex<TKey extends TreeIndexKey, TValue> extends ReadonlyMap<TKey, TValue> {
+}
+
+// @alpha
+export type TreeIndexKey = number | string | boolean | IFluidHandle | null;
+
+// @alpha
+export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
