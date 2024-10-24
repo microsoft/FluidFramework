@@ -30,6 +30,12 @@ import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
 
 /**
+ * Only client and server release groups use changesets and the related release note and per-package changelog
+ * generation. Other release groups use various other means to track changes.
+ */
+const releaseGroupsUsingChangesets = new Set(["client", "server"]);
+
+/**
  * Checks that the current branch matches the expected branch for a release.
  *
  * @param state - The current state machine state.
@@ -481,9 +487,18 @@ export const checkAssertTagging: StateHandlerFunction = async (
 /**
  * Checks that release notes have been generated.
  *
+ * If release notes exist, then this function will send the "success" action to the state machine and return `true`. The
+ * state machine will transition to the appropriate state based on the "success" action.
+ *
+ * If release notes have not been generated, then this function will send the "failure" action to the state machine and
+ * still return `true`, since the state has been handled. The state machine will transition to the appropriate state
+ * based on the "failure" action.
+ *
+ * Once this function returns, the state machine's state will be reevaluated and passed to another state handler.
+ *
  * @param state - The current state machine state.
  * @param machine - The state machine.
- * @param testMode - Set to true to run function in test mode.
+ * @param testMode - Set to true to run function in test mode. In test mode, the function returns true immediately.
  * @param log - A logger that the function can use for logging.
  * @param data - An object with handler-specific contextual data.
  * @returns True if the state was handled; false otherwise.
@@ -499,9 +514,13 @@ export const checkReleaseNotes: StateHandlerFunction = async (
 
 	const { bumpType, releaseGroup, releaseVersion } = data;
 
-	// This check should only be run for client/server minor/major releases. Patch releases should always pass this
-	// check, as will release groups other than client/server.
-	if (["client", "server"].includes(releaseGroup) && bumpType !== "patch") {
+	if (
+		// Only some release groups use changeset-based change-tracking.
+		releaseGroupsUsingChangesets.has(releaseGroup) &&
+		// This check should only be run for minor/major releases. Patch releases do not use changesets or generate release
+		// notes so there is no need to check them.
+		bumpType !== "patch"
+	) {
 		// Check if the release notes file exists
 		const filename = `RELEASE_NOTES/${releaseVersion}.md`;
 
@@ -522,9 +541,19 @@ export const checkReleaseNotes: StateHandlerFunction = async (
 /**
  * Checks that changelogs have been generated.
  *
+ * If changelogs have been generated for the current release, then this function will send the "success" action to the
+ * state machine and return `true`. The state machine will transition to the appropriate state based on the "success"
+ * action.
+ *
+ * If changelogs have not been generated, then this function will send the "failure" action to the state machine and
+ * still return `true`, since the state has been handled. The state machine will transition to the appropriate state
+ * based on the "failure" action.
+ *
+ * Once this function returns, the state machine's state will be reevaluated and passed to another state handler.
+ *
  * @param state - The current state machine state.
  * @param machine - The state machine.
- * @param testMode - Set to true to run function in test mode.
+ * @param testMode - Set to true to run function in test mode. In test mode, the function returns true immediately.
  * @param log - A logger that the function can use for logging.
  * @param data - An object with handler-specific contextual data.
  * @returns True if the state was handled; false otherwise.
@@ -540,9 +569,13 @@ export const checkChangelogs: StateHandlerFunction = async (
 
 	const { releaseGroup, bumpType } = data;
 
-	// This check should only be run for client/server minor/major releases. Patch releases should always pass this
-	// check, as will release groups other than client/server.
-	if (["client", "server"].includes(releaseGroup) && bumpType !== "patch") {
+	if (
+		// Only some release groups use changeset-based change-tracking.
+		releaseGroupsUsingChangesets.has(releaseGroup) &&
+		// This check should only be run for minor/major releases. Patch releases do not use changesets or generate
+		// per-package changelogs so there is no need to check them.
+		bumpType !== "patch"
+	) {
 		const question: inquirer.ConfirmQuestion = {
 			type: "confirm",
 			name: "confirmed",
@@ -555,7 +588,8 @@ export const checkChangelogs: StateHandlerFunction = async (
 			log.logHr();
 			log.errorLog(`Changelogs must be generated.`);
 			BaseStateHandler.signalFailure(machine, state);
-			return false;
+			// State was handled, so return true.
+			return true;
 		}
 	}
 
