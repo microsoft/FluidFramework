@@ -104,7 +104,7 @@ resources:
       trigger:
         branches:
           include:
-            - refs/heads/test/michaelzhen-1.0
+            - refs/heads/test/michaelzhen
   repositories:
     - repository: self
       ref: refs/heads/test/michaelzhen
