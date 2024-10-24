@@ -9,7 +9,6 @@ import path from "node:path";
 
 import { expect } from "chai";
 import { describe, it } from "mocha";
-// import type { SimpleGit } from "simple-git";
 
 import { loadFluidRepo } from "../fluidRepo.js";
 import type { PackageName, WorkspaceName } from "../types.js";
