@@ -50,7 +50,7 @@ describe("readPackageJsonAndIndent", () => {
 });
 
 describe("updatePackageJsonFile", () => {
-	it("outputs file with spaces", () => {
+	it("keeps indentation style in file with spaces", () => {
 		const testFile = path.resolve(testDataPath, "spaces/_package.json");
 		const expectedIndent = "  ";
 		updatePackageJsonFile(testFile, testTransformer);
@@ -58,29 +58,29 @@ describe("updatePackageJsonFile", () => {
 		assert.strictEqual(indent, expectedIndent);
 	});
 
-	it("outputs file with tabs", () => {
+	it("keeps indentation style in file with tabs", () => {
 		const testFile = path.resolve(testDataPath, "tabs/_package.json");
 		const expectedIndent = "\t";
 		updatePackageJsonFile(testFile, testTransformer);
 		const [, indent] = readPackageJsonAndIndent(testFile);
 		assert.strictEqual(indent, expectedIndent);
 	});
+});
 
-	describe("updatePackageJsonFileAsync", () => {
-		it("outputs file with spaces", async () => {
-			const testFile = path.resolve(testDataPath, "spaces/_package.json");
-			const expectedIndent = "  ";
-			await updatePackageJsonFileAsync(testFile, testTransformerAsync);
-			const [, indent] = readPackageJsonAndIndent(testFile);
-			assert.strictEqual(indent, expectedIndent);
-		});
+describe("updatePackageJsonFileAsync", () => {
+	it("keeps indentation style in file with spaces", async () => {
+		const testFile = path.resolve(testDataPath, "spaces/_package.json");
+		const expectedIndent = "  ";
+		await updatePackageJsonFileAsync(testFile, testTransformerAsync);
+		const [, indent] = readPackageJsonAndIndent(testFile);
+		assert.strictEqual(indent, expectedIndent);
+	});
 
-		it("outputs file with tabs", async () => {
-			const testFile = path.resolve(testDataPath, "tabs/_package.json");
-			const expectedIndent = "\t";
-			await updatePackageJsonFileAsync(testFile, testTransformerAsync);
-			const [, indent] = readPackageJsonAndIndent(testFile);
-			assert.strictEqual(indent, expectedIndent);
-		});
+	it("keeps indentation style in file with tabs", async () => {
+		const testFile = path.resolve(testDataPath, "tabs/_package.json");
+		const expectedIndent = "\t";
+		await updatePackageJsonFileAsync(testFile, testTransformerAsync);
+		const [, indent] = readPackageJsonAndIndent(testFile);
+		assert.strictEqual(indent, expectedIndent);
 	});
 });

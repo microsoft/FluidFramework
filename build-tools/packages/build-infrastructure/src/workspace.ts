@@ -153,6 +153,9 @@ export class Workspace implements IWorkspace {
 		}
 	}
 
+	/**
+	 * {@inheritDoc Installable.checkInstall}
+	 */
 	public async checkInstall(): Promise<true | string[]> {
 		const errors: string[] = [];
 		for (const buildPackage of this.packages) {
@@ -168,6 +171,9 @@ export class Workspace implements IWorkspace {
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc Installable.install}
+	 */
 	public async install(updateLockfile: boolean): Promise<boolean> {
 		const command = this.packageManager.installCommand(updateLockfile);
 
@@ -181,6 +187,9 @@ export class Workspace implements IWorkspace {
 		return true;
 	}
 
+	/**
+	 * Synchronously reload all of the packages in the workspace.
+	 */
 	public reload(): void {
 		for (const pkg of this.packages) {
 			pkg.reload();
@@ -191,6 +200,14 @@ export class Workspace implements IWorkspace {
 		return `${this.name} (WORKSPACE)`;
 	}
 
+	/**
+	 * Load a workspace from a {@link WorkspaceDefinition}.
+	 *
+	 * @param name - The name of the workspace.
+	 * @param definition - The definition for the workspace.
+	 * @param root - The path to the root of the workspace.
+	 * @returns A loaded {@link IWorkspace}.
+	 */
 	public static load(name: string, definition: WorkspaceDefinition, root: string): IWorkspace {
 		const workspace = new Workspace(name, definition, root);
 		return workspace;

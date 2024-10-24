@@ -9,9 +9,12 @@ import colors from "picocolors";
 import { getAllDependenciesInRepo, loadFluidRepo } from "../fluidRepo.js";
 import type { IFluidRepo } from "../types.js";
 
+/**
+ * This command is intended for testing and debugging use only.
+ */
 export class ListCommand extends Command {
 	static override description =
-		"List objects in the Fluid repo, like release groups, workspaces, and packages.";
+		"List objects in the Fluid repo, like release groups, workspaces, and packages. USED FOR TESTING ONLY.";
 
 	static override flags = {
 		path: Flags.directory({

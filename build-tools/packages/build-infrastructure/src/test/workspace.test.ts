@@ -43,9 +43,17 @@ describe("workspaces", () => {
 		// });
 
 		it("install fails when updateLockfile=false", async () => {
-			await assert.rejects(async () => {
-				await workspace?.install(false);
-			});
+			await assert.rejects(
+				async () => {
+					await workspace?.install(false);
+				},
+				{
+					name: "Error",
+					// Note: This assumes we are using pnpm as the package manager. Other package managers will throw different
+					// errors.
+					message: /.*ERR_PNPM_OUTDATED_LOCKFILE.*/,
+				},
+			);
 		});
 	});
 
