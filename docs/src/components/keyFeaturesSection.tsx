@@ -5,9 +5,9 @@
 
 import { HomePageSection } from "@site/src/components/homePageSection";
 
-import EasyToUseImage from "@site/static/assets/home-easy-to-use.png";
-import OpenSourecImage from "@site/static/assets/home-open-source.png";
-import PerformanceImage from "@site/static/assets/home-performance.png";
+import EasyToUseImage from "@site/static/assets/home/easy-to-use.png";
+import OpenSourecImage from "@site/static/assets/home/open-source.png";
+import PerformanceImage from "@site/static/assets/home/performance.png";
 
 import "@site/src/css/keyFeaturesSection.css";
 

@@ -10,10 +10,10 @@
 import React from "react";
 import { HomePageSection } from "@site/src/components/homePageSection";
 
-import ServiceSectionBG from "@site/static/images/ffInCloudBG.png";
-import ServicesDiagram from "@site/static/assets/services-diagram.png";
+import ServiceSectionBG from "@site/static/assets/home/services-section-background.png";
+import ServicesDiagram from "@site/static/assets/home/services-diagram.png";
 import MicrosoftLogo from "@site/static/assets/microsoft-logo.png";
-import AzureLogo from "@site/static/assets/azure.png";
+import AzureLogo from "@site/static/assets/azure-logo.png";
 
 import "@site/src/css/serviceSection.css";
 
