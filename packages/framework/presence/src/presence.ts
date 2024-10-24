@@ -79,7 +79,7 @@ export interface ISessionClient<
 	 * @remarks
 	 * Connection id will change on reconnect.
 	 *
-	 * If {@link ISessionClient.getStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
+	 * If {@link ISessionClient.status} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
 	 */
 	connectionId(): ClientConnectionId;
 
@@ -89,7 +89,7 @@ export interface ISessionClient<
 	 * @returns Status of session client.
 	 *
 	 */
-	getStatus(): SessionClientStatus;
+	status(): SessionClientStatus;
 }
 
 /**
