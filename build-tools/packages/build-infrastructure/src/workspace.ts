@@ -71,7 +71,7 @@ export class Workspace implements IWorkspace {
 		} = getPackagesSync(this.directory);
 		if (foundRoot !== this.directory) {
 			// This is a sanity check. directory is the path passed in when creating the Workspace object, while rootDir is
-			// the dir that manypkg found. They should be the same.
+			// the dir that `getPackagesSync` found. They should be the same.
 			throw new Error(
 				`The root dir found by manypkg, '${foundRoot}', does not match the configured directory '${this.directory}'`,
 			);
