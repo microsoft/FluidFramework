@@ -29,12 +29,14 @@ html {
  */
 @font-face {
 	font-family: "Segoe UI";
-	src: url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.eot"),
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.eot"),
 		/* IE9 compat modes */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.eot?#iefix")
 			format("embedded-opentype"); /* IE6-IE8 */
 
-	src: local("Segoe UI Light"),
+	src:
+		local("Segoe UI Light"),
 		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.woff2")
 			format("woff2"),
 		/* Super modern browsers */
@@ -55,12 +57,14 @@ html {
  */
 @font-face {
 	font-family: "Segoe UI";
-	src: url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.eot"),
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.eot"),
 		/* IE9 compat modes */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.eot?#iefix")
 			format("embedded-opentype"); /* IE6-IE8 */
 
-	src: local("Segoe UI Semilight"),
+	src:
+		local("Segoe UI Semilight"),
 		/* Check local copy */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.woff2")
 			format("woff2"),
@@ -84,12 +88,14 @@ html {
 @font-face {
 	font-family: "Segoe UI";
 
-	src: url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.eot"),
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.eot"),
 		/* IE9 compat modes */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.eot?#iefix")
 			format("embedded-opentype"); /* IE6-IE8 */
 
-	src: local("Segoe UI"),
+	src:
+		local("Segoe UI"),
 		/* Check local copy */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff2")
 			format("woff"),
@@ -113,12 +119,14 @@ html {
 @font-face {
 	font-family: "Segoe UI";
 
-	src: url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.eot"),
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.eot"),
 		/* IE9 compat modes */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.eot?#iefix")
 			format("embedded-opentype"); /* IE6-IE8 */
 
-	src: local("Segoe UI Semibold"),
+	src:
+		local("Segoe UI Semibold"),
 		/* Check local copy */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.woff2")
 			format("woff"),
@@ -142,12 +150,14 @@ html {
 @font-face {
 	font-family: "Segoe UI";
 
-	src: url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.eot"),
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.eot"),
 		/* IE9 compat modes */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.eot?#iefix")
 			format("embedded-opentype"); /* IE6-IE8 */
 
-	src: local("Segoe UI Bold"),
+	src:
+		local("Segoe UI Bold"),
 		/* Check local copy */
 			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.woff2")
 			format("woff"),

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from 'react';
+import React from "react";
 
-import { SectionHeader } from '@site/src/components/sectionHeader';
+import { SectionHeader } from "@site/src/components/sectionHeader";
 
 import "@site/src/css/homePageSection.css";
 
@@ -32,7 +32,12 @@ export type HomePageSectionProps = React.PropsWithChildren<{
 /**
  * Common base component for homepage sections
  */
-export function HomePageSection({title, subtitle, backgroundStyle, children}: HomePageSectionProps): JSX.Element {
+export function HomePageSection({
+	title,
+	subtitle,
+	backgroundStyle,
+	children,
+}: HomePageSectionProps): JSX.Element {
 	return (
 		<div className="homePageSection" style={backgroundStyle}>
 			<div className="homePageSectionInner">

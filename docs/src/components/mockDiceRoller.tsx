@@ -47,18 +47,23 @@ export interface MockDiceRollerSampleProps {
  * This is a temporary implementation until we have a way to embed live Fluid sample apps.
  * In the future, we should remove this and embed the dice roller app directly.
  */
-export function MockDiceRollerSample({style, className}: MockDiceRollerSampleProps): React.ReactElement {
+export function MockDiceRollerSample({
+	style,
+	className,
+}: MockDiceRollerSampleProps): React.ReactElement {
 	const [containerId] = React.useState(Date.now().toString());
 	const [diceValue, setDiceValue] = React.useState(1);
 
 	const rollDice = () => {
 		setDiceValue(Math.floor(Math.random() * 6) + 1);
-	}
+	};
 
-	return <div style={style} className={className}>
-		<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
-		<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
-	</div>
+	return (
+		<div style={style} className={className}>
+			<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
+			<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
+		</div>
+	);
 }
 
 /**
@@ -84,17 +89,27 @@ interface DiceRollerCardProps {
 /**
  * A single dice-roller view within a styled card.
  */
-function DiceRollerCard({diceValue, containerId, onClick}: DiceRollerCardProps): React.ReactElement {
+function DiceRollerCard({
+	diceValue,
+	containerId,
+	onClick,
+}: DiceRollerCardProps): React.ReactElement {
 	const imageUrl = diceImages.get(diceValue)!;
-	return <CardWithBlur>
-		<div className="ffcom-dice-roller-card ">
-			<div className="ffcom-dice-roller-card-nav-bar">
-				{`http://localhost:8080#${containerId}`}
+	return (
+		<CardWithBlur>
+			<div className="ffcom-dice-roller-card ">
+				<div className="ffcom-dice-roller-card-nav-bar">
+					{`http://localhost:8080#${containerId}`}
+				</div>
+				<img
+					className="ffcom-dice-image"
+					src={imageUrl}
+					alt={`Dice showing ${diceValue}`}
+				/>
+				<button className="ffcom-roll-button" onClick={onClick}>
+					<span className="ffcom-roll-button-label">Roll</span>
+				</button>
 			</div>
-			<img className="ffcom-dice-image" src={imageUrl} alt={`Dice showing ${diceValue}`} />
-			<button className="ffcom-roll-button" onClick={onClick}>
-				<span className="ffcom-roll-button-label" >Roll</span>
-			</button>
-		</div>
-	</CardWithBlur>;
+		</CardWithBlur>
+	);
 }

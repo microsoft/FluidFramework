@@ -4,17 +4,16 @@
  */
 
 import React from "react";
-import CodeBlock from '@theme/CodeBlock';
+import CodeBlock from "@theme/CodeBlock";
 
 import { CardWithBlur } from "@site/src/components/card";
-import {MockDiceRollerSample} from "@site/src/components/mockDiceRoller";
-import { HomePageSection } from '@site/src/components/homePageSection';
+import { MockDiceRollerSample } from "@site/src/components/mockDiceRoller";
+import { HomePageSection } from "@site/src/components/homePageSection";
 
 import "@site/src/css/howItWorksSection.css";
-import ServiceSectionBG from '@site/static/images/liveCodeBG.png';
+import ServiceSectionBG from "@site/static/images/liveCodeBG.png";
 
-const code =
-`import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
+const code = `import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const client = new TinyliciousClient();
@@ -110,40 +109,52 @@ const renderDiceRoller = (dice, elem) => {
 export function HowItWorksSection(): React.ReactElement {
 	const backgroundStyle: React.CSSProperties = {
 		background: `linear-gradient(to bottom, rgba(255, 253, 251, 0.8) 10%, rgba(255, 253, 251, 0.8)), url(${ServiceSectionBG})`,
-		backgroundPosition: 'center',
-		backgroundRepeat: 'no-repeat',
-		backgroundSize: 'cover',
+		backgroundPosition: "center",
+		backgroundRepeat: "no-repeat",
+		backgroundSize: "cover",
 	};
-	return <HomePageSection title="See how it works" subtitle="Open Source" backgroundStyle={backgroundStyle}>
-		<div className="howItWorksSectionBody">
-			<div className="howItWorksSectionCodeBody">
-				<div className="howItWorksCodeColumn">
-					<div className="howItWorksColumnLabel">
-						Sample Code
+	return (
+		<HomePageSection
+			title="See how it works"
+			subtitle="Open Source"
+			backgroundStyle={backgroundStyle}
+		>
+			<div className="howItWorksSectionBody">
+				<div className="howItWorksSectionCodeBody">
+					<div className="howItWorksCodeColumn">
+						<div className="howItWorksColumnLabel">Sample Code</div>
+						<CardWithBlur>
+							<div className="howItWorksCodeCardBody">
+								<CodeBlock
+									language="typescript"
+									className="howItWorksCodeCardText"
+									showLineNumbers
+								>
+									{code}
+								</CodeBlock>
+							</div>
+						</CardWithBlur>
 					</div>
-					<CardWithBlur>
-						<div className="howItWorksCodeCardBody">
-							<CodeBlock
-								language="typescript"
-								className="howItWorksCodeCardText"
-								showLineNumbers
-							>
-								{code}
-							</CodeBlock>
-						</div>
-					</CardWithBlur>
+					<div className="howItWorksOutputColumn">
+						<div className="howItWorksColumnLabel">Sample Output</div>
+						<MockDiceRollerSample className="howItWorksDiceCards" />
+					</div>
 				</div>
-				<div className="howItWorksOutputColumn">
-					<div className="howItWorksColumnLabel">
-						Sample Output
-					</div>
-					<MockDiceRollerSample className="howItWorksDiceCards" />
+				<div className="howItWorksTrySamplesRow">
+					<a
+						className="howItWorksTrySamplesLink"
+						href="https://github.com/microsoft/FluidHelloWorld"
+					>
+						Try the dice-roller sample
+					</a>
+					<a
+						className="howItWorksTrySamplesLink"
+						href="https://github.com/Microsoft/FluidExamples"
+					>
+						Try the other samples
+					</a>
 				</div>
 			</div>
-			<div className="howItWorksTrySamplesRow">
-				<a className="howItWorksTrySamplesLink" href="https://github.com/microsoft/FluidHelloWorld">Try the dice-roller sample</a>
-				<a className="howItWorksTrySamplesLink" href="https://github.com/Microsoft/FluidExamples">Try the other samples</a>
-			</div>
-		</div>
-	</HomePageSection>;
+		</HomePageSection>
+	);
 }

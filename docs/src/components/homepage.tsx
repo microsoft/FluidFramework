@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from 'react';
+import React from "react";
 
-import { TitleSection } from '@site/src/components/TitleSection';
+import { TitleSection } from "@site/src/components/TitleSection";
 import { KeyFeaturesSection } from "@site/src/components/keyFeaturesSection";
 import { PartnersSection } from "@site/src/components/partnersSection";
 import { HowItWorksSection } from "@site/src/components/howItWorksSection";
@@ -15,7 +15,7 @@ import "@site/src/css/homepage.css";
 
 export function Homepage(): React.ReactElement {
 	return (
-		<div className='ffcom_homepage'>
+		<div className="ffcom_homepage">
 			<TitleSection />
 			<div className="ffcom_homepage_body">
 				<KeyFeaturesSection />

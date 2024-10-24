@@ -38,11 +38,12 @@ function Footer(): JSX.Element {
 		<footer
 			className={clsx("footer", {
 				"footer--dark": true,
-			})}>
-				<FooterSocialLinks />
-				<FooterCopyright />
-				<FooterPrivacyLinks />
-			</footer>
+			})}
+		>
+			<FooterSocialLinks />
+			<FooterCopyright />
+			<FooterPrivacyLinks />
+		</footer>
 	);
 }
 
@@ -69,10 +70,10 @@ function FooterSocialLinks(): JSX.Element {
 			<LinkItem targetUrl={githubRepoUrl} ariaLabel="Fluid Framework on GitHub.">
 				<GitHubIcon /> fluid-framework
 			</LinkItem>
-			<LinkItem targetUrl={githubDiscussionsUrl} ariaLabel='Ask questions on GitHub.'>
+			<LinkItem targetUrl={githubDiscussionsUrl} ariaLabel="Ask questions on GitHub.">
 				💬 Ask questions
 			</LinkItem>
-			<LinkItem targetUrl={githubReportIssuesUrl} ariaLabel='Report issues on GitHub.'>
+			<LinkItem targetUrl={githubReportIssuesUrl} ariaLabel="Report issues on GitHub.">
 				🐛 Report issues
 			</LinkItem>
 		</div>
@@ -82,9 +83,7 @@ function FooterSocialLinks(): JSX.Element {
 function FooterPrivacyLinks(): JSX.Element {
 	return (
 		<div className="footer-privacy">
-			<LinkItem targetUrl="https://privacy.microsoft.com/privacystatement">
-				Privacy
-			</LinkItem>
+			<LinkItem targetUrl="https://privacy.microsoft.com/privacystatement">Privacy</LinkItem>
 			<LinkItem targetUrl="https://go.microsoft.com/fwlink/?linkid=2259814">
 				Consumer Health Privacy
 			</LinkItem>

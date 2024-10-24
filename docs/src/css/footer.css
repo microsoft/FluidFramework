@@ -1,4 +1,3 @@
-
 .footer {
 	width: 100%;
 	display: flex;
@@ -27,7 +26,13 @@
 
 /* Reorder items on mobile */
 @media all and (max-width: 450px) {
-.footer-social { order: 1 }
-.footer-privacy { order: 2; }
-.footer-copyright { order: 3; }
+	.footer-social {
+		order: 1;
+	}
+	.footer-privacy {
+		order: 2;
+	}
+	.footer-copyright {
+		order: 3;
+	}
 }
