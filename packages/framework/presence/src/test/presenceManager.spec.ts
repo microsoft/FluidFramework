@@ -133,7 +133,7 @@ describe("Presence", () => {
 						newAttendee.getStatus(),
 						SessionClientStatus.Connected,
 						"Attendee has wrong status",
-					)
+					);
 				});
 
 				it("is not announced via attendeeDisconnected when unknown connection is removed", () => {
@@ -144,7 +144,7 @@ describe("Presence", () => {
 
 					// Act & Verify - remove unknown connection id
 					presence.removeClientConnectionId("unknownConnectionId");
-				})
+				});
 
 				describe("disconnects", () => {
 					let disconnectedAttendee: ISessionClient | undefined;
@@ -226,7 +226,11 @@ describe("Presence", () => {
 								const attendee = presence.getAttendee(id);
 								// Verify
 								assert.equal(attendee, newAttendee, "getAttendee returned wrong attendee");
-								assert.equal(attendee.getStatus(), SessionClientStatus.Connected, "getAttendee returned attendee with wrong status");
+								assert.equal(
+									attendee.getStatus(),
+									SessionClientStatus.Connected,
+									"getAttendee returned attendee with wrong status",
+								);
 							});
 
 							it('with status "Disconnected" after disconnect', () => {
@@ -236,7 +240,11 @@ describe("Presence", () => {
 
 								// Verify
 								assert.equal(attendee, newAttendee, "getAttendee returned wrong attendee");
-								assert.equal(attendee.getStatus(), SessionClientStatus.Disconnected, "getAttendee returned attendee with wrong status");
+								assert.equal(
+									attendee.getStatus(),
+									SessionClientStatus.Disconnected,
+									"getAttendee returned attendee with wrong status",
+								);
 							});
 						});
 					}
@@ -249,7 +257,11 @@ describe("Presence", () => {
 							// Act
 							const attendees = presence.getAttendees();
 							assert(attendees.has(newAttendee), "getAttendees set does not contain attendee");
-							assert.equal(newAttendee.getStatus(), SessionClientStatus.Connected, "getAttendees set contains attendee with wrong status");
+							assert.equal(
+								newAttendee.getStatus(),
+								SessionClientStatus.Connected,
+								"getAttendees set contains attendee with wrong status",
+							);
 						});
 						it('with status "Disconnected"', () => {
 							// Setup
@@ -261,7 +273,11 @@ describe("Presence", () => {
 							// Verify
 							const attendees = presence.getAttendees();
 							assert(attendees.has(newAttendee), "getAttendees set does not contain attendee");
-							assert.equal(newAttendee.getStatus(), SessionClientStatus.Disconnected, "getAttendees set contains attendee with wrong status");
+							assert.equal(
+								newAttendee.getStatus(),
+								SessionClientStatus.Disconnected,
+								"getAttendees set contains attendee with wrong status",
+							);
 						});
 					});
 
