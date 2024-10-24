@@ -141,22 +141,20 @@
 
 .howItWorksTrySamplesLink {
 	/* Label */
+	cursor: pointer;
 
 	/* VP4/action/button */
 	font-family: 'Segoe UI';
 	font-style: normal;
 	font-weight: 600;
-	font-size: 15px;
-	line-height: 22px;
-	/* identical to box height, or 147% */
-	text-align: center;
-	letter-spacing: -0.02em;
+	font-size: 14px;
+	line-height: 20px;
 
-	/* reimagine/day/foreground/accent-strong(cta)/normal */
-	/* color: #FFFFFF; */
+	color: #2A446F;
+	border-bottom: 1px solid #2A446F;
+}
 
-	/* Inside auto layout */
-	flex: none;
-	order: 0;
-	flex-grow: 0;
+.howItWorksTrySamplesLink:hover {
+	text-decoration: none;
+	color: inherit;
 }
