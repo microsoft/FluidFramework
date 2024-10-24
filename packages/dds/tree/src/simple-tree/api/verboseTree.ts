@@ -53,7 +53,7 @@ import { getUnhydratedContext } from "../createContext.js";
  * @privateRemarks
  * This can store all possible simple trees,
  * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
- * @beta
+ * @alpha
  */
 export type VerboseTree<THandle = IFluidHandle> =
 	| VerboseTreeNode<THandle>
@@ -83,7 +83,7 @@ export type VerboseTree<THandle = IFluidHandle> =
  * Unlike `JsonableTree`, leaf nodes are not boxed into node objects, and instead have their schema inferred from the value.
  * Additionally, sequence fields can only occur on a node that has a single sequence field (with the empty key)
  * replicating the behavior of simple-tree ArrayNodes.
- * @beta
+ * @alpha
  */
 export interface VerboseTreeNode<THandle = IFluidHandle> {
 	/**
@@ -111,7 +111,7 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 
 /**
  * Options for how to interpret a `VerboseTree<TCustom>` when schema information is available.
- * @beta
+ * @alpha
  */
 export interface ParseOptions<TCustom> {
 	/**

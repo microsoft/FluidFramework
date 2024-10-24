@@ -37,11 +37,6 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
-// @beta
-export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
-    [key: string]: ConciseTree<THandle>;
-};
-
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -74,12 +69,6 @@ export interface ContainerSchema {
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 
-// @beta
-export interface EncodeOptions<TCustom> {
-    readonly useStoredKeys?: boolean;
-    valueConverter(data: IFluidHandle): TCustom;
-}
-
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
@@ -88,14 +77,6 @@ export abstract class ErasedType<out Name = unknown> {
 
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
-
-// @beta
-export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
-
-// @beta
-export type FactoryContentObject = {
-    readonly [P in string]?: InsertableContent;
-};
 
 // @public
 type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
@@ -151,18 +132,6 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
-
-// @beta
-export enum FluidClientVersion {
-    // (undocumented)
-    v2_0 = "v2_0",
-    // (undocumented)
-    v2_1 = "v2_1",
-    // (undocumented)
-    v2_2 = "v2_2",
-    // (undocumented)
-    v2_3 = "v2_3"
-}
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -439,15 +408,6 @@ export type InitialObjects<T extends ContainerSchema> = {
 // @public
 type _InlineTrick = 0;
 
-// @beta
-export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> = TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : InsertableContent;
-
-// @beta
-export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
-
-// @beta
-export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TSchema extends ImplicitFieldSchema ? InsertableTreeFieldFromImplicitField<TSchema> : InsertableContent | undefined;
-
 // @public
 type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property & string]>;
@@ -581,14 +541,6 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
-// @beta
-export type JsonCompatible<TExtra = never> = string | number | boolean | null | JsonCompatible<TExtra>[] | JsonCompatibleObject<TExtra> | TExtra;
-
-// @beta
-export type JsonCompatibleObject<TExtra = never> = {
-    [P in string]?: JsonCompatible<TExtra>;
-};
-
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -662,12 +614,6 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
 
 // @public
 export type Off = () => void;
-
-// @beta
-export interface ParseOptions<TCustom> {
-    readonly useStoredKeys?: boolean;
-    valueConverter(data: VerboseTree<TCustom>): TreeLeafValue | VerboseTreeNode<TCustom>;
-}
 
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
@@ -859,18 +805,6 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 export const TreeBeta: {
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
     clone<TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
-    create<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableTreeFieldFromImplicitField | ConciseTree): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    exportConcise(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): ConciseTree;
-    exportConcise<THandle>(node: TreeNode | TreeLeafValue, options?: EncodeOptions<THandle>): ConciseTree<THandle>;
-    exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
-    exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
-    exportCompressed(tree: TreeNode | TreeLeafValue, options: {
-        oldestCompatibleClient: FluidClientVersion;
-        idCompressor?: IIdCompressor;
-    }): JsonCompatible<IFluidHandle>;
 };
 
 // @public @sealed
@@ -1030,12 +964,6 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 // @public
 export type Unhydrated<T> = T;
 
-// @beta
-export const UnsafeUnknownSchema: unique symbol;
-
-// @beta
-export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
-
 // @public
 export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
     [NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
@@ -1046,17 +974,6 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
 }[T["kind"]]>> = true;
-
-// @beta
-export type VerboseTree<THandle = IFluidHandle> = VerboseTreeNode<THandle> | Exclude<TreeLeafValue, IFluidHandle> | THandle;
-
-// @beta
-export interface VerboseTreeNode<THandle = IFluidHandle> {
-    fields: VerboseTree<THandle>[] | {
-        [key: string]: VerboseTree<THandle>;
-    };
-    type: string;
-}
 
 // @public @sealed
 export interface ViewableTree {

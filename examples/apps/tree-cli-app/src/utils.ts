@@ -21,7 +21,6 @@ import {
 	extractPersistedSchema,
 	FluidClientVersion,
 	independentInitializedView,
-	TreeBeta,
 	typeboxValidator,
 	type ForestOptions,
 	type ICodecOptions,
@@ -29,6 +28,7 @@ import {
 	type VerboseTree,
 	type ViewContent,
 	type ConciseTree,
+	TreeAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
 import { type Static, Type } from "@sinclair/typebox";
@@ -56,24 +56,18 @@ export function loadDocument(source: string | undefined): List {
 
 	switch (parts.at(-2)) {
 		case "concise": {
-			return TreeBeta.importConcise(List, fileData as ConciseTree);
+			return TreeAlpha.importConcise(List, fileData as ConciseTree);
 		}
 		case "verbose": {
-			return TreeBeta.importVerbose(List, fileData as VerboseTree);
+			return TreeAlpha.importVerbose(List, fileData as VerboseTree);
 		}
 		case "verbose-stored": {
-			return TreeBeta.importVerbose(List, fileData as VerboseTree, {
+			return TreeAlpha.importVerbose(List, fileData as VerboseTree, {
 				useStoredKeys: true,
 			});
 		}
 		case "compressed": {
-			const content: ViewContent = {
-				schema: extractPersistedSchema(List),
-				tree: fileData,
-				idCompressor: createIdCompressor(),
-			};
-			const view = independentInitializedView(config, options, content);
-			return view.root;
+			return TreeAlpha.importCompressed(List, fileData, { jsonValidator: typeboxValidator });
 		}
 		case "snapshot": {
 			// TODO: validate
@@ -126,19 +120,19 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 
 	switch (parts.at(-2)) {
 		case "concise": {
-			return TreeBeta.exportConcise(tree) as JsonCompatible;
+			return TreeAlpha.exportConcise(tree) as JsonCompatible;
 		}
 		case "verbose": {
-			return TreeBeta.exportVerbose(tree) as JsonCompatible;
+			return TreeAlpha.exportVerbose(tree) as JsonCompatible;
 		}
 		case "concise-stored": {
-			return TreeBeta.exportConcise(tree, { useStoredKeys: true }) as JsonCompatible;
+			return TreeAlpha.exportConcise(tree, { useStoredKeys: true }) as JsonCompatible;
 		}
 		case "verbose-stored": {
-			return TreeBeta.exportVerbose(tree, { useStoredKeys: true }) as JsonCompatible;
+			return TreeAlpha.exportVerbose(tree, { useStoredKeys: true }) as JsonCompatible;
 		}
 		case "compressed": {
-			return TreeBeta.exportCompressed(tree, {
+			return TreeAlpha.exportCompressed(tree, {
 				...options,
 				oldestCompatibleClient: FluidClientVersion.v2_3,
 			}) as JsonCompatible;
@@ -146,7 +140,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		case "snapshot": {
 			const idCompressor = createIdCompressor(); // TODO: get from tree?
 			const file: File = {
-				tree: TreeBeta.exportCompressed(tree, {
+				tree: TreeAlpha.exportCompressed(tree, {
 					oldestCompatibleClient: FluidClientVersion.v2_3,
 					idCompressor,
 				}),
