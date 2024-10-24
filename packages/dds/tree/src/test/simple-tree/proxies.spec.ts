@@ -8,9 +8,13 @@ import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	type booleanSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeFromSchema,
+	type NodeKind,
 	SchemaFactory,
 	TreeArrayNode,
+	type TreeNodeSchema,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 
@@ -388,6 +392,12 @@ describe("ArrayNode Proxy", () => {
 
 		it("booleans", () => {
 			const root = hydrate(schema, initialTree);
+			const a = root.booleans;
+			type T = InsertableTreeNodeFromImplicitAllowedTypes<
+				TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>
+			>;
+
+			type T2 = InsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
 			root.booleans.insertAtStart(true);
 			root.booleans.insertAt(1, false);
 			root.booleans.insertAtEnd(true);

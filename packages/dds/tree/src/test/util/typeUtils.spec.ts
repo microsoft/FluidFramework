@@ -6,11 +6,14 @@
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
+	requireFalse,
 	requireTrue,
 } from "../../util/index.js";
 import type {
+	IsUnion,
 	RestrictiveReadonlyRecord,
 	RestrictiveStringRecord,
+	UnionToIntersection,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/typeUtils.js";
@@ -63,4 +66,27 @@ import type {
 	type keys = keyof RestrictiveStringRecord<number>;
 	// Ideally the keys would be strings, but they are string | symbol
 	type check7_ = requireTrue<areSafelyAssignable<keys, string | symbol>>;
+}
+
+// Test IsUnion
+{
+	type _check1 = requireTrue<IsUnion<1 | 2>>;
+	type _check2 = requireFalse<IsUnion<number | 1>>;
+	type _check3 = requireTrue<IsUnion<1 | string>>;
+	type _check4 = requireFalse<IsUnion<"hi">>;
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	type _check5 = requireFalse<IsUnion<any>>;
+	type _check6 = requireFalse<IsUnion<unknown>>;
+	type _check7 = requireFalse<IsUnion<never>>;
+}
+
+// Test UnionToIntersection
+{
+	type _check1 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
+	type _check2 = requireTrue<areSafelyAssignable<UnionToIntersection<1 | 2>, never>>;
+	type _check3 = requireTrue<
+		areSafelyAssignable<UnionToIntersection<{ x: 1 | 2 } | { x: 2 | 3 }>, { x: 2 }>
+	>;
+	type _check4 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
 }

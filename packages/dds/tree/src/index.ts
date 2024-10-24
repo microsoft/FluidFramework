@@ -115,6 +115,7 @@ export {
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
 	type TreeNodeSchemaClassUnsafe,
+	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -125,7 +126,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
 	type InsertableField,
@@ -160,6 +160,8 @@ export {
 	type LazyItem,
 	type Unenforced,
 	type ReadonlyArrayNode,
+	type InsertableTreeNodeFromAllowedTypes,
+	type Input,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -180,6 +182,10 @@ export {
 	type RestrictiveReadonlyRecord,
 	type RestrictiveStringRecord,
 	type MakeNominal,
+	type IsUnion,
+	type UnionToIntersection,
+	type UnionToTuple,
+	type PopUnion,
 } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";

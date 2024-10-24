@@ -7,7 +7,8 @@ import type { TreeLeafValue } from "../schemaTypes.js";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 
 /**
- * Schema for a tree node.
+ * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
+ *
  * @typeParam Name - The full (including scope) name/identifier for the schema.
  * @typeParam Kind - Which kind of node this schema is for.
  * @typeParam TNode - API for nodes that use this schema.
@@ -15,6 +16,8 @@ import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
  * @typeParam Info - Data used when defining this schema.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
+ * Use {@link SchemaFactory} to define schema.
+ * Use `Tree.schema(value)` to lookup the schema for a {@link TreeNode} or {@link TreeLeafValue}.
  * @sealed @public
  */
 export type TreeNodeSchema<

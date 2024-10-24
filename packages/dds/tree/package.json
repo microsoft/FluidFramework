@@ -229,13 +229,15 @@
 	"typeValidation": {
 		"broken": {
 			"TypeAlias_InsertableTreeFieldFromImplicitField": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"Interface_TreeArrayNode": {
 				"backCompat": false
 			},
 			"TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"TypeAlias_NodeFromSchema": {
 				"backCompat": false
@@ -245,6 +247,20 @@
 			},
 			"TypeAlias_TreeNodeFromImplicitAllowedTypes": {
 				"backCompat": false
+			},
+			"TypeAlias_InternalTypes_ApplyKind": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAlias_InsertableTreeFieldFromImplicitFieldUnsafe": {
+				"forwardCompat": false
+			},
+			"TypeAlias_InternalTypes_InsertableTreeFieldFromImplicitFieldUnsafe": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"

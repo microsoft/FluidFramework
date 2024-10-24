@@ -99,7 +99,13 @@ export type {
 	RestrictiveStringRecord,
 	_InlineTrick,
 	FlattenKeys,
+	IsUnion,
+	UnionToIntersection,
+	UnionToTuple,
+	PopUnion,
 } from "./typeUtils.js";
+
+export { unsafeArrayToTuple } from "./typeUtils.js";
 
 export {
 	type BrandedKey,

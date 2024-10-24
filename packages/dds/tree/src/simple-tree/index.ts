@@ -40,7 +40,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
@@ -96,6 +95,7 @@ export {
 	type TreeNodeSchemaUnsafe,
 	type AllowedTypesUnsafe,
 	type TreeNodeSchemaNonClassUnsafe,
+	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type TreeViewAlpha,
 } from "./api/index.js";
 export {
@@ -121,6 +121,9 @@ export {
 	type InsertableField,
 	type Insertable,
 	type UnsafeUnknownSchema,
+	type ApplyKindInput,
+	type InsertableTreeNodeFromAllowedTypes,
+	type Input,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
