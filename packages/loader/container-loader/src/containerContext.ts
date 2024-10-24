@@ -30,18 +30,13 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import { pkgVersion } from "./packageVersion.js";
+
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
  */
 export class ContainerContext implements IContainerContext {
-	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
-		/**
-		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
-		 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
-		 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
-		 */
-		["referenceSequenceNumbers", true],
-	]);
+	public readonly pkgVersion = pkgVersion;
 
 	public get clientId(): string | undefined {
 		return this._getClientId();
@@ -109,6 +104,7 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getConnected: () => boolean,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
+		public readonly supportedFeatures: ReadonlyMap<string, unknown>,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 		public readonly snapshotWithContents?: ISnapshot,
