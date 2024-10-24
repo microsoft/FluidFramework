@@ -23,6 +23,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getKernel,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -97,6 +98,12 @@ export {
 	type AllowedTypesUnsafe,
 	type TreeNodeSchemaNonClassUnsafe,
 	type TreeViewAlpha,
+	tryGetSchema,
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	verboseFromCursor,
+	conciseFromCursor,
+	createFromCursor,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

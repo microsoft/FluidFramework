@@ -9,8 +9,6 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { assert } from "@fluidframework/core-utils/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObjectKind,
@@ -18,44 +16,8 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import {
-	buildConfiguredForest,
-	createTreeCheckout,
-	SharedTree as SharedTreeImpl,
-	type ForestOptions,
-	type SharedTreeOptions,
-} from "./shared-tree/index.js";
-import type {
-	ImplicitFieldSchema,
-	ITree,
-	TreeView,
-	TreeViewConfiguration,
-} from "./simple-tree/index.js";
-import { SchematizingSimpleTreeView, defaultSharedTreeOptions } from "./shared-tree/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
-	initializeForest,
-	mapCursorField,
-	RevisionTagCodec,
-	TreeStoredSchemaRepository,
-	type ITreeCursorSynchronous,
-	type RevisionTag,
-} from "./core/index.js";
-import {
-	chunkTree,
-	createNodeKeyManager,
-	defaultChunkPolicy,
-	defaultSchemaPolicy,
-	makeFieldBatchCodec,
-	makeSchemaCodec,
-	TreeCompressionStrategy,
-	type FieldBatchEncodingContext,
-} from "./feature-libraries/index.js";
-import type { JsonCompatible, JsonCompatibleReadOnly } from "./util/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ICodecOptions } from "./codec/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { Format } from "./feature-libraries/schema-index/index.js";
+import { SharedTree as SharedTreeImpl, type SharedTreeOptions } from "./shared-tree/index.js";
+import type { ITree } from "./simple-tree/index.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
@@ -134,136 +96,4 @@ export function configuredSharedTree(
 		}
 	}
 	return createSharedObjectKind<ITree>(ConfiguredFactory);
-}
-
-/**
- * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
- *
- * @remarks
- * Such a view can never experience collaboration or be persisted to to a Fluid Container.
- *
- * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
- * @alpha
- */
-export function independentView<TSchema extends ImplicitFieldSchema>(
-	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
-): TreeView<TSchema> {
-	const idCompressor: IIdCompressor = options.idCompressor ?? createIdCompressor();
-	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
-	const revisionTagCodec = new RevisionTagCodec(idCompressor);
-	const schema = new TreeStoredSchemaRepository();
-	const forest = buildConfiguredForest(
-		options.forest ?? defaultSharedTreeOptions.forest,
-		schema,
-		idCompressor,
-	);
-	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
-		forest,
-		schema,
-	});
-	const out: TreeView<TSchema> = new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		createNodeKeyManager(idCompressor),
-	);
-	return out;
-}
-
-/**
- * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
- *
- * @remarks
- * Such a view can never experience collaboration or be persisted to to a Fluid Container.
- *
- * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
- * @alpha
- */
-export function independentInitializedView<TSchema extends ImplicitFieldSchema>(
-	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions,
-	content: ViewContent,
-): TreeView<TSchema> {
-	const idCompressor: IIdCompressor = content.idCompressor;
-	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
-	const revisionTagCodec = new RevisionTagCodec(idCompressor);
-
-	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
-	const schemaCodec = makeSchemaCodec(options);
-
-	const schema = new TreeStoredSchemaRepository(schemaCodec.decode(content.schema as Format));
-	const forest = buildConfiguredForest(
-		options.forest ?? defaultSharedTreeOptions.forest,
-		schema,
-		idCompressor,
-	);
-
-	const context: FieldBatchEncodingContext = {
-		encodeType: TreeCompressionStrategy.Compressed,
-		idCompressor,
-		originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
-		schema: { schema, policy: defaultSchemaPolicy },
-	};
-
-	const fieldCursors = fieldBatchCodec.decode(content.tree as JsonCompatibleReadOnly, context);
-	assert(fieldCursors.length === 1, "must have exactly 1 field in batch");
-	// Checked above.
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const cursors = fieldCursorToNodesCursors(fieldCursors[0]!);
-
-	initializeForest(forest, cursors, revisionTagCodec, idCompressor, false);
-
-	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
-		forest,
-		schema,
-	});
-	const out: TreeView<TSchema> = new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		createNodeKeyManager(idCompressor),
-	);
-	return out;
-}
-
-function fieldCursorToNodesCursors(
-	fieldCursor: ITreeCursorSynchronous,
-): ITreeCursorSynchronous[] {
-	return mapCursorField(fieldCursor, copyNodeCursor);
-}
-
-/**
- * TODO: avoid needing this, or optimize it.
- */
-function copyNodeCursor(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
-	const copy = chunkTree(cursor, {
-		policy: defaultChunkPolicy,
-		idCompressor: undefined,
-	}).cursor();
-	copy.enterNode(0);
-	return copy;
-}
-
-/**
- * The portion of SharedTree data typically persisted the container.
- * Usable with {@link independentInitializedView} to create a {@link TreeView}
- * without loading a container.
- * @alpha
- */
-export interface ViewContent {
-	/**
-	 * Compressed tree from {@link TreeBeta.exportCompressed}.
-	 * @remarks
-	 * This is an owning reference:
-	 * consumers of this content might modify this data in place (for example when applying edits) to avoid copying.
-	 */
-	readonly tree: JsonCompatible<IFluidHandle>;
-	/**
-	 * Persisted schema from {@link extractPersistedSchema}.
-	 */
-	readonly schema: JsonCompatible;
-	/**
-	 * IIdCompressor which will be used to decompress any compressed identifiers in `tree`
-	 * as well as for any other identifiers added to the view.
-	 */
-	readonly idCompressor: IIdCompressor;
 }

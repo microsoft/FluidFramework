@@ -339,7 +339,7 @@ export function withSchemaValidation<
  * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
  * a more complex scheme may be needed to allow safely opting into incompatible features in those cases:
  * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
- * @beta
+ * @alpha
  */
 export enum FluidClientVersion {
 	v2_0 = "v2_0",

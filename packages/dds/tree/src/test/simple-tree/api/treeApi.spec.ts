@@ -43,6 +43,9 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import { testSimpleTrees } from "../../testTrees.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+import { ajvValidator } from "../../codec/index.js";
+import { TreeAlpha } from "../../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -1124,7 +1127,7 @@ describe("treeNodeApi", () => {
 		describe("test-trees", () => {
 			for (const testCase of testSimpleTrees) {
 				it(testCase.name, () => {
-					const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root());
+					const tree = TreeAlpha.create<UnsafeUnknownSchema>(testCase.schema, testCase.root());
 					const exported = TreeBeta.clone(tree);
 					if (isTreeNode(tree)) {
 						// New instance
@@ -1140,25 +1143,25 @@ describe("treeNodeApi", () => {
 	describe("create", () => {
 		it("undefined", () => {
 			// Valid
-			assert.equal(TreeBeta.create(schema.optional([]), undefined), undefined);
+			assert.equal(TreeAlpha.create(schema.optional([]), undefined), undefined);
 			// Undefined where not allowed
 			assert.throws(
-				() => TreeBeta.create(schema.required([]), undefined as never),
+				() => TreeAlpha.create(schema.required([]), undefined as never),
 				validateUsageError(/undefined for non-optional field/),
 			);
 			// Undefined required, not provided
 			assert.throws(
-				() => TreeBeta.create(schema.optional([]), 1 as unknown as undefined),
+				() => TreeAlpha.create(schema.optional([]), 1 as unknown as undefined),
 				validateUsageError(/incompatible/),
 			);
 		});
 
 		it("union", () => {
 			// Valid
-			assert.equal(TreeBeta.create([schema.null, schema.number], null), null);
+			assert.equal(TreeAlpha.create([schema.null, schema.number], null), null);
 			// invalid
 			assert.throws(
-				() => TreeBeta.create([schema.null, schema.number], "x" as unknown as number),
+				() => TreeAlpha.create([schema.null, schema.number], "x" as unknown as number),
 				validateUsageError(/incompatible/),
 			);
 		});
@@ -1166,7 +1169,7 @@ describe("treeNodeApi", () => {
 		// Integration test object complex objects work (mainly covered by tests elsewhere)
 		it("object", () => {
 			const A = schema.object("A", { x: schema.number });
-			const a = TreeBeta.create(A, { x: 1 });
+			const a = TreeAlpha.create(A, { x: 1 });
 			assert.deepEqual(a, { x: 1 });
 		});
 	});
@@ -1175,32 +1178,32 @@ describe("treeNodeApi", () => {
 		describe("importConcise", () => {
 			it("undefined", () => {
 				// Valid
-				assert.equal(TreeBeta.importConcise(schema.optional([]), undefined), undefined);
+				assert.equal(TreeAlpha.importConcise(schema.optional([]), undefined), undefined);
 				// Undefined where not allowed
 				assert.throws(
-					() => TreeBeta.importConcise(schema.required([]), undefined),
+					() => TreeAlpha.importConcise(schema.required([]), undefined),
 					validateUsageError(/Got undefined for non-optional field/),
 				);
 				// Undefined required, not provided
 				assert.throws(
-					() => TreeBeta.importConcise(schema.optional([]), 1),
+					() => TreeAlpha.importConcise(schema.optional([]), 1),
 					validateUsageError(/incompatible with all of the types allowed/),
 				);
 			});
 
 			it("union", () => {
 				// Valid
-				assert.equal(TreeBeta.importConcise([schema.null, schema.number], null), null);
+				assert.equal(TreeAlpha.importConcise([schema.null, schema.number], null), null);
 				// invalid
 				assert.throws(
-					() => TreeBeta.importConcise([schema.null, schema.number], "x"),
+					() => TreeAlpha.importConcise([schema.null, schema.number], "x"),
 					validateUsageError(/The provided data is incompatible/),
 				);
 			});
 
 			it("object", () => {
 				const A = schema.object("A", { x: schema.number });
-				const a = TreeBeta.importConcise(A, { x: 1 });
+				const a = TreeAlpha.importConcise(A, { x: 1 });
 				assert.deepEqual(a, { x: 1 });
 			});
 		});
@@ -1209,19 +1212,19 @@ describe("treeNodeApi", () => {
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create<UnsafeUnknownSchema>(
+						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
 							testCase.schema,
 							testCase.root(),
 						);
 						assert(tree !== undefined);
-						const exported = TreeBeta.exportConcise(tree);
+						const exported = TreeAlpha.exportConcise(tree);
 						if (testCase.ambiguous) {
 							assert.throws(
-								() => TreeBeta.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
+								() => TreeAlpha.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
 								validateUsageError(/compatible with more than one type/),
 							);
 						} else {
-							const imported = TreeBeta.importConcise<UnsafeUnknownSchema>(
+							const imported = TreeAlpha.importConcise<UnsafeUnknownSchema>(
 								testCase.schema,
 								exported,
 							);
@@ -1236,12 +1239,12 @@ describe("treeNodeApi", () => {
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create<UnsafeUnknownSchema>(
+						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
 							testCase.schema,
 							testCase.root(),
 						);
 						assert(tree !== undefined);
-						const _exported = TreeBeta.exportConcise(tree, { useStoredKeys: true });
+						const _exported = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
 						// We have nothing that imports concise trees with stored keys, so no validation here.
 					});
 				}
@@ -1253,32 +1256,32 @@ describe("treeNodeApi", () => {
 		describe("importVerbose", () => {
 			it("undefined", () => {
 				// Valid
-				assert.equal(TreeBeta.importVerbose(schema.optional([]), undefined), undefined);
+				assert.equal(TreeAlpha.importVerbose(schema.optional([]), undefined), undefined);
 				// Undefined where not allowed
 				assert.throws(
-					() => TreeBeta.importVerbose(schema.required([]), undefined),
+					() => TreeAlpha.importVerbose(schema.required([]), undefined),
 					validateUsageError(/non-optional/),
 				);
 				// Undefined required, not provided
 				assert.throws(
-					() => TreeBeta.importVerbose(schema.optional([]), 1),
+					() => TreeAlpha.importVerbose(schema.optional([]), 1),
 					validateUsageError(/does not conform to schema/),
 				);
 			});
 
 			it("union", () => {
 				// Valid
-				assert.equal(TreeBeta.importVerbose([schema.null, schema.number], null), null);
+				assert.equal(TreeAlpha.importVerbose([schema.null, schema.number], null), null);
 				// invalid
 				assert.throws(
-					() => TreeBeta.importVerbose([schema.null, schema.number], "x"),
+					() => TreeAlpha.importVerbose([schema.null, schema.number], "x"),
 					validateUsageError(/does not conform to schema/),
 				);
 			});
 
 			it("object", () => {
 				const A = schema.object("A", { x: schema.number });
-				const a = TreeBeta.importVerbose(A, { type: A.identifier, fields: { x: 1 } });
+				const a = TreeAlpha.importVerbose(A, { type: A.identifier, fields: { x: 1 } });
 				assert.deepEqual(a, { x: 1 });
 			});
 		});
@@ -1287,13 +1290,13 @@ describe("treeNodeApi", () => {
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create<UnsafeUnknownSchema>(
+						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
 							testCase.schema,
 							testCase.root(),
 						);
 						assert(tree !== undefined);
-						const exported = TreeBeta.exportVerbose(tree);
-						const imported = TreeBeta.importVerbose(testCase.schema, exported);
+						const exported = TreeAlpha.exportVerbose(tree);
+						const imported = TreeAlpha.importVerbose(testCase.schema, exported);
 						expectTreesEqual(tree, imported);
 					});
 				}
@@ -1304,13 +1307,13 @@ describe("treeNodeApi", () => {
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
-						const tree = TreeBeta.create<UnsafeUnknownSchema>(
+						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
 							testCase.schema,
 							testCase.root(),
 						);
 						assert(tree !== undefined);
-						const exported = TreeBeta.exportVerbose(tree, { useStoredKeys: true });
-						const imported = TreeBeta.importVerbose(testCase.schema, exported, {
+						const exported = TreeAlpha.exportVerbose(tree, { useStoredKeys: true });
+						const imported = TreeAlpha.importVerbose(testCase.schema, exported, {
 							useStoredKeys: true,
 						});
 						expectTreesEqual(tree, imported);
@@ -1320,17 +1323,25 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	// TODO: test exportCompressed, add importCompressed
-
 	describe("compressed", () => {
 		describe("roundtrip", () => {
 			for (const testCase of testSimpleTrees) {
-				it(testCase.name, () => {
-					const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root());
-					// const exported = TreeBeta.exportCompressed(tree, X);
-					// const imported = TreeBeta.importCompressed(testCase.schema, exported);
-					// expectTreesEqual(tree, imported);
-				});
+				if (testCase.root() !== undefined) {
+					it(testCase.name, () => {
+						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
+							testCase.schema,
+							testCase.root(),
+						);
+						assert(tree !== undefined);
+						const exported = TreeAlpha.exportCompressed(tree, {
+							oldestCompatibleClient: FluidClientVersion.v2_0,
+						});
+						const imported = TreeAlpha.importCompressed(testCase.schema, exported, {
+							jsonValidator: ajvValidator,
+						});
+						expectTreesEqual(tree, imported);
+					});
+				}
 			}
 		});
 	});
@@ -1349,10 +1360,10 @@ function expectTreesEqual(
 	assert.equal(Tree.schema(a), Tree.schema(b));
 
 	// This should catch all cases, assuming exportVerbose works correctly.
-	assert.deepEqual(TreeBeta.exportVerbose(a), TreeBeta.exportVerbose(b));
+	assert.deepEqual(TreeAlpha.exportVerbose(a), TreeAlpha.exportVerbose(b));
 
 	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
 	// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
 	// but should have no false positives since equal trees always have the same concise tree.
-	assert.deepEqual(TreeBeta.exportConcise(a), TreeBeta.exportConcise(b));
+	assert.deepEqual(TreeAlpha.exportConcise(a), TreeAlpha.exportConcise(b));
 }

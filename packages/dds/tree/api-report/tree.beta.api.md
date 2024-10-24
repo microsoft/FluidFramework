@@ -30,11 +30,6 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
-// @beta
-export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
-    [key: string]: ConciseTree<THandle>;
-};
-
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -110,18 +105,6 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
-
-// @beta
-export enum FluidClientVersion {
-    // (undocumented)
-    v2_0 = "v2_0",
-    // (undocumented)
-    v2_1 = "v2_1",
-    // (undocumented)
-    v2_2 = "v2_2",
-    // (undocumented)
-    v2_3 = "v2_3"
-}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -487,18 +470,6 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 export const TreeBeta: {
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
     clone<TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
-    create<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableTreeFieldFromImplicitField | ConciseTree): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importVerbose<TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    importVerbose<TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-    exportConcise(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): ConciseTree;
-    exportConcise<THandle>(node: TreeNode | TreeLeafValue, options?: EncodeOptions<THandle>): ConciseTree<THandle>;
-    exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
-    exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
-    exportCompressed(tree: TreeNode | TreeLeafValue, options: {
-        oldestCompatibleClient: FluidClientVersion;
-        idCompressor?: IIdCompressor;
-    }): JsonCompatible<IFluidHandle>;
 };
 
 // @public @sealed

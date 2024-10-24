@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { createFromInsertable, SchemaFactory, TreeBeta } from "../../../simple-tree/index.js";
+import { createFromInsertable, SchemaFactory } from "../../../simple-tree/index.js";
+import { TreeAlpha } from "../../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -23,7 +24,7 @@ describe("simple-tree create", () => {
 	});
 
 	it("createFromVerbose", () => {
-		const canvas1 = TreeBeta.importVerbose(Canvas, {
+		const canvas1 = TreeAlpha.importVerbose(Canvas, {
 			type: Canvas.identifier,
 			fields: { stuff: { type: NodeList.identifier, fields: [] } },
 		});

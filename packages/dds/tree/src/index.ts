@@ -60,6 +60,10 @@ export {
 	getBranch,
 	type TreeBranch,
 	type TreeBranchFork,
+	independentInitializedView,
+	type ViewContent,
+	TreeAlpha,
+	independentView,
 } from "./shared-tree/index.js";
 
 export {
@@ -169,8 +173,6 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
-	independentInitializedView,
-	type ViewContent,
 } from "./treeFactory.js";
 
 export {

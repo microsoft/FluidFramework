@@ -67,6 +67,11 @@ export interface ViewableTree {
 	viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
+
+	// TODO:
+	// Add stored key versions of Tree.exportVerbose, Tree.exportConcise and Tree.exportCompressed here.
+	// Add exportSimpleSchema and exportJsonSchema which constraints the concise format.
+	// Ensure schema exporting APIs here aline and reference APis for exporting view schema to the same formats (which should include stored vs property key choice)
 }
 
 /**
@@ -242,7 +247,7 @@ export class TreeViewConfiguration<
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
-			throw new UsageError(`Ambigious schema found:\n${[...deduplicated].join("\n")}`);
+			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
