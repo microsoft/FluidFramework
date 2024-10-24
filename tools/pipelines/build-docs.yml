@@ -106,7 +106,9 @@ resources:
           include:
             - refs/heads/test/michaelzhen-1.0
   repositories:
-    - repository: ff_internal
+    - repository: FluidFrameworkRepo
+      name: ff_internal
+      type: git
       ref: refs/heads/test/michaelzhen
 
 stages:
@@ -117,7 +119,7 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
-        - checkout: ff_internal
+        - checkout: FluidFrameworkRepo
         - template: /tools/pipelines/templates/include-install-build-tools.yml
           parameters:
             buildDirectory: $(Build.SourcesDirectory)
