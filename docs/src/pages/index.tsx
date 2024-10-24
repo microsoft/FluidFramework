@@ -9,9 +9,6 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 import { Homepage } from "@site/src/components/homepage";
 
-// TODO: ideally the sections should be aligned horizontally.
-// Currently, each is centered and scales independently.
-
 /**
  * The website homepage.
  */
