@@ -41,7 +41,9 @@ describe("Health Check Endpoints", () => {
 				setupApp(useReadinessCheck);
 			});
 			it("should return 200 for /startup when startup is complete", async () => {
-				startupCheck.setReady();
+				if (startupCheck.setReady) {
+					startupCheck.setReady();
+				}
 				const req = supertest.get("/startup");
 				await req.expect(200);
 			});

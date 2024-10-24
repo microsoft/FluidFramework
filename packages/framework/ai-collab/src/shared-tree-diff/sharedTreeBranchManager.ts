@@ -6,6 +6,7 @@
 import type {
 	ImplicitFieldSchema,
 	TreeArrayNode,
+	TreeMapNode,
 	TreeView,
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
@@ -38,8 +39,8 @@ export class SharedTreeBranchManager {
 	}
 
 	/**
-	 * Compares the differences between either two objects or a TreeeNode and a plain object.
-	 * TODO: Should allow comparing two tree nodes? Should we allowe comparing two plain objects? Or just leave as tree node vs object?
+	 * Compares the differences between either two objects or a TreeNode and a plain object.
+	 * TODO: Should allow comparing two tree nodes? Should we allow comparing two plain objects? Or just leave as tree node vs object?
 	 */
 	public compare(
 		obj: Record<string, unknown> | TreeArrayNode,
@@ -103,7 +104,7 @@ export class SharedTreeBranchManager {
 
 		console.log("traveling to absolute path from root:", absolutePathToObjectNode);
 		const newBranchTargetNode = sharedTreeTraverse(
-			forkView.root as Record<string, unknown> | unknown[],
+			forkView.root as unknown as TreeMapNode | TreeArrayNode | Record<string, unknown>,
 			absolutePathToObjectNode,
 		) as Record<string, unknown> | TreeArrayNode;
 
@@ -140,7 +141,7 @@ export class SharedTreeBranchManager {
 		const forkBranch = originalBranch.branch();
 		const forkView = forkBranch.viewWith(treeViewConfiguration);
 		const newBranchTargetNode = sharedTreeTraverse(
-			forkView.root as Record<string, unknown> | unknown[],
+			forkView.root as TreeMapNode | TreeArrayNode | Record<string, unknown>,
 			absolutePathToObjectNode,
 		) as Record<string, unknown> | TreeArrayNode;
 		// this.mergeDiffs(differences, newBranchTargetNode);
@@ -183,7 +184,10 @@ export class SharedTreeBranchManager {
 			switch (diff.type) {
 				case "CHANGE":
 				case "CREATE": {
-					targetObject.set(diff.path[diff.path.length - 1] as string, diff.value);
+					// This code is doing non-schema aware editing, which is not a supported feature of this API.
+					// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+					targetObject.set(diff.path[diff.path.length - 1] as string, diff.value as any);
 					return true;
 				}
 				case "REMOVE": {
@@ -201,10 +205,16 @@ export class SharedTreeBranchManager {
 				case "CHANGE":
 				case "CREATE": {
 					if (isTargetIndexValid) {
-						targetObject.insertAt(targetIndex, diff.value);
+						// This code is doing non-schema aware editing, which is not a supported feature of this API.
+						// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+						targetObject.insertAt(targetIndex, diff.value as any);
 						return true;
 					} else {
-						targetObject.insertAtEnd(diff.value);
+						// This code is doing non-schema aware editing, which is not a supported feature of this API.
+						// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+						targetObject.insertAtEnd(diff.value as any);
 						console.warn(
 							"CREATE diff specified an invalid index, defaulting to pushing to end of array",
 						);
