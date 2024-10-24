@@ -100,13 +100,13 @@ resources:
   pipelines:
     - pipeline: build-tools
       source: Build - build-tools
-      branch: refs/heads/test/michaelzhen
+      # branch: refs/heads/test/michaelzhen-1.0
       trigger:
         branches:
           include:
             - refs/heads/test/michaelzhen-1.0
   repositories:
-    - repository: self
+    - repository: ff_internal
       ref: refs/heads/test/michaelzhen
 
 stages:
@@ -117,7 +117,7 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
-        - checkout: self
+        - checkout: ff_internal
         - template: /tools/pipelines/templates/include-install-build-tools.yml
           parameters:
             buildDirectory: $(Build.SourcesDirectory)
