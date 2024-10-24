@@ -60,7 +60,7 @@ describe("loadFluidRepo", () => {
 		it("releaseGroupDependencies", async () => {
 			const repo = loadFluidRepo(testRepoRoot);
 			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- test data (validated by another test) guarantees this has a value
 			const actualDependencies = mainReleaseGroup!.releaseGroupDependencies;
 			const names = actualDependencies.map((r) => r.name as string);
 
