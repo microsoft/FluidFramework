@@ -101,7 +101,10 @@ resources:
     - pipeline: build-tools
       source: Build - build-tools
       branch: refs/heads/test/michaelzhen-1.0
-      trigger: true
+      trigger:
+        branches:
+          include:
+            - test/michaelzhen-1.0
   repositories:
     - repository: self
       ref: refs/heads/test/michaelzhen
