@@ -17,6 +17,7 @@ import {
 	type StableNodeKey,
 } from "../../../feature-libraries/index.js";
 import {
+	isTreeNode,
 	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
@@ -1119,6 +1120,20 @@ describe("treeNodeApi", () => {
 			const clonedMetadata = TreeBeta.clone<typeof schema.string>(topLeftPoint.metadata);
 			assert.equal(clonedMetadata, topLeftPoint.metadata, "String not cloned properly");
 		});
+
+		describe("test-trees", () => {
+			for (const testCase of testSimpleTrees) {
+				it(testCase.name, () => {
+					const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root());
+					const exported = TreeBeta.clone(tree);
+					if (isTreeNode(tree)) {
+						// New instance
+						assert.notEqual(tree, exported);
+					}
+					expectTreesEqual(tree, exported);
+				});
+			}
+		});
 	});
 
 	// create is mostly the same as node constructors which have their own tests, so just cover the new cases (optional and top level unions) here.
@@ -1305,7 +1320,20 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	// TODO: test exportCompressed
+	// TODO: test exportCompressed, add importCompressed
+
+	describe("compressed", () => {
+		describe("roundtrip", () => {
+			for (const testCase of testSimpleTrees) {
+				it(testCase.name, () => {
+					const tree = TreeBeta.create<UnsafeUnknownSchema>(testCase.schema, testCase.root());
+					// const exported = TreeBeta.exportCompressed(tree, X);
+					// const imported = TreeBeta.importCompressed(testCase.schema, exported);
+					// expectTreesEqual(tree, imported);
+				});
+			}
+		});
+	});
 });
 
 function expectTreesEqual(

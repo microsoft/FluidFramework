@@ -319,33 +319,16 @@ export const TreeBeta: {
 	clone<TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		/* The only non-TreeNode cases are {@link Value} (for an empty optional field) which can be returned as is. */
+		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */
 		if (!isTreeNode(node)) {
 			return node;
 		}
 
 		const kernel = getKernel(node);
-		/*
-		 * For unhydrated nodes, we can create a cursor by calling `cursorFromInsertable` because the node
-		 * hasn't been inserted yet. We can then create a new node from the cursor.
-		 */
-		if (!kernel.isHydrated()) {
-			return createFromCursor(
-				kernel.schema,
-				cursorFromInsertable<UnsafeUnknownSchema>(kernel.schema, node),
-			) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-		}
-
-		// For hydrated nodes, create a new cursor in the forest and then create a new node from the cursor.
-		const forest = kernel.context.flexContext.checkout.forest;
-		const cursor = forest.allocateCursor("tree.clone");
-		forest.moveCursorToPath(kernel.anchorNode, cursor);
-		const clonedNode = createFromCursor(
-			kernel.schema,
-			cursor as ITreeCursorSynchronous,
-		) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-		cursor.free();
-		return clonedNode;
+		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+		return createFromCursor(kernel.schema, cursor as ITreeCursorSynchronous) as Unhydrated<
+			TreeFieldFromImplicitField<TSchema>
+		>;
 	},
 
 	create: createFromInsertable,
