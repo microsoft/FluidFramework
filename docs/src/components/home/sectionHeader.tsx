@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import "@site/src/css/sectionHeader.css";
+import "@site/src/css/home/sectionHeader.css";
 
 /**
  * {@link SectionHeader} component props.

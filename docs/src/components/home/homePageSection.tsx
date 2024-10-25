@@ -5,9 +5,9 @@
 
 import React from "react";
 
-import { SectionHeader, type SectionHeaderProps } from "@site/src/components/sectionHeader";
+import { SectionHeader, type SectionHeaderProps } from "./sectionHeader";
 
-import "@site/src/css/homePageSection.css";
+import "@site/src/css/home/homePageSection.css";
 
 /**
  * {@link HomePageSection} component props.

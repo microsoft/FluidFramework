@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import "@site/src/css/keyFeatureCard.css";
+import "@site/src/css/home/keyFeatureCard.css";
 
 /**
  * {@link KeyFeatureCard} component props.

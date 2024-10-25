@@ -7,13 +7,13 @@ import React from "react";
 
 import CodeBlock from "@theme/CodeBlock";
 
-import { CardWithBlur } from "@site/src/components/card";
-import { MockDiceRollerSample } from "@site/src/components/mockDiceRoller";
-import { HomePageSection } from "@site/src/components/homePageSection";
+import { CardWithBlur } from "../card";
+import { MockDiceRollerSample } from "../mockDiceRoller";
+import { HomePageSection } from "./homePageSection";
 
 import ServiceSectionBG from "@site/static/assets/home/how-it-works-section-background.png";
 
-import "@site/src/css/howItWorksSection.css";
+import "@site/src/css/home/howItWorksSection.css";
 
 const code = `import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";

@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { HomePageSection } from "@site/src/components/homePageSection";
+import { HomePageSection } from "./homePageSection";
 
 import AutodeskLogo from "@site/static/assets/autodesk-logo.png";
 import HexagonLogo from "@site/static/assets/hexagon-logo.png";
@@ -14,7 +14,7 @@ import TeamsLogo from "@site/static/assets/teams-logo.png";
 import PowerAppsLogo from "@site/static/assets/power-apps-logo.png";
 import WhiteboardLogo from "@site/static/assets/whiteboard-logo.png";
 
-import "@site/src/css/partnersSection.css";
+import "@site/src/css/home/partnersSection.css";
 
 const bodyTextPlaceholder =
 	"This is placeholder text. It should be replaced with real contents before this site goes live. Repeat: this is only placeholder text. In the event of real text, you would not be reading this text.";

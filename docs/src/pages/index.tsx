@@ -7,7 +7,7 @@ import React from "react";
 import Layout from "@theme/Layout";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
-import { Homepage } from "@site/src/components/homepage";
+import { Homepage } from "@site/src/components/home";
 
 /**
  * The website homepage.

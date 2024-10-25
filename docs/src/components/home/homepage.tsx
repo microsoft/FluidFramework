@@ -5,13 +5,13 @@
 
 import React from "react";
 
-import { HomePageBanner } from "@site/src/components/homePageBanner";
-import { KeyFeaturesSection } from "@site/src/components/keyFeaturesSection";
-import { PartnersSection } from "@site/src/components/partnersSection";
-import { HowItWorksSection } from "@site/src/components/howItWorksSection";
-import { ServiceSection } from "@site/src/components/serviceSection";
+import { HomePageBanner } from "./homePageBanner";
+import { KeyFeaturesSection } from "./keyFeaturesSection";
+import { PartnersSection } from "./partnersSection";
+import { HowItWorksSection } from "./howItWorksSection";
+import { ServiceSection } from "./serviceSection";
 
-import "@site/src/css/homepage.css";
+import "@site/src/css/home/homepage.css";
 
 /**
  * Root homepage component.

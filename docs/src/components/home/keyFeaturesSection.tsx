@@ -5,14 +5,14 @@
 
 import React from "react";
 
-import { HomePageSection } from "@site/src/components/homePageSection";
-import { KeyFeatureCard } from "@site/src/components/keyFeatureCard";
+import { HomePageSection } from "./homePageSection";
+import { KeyFeatureCard } from "./keyFeatureCard";
 
 import EasyToUseImage from "@site/static/assets/home/easy-to-use.png";
 import OpenSourecImage from "@site/static/assets/home/open-source.png";
 import PerformanceImage from "@site/static/assets/home/performance.png";
 
-import "@site/src/css/keyFeaturesSection.css";
+import "@site/src/css/home/keyFeaturesSection.css";
 
 const easyToUseText =
 	"Transform your collaborative experience with our developer friendly framework - where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software.";

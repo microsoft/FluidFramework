@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import "@site/src/css/homePageBanner.css";
+import "@site/src/css/home/homePageBanner.css";
 
 /**
  * Homepage title component.
