@@ -31,17 +31,28 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
 export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSessionId" };
 
 /**
- * The connection status of the {@link ISessionClient}.
+ * An object containing the possible connection statuses of an {@link ISessionClient}.
  *
  * @alpha
  */
 export const SessionClientStatus = {
+	/**
+	 * The session client is connected to the delta stream.
+	 * Can send to and receive updates from other session clients.
+	 */
 	Connected: "Connected",
+	/**
+	 * The session client is not connected to the delta stream.
+	 * Cannot send to or receive updates from other session clients.
+	 */
 	Disconnected: "Disconnected",
 } as const;
 
 /**
- * Type for the connection status of the {@link ISessionClient}.
+ * Represents the connection status of an {@link ISessionClient}.
+ *
+ * This type can be either `'Connected'` or `'Disconnected'`, indicating whether
+ * the session client is currently able to send and receive updates.
  *
  * @alpha
  */
