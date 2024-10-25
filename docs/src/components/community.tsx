@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";

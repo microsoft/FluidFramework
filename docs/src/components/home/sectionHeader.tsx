@@ -29,7 +29,11 @@ export function SectionHeader({ title, subtitle }: SectionHeaderProps): JSX.Elem
 	return (
 		<div className="ffcom-section-header">
 			<div className="ffcom-section-header-inner">
-				{subtitle && <p className="ffcom-section-header-subtitle">{subtitle}</p>}
+				{subtitle === undefined ? (
+					<></>
+				) : (
+					<p className="ffcom-section-header-subtitle">{subtitle}</p>
+				)}
 				<p className="ffcom-section-header-title">{title}</p>
 			</div>
 		</div>

@@ -9,7 +9,6 @@ import XIcon from "@theme/Icon/Socials/X";
 import clsx from "clsx";
 import React from "react";
 
-
 import FooterLogo from "./Logo";
 
 import "@site/src/css/footer.css";

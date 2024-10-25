@@ -25,7 +25,8 @@ export function Banner(): React.ReactElement {
 	);
 }
 
-const titleBoxDescriptionText = "Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications."
+const titleBoxDescriptionText =
+	"Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.";
 
 function TitleBox(): React.ReactElement {
 	return (
