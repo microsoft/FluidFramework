@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import React from "react";
+
 import { HomePageSection } from "@site/src/components/homePageSection";
 
 import EasyToUseImage from "@site/static/assets/home/easy-to-use.png";
