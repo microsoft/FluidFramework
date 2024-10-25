@@ -1,0 +1,3 @@
+# Ignore all files. This package only uses biome for formatting.
+**/*.*
+*/*

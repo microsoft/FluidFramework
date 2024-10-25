@@ -45,13 +45,14 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
-		public startupCheck: StartupCheck,
+		public startupCheck: IReadinessCheck,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
 		public readinessCheck?: IReadinessCheck,
+		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -398,6 +399,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
 			customizations?.readinessCheck,
+			customizations?.fluidAccessTokenGenerator,
 		);
 	}
 }
@@ -428,6 +430,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
+			resources.fluidAccessTokenGenerator,
 		);
 	}
 }
