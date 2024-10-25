@@ -2841,7 +2841,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("ignores in-flight signals on disconnect/reconnect", () => {
+			it("ignores signals sent before disconnect and resets stats on reconnect", () => {
 				// Define resubmit and setConnectionState on channel collection
 				// This is needed to submit test data store ops
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -2898,6 +2898,53 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							sent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
+							lost: 0,
+							outOfOrder: 0,
+							reconnectCount: 1,
+						},
+					],
+					"SignalLatency telemetry should be logged with correct reconnect count",
+					/* inlineDetailsProp = */ true,
+				);
+			});
+
+			it("ignores signals sent while disconnected and resets stats on reconnect", () => {
+				// SETUP - define resubmit and setConnectionState on channel collection.
+				// This is needed to submit test data store ops. Once defined, submit a test data store op
+				// so that message is queued in PendingStateManager and reconnect count is increased.
+				// Send and process an initial signal to prime the system.
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				(containerRuntime as any).channelCollection = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+						submitDataStoreOp(
+							containerRuntime,
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} as ChannelCollection;
+				submitDataStoreOp(containerRuntime, "1", "test");
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				// ACT - Disconnect client and send signals while disconnected.
+				// Reconnect client and continue sending signals.
+				changeConnectionState(containerRuntime, false, mockClientId);
+				sendSignals(150);
+				dropSignals(150);
+				changeConnectionState(containerRuntime, true, mockClientId);
+				sendSignals(100);
+				processSubmittedSignals(100);
+
+				// VERIFY - SignalLatency telemetry should be logged with correct reconnect count
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							sent: 50, // 201 (tracked latency signal) - 152 (earliest sent signal on reconnect) + 1 = 50
 							lost: 0,
 							outOfOrder: 0,
 							reconnectCount: 1,
