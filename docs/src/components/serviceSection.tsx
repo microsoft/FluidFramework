@@ -8,6 +8,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+
 import { HomePageSection } from "@site/src/components/homePageSection";
 
 import ServiceSectionBG from "@site/static/assets/home/services-section-background.png";
