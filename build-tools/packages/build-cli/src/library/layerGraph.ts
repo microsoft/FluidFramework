@@ -36,7 +36,6 @@ interface ILayerInfoFile {
 }
 
 class BaseNode {
-	// eslint-disable-next-line no-useless-constructor
 	constructor(public readonly name: string) {}
 
 	public get dotName(): string {

@@ -1,5 +1,21 @@
 # Fluid Framework Developer Tools
 
+# Unpublished
+
+<!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
+
+- Update icon assets with new Fluid logo.
+
+# 0.1.2
+
+- Fixes for bugs revealed in accessibility review
+
+# 0.1.1
+
+- Accessibility and bug fixes for various components
+- Visual and styling improvements
+- Added telemetry opt-in modal
+
 # 0.1.0
 
 -   Updates the Shared Tree Visualizer.

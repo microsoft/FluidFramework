@@ -6,13 +6,15 @@
 import child_process from "child_process";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
 
-import { FileLogger } from "./FileLogger.js";
 import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
-import { initialize, safeExit } from "./utils.js";
+import { initialize } from "./utils.js";
 
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
@@ -32,31 +34,44 @@ export async function stressTest(
 		createTestId: boolean;
 		testUsers: TestUsers | undefined;
 		profileName: string;
+		logger: ITelemetryLoggerExt;
+		outputDir: string;
 	},
 ) {
-	const url = await (args.testId !== undefined && !args.createTestId
+	const {
+		testId,
+		debug,
+		verbose,
+		seed,
+		enableMetrics,
+		createTestId,
+		testUsers,
+		profileName,
+		logger,
+		outputDir,
+	} = args;
+
+	const url = await (testId !== undefined && !createTestId
 		? // If testId is provided and createTestId is false, then load the file;
-			testDriver.createContainerUrl(args.testId)
+			testDriver.createContainerUrl(testId)
 		: // If no testId is provided, (or) if testId is provided but createTestId is true, then
 			// create a file;
 			// In case testId is provided, name of the file to be created is taken as the testId provided
-			initialize(testDriver, args.seed, profile, args.verbose, args.profileName, args.testId));
+			initialize(testDriver, seed, profile, verbose, logger, testId));
+
+	logger.sendTelemetryEvent({
+		eventName: "ResolveStressTestDocument",
+		url: { value: url, tag: TelemetryDataTag.UserData },
+	});
 
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
 	);
 	const startTime = Date.now();
-	console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
-	console.log(`Selected test profile: ${args.profileName}`);
+	console.log(`Connecting to ${testId !== undefined ? "existing" : "new"}`);
+	console.log(`Selected test profile: ${profileName}`);
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 	console.log(`Start time: ${startTime} ms\n`);
-
-	const logger = await FileLogger.createLogger({
-		driverType: testDriver.type,
-		driverEndpointName: testDriver.endpointName,
-		profile: args.profileName,
-		runId: undefined,
-	});
 
 	const runnerArgs: string[][] = [];
 	for (let i = 0; i < profile.numClients; i++) {
@@ -65,22 +80,24 @@ export async function stressTest(
 			"--driver",
 			testDriver.type,
 			"--profile",
-			args.profileName,
+			profileName,
 			"--runId",
 			i.toString(),
 			"--url",
 			url,
 			"--seed",
-			`0x${args.seed.toString(16)}`,
+			`0x${seed.toString(16)}`,
+			"--outputDir",
+			outputDir,
 		];
-		if (args.debug) {
+		if (debug) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
 			childArgs.unshift(`--inspect-brk=${debugPort}`);
 		}
-		if (args.verbose) {
+		if (verbose) {
 			childArgs.push("--verbose");
 		}
-		if (args.enableMetrics) {
+		if (enableMetrics) {
 			childArgs.push("--enableOpsMetrics");
 		}
 
@@ -92,7 +109,7 @@ export async function stressTest(
 	}
 	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
 
-	if (args.enableMetrics) {
+	if (enableMetrics) {
 		setInterval(() => {
 			ps.lookup(
 				{
@@ -113,42 +130,36 @@ export async function stressTest(
 		}, 20000);
 	}
 
-	try {
-		await Promise.all(
-			runnerArgs.map(async (childArgs, index) => {
-				const testUser =
-					args.testUsers !== undefined
-						? args.testUsers[index % args.testUsers.length]
-						: undefined;
-				const username = testUser !== undefined ? testUser.username : undefined;
-				const password = testUser !== undefined ? testUser.password : undefined;
-				const envVar = { ...process.env };
-				if (username !== undefined && password !== undefined) {
-					if (testDriver.endpointName === "odsp") {
-						envVar.login__odsp__test__accounts = createLoginEnv(username, password);
-					} else if (testDriver.endpointName === "odsp-df") {
-						envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
-					}
+	await Promise.all(
+		runnerArgs.map(async (childArgs, index) => {
+			const testUser =
+				testUsers !== undefined ? testUsers[index % testUsers.length] : undefined;
+			const username = testUser !== undefined ? testUser.username : undefined;
+			const password = testUser !== undefined ? testUser.password : undefined;
+			const envVar = { ...process.env };
+			if (username !== undefined && password !== undefined) {
+				if (testDriver.endpointName === "odsp") {
+					envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+				} else if (testDriver.endpointName === "odsp-df") {
+					envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
 				}
-				const runnerProcess = child_process.spawn("node", childArgs, {
-					stdio: "inherit",
-					env: envVar,
-				});
+			}
+			const runnerProcess = child_process.spawn("node", childArgs, {
+				stdio: "inherit",
+				env: envVar,
+			});
 
-				setupTelemetry(runnerProcess, logger, index, username);
-				if (args.enableMetrics) {
-					setupDataTelemetry(runnerProcess, logger, index, username);
-				}
+			setupTelemetry(runnerProcess, logger, index, username);
+			if (enableMetrics) {
+				setupDataTelemetry(runnerProcess, logger, index, username);
+			}
 
-				return new Promise((resolve) => runnerProcess.once("close", resolve));
-			}),
-		);
-	} finally {
-		const endTime = Date.now();
-		console.log(`End time: ${endTime} ms\n`);
-		console.log(`Total run time: ${(endTime - startTime) / 1000}s\n`);
-		await safeExit(0, url);
-	}
+			return new Promise((resolve) => runnerProcess.once("close", resolve));
+		}),
+	);
+	const endTime = Date.now();
+	console.log(`End time: ${endTime} ms\n`);
+	console.log(`Total run time: ${(endTime - startTime) / 1000}s\n`);
 }
 
 /**

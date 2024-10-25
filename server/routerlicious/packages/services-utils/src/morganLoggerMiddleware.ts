@@ -12,7 +12,6 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { getCorrelationIdWithHttpFallback } from "./asyncLocalStorage";
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -117,7 +116,10 @@ export function jsonMorganLoggerMiddleware(
 				[HttpProperties.requestContentLength]: tokens.req(req, res, "content-length"),
 				[HttpProperties.responseContentLength]: tokens.res(req, res, "content-length"),
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),
-				[BaseTelemetryProperties.correlationId]: getCorrelationIdWithHttpFallback(req, res),
+				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(
+					req,
+					res,
+				).correlationId,
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
 				[HttpProperties.retryCount]: Number.parseInt(

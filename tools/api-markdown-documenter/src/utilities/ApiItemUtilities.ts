@@ -12,9 +12,10 @@ import {
 	type ApiFunction,
 	type ApiIndexSignature,
 	type ApiItem,
-	type ApiItemKind,
+	ApiItemKind,
 	type ApiMethod,
 	type ApiMethodSignature,
+	type ApiModel,
 	type ApiNamespace,
 	ApiOptionalMixin,
 	type ApiPackage,
@@ -23,9 +24,15 @@ import {
 	ApiReleaseTagMixin,
 	ApiStaticMixin,
 	type Excerpt,
+	type IResolveDeclarationReferenceResult,
 	type ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { type DocSection, StandardTags, TSDocTagDefinition } from "@microsoft/tsdoc";
+import {
+	type DocDeclarationReference,
+	type DocSection,
+	StandardTags,
+	TSDocTagDefinition,
+} from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import { type Logger } from "../Logging.js";
 
@@ -204,6 +211,25 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
 }
 
 /**
+ * Checks if the provided API item or any ancestors is tagged with the specified
+ * {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tag}.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must be a valid TSDoc tag (including starting with `@`).
+ *
+ * @throws If the provided TSDoc tag name is invalid.
+ *
+ * @public
+ */
+export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
+	return (
+		hasModifierTag(apiItem, tagName) ||
+		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
+	);
+}
+
+/**
  * Gets all custom {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags | block comments} associated with the provided API item.
  * @returns A mapping from tag name to the associated block contents.
  *
@@ -260,7 +286,6 @@ function getCustomBlockSectionsForMultiInstanceTags(
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
  * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
- * @param config - See {@link ApiItemTransformationConfiguration}
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
@@ -521,4 +546,47 @@ export function getSafeFilenameForName(apiItemName: string): string {
 export function getSingleLineExcerptText(excerpt: Excerpt): string {
 	// Regex replaces line breaks with spaces to ensure everything ends up on a single line.
 	return excerpt.text.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Resolves a symbolic link and creates a URL to the target.
+ *
+ * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
+ * @param codeDestination - The link reference target.
+ * @param apiModel - The API model to which the API item and destination belong.
+ *
+ * @throws If the reference cannot be resolved.
+ */
+export function resolveSymbolicReference(
+	contextApiItem: ApiItem,
+	codeDestination: DocDeclarationReference,
+	apiModel: ApiModel,
+): ApiItem {
+	const resolvedReference: IResolveDeclarationReferenceResult =
+		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
+
+	const resolvedApiItem = resolvedReference.resolvedApiItem;
+	if (resolvedApiItem === undefined) {
+		throw new Error(
+			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
+				contextApiItem,
+			)}": ${resolvedReference.errorMessage}`,
+		);
+	}
+
+	return resolvedApiItem;
+}
+
+/**
+ * Creates a scoped member specifier for the provided API item, including the name of the package the item belongs to
+ * if applicable.
+ *
+ * Intended for use in diagnostic messaging.
+ */
+export function getScopedMemberNameForDiagnostics(apiItem: ApiItem): string {
+	return apiItem.kind === ApiItemKind.Package
+		? (apiItem as ApiPackage).displayName
+		: `${
+				apiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
+		  }#${apiItem.getScopedNameWithinPackage()}`;
 }

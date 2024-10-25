@@ -13,7 +13,6 @@ import {
 	rootFieldKey,
 	type ChangeFamilyEditor,
 } from "../../../core/index.js";
-import { singleJsonCursor } from "../../../domains/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
 import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
@@ -28,6 +27,7 @@ import {
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils.js";
+import { singleJsonCursor } from "../../json/index.js";
 
 describe("EditManager - Bench", () => {
 	interface Scenario {
@@ -276,7 +276,7 @@ describe("EditManager - Bench", () => {
 							const sequencedEdits: Commit<TestChange>[] = [];
 							for (let iChange = 0; iChange < count; iChange++) {
 								const revision = mintRevisionTag();
-								manager.localBranch.apply(TestChange.emptyChange, revision);
+								manager.localBranch.apply({ change: TestChange.emptyChange, revision });
 								sequencedEdits.push({
 									change: TestChange.emptyChange,
 									revision,

@@ -99,11 +99,11 @@ export class DetachedFieldIndex {
 		return clone;
 	}
 
-	public *entries(): Generator<
-		{ root: ForestRootId; latestRelevantRevision?: RevisionTag } & {
-			id: Delta.DetachedNodeId;
-		}
-	> {
+	public *entries(): Generator<{
+		root: ForestRootId;
+		latestRelevantRevision?: RevisionTag;
+		id: Delta.DetachedNodeId;
+	}> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
 			if (major !== undefined) {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
@@ -150,7 +150,15 @@ export class DetachedFieldIndex {
 					});
 				}
 				this.latestRelevantRevisionToFields.delete(current);
-				this.latestRelevantRevisionToFields.set(updated, inner);
+
+				const updatedInner = this.latestRelevantRevisionToFields.get(updated);
+				if (updatedInner !== undefined) {
+					for (const [root, nodeId] of inner) {
+						updatedInner.set(root, nodeId);
+					}
+				} else {
+					this.latestRelevantRevisionToFields.set(updated, inner);
+				}
 			}
 		}
 
@@ -331,6 +339,7 @@ export class DetachedFieldIndex {
 		this.isFullyLoaded = false;
 		const rootMap = new Map<ForestRootId, Delta.DetachedNodeId>();
 		forEachInNestedMap(detachedFieldIndex.data, ({ root }, major, minor) => {
+			setInNestedMap(this.detachedNodeToField, major, minor, { root });
 			rootMap.set(root, { major, minor });
 		});
 
@@ -348,10 +357,13 @@ export class DetachedFieldIndex {
 			0x9bd /* revisions should only be set once using this function after loading data from a summary */,
 		);
 
-		const newDetachedNodeToField = new Map();
+		const newDetachedNodeToField: NestedMap<Major, Minor, DetachedField> = new Map();
 		const rootMap = new Map();
 		forEachInNestedMap(this.detachedNodeToField, ({ root }, major, minor) => {
-			setInNestedMap(newDetachedNodeToField, major, minor, { root, latestRevision });
+			setInNestedMap(newDetachedNodeToField, major, minor, {
+				root,
+				latestRelevantRevision: latestRevision,
+			});
 			rootMap.set(root, { major, minor });
 		});
 

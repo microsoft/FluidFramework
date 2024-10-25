@@ -58,7 +58,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	// Process API reports
 	logProgress("Loading API model...");
 
-	const apiModel = await loadModel(inputDir);
+	const apiModel = await loadModel({ modelDirectoryPath: inputDir });
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
@@ -78,23 +78,27 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		],
 		newlineKind: "lf",
 		uriRoot: uriRootDir,
-		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
+		includeBreadcrumb: true, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
-			if (ApiItemUtilities.isDeprecated(apiItem)) {
-				alerts.push("Deprecated");
-			}
-			if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
-				alerts.push("Legacy");
-			}
+			if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
+				alerts.push("System");
+			} else {
+				if (ApiItemUtilities.isDeprecated(apiItem)) {
+					alerts.push("Deprecated");
+				}
+				if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
+					alerts.push("Legacy");
+				}
 
-			const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
-			if (releaseTag === ReleaseTag.Alpha) {
-				alerts.push("Alpha");
-			} else if (releaseTag === ReleaseTag.Beta) {
-				alerts.push("Beta");
+				const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+				if (releaseTag === ReleaseTag.Alpha) {
+					alerts.push("Alpha");
+				} else if (releaseTag === ReleaseTag.Beta) {
+					alerts.push("Beta");
+				}
 			}
 			return alerts;
 		},

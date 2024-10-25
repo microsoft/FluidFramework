@@ -5,6 +5,7 @@
 
 export {
 	areEqualChangeAtomIds,
+	areEqualChangeAtomIdOpts,
 	makeChangeAtomId,
 	asChangeAtomId,
 	mintCommit,
@@ -23,8 +24,6 @@ export {
 	taggedOptAtomId,
 	offsetChangeAtomId,
 	replaceAtomRevisions,
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
 	replaceChange,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";

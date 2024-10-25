@@ -183,11 +183,11 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 
 // @alpha (undocumented)
 export interface ISerializableInterval extends IInterval {
-    // (undocumented)
+    // @deprecated (undocumented)
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     getIntervalId(): string | undefined;
     properties: PropertySet;
-    // (undocumented)
+    // @deprecated (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
     serialize(): ISerializedInterval;
@@ -241,7 +241,7 @@ export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObjec
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     localReferencePositionToPosition(lref: ReferencePosition): number;
-    obliterateRange(start: number, end: number): void;
+    obliterateRange(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): void;
     posFromRelativePos(relativePos: IRelativePosition): number;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
@@ -298,6 +298,7 @@ export function revertSharedStringRevertibles(sharedString: ISharedString, rever
 
 // @alpha
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+    // @deprecated
     constructor(opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client);
     readonly isLocal: boolean;
     // (undocumented)
@@ -306,6 +307,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 
 // @alpha
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    // @deprecated
     constructor(
     deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
     get clientId(): string | undefined;
@@ -319,6 +321,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 
 // @alpha
 export class SequenceInterval implements ISerializableInterval {
+    // @deprecated
     constructor(client: Client,
     start: LocalReferencePosition,
     end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, startSide?: Side, endSide?: Side);
@@ -357,6 +360,7 @@ export class SequenceInterval implements ISerializableInterval {
 
 // @alpha
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+    // @deprecated
     constructor(
     opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
@@ -364,7 +368,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 
 export { SequencePlace }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedSegmentSequence<T> {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     // (undocumented)
@@ -413,7 +417,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // (undocumented)
-    obliterateRange(start: number, end: number): void;
+    obliterateRange(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): void;
     protected onConnect(): void;
     protected onDisconnect(): void;
     // (undocumented)
@@ -441,7 +445,7 @@ export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind<I
 // @alpha
 export type SharedString = ISharedString;
 
-// @alpha
+// @alpha @deprecated
 export class SharedStringClass extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet): void;

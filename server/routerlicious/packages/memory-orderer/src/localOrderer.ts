@@ -241,7 +241,7 @@ export class LocalOrderer implements IOrderer {
 			this.scriptoriumContext,
 			async (lambdaSetup, context) => {
 				const deltasCollection = await lambdaSetup.deltaCollectionP();
-				return new ScriptoriumLambda(deltasCollection, context, undefined);
+				return new ScriptoriumLambda(deltasCollection, context, undefined, undefined);
 			},
 		);
 
@@ -348,6 +348,7 @@ export class LocalOrderer implements IOrderer {
 			this.documentId,
 			this.gitManager,
 			false,
+			this.details.value.isEphemeralContainer,
 		);
 		const latestSummary = await summaryReader.readLastSummary();
 		const summaryWriter = new SummaryWriter(

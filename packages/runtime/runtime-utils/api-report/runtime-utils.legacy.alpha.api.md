@@ -27,6 +27,9 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract readonly isAttached: boolean;
 }
 
+// @public
+export function isFluidHandle(value: unknown): value is IFluidHandle;
+
 // @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
@@ -35,7 +38,7 @@ export class RequestParser implements IRequest {
     createSubRequest(startingPathIndex: number): IRequest;
     static getPathParts(url: string): readonly string[];
     // (undocumented)
-    get headers(): IRequestHeader | undefined;
+    readonly headers?: IRequestHeader;
     isLeaf(elements: number): boolean;
     get pathParts(): readonly string[];
     // (undocumented)
@@ -62,12 +65,13 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 
 // @alpha (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
-    constructor();
+    constructor(params?: {
+        groupId?: string;
+    });
     // (undocumented)
     addAttachment(id: string): void;
     // (undocumented)
     addBlob(key: string, content: string | Uint8Array): void;
-    // (undocumented)
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
     // (undocumented)
     addWithStats(key: string, summarizeResult: ISummarizeResult): void;

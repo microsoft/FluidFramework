@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
 import {
 	ICreateRefParamsExternal,
@@ -33,11 +32,12 @@ export function create(
 	tenantService: ITenantService,
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
 ): Router {
 	const router: Router = Router();
 
@@ -58,8 +58,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getRefs();
 	}
@@ -73,8 +73,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getRef(ref);
 	}
@@ -92,8 +92,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.createRef(params);
 	}
@@ -112,8 +112,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.updateRef(ref, params);
 	}
@@ -127,8 +127,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.deleteRef(ref);
 	}

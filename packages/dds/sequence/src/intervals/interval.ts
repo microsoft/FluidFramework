@@ -13,6 +13,7 @@ import {
 	createMap,
 	reservedRangeLabelsKey,
 	SequencePlace,
+	addProperties,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -48,7 +49,7 @@ export class Interval implements ISerializableInterval {
 		props?: PropertySet,
 	) {
 		if (props) {
-			this.addProperties(props);
+			this.properties = addProperties(this.properties, props);
 		}
 	}
 
@@ -94,7 +95,10 @@ export class Interval implements ISerializableInterval {
 			start: this.start,
 		};
 		if (this.properties) {
-			serializedInterval.properties = { ...this.properties };
+			serializedInterval.properties = addProperties(
+				serializedInterval.properties,
+				this.properties,
+			);
 		}
 		return serializedInterval;
 	}
@@ -196,8 +200,8 @@ export class Interval implements ISerializableInterval {
 			);
 		}
 
-		const startPos = typeof start === "number" ? start : start?.pos ?? this.start;
-		const endPos = typeof end === "number" ? end : end?.pos ?? this.end;
+		const startPos = typeof start === "number" ? start : (start?.pos ?? this.start);
+		const endPos = typeof end === "number" ? end : (end?.pos ?? this.end);
 
 		if (this.start === startPos && this.end === endPos) {
 			// Return undefined to indicate that no change is necessary.

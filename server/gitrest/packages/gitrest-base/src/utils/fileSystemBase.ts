@@ -79,6 +79,7 @@ export abstract class FsPromisesBase implements IFileSystemPromises {
 					flag?: OpenMode | undefined;
 			  } & Abortable)
 			| BufferEncoding
+			// eslint-disable-next-line @rushstack/no-new-null -- existing usage, won't address as we update the lint config
 			| null,
 	): Promise<void> {
 		// Verify that the file size is within the allowed limit.

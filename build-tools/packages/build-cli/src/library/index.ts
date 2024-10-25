@@ -17,7 +17,15 @@ export {
 } from "./branches.js";
 export { getDisplayDate, getDisplayDateRelative } from "./dates.js";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
-export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets.js";
+export {
+	DEFAULT_CHANGESET_PATH,
+	fluidCustomChangeSetMetadataDefaults,
+	groupByMainPackage,
+	groupBySection,
+	loadChangesets,
+	type FluidCustomChangesetMetadata,
+	UNKNOWN_SECTION,
+} from "./changesets.js";
 export {
 	unscopedPackageNameString,
 	BaseCommand,
@@ -40,12 +48,11 @@ export {
 	sortVersions,
 } from "./package.js";
 export { difference } from "./sets.js";
-export { getIndent, indentString } from "./text.js";
+export { getIndent, indentString, readLines } from "./text.js";
 export { getApiExports } from "./typescriptApi.js";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github.js";
 export {
 	getRanges,
-	PackageVersionList,
 	ReleaseRanges,
 	ReleaseReport,
 	ReportKind,

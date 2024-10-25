@@ -3,24 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 import chalk from "chalk";
 import registerDebug from "debug";
-import { FluidRepo, IFluidBuildConfig } from "../common/fluidRepo";
-import { getFluidBuildConfig } from "../common/fluidUtils";
+
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
-import {
-	ExecAsyncResult,
-	existsSync,
-	globFn,
-	isSameFileOrDir,
-	lookUpDirSync,
-} from "../common/utils";
+import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
+import { FluidRepo } from "./fluidRepo";
+import { getFluidBuildConfig } from "./fluidUtils";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
+import { globFn } from "./tasks/taskUtils";
+
 const traceInit = registerDebug("fluid-build:init");
 
 const { log } = defaultLogger;
@@ -33,17 +32,8 @@ export interface IPackageMatchedOptions {
 }
 
 export class FluidRepoBuild extends FluidRepo {
-	public static create(resolvedRoot: string) {
-		// Default to just resolveRoot if no config is found
-		const packageManifest = getFluidBuildConfig(resolvedRoot) ?? {
-			repoPackages: {
-				root: "",
-			},
-		};
-		return new FluidRepoBuild(resolvedRoot, packageManifest);
-	}
-	private constructor(resolvedRoot: string, packageManifest: IFluidBuildConfig) {
-		super(resolvedRoot, packageManifest);
+	public constructor(protected context: BuildContext) {
+		super(context.repoRoot, context.fluidBuildConfig.repoPackages);
 	}
 
 	public async clean() {
@@ -101,6 +91,9 @@ export class FluidRepoBuild extends FluidRepo {
 		return true;
 	}
 
+	/**
+	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
+	 */
 	public async depcheck(fix: boolean) {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific
@@ -124,6 +117,9 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 	}
 
+	/**
+	 * @deprecated symlink-related functionality will be removed in an upcoming release.
+	 */
 	public async symlink(options: ISymlinkOptions) {
 		// Only do parallel if we are checking only
 		const result = await this.packages.forEachAsync(
@@ -140,6 +136,7 @@ export class FluidRepoBuild extends FluidRepo {
 		return new BuildGraph(
 			this.createPackageMap(),
 			this.getReleaseGroupPackages(),
+			this.context,
 			buildTargetNames,
 			getFluidBuildConfig(this.resolvedRoot)?.tasks,
 			(pkg: Package) => {

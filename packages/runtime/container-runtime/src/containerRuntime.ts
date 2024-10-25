@@ -102,11 +102,16 @@ import {
 	responseToException,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
-import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
+import type {
+	IFluidErrorBase,
+	ITelemetryGenericEventExt,
+	TelemetryEventPropertyTypeExt,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	GenericError,
 	IEventSampler,
 	LoggingError,
@@ -162,15 +167,16 @@ import {
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
+import { ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
+	BatchStartInfo,
+	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
@@ -180,6 +186,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	serializeOpContents,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -234,19 +241,32 @@ import {
 import { Throttler, formExponentialFn } from "./throttler.js";
 
 /**
- * Utility to implement compat behaviors given an unknown message type
+ * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
  * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
  *
- * @param _unknownContainerRuntimeMessageType - Typed as something unexpected, to ensure all known types have been
+ * @param unknownContainerRuntimeMessageType - Typed as something unexpected, to ensure all known types have been
  * handled before calling this function (e.g. in a switch statement).
- * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
+ *
+ * @param codePath - The code path where the unexpected message type was encountered.
+ *
+ * @param sequencedMessage - The sequenced message that contained the unexpected message type.
+ *
  */
-function compatBehaviorAllowsMessageType(
-	_unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
-	compatBehavior: "Ignore" | "FailToProcess" | undefined,
-): boolean {
-	// undefined defaults to same behavior as "FailToProcess"
-	return compatBehavior === "Ignore";
+function getUnknownMessageTypeError(
+	unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
+	codePath: string,
+	sequencedMessage?: ISequencedDocumentMessage,
+): IFluidErrorBase {
+	return DataProcessingError.create(
+		"Runtime message of unknown type",
+		codePath,
+		sequencedMessage,
+		{
+			messageDetails: {
+				type: unknownContainerRuntimeMessageType,
+			},
+		},
+	);
 }
 
 /**
@@ -522,6 +542,9 @@ export const TombstoneResponseHeaderKey = "isTombstoned";
  * Inactive error responses will have this header set to true
  * @legacy
  * @alpha
+ *
+ * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
+ * to this was experimental and is no longer supported.
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
@@ -533,16 +556,7 @@ export interface RuntimeHeaderData {
 	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
-	allowInactive?: boolean;
 }
-
-/** Default values for Runtime Headers */
-export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
-	wait: true,
-	viaHandle: false,
-	allowTombstone: false,
-	allowInactive: false,
-};
 
 /**
  * Available compression algorithms for op compression.
@@ -629,10 +643,9 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated please use version in driver-utils
- * @internal
+ * Checks whether a message.type is one of the values in ContainerMessageType
  */
-export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(ContainerMessageType) as string[]).includes(message.type);
 }
 
@@ -684,28 +697,6 @@ export const makeLegacySendBatchFn =
 
 		return clientSequenceNumber;
 	};
-
-/** Helper type for type constraints passed through several functions.
- * local - Did this client send the op?
- * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
- * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
- * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
- * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
- */
-type MessageWithContext = {
-	local: boolean;
-	savedOp?: boolean;
-	localOpMetadata?: unknown;
-} & (
-	| {
-			message: InboundSequencedContainerRuntimeMessage;
-			modernRuntimeMessage: true;
-	  }
-	| {
-			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
-			modernRuntimeMessage: false;
-	  }
-);
 
 const summarizerRequestUrl = "_summarizer";
 
@@ -759,6 +750,74 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
 	return metadata?.documentSchema?.runtime?.explicitSchemaControl
 		? metadata?.lastMessage
 		: metadata?.message;
+}
+
+/**
+ * There is some ancient back-compat code that we'd like to instrument
+ * to understand if/when it is hit.
+ * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
+ */
+export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+	return (codePath: string) => {
+		logger.sendTelemetryEvent({
+			eventName: "LegacyMessageFormat",
+			details: { codePath, type },
+		});
+
+		// Now that we've logged, prevent future logging (globally).
+		getSingleUseLegacyLogCallback = () => () => {};
+	};
+};
+
+/**
+ * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
+ * @legacy
+ * @alpha
+ */
+export interface LoadContainerRuntimeParams {
+	/**
+	 * Context of the container.
+	 */
+	context: IContainerContext;
+	/**
+	 * Mapping from data store types to their corresponding factories
+	 */
+	registryEntries: NamedFluidDataStoreRegistryEntries;
+	/**
+	 * Pass 'true' if loading from an existing snapshot.
+	 */
+	existing: boolean;
+	/**
+	 * Additional options to be passed to the runtime
+	 */
+	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * runtime services provided with context
+	 */
+	containerScope?: FluidObject;
+	/**
+	 * Promise that resolves to an object which will act as entryPoint for the Container.
+	 */
+	provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+
+	/**
+	 * Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * */
+	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+}
+/**
+ * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
+ * @legacy
+ * @alpha
+ */
+export async function loadContainerRuntime(
+	params: LoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime> {
+	return ContainerRuntime.loadRuntime(params);
 }
 
 /**
@@ -1100,6 +1159,9 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
+	/**
+	 * Do not call directly - use submitAddressesSignal
+	 */
 	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
@@ -1219,6 +1281,7 @@ export class ContainerRuntime
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
+	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
 
 	private _connected: boolean;
@@ -1267,13 +1330,19 @@ export class ContainerRuntime
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
+	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private readonly _perfSignalData: IPerfSignalReport = {
+	private readonly _signalTracking: IPerfSignalReport = {
+		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
-		signalSequenceNumber: 0,
+		signalsOutOfOrder: 0,
+		signalsSentSinceLastLatencyMeasurement: 0,
+		broadcastSignalSequenceNumber: 0,
 		signalTimestamp: 0,
+		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
+		minimumTrackingSignalSequenceNumber: undefined,
 	};
 
 	/**
@@ -1285,6 +1354,7 @@ export class ContainerRuntime
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
+	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1330,14 +1400,22 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcTombstoneEnforcementAllowed(): boolean {
-		return this.garbageCollector.tombstoneEnforcementAllowed;
+		return false;
 	}
 
-	/** If true, throw an error when a tombstone data store is used. */
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcThrowOnTombstoneUsage(): boolean {
-		return this.garbageCollector.throwOnTombstoneUsage;
+		return false;
 	}
 
 	/**
@@ -1547,7 +1625,6 @@ export class ContainerRuntime
 			{
 				applyStashedOp: this.applyStashedOp.bind(this),
 				clientId: () => this.clientId,
-				close: this.closeFn,
 				connected: () => this.connected,
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
@@ -1558,8 +1635,8 @@ export class ContainerRuntime
 		);
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-		const useDeltaManagerOpsProxy =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
+		this.useDeltaManagerOpsProxy =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
 		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
 			this.innerDeltaManager,
@@ -1568,7 +1645,7 @@ export class ContainerRuntime
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
-		if (useDeltaManagerOpsProxy) {
+		if (this.useDeltaManagerOpsProxy) {
 			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
 				summarizerDeltaManagerProxy,
 				this.pendingStateManager,
@@ -1602,6 +1679,21 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
+		this.offlineEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		if (this.offlineEnabled && this._flushMode !== FlushMode.TurnBased) {
+			const error = new UsageError("Offline mode is only supported in turn-based mode");
+			this.closeFn(error);
+			throw error;
+		}
+
+		// DuplicateBatchDetection is only enabled if Offline Load is enabled
+		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
+		// Don't waste resources doing so if not needed.
+		if (this.offlineEnabled) {
+			this.duplicateBatchDetector = new DuplicateBatchDetector();
+		}
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
@@ -1633,6 +1725,13 @@ export class ContainerRuntime
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
+		// If the base snapshot was generated when isolated channels were disabled, set the summary reference
+		// sequence to undefined so that this snapshot will not be used for incremental summaries. This is for
+		// back-compat and will rarely happen so its okay to re-summarize everything in the first summary.
+		const summaryReferenceSequenceNumber =
+			baseSnapshot === undefined || metadata?.disableIsolatedChannels === true
+				? undefined
+				: loadedFromSequenceNumber;
 		this.summarizerNode = createRootSummarizerNodeWithGC(
 			createChildLogger({ logger: this.logger, namespace: "SummarizerNode" }),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
@@ -1640,8 +1739,7 @@ export class ContainerRuntime
 				this.summarizeInternal(fullTree, trackState, telemetryContext),
 			// Latest change sequence number, no changes since summary applied yet
 			loadedFromSequenceNumber,
-			// Summary reference sequence number, undefined if no summary yet
-			baseSnapshot !== undefined ? loadedFromSequenceNumber : undefined,
+			summaryReferenceSequenceNumber,
 			{
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
@@ -1654,10 +1752,6 @@ export class ContainerRuntime
 			// Function to get the GC details from the base snapshot we loaded from.
 			async () => this.garbageCollector.getBaseGCDetails(),
 		);
-
-		if (baseSnapshot) {
-			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
-		}
 
 		const parentContext = wrapContext(this);
 
@@ -1675,7 +1769,7 @@ export class ContainerRuntime
 				type,
 				envelope1.contents,
 			);
-			return this.submitSignalFn(envelope2, targetClientId);
+			return this.submitEnvelopedSignal(envelope2, targetClientId);
 		};
 
 		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
@@ -2166,13 +2260,9 @@ export class ContainerRuntime
 		let childTree = snapshotTree;
 		for (const part of pathParts) {
 			if (hasIsolatedChannels) {
-				// TODO Why are we non null asserting here
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				childTree = childTree.trees[channelsTreeName]!;
+				childTree = childTree?.trees[channelsTreeName];
 			}
-			// TODO Why are we non null asserting here
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			childTree = childTree.trees[part]!;
+			childTree = childTree?.trees[part];
 		}
 		return childTree;
 	}
@@ -2224,9 +2314,7 @@ export class ContainerRuntime
 			}
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]!);
+				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
 				return blob
 					? {
 							status: 200,
@@ -2450,27 +2538,12 @@ export class ContainerRuntime
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
 			default: {
-				// This should be extremely rare for stashed ops.
-				// It would require a newer runtime stashing ops and then an older one applying them,
-				// e.g. if an app rolled back its container version
-				const compatBehavior = opContents.compatDetails?.behavior;
-				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
-					const error = DataProcessingError.create(
-						"Stashed runtime message of unexpected type",
-						"applyStashedOp",
-						undefined /* sequencedMessage */,
-						{
-							messageDetails: JSON.stringify({
-								type: opContents.type,
-								compatBehavior,
-							}),
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
-				// Note: Even if its compat behavior allows it, we don't know how to apply this stashed op.
-				// All we can do is ignore it (similar to on process).
+				const error = getUnknownMessageTypeError(
+					opContents.type,
+					"applyStashedOp" /* codePath */,
+				);
+				this.closeFn(error);
+				throw error;
 			}
 		}
 	}
@@ -2564,9 +2637,14 @@ export class ContainerRuntime
 		this._connected = connected;
 
 		if (!connected) {
-			this._perfSignalData.signalsLost = 0;
-			this._perfSignalData.signalTimestamp = 0;
-			this._perfSignalData.trackingSignalSequenceNumber = undefined;
+			this._signalTracking.signalsLost = 0;
+			this._signalTracking.signalsOutOfOrder = 0;
+			this._signalTracking.signalTimestamp = 0;
+			this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+			this._signalTracking.totalSignalsSentInLatencyWindow = 0;
+			this._signalTracking.roundTripSignalSequenceNumber = undefined;
+			this._signalTracking.trackingSignalSequenceNumber = undefined;
+			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -2609,149 +2687,274 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
-	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
+	/**
+	 * Processes the op.
+	 * @param messageCopy - Sequenced message for a distributed document.
+	 * @param local - true if the message was originally generated by the client receiving it.
+	 */
+	public process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean) {
+		// spread operator above ensure we make a shallow copy of message, as the processing flow will modify it.
+		// There might be multiple container instances receiving the same message.
+
 		this.verifyNotClosed();
 
 		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
-		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
+		const hasModernRuntimeMessageEnvelope = messageCopy.type === MessageType.Operation;
+		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
+		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
 
-		const savedOp = (messageArg.metadata as ISavedOpMetadata)?.savedOp;
+		let runtimeBatch: boolean =
+			hasModernRuntimeMessageEnvelope || isUnpackedRuntimeMessage(messageCopy);
+		if (runtimeBatch) {
+			// We expect runtime messages to have JSON contents - deserialize it in place.
+			ensureContentsDeserialized(messageCopy);
+		}
 
-		// There is some ancient back-compat code that we'd like to instrument
-		// to understand if/when it is hit.
-		const logLegacyCase = (codePath: string) =>
-			this.logger.sendTelemetryEvent({
-				eventName: "LegacyMessageFormat",
-				details: { codePath, type: messageArg.type },
-			});
-
-		// Do shallow copy of message, as the processing flow will modify it.
-		// There might be multiple container instances receiving the same message.
-		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
-		// but will not modify the contents object (likely it will replace it on the message).
-		const messageCopy = { ...messageArg };
-		// We expect runtime messages to have JSON contents - deserialize it in place.
-		ensureContentsDeserialized(messageCopy, modernRuntimeMessage, logLegacyCase);
-		if (modernRuntimeMessage) {
-			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (processResult === undefined) {
+		if (hasModernRuntimeMessageEnvelope) {
+			// If the message has the modern message envelope, then process it here.
+			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
+			const inboundResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
+			if (inboundResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
 				return;
 			}
-			const batchStartCsn = processResult.batchStartCsn;
-			const batch = processResult.messages;
-			const messages: {
-				message: InboundSequencedContainerRuntimeMessage;
-				localOpMetadata: unknown;
-			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
-				: batch.map((message) => ({ message, localOpMetadata: undefined }));
-			messages.forEach(({ message, localOpMetadata }) => {
-				const msg: MessageWithContext = {
-					message,
-					local,
-					modernRuntimeMessage,
-					savedOp,
-					localOpMetadata,
-				};
-				this.ensureNoDataModelChanges(() => this.processCore(msg));
-			});
-		} else {
-			const msg: MessageWithContext = {
-				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+
+			if ("batchStart" in inboundResult) {
+				const batchStart: BatchStartInfo = inboundResult.batchStart;
+				const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
+				if (result?.duplicate) {
+					const error = new DataCorruptionError(
+						"Duplicate batch - The same batch was sequenced twice",
+						{ batchId: batchStart.batchId },
+					);
+
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: "DuplicateBatch",
+							details: {
+								batchId: batchStart.batchId,
+								clientId: batchStart.clientId,
+								batchStartCsn: batchStart.batchStartCsn,
+								size: inboundResult.length,
+								duplicateBatchSequenceNumber: result.otherSequenceNumber,
+								...extractSafePropertiesFromMessage(batchStart.keyMessage),
+							},
+						},
+						error,
+					);
+					throw error;
+				}
+			}
+
+			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
+			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
+			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
+			let messagesWithPendingState: {
+				message: ISequencedDocumentMessage;
+				localOpMetadata?: unknown;
+			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
+
+			if (inboundResult.type !== "fullBatch") {
+				assert(
+					messagesWithPendingState.length === 1,
+					0xa3d /* Partial batch should have exactly one message */,
+				);
+			}
+
+			if (messagesWithPendingState.length === 0) {
+				assert(
+					inboundResult.type === "fullBatch",
+					0xa3e /* Empty batch is always considered a full batch */,
+				);
+				/**
+				 * We need to process an empty batch, which will execute expected actions while processing even if there
+				 * are no inner runtime messages.
+				 *
+				 * Empty batches are produced by the outbox on resubmit when the resubmit flow resulted in no runtime
+				 * messages.
+				 * This can happen if changes from a remote client "cancel out" the pending changes being resubmitted by
+				 * this client.  We submit an empty batch if "offline load" (aka rehydrating from stashed state) is
+				 * enabled, to ensure we account for this batch when comparing batchIds, checking for a forked container.
+				 * Otherwise, we would not realize this container has forked in the case where it did fork, and a batch
+				 * became empty but wasn't submitted as such.
+				 */
+				messagesWithPendingState = [
+					{
+						message: inboundResult.batchStart.keyMessage,
+						localOpMetadata: undefined,
+					},
+				];
+				// Empty batch message is a non-runtime message as it was generated by the op grouping manager.
+				runtimeBatch = false;
+			}
+
+			const locationInBatch: { batchStart: boolean; batchEnd: boolean } =
+				inboundResult.type === "fullBatch"
+					? { batchStart: true, batchEnd: true }
+					: inboundResult.type === "batchStartingMessage"
+						? { batchStart: true, batchEnd: false }
+						: { batchStart: false, batchEnd: inboundResult.batchEnd === true };
+
+			this.processInboundMessages(
+				messagesWithPendingState,
+				locationInBatch,
 				local,
-				modernRuntimeMessage,
 				savedOp,
-			};
-			this.ensureNoDataModelChanges(() => this.processCore(msg));
+				runtimeBatch,
+			);
+		} else {
+			if (!runtimeBatch) {
+				// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
+				// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
+				if (
+					typeof messageCopy.contents === "string" &&
+					messageCopy.contents !== "" &&
+					messageCopy.type !== MessageType.ClientLeave
+				) {
+					messageCopy.contents = JSON.parse(messageCopy.contents);
+				}
+			}
+			this.processInboundMessages(
+				[{ message: messageCopy, localOpMetadata: undefined }],
+				{ batchStart: true, batchEnd: true }, // Single message
+				local,
+				savedOp,
+				runtimeBatch,
+			);
+		}
+
+		if (local) {
+			// If we have processed a local op, this means that the container is
+			// making progress and we can reset the counter for how many times
+			// we have consecutively replayed the pending states
+			this.resetReconnectCount();
 		}
 	}
 
 	private _processedClientSequenceNumber: number | undefined;
 
 	/**
-	 * Direct the message to the correct subsystem for processing, and implement other side effects
+	 * Processes inbound message(s). It calls schedule manager according to the messages' location in the batch.
+	 * @param messages - messages to process.
+	 * @param locationInBatch - Are we processing the start and/or end of a batch?
+	 * @param local - true if the messages were originally generated by the client receiving it.
+	 * @param savedOp - true if the message is a replayed saved op.
+	 * @param runtimeBatch - true if these are runtime messages.
 	 */
-	private processCore(messageWithContext: MessageWithContext) {
-		const { message, local, localOpMetadata } = messageWithContext;
-
-		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
-		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
-		if (
-			this.deltaManager.minimumSequenceNumber <
-			messageWithContext.message.minimumSequenceNumber
-		) {
-			messageWithContext.message.minimumSequenceNumber =
-				this.deltaManager.minimumSequenceNumber;
+	private processInboundMessages(
+		messages: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata?: unknown;
+		}[],
+		locationInBatch: { batchStart: boolean; batchEnd: boolean },
+		local: boolean,
+		savedOp: boolean | undefined,
+		runtimeBatch: boolean,
+	) {
+		if (locationInBatch.batchStart) {
+			const firstMessage = messages[0]?.message;
+			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
+			this.scheduleManager.batchBegin(firstMessage);
 		}
 
-		// Surround the actual processing of the operation with messages to the schedule manager indicating
-		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
-		// messages once a batch has been fully processed.
-		this.scheduleManager.beforeOpProcessing(message);
+		let error: unknown;
+		try {
+			messages.forEach(({ message, localOpMetadata }) => {
+				this.ensureNoDataModelChanges(() => {
+					if (runtimeBatch) {
+						this.validateAndProcessRuntimeMessage({
+							message: message as InboundSequencedContainerRuntimeMessage,
+							local,
+							savedOp,
+							localOpMetadata,
+						});
+					} else {
+						this.observeNonRuntimeMessage(message);
+					}
+				});
+			});
+		} catch (e) {
+			error = e;
+			throw error;
+		} finally {
+			if (locationInBatch.batchEnd) {
+				const lastMessage = messages[messages.length - 1]?.message;
+				assert(lastMessage !== undefined, 0xa32 /* Batch must have at least one message */);
+				this.scheduleManager.batchEnd(error, lastMessage);
+			}
+		}
+	}
+
+	/**
+	 * Observes messages that are not intended for the runtime layer, updating/notifying Runtime systems as needed.
+	 * @param message - non-runtime message to process.
+	 */
+	private observeNonRuntimeMessage(message: ISequencedDocumentMessage) {
+		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
+		if (this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber) {
+			message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
+		}
 
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
-		try {
-			// RemoteMessageProcessor would have already reconstituted Chunked Ops into the original op type
-			assert(
-				message.type !== ContainerMessageType.ChunkedOp,
-				0x93b /* we should never get here with chunked ops */,
-			);
-
-			// If there are no more pending messages after processing a local message,
-			// the document is no longer dirty.
-			if (!this.hasPendingMessages()) {
-				this.updateDocumentDirtyState(false);
-			}
-
-			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
-
-			this.emit("op", message, messageWithContext.modernRuntimeMessage);
-
-			this.scheduleManager.afterOpProcessing(undefined, message);
-
-			if (local) {
-				// If we have processed a local op, this means that the container is
-				// making progress and we can reset the counter for how many times
-				// we have consecutively replayed the pending states
-				this.resetReconnectCount();
-			}
-		} catch (e) {
-			this.scheduleManager.afterOpProcessing(e, message);
-			throw e;
+		// If there are no more pending messages after processing a local message,
+		// the document is no longer dirty.
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState(false);
 		}
+
+		this.emit("op", message, false /* runtimeMessage */);
 	}
+
 	/**
 	 * Assuming the given message is also a TypedContainerRuntimeMessage,
 	 * checks its type and dispatches the message to the appropriate handler in the runtime.
 	 * Throws a DataProcessingError if the message looks like but doesn't conform to a known TypedContainerRuntimeMessage type.
 	 */
-	private validateAndProcessRuntimeMessage(
-		messageWithContext: MessageWithContext,
-		localOpMetadata: unknown,
-	): void {
-		// TODO: destructure message and modernRuntimeMessage once using typescript 5.2.2+
-		const { local } = messageWithContext;
-		switch (messageWithContext.message.type) {
+
+	private validateAndProcessRuntimeMessage(messageWithContext: {
+		message: InboundSequencedContainerRuntimeMessage;
+		local: boolean;
+		savedOp?: boolean;
+		localOpMetadata?: unknown;
+	}): void {
+		const { local, message, savedOp, localOpMetadata } = messageWithContext;
+
+		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
+		if (
+			this.useDeltaManagerOpsProxy &&
+			this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber
+		) {
+			message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
+		}
+
+		this._processedClientSequenceNumber = message.clientSequenceNumber;
+
+		// If there are no more pending messages after processing a local message,
+		// the document is no longer dirty.
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState(false);
+		}
+
+		switch (message.type) {
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.FluidDataStoreOp:
-				this.channelCollection.process(messageWithContext.message, local, localOpMetadata);
+				this.channelCollection.process(message, local, localOpMetadata);
 				break;
 			case ContainerMessageType.BlobAttach:
-				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
+				this.blobManager.processBlobAttachOp(message, local);
 				break;
 			case ContainerMessageType.IdAllocation:
 				// Don't re-finalize the range if we're processing a "savedOp" in
 				// stashed ops flow. The compressor is stashed with these ops already processed.
 				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
 				// thus we need to process all the ops.
-				if (!(this.skipSavedCompressorOps && messageWithContext.savedOp === true)) {
-					const range = messageWithContext.message.contents;
+				if (!(this.skipSavedCompressorOps && savedOp === true)) {
+					const range = message.contents;
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
@@ -2770,11 +2973,7 @@ export class ContainerRuntime
 				}
 				break;
 			case ContainerMessageType.GC:
-				this.garbageCollector.processMessage(
-					messageWithContext.message,
-					messageWithContext.message.timestamp,
-					local,
-				);
+				this.garbageCollector.processMessage(message, message.timestamp, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
@@ -2784,60 +2983,120 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
 				this.documentsSchemaController.processDocumentSchemaOp(
-					messageWithContext.message.contents,
-					messageWithContext.local,
-					messageWithContext.message.sequenceNumber,
+					message.contents,
+					local,
+					message.sequenceNumber,
 				);
 				break;
 			default: {
-				// If we didn't necessarily expect a runtime message type, then no worries - just return
-				// e.g. this case applies to system ops, or legacy ops that would have fallen into the above cases anyway.
-				if (!messageWithContext.modernRuntimeMessage) {
-					return;
-				}
-
-				const compatBehavior = messageWithContext.message.compatDetails?.behavior;
-				if (
-					!compatBehaviorAllowsMessageType(messageWithContext.message.type, compatBehavior)
-				) {
-					const { message } = messageWithContext;
-					const error = DataProcessingError.create(
-						// Former assert 0x3ce
-						"Runtime message of unknown type",
-						"OpProcessing",
-						message,
-						{
-							local,
-							messageDetails: JSON.stringify({
-								type: message.type,
-								contentType: typeof message.contents,
-								compatBehavior,
-								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
-								compression: message.compression,
-							}),
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
+				const error = getUnknownMessageTypeError(
+					message.type,
+					"validateAndProcessRuntimeMessage" /* codePath */,
+					message,
+				);
+				this.closeFn(error);
+				throw error;
 			}
 		}
+
+		this.emit("op", message, true /* runtimeMessage */);
 	}
 
 	/**
 	 * Emits the Signal event and update the perf signal data.
-	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
 	 */
-	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
-		const duration = Date.now() - this._perfSignalData.signalTimestamp;
+	private sendSignalTelemetryEvent() {
+		const duration = Date.now() - this._signalTracking.signalTimestamp;
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
-			duration,
-			signalsLost: this._perfSignalData.signalsLost,
+			details: {
+				duration, // Roundtrip duration of the tracked signal in milliseconds.
+				sent: this._signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
+				lost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
+				outOfOrder: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
+				reconnectCount: this.consecutiveReconnects, // Container reconnect count.
+			},
 		});
+		this._signalTracking.signalsLost = 0;
+		this._signalTracking.signalsOutOfOrder = 0;
+		this._signalTracking.signalTimestamp = 0;
+		this._signalTracking.totalSignalsSentInLatencyWindow = 0;
+	}
 
-		this._perfSignalData.signalsLost = 0;
-		this._perfSignalData.signalTimestamp = 0;
+	/**
+	 * Updates signal telemetry including emitting telemetry events.
+	 */
+	private processSignalForTelemetry(envelope: ISignalEnvelope): void {
+		const { clientBroadcastSignalSequenceNumber } = envelope;
+		if (clientBroadcastSignalSequenceNumber === undefined) {
+			return;
+		}
+
+		if (
+			this._signalTracking.trackingSignalSequenceNumber === undefined ||
+			this._signalTracking.minimumTrackingSignalSequenceNumber === undefined
+		) {
+			return;
+		}
+
+		if (
+			clientBroadcastSignalSequenceNumber >= this._signalTracking.trackingSignalSequenceNumber
+		) {
+			// Calculate the number of signals lost and log the event.
+			const signalsLost =
+				clientBroadcastSignalSequenceNumber -
+				this._signalTracking.trackingSignalSequenceNumber;
+			if (signalsLost > 0) {
+				this._signalTracking.signalsLost += signalsLost;
+				this.mc.logger.sendErrorEvent({
+					eventName: "SignalLost",
+					details: {
+						signalsLost, // Number of lost signals detected.
+						expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+						clientBroadcastSignalSequenceNumber, // Actual signal sequence number received.
+					},
+				});
+			}
+			// Update the tracking signal sequence number to the next expected signal in the sequence.
+			this._signalTracking.trackingSignalSequenceNumber =
+				clientBroadcastSignalSequenceNumber + 1;
+		} else if (
+			// Check if this is a signal in range of interest.
+			clientBroadcastSignalSequenceNumber >=
+			this._signalTracking.minimumTrackingSignalSequenceNumber
+		) {
+			this._signalTracking.signalsOutOfOrder++;
+			const details: TelemetryEventPropertyTypeExt = {
+				expectedSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+				clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
+			};
+			// Only log `contents.type` when address is for container to avoid
+			// chance that contents type is customer data.
+			if (envelope.address === undefined) {
+				details.contentsType = envelope.contents.type; // Type of signal that was received out of order.
+			}
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "SignalOutOfOrder",
+				details,
+			});
+		}
+		if (
+			this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
+			clientBroadcastSignalSequenceNumber >= this._signalTracking.roundTripSignalSequenceNumber
+		) {
+			if (
+				clientBroadcastSignalSequenceNumber ===
+				this._signalTracking.roundTripSignalSequenceNumber
+			) {
+				// Latency tracked signal has been received.
+				// We now log the roundtrip duration of the tracked signal.
+				// This telemetry event also logs metrics for broadcast signals
+				// sent, lost, and out of order.
+				// These metrics are reset after logging the telemetry event.
+				this.sendSignalTelemetryEvent();
+			}
+			this._signalTracking.roundTripSignalSequenceNumber = undefined;
+		}
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -2846,34 +3105,21 @@ export class ContainerRuntime
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
+			targetClientId: message.targetClientId,
 		};
 
-		// Only collect signal telemetry for messages sent by the current client.
-		if (message.clientId === this.clientId && this.connected) {
-			// Check to see if the signal was lost.
-			if (
-				this._perfSignalData.trackingSignalSequenceNumber !== undefined &&
-				envelope.clientSignalSequenceNumber > this._perfSignalData.trackingSignalSequenceNumber
-			) {
-				this._perfSignalData.signalsLost++;
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-				this.mc.logger.sendErrorEvent({
-					eventName: "SignalLost",
-					type: envelope.contents.type,
-					signalsLost: this._perfSignalData.signalsLost,
-					trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
-					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
-				});
-			} else if (
-				envelope.clientSignalSequenceNumber ===
-				this._perfSignalData.trackingSignalSequenceNumber
-			) {
-				// only logging for the first connection and the trackingSignalSequenceNUmber.
-				if (this.consecutiveReconnects === 0) {
-					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
-				}
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-			}
+		// Only collect signal telemetry for broadcast messages sent by the current client.
+		if (
+			message.clientId === this.clientId &&
+			// jason-ha: This `connected` check seems incorrect. Signals that come through
+			// here must have been received while connected to service and there is no need
+			// to avoid processing when connection has dropped. Because container runtime's
+			// `connected` (and `_connected`) state also reflects some ops state, it may
+			//  easily be false when newly connected and signal tracking may very well
+			// complain lost signals (that were simply skipped per this check).
+			this.connected
+		) {
+			this.processSignalForTelemetry(envelope);
 		}
 
 		if (envelope.address === undefined) {
@@ -3120,24 +3366,53 @@ export class ContainerRuntime
 		address: string | undefined,
 		type: string,
 		content: any,
-	): ISignalEnvelope {
-		const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
-		const newEnvelope: ISignalEnvelope = {
+	): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
+		const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
 			address,
-			clientSignalSequenceNumber: newSequenceNumber,
 			contents: { type, content },
 		};
 
-		// We should not track any signals in case we already have a tracking number.
-		if (
-			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._perfSignalData.trackingSignalSequenceNumber === undefined
-		) {
-			this._perfSignalData.signalTimestamp = Date.now();
-			this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
+		return newEnvelope;
+	}
+
+	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string) {
+		const isBroadcastSignal = targetClientId === undefined;
+
+		if (isBroadcastSignal) {
+			const clientBroadcastSignalSequenceNumber = ++this._signalTracking
+				.broadcastSignalSequenceNumber;
+			// Stamp with the broadcast signal sequence number.
+			envelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
+
+			this._signalTracking.signalsSentSinceLastLatencyMeasurement++;
+
+			if (
+				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
+				this._signalTracking.trackingSignalSequenceNumber === undefined
+			) {
+				// Signal monitoring window is undefined
+				// Initialize tracking to expect the next signal sent by the connected client.
+				this._signalTracking.minimumTrackingSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+				this._signalTracking.trackingSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+			}
+
+			// We should not track the round trip of a new signal in the case we are already tracking one.
+			if (
+				clientBroadcastSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+				this._signalTracking.roundTripSignalSequenceNumber === undefined
+			) {
+				this._signalTracking.signalTimestamp = Date.now();
+				this._signalTracking.roundTripSignalSequenceNumber =
+					clientBroadcastSignalSequenceNumber;
+				this._signalTracking.totalSignalsSentInLatencyWindow +=
+					this._signalTracking.signalsSentSinceLastLatencyMeasurement;
+				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+			}
 		}
 
-		return newEnvelope;
+		this.submitSignalFn(envelope, targetClientId);
 	}
 
 	/**
@@ -3145,11 +3420,17 @@ export class ContainerRuntime
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 *
+	 * @remarks
+	 *
+	 * The `targetClientId` parameter here is currently intended for internal testing purposes only.
+	 * Support for this option at container runtime is planned to be deprecated in the future.
+	 *
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.submitSignalFn(envelope, targetClientId);
+		return this.submitEnvelopedSignal(envelope, targetClientId);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -3705,9 +3986,7 @@ export class ContainerRuntime
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
 			// summarized dataStore count is total dataStore count minus handle count
-			// TODO why are we non null asserting here
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const dataStoreTree = summaryTree.tree[channelsTreeName]!;
+			const dataStoreTree = summaryTree.tree[channelsTreeName];
 
 			assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
 			const handleCount = Object.values(dataStoreTree.tree).filter(
@@ -3955,7 +4234,7 @@ export class ContainerRuntime
 					contents: idRange,
 				};
 				const idAllocationBatchMessage: BatchMessage = {
-					contents: JSON.stringify(idAllocationMessage),
+					contents: serializeOpContents(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
@@ -3982,8 +4261,6 @@ export class ContainerRuntime
 			0x93f /* metadata */,
 		);
 
-		const serializedContent = JSON.stringify(containerRuntimeMessage);
-
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
@@ -3998,12 +4275,6 @@ export class ContainerRuntime
 			type !== ContainerMessageType.IdAllocation,
 			0x9a5 /* IdAllocation should be submitted directly to outbox. */,
 		);
-		const message: BatchMessage = {
-			contents: serializedContent,
-			metadata,
-			localOpMetadata,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-		};
 
 		try {
 			this.submitIdAllocationOpIfNeeded(false);
@@ -4011,26 +4282,32 @@ export class ContainerRuntime
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
 			// on this callback to do actual sending.
-			const contents = this.documentsSchemaController.maybeSendSchemaMessage();
-			if (contents) {
+			const schemaChangeMessage = this.documentsSchemaController.maybeSendSchemaMessage();
+			if (schemaChangeMessage) {
 				this.logger.sendTelemetryEvent({
 					eventName: "SchemaChangeProposal",
-					refSeq: contents.refSeq,
-					version: contents.version,
-					newRuntimeSchema: JSON.stringify(contents.runtime),
+					refSeq: schemaChangeMessage.refSeq,
+					version: schemaChangeMessage.version,
+					newRuntimeSchema: JSON.stringify(schemaChangeMessage.runtime),
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
 				});
 				const msg: ContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
-					contents,
+					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
-					contents: JSON.stringify(msg),
+					contents: serializeOpContents(msg),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				});
 			}
 
+			const message: BatchMessage = {
+				contents: serializeOpContents(containerRuntimeMessage),
+				metadata,
+				localOpMetadata,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
 				this.outbox.submitBlobAttach(message);
@@ -4121,6 +4398,12 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * Resubmits each message in the batch, and then flushes the outbox.
+	 *
+	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
+	 * for correlation to detect container forking.
+	 */
 	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
@@ -4130,10 +4413,7 @@ export class ContainerRuntime
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		const includeBatchId =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
-
-		this.flush(includeBatchId ? batchId : undefined);
+		this.flush(this.offlineEnabled ? batchId : undefined);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {
@@ -4191,30 +4471,9 @@ export class ContainerRuntime
 				// send any ops, as some other client already changed schema.
 				break;
 			default: {
-				// This case should be very rare - it would imply an op was stashed from a
-				// future version of runtime code and now is being applied on an older version.
-				const compatBehavior = message.compatDetails?.behavior;
-				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
-					// We do not ultimately resubmit it, to be consistent with this version of the code.
-					this.logger.sendTelemetryEvent({
-						eventName: "resubmitUnrecognizedMessageTypeAllowed",
-						messageDetails: { type: message.type, compatBehavior },
-					});
-				} else {
-					const error = DataProcessingError.create(
-						"Resubmitting runtime message of unexpected type",
-						"reSubmitCore",
-						undefined /* sequencedMessage */,
-						{
-							messageDetails: JSON.stringify({
-								type: message.type,
-								compatBehavior,
-							}),
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
+				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
+				this.closeFn(error);
+				throw error;
 			}
 		}
 	}

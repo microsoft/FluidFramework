@@ -4,7 +4,7 @@ This package contains a simple example application aimed at demonstrating how us
 
 Note: while this example is built using [React](), the developer tools are not specific to `React`; they should be compatible with the view framework of your choice.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED:usesTinylicious=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

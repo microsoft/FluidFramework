@@ -69,15 +69,12 @@ import {
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
+	type IConfigProvider,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	DeletedResponseHeaderKey,
-	RuntimeHeaderData,
-	defaultRuntimeHeaderData,
-} from "./containerRuntime.js";
+import { DeletedResponseHeaderKey, RuntimeHeaderData } from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,
 	channelToDataStore,
@@ -119,17 +116,24 @@ export enum RuntimeHeaders {
  * @alpha
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
-/**
- * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
- * @internal
- */
-export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 type PendingAliasResolve = (success: boolean) => void;
 
 interface FluidDataStoreMessage {
 	content: any;
 	type: string;
+}
+
+function computeRuntimeHeaderData(
+	config: IConfigProvider,
+	data: Partial<RuntimeHeaderData>,
+): Required<RuntimeHeaderData> {
+	return {
+		wait: config.getBoolean("Fluid.ContainerRuntime.WaitHeaderDefault") ?? true,
+		viaHandle: false,
+		allowTombstone: false,
+		...data,
+	};
 }
 
 /**
@@ -213,7 +217,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
  * @param parentContext - the {@link IFluidParentContext} to wrap
  * @returns A wrapped {@link IFluidParentContext}
  */
-export function wrapContextForInnerChannel(
+function wrapContextForInnerChannel(
 	id: string,
 	parentContext: IFluidParentContext,
 ): IFluidParentContext {
@@ -563,9 +567,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return {
 			id: localContext.id,
 			snapshot,
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			type: getLocalDataStoreType(localContext)!,
+			type: getLocalDataStoreType(localContext),
 		} satisfies IAttachMessage;
 	}
 
@@ -911,7 +913,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 		originalRequest: IRequest,
 	): Promise<IFluidDataStoreContextInternal> {
-		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
 		if (
 			this.checkAndLogIfDeleted(
 				id,
@@ -959,7 +961,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		) {
 			return undefined;
 		}
-		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			return undefined;
@@ -1116,9 +1118,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
 					);
 					dataStoreSummary = convertSnapshotTreeToSummaryTree(
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						getSnapshotTree(this.baseSnapshot).trees[contextId]!,
+						getSnapshotTree(this.baseSnapshot).trees[contextId],
 					);
 				}
 				builder.addWithStats(contextId, dataStoreSummary);
@@ -1327,9 +1327,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	): readonly string[] {
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const dataStoreId = pathParts[1]!;
+			const dataStoreId = pathParts[1];
 
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
@@ -1374,9 +1372,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			if (pathParts.length > 2) {
 				continue;
 			}
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const dataStoreId = pathParts[1]!;
+			const dataStoreId = pathParts[1];
 			assert(this.contexts.has(dataStoreId), 0x510 /* No data store with specified id */);
 			tombstonedDataStoresSet.add(dataStoreId);
 		}
@@ -1411,9 +1407,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	): Promise<readonly string[] | undefined> {
 		// If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
 		// data store that contains it.
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const context = this.contexts.get(nodePath.split("/")[1]!);
+		const context = this.contexts.get(nodePath.split("/")[1]);
 		return (await context?.getInitialSnapshotDetails())?.pkg;
 	}
 
@@ -1423,9 +1417,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public getGCNodeType(nodePath: string): GCNodeType | undefined {
 		const pathParts = nodePath.split("/");
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		if (!this.contexts.has(pathParts[1]!)) {
+		if (!this.contexts.has(pathParts[1])) {
 			return undefined;
 		}
 
@@ -1443,9 +1435,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	public async request(request: IRequest): Promise<IResponse> {
 		const requestParser = RequestParser.create(request);
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = requestParser.pathParts[0]!;
+		const id = requestParser.pathParts[0];
 
 		// Differentiate between requesting the dataStore directly, or one of its children
 		const requestForChild = !requestParser.isLeaf(1);
@@ -1460,14 +1450,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
 		}
-		if (typeof request.headers?.[AllowInactiveRequestHeaderKey] === "boolean") {
-			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
-		}
 
-		// We allow Tombstone/Inactive requests for sub-DataStore objects
+		// We allow Tombstone requests for sub-DataStore objects
 		if (requestForChild) {
 			headerData.allowTombstone = true;
-			headerData.allowInactive = true;
 		}
 
 		await this.waitIfPendingAlias(id);
