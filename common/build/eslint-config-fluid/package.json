@@ -52,7 +52,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"sort-json": "^2.0.1",
