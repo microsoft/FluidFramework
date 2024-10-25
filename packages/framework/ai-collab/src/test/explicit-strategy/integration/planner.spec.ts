@@ -277,7 +277,7 @@ describe("Ai Planner App", () => {
 		}
 	});
 
-	it("BUG: OpenAI structured output fails when json schema with psuedo optional field is used in response format", async () => {
+	it.skip("BUG: OpenAI structured output fails when json schema with psuedo optional field is used in response format", async () => {
 		class TestAppSchemaWithOptionalProp extends sf.object("TestAppSchemaWithOptionalProp", {
 			nonOptionalProp: sf.string,
 			taskList: SharedTreeTaskList,
