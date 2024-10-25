@@ -14,8 +14,12 @@ export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 /**
  * Value that may be used as keys in a {@link TreeIndex}.
  *
+ * @privateRemarks
+ * no-new-null is disabled for this type so that it supports the TreeValue type.
+ *
  * @alpha
  */
+// eslint-disable-next-line @rushstack/no-new-null
 export type TreeIndexKey = number | string | boolean | IFluidHandle | null;
 
 /**

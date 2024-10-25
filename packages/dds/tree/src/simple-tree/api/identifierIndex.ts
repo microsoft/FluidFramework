@@ -4,29 +4,42 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
-import type { AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../../core/index.js";
+import type {
+	AnchorNode,
+	FieldKey,
+	ITreeSubscriptionCursor,
+	TreeNodeSchemaIdentifier,
+} from "../../core/index.js";
+// todo fix this
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
-	Context,
+	type Context,
 	AnchorTreeIndex,
-	flexTreeSlot,
-	type FlexTreeNode,
-	type KeyFinder,
 	isTreeValue,
 	type TreeIndexNodes,
 	hasElement,
 	type TreeIndex,
-	type FlexTreeContext,
 	type TreeIndexKey,
+	type KeyFinder,
 } from "../../feature-libraries/index.js";
 import { brand, fail } from "../../util/index.js";
-import { FieldKind, type NodeFromSchema } from "../schemaTypes.js";
-import { getSimpleNodeSchema, type TreeNode, type TreeNodeSchema } from "../core/index.js";
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
+import type { ImplicitFieldSchema, NodeFromSchema } from "../schemaTypes.js";
+import {
+	getOrCreateNodeFromInnerNode,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../core/index.js";
 import { ObjectNodeSchema } from "../objectNodeTypes.js";
 import { treeNodeApi } from "./treeNodeApi.js";
+// todo
+// eslint-disable-next-line import/no-internal-modules
+import { proxySlot } from "../core/treeNodeKernel.js";
+import type { TreeView } from "./tree.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
+// todo
+// eslint-disable-next-line import/no-internal-modules
+import type { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 
 /**
  * A {@link TreeIndex} that returns tree nodes given their associated keys.
@@ -38,35 +51,42 @@ export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey,
 /**
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
  *
- * @param context - the context for the tree being indexed
- * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns a {@link KeyFinder} that works with the schema
+ * @param view - the view for the tree being indexed
+ * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema should be keyed on
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
  *
  * @alpha
  */
-export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(
-	context: FlexTreeContext,
-	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
+export function createSimpleTreeIndex<
+	TFieldSchema extends ImplicitFieldSchema,
+	TKey extends TreeIndexKey,
+	TValue,
+>(
+	view: TreeView<TFieldSchema>,
+	indexer: (schema: TreeNodeSchema) => string | undefined,
 	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
+	isKeyValid: (key: TreeIndexKey) => key is TKey,
 ): SimpleTreeIndex<TKey, TValue>;
 /**
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
  *
- * @param context - the context for the tree being indexed
- * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns a {@link KeyFinder} that works with the schema
+ * @param view - the view for the tree being indexed
+ * @param indexer - - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema should be keyed on
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
  * @param indexableSchema - a list of all the schema types that can be indexed
  *
  * @alpha
  */
 export function createSimpleTreeIndex<
+	TFieldSchema extends ImplicitFieldSchema,
 	TKey extends TreeIndexKey,
 	TValue,
 	TSchema extends TreeNodeSchema,
 >(
-	context: FlexTreeContext,
-	indexer: (schema: TSchema) => KeyFinder<TKey> | undefined,
+	view: TreeView<TFieldSchema>,
+	indexer: (schema: TSchema) => string | undefined,
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
+	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema: readonly TSchema[],
 ): SimpleTreeIndex<TKey, TValue>;
 /**
@@ -74,48 +94,61 @@ export function createSimpleTreeIndex<
  *
  * @alpha
  */
-export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(
-	context: FlexTreeContext,
-	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
+export function createSimpleTreeIndex<
+	TFieldSchema extends ImplicitFieldSchema,
+	TKey extends TreeIndexKey,
+	TValue,
+>(
+	view: TreeView<TFieldSchema>,
+	indexer: (schema: TreeNodeSchema) => string | undefined,
 	getValue:
 		| ((nodes: TreeIndexNodes<TreeNode>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
+	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema?: readonly TreeNodeSchema[],
 ): SimpleTreeIndex<TKey, TValue> {
-	assert(context instanceof Context, "unexpected context implementation");
 	const indexableSchemaMap = new Map();
 	if (indexableSchema !== undefined) {
 		for (const schemus of indexableSchema) {
 			indexableSchemaMap.set(schemus.identifier, schemus);
 		}
+	} else {
+		walkFieldSchema(view.schema, {
+			node: (schemus) => indexableSchemaMap.set(schemus.identifier, schemus),
+		});
 	}
 
 	const schemaIndexer =
 		indexableSchema === undefined
 			? (schemaIdentifier: TreeNodeSchemaIdentifier) => {
-					const storedSchema = context.flexSchema.nodeSchema.get(schemaIdentifier);
-					if (storedSchema !== undefined) {
-						const schemus = getSimpleNodeSchema(storedSchema);
-						return indexer(schemus);
+					// if indexable schema isn't provided, we check if the node is in schema
+					const schemus = indexableSchemaMap.get(schemaIdentifier);
+					if (schemus !== undefined) {
+						const keyLocation = indexer(schemus);
+						if (keyLocation !== undefined) {
+							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
+						}
 					} else {
-						// else: the node is out of schema. TODO: do we error, or allow that?
 						fail("node is out of schema");
 					}
 				}
 			: (schemaIdentifier: TreeNodeSchemaIdentifier) => {
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
 					if (schemus !== undefined) {
-						return indexer(schemus);
+						const keyLocation = indexer(schemus);
+						if (keyLocation !== undefined) {
+							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
+						}
 					}
 				};
 
 	const index = new AnchorTreeIndex<TKey, TValue>(
-		context.checkout.forest,
+		(view as SchematizingSimpleTreeView<TFieldSchema>).getView().checkout.forest,
 		schemaIndexer,
 		(anchorNodes) => {
 			const simpleTreeNodes: TreeNode[] = [];
 			for (const a of anchorNodes) {
-				const simpleTree = getOrCreateSimpleTree(context, a);
+				const simpleTree = getOrCreateSimpleTree(view, a);
 				if (!isTreeValue(simpleTree)) {
 					simpleTreeNodes.push(simpleTree);
 				}
@@ -126,7 +159,7 @@ export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(
 			}
 		},
 		(anchorNode: AnchorNode) => {
-			const simpleTree = getOrCreateSimpleTree(context, anchorNode);
+			const simpleTree = getOrCreateSimpleTree(view, anchorNode);
 			if (!isTreeValue(simpleTree)) {
 				return treeNodeApi.status(simpleTree);
 			}
@@ -145,44 +178,35 @@ export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(
  */
 export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
 
+function isStringKey(key: TreeIndexKey): key is string {
+	return typeof key === "string";
+}
+
 /**
- * Creates an {@link IdentifierIndex} for a given {@link FlexTreeContext}.
+ * Creates an {@link IdentifierIndex} for a given {@link TreeView}.
  *
  * @alpha
  */
-export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex {
-	assert(context instanceof Context, "Unexpected context implementation");
-
+export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
+): IdentifierIndex {
 	// For each node schema, find which field key the identifier field is under.
 	// This can be done easily because identifiers are their own field kinds.
-	const identifierFields = new Map<string, FieldKey>();
-	for (const [schemaId, flexSchema] of context.flexSchema.nodeSchema.entries()) {
-		const schemus = getSimpleNodeSchema(flexSchema);
-		if (schemus instanceof ObjectNodeSchema) {
-			for (const [fieldKey, fieldSchema] of schemus.fields.entries()) {
-				if (fieldSchema.kind === FieldKind.Identifier) {
-					identifierFields.set(schemaId, brand(fieldKey));
+	const identifierFields = new Map<string, string>();
+	walkFieldSchema(view.schema, {
+		node: (schemus) => {
+			if (schemus instanceof ObjectNodeSchema) {
+				for (const fieldKey of schemus.fields.keys()) {
+					identifierFields.set(schemus.identifier, fieldKey);
 					break;
 				}
 			}
-		}
-	}
+		},
+	});
 
 	return createSimpleTreeIndex(
-		context,
-		(schema) => {
-			const identifierFieldKey = identifierFields.get(schema.identifier);
-			if (identifierFieldKey !== undefined) {
-				return (cursor) => {
-					cursor.enterField(identifierFieldKey);
-					cursor.enterNode(0);
-					const identifier = cursor.value as string;
-					cursor.exitNode();
-					cursor.exitField();
-					return identifier;
-				};
-			}
-		},
+		view,
+		(schemus) => identifierFields.get(schemus.identifier),
 		(nodes) => {
 			if (nodes.length > 1) {
 				throw new UsageError(
@@ -192,46 +216,53 @@ export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex
 
 			return nodes[0];
 		},
+		isStringKey,
 	);
 }
 
 /**
  * Gets a simple tree from an anchor node
  */
-function getOrCreateSimpleTree(
-	context: Context,
+function getOrCreateSimpleTree<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
 	anchorNode: AnchorNode,
 ): TreeNode | TreeIndexKey {
-	return getOrCreateNodeFromFlexTreeNode(
-		anchorNode.slots.get(flexTreeSlot) ?? makeFlexNode(context, anchorNode),
+	return (
+		anchorNode.slots.get(proxySlot) ??
+		makeTreeNode((view as SchematizingSimpleTreeView<TSchema>).getView().context, anchorNode)
 	);
 }
 
 /**
- * Make a flex tree node from an anchor node
+ * Make a tree node from an anchor node
  */
-function makeFlexNode(context: Context, anchorNode: AnchorNode): FlexTreeNode {
+function makeTreeNode(context: Context, anchorNode: AnchorNode): TreeNode | TreeIndexKey {
 	const cursor = context.checkout.forest.allocateCursor();
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 	const flexNode = makeTree(context, cursor);
 	cursor.free();
-	return flexNode;
+	return getOrCreateNodeFromInnerNode(flexNode);
 }
 
-function keyFinder(
-	cursor: ITreeSubscriptionCursor,
+function makeGenericKeyFinder<TKey extends TreeIndexKey>(
 	keyField: FieldKey,
-	index = 0,
-): TreeIndexKey {
-	cursor.enterField(keyField);
-	cursor.enterNode(index);
-	const value = cursor.value;
-	cursor.exitNode();
-	cursor.exitField();
+	isKeyValid: (key: TreeIndexKey) => key is TKey,
+): KeyFinder<TKey> {
+	return (cursor: ITreeSubscriptionCursor) => {
+		cursor.enterField(keyField);
+		cursor.firstNode();
+		const value = cursor.value;
+		cursor.exitNode();
+		cursor.exitField();
 
-	if (value === undefined) {
-		fail("a value for the key does not exist");
-	}
+		if (value === undefined) {
+			fail("a value for the key does not exist");
+		}
 
-	return value;
+		if (!isKeyValid(value)) {
+			fail("the key is an unexpected type");
+		}
+
+		return value;
+	};
 }

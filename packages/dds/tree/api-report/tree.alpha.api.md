@@ -37,16 +37,16 @@ export interface CommitMetadata {
 }
 
 // @alpha
-export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex;
-
-// @alpha
-export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue>(context: FlexTreeContext, indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue): SimpleTreeIndex<TKey, TValue>;
-
-// @alpha
-export function createSimpleTreeIndex<TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(context: FlexTreeContext, indexer: (schema: TSchema) => KeyFinder<TKey> | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
-
-// @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: JsonCompatible, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
+
+// @alpha
+export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
+
+// @alpha
+export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): SimpleTreeIndex<TKey, TValue>;
+
+// @alpha
+export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: (schema: TSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
@@ -147,12 +147,12 @@ export function getBranch(view: TreeView<ImplicitFieldSchema>): TreeBranch;
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
 
 // @alpha
-export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
-
-// @alpha
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
 }
+
+// @alpha
+export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -521,9 +521,6 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha
-export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey, TValue>;
-
-//@alpha
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
@@ -541,6 +538,9 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha
 export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
+
+// @alpha
+export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey, TValue>;
 
 // @alpha
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {

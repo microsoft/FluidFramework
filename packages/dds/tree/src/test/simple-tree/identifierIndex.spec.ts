@@ -19,20 +19,16 @@ import { hydrate } from "./utils.js";
 import { createSimpleTreeIndex } from "../../simple-tree/api/identifierIndex.js";
 import {
 	flexTreeSlot,
-	type FlexTreeNode,
+	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
+import { rootFieldKey, type FieldKey, type UpPath } from "../../core/index.js";
 import {
-	rootFieldKey,
-	type FieldKey,
-	type ITreeSubscriptionCursor,
-	type UpPath,
-} from "../../core/index.js";
-
-function getFlexNode(node: TreeNode): FlexTreeNode {
-	return getOrCreateInnerNode(node);
-}
+	ViewSlot,
+	type SchematizingSimpleTreeView,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../shared-tree/schematizingTreeView.js";
 
 /** The field key under which the parentId node puts its identifier */
 const parentKey: FieldKey = brand("parentKey");
@@ -52,6 +48,10 @@ class IndexableParent extends schemaFactory.object("IndexableParent", {
 	child: schemaFactory.optional(IndexableChild),
 }) {}
 
+function isStringKey(key: TreeIndexKey): key is string {
+	return typeof key === "string";
+}
+
 describe("simple tree indexes", () => {
 	function createView(child?: IndexableChild) {
 		const config = new TreeViewConfiguration({ schema: IndexableParent });
@@ -61,22 +61,12 @@ describe("simple tree indexes", () => {
 		return { view, parent: view.root };
 	}
 
-	function makeKeyFinder(schema: TreeNodeSchema) {
+	function indexer(schema: TreeNodeSchema) {
 		if (
 			schema.identifier === IndexableParent.identifier ||
 			schema.identifier === IndexableChild.identifier
 		) {
-			return (node: ITreeSubscriptionCursor) => {
-				node.enterField(
-					schema.identifier === IndexableParent.identifier ? parentKey : childKey,
-				);
-				node.enterNode(0);
-				const value = node.value;
-				node.exitNode();
-				node.exitField();
-				assert(typeof value === "string");
-				return value;
-			};
+			return schema.identifier === IndexableParent.identifier ? parentKey : childKey;
 		}
 		return;
 	}
@@ -87,11 +77,12 @@ describe("simple tree indexes", () => {
 			child: { [childKey]: childId },
 		});
 		const node = getOrCreateInnerNode(parent);
-		const context = node.context;
+		const view = node.anchorNode.slots.get(ViewSlot) ?? fail("no view");
 		const index = createSimpleTreeIndex(
-			context,
-			(s) => makeKeyFinder(s),
+			view,
+			(s) => indexer(s),
 			() => 3,
+			isStringKey,
 			[IndexableParent, IndexableChild],
 		);
 		assert.equal(index.size, 2);
@@ -107,17 +98,18 @@ describe("simple tree indexes", () => {
 			child: { [childKey]: childId },
 		});
 		const node = getOrCreateInnerNode(parent);
-		const context = node.context;
+		const view = node.anchorNode.slots.get(ViewSlot) ?? fail("no view");
 
 		const index = createSimpleTreeIndex(
-			context,
-			(s) => makeKeyFinder(s),
+			view,
+			(s) => indexer(s),
 			(nodes) => nodes,
+			isStringKey,
 			[IndexableParent, IndexableChild],
 		);
 
-		assert(context.isHydrated());
-		const { forest } = context.checkout;
+		const { forest } = (view as SchematizingSimpleTreeView<typeof IndexableParent>).getView()
+			.checkout;
 		const path: UpPath = {
 			parent: {
 				parent: undefined,
@@ -139,11 +131,16 @@ describe("simple tree indexes", () => {
 	});
 
 	it("filters out removed nodes", () => {
-		const { parent } = createView(new IndexableChild({ [childKey]: childId }));
-		const index = createSimpleTreeIndex<string, TreeIndexNodes<TreeNode>>(
-			getFlexNode(parent).context,
-			(schema) => makeKeyFinder(schema),
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const index = createSimpleTreeIndex<
+			typeof IndexableParent,
+			string,
+			TreeIndexNodes<TreeNode>
+		>(
+			view,
+			(schema) => indexer(schema),
 			(nodes) => nodes,
+			isStringKey,
 		);
 
 		assert.equal(index.size, 2);
@@ -171,17 +168,10 @@ describe("simple tree indexes", () => {
 		view.initialize({ other: parentId, child: new OtherIndexableChild({ other: childId }) });
 		const parent = view.root;
 		const index = createSimpleTreeIndex(
-			getFlexNode(parent).context,
-			(schema) => (node: ITreeSubscriptionCursor) => {
-				node.enterField(brand("other"));
-				node.firstNode();
-				const value = node.value;
-				node.exitNode();
-				node.exitField();
-				assert(typeof value === "string");
-				return value;
-			},
+			view,
+			(schema) => "other",
 			(nodes) => nodes.length,
+			isStringKey,
 			[OtherIndexableChild, OtherIndexableParent],
 		);
 
@@ -196,11 +186,11 @@ describe("simple tree indexes", () => {
 	});
 });
 
-describe.only("identifier indexes", () => {
+describe("identifier indexes", () => {
 	function init(child?: InsertableTypedNode<typeof IndexableChild>) {
 		const parent = hydrate(IndexableParent, { [parentKey]: parentId, child });
 		const index = createIdentifierIndex(
-			getFlexNode(parent).context ?? fail("nodes in index should be cooked"),
+			getOrCreateInnerNode(parent).anchorNode.slots.get(ViewSlot) ?? fail("no view"),
 		);
 		return { parent, index };
 	}

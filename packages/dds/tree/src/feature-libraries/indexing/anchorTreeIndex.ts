@@ -30,8 +30,6 @@ import { TreeStatus } from "../flex-tree/index.js";
  * This function does not own the cursor in any way, it walks the cursor to find the key the node is indexed on
  * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
  * and must be disposed elsewhere.
- *
- * @alpha
  */
 export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCursor) => TKey;
 

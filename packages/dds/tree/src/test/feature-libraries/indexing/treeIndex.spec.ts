@@ -9,7 +9,6 @@ import { getView } from "../../utils.js";
 import {
 	type FlexTreeNode,
 	AnchorTreeIndex,
-	flexTreeSlot,
 	isTreeValue,
 } from "../../../feature-libraries/index.js";
 import type { AnchorNode, FieldKey, ITreeSubscriptionCursor } from "../../../core/index.js";
@@ -25,7 +24,7 @@ import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizi
 // eslint-disable-next-line import/no-internal-modules
 import { treeApi } from "../../../shared-tree/treeApi.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getOrCreateNodeFromFlexTreeNode } from "../../../simple-tree/proxies.js";
+import { proxySlot } from "../../../simple-tree/core/treeNodeKernel.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -88,9 +87,8 @@ describe("tree indexes", () => {
 				);
 			},
 			(anchorNode: AnchorNode) => {
-				const simpleTree = getOrCreateNodeFromFlexTreeNode(
-					anchorNode.slots.get(flexTreeSlot) ?? fail("todo node should be hydrated"),
-				);
+				const simpleTree =
+					anchorNode.slots.get(proxySlot) ?? fail("todo node should be hydrated");
 				if (!isTreeValue(simpleTree)) {
 					return treeApi.status(simpleTree);
 				}
