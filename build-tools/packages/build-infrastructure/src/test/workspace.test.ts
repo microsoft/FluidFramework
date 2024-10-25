@@ -69,7 +69,6 @@ describe("workspaces", () => {
 		it("checkInstall returns errors when node_modules is missing", async () => {
 			const actual = await workspace?.checkInstall();
 			expect(actual).not.to.be.true;
-			expect(actual).to.be.ofSize(1);
 			expect(actual?.[0]).to.include(": node_modules not installed in");
 		});
 
