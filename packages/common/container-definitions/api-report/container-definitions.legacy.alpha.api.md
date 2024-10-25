@@ -49,7 +49,8 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 
 // @public
 export interface IAudienceEvents extends IEvent {
-    (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
+    (event: "addMember", listener: (clientId: string, client: IClient) => void): void;
+    (event: "removeMember", listener: (clientId: string, client: IClient) => void): void;
     (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }
 
