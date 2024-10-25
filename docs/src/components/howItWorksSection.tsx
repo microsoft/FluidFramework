@@ -124,15 +124,15 @@ export function HowItWorksSection(): React.ReactElement {
 			subtitle="Open Source"
 			backgroundStyle={backgroundStyle}
 		>
-			<div className="howItWorksSectionBody">
-				<div className="howItWorksSectionCodeBody">
-					<div className="howItWorksCodeColumn">
-						<div className="howItWorksColumnLabel">Sample Code</div>
+			<div className="ffcom-how-it-works-section-body">
+				<div className="ffcom-how-it-works-section-code-body">
+					<div className="ffcom-how-it-works-code-column">
+						<div className="ffcom-how-it-works-column-label">Sample Code</div>
 						<CardWithBlur>
-							<div className="howItWorksCodeCardBody">
+							<div className="ffcom-how-it-works-code-card-body">
 								<CodeBlock
 									language="typescript"
-									className="howItWorksCodeCardText"
+									className="ffcom-how-it-works-code-card-text"
 									showLineNumbers
 								>
 									{code}
@@ -140,20 +140,20 @@ export function HowItWorksSection(): React.ReactElement {
 							</div>
 						</CardWithBlur>
 					</div>
-					<div className="howItWorksOutputColumn">
-						<div className="howItWorksColumnLabel">Sample Output</div>
-						<MockDiceRollerSample className="howItWorksDiceCards" />
+					<div className="ffcom-how-it-works-output-column ">
+						<div className="ffcom-how-it-works-column-label">Sample Output</div>
+						<MockDiceRollerSample className="ffcom-how-it-works-dice-cards" />
 					</div>
 				</div>
-				<div className="howItWorksTrySamplesRow">
+				<div className="ffcom-how-it-works-try-samples-row">
 					<a
-						className="howItWorksTrySamplesLink"
+						className="ffcom-how-it-works-try-samples-link "
 						href="https://github.com/microsoft/FluidHelloWorld"
 					>
 						Try the dice-roller sample
 					</a>
 					<a
-						className="howItWorksTrySamplesLink"
+						className="ffcom-how-it-works-try-samples-link "
 						href="https://github.com/Microsoft/FluidExamples"
 					>
 						Try the other samples
