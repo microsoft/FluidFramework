@@ -97,7 +97,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(prettier@3.0.3)
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -651,7 +651,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -781,7 +781,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -959,7 +959,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -1086,7 +1086,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -1216,7 +1216,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -1376,7 +1376,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -1485,7 +1485,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -1667,7 +1667,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -1782,7 +1782,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -1888,7 +1888,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -2348,7 +2348,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -2460,7 +2460,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -2666,7 +2666,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -2772,7 +2772,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -3097,7 +3097,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -3784,7 +3784,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -4146,7 +4146,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -4300,7 +4300,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -4497,7 +4497,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -5020,7 +5020,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -5189,7 +5189,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -5367,7 +5367,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -5527,7 +5527,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -5657,7 +5657,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -5766,7 +5766,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -5890,7 +5890,7 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -7282,7 +7282,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rewire:
         specifier: ^5.0.0
@@ -15177,7 +15177,7 @@ importers:
         specifier: ^2.1.3
         version: 2.1.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
@@ -15497,7 +15497,7 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
+        specifier: ^22.15.0
         version: 22.15.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
