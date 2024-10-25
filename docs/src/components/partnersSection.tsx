@@ -25,8 +25,8 @@ const bodyTextPlaceholder =
 export function PartnersSection(): JSX.Element {
 	return (
 		<HomePageSection title="Who's using Fluid Framework">
-			<div className="partnersSectionContents">
-				<div className="partnersSectionContentsInner">
+			<div className="ffcom-partners-section-contents">
+				<div className="ffcom-partners-section-contents-inner">
 					<PartnerEntry
 						icon={<img src={AutodeskLogo} />}
 						labelText="Autodesk"
@@ -75,22 +75,22 @@ const learnMoreHref = "/docs";
 
 function PartnerEntry({ icon, labelText, bodyText }: PartnerEntryProps): JSX.Element {
 	return (
-		<div className="partnerEntry">
-			<div className="partnerEntryInner">
-				<div className="partnerEntryIcon">{icon}</div>
-				<div className="partnerEntryBody">
-					<div className="partnerEntryLabelContainer">
-						<div className="partnerEntryLabelContainerInner">
-							<div className="partnerEntryLabelIndicatorContainer">
-								<div className="partnerEntryLabelIndicatorShape" />
+		<div className="ffcom-partner-entry">
+			<div className="ffcom-partner-entry-inner">
+				<div className="ffcom-partner-entry-icon">{icon}</div>
+				<div className="ffcom-partner-entry-body">
+					<div className="ffcom-partner-entry-label-container ">
+						<div className="ffcom-partner-entry-label-container-inner">
+							<div className="ffcom-partner-entry-label-indicator-container">
+								<div className="ffcom-partner-entry-label-indicator-shape" />
 							</div>
-							<p className="partnerEntryLabelText">{labelText}</p>
+							<p className="ffcom-partner-entry-label-text">{labelText}</p>
 						</div>
 					</div>
-					<p className="partnerEntryDescriptionText">{bodyText}</p>
-					<div className="partnerEntryLearnMoreContainer">
-						<div className="partnerEntryLearnMoreContainerInner">
-							<a className="partnerEntryLearnMoreText" href={learnMoreHref}>
+					<p className="ffcom-partner-entry-description-text ">{bodyText}</p>
+					<div className="ffcom-partner-entry-learn-more-container ">
+						<div className="ffcom-partner-entry-learn-more-container-inner">
+							<a className="ffcom-partner-entry-learn-more-text" href={learnMoreHref}>
 								Learn more
 							</a>
 						</div>

@@ -1,21 +1,16 @@
-.partnersSectionContents {
+.ffcom-partners-section-contents {
 	width: 100%;
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 	flex-wrap: wrap;
 	padding: 0px;
-	/* gap: 160px; */
 	flex: none;
 	order: 1;
 	flex-grow: 0;
 }
 
-/* TODO: better name */
-.partnersSectionContentsInner {
-	/* Grid-Container */
-
-	/* Auto layout */
+.ffcom-partners-section-contents-inner {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -24,285 +19,170 @@
 	padding: 0px;
 	width: 100%;
 	gap: 20px;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 5;
 	flex-grow: 0;
 }
 
-.partnerEntry {
-	/* Column-1 */
-
-	/* Auto layout */
+.ffcom-partner-entry {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 	align-items: flex-start;
 	padding: 0px;
-
 	max-width: 30%;
 	min-width: 250px;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
 }
 
-.partnerEntryInner {
-	/* TextBlock */
-
-	/* Auto layout */
+.ffcom-partner-entry-inner {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 0px;
 	gap: 16px;
-
 	width: 100%;
 	height: 100%;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 1;
 }
 
-.partnerEntryIcon {
-	/* Badge */
-
+.ffcom-partner-entry-icon {
 	box-sizing: border-box;
-
-	/* Auto layout */
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 	align-items: center;
 	padding: 0px;
-
 	width: 48px;
 	height: 48px;
-
-	/* reimagine/day/background/card(card)/normal */
 	background: #fefefe;
-	/* reimagine/day/border/card(card)/fade */
 	border: 1px solid #e6f2fb;
 	border-radius: 8px;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
 }
 
-.partnerEntryBody {
-	/* Body */
-
-	/* Auto layout */
+.ffcom-partner-entry-body {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 0px;
 	gap: 16px;
-
-	/* width: 378.67px;
-	height: 110px; */
-
-	/* Inside auto layout */
 	flex: none;
 	order: 1;
 	align-self: stretch;
 	flex-grow: 0;
 }
 
-.partnerEntryLabelContainer {
-	/* Eyebrow + Title */
-
-	/* Auto layout */
+.ffcom-partner-entry-label-container {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 0px;
 	gap: 4px;
-
-	/* width: 378.67px;
-	height: 24px; */
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	align-self: stretch;
 	flex-grow: 0;
 }
 
-.partnerEntryLabelContainerInner {
-	/* Title+Indicator */
-
-	/* Auto layout */
+.ffcom-partner-entry-label-container-inner {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	padding: 0px;
 	gap: 8px;
-
-	/* width: 378.67px;
-	height: 24px; */
-
-	/* Inside auto layout */
 	flex: none;
 	order: 1;
 	align-self: stretch;
 	flex-grow: 0;
 }
 
-.partnerEntryLabelIndicatorContainer {
-	/* Indicator */
-
-	/* Auto layout */
+.ffcom-partner-entry-label-indicator-container {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 0px;
-
 	width: 4px;
 	height: 24px;
-
-	/* border-radius: 200px; */
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	align-self: stretch;
 	flex-grow: 0;
 }
 
-.partnerEntryLabelIndicatorShape {
-	/* Shape */
-
+.ffcom-partner-entry-label-indicator-shape {
 	width: 4px;
-	/* height: 24px; */
-
-	/* reimagine/day/foreground/base(theme)/highlight */
 	background: #005597;
 	border-radius: 200px;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 1;
 }
 
-.partnerEntryLabelText {
-	/* Title */
-
-	/* width: 366.67px;
-	height: 24px; */
-
-	/* VP4/heading/3xs */
+.ffcom-partner-entry-label-text {
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 16px;
 	line-height: 24px;
-	/* identical to box height, or 150% */
 	letter-spacing: -0.03em;
-
-	/* reimagine/day/foreground/base(theme)/strong */
 	color: #0e1726;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 1;
 	flex-grow: 1;
 }
 
-.partnerEntryDescriptionText {
-	/* Text */
-
-	/* width: 378.67px;
-	height: 32px; */
-
-	/* VP4/body/xs */
+.ffcom-partner-entry-description-text {
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 400;
 	font-size: 12px;
 	line-height: 16px;
-	/* or 133% */
 	letter-spacing: -0.03em;
 	margin: 0;
-
-	/* reimagine/day/foreground/base(theme)/subtle */
 	color: #17253d;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 1;
 	align-self: stretch;
 	flex-grow: 0;
 }
 
-.partnerEntryLearnMoreContainer {
-	/* Link */
-
-	/* Auto layout */
+.ffcom-partner-entry-learn-more-container {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	padding: 0px;
 	gap: 8px;
-
-	/* width: 73px;
-	height: 22px; */
-
-	/* Inside auto layout */
 	flex: none;
 	order: 2;
 	flex-grow: 0;
 }
 
-.partnerEntryLearnMoreContainerInner {
-	/* Label Wrapper */
-
+.ffcom-partner-entry-learn-more-container-inner {
 	box-sizing: border-box;
-
-	/* Auto layout */
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
 	padding: 0px 0px 2px;
-
-	/* width: 73px;
-	height: 22px; */
-
-	/* reimagine/day/foreground/accent-subtle(cta)/normal */
 	border-bottom: 1px solid #2a446f;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
 }
 
-.partnerEntryLearnMoreText {
-	/* Label */
-
-	/* width: 73px;
-	height: 20px; */
-
-	/* VP4/label/m */
+.ffcom-partner-entry-learn-more-text {
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 14px;
 	line-height: 20px;
-	/* identical to box height, or 143% */
-
-	/* reimagine/day/foreground/accent-subtle(cta)/normal */
 	color: #2a446f;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	flex-grow: 0;
