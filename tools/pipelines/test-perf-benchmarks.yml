@@ -601,7 +601,7 @@ stages:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-            FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": ${{variables.pipelineIdentifierForTelemetry}} }'
+            FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": '${{variables.pipelineIdentifierForTelemetry}}" }'
             login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
               login__odsp__test__tenants: $(automation-perf-login-odsp-test-tenants)
