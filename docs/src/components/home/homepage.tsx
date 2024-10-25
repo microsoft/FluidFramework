@@ -6,9 +6,9 @@
 import React from "react";
 
 import { Banner } from "./banner";
+import { HowItWorksSection } from "./howItWorksSection";
 import { KeyFeaturesSection } from "./keyFeaturesSection";
 import { PartnersSection } from "./partnersSection";
-import { HowItWorksSection } from "./howItWorksSection";
 import { ServiceSection } from "./serviceSection";
 
 import "@site/src/css/home/homepage.css";

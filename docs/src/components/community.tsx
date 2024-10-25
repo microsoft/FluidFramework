@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import clsx from "clsx";
 
 import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
+import React from "react";
+import clsx from "clsx";
 
 import "@site/src/css/community.css";
 
 // TODO: it probably makes more sense to inline this stuff into `Community.mdx`
 
-type CommunityLinkItem = {
+interface CommunityLinkItem {
 	title: string;
 	Icon: React.ComponentType<React.ComponentProps<"svg">>;
 	description: JSX.Element;
 	linkUrl: string;
-};
+}
 
 const links: CommunityLinkItem[] = [
 	{

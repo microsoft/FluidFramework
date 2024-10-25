@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import Link from "@docusaurus/Link";
+import GitHubIcon from "@theme/Icon/Socials/GitHub";
+import XIcon from "@theme/Icon/Socials/X";
 import clsx from "clsx";
 import React from "react";
 
-import XIcon from "@theme/Icon/Socials/X";
-import GitHubIcon from "@theme/Icon/Socials/GitHub";
-import Link from "@docusaurus/Link";
+
 import FooterLogo from "./Logo";
 
 import "@site/src/css/footer.css";

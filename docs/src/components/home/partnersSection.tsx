@@ -10,8 +10,8 @@ import { PageSection } from "./pageSection";
 import AutodeskLogo from "@site/static/assets/autodesk-logo.png";
 import HexagonLogo from "@site/static/assets/hexagon-logo.png";
 import LoopLogo from "@site/static/assets/loop-logo.svg";
-import TeamsLogo from "@site/static/assets/teams-logo.png";
 import PowerAppsLogo from "@site/static/assets/power-apps-logo.png";
+import TeamsLogo from "@site/static/assets/teams-logo.png";
 import WhiteboardLogo from "@site/static/assets/whiteboard-logo.png";
 
 import "@site/src/css/home/partnersSection.css";

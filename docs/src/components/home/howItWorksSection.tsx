@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import CodeBlock from "@theme/CodeBlock";
 import React from "react";
 
-import CodeBlock from "@theme/CodeBlock";
 
 import { CardWithBlur } from "../card";
 import { MockDiceRollerSample } from "../mockDiceRoller";
+
 import { PageSection } from "./pageSection";
 
 import ServiceSectionBG from "@site/static/assets/home/how-it-works-section-background.png";

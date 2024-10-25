@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import Layout from "@theme/Layout";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import Layout from "@theme/Layout";
+import React from "react";
 
 import { Homepage } from "@site/src/components/home";
 

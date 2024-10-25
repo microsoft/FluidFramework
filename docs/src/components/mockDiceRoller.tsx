@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+
 import { CardWithBlur } from "@site/src/components/card";
 import Dice1 from "@site/static/assets/dice/1.png";
 import Dice2 from "@site/static/assets/dice/2.png";

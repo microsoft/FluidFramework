@@ -11,10 +11,10 @@ import React from "react";
 
 import { PageSection } from "./pageSection";
 
-import ServiceSectionBG from "@site/static/assets/home/services-section-background.png";
-import ServicesDiagram from "@site/static/assets/home/services-diagram.png";
-import MicrosoftLogo from "@site/static/assets/microsoft-logo.png";
 import AzureLogo from "@site/static/assets/azure-logo.png";
+import ServicesDiagram from "@site/static/assets/home/services-diagram.png";
+import ServiceSectionBG from "@site/static/assets/home/services-section-background.png";
+import MicrosoftLogo from "@site/static/assets/microsoft-logo.png";
 
 import "@site/src/css/home/serviceSection.css";
 
@@ -80,7 +80,6 @@ function ServiceSectionCard({
 }: ServiceSectionCardProps): React.ReactElement {
 	return (
 		<div className="ffcom-service">
-			{/*SPE*/}
 			<div className="ffcom-service-content">
 				<img src={logoSource} className="ffcom-service-card-logo" alt={logoAltText} />
 				<div className="ffcom-service-title">{title}</div>

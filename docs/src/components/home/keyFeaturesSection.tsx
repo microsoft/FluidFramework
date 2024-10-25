@@ -5,8 +5,8 @@
 
 import React from "react";
 
-import { PageSection } from "./pageSection";
 import { KeyFeatureCard } from "./keyFeatureCard";
+import { PageSection } from "./pageSection";
 
 import EasyToUseImage from "@site/static/assets/home/easy-to-use.png";
 import OpenSourecImage from "@site/static/assets/home/open-source.png";
