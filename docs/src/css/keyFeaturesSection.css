@@ -1,6 +1,5 @@
-.keyFeaturesCardGrid {
+.ffcom-key-features-card-grid {
 	width: 100%;
-
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -9,7 +8,7 @@
 	gap: 16px;
 }
 
-.keyFeatureCard {
+.ffcom-key-feature-card {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -22,45 +21,46 @@
 	border-radius: 24px;
 }
 @media (max-width: 2560px) {
-	.keyFeaturesCardGrid{
+	.ffcom-key-features-card-grid{
 		justify-content: space-between;
 	}
-	.keyFeatureCard {
+	.ffcom-key-feature-card {
 		min-width: 30%;
 		max-width: 32%;
 	}
 }
 
 @media (max-width: 1024px) {
-	.keyFeaturesCardGrid{
+	.ffcom-key-features-card-grid{
 		justify-content: space-around;
 	}
-	.keyFeatureCard {
+	.ffcom-key-feature-card {
 		min-width: 35%;
 		max-width: 45%;
 	}
 }
 @media (max-width: 768px) {
-	.keyFeaturesCardGrid{
+	.ffcom-key-features-card-grid{
 		justify-content: space-around;
 	}
-	.keyFeatureCard {
+
+	.ffcom-key-feature-card {
 		min-width: 44%;
 		max-width: 48%;
 	}
 }
 
 @media (max-width: 635px) {
-	.keyFeaturesCardGrid {
+	.ffcom-key-features-card-grid {
 		justify-content: space-around;
 	}
 
-	.keyFeatureCard {
+	.ffcom-key-feature-card {
 		min-width: 80%;
 	}
 }
 
-.keyFeatureCardImageContainer {
+.ffcom-key-feature-card-image-container {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -74,7 +74,7 @@
 	z-index: 1;
 }
 
-.keyFeatureCardImage {
+.ffcom-key-feature-card-image {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -90,7 +90,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardContents {
+.ffcom-key-feature-card-contents {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -104,7 +104,7 @@
 	z-index: 0;
 }
 
-.keyFeatureCardBody {
+.ffcom-key-feature-card-body {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -116,7 +116,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardBodyLabelContainer {
+.ffcom-key-feature-card-body-label-container {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -130,7 +130,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardBodyLabel {
+.ffcom-key-feature-card-body-label {
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
@@ -145,7 +145,7 @@
 	width: 100%;
 }
 
-.keyFeatureCardBodyTextContainer {
+.ffcom-key-feature-card-body-text-container {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -157,7 +157,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardBodyText {
+.ffcom-key-feature-card-body-text {
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 400;
@@ -171,7 +171,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardFooter {
+.ffcom-key-feature-card-footer {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -182,7 +182,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardFooterContent {
+.ffcom-key-feature-card-footer-content {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -193,7 +193,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardFooterLink {
+.ffcom-key-feature-card-footer-link {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
@@ -205,7 +205,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardFooterLinkButton {
+.ffcom-key-feature-card-footer-link-button {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
@@ -221,7 +221,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardFooterLinkLabelFrame {
+.ffcom-key-feature-card-footer-link-label-frame {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -231,7 +231,7 @@
 	flex-grow: 0;
 }
 
-.keyFeatureCardFooterLinkLabelText {
+.ffcom-key-feature-card-footer-link-label-text {
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;

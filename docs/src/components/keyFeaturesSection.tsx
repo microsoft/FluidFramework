@@ -30,7 +30,7 @@ export function KeyFeaturesSection(): JSX.Element {
 
 function KeyFeaturesCardGrid(): JSX.Element {
 	return (
-		<div className="keyFeaturesCardGrid">
+		<div className="ffcom-key-features-card-grid">
 			<KeyFeatureCard
 				imageSrc={EasyToUseImage}
 				imageAltText="Easy to use"
@@ -64,7 +64,7 @@ function KeyFeatureCard(props: {
 	footerHref: string;
 }): JSX.Element {
 	return (
-		<div className="keyFeatureCard">
+		<div className="ffcom-key-feature-card">
 			<KeyFeatureImage src={props.imageSrc} alt={props.imageAltText} />
 			<KeyFeatureCardContents
 				label={props.bodyLabel}
@@ -77,15 +77,15 @@ function KeyFeatureCard(props: {
 
 function KeyFeatureImage(props: { src: string; alt: string }): JSX.Element {
 	return (
-		<div className="keyFeatureCardImageContainer">
-			<img src={props.src} alt={props.alt} className="keyFeatureCardImage" />
+		<div className="ffcom-key-feature-card-image-container">
+			<img src={props.src} alt={props.alt} className="ffcom-key-feature-card-image" />
 		</div>
 	);
 }
 
 function KeyFeatureCardContents(props: { label: string; text: string; href: string }): JSX.Element {
 	return (
-		<div className="keyFeatureCardContents">
+		<div className="ffcom-key-feature-card-contents">
 			<KeyFeatureCardBody label={props.label} text={props.text} />
 			<KeyFeatureCardFooter href={props.href} />
 		</div>
@@ -94,12 +94,12 @@ function KeyFeatureCardContents(props: { label: string; text: string; href: stri
 
 function KeyFeatureCardBody(props: { label: string; text: string }): JSX.Element {
 	return (
-		<div className="keyFeatureCardBody">
-			<div className="keyFeatureCardBodyLabelContainer">
-				<p className="keyFeatureCardBodyLabel">{props.label}</p>
+		<div className="ffcom-key-feature-card-body ">
+			<div className="ffcom-key-feature-card-body-label-container">
+				<p className="ffcom-key-feature-card-body-label">{props.label}</p>
 			</div>
-			<div className="keyFeatureCardBodyTextContainer">
-				<p className="keyFeatureCardBodyText">{props.text}</p>
+			<div className="ffcom-key-feature-card-body-text-container">
+				<p className="ffcom-key-feature-card-body-text">{props.text}</p>
 			</div>
 		</div>
 	);
@@ -107,12 +107,12 @@ function KeyFeatureCardBody(props: { label: string; text: string }): JSX.Element
 
 function KeyFeatureCardFooter(props: { href: string }): JSX.Element {
 	return (
-		<div className="keyFeatureCardFooter">
-			<div className="keyFeatureCardFooterContent">
-				<div className="keyFeatureCardFooterLink">
-					<div className="keyFeatureCardFooterLinkButton">{">"}</div>
-					<div className="keyFeatureCardFooterLinkLabelFrame">
-						<a className="keyFeatureCardFooterLinkLabelText" href={props.href}>
+		<div className="ffcom-key-feature-card-footer">
+			<div className="ffcom-key-feature-card-footer-content">
+				<div className="ffcom-key-feature-card-footer-link">
+					<div className="ffcom-key-feature-card-footer-link-button">{">"}</div>
+					<div className="ffcom-key-feature-card-footer-link-label-frame">
+						<a className="ffcom-key-feature-card-footer-link-label-text" href={props.href}>
 							Learn more
 						</a>
 					</div>
