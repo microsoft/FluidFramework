@@ -16,6 +16,9 @@ import WhiteboardLogo from "@site/static/assets/whiteboard-logo.png";
 const bodyTextPlaceholder =
 	"This is placeholder text. It should be replaced with real contents before this site goes live. Repeat: this is only placeholder text. In the event of real text, you would not be reading this text.";
 
+/**
+ * Homepage "Partners" section component.
+ */
 export function PartnersSection(): JSX.Element {
 	return (
 		<HomePageSection title="Who's using Fluid Framework">

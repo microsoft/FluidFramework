@@ -23,6 +23,9 @@ const afrCardDescription =
 const speCardDescription =
 	"Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.";
 
+/**
+ * Homepage "Services" section component.
+ */
 export function ServiceSection(): JSX.Element {
 	const backgroundStyle: React.CSSProperties = {
 		background: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${ServiceSectionBG})`,

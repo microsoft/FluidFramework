@@ -20,6 +20,9 @@ const openSourceText =
 const performanceText =
 	"Unleash unparalleled speed and performance with our cutting-edge solution for building real-time collaborative applications. Collaborative features are only successful if they are fast, scale to large data and user bases. Fluid offers an approachable programming model that leverages mainstream web technology while delivering best-in-class performance.";
 
+/**
+ * Homepage "Key Features" section component.
+ */
 export function KeyFeaturesSection(): JSX.Element {
 	return (
 		<HomePageSection title="Start building with Fluid Framework" subtitle="Key Features">
