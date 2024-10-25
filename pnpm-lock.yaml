@@ -642,8 +642,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -772,8 +772,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -950,8 +950,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1080,8 +1080,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1207,8 +1207,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1367,8 +1367,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1479,8 +1479,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1661,8 +1661,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1776,8 +1776,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1882,8 +1882,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -2336,8 +2336,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       less:
         specifier: ~3.12.0
         version: 3.12.2
@@ -2454,8 +2454,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -2660,8 +2660,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -2766,8 +2766,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -3091,8 +3091,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -3778,8 +3778,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -4137,8 +4137,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -4291,8 +4291,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5011,8 +5011,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5180,8 +5180,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5358,8 +5358,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5518,8 +5518,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5651,8 +5651,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5757,8 +5757,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5881,8 +5881,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -7267,8 +7267,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       mocha:
         specifier: ^10.2.0
         version: 10.7.3
@@ -15159,8 +15159,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@23.6.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       jsdom:
         specifier: ^16.7.0
         version: 16.7.0
@@ -28622,6 +28622,11 @@ packages:
       homedir-polyfill: 1.0.3
     dev: true
 
+  /expect-puppeteer@10.1.3:
+    resolution: {integrity: sha512-2t1D2t0AfBDMp8rMHEws6mRx1iXeER6sOrIm/8sxM3KxkY7O8AD6j5XfTtVJI6Updc/c4IiuFSz3o/82soHUdA==}
+    engines: {node: '>=16'}
+    dev: true
+
   /expect-puppeteer@9.0.2:
     resolution: {integrity: sha512-nv3RD8MOStXOf4bLpr1wiqxPMLL7MwXvtMeZBtGvg5bubAHiHcYBcvDTJwkUjdOWz3scjOnOOl5z6KZakMobCw==}
     engines: {node: '>=16'}
@@ -30982,6 +30987,22 @@ packages:
       - supports-color
     dev: true
 
+  /jest-dev-server@10.1.1:
+    resolution: {integrity: sha512-Yk9gmW/io2udONlhdrsC69ZGYM2CISvGItyYk9zD5QK3tGq8ZAJP27NDHma4hI6ey/zcaiqbrDkIf7dmpHq86w==}
+    engines: {node: '>=16'}
+    dependencies:
+      chalk: 4.1.2
+      cwd: 0.10.0
+      find-process: 1.4.7
+      prompts: 2.4.2
+      spawnd: 10.1.1
+      tree-kill: 1.2.2
+      wait-on: 7.2.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
   /jest-dev-server@9.0.2:
     resolution: {integrity: sha512-Zc/JB0IlNNrpXkhBw+h86cGrde/Mey52KvF+FER2eyrtYJTHObOwW7Iarxm3rPyTKby5+3Y2QZtl8pRz/5GCxg==}
     engines: {node: '>=16'}
@@ -31059,6 +31080,21 @@ packages:
       '@types/node': 18.19.54
       jest-mock: 29.7.0
       jest-util: 29.7.0
+    dev: true
+
+  /jest-environment-puppeteer@10.1.3(typescript@5.4.5):
+    resolution: {integrity: sha512-dHBP44r0f1RUis6kWTxYmPyoB2QWXeotzzRWVjIgbiLIVIaRsKkvj3pIscRXQbJIfwaTAT+W50h0URV47IMc1Q==}
+    engines: {node: '>=16'}
+    dependencies:
+      chalk: 4.1.2
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      deepmerge: 4.3.1
+      jest-dev-server: 10.1.1
+      jest-environment-node: 29.7.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+      - typescript
     dev: true
 
   /jest-environment-puppeteer@9.0.2(typescript@5.4.5):
@@ -31170,14 +31206,14 @@ packages:
       jest-resolve: 29.7.0
     dev: true
 
-  /jest-puppeteer@9.0.2(puppeteer@23.6.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-ZB0K/tH+0e7foRRn+VpKIufvkW1by8l7ifh62VOdOh5ijEf7yt8W2/PcBNNwP0RLm46AytiBkrIEenvWhxcBRQ==}
+  /jest-puppeteer@10.1.3(puppeteer@23.6.0)(typescript@5.4.5):
+    resolution: {integrity: sha512-YQYrv7Wq3IWySyCsX6pmaSXq8VexELlxW073YvwKx6J4mchhTSHilIa5O0Wv2j95/pZtfAi/PzVmsOuCCcFlig==}
     engines: {node: '>=16'}
     peerDependencies:
       puppeteer: '>=19'
     dependencies:
-      expect-puppeteer: 9.0.2
-      jest-environment-puppeteer: 9.0.2(typescript@5.4.5)
+      expect-puppeteer: 10.1.3
+      jest-environment-puppeteer: 10.1.3(typescript@5.4.5)
       puppeteer: 23.6.0(typescript@5.4.5)
     transitivePeerDependencies:
       - debug
@@ -36882,6 +36918,14 @@ packages:
     engines: {node: '>=14'}
     dependencies:
       cross-spawn: 7.0.3
+    dev: true
+
+  /spawnd@10.1.1:
+    resolution: {integrity: sha512-kTim9sz8KuKX7ZcO8imlvEvbaJmFtFhT5tKS0WP5FRlmWLH5Pd9qj9u29nbMrvDcJPj8ltwOG+QAiZq928GKCw==}
+    engines: {node: '>=16'}
+    dependencies:
+      signal-exit: 4.1.0
+      tree-kill: 1.2.2
     dev: true
 
   /spawnd@9.0.2:
