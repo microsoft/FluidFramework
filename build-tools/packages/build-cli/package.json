@@ -89,7 +89,7 @@
 		"@oclif/plugin-commands": "^4.0.9",
 		"@oclif/plugin-help": "^6.2.7",
 		"@oclif/plugin-not-found": "^3.2.13",
-		"@octokit/core": "^4.2.4",
+		"@octokit/core": "^5.0.0",
 		"@octokit/rest": "^21.0.2",
 		"@rushstack/node-core-library": "^3.59.5",
 		"async": "^3.2.4",
