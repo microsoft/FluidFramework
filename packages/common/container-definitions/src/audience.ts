@@ -36,11 +36,21 @@ export interface IAudienceOwner extends IAudience {
 export interface IAudienceEvents extends IEvent {
 	/**
 	 * "addMember" event is raised when a new user joins collaborative session.
+	 *
+	 * @param clientId - clientId of the new user that joined.
+	 * @param client - Information about the new user that joined (including user identity, connection properties).
+	 *
+	 * @eventProperty
 	 */
 	(event: "addMember", listener: (clientId: string, client: IClient) => void): void;
 
 	/**
 	 * "removeMember" event is raised when a user leaves collaborative session.
+	 *
+	 * @param clientId - clientId of the user that left.
+	 * @param client - Information about the user that left (including user identity, connection properties).
+	 *
+	 * @eventProperty
 	 */
 	(event: "removeMember", listener: (clientId: string, client: IClient) => void): void;
 	/**
