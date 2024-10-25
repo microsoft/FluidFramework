@@ -7,8 +7,8 @@
 import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
-import React from "react";
 import clsx from "clsx";
+import React from "react";
 
 import "@site/src/css/community.css";
 
