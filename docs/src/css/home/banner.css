@@ -1,36 +1,36 @@
-.ffcom-title-section-container {
-	height: 40vh;
+.ffcom-banner {
 	width: 100%;
+	min-height: 40vh;
 
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
 	justify-content: center;
-	align-items: center;
 
-	overflow: hidden;
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
+
+	padding-top: 50px;
+	padding-bottom: 50px;
 }
 
-.ffcom-root-container {
-	height: 100%;
+.ffcom-banner-inner {
 	width: 100%;
+	height: 100%;
 
-	padding: 0% 10%;
-}
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	align-items: center;
+	flex-wrap: wrap;
 
-@media (min-width: 1640px) {
-	.ffcom-root-container {
-		padding: 0% 20%;
-	}
-	.ffcom-title-section-container {
-		height: 45vh;
-	}
+	padding-left: 15px;
+	padding-right: 15px;
+	gap: 50px;
 }
 
 /* Light mode override */
-[data-theme="light"] .ffcom-title-section-container {
+[data-theme="light"] .ffcom-banner {
 	background-image: linear-gradient(
 			90.5deg,
 			rgba(255, 255, 255, 0.9) 19.21%,
@@ -40,27 +40,18 @@
 }
 
 /* Dark mode override */
-[data-theme="dark"] .ffcom-title-section-container {
+[data-theme="dark"] .ffcom-banner {
 	background-image: linear-gradient(90.5deg, rgba(0, 0, 0, 0.8) 19.21%, rgba(0, 0, 0, 0.3)),
 		url("@site/static/assets/home/banner-dark.png");
 }
 
-.ffcom-content-container {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-
-	padding: 0px;
-	gap: 16px;
-}
-
 .ffcom-video-container {
-	width: 50%;
+	height: 100%;
+	max-height: 325px;
 	aspect-ratio: 1.68;
+	flex-grow: 1;
 
 	padding: 12px;
-	margin: 50px 0 0 0;
 
 	background: rgba(255, 255, 255, 0.4);
 	border: 1px solid rgba(255, 255, 255, 0.1);
@@ -75,9 +66,7 @@
 }
 
 .ffcom-title-box {
-	height: 15vh;
-	width: 50%;
-	max-height: 164px;
+	max-width: 500px;
 }
 
 .ffcom-title {
@@ -113,9 +102,6 @@
 	.ffcom-description {
 		font-size: 16px;
 	}
-	.ffcom-content-container {
-		flex-direction: column;
-	}
 	.ffcom-title-box {
 		width: 100%;
 		align-content: center;
@@ -124,14 +110,5 @@
 	.ffcom-title {
 		display: flex;
 		justify-content: center;
-	}
-	.ffcom-video-container {
-		margin: 0;
-		width: 80%;
-	}
-}
-@media (max-width: 425px) {
-	.ffcom-video-container {
-		width: 100%;
 	}
 }
