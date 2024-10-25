@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils/internal";
 import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
 import type {
@@ -284,7 +285,8 @@ function getOrCreateTypeForField(
 				fieldSchema.allowedTypes,
 			);
 		case FieldKind.Optional:
-			return z.optional(
+			return z.union([
+				z.null(),
 				getTypeForAllowedTypes(
 					definitionMap,
 					typeMap,
@@ -293,7 +295,7 @@ function getOrCreateTypeForField(
 					modifyTypeSet,
 					fieldSchema.allowedTypes,
 				),
-			);
+			]);
 		case FieldKind.Identifier:
 			return undefined;
 		default:

@@ -24,20 +24,55 @@ export interface OpenAiClientOptions {
  */
 export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
 	openAI: OpenAiClientOptions;
+	/**
+	 * The view of your Shared Tree.
+	 * @remarks Its is recommended to pass a branch of your current tree view so the AI has a separate canvas to work on
+	 * and merge said branch back to the main tree when the AI is done and the user accepts
+	 */
 	treeView: TreeView<TSchema>;
 	prompt: {
+		/**
+		 * The context to give the LLM about its role in the collaboration.
+		 */
 		systemRoleContext: string;
+		/**
+		 * The request from the users to the LLM.
+		 */
 		userAsk: string;
 	};
+	/**
+	 * Limiters are various optional ways to limit this library's usage of the LLM.
+	 */
 	limiters?: {
 		abortController?: AbortController;
+		/**
+		 * The maximum number of sequential errors the LLM can make before aborting the collaboration.
+		 */
 		maxSequentialErrors?: number;
+		/**
+		 * The maximum number of model calls the LLM can make before aborting the collaboration.
+		 */
 		maxModelCalls?: number;
+		/**
+		 * The maximum token usage limits for the LLM.
+		 */
 		tokenLimits?: TokenUsage;
 	};
+	/**
+	 * When enabled, the LLM will be prompted to first produce a plan based on the user's ask before generating changes to your applications data
+	 */
 	planningStep?: boolean;
+	/**
+	 * When enabled, the LLM will be prompted with a final review of the changes they made to confimr their validity.
+	 */
 	finalReviewStep?: boolean;
+	/**
+	 * An optional validator function that can be used to validate the new content produced by the LLM.
+	 */
 	validator?: (newContent: TreeNode) => void;
+	/**
+	 * When enabled, the library will console.log information useful for debugging the AI collaboration.
+	 */
 	dumpDebugLog?: boolean;
 }
 

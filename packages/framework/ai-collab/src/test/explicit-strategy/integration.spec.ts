@@ -82,7 +82,7 @@ const factory = SharedTree.getFactory();
 const TEST_MODEL_NAME = "gpt-4o";
 
 describe.skip("Agent Editing Integration", () => {
-	process.env.OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
+	process.env.OPENAI_API_KEY = ""; // DON'T COMMIT THIS
 	process.env.AZURE_OPENAI_API_KEY = "TODO "; // DON'T COMMIT THIS
 	process.env.AZURE_OPENAI_ENDPOINT = "TODO ";
 	process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4o";
@@ -164,7 +164,7 @@ describe.skip("Agent Editing Integration", () => {
 			],
 			sessionsPerDay: 2,
 		});
-		const openAIClient = initializeOpenAIClient("azure");
+		const openAIClient = initializeOpenAIClient("openai");
 		const abortController = new AbortController();
 		await generateTreeEdits({
 			openAI: { client: openAIClient, modelName: TEST_MODEL_NAME },

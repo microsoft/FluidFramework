@@ -59,7 +59,7 @@ function populateDefaults(
 		} else {
 			assert(
 				typeof json[typeField] === "string",
-				`${typeField} must be present in new JSON content`,
+				"The typeField must be present in new JSON content",
 			);
 			const nodeSchema = definitionMap.get(json[typeField]);
 			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");

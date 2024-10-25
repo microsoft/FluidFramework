@@ -6,7 +6,6 @@
 import {
 	getSimpleSchema,
 	normalizeFieldSchema,
-	// Tree,
 	type ImplicitFieldSchema,
 	type SimpleTreeSchema,
 	type TreeNode,

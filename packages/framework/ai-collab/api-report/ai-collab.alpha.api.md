@@ -19,11 +19,8 @@ export interface AiCollabErrorResponse {
 
 // @alpha
 export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
-    // (undocumented)
     dumpDebugLog?: boolean;
-    // (undocumented)
     finalReviewStep?: boolean;
-    // (undocumented)
     limiters?: {
         abortController?: AbortController;
         maxSequentialErrors?: number;
@@ -32,16 +29,13 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
     };
     // (undocumented)
     openAI: OpenAiClientOptions;
-    // (undocumented)
     planningStep?: boolean;
     // (undocumented)
     prompt: {
         systemRoleContext: string;
         userAsk: string;
     };
-    // (undocumented)
     treeView: TreeView<TSchema>;
-    // (undocumented)
     validator?: (newContent: TreeNode) => void;
 }
 
