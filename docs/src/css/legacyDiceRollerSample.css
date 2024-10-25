@@ -1,4 +1,4 @@
-.browser-window {
+.ffcom-legacy-dice-roller-window {
 	position: absolute;
 	top: 0;
 	height: 45px;
@@ -8,7 +8,7 @@
 	user-select: none;
 }
 
-.browser-window-wrapper {
+.ffcom-legacy-dice-roller-window-wrapper {
 	flex-grow: 1;
 	width: 100%;
 	border: 1px solid lightgray;
@@ -18,14 +18,14 @@
 	margin: 2px;
 }
 
-.browser-window-icon-wrapper {
+.ffcom-legacy-dice-roller-icon-wrapper {
 	position: absolute;
 	display: flex;
 	top: 0px;
 	right: 0px;
 }
 
-.browser-window-icon {
+.ffcom-legacy-dice-roller-icon {
 	position: relative;
 	top: 0px;
 	right: 0px;
@@ -34,7 +34,7 @@
 	text-align: center;
 }
 
-.browser-window-nav {
+.ffcom-legacy-dice-roller-nav {
 	position: absolute;
 	font-size: 10px;
 	bottom: 5px;
@@ -48,6 +48,6 @@
 	overflow: hidden;
 }
 
-.browser-window-nav-url {
+.ffcom-legacy-dice-roller-nav-url {
 	padding-left: 2px;
 }

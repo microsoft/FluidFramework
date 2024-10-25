@@ -32,12 +32,10 @@ export function LegacyDiceRollerSample(): JSX.Element {
 	const containerId = Date.now().toString();
 
 	return (
-		<>
-			<div id="content" style={{ minHeight: "200px" }}>
-				<Panel containerId={containerId} elementId={"dice-roller-left"} />
-				<Panel containerId={containerId} elementId={"dice-roller-right"} />
-			</div>
-		</>
+		<div id="content" style={{ minHeight: "200px" }}>
+			<Panel containerId={containerId} elementId={"dice-roller-left"} />
+			<Panel containerId={containerId} elementId={"dice-roller-right"} />
+		</div>
 	);
 }
 
@@ -48,15 +46,15 @@ interface PanelProps {
 
 function Panel({ containerId, elementId }: PanelProps): JSX.Element {
 	return (
-		<div className="browser-window-wrapper" id={elementId}>
-			<div aria-hidden="true" className="browser-window">
-				<div className="browser-window-nav">
-					<div className="browser-window-nav-url">{`http://localhost:8080#${containerId}`}</div>
+		<div className="ffcom-legacy-dice-roller-window-wrapper" id={elementId}>
+			<div aria-hidden="true" className="ffcom-legacy-dice-roller-window">
+				<div className="ffcom-legacy-dice-roller-nav">
+					<div className="ffcom-legacy-dice-roller-nav-url">{`http://localhost:8080#${containerId}`}</div>
 				</div>
-				<div className="browser-window-icon-wrapper">
-					<div className="browser-window-icon">−</div>
-					<div className="browser-window-icon">□</div>
-					<div className="browser-window-icon">x</div>
+				<div className="ffcom-legacy-dice-roller-icon-wrapper">
+					<div className="ffcom-legacy-dice-roller-icon">−</div>
+					<div className="ffcom-legacy-dice-roller-icon">□</div>
+					<div className="ffcom-legacy-dice-roller-icon">x</div>
 				</div>
 			</div>
 		</div>
