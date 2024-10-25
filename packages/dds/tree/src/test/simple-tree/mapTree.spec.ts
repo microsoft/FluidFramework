@@ -29,6 +29,7 @@ import {
 } from "../../core/index.js";
 import {
 	booleanSchema,
+	cursorFromInsertable,
 	handleSchema,
 	nullSchema,
 	numberSchema,
@@ -59,7 +60,7 @@ import {
 	MockNodeKeyManager,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { cursorFromInsertableTreeField, validateUsageError } from "../utils.js";
+import { validateUsageError } from "../utils.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
@@ -1513,15 +1514,16 @@ describe("toMapTree", () => {
 			new Map(),
 		);
 
-		describe("cursorFromInsertableTreeField", () => {
+		describe("cursorFromInsertable", () => {
 			it("Success", () => {
-				cursorFromInsertableTreeField(schemaFactory.string, "Hello world", nodeKeyManager);
+				cursorFromInsertable(schemaFactory.string, "Hello world", nodeKeyManager);
 			});
 
 			it("Failure", () => {
 				assert.throws(
 					() =>
-						cursorFromInsertableTreeField(schemaFactory.number, "Hello world", nodeKeyManager),
+						// @ts-expect-error invalid data for schema
+						cursorFromInsertable(schemaFactory.number, "Hello world", nodeKeyManager),
 					validateUsageError(/incompatible/),
 				);
 			});
