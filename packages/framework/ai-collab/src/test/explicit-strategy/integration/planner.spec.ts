@@ -174,42 +174,9 @@ const factory = SharedTree.getFactory();
 const OPENAI_API_KEY = "";
 
 describe("Ai Planner App", () => {
-	it.skip("Simple test", async () => {
-		// mocha.setup({
-		// 	timeout: 20000,
-		// });
-
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: SharedTreeAppState }));
-		view.initialize(INITIAL_APP_STATE);
-
-		await aiCollab({
-			openAI: {
-				client: new OpenAI({
-					apiKey: OPENAI_API_KEY,
-				}),
-				modelName: "gpt-4o",
-			},
-			treeView: view,
-			prompt: {
-				systemRoleContext:
-					"You are a project manager overseeing a team of engineers and assigning tasks within task groups to them.",
-				userAsk: "Change the first task group title to 'Hello World'",
-			},
-			planningStep: true,
-			finalReviewStep: true,
-			dumpDebugLog: true,
-		});
-
-		// assert.equal(view.root.taskGroups[0]?.title, "Hello World");
-	});
-
-	it.skip("VERY Simple test", async () => {
+	it.skip("BUG: Invalid json schema produced when schema has no arrays at all", async () => {
 		class TestAppSchema extends sf.object("PrioritySpecification", {
-			priority: sf.optional(sf.string),
+			priority: sf.string,
 		}) {}
 
 		const tree = factory.create(
@@ -219,23 +186,80 @@ describe("Ai Planner App", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
 		view.initialize({ priority: "low" });
 
-		await aiCollab({
-			openAI: {
-				client: new OpenAI({
-					apiKey: OPENAI_API_KEY,
-				}),
-				modelName: "gpt-4o",
-			},
-			treeView: view,
-			prompt: {
-				systemRoleContext: "You are a managing objects with a priority field.",
-				userAsk: "Change the priority from low to high",
-			},
-			planningStep: true,
-			finalReviewStep: true,
+		try {
+			await aiCollab({
+				openAI: {
+					client: new OpenAI({
+						apiKey: OPENAI_API_KEY,
+					}),
+					modelName: "gpt-4o",
+				},
+				treeView: view,
+				prompt: {
+					systemRoleContext: "You are a managing objects with a priority field.",
+					userAsk: "Change the priority from low to high",
+				},
+				planningStep: true,
+				finalReviewStep: true,
+			});
+		} catch (error) {
+			assert(error instanceof APIError);
+			assert(error.status === 400);
+			assert(error.type === "invalid_request_error");
+			assert(
+				error.message ===
+					"400 Invalid schema for response_format 'SharedTreeAI': In context=('properties', 'edit', 'anyOf', '1', 'properties', 'content', 'not'), schema must have a 'type' key.",
+			);
+		}
+	});
+
+	it.skip("BUG: Invalid json schema produced when schema has multiple keys with the same name and order", async () => {
+		class TestInnerAppSchema extends sf.object("TestInnerAppSchema", {
+			title: sf.string,
+		}) {}
+
+		class TestAppSchema extends sf.object("TestAppSchema", {
+			title: sf.string,
+			taskList: SharedTreeTaskList,
+			appData: TestInnerAppSchema,
+		}) {}
+
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
+		view.initialize({
+			title: "Sample Title",
+			taskList: [],
+			appData: { title: "Inner App Data" },
 		});
 
-		assert.equal(view.root.priority, "high");
+		try {
+			await aiCollab({
+				openAI: {
+					client: new OpenAI({
+						apiKey: OPENAI_API_KEY,
+					}),
+					modelName: "gpt-4o",
+				},
+				treeView: view,
+				prompt: {
+					systemRoleContext: "You are a managing json objects",
+					userAsk: "Change the `title` field of the outer object to 'Hello World'",
+				},
+				planningStep: true,
+				finalReviewStep: true,
+			});
+		} catch (error) {
+			assert(error instanceof APIError);
+			assert(error.status === 400);
+			assert(error.type === "invalid_request_error");
+			assert(
+				error.message ===
+					"400 Invalid schema for response_format 'SharedTreeAI'. Please ensure it is a valid JSON Schema.",
+			);
+		}
 	});
 
 	it.skip("BUG: Invalid json schema produced when schema has no arrays", async () => {
@@ -315,7 +339,7 @@ describe("Ai Planner App", () => {
 			assert(error.type === "invalid_request_error");
 			assert(
 				error.message ===
-					"Invalid schema for response_format 'SharedTreeAI'. Please ensure it is a valid JSON Schema.",
+					"400 Invalid schema for response_format 'SharedTreeAI'. Please ensure it is a valid JSON Schema.",
 			);
 		}
 
@@ -342,7 +366,7 @@ describe("Ai Planner App", () => {
 				}),
 				modelName: "gpt-4o",
 			},
-			treeView: view,
+			treeView: view2,
 			prompt: {
 				systemRoleContext: "You are a managing json objects",
 				userAsk: "Change the `optionalProp` field to 'Hello World'",
