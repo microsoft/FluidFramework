@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { HomePageBanner } from "./homePageBanner";
+import { Banner } from "./banner";
 import { KeyFeaturesSection } from "./keyFeaturesSection";
 import { PartnersSection } from "./partnersSection";
 import { HowItWorksSection } from "./howItWorksSection";
@@ -19,7 +19,7 @@ import "@site/src/css/home/homepage.css";
 export function Homepage(): React.ReactElement {
 	return (
 		<div className="ffcom_homepage">
-			<HomePageBanner />
+			<Banner />
 			<div className="ffcom_homepage_body">
 				<KeyFeaturesSection />
 				<PartnersSection />

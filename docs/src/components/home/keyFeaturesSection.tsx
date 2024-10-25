@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { HomePageSection } from "./homePageSection";
+import { PageSection } from "./pageSection";
 import { KeyFeatureCard } from "./keyFeatureCard";
 
 import EasyToUseImage from "@site/static/assets/home/easy-to-use.png";
@@ -28,9 +28,9 @@ const performanceText =
  */
 export function KeyFeaturesSection(): JSX.Element {
 	return (
-		<HomePageSection title="Start building with Fluid Framework" subtitle="Key Features">
+		<PageSection title="Start building with Fluid Framework" subtitle="Key Features">
 			<KeyFeaturesCardGrid />
-		</HomePageSection>
+		</PageSection>
 	);
 }
 

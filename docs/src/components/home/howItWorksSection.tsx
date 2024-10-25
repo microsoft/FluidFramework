@@ -9,7 +9,7 @@ import CodeBlock from "@theme/CodeBlock";
 
 import { CardWithBlur } from "../card";
 import { MockDiceRollerSample } from "../mockDiceRoller";
-import { HomePageSection } from "./homePageSection";
+import { PageSection } from "./pageSection";
 
 import ServiceSectionBG from "@site/static/assets/home/how-it-works-section-background.png";
 
@@ -119,7 +119,7 @@ export function HowItWorksSection(): React.ReactElement {
 		backgroundSize: "cover",
 	};
 	return (
-		<HomePageSection
+		<PageSection
 			title="See how it works"
 			subtitle="Open Source"
 			backgroundStyle={backgroundStyle}
@@ -160,6 +160,6 @@ export function HowItWorksSection(): React.ReactElement {
 					</a>
 				</div>
 			</div>
-		</HomePageSection>
+		</PageSection>
 	);
 }

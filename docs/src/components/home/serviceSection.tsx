@@ -9,7 +9,7 @@
  */
 import React from "react";
 
-import { HomePageSection } from "./homePageSection";
+import { PageSection } from "./pageSection";
 
 import ServiceSectionBG from "@site/static/assets/home/services-section-background.png";
 import ServicesDiagram from "@site/static/assets/home/services-diagram.png";
@@ -35,7 +35,7 @@ export function ServiceSection(): JSX.Element {
 		backgroundSize: "cover",
 	};
 	return (
-		<HomePageSection title="Fluid Framework in the Cloud" backgroundStyle={backgroundStyle}>
+		<PageSection title="Fluid Framework in the Cloud" backgroundStyle={backgroundStyle}>
 			<div className="ffcom-service-content-container">
 				<img
 					src={ServicesDiagram}
@@ -59,7 +59,7 @@ export function ServiceSection(): JSX.Element {
 					/>
 				</div>
 			</div>
-		</HomePageSection>
+		</PageSection>
 	);
 }
 

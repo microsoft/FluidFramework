@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { HomePageSection } from "./homePageSection";
+import { PageSection } from "./pageSection";
 
 import AutodeskLogo from "@site/static/assets/autodesk-logo.png";
 import HexagonLogo from "@site/static/assets/hexagon-logo.png";
@@ -24,7 +24,7 @@ const bodyTextPlaceholder =
  */
 export function PartnersSection(): JSX.Element {
 	return (
-		<HomePageSection title="Who's using Fluid Framework">
+		<PageSection title="Who's using Fluid Framework">
 			<div className="ffcom-partners-section-contents">
 				<div className="ffcom-partners-section-contents-inner">
 					<PartnerEntry
@@ -59,7 +59,7 @@ export function PartnersSection(): JSX.Element {
 					/>
 				</div>
 			</div>
-		</HomePageSection>
+		</PageSection>
 	);
 }
 

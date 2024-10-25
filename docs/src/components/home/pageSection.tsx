@@ -7,12 +7,12 @@ import React from "react";
 
 import { SectionHeader, type SectionHeaderProps } from "./sectionHeader";
 
-import "@site/src/css/home/homePageSection.css";
+import "@site/src/css/home/pageSection.css";
 
 /**
- * {@link HomePageSection} component props.
+ * {@link PageSection} component props.
  */
-export type HomePageSectionProps = React.PropsWithChildren<
+export type PageSectionProps = React.PropsWithChildren<
 	SectionHeaderProps & {
 		/**
 		 * Optional background style to apply to the root element of the section.
@@ -24,12 +24,12 @@ export type HomePageSectionProps = React.PropsWithChildren<
 /**
  * Common base component for homepage sections
  */
-export function HomePageSection({
+export function PageSection({
 	title,
 	subtitle,
 	backgroundStyle,
 	children,
-}: HomePageSectionProps): JSX.Element {
+}: PageSectionProps): JSX.Element {
 	return (
 		<div className="ffcom-home-page-section" style={backgroundStyle}>
 			<div className="ffcom-home-page-section-inner">
