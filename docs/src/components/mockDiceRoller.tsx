@@ -25,45 +25,91 @@ const diceImages = new Map<number, string>([
 
 import "@site/src/css/mockDiceRoller.css";
 
+/**
+ * {@link MockDiceRollerSample} component props.
+ */
 export interface MockDiceRollerSampleProps {
-	className?: string;
+	/**
+	 * Style properties to apply to the root element of the component.
+	 */
 	style?: React.CSSProperties;
+
+	/**
+	 * Optional CSS class name to apply to the root element of the component.
+	 */
+	className?: string;
 }
 
 /**
- * Here be lies. All lies.
+ * Mock dice roller implementation for the website.
+ *
+ * @remarks
+ * This is a temporary implementation until we have a way to embed live Fluid sample apps.
+ * In the future, we should remove this and embed the dice roller app directly.
  */
-export function MockDiceRollerSample({className, style}: MockDiceRollerSampleProps): React.ReactElement {
+export function MockDiceRollerSample({
+	style,
+	className,
+}: MockDiceRollerSampleProps): React.ReactElement {
 	const [containerId] = React.useState(Date.now().toString());
 	const [diceValue, setDiceValue] = React.useState(1);
 
 	const rollDice = () => {
 		setDiceValue(Math.floor(Math.random() * 6) + 1);
-	}
+	};
 
-	return <div className={className} style={style}>
-		<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
-		<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
-	</div>
+	return (
+		<div style={style} className={className}>
+			<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
+			<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
+		</div>
+	);
 }
 
+/**
+ * {@link DiceRollerCard} component props.
+ */
 interface DiceRollerCardProps {
+	/**
+	 * The current value of the dice.
+	 */
 	diceValue: number;
+
+	/**
+	 * The mock container ID, to display in the URL bar of the card.
+	 */
 	containerId: string;
+
+	/**
+	 * Invoked when the "Roll" button is clicked.
+	 */
 	onClick?: () => void;
 }
 
-function DiceRollerCard({diceValue, containerId, onClick}: DiceRollerCardProps): React.ReactElement {
+/**
+ * A single dice-roller view within a styled card.
+ */
+function DiceRollerCard({
+	diceValue,
+	containerId,
+	onClick,
+}: DiceRollerCardProps): React.ReactElement {
 	const imageUrl = diceImages.get(diceValue)!;
-	return <CardWithBlur>
-		<div className="diceRollerCard">
-			<div className="diceRollerCardNavBar">
-				{`http://localhost:8080#${containerId}`}
+	return (
+		<CardWithBlur>
+			<div className="ffcom-dice-roller-card ">
+				<div className="ffcom-dice-roller-card-nav-bar">
+					{`http://localhost:8080#${containerId}`}
+				</div>
+				<img
+					className="ffcom-dice-image"
+					src={imageUrl}
+					alt={`Dice showing ${diceValue}`}
+				/>
+				<button className="ffcom-roll-button" onClick={onClick}>
+					<span className="ffcom-roll-button-label">Roll</span>
+				</button>
 			</div>
-			<img className="diceImage" src={imageUrl} alt={`Dice showing ${diceValue}`} />
-			<button className="rollButton" onClick={onClick}>
-				<span className="rollButtonLabel" >Roll</span>
-			</button>
-		</div>
-	</CardWithBlur>;
+		</CardWithBlur>
+	);
 }

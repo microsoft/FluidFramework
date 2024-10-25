@@ -1,4 +1,17 @@
 .ffcom_homepage {
+	display: flex;
+	flex-direction: column;
+	align-content: center;
+
 	width: 100%;
-	background-color: #FFF8F3;
+
+	background-color: #fff8f3;
+}
+
+.ffcom_homepage_body {
+	display: flex;
+	flex-direction: column;
+	align-content: center;
+
+	width: 100%;
 }

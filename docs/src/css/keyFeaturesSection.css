@@ -17,11 +17,12 @@
 	padding: 0px;
 	isolation: isolate;
 
-
 	/* day/background/card/normal */
-	background: #FEFEFE;
+	background: #fefefe;
 	/* elevation/day/level-2 */
-	box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
+	box-shadow:
+		0px 0px 2px rgba(0, 0, 0, 0.12),
+		0px 2px 4px rgba(0, 0, 0, 0.14);
 	border-radius: 24px;
 }
 @media (max-width: 2560px) {
@@ -54,7 +55,7 @@
 }
 
 @media (max-width: 635px) {
-	.keyFeaturesCardGrid{
+	.keyFeaturesCardGrid {
 		justify-content: space-around;
 	}
 
@@ -78,7 +79,6 @@
 		max-width: 32%;
 	}
 } */
-
 
 .keyFeatureCardImageContainer {
 	/* Auto layout */
@@ -163,14 +163,14 @@
 
 .keyFeatureCardBodyLabel {
 	/* VP4/heading/2xs */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 20px;
 	line-height: 28px;
 	letter-spacing: -0.03em;
 
-	color: #0E1726;
+	color: #0e1726;
 	flex: none;
 	order: 1;
 	align-self: stretch;
@@ -195,7 +195,7 @@
 
 .keyFeatureCardBodyText {
 	/* VP4/body/m */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 400;
 	font-size: 16px;
@@ -204,7 +204,7 @@
 	letter-spacing: -0.03em;
 
 	/* day/foreground/base/subtle */
-	color: #17253D;
+	color: #17253d;
 
 	/* Inside auto layout */
 	flex: none;
@@ -292,7 +292,7 @@
 
 .keyFeatureCardFooterLinkLabelText {
 	/* VP4/action/label */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 15px;
@@ -302,7 +302,7 @@
 	letter-spacing: -0.02em;
 
 	/* day/foreground/accent-subtle/normal */
-	color: #2A446F;
+	color: #2a446f;
 
 	/* Inside auto layout */
 	flex: none;

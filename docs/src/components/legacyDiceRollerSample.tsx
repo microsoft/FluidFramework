@@ -1,0 +1,64 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import React from "react";
+
+import "@site/src/css/legacyDiceRollerSample.css";
+
+/**
+ * Legacy dice roller sample component.
+ *
+ * @remarks
+ * Leverages an old app bundle to render a Fluid-backed dice roller.
+ * Used by the v1 docs, but should not be used by newer docs.
+ *
+ * Newer docs should use the {@link MockDiceRollerSample} component instead.
+ */
+export function LegacyDiceRollerSample(): JSX.Element {
+	React.useEffect(() => {
+		const script = document.createElement("script");
+		script.src = `https://storage.fluidframework.com/static/js/dice-roller.2021-09-24.js`;
+		script.async = true;
+
+		document.body.appendChild(script);
+
+		return () => {
+			document.body.removeChild(script);
+		};
+	}, []);
+
+	const containerId = Date.now().toString();
+
+	return (
+		<>
+			<div id="content" style={{ minHeight: "200px" }}>
+				<Panel containerId={containerId} elementId={"dice-roller-left"} />
+				<Panel containerId={containerId} elementId={"dice-roller-right"} />
+			</div>
+		</>
+	);
+}
+
+interface PanelProps {
+	elementId: string;
+	containerId: string;
+}
+
+function Panel({ containerId, elementId }: PanelProps): JSX.Element {
+	return (
+		<div className="browser-window-wrapper" id={elementId}>
+			<div aria-hidden="true" className="browser-window">
+				<div className="browser-window-nav">
+					<div className="browser-window-nav-url">{`http://localhost:8080#${containerId}`}</div>
+				</div>
+				<div className="browser-window-icon-wrapper">
+					<div className="browser-window-icon">−</div>
+					<div className="browser-window-icon">□</div>
+					<div className="browser-window-icon">x</div>
+				</div>
+			</div>
+		</div>
+	);
+}

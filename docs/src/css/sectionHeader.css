@@ -27,12 +27,11 @@
 	flex: none;
 	order: 0;
 	flex-grow: 1;
-
 }
 
 .sectionHeaderSubtitle {
 	/* VP4/label/eyebrow */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 12px;
@@ -42,7 +41,7 @@
 	text-transform: uppercase;
 
 	/* M365/Day/Section Eyebrow */
-	color: #61615E;
+	color: #61615e;
 
 	/* Inside auto layout */
 	flex: none;

@@ -6,16 +6,16 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "docusaurus"
+		"directory": "docs"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"api-markdown-documenter": "node ./infra/generate-api-documentation.mjs",
 		"build": "npm run build:api-documentation && npm run build:docusaurus",
-		"build:dev": "cross-env NODE_ENV=development npm run build",
 		"build:api-documentation": "npm run download-doc-models && npm run api-markdown-documenter",
 		"build:api-documentation:dev": "cross-env NODE_ENV=development npm run build:api-documentation",
+		"build:dev": "cross-env NODE_ENV=development npm run build",
 		"build:docusaurus": "npm run gen-docusaurus && docusaurus build",
 		"clean": "concurrently \"npm:clean:*\"",
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
@@ -23,7 +23,12 @@
 		"clean:docusaurus": "docusaurus clear",
 		"deploy": "npm run gen-docusaurus && docusaurus deploy",
 		"download-doc-models": "node ./infra/download-doc-models.mjs",
+		"format": "npm run prettier:fix",
 		"gen-docusaurus": "node ./infra/pre-docusaurus.mjs",
+		"lint": "npm run prettier",
+		"lint:fix": "npm run prettier:fix",
+		"prettier": "prettier --check ./src --cache --ignore-path ../.prettierignore",
+		"prettier:fix": "prettier --write ./src --cache --ignore-path ../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"serve": "docusaurus serve",
 		"start": "npm run gen-docusaurus && docusaurus start",

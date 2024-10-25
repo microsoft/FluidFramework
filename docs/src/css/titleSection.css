@@ -1,13 +1,13 @@
 .titleSectionContainer {
 	width: 100%;
 	display: flex;
-    flex-direction: row;
+	flex-direction: row;
 	justify-content: center;
-    align-items: center;
+	align-items: center;
 	height: 40vh;
-    flex: none;
-    order: 0;
-    flex-grow: 0;
+	flex: none;
+	order: 0;
+	flex-grow: 0;
 	overflow: hidden;
 	background-size: cover;
 	background-position: center;
@@ -31,13 +31,19 @@
 }
 
 /* Light mode override */
-[data-theme='light'] .titleSectionContainer {
-	background-image: linear-gradient(90.5deg, rgba(255, 255, 255, 0.9) 19.21%, rgba(255, 255, 255, 0.1) 94.15%),url('../../static/assets/title-background-light.png');
+[data-theme="light"] .titleSectionContainer {
+	background-image: linear-gradient(
+			90.5deg,
+			rgba(255, 255, 255, 0.9) 19.21%,
+			rgba(255, 255, 255, 0.1) 94.15%
+		),
+		url("@site/static/assets/home/title-background-light.png");
 }
 
 /* Dark mode override */
-[data-theme='dark'] .titleSectionContainer {
-	background-image: linear-gradient(90.5deg, rgba(0, 0, 0, 0.8) 19.21%, rgba(0, 0, 0, 0.3)), url('../../static/assets/title-background-dark.png');
+[data-theme="dark"] .titleSectionContainer {
+	background-image: linear-gradient(90.5deg, rgba(0, 0, 0, 0.8) 19.21%, rgba(0, 0, 0, 0.3)),
+		url("@site/static/assets/home//title-background-dark.png");
 }
 
 .contentContainer {
@@ -77,16 +83,16 @@
 
 .titleBox {
 	z-index: 2;
-    height: 15vh;
-    width: 50%;
-    max-height: 164px;
+	height: 15vh;
+	width: 50%;
+	max-height: 164px;
 }
 
 .title {
-	color: #0E1726;
-	font-family: 'Segoe UI';
+	color: #0e1726;
+	font-family: "Segoe UI";
 	font-weight: 600;
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-size: 45px;
 	letter-spacing: -0.05em;
@@ -103,20 +109,20 @@
 }
 
 .description {
-	color: #17253D;;
-	font-family: 'Segoe UI';
+	color: #17253d;
+	font-family: "Segoe UI";
 	font-weight: 400;
 	font-size: 20px;
 }
 
 /* Dark mode override */
-[data-theme='dark'] .title,
-[data-theme='dark'] .description{
-	color: #FEFEFE
+[data-theme="dark"] .title,
+[data-theme="dark"] .description {
+	color: #fefefe;
 }
 
 @media (max-width: 768px) {
-	.description{
+	.description {
 		font-size: 16px;
 	}
 	.contentContainer {
@@ -125,7 +131,7 @@
 	.titleBox {
 		width: 100%;
 		align-content: center;
-        text-align: center;
+		text-align: center;
 	}
 	.title {
 		display: flex;
@@ -137,7 +143,7 @@
 	}
 }
 @media (max-width: 425px) {
-	.videoContainer{
+	.videoContainer {
 		width: 100%;
 	}
 }

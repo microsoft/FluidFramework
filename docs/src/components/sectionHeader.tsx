@@ -10,11 +10,13 @@ export interface SectionHeaderProps {
 	subtitle?: string;
 }
 
-export function SectionHeader({title, subtitle}: SectionHeaderProps): JSX.Element {
-	return <div className="sectionHeader">
-		<div className="sectionHeaderInner">
-			{ subtitle && (<p className="sectionHeaderSubtitle">{subtitle}</p>) }
-			<p className="sectionHeaderTitle">{title}</p>
+export function SectionHeader({ title, subtitle }: SectionHeaderProps): JSX.Element {
+	return (
+		<div className="sectionHeader">
+			<div className="sectionHeaderInner">
+				{subtitle && <p className="sectionHeaderSubtitle">{subtitle}</p>}
+				<p className="sectionHeaderTitle">{title}</p>
+			</div>
 		</div>
-	</div>;
+	);
 }

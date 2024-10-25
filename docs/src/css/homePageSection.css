@@ -2,33 +2,20 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 72px 0px 0px 0px;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
+
+	width: 100%;
+
+	padding-top: 25px;
 }
 
-/* TODO: better name */
 .homePageSectionInner {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	z-index: 2;
-	max-width: 100%;
-	padding: 10px;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
-}
 
-.contentBoundary {
-	width: 100%;
 	height: 100%;
-	max-width: 90%;
-}
+	width: 100%;
+	max-width: 1600px;
 
-@media (min-width: 1640px) {
-	.contentBoundary {
-		max-width: 80%;
-	}
+	padding: 15px;
 }

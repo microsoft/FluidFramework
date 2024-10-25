@@ -1,14 +1,14 @@
 .partnersSectionContents {
 	width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-    padding: 0px;
-    /* gap: 160px; */
-    flex: none;
-    order: 1;
-    flex-grow: 0;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	flex-wrap: wrap;
+	padding: 0px;
+	/* gap: 160px; */
+	flex: none;
+	order: 1;
+	flex-grow: 0;
 }
 
 /* TODO: better name */
@@ -22,7 +22,7 @@
 	justify-content: space-between;
 	flex-wrap: wrap;
 	padding: 0px;
-	width:100%;
+	width: 100%;
 	gap: 20px;
 
 	/* Inside auto layout */
@@ -85,9 +85,9 @@
 	height: 48px;
 
 	/* reimagine/day/background/card(card)/normal */
-	background: #FEFEFE;
+	background: #fefefe;
 	/* reimagine/day/border/card(card)/fade */
-	border: 1px solid #E6F2FB;
+	border: 1px solid #e6f2fb;
 	border-radius: 8px;
 
 	/* Inside auto layout */
@@ -109,13 +109,11 @@
 	/* width: 378.67px;
 	height: 110px; */
 
-
 	/* Inside auto layout */
 	flex: none;
 	order: 1;
 	align-self: stretch;
 	flex-grow: 0;
-
 }
 
 .partnerEntryLabelContainer {
@@ -130,7 +128,6 @@
 
 	/* width: 378.67px;
 	height: 24px; */
-
 
 	/* Inside auto layout */
 	flex: none;
@@ -203,7 +200,7 @@
 	height: 24px; */
 
 	/* VP4/heading/3xs */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 16px;
@@ -212,7 +209,7 @@
 	letter-spacing: -0.03em;
 
 	/* reimagine/day/foreground/base(theme)/strong */
-	color: #0E1726;
+	color: #0e1726;
 
 	/* Inside auto layout */
 	flex: none;
@@ -227,18 +224,17 @@
 	height: 32px; */
 
 	/* VP4/body/xs */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 400;
 	font-size: 12px;
 	line-height: 16px;
 	/* or 133% */
 	letter-spacing: -0.03em;
-	margin:0;
+	margin: 0;
 
 	/* reimagine/day/foreground/base(theme)/subtle */
-	color: #17253D;
-
+	color: #17253d;
 
 	/* Inside auto layout */
 	flex: none;
@@ -259,7 +255,6 @@
 
 	/* width: 73px;
 	height: 22px; */
-
 
 	/* Inside auto layout */
 	flex: none;
@@ -282,7 +277,7 @@
 	height: 22px; */
 
 	/* reimagine/day/foreground/accent-subtle(cta)/normal */
-	border-bottom: 1px solid #2A446F;
+	border-bottom: 1px solid #2a446f;
 
 	/* Inside auto layout */
 	flex: none;
@@ -297,7 +292,7 @@
 	height: 20px; */
 
 	/* VP4/label/m */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 14px;
@@ -305,7 +300,7 @@
 	/* identical to box height, or 143% */
 
 	/* reimagine/day/foreground/accent-subtle(cta)/normal */
-	color: #2A446F;
+	color: #2a446f;
 
 	/* Inside auto layout */
 	flex: none;

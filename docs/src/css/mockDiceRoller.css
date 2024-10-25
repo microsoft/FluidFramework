@@ -1,6 +1,4 @@
-.diceRollerCard {
-	/* flex-grow: 1; */
-	/* TODO: confirm this is reasonable for small screens */
+.ffcom-dice-roller-card {
 	min-width: 300px;
 	box-sizing: border-box;
 	margin: 2px;
@@ -10,31 +8,30 @@
 	align-items: center;
 }
 
-.diceRollerCardNavBar {
-	/* Rectangle 34647954 */
-
+.ffcom-dice-roller-card-nav-bar {
 	box-sizing: border-box;
 
 	color: black;
-	background: #FFFFFF;
-	border: 1px solid #E1E1E1;
+	background: #ffffff;
+	border: 1px solid #e1e1e1;
 	border-radius: 5px;
 	padding: 5px;
 }
 
-.diceImage {
+.ffcom-dice-image {
 	width: 200px;
 }
 
-.rollButton {
+.ffcom-roll-button {
 	width: 118px;
 	height: 48px;
-	background: #0078D4;
+
+	background: #0078d4;
 	border-style: none;
 	border-radius: 8px;
 }
 
-.rollButtonLabel {
+.ffcom-roll-button-label {
 	font-size: 15px;
-	color: #FFFFFF;
+	color: #ffffff;
 }

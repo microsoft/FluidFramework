@@ -46,11 +46,10 @@
 	gap: 15px;
 }
 
-
 .howItWorksColumnLabel {
 	/* Sample Code */
 
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 400;
 	font-size: 16px;
@@ -69,8 +68,8 @@
 
 	box-sizing: border-box;
 
-	background: #FFFFFF;
-	border: 1px solid #E1E1E1;
+	background: #ffffff;
+	border: 1px solid #e1e1e1;
 	border-radius: 5px;
 }
 
@@ -79,7 +78,7 @@
 	max-height: 600px;
 	width: 100%;
 
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 350;
 	font-size: 16px;
@@ -110,7 +109,7 @@
 	min-height: 48px;
 
 	/* reimagine/day/background/accent-strong(cta)/normal */
-	background: #0078D4;
+	background: #0078d4;
 	border-radius: 8px;
 }
 
@@ -144,14 +143,14 @@
 	cursor: pointer;
 
 	/* VP4/action/button */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 14px;
 	line-height: 20px;
 
-	color: #2A446F;
-	border-bottom: 1px solid #2A446F;
+	color: #2a446f;
+	border-bottom: 1px solid #2a446f;
 }
 
 .howItWorksTrySamplesLink:hover {

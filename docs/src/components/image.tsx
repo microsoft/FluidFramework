@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React from 'react';
-import { useColorMode } from '@docusaurus/theme-common';
+import React from "react";
+import { useColorMode } from "@docusaurus/theme-common";
 
 /**
  * {@link ColorModeImageSwitcher} component props.
@@ -35,9 +35,12 @@ export interface ColorModeImageSwitcherProps {
  * Image switcher dependent on the site's color mode.
  * Displays a different source image depending on the active color mode.
  */
-export function ColorModeImageSwitcher(
-	{lightModeImageSource, darkModeImageSource, altText, className}: ColorModeImageSwitcherProps
-): React.ReactElement {
+export function ColorModeImageSwitcher({
+	lightModeImageSource,
+	darkModeImageSource,
+	altText,
+	className,
+}: ColorModeImageSwitcherProps): React.ReactElement {
 	const { colorMode } = useColorMode();
 	return (
 		<img

@@ -1,19 +1,15 @@
-
-
-
-
-.serviceContentContainer{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-wrap: wrap;
-    padding-bottom: 2%;
-    gap: 15px;
+.serviceContentContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex-wrap: wrap;
+	padding-bottom: 2%;
+	gap: 15px;
 	width: 100%;
-    justify-content: center;
-    flex: none;
-    order: 1;
-    flex-grow: 0;
+	justify-content: center;
+	flex: none;
+	order: 1;
+	flex-grow: 0;
 }
 
 .services {
@@ -24,25 +20,27 @@
 	flex-wrap: wrap;
 	margin: 0px;
 
-    gap: 20px;
+	gap: 20px;
 	padding-top: 3%;
 }
 
 .service {
 	display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+	flex-direction: column;
+	align-items: flex-start;
 
 	max-width: 500px;
 
-    padding: 15px;
+	padding: 15px;
 
-    background: #FEFEFE;
-    box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.14);
-    border-radius: 24px;
+	background: #fefefe;
+	box-shadow:
+		0px 0px 2px rgba(0, 0, 0, 0.12),
+		0px 2px 4px rgba(0, 0, 0, 0.14);
+	border-radius: 24px;
 
 	/* TODO: is this needed? */
-    isolation: isolate
+	isolation: isolate;
 }
 @media (max-width: 1024px) {
 	.service {
@@ -50,11 +48,11 @@
 	}
 }
 
-.serviceContent{
+.serviceContent {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-    justify-content: space-between;
+	justify-content: space-between;
 	padding: 0px;
 	gap: 16px;
 	width: 100%;
@@ -70,7 +68,7 @@
 	height: 28px;
 
 	/* VP4/heading/2xs */
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 20px;
@@ -79,80 +77,77 @@
 	letter-spacing: -0.03em;
 
 	/* reimagine/day/foreground/base(theme)/strong */
-	color: #0E1726;
+	color: #0e1726;
 }
 
 .serviceDescription {
 	/* Text */
 
-width: 100%;
+	width: 100%;
 
-/* VP4/body/m */
-font-family: 'Segoe UI';
-font-style: normal;
-font-weight: 400;
-font-size: 16px;
-line-height: 24px;
-/* or 150% */
-letter-spacing: -0.03em;
+	/* VP4/body/m */
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 24px;
+	/* or 150% */
+	letter-spacing: -0.03em;
 
-/* reimagine/day/foreground/base(theme)/subtle */
-color: #17253D;
+	/* reimagine/day/foreground/base(theme)/subtle */
+	color: #17253d;
 
-
-/* Inside auto layout */
-flex: none;
-order: 1;
-align-self: stretch;
-flex-grow: 0;
-
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	align-self: stretch;
+	flex-grow: 0;
 }
 
 .logo {
 	/* Badge */
 
-box-sizing: border-box;
+	box-sizing: border-box;
 
-/* Auto layout */
-display: flex;
-flex-direction: row;
-justify-content: center;
-align-items: center;
-padding: 0px;
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	padding: 0px;
 
-width: 48px;
-height: 48px;
+	width: 48px;
+	height: 48px;
 
-/* day/border/card(card)/fade */
-border: 1px solid #E6F2FB;
-border-radius: 8px;
+	/* day/border/card(card)/fade */
+	border: 1px solid #e6f2fb;
+	border-radius: 8px;
 
-/* Inside auto layout */
-flex: none;
-order: 0;
-flex-grow: 0;
-
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	flex-grow: 0;
 }
 
 .learnMore {
-/* Label */
-cursor: pointer;
+	/* Label */
+	cursor: pointer;
 
-width: 73px;
-height: 20px;
+	width: 73px;
+	height: 20px;
 
-font-family: 'Segoe UI';
-font-style: normal;
-font-weight: 600;
-font-size: 14px;
-line-height: 20px;
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 600;
+	font-size: 14px;
+	line-height: 20px;
 
-color: #2A446F;
-border-bottom: 1px solid #2A446F;
-/* Inside auto layout */
-flex: none;
-order: 1;
-flex-grow: 0;
+	color: #2a446f;
+	border-bottom: 1px solid #2a446f;
+	/* Inside auto layout */
+	flex: none;
+	order: 1;
+	flex-grow: 0;
 }
 
 .learnMore:hover {
