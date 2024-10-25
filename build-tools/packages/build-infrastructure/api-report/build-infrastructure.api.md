@@ -154,6 +154,7 @@ export function isIReleaseGroup(toCheck: Exclude<any, string | number | ReleaseG
 // @public
 export interface IWorkspace extends Installable, Reloadable {
     directory: string;
+    fluidRepo: IFluidRepo;
     name: WorkspaceName;
     packages: IPackage[];
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
