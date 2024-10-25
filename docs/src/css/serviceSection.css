@@ -1,4 +1,4 @@
-.serviceContentContainer {
+.ffcom-service-content-container {
 	width: 100%;
 
 	display: flex;
@@ -11,7 +11,7 @@
 	gap: 15px;
 }
 
-.services {
+.ffcom-services {
 	width: 100%;
 
 	display: flex;
@@ -24,7 +24,7 @@
 	padding-top: 3%;
 }
 
-.service {
+.ffcom-service {
 	max-width: 500px;
 
 	display: flex;
@@ -48,7 +48,7 @@
 	}
 }
 
-.serviceContent {
+.ffcom-service-content {
 	width: 100%;
 
 	display: flex;
@@ -60,7 +60,7 @@
 	gap: 16px;
 }
 
-.serviceTitle {
+.ffcom-service-title {
 	height: 28px;
 
 	font-family: "Segoe UI";
@@ -73,7 +73,7 @@
 	color: #0e1726;
 }
 
-.serviceDescription {
+.ffcom-service-description {
 	width: 100%;
 
 	/* VP4/body/m */
@@ -87,7 +87,7 @@
 	color: #17253d;
 }
 
-.logo {
+.ffcom-service-card-logo {
 	box-sizing: border-box;
 
 	/* Auto layout */
@@ -110,7 +110,7 @@
 	flex-grow: 0;
 }
 
-.learnMore {
+.ffcom-learn-more-link {
 	cursor: pointer;
 
 	width: 73px;
@@ -126,7 +126,7 @@
 	border-bottom: 1px solid #2a446f;
 }
 
-.learnMore:hover {
+.ffcom-learn-more-link:hover {
 	text-decoration: none;
 	color: inherit;
 }

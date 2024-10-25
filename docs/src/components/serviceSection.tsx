@@ -36,13 +36,13 @@ export function ServiceSection(): JSX.Element {
 	};
 	return (
 		<HomePageSection title="Fluid Framework in the Cloud" backgroundStyle={backgroundStyle}>
-			<div className="serviceContentContainer">
+			<div className="ffcom-service-content-container">
 				<img
 					src={ServicesDiagram}
 					alt="Fluid architecture diagram"
 					style={{ width: "100%" }}
 				/>
-				<div className="services">
+				<div className="ffcom-services">
 					<ServiceSectionCard
 						logoSource={AzureLogo}
 						logoAltText="Microsoft Azure logo"
@@ -79,14 +79,14 @@ function ServiceSectionCard({
 	learnMoreHref,
 }: ServiceSectionCardProps): React.ReactElement {
 	return (
-		<div className="service">
+		<div className="ffcom-service">
 			{/*SPE*/}
-			<div className="serviceContent">
-				<img src={logoSource} className="logo" alt={logoAltText} />
-				<div className="serviceTitle">{title}</div>
-				<div className="serviceDescription">{description}</div>
+			<div className="ffcom-service-content">
+				<img src={logoSource} className="ffcom-service-card-logo" alt={logoAltText} />
+				<div className="ffcom-service-title">{title}</div>
+				<div className="ffcom-service-description">{description}</div>
 				<a
-					className="learnMore"
+					className="ffcom-learn-more-link"
 					href={learnMoreHref}
 					target="_blank"
 					rel="noopener noreferrer"
