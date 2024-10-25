@@ -777,8 +777,8 @@ export class FluidDataStoreRuntime
 			);
 		}
 
-		for (const { contents } of messagesContent) {
-			this.emit("op", { ...message, contents });
+		for (const { contents, clientSequenceNumber } of messagesContent) {
+			this.emit("op", { ...message, contents, clientSequenceNumber });
 		}
 	}
 
