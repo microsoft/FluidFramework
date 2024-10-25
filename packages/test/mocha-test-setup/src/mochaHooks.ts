@@ -40,9 +40,7 @@ class TestLogger implements ITelemetryBufferedLogger {
 		this.parentLogger.send({
 			...event,
 			...propsDict,
-			details: JSON.stringify({
-				displayName: process.env.FLUID_TEST_PIPELINE_IDENTIFIER ?? "",
-			}),
+			details: JSON.stringify(process.env.FLUID_LOGGER_PROPS),
 		});
 	}
 	async flush() {

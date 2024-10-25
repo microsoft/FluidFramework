@@ -5,8 +5,8 @@
 
 import fs from "fs";
 
-import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
+import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -93,14 +93,20 @@ class FileLogger implements ITelemetryBufferedLogger {
 		) {
 			event.category = "generic";
 		}
-		this.baseLogger?.send({
+
+		const plainEvent = {
 			...event,
 			hostName: pkgName,
 			testVersion: pkgVersion,
-			details: JSON.stringify({
-				displayName: process.env.FLUID_TEST_PIPELINE_IDENTIFIER ?? "",
-			}),
-		});
+		};
+		let augmentedEvent: ITelemetryBaseEvent | undefined;
+		if (process.env.FLUID_LOGGER_PROPS?.includes("displayName") !== false) {
+			augmentedEvent = {
+				...plainEvent,
+				details: JSON.stringify(process.env.FLUID_LOGGER_PROPS),
+			};
+		}
+		this.baseLogger?.send(augmentedEvent ?? plainEvent);
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
