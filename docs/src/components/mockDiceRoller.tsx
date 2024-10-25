@@ -13,14 +13,16 @@ import Dice4 from "@site/static/assets/dice/4.png";
 import Dice5 from "@site/static/assets/dice/5.png";
 import Dice6 from "@site/static/assets/dice/6.png";
 
-const diceImages = new Map<number, string>([
-	[1, Dice1],
-	[2, Dice2],
-	[3, Dice3],
-	[4, Dice4],
-	[5, Dice5],
-	[6, Dice6],
-]);
+type DiceValue = 1 | 2 | 3 | 4 | 5 | 6;
+
+const diceImages = {
+	1: Dice1,
+	2: Dice2,
+	3: Dice3,
+	4: Dice4,
+	5: Dice5,
+	6: Dice6,
+} as const;
 
 import "@site/src/css/mockDiceRoller.css";
 
@@ -72,7 +74,7 @@ interface DiceRollerCardProps {
 	/**
 	 * The current value of the dice.
 	 */
-	diceValue: number;
+	diceValue: DiceValue;
 
 	/**
 	 * The mock container ID, to display in the URL bar of the card.
@@ -93,7 +95,7 @@ function DiceRollerCard({
 	containerId,
 	onClick,
 }: DiceRollerCardProps): React.ReactElement {
-	const imageUrl = diceImages.get(diceValue)!;
+	const imageUrl = diceImages[diceValue];
 	return (
 		<CardWithBlur>
 			<div className="ffcom-dice-roller-card ">
