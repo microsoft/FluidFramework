@@ -9,6 +9,7 @@ import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
+import type { TsConfigJson } from "type-fest";
 
 import type { CommandLogger } from "../../logging.js";
 import { BaseCommand } from "./base.js";
@@ -18,8 +19,6 @@ import { ApiTag } from "../apiTag.js";
 import type { ExportData } from "../packageExports.js";
 import { queryDefaultResolutionPathsFromPackageExports } from "../packageExports.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
-
-import type { TsConfigJson } from "type-fest";
 
 const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
@@ -66,7 +65,7 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 			[`${outDir}${outFileLegacy}${outFileSuffix}`, ApiTag.legacy],
 		]);
 
-		const { mapSrcApiTagLevelToOutput } = getOutputConfiguration(
+		const mapSrcApiTagLevelToOutput = getOutputConfiguration(
 			packageJson,
 			tsConfig,
 			mapSrcQueryPathToApiTagLevel,
@@ -119,16 +118,14 @@ async function readTsConfig(): Promise<TsConfigJson> {
  * @param tsconfig - `tsconfig.json` content.
  * @param mapSrcQueryPathToApiTagLevel - Maps source query paths or regular expressions to their corresponding API tags.
  * @param logger - An optional logger for logging messages or warnings during processing.
- * @returns Maps API tags to their associated export data.
+ * @returns Map with export data associated with different API tags.
  */
 function getOutputConfiguration(
 	packageJson: PackageJson,
 	tsconfig: TsConfigJson,
 	mapSrcQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
 	logger?: CommandLogger,
-): {
-	mapSrcApiTagLevelToOutput: Map<ApiTag, ExportData>;
-} {
+): Map<ApiTag, ExportData> {
 	let emitDeclarationOnly: boolean = false;
 	if (tsconfig.compilerOptions?.emitDeclarationOnly !== undefined) {
 		emitDeclarationOnly = tsconfig.compilerOptions.emitDeclarationOnly;
@@ -142,7 +139,7 @@ function getOutputConfiguration(
 			logger,
 		);
 
-	return { mapSrcApiTagLevelToOutput };
+	return mapSrcApiTagLevelToOutput;
 }
 
 function sourceContext(node: Node): string {

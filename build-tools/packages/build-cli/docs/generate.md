@@ -11,7 +11,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
-* [`flub generate source-entrypoints`](#flub-generate-source-entrypoints)
+* [`flub generate sourceEntrypoints`](#flub-generate-sourceentrypoints)
 * [`flub generate typetests`](#flub-generate-typetests)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
@@ -356,13 +356,13 @@ EXAMPLES
 
 _See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/releaseNotes.ts)_
 
-## `flub generate source-entrypoints`
+## `flub generate sourceEntrypoints`
 
 Generates entrypoints for Fluid Framework API levels (/alpha, /beta, /public, /legacy) as found in package.json "exports"
 
 ```
 USAGE
-  $ flub generate source-entrypoints [-v | --quiet] [--mainEntrypoint <value>]
+  $ flub generate sourceEntrypoints [-v | --quiet] [--mainEntrypoint <value>]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
@@ -376,7 +376,7 @@ DESCRIPTION
   "exports"
 ```
 
-_See code: [src/commands/generate/source-entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/source-entrypoints.ts)_
+_See code: [src/commands/generate/sourceEntrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/sourceEntrypoints.ts)_
 
 ## `flub generate typetests`
 
