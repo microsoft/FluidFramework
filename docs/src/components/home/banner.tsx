@@ -30,8 +30,8 @@ function TitleBox(): React.ReactElement {
 		<div className="ffcom-title-box">
 			<h3 className="ffcom-title">Fluid Framework</h3>
 			<span className="ffcom-description">
-				Empower collaborative innovation with Fluid Framework's seamless,
-				high-performance tech stack for real-time applications.
+				Empower collaborative innovation with Fluid Framework's seamless, high-performance
+				tech stack for real-time applications.
 			</span>
 		</div>
 	);

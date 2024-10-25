@@ -21,15 +21,17 @@ export interface KeyFeatureCardProps {
 /**
  * Key feature card component.
  */
-export function KeyFeatureCard({imageSrc, imageAltText, bodyLabel, bodyText, footerHref}: KeyFeatureCardProps): JSX.Element {
+export function KeyFeatureCard({
+	imageSrc,
+	imageAltText,
+	bodyLabel,
+	bodyText,
+	footerHref,
+}: KeyFeatureCardProps): JSX.Element {
 	return (
 		<div className="ffcom-key-feature-card">
 			<KeyFeatureImage src={imageSrc} alt={imageAltText} />
-			<KeyFeatureCardContents
-				label={bodyLabel}
-				text={bodyText}
-				href={footerHref}
-			/>
+			<KeyFeatureCardContents label={bodyLabel} text={bodyText} href={footerHref} />
 		</div>
 	);
 }
@@ -71,7 +73,10 @@ function KeyFeatureCardFooter(props: { href: string }): JSX.Element {
 				<div className="ffcom-key-feature-card-footer-link">
 					<div className="ffcom-key-feature-card-footer-link-button">{">"}</div>
 					<div className="ffcom-key-feature-card-footer-link-label-frame">
-						<a className="ffcom-key-feature-card-footer-link-label-text" href={props.href}>
+						<a
+							className="ffcom-key-feature-card-footer-link-label-text"
+							href={props.href}
+						>
 							Learn more
 						</a>
 					</div>

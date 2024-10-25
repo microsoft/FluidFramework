@@ -26,19 +26,19 @@
 }
 
 @media (max-width: 2560px) {
-	.ffcom-key-features-card-grid{
+	.ffcom-key-features-card-grid {
 		justify-content: space-between;
 	}
 }
 
 @media (max-width: 1024px) {
-	.ffcom-key-features-card-grid{
+	.ffcom-key-features-card-grid {
 		justify-content: space-around;
 	}
 }
 
 @media (max-width: 768px) {
-	.ffcom-key-features-card-grid{
+	.ffcom-key-features-card-grid {
 		justify-content: space-around;
 	}
 }

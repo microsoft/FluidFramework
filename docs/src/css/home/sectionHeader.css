@@ -7,7 +7,6 @@
 
 	padding: 0px;
 	gap: 16px;
-
 }
 
 .ffcom-section-header-inner {
@@ -34,19 +33,19 @@
 }
 
 .ffcom-section-header-title {
-	font-family: 'Segoe UI';
+	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 40px;
 	line-height: 48px;
 	letter-spacing: -0.05em;
-	color: #0E1726;
+	color: #0e1726;
 
 	align-self: stretch;
 }
 
 @media (max-width: 768px) {
-	.ffcom-section-header-title{
+	.ffcom-section-header-title {
 		font-size: 28px;
 	}
 	.ffcom-section-header-subtitle {
@@ -55,7 +54,7 @@
 }
 
 @media (max-width: 425px) {
-	.ffcom-section-header-title{
+	.ffcom-section-header-title {
 		font-size: 24px;
 	}
 	.ffcom-section-header-subtitle {
