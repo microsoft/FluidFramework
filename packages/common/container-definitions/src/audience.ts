@@ -35,7 +35,7 @@ export interface IAudienceOwner extends IAudience {
  */
 export interface IAudienceEvents extends IEvent {
 	/**
-	 * "addMember" event is raised when a new user joins collaborative session.
+	 * Raised when a new user joins collaborative session.
 	 */
 	(event: "addMember", listener: (clientId: string, client: IClient) => void): void;
 
