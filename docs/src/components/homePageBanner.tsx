@@ -5,12 +5,12 @@
 
 import React from "react";
 
-import "@site/src/css/titleSection.css";
+import "@site/src/css/homePageBanner.css";
 
 /**
  * Homepage title component.
  */
-export function TitleSection(): React.ReactElement {
+export function HomePageBanner(): React.ReactElement {
 	return (
 		<div className={"ffcom-title-section-container"}>
 			<div className="ffcom-root-container">

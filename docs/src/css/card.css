@@ -1,7 +1,6 @@
 .ffcom-card-with-blur {
 	box-sizing: border-box;
 
-	/* day/background/glass/normal */
 	background: rgba(255, 255, 255, 0.4);
 	/* blur/glass */
 	/* Note: backdrop-filter has minimal browser support */

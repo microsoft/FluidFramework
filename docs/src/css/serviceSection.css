@@ -1,35 +1,35 @@
 .serviceContentContainer {
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
+	justify-content: center;
 	align-items: center;
 	flex-wrap: wrap;
+
 	padding-bottom: 2%;
 	gap: 15px;
-	width: 100%;
-	justify-content: center;
-	flex: none;
-	order: 1;
-	flex-grow: 0;
 }
 
 .services {
 	width: 100%;
+
 	display: flex;
 	flex-direction: row;
 	justify-content: space-evenly;
 	flex-wrap: wrap;
-	margin: 0px;
 
+	margin: 0px;
 	gap: 20px;
 	padding-top: 3%;
 }
 
 .service {
+	max-width: 500px;
+
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-
-	max-width: 500px;
 
 	padding: 15px;
 
@@ -49,40 +49,31 @@
 }
 
 .serviceContent {
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	justify-content: space-between;
+
 	padding: 0px;
 	gap: 16px;
-	width: 100%;
-	flex: none;
-	order: 1;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .serviceTitle {
-	/* Title */
-
 	height: 28px;
 
-	/* VP4/heading/2xs */
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 20px;
 	line-height: 28px;
-	/* identical to box height, or 140% */
 	letter-spacing: -0.03em;
 
-	/* reimagine/day/foreground/base(theme)/strong */
 	color: #0e1726;
 }
 
 .serviceDescription {
-	/* Text */
-
 	width: 100%;
 
 	/* VP4/body/m */
@@ -91,22 +82,12 @@
 	font-weight: 400;
 	font-size: 16px;
 	line-height: 24px;
-	/* or 150% */
 	letter-spacing: -0.03em;
 
-	/* reimagine/day/foreground/base(theme)/subtle */
 	color: #17253d;
-
-	/* Inside auto layout */
-	flex: none;
-	order: 1;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .logo {
-	/* Badge */
-
 	box-sizing: border-box;
 
 	/* Auto layout */
@@ -130,7 +111,6 @@
 }
 
 .learnMore {
-	/* Label */
 	cursor: pointer;
 
 	width: 73px;
@@ -144,10 +124,6 @@
 
 	color: #2a446f;
 	border-bottom: 1px solid #2a446f;
-	/* Inside auto layout */
-	flex: none;
-	order: 1;
-	flex-grow: 0;
 }
 
 .learnMore:hover {

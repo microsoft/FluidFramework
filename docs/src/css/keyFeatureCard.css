@@ -1,72 +1,54 @@
 
 .ffcom-key-feature-card-image-container {
+	height: 242px;
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
+
 	padding: 8px 8px 0px;
-	width: 100%;
-	height: 242px;
-	flex: none;
-	order: 0;
-	align-self: stretch;
-	flex-grow: 0;
-	z-index: 1;
 }
 
 .ffcom-key-feature-card-image {
+	height: 234px;
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	padding: 0px;
+
 	isolation: isolate;
 	object-fit: cover;
-	width: 100%;
-	height: 234px;
+
 	border-radius: 16px;
-	flex: none;
-	order: 0;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-contents {
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	justify-content: space-between;
+
 	padding: 24px;
-	width: 100%;
-	flex: none;
-	order: 1;
-	align-self: stretch;
-	flex-grow: 1;
-	z-index: 0;
 }
 
 .ffcom-key-feature-card-body {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	padding: 0px;
+
 	gap: 16px;
-	flex: none;
-	order: 0;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-body-label-container {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
-	padding: 0px;
-	gap: 16px;
 
-	/* Inside auto layout */
-	flex: none;
-	order: 0;
-	align-self: stretch;
-	flex-grow: 0;
+	gap: 16px;
 }
 
 .ffcom-key-feature-card-body-label {
@@ -77,23 +59,17 @@
 	line-height: 28px;
 	letter-spacing: -0.03em;
 	color: #0e1726;
-	flex: none;
-	order: 1;
+
 	align-self: stretch;
 	flex-grow: 0;
-	width: 100%;
 }
 
 .ffcom-key-feature-card-body-text-container {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	padding: 0px;
+
 	gap: 16px;
-	flex: none;
-	order: 1;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-body-text {
@@ -104,32 +80,20 @@
 	line-height: 24px;
 	letter-spacing: -0.03em;
 	color: #17253d;
-	flex: none;
-	order: 0;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-footer {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	padding: 0px;
-	flex: none;
-	order: 1;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-footer-content {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
-	padding: 0px;
+
 	gap: 24px;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-footer-link {
@@ -137,37 +101,32 @@
 	flex-direction: row;
 	justify-content: center;
 	align-items: center;
-	padding: 0px;
+
 	gap: 8px;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-footer-link-button {
+	width: 32px;
+	height: 32px;
+
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 	align-items: center;
+
 	padding: 8px;
-	width: 32px;
-	height: 32px;
+
 	color: white;
 	background: #000000;
 	border-radius: 8px;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-footer-link-label-frame {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
+
 	padding: 0px 0px 2px;
-	flex: none;
-	order: 1;
-	flex-grow: 0;
 }
 
 .ffcom-key-feature-card-footer-link-label-text {
@@ -178,10 +137,8 @@
 	line-height: 22px;
 	text-align: center;
 	letter-spacing: -0.02em;
+
 	color: #2a446f;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
 }
 
 @media (max-width: 2560px) {
