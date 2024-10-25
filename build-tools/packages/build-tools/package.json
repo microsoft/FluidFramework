@@ -69,7 +69,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.4",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.44.0",
+		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/async": "^3.2.24",
 		"@types/fs-extra": "^11.0.4",
