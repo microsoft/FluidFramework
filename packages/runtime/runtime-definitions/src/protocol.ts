@@ -78,7 +78,7 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
  * @alpha
  * @legacy
  */
-export type ISequencedRuntimeMessageCore = Omit<
+export type ISequencedMessageEnvelope = Omit<
 	ISequencedDocumentMessage,
 	"contents" | "clientSequenceNumber"
 >;
@@ -88,8 +88,19 @@ export type ISequencedRuntimeMessageCore = Omit<
  * @alpha
  * @legacy
  */
-export interface IRuntimeMessageContents {
+export interface IRuntimeMessagesContent {
 	contents: unknown;
 	localOpMetadata: unknown;
 	clientSequenceNumber: number;
+}
+
+/**
+ * The properties for the processMessages function in the runtime.
+ * @alpha
+ * @legacy
+ */
+export interface IProcessMessagesProps {
+	message: ISequencedMessageEnvelope;
+	local: boolean;
+	messagesContent: IRuntimeMessagesContent[];
 }

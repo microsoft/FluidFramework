@@ -58,8 +58,7 @@ import {
 	IFluidDataStoreChannel,
 	VisibilityState,
 	type ITelemetryContext,
-	type ISequencedRuntimeMessageCore,
-	type IRuntimeMessageContents,
+	type IProcessMessagesProps,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -1005,13 +1004,13 @@ export class MockFluidDataStoreRuntime
 		});
 	}
 
-	public processMessages(
-		message: ISequencedRuntimeMessageCore,
-		messageContents: IRuntimeMessageContents[],
-		local: boolean,
-	) {
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messageContents) {
-			this.process({ ...message, contents, clientSequenceNumber }, local, localOpMetadata);
+	public processMessages(props: IProcessMessagesProps) {
+		for (const { contents, localOpMetadata, clientSequenceNumber } of props.messagesContent) {
+			this.process(
+				{ ...props.message, contents, clientSequenceNumber },
+				props.local,
+				localOpMetadata,
+			);
 		}
 	}
 

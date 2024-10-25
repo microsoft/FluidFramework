@@ -40,7 +40,8 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
-	type ISequencedRuntimeMessageCore,
+	type IProcessMessagesProps,
+	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -2523,18 +2524,20 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
-				const messages: ISequencedRuntimeMessageCore[] = [
+				const messages: ISequencedMessageEnvelope[] = [
 					{ sequenceNumber: 1 },
 					{ sequenceNumber: 2 },
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
-				] as unknown as ISequencedRuntimeMessageCore[];
+				] as unknown as ISequencedMessageEnvelope[];
 				messages.forEach((message) => {
-					missingDataStoreContext.processMessages(
+					missingDataStoreContext.processMessages({
 						message,
-						[{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 }],
-						false,
-					);
+						messagesContent: [
+							{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 },
+						],
+						local: false,
+					});
 				});
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
@@ -2542,18 +2545,11 @@ describe("Runtime", () => {
 
 				let opsProcessed = 0;
 				let opsStart: number | undefined;
-				const processMessagesStub = (
-					message: ISequencedRuntimeMessageCore,
-					messageContents: {
-						contents: unknown;
-						localOpMetadata: unknown;
-					}[],
-					local: boolean,
-				) => {
+				const processMessagesStub = (props: IProcessMessagesProps) => {
 					if (opsProcessed === 0) {
-						opsStart = message.sequenceNumber;
+						opsStart = props.message.sequenceNumber;
 					}
-					opsProcessed += messageContents.length;
+					opsProcessed += props.messagesContent.length;
 				};
 				const stub = sandbox
 					.stub(missingDataStoreRuntime, "processMessages")
