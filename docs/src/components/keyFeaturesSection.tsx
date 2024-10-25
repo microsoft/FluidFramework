@@ -6,6 +6,7 @@
 import React from "react";
 
 import { HomePageSection } from "@site/src/components/homePageSection";
+import { KeyFeatureCard } from "@site/src/components/keyFeatureCard";
 
 import EasyToUseImage from "@site/static/assets/home/easy-to-use.png";
 import OpenSourecImage from "@site/static/assets/home/open-source.png";
@@ -57,72 +58,6 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				bodyText={performanceText}
 				footerHref="/docs"
 			/>
-		</div>
-	);
-}
-
-function KeyFeatureCard(props: {
-	imageSrc: string;
-	imageAltText: string;
-	bodyLabel: string;
-	bodyText: string;
-	footerHref: string;
-}): JSX.Element {
-	return (
-		<div className="ffcom-key-feature-card">
-			<KeyFeatureImage src={props.imageSrc} alt={props.imageAltText} />
-			<KeyFeatureCardContents
-				label={props.bodyLabel}
-				text={props.bodyText}
-				href={props.footerHref}
-			/>
-		</div>
-	);
-}
-
-function KeyFeatureImage(props: { src: string; alt: string }): JSX.Element {
-	return (
-		<div className="ffcom-key-feature-card-image-container">
-			<img src={props.src} alt={props.alt} className="ffcom-key-feature-card-image" />
-		</div>
-	);
-}
-
-function KeyFeatureCardContents(props: { label: string; text: string; href: string }): JSX.Element {
-	return (
-		<div className="ffcom-key-feature-card-contents">
-			<KeyFeatureCardBody label={props.label} text={props.text} />
-			<KeyFeatureCardFooter href={props.href} />
-		</div>
-	);
-}
-
-function KeyFeatureCardBody(props: { label: string; text: string }): JSX.Element {
-	return (
-		<div className="ffcom-key-feature-card-body ">
-			<div className="ffcom-key-feature-card-body-label-container">
-				<p className="ffcom-key-feature-card-body-label">{props.label}</p>
-			</div>
-			<div className="ffcom-key-feature-card-body-text-container">
-				<p className="ffcom-key-feature-card-body-text">{props.text}</p>
-			</div>
-		</div>
-	);
-}
-
-function KeyFeatureCardFooter(props: { href: string }): JSX.Element {
-	return (
-		<div className="ffcom-key-feature-card-footer">
-			<div className="ffcom-key-feature-card-footer-content">
-				<div className="ffcom-key-feature-card-footer-link">
-					<div className="ffcom-key-feature-card-footer-link-button">{">"}</div>
-					<div className="ffcom-key-feature-card-footer-link-label-frame">
-						<a className="ffcom-key-feature-card-footer-link-label-text" href={props.href}>
-							Learn more
-						</a>
-					</div>
-				</div>
-			</div>
 		</div>
 	);
 }
