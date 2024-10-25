@@ -13,6 +13,7 @@ import { loadPackageFromWorkspaceDefinition } from "./package.js";
 import { createPackageManager } from "./packageManagers.js";
 import { ReleaseGroup } from "./releaseGroup.js";
 import type {
+	IFluidRepo,
 	IPackage,
 	IPackageManager,
 	IReleaseGroup,
@@ -59,7 +60,16 @@ export class Workspace implements IWorkspace {
 	 * @param definition - The definition of the workspace.
 	 * @param root - The path to the root of the workspace.
 	 */
-	private constructor(name: string, definition: WorkspaceDefinition, root: string) {
+	private constructor(
+		name: string,
+		definition: WorkspaceDefinition,
+		root: string,
+
+		/**
+		 * {@inheritDoc IWorkspace.fluidRepo}
+		 */
+		public readonly fluidRepo: IFluidRepo,
+	) {
 		this.name = name as WorkspaceName;
 		this.directory = path.resolve(root, definition.directory);
 
@@ -206,10 +216,16 @@ export class Workspace implements IWorkspace {
 	 * @param name - The name of the workspace.
 	 * @param definition - The definition for the workspace.
 	 * @param root - The path to the root of the workspace.
+	 * @param fluidRepo - The Fluid repo that the workspace belongs to.
 	 * @returns A loaded {@link IWorkspace}.
 	 */
-	public static load(name: string, definition: WorkspaceDefinition, root: string): IWorkspace {
-		const workspace = new Workspace(name, definition, root);
+	public static load(
+		name: string,
+		definition: WorkspaceDefinition,
+		root: string,
+		fluidRepo: IFluidRepo,
+	): IWorkspace {
+		const workspace = new Workspace(name, definition, root, fluidRepo);
 		return workspace;
 	}
 }

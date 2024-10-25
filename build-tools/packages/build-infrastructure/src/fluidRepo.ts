@@ -68,14 +68,14 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 				console.warn(
 					`The repoPackages setting is deprecated and will no longer be read in a future version. Use repoLayout instead.`,
 				);
-				this._workspaces = loadWorkspacesFromLegacyConfig(config.repoPackages, this.root);
+				this._workspaces = loadWorkspacesFromLegacyConfig(config.repoPackages, this);
 			}
 		} else {
 			this._workspaces = new Map<WorkspaceName, IWorkspace>(
 				Object.entries(config.repoLayout.workspaces).map((entry) => {
 					const name = entry[0] as WorkspaceName;
 					const definition = entry[1];
-					const ws = Workspace.load(name, definition, this.root);
+					const ws = Workspace.load(name, definition, this.root, this);
 					return [name, ws];
 				}),
 			);

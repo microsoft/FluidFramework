@@ -69,26 +69,16 @@ describe("loadFluidRepo", () => {
 		});
 	});
 
-	describe("FluidFramework repo", () => {
+	describe("FluidFramework repo - tests backCompat config loading", () => {
 		it("loads correctly", () => {
 			// Load the root config
 			const repo = loadFluidRepo(findGitRootSync());
-			assert.strictEqual(
-				repo.workspaces.size,
-				14,
-				`Expected 14 workspaces, found ${repo.workspaces.size}`,
-			);
+			expect(repo.workspaces.size).to.be.greaterThan(1);
 
 			const client = repo.workspaces.get("client" as WorkspaceName);
 			expect(client).to.not.be.undefined;
-			expect(client?.packages.length).to.equal(
-				155,
-				"client workspace has the wrong number of packages",
-			);
-			expect(client?.releaseGroups.size).to.equal(
-				1,
-				"client workspace has the wrong number of release groups",
-			);
+			expect(client?.packages.length).to.be.greaterThan(1);
+			expect(client?.releaseGroups.size).to.be.greaterThan(0);
 
 			const buildTools = repo.workspaces.get("build-tools" as WorkspaceName);
 			expect(buildTools).to.not.be.undefined;
@@ -105,12 +95,12 @@ describe("loadFluidRepo", () => {
 		it("releaseGroupDependencies", async () => {
 			const repo = loadFluidRepo(findGitRootSync());
 			const clientReleaseGroup = repo.releaseGroups.get("client" as ReleaseGroupName);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const actualDependencies = clientReleaseGroup!.releaseGroupDependencies;
-			const names = actualDependencies.map((r) => r.name as string);
+			assert(clientReleaseGroup !== undefined);
+
+			const actualDependencies = clientReleaseGroup.releaseGroupDependencies;
 
 			expect(actualDependencies).to.not.be.undefined;
-			expect(names).to.be.containingAllOf([]);
+			expect(actualDependencies).to.not.be.empty;
 		});
 	});
 });

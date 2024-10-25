@@ -188,6 +188,11 @@ export interface IWorkspace extends Installable, Reloadable {
 	releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
 	/**
+	 * The Fluid repo that the workspace belongs to.
+	 */
+	fluidRepo: IFluidRepo;
+
+	/**
 	 * An array of all the packages in the workspace. This includes the workspace root and any release group roots and
 	 * constituent packages as well.
 	 */

@@ -16,7 +16,7 @@ import type {
 	ReleaseGroupDefinition,
 	WorkspaceDefinition,
 } from "./config.js";
-import type { IWorkspace, WorkspaceName } from "./types.js";
+import type { IFluidRepo, IWorkspace, WorkspaceName } from "./types.js";
 import { Workspace } from "./workspace.js";
 
 /**
@@ -25,12 +25,12 @@ import { Workspace } from "./workspace.js";
  * **ONLY INTENDED FOR BACK-COMPAT.**
  *
  * @param entry - The config entry.
- * @param fluidRepoRoot - The path to the root of the FluidRepo.
+ * @param fluidRepo - The Fluid repo the workspace belongs to.
  */
 export function loadWorkspacesFromLegacyConfig(
 	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	config: IFluidBuildDirs,
-	fluidRepoRoot: string,
+	fluidRepo: IFluidRepo,
 ): Map<WorkspaceName, IWorkspace> {
 	const workspaces: Map<WorkspaceName, IWorkspace> = new Map();
 
@@ -39,14 +39,12 @@ export function loadWorkspacesFromLegacyConfig(
 		const loadedWorkspaces: IWorkspace[] = [];
 		if (Array.isArray(entry)) {
 			for (const item of entry) {
-				loadedWorkspaces.push(...loadWorkspacesFromLegacyConfigEntry(item, fluidRepoRoot));
+				loadedWorkspaces.push(...loadWorkspacesFromLegacyConfigEntry(item, fluidRepo));
 			}
 		} else if (typeof entry === "object") {
-			loadedWorkspaces.push(
-				...loadWorkspacesFromLegacyConfigEntry(entry, fluidRepoRoot, name),
-			);
+			loadedWorkspaces.push(...loadWorkspacesFromLegacyConfigEntry(entry, fluidRepo, name));
 		} else {
-			loadedWorkspaces.push(...loadWorkspacesFromLegacyConfigEntry(entry, fluidRepoRoot));
+			loadedWorkspaces.push(...loadWorkspacesFromLegacyConfigEntry(entry, fluidRepo));
 		}
 		for (const ws of loadedWorkspaces) {
 			workspaces.set(ws.name, ws);
@@ -73,7 +71,7 @@ export function loadWorkspacesFromLegacyConfig(
 function loadWorkspacesFromLegacyConfigEntry(
 	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	entry: string | IFluidBuildDir,
-	fluidRepoRoot: string,
+	fluidRepo: IFluidRepo,
 	name?: string,
 ): IWorkspace[] {
 	const directory = typeof entry === "string" ? entry : entry.directory;
@@ -89,14 +87,14 @@ function loadWorkspacesFromLegacyConfigEntry(
 	// BACK-COMPAT HACK - assume that a directory in the legacy config either has a package.json -- in which case the
 	// directory will be treated as a workspace root -- or it does not, in which case all package.json files under the
 	// path will be treated as workspace roots.
-	const packagePath = path.join(fluidRepoRoot, directory, "package.json");
+	const packagePath = path.join(fluidRepo.root, directory, "package.json");
 	if (existsSync(packagePath)) {
 		const workspaceDefinition: WorkspaceDefinition = {
 			directory,
 			releaseGroups: releaseGroupDefinitions,
 		};
 
-		return [Workspace.load(workspaceName, workspaceDefinition, fluidRepoRoot)];
+		return [Workspace.load(workspaceName, workspaceDefinition, fluidRepo.root, fluidRepo)];
 	}
 
 	const packageJsonPaths = globby
@@ -111,11 +109,11 @@ function loadWorkspacesFromLegacyConfigEntry(
 		})
 		.map(
 			// Make the paths relative to the repo root
-			(filePath) => path.relative(fluidRepoRoot, filePath),
+			(filePath) => path.relative(fluidRepo.root, filePath),
 		);
 	const workspaces = packageJsonPaths.flatMap((pkgPath) => {
 		const dir = path.dirname(pkgPath);
-		return loadWorkspacesFromLegacyConfigEntry(dir, fluidRepoRoot);
+		return loadWorkspacesFromLegacyConfigEntry(dir, fluidRepo);
 	});
 	return workspaces;
 }
