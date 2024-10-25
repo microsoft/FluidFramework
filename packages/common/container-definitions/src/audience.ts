@@ -40,7 +40,7 @@ export interface IAudienceEvents extends IEvent {
 	(event: "addMember", listener: (clientId: string, client: IClient) => void): void;
 
 	/**
-	 * "removeMember" event is raised when a user leaves collaborative session.
+	 * Raised when a user leaves collaborative session.
 	 */
 	(event: "removeMember", listener: (clientId: string, client: IClient) => void): void;
 	/**
