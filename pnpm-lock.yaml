@@ -636,8 +636,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -766,8 +766,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -944,8 +944,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -1074,8 +1074,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -1201,8 +1201,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -1361,8 +1361,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -1473,8 +1473,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -1655,8 +1655,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -1770,8 +1770,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -1876,8 +1876,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -2330,8 +2330,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -2448,8 +2448,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -2654,8 +2654,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -2760,8 +2760,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -3085,8 +3085,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -3772,8 +3772,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -4131,8 +4131,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -4285,8 +4285,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5005,8 +5005,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5174,8 +5174,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5352,8 +5352,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5512,8 +5512,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5645,8 +5645,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5751,8 +5751,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -5875,8 +5875,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -7261,8 +7261,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -14859,8 +14859,8 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -15153,8 +15153,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -15488,8 +15488,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -31003,22 +31003,6 @@ packages:
       - supports-color
     dev: true
 
-  /jest-dev-server@9.0.2:
-    resolution: {integrity: sha512-Zc/JB0IlNNrpXkhBw+h86cGrde/Mey52KvF+FER2eyrtYJTHObOwW7Iarxm3rPyTKby5+3Y2QZtl8pRz/5GCxg==}
-    engines: {node: '>=16'}
-    dependencies:
-      chalk: 4.1.2
-      cwd: 0.10.0
-      find-process: 1.4.7
-      prompts: 2.4.2
-      spawnd: 9.0.2
-      tree-kill: 1.2.2
-      wait-on: 7.2.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
   /jest-diff@29.7.0:
     resolution: {integrity: sha512-LMIgiIrhigmPrs03JHpxUh2yISK3vLFPkAodPeo0+BuF7wA2FoQbkEg1u8gBYBThncu7e1oEDUfIXVuTqLRUjw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -31090,21 +31074,6 @@ packages:
       cosmiconfig: 8.3.6(typescript@5.4.5)
       deepmerge: 4.3.1
       jest-dev-server: 10.1.1
-      jest-environment-node: 29.7.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-      - typescript
-    dev: true
-
-  /jest-environment-puppeteer@9.0.2(typescript@5.4.5):
-    resolution: {integrity: sha512-t7+W4LUiPoOz+xpKREgnu6IElMuRthOWTkrThDZqVKPmLhwbK3yx7OCiX8xT1Pw/Cv5WnSoNhwtN7czdCC3fQg==}
-    engines: {node: '>=16'}
-    dependencies:
-      chalk: 4.1.2
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      deepmerge: 4.3.1
-      jest-dev-server: 9.0.2
       jest-environment-node: 29.7.0
     transitivePeerDependencies:
       - debug
@@ -36922,14 +36891,6 @@ packages:
 
   /spawnd@10.1.1:
     resolution: {integrity: sha512-kTim9sz8KuKX7ZcO8imlvEvbaJmFtFhT5tKS0WP5FRlmWLH5Pd9qj9u29nbMrvDcJPj8ltwOG+QAiZq928GKCw==}
-    engines: {node: '>=16'}
-    dependencies:
-      signal-exit: 4.1.0
-      tree-kill: 1.2.2
-    dev: true
-
-  /spawnd@9.0.2:
-    resolution: {integrity: sha512-nl8DVHEDQ57IcKakzpjanspVChkMpGLuVwMR/eOn9cXE55Qr6luD2Kn06sA0ootRMdgrU4tInN6lA6ohTNvysw==}
     engines: {node: '>=16'}
     dependencies:
       signal-exit: 4.1.0
