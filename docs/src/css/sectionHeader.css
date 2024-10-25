@@ -1,4 +1,4 @@
-.sectionHeader {
+.ffcom-section-header {
 	/* Layout */
 
 	/* Auto layout */
@@ -14,11 +14,7 @@
 	flex-grow: 0;
 }
 
-/* TODO: better name */
-.sectionHeaderInner {
-	/* Heading */
-
-	/* Auto layout */
+.ffcom-section-header-inner {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -29,29 +25,22 @@
 	flex-grow: 1;
 }
 
-.sectionHeaderSubtitle {
-	/* VP4/label/eyebrow */
+.ffcom-section-header-subtitle {
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
 	font-size: 12px;
 	line-height: 16px;
-	/* identical to box height, or 133% */
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-
-	/* M365/Day/Section Eyebrow */
 	color: #61615e;
-
-	/* Inside auto layout */
 	flex: none;
 	order: 0;
 	align-self: stretch;
 	flex-grow: 0;
 }
 
-/* TODO: allow wrapping */
-.sectionHeaderTitle {
+.ffcom-section-header-title {
 	font-family: 'Segoe UI';
 	font-style: normal;
 	font-weight: 600;
@@ -66,19 +55,19 @@
 }
 
 @media (max-width: 768px) {
-	.sectionHeaderTitle{
+	.ffcom-section-header-title{
 		font-size: 28px;
 	}
-	.sectionHeaderSubtitle {
+	.ffcom-section-header-subtitle {
 		font-size: 10px;
 	}
 }
 
 @media (max-width: 425px) {
-	.sectionHeaderTitle{
+	.ffcom-section-header-title{
 		font-size: 24px;
 	}
-	.sectionHeaderSubtitle {
+	.ffcom-section-header-subtitle {
 		font-size: 10px;
 	}
 }

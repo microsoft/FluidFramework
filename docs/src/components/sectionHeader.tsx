@@ -27,10 +27,10 @@ export interface SectionHeaderProps {
  */
 export function SectionHeader({ title, subtitle }: SectionHeaderProps): JSX.Element {
 	return (
-		<div className="sectionHeader">
-			<div className="sectionHeaderInner">
-				{subtitle && <p className="sectionHeaderSubtitle">{subtitle}</p>}
-				<p className="sectionHeaderTitle">{title}</p>
+		<div className="ffcom-section-header">
+			<div className="ffcom-section-header-inner">
+				{subtitle && <p className="ffcom-section-header-subtitle">{subtitle}</p>}
+				<p className="ffcom-section-header-title">{title}</p>
 			</div>
 		</div>
 	);
