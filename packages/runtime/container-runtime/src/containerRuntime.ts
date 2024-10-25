@@ -89,7 +89,7 @@ import {
 	channelsTreeName,
 	gcTreeKey,
 	IInboundSignalMessage,
-	type IRuntimeMessageContents,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -2913,7 +2913,7 @@ export class ContainerRuntime
 				return;
 			}
 
-			let bunchedMessageContents: IRuntimeMessageContents[] = [];
+			let bunchedMessagesContent: IRuntimeMessagesContent[] = [];
 			let previousMessage: InboundSequencedContainerRuntimeMessage | undefined;
 
 			// Helper that processes the previous bunch of messages.
@@ -2923,12 +2923,12 @@ export class ContainerRuntime
 				this.ensureNoDataModelChanges(() => {
 					this.validateAndProcessRuntimeMessages(
 						runtimeMessage,
-						bunchedMessageContents,
+						bunchedMessagesContent,
 						local,
 						savedOp,
 					);
 				});
-				bunchedMessageContents = [];
+				bunchedMessagesContent = [];
 			};
 
 			/**
@@ -2942,7 +2942,7 @@ export class ContainerRuntime
 					sendBunchedMessages();
 				}
 				previousMessage = currentMessage;
-				bunchedMessageContents.push({
+				bunchedMessagesContent.push({
 					contents: message.contents,
 					localOpMetadata,
 					clientSequenceNumber: message.clientSequenceNumber,
@@ -3002,7 +3002,7 @@ export class ContainerRuntime
 	 */
 	private validateAndProcessRuntimeMessages(
 		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
-		messageContents: IRuntimeMessageContents[],
+		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
 		savedOp?: boolean,
 	): void {
@@ -3013,7 +3013,7 @@ export class ContainerRuntime
 		}
 
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
-		const contents = messageContents.map((c) => c.contents);
+		const contents = messagesContent.map((c) => c.contents);
 
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
@@ -3022,11 +3022,7 @@ export class ContainerRuntime
 				// Remove the metadata from the message before sending it to the channel collection. The metadata
 				// is added by the container runtime and is not part of the message that the channel collection and
 				// layers below it expect.
-				this.channelCollection.processMessages(
-					{ ...message, metadata: undefined },
-					messageContents,
-					local,
-				);
+				this.channelCollection.processMessages({ message, messagesContent, local });
 				break;
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.processBlobAttachMessage(message, local);

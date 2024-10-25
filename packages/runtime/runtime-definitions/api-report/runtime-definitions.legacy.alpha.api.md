@@ -259,6 +259,16 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
 
+// @alpha
+export interface IProcessMessagesProps {
+    // (undocumented)
+    local: boolean;
+    // (undocumented)
+    message: ISequencedMessageEnvelope;
+    // (undocumented)
+    messagesContent: IRuntimeMessagesContent[];
+}
+
 // @alpha (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
@@ -272,7 +282,7 @@ export interface IProvideFluidDataStoreRegistry {
 }
 
 // @alpha
-export interface IRuntimeMessageContents {
+export interface IRuntimeMessagesContent {
     // (undocumented)
     clientSequenceNumber: number;
     // (undocumented)
@@ -282,7 +292,7 @@ export interface IRuntimeMessageContents {
 }
 
 // @alpha
-export type ISequencedRuntimeMessageCore = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
+export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @alpha
 export interface ISummarizeInternalResult extends ISummarizeResult {

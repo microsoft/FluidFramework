@@ -27,7 +27,7 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	type ISequencedRuntimeMessageCore,
+	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
@@ -596,7 +596,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return this.sendBlobAttachOp(localId, blobId);
 	}
 
-	public processBlobAttachMessage(message: ISequencedRuntimeMessageCore, local: boolean) {
+	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean) {
 		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
 		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 

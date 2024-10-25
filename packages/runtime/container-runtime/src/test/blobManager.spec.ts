@@ -23,7 +23,7 @@ import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/inter
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import type { ISequencedRuntimeMessageCore } from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	LoggingError,
 	MonitoringContext,
@@ -267,7 +267,7 @@ export class MockRuntime
 	public async remoteUpload(blob: ArrayBufferLike) {
 		const response = await this.storage.createBlob(blob);
 		const op = { metadata: { localId: uuid(), blobId: response.id } };
-		this.blobManager.processBlobAttachMessage(op as ISequencedRuntimeMessageCore, false);
+		this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
 		return op;
 	}
 
