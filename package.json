@@ -198,6 +198,7 @@
 					"^build",
 					"build:docs",
 					"build:gendocs:client",
+					"generate:packagesMd",
 					"checks"
 				],
 				"script": false
@@ -267,8 +268,7 @@
 					"layer-check",
 					"syncpack:deps",
 					"syncpack:versions",
-					"check:versions",
-					"generate:packagesMd"
+					"check:versions"
 				],
 				"script": false
 			},
@@ -286,7 +286,8 @@
 			"ci:build": {
 				"dependsOn": [
 					"^ci:build",
-					"ci:build:docs"
+					"ci:build:docs",
+					"generate:packagesMd"
 				],
 				"script": false
 			},
