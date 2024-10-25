@@ -138,14 +138,12 @@ describe("FluidReleaseMachine", () => {
 
 			if (!state.startsWith("Do") || requiresBothActions.has(state)) {
 				it(state, () => {
-					// eslint-disable-next-line unicorn/no-array-for-each
-					["failure", "success"].forEach((item) => expect(exits).to.be.containing(item));
+					expect(exits).to.deep.equal(["failure", "success"]);
 				});
 			} else {
 				// Do* actions are not required to have a failure action
 				it(state, () => {
-					expect(exits).to.be.containing("success");
-					expect(exits).to.be.ofSize(1);
+					expect(exits).to.deep.equal(["success"]);
 				});
 			}
 		}
