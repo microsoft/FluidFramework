@@ -93,7 +93,14 @@ class FileLogger implements ITelemetryBufferedLogger {
 		) {
 			event.category = "generic";
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName, testVersion: pkgVersion });
+		this.baseLogger?.send({
+			...event,
+			hostName: pkgName,
+			testVersion: pkgVersion,
+			details: JSON.stringify({
+				displayName: process.env.FLUID_TEST_PIPELINE_IDENTIFIER ?? "",
+			}),
+		});
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
