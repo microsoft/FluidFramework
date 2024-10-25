@@ -31,8 +31,8 @@ export function HomePageSection({
 	children,
 }: HomePageSectionProps): JSX.Element {
 	return (
-		<div className="homePageSection" style={backgroundStyle}>
-			<div className="homePageSectionInner">
+		<div className="ffcom-home-page-section" style={backgroundStyle}>
+			<div className="ffcom-home-page-section-inner">
 				<SectionHeader title={title} subtitle={subtitle} />
 				{children}
 			</div>
