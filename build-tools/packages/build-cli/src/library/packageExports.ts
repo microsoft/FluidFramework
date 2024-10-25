@@ -245,6 +245,15 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 	return { mapKeyToOutput, mapNode10CompatExportPathToData, mapTypesPathToExportPaths };
 }
 
+/**
+ * Read package "exports" to determine which of given "default" paths are present in map.
+ *
+ * @param packageJson - json content of package.json
+ * @param mapSrcQueryPathToOutKey - keys of map represent paths to match.
+ * @param emitDeclarationOnly - If true, "types" exports are considered.
+ * @param logger - optional Logger
+ * @returns object with mapKeyToOutput.
+ */
 export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 	packageJson: PackageJson,
 	mapSrcQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
@@ -252,10 +261,8 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 	logger?: Logger,
 ): {
 	mapKeyToOutput: Map<TOutKey, ExportData>;
-	mapDefaultPathToExportPaths: Map<string, Readonly<{ exportPath: string }>[]>;
 } {
 	const mapKeyToOutput = new Map<TOutKey, ExportData>();
-	const mapDefaultPathToExportPaths = new Map<string, Readonly<{ exportPath: string }>[]>();
 
 	const { exports } = packageJson;
 	if (typeof exports !== "object" || exports === null) {
@@ -282,24 +289,13 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 			continue;
 		}
 
-		// fix this
 		const findResults = findDefaultPathsMatching(
 			mapSrcQueryPathToOutKey,
 			exportValue,
 			emitDeclarationOnly,
-			{
-				conditions: [],
-			},
 		);
 		for (const findResult of findResults) {
 			const { outKey, relPath, conditions, isTypeOnly } = findResult;
-
-			const existingExportsPaths = mapDefaultPathToExportPaths.get(relPath);
-			if (existingExportsPaths === undefined) {
-				mapDefaultPathToExportPaths.set(relPath, [{ exportPath }]);
-			} else {
-				existingExportsPaths.push({ exportPath });
-			}
 
 			// Add mapping for using given key, if defined.
 			if (outKey !== undefined) {
@@ -312,17 +308,23 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 		}
 	}
 
-	return { mapKeyToOutput, mapDefaultPathToExportPaths };
+	return { mapKeyToOutput };
 }
 
+/**
+ * This function recursively searches for 'default' paths that match the given export entries.
+ * Performs a depth first search of exports conditions looking for "defaults" constrained
+ * paths (relative file path) matching keys in query map.
+ *
+ * @param mapQueryPathToOutKey - map with match keys
+ * @param exports - export conditions
+ * @param emitDeclarationOnly -If true, "types" exports are considered.
+ * @returns matching export data and matching query entry value as outKey property
+ */
 function findDefaultPathsMatching<TOutKey>(
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	exports: Readonly<ExportsRecordValue>,
 	emitDeclarationOnly: boolean,
-	previous: Readonly<{
-		conditions: readonly string[];
-		isTypeOnly?: boolean;
-	}>,
 ): (ExportData & { outKey: TOutKey | undefined })[] {
 	const results: (ExportData & { outKey: TOutKey | undefined })[] = [];
 
@@ -360,9 +362,6 @@ function findDefaultPathsMatching<TOutKey>(
 				mapQueryPathToOutKey,
 				value,
 				emitDeclarationOnly,
-				{
-					conditions: [],
-				},
 			);
 			if (deepFind !== undefined) {
 				results.push(...deepFind);

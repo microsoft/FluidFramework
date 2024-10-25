@@ -358,7 +358,7 @@ _See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/
 
 ## `flub generate source-entrypoints`
 
-Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
+Generates entrypoints for Fluid Framework API levels (/alpha, /beta, /public, /legacy) as found in package.json "exports"
 
 ```
 USAGE
@@ -372,7 +372,7 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
+  Generates entrypoints for Fluid Framework API levels (/alpha, /beta, /public, /legacy) as found in package.json
   "exports"
 ```
 

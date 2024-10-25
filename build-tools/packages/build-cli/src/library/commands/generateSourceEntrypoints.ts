@@ -28,7 +28,7 @@ const optionDefaults = {
 	outFileLegacy: ApiLevel.legacy,
 	outFilePublic: ApiLevel.public,
 	outFileSuffix: ".ts",
-	srcDir: "src/entrypoints/",
+	outDir: "src/entrypoints/",
 } as const;
 
 /**
@@ -38,7 +38,7 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 	typeof GenerateSourceEntrypointsCommand
 > {
 	static readonly description =
-		`Generates entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"`;
+		`Generates entrypoints for Fluid Framework API levels (/alpha, /beta, /public, /legacy) as found in package.json "exports"`;
 
 	static readonly flags = {
 		mainEntrypoint: Flags.file({
@@ -56,23 +56,34 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 
 		const tsConfig = await readTsConfig();
 
-		const { mapQueryPathToApiTagLevel, mapApiTagLevelToOutput } = getOutputConfiguration(
+		const { outFileSuffix, outFileAlpha, outFileBeta, outFileLegacy, outFilePublic, outDir } =
+			optionDefaults;
+
+		const mapSrcQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
+			[`${outDir}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
+			[`${outDir}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
+			[`${outDir}${outFilePublic}${outFileSuffix}`, ApiTag.public],
+			[`${outDir}${outFileLegacy}${outFileSuffix}`, ApiTag.legacy],
+		]);
+
+		const { mapSrcApiTagLevelToOutput } = getOutputConfiguration(
 			packageJson,
 			tsConfig,
+			mapSrcQueryPathToApiTagLevel,
 			this.logger,
 		);
 
-		if (mapApiTagLevelToOutput.size === 0) {
+		if (mapSrcApiTagLevelToOutput.size === 0) {
 			throw new Error(
 				`There are no package exports matching requested output entrypoints:\n\t${[
-					...mapQueryPathToApiTagLevel.keys(),
+					...mapSrcQueryPathToApiTagLevel.keys(),
 				].join("\n\t")}`,
 			);
 		}
 
 		const promises: Promise<void>[] = [];
 		promises.push(
-			generateSourceEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger),
+			generateSourceEntrypoints(mainEntrypoint, mapSrcApiTagLevelToOutput, this.logger),
 		);
 
 		// All of the output actions (deletes of stale files or writing of new/updated files)
@@ -81,11 +92,13 @@ export class GenerateSourceEntrypointsCommand extends BaseCommand<
 	}
 }
 
+// Reads and parses the `package.json` file in the current directory.
 async function readPackageJson(): Promise<PackageJson> {
 	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
 	return JSON.parse(packageJson) as PackageJson;
 }
 
+// Reads and parses the `tsconfig.json` file in the current directory.
 async function readTsConfig(): Promise<TsConfigJson> {
 	const tsConfigContent = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
 	// Trim content to avoid unexpected whitespace issues
@@ -98,24 +111,24 @@ async function readTsConfig(): Promise<TsConfigJson> {
 	return JSON.parse(sanitizedContent) as TsConfigJson;
 }
 
+/**
+ * Generates mappings based on the provided `package.json` and `tsconfig.json`. It establishes a relationship between source paths
+ * and API tag levels, and maps these tags to their corresponding export data.
+ *
+ * @param packageJson - `package.json` content.
+ * @param tsconfig - `tsconfig.json` content.
+ * @param mapSrcQueryPathToApiTagLevel - Maps source query paths or regular expressions to their corresponding API tags.
+ * @param logger - An optional logger for logging messages or warnings during processing.
+ * @returns Maps API tags to their associated export data.
+ */
 function getOutputConfiguration(
 	packageJson: PackageJson,
 	tsconfig: TsConfigJson,
+	mapSrcQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
 	logger?: CommandLogger,
 ): {
-	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>;
-	mapApiTagLevelToOutput: Map<ApiTag, ExportData>;
+	mapSrcApiTagLevelToOutput: Map<ApiTag, ExportData>;
 } {
-	const { outFileSuffix, outFileAlpha, outFileBeta, outFileLegacy, outFilePublic, srcDir } =
-		optionDefaults;
-
-	const mapQuerySrcPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
-		[`${srcDir}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
-		[`${srcDir}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
-		[`${srcDir}${outFilePublic}${outFileSuffix}`, ApiTag.public],
-		[`${srcDir}${outFileLegacy}${outFileSuffix}`, ApiTag.legacy],
-	]);
-
 	let emitDeclarationOnly: boolean = false;
 	if (tsconfig.compilerOptions?.emitDeclarationOnly !== undefined) {
 		emitDeclarationOnly = tsconfig.compilerOptions.emitDeclarationOnly;
@@ -124,15 +137,12 @@ function getOutputConfiguration(
 	const { mapKeyToOutput: mapSrcApiTagLevelToOutput } =
 		queryDefaultResolutionPathsFromPackageExports(
 			packageJson,
-			mapQuerySrcPathToApiTagLevel,
+			mapSrcQueryPathToApiTagLevel,
 			emitDeclarationOnly,
 			logger,
 		);
 
-	return {
-		mapQueryPathToApiTagLevel: mapQuerySrcPathToApiTagLevel,
-		mapApiTagLevelToOutput: mapSrcApiTagLevelToOutput,
-	};
+	return { mapSrcApiTagLevelToOutput };
 }
 
 function sourceContext(node: Node): string {
