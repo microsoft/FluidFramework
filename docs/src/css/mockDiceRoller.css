@@ -1,6 +1,4 @@
 .ffcom-dice-roller-card {
-	/* flex-grow: 1; */
-	/* TODO: confirm this is reasonable for small screens */
 	min-width: 300px;
 	box-sizing: border-box;
 	margin: 2px;
@@ -11,8 +9,6 @@
 }
 
 .ffcom-dice-roller-card-nav-bar {
-	/* Rectangle 34647954 */
-
 	box-sizing: border-box;
 
 	color: black;
@@ -29,6 +25,7 @@
 .ffcom-roll-button {
 	width: 118px;
 	height: 48px;
+
 	background: #0078d4;
 	border-style: none;
 	border-radius: 8px;

@@ -53,7 +53,7 @@ const links: CommunityLinkItem[] = [
 
 export default function CommunityLinks(): JSX.Element {
 	return (
-		<section className={"community-links"}>
+		<section className={"ffcom-community-links"}>
 			<div className="container">
 				<div className="row">
 					{links.map((props, idx) => (
@@ -69,7 +69,7 @@ function CommunityLink({ title, Icon, description, linkUrl: href }: CommunityLin
 	return (
 		<div className={clsx("col col--4")}>
 			<div className="text--center">
-				<Icon className={"community-link-icon"} role="img" />
+				<Icon className={"ffcom-community-link-icon"} role="img" />
 			</div>
 			<div className="text--center padding-horiz--md">
 				<Heading as="h3">

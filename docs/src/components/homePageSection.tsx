@@ -1,0 +1,41 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import React from "react";
+
+import { SectionHeader, type SectionHeaderProps } from "@site/src/components/sectionHeader";
+
+import "@site/src/css/homePageSection.css";
+
+/**
+ * {@link HomePageSection} component props.
+ */
+export type HomePageSectionProps = React.PropsWithChildren<
+	SectionHeaderProps & {
+		/**
+		 * Optional background style to apply to the root element of the section.
+		 */
+		backgroundStyle?: React.CSSProperties;
+	}
+>;
+
+/**
+ * Common base component for homepage sections
+ */
+export function HomePageSection({
+	title,
+	subtitle,
+	backgroundStyle,
+	children,
+}: HomePageSectionProps): JSX.Element {
+	return (
+		<div className="ffcom-home-page-section" style={backgroundStyle}>
+			<div className="ffcom-home-page-section-inner">
+				<SectionHeader title={title} subtitle={subtitle} />
+				{children}
+			</div>
+		</div>
+	);
+}
