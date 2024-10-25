@@ -2940,6 +2940,20 @@ describe("Runtime", () => {
 				processSubmittedSignals(100);
 
 				// VERIFY - SignalLatency telemetry should be logged with correct reconnect count
+				// No error events should be logged for signals sent before disconnect
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+					],
+					"SignalOutOfOrder/SignalLost telemetry should not be logged on reconnect",
+					/* inlineDetailsProp = */ true,
+					/* clearEventsAfterCheck = */ false,
+				);
 				logger.assertMatch(
 					[
 						{
