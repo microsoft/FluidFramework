@@ -1,4 +1,4 @@
-.ffcom_homepage {
+.ffcom-homepage {
 	width: 100%;
 
 	display: flex;
@@ -8,7 +8,7 @@
 	background-color: #fff8f3;
 }
 
-.ffcom_homepage_body {
+.ffcom-homepage-body {
 	width: 100%;
 
 	display: flex;

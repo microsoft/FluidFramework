@@ -18,9 +18,9 @@ import "@site/src/css/home/homepage.css";
  */
 export function Homepage(): React.ReactElement {
 	return (
-		<div className="ffcom_homepage">
+		<div className="ffcom-homepage">
 			<Banner />
-			<div className="ffcom_homepage_body">
+			<div className="ffcom-homepage-body">
 				<KeyFeaturesSection />
 				<PartnersSection />
 				<HowItWorksSection />
