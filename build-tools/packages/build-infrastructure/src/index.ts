@@ -25,6 +25,21 @@ export {
 	getFluidRepoLayout,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
+export {
+	FluidRepo as FluidRepoBase,
+	getAllDependenciesInRepo,
+	loadFluidRepo,
+} from "./fluidRepo.js";
+export {
+	getFiles,
+	findGitRootSync,
+	getMergeBaseRemote,
+	getRemote,
+	getChangedSinceRef,
+} from "./git.js";
+export { PackageBase } from "./package.js";
+export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
+export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,
 	Installable,
@@ -43,30 +58,13 @@ export type {
 	IPackageManager,
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
-
-// export {
-// 	filterPackages,
-// 	type FilterablePackage,
-// 	selectAndFilterPackages,
-// 	type GlobString,
-// 	AllPackagesSelectionCriteria,
-// 	EmptySelectionCriteria,
-// 	type PackageSelectionCriteria,
-// 	type PackageFilterOptions,
-// } from "./filter.js";
-// export {
-// 	FluidRepo as FluidRepoBase,
-// 	getAllDependenciesInRepo,
-// 	loadFluidRepo,
-// } from "./fluidRepo.js";
-// export {
-// 	getFiles,
-// 	findGitRootSync,
-// 	getMergeBaseRemote,
-// 	getRemote,
-// 	getChangedSinceRef,
-// } from "./git.js";
-// export { PackageBase } from "./package.js";
-// export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
-// export { createPackageManager } from "./packageManagers.js";
-// export { setVersion } from "./versions.js";
+export {
+	filterPackages,
+	type FilterablePackage,
+	selectAndFilterPackages,
+	type GlobString,
+	AllPackagesSelectionCriteria,
+	EmptySelectionCriteria,
+	type PackageSelectionCriteria,
+	type PackageFilterOptions,
+} from "./filter.js";

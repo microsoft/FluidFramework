@@ -13,6 +13,29 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
+export const AllPackagesSelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export const EmptySelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export interface FilterablePackage {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    private?: boolean | undefined;
+}
+
+// @public
+export function filterPackages<T extends FilterablePackage>(packages: T[], filters: PackageFilterOptions): Promise<T[]>;
+
+// @public
+export function findGitRootSync(cwd?: string): string;
+
+// @public
 export interface FluidPackageJsonFields {
     pnpm?: {
         overrides?: Record<string, string>;
@@ -23,10 +46,56 @@ export interface FluidPackageJsonFields {
 export const FLUIDREPO_CONFIG_VERSION = 1;
 
 // @public
+export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
+    constructor(searchPath: string,
+    upstreamRemotePartialUrl?: string | undefined);
+    protected readonly configFilePath: string;
+    readonly configuration: IFluidRepoLayout;
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
+    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
+    getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
+    get packages(): Map<PackageName, P>;
+    relativeToRepo(p: string): string;
+    get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
+    reload(): void;
+    readonly root: string;
+    readonly upstreamRemotePartialUrl?: string | undefined;
+    get workspaces(): Map<WorkspaceName, IWorkspace>;
+}
+
+// @public
+export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[]): {
+    packages: IPackage[];
+    releaseGroups: IReleaseGroup[];
+    workspaces: IWorkspace[];
+};
+
+// @public
+export function getChangedSinceRef<P extends IPackage>(fluidRepo: IFluidRepo<P>, ref: string, remote?: string): Promise<{
+    files: string[];
+    dirs: string[];
+    workspaces: IWorkspace[];
+    releaseGroups: IReleaseGroup[];
+    packages: IPackage[];
+}>;
+
+// @public
+export function getFiles(git: SimpleGit, directory: string): Promise<string[]>;
+
+// @public
 export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
     config: IFluidRepoLayout;
     configFilePath: string;
 };
+
+// @public
+export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string): Promise<string>;
+
+// @public
+export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
+
+// @public
+export type GlobString = string;
 
 // @public @deprecated
 export interface IFluidBuildDir {
@@ -72,7 +141,7 @@ export interface IFluidRepoLayout {
 
 // @public
 export interface Installable {
-    checkInstall(): Promise<boolean>;
+    checkInstall(): Promise<true | string[]>;
     install(updateLockfile: boolean): Promise<boolean>;
 }
 
@@ -126,6 +195,7 @@ export function isIReleaseGroup(toCheck: Exclude<any, string | number | ReleaseG
 // @public
 export interface IWorkspace extends Installable, Reloadable {
     directory: string;
+    fluidRepo: IFluidRepo;
     name: WorkspaceName;
     packages: IPackage[];
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
@@ -135,10 +205,44 @@ export interface IWorkspace extends Installable, Reloadable {
 }
 
 // @public
+export function loadFluidRepo<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IFluidRepo<P>;
+
+// @public
 export class NotInGitRepository extends Error {
-    constructor(path: string);
-    // (undocumented)
+    constructor(
+    path: string);
     readonly path: string;
+}
+
+// @public
+export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps extends AdditionalPackageProps = undefined> implements IPackage<J> {
+    constructor(
+    packageJsonFilePath: string,
+    packageManager: IPackageManager,
+    workspace: IWorkspace,
+    isWorkspaceRoot: boolean,
+    releaseGroup: ReleaseGroupName,
+    isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
+    checkInstall(): Promise<true | string[]>;
+    get combinedDependencies(): Generator<PackageDependency, void>;
+    get directory(): string;
+    getScript(name: string): string | undefined;
+    install(updateLockfile: boolean): Promise<boolean>;
+    isReleaseGroupRoot: boolean;
+    readonly isWorkspaceRoot: boolean;
+    get name(): PackageName;
+    get nameColored(): string;
+    get packageJson(): J;
+    readonly packageJsonFilePath: string;
+    readonly packageManager: IPackageManager;
+    get private(): boolean;
+    readonly releaseGroup: ReleaseGroupName;
+    reload(): void;
+    savePackageJson(): Promise<void>;
+    // (undocumented)
+    toString(): string;
+    get version(): string;
+    readonly workspace: IWorkspace;
 }
 
 // @public
@@ -149,6 +253,13 @@ export interface PackageDependency {
 }
 
 // @public
+export interface PackageFilterOptions {
+    private: boolean | undefined;
+    scope?: string[] | undefined;
+    skipScope?: string[] | undefined;
+}
+
+// @public
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
 // @public
@@ -156,6 +267,16 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
 
 // @public
 export type PackageName = Opaque<string, "PackageName">;
+
+// @public
+export interface PackageSelectionCriteria {
+    changedSinceBranch?: string | undefined;
+    directory?: string | undefined;
+    releaseGroupRoots: (GlobString | string)[];
+    releaseGroups: (GlobString | string)[];
+    workspaceRoots: (GlobString | string)[];
+    workspaces: (GlobString | string)[];
+}
 
 // @public
 export interface ReleaseGroupDefinition {
@@ -170,9 +291,20 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 
 // @public
 export interface Reloadable {
-    // (undocumented)
     reload(): void;
 }
+
+// @public
+export function selectAndFilterPackages<P extends IPackage>(fluidRepo: IFluidRepo<P>, selection: PackageSelectionCriteria, filter?: PackageFilterOptions): Promise<{
+    selected: P[];
+    filtered: P[];
+}>;
+
+// @public
+export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;
+
+// @public
+export function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => Promise<void>): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {
