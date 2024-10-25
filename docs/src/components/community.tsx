@@ -9,6 +9,9 @@ import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import clsx from "clsx";
 import React from "react";
 
+import DiscussionIcon from "@site/static/assets/community/discussion.svg";
+import ReportIssuesIcon from "@site/static/assets/community/report-issues.svg";
+
 import "@site/src/css/community.css";
 
 // TODO: it probably makes more sense to inline this stuff into `Community.mdx`
@@ -29,7 +32,7 @@ const links: CommunityLinkItem[] = [
 	},
 	{
 		title: "Ask Technical Questions",
-		Icon: require("@site/static/assets/community/discussion.svg").default,
+		Icon: DiscussionIcon,
 		description: (
 			<>
 				Our GitHub Discussions are a great way to participate. Feel free to ask questions
@@ -40,7 +43,7 @@ const links: CommunityLinkItem[] = [
 	},
 	{
 		title: "Report Issues",
-		Icon: require("@site/static/assets/community/report-issues.svg").default,
+		Icon: ReportIssuesIcon,
 		description: (
 			<>
 				Found something not working as expected? Please file a GitHub issue, so we can take
