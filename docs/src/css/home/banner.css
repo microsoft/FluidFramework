@@ -92,23 +92,14 @@
 	font-size: 20px;
 }
 
-/* Dark mode override */
-[data-theme="dark"] .ffcom-title,
-[data-theme="dark"] .ffcom-description {
-	color: #fefefe;
-}
-
 @media (max-width: 768px) {
 	.ffcom-description {
 		font-size: 16px;
 	}
-	.ffcom-title-box {
-		width: 100%;
-		align-content: center;
-		text-align: center;
-	}
-	.ffcom-title {
-		display: flex;
-		justify-content: center;
-	}
+}
+
+/* Dark mode override */
+[data-theme="dark"] .ffcom-title,
+[data-theme="dark"] .ffcom-description {
+	color: #fefefe;
 }
