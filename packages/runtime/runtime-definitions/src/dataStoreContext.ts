@@ -34,7 +34,7 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage, IProcessMessagesProps } from "./protocol.js";
+import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -337,9 +337,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	/**
 	 * Process messages for this channel. The messages here are contiguous messages in a batch.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	processMessages?(props: IProcessMessagesProps): void;
+	processMessages?(messageCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Processes the op.
@@ -433,7 +433,7 @@ export type CreateChildSummarizerNodeFn = (
  * @internal
  */
 export interface IPendingMessagesState {
-	propsList: IProcessMessagesProps[];
+	messageCollections: IRuntimeMessageCollection[];
 	pendingCount: number;
 }
 

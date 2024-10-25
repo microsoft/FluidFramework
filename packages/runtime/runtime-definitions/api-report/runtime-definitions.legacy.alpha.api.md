@@ -140,7 +140,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     makeVisibleAndAttachGraph(): void;
     // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    processMessages?(props: IProcessMessagesProps): void;
+    processMessages?(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -261,16 +261,6 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
 
-// @alpha
-export interface IProcessMessagesProps {
-    // (undocumented)
-    local: boolean;
-    // (undocumented)
-    message: ISequencedMessageEnvelope;
-    // (undocumented)
-    messagesContent: IRuntimeMessagesContent[];
-}
-
 // @alpha (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
@@ -281,6 +271,16 @@ export interface IProvideFluidDataStoreFactory {
 export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+}
+
+// @alpha
+export interface IRuntimeMessageCollection {
+    // (undocumented)
+    envelope: ISequencedMessageEnvelope;
+    // (undocumented)
+    local: boolean;
+    // (undocumented)
+    messagesContent: IRuntimeMessagesContent[];
 }
 
 // @alpha

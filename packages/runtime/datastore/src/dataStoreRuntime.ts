@@ -54,7 +54,7 @@ import {
 	VisibilityState,
 	gcDataBlobKey,
 	IInboundSignalMessage,
-	type IProcessMessagesProps,
+	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -655,9 +655,9 @@ export class FluidDataStoreRuntime
 	/**
 	 * Process channel messages. The messages here are contiguous channel types messages in a batch for this data
 	 * store.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	private processChannelMessages(props: IProcessMessagesProps) {
+	private processChannelMessages(messageCollection: IRuntimeMessageCollection) {
 		this.verifyNotClosed();
 
 		/*
@@ -667,7 +667,7 @@ export class FluidDataStoreRuntime
 		 */
 		let currentAddress: string | undefined;
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
-		const { messagesContent, message, local } = props;
+		const { messagesContent, local } = messageCollection;
 
 		const sendBunchedMessages = () => {
 			// Current address will be undefined for the first message in the list.
@@ -686,7 +686,7 @@ export class FluidDataStoreRuntime
 				localOpMetadata,
 			} of currentMessagesContent) {
 				channelContext.processOp(
-					{ ...message, contents, clientSequenceNumber },
+					{ ...messageCollection.envelope, contents, clientSequenceNumber },
 					local,
 					localOpMetadata,
 				);
@@ -695,26 +695,26 @@ export class FluidDataStoreRuntime
 		};
 
 		for (const { contents, ...restOfMessagesContent } of messagesContent) {
-			const envelope = contents as IEnvelope;
+			const contentsEnvelope = contents as IEnvelope;
 
 			// If the address of the message changes while processing the batch, send the current bunch.
-			if (currentAddress !== envelope.address) {
+			if (currentAddress !== contentsEnvelope.address) {
 				sendBunchedMessages();
 			}
 
 			currentMessagesContent.push({
-				contents: envelope.contents,
+				contents: contentsEnvelope.contents,
 				...restOfMessagesContent,
 			});
-			currentAddress = envelope.address;
+			currentAddress = contentsEnvelope.address;
 		}
 
 		// Process the last bunch of messages.
 		sendBunchedMessages();
 	}
 
-	private processAttachMessages(props: IProcessMessagesProps) {
-		const { messagesContent, message, local } = props;
+	private processAttachMessages(messageCollection: IRuntimeMessageCollection) {
+		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as IAttachMessage;
 			const id = attachMessage.id;
@@ -723,7 +723,7 @@ export class FluidDataStoreRuntime
 			processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 				// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
 				const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
-				this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
+				this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp);
 			});
 
 			// If a non-local operation then go and create the object
@@ -738,7 +738,7 @@ export class FluidDataStoreRuntime
 
 				const summarizerNodeParams = {
 					type: CreateSummarizerNodeSource.FromAttach,
-					sequenceNumber: message.sequenceNumber,
+					sequenceNumber: envelope.sequenceNumber,
 					snapshot: attachMessage.snapshot,
 				};
 
@@ -753,19 +753,19 @@ export class FluidDataStoreRuntime
 
 	/**
 	 * Process messages for this data store. The messages here are contiguous messages in a batch.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	public processMessages(props: IProcessMessagesProps): void {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed();
 
-		const { message, messagesContent } = props;
+		const { envelope, messagesContent } = messageCollection;
 		try {
-			switch (message.type) {
+			switch (envelope.type) {
 				case DataStoreMessageType.ChannelOp:
-					this.processChannelMessages(props);
+					this.processChannelMessages(messageCollection);
 					break;
 				case DataStoreMessageType.Attach:
-					this.processAttachMessages(props);
+					this.processAttachMessages(messageCollection);
 					break;
 				default:
 			}
@@ -773,12 +773,12 @@ export class FluidDataStoreRuntime
 			throw DataProcessingError.wrapIfUnrecognized(
 				error,
 				"fluidDataStoreRuntimeFailedToProcessMessage",
-				message,
+				envelope,
 			);
 		}
 
 		for (const { contents, clientSequenceNumber } of messagesContent) {
-			this.emit("op", { ...message, contents, clientSequenceNumber });
+			this.emit("op", { ...envelope, contents, clientSequenceNumber });
 		}
 	}
 
@@ -793,7 +793,7 @@ export class FluidDataStoreRuntime
 		localOpMetadata: unknown,
 	) {
 		this.processMessages({
-			message,
+			envelope: message,
 			messagesContent: [
 				{
 					contents: message.contents,

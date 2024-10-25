@@ -449,7 +449,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // @deprecated (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
-    processMessages(props: IProcessMessagesProps): void;
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)

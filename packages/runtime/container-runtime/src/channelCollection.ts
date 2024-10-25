@@ -45,7 +45,7 @@ import {
 	gcDataBlobKey,
 	type IRuntimeMessagesContent,
 	type InboundAttachMessage,
-	type IProcessMessagesProps,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -844,7 +844,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				return;
 			case ContainerMessageType.FluidDataStoreOp: {
 				this.processChannelMessages({
-					message,
+					envelope: message,
 					messagesContent: [
 						{
 							contents: message.contents,
@@ -864,10 +864,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	/**
 	 * Process channel messages. The messages here are contiguous channel type messages in a batch. Bunch
 	 * of contiguous messages for a data store should be sent to it together.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	private processChannelMessages(props: IProcessMessagesProps): void {
-		const { message, messagesContent, local } = props;
+	private processChannelMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { messagesContent, local } = messageCollection;
 		let currentMessageState: { address: string; type: string } | undefined;
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 
@@ -881,7 +881,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			assert(!!currentContext, "Context not found");
 
 			currentContext.processMessages({
-				message: { ...message, type: currentMessageState.type },
+				envelope: { ...messageCollection.envelope, type: currentMessageState.type },
 				messagesContent: currentMessagesContent,
 				local,
 			});
@@ -894,8 +894,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * like merge tree or shared tree can process ops more efficiently when they are bunched together.
 		 */
 		for (const { contents, ...restOfMessagesContent } of messagesContent) {
-			const envelope = contents as IEnvelope;
-			const address = envelope.address;
+			const contentsEnvelope = contents as IEnvelope;
+			const address = contentsEnvelope.address;
 			const context = this.contexts.get(address);
 
 			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
@@ -909,11 +909,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				throw DataProcessingError.create(
 					"No context for op",
 					"processFluidDataStoreOp",
-					message as ISequencedDocumentMessage,
+					messageCollection.envelope as ISequencedDocumentMessage,
 					{
 						local,
 						messageDetails: JSON.stringify({
-							type: message.type,
+							type: messageCollection.envelope.type,
 							contentType: typeof contents,
 						}),
 						...tagCodeArtifacts({ address }),
@@ -922,7 +922,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 
 			const { type: contextType, content: contextContents } =
-				envelope.contents as FluidDataStoreMessage;
+				contentsEnvelope.contents as FluidDataStoreMessage;
 			// If the address or type of the message changes while processing the message, send the current bunch.
 			if (
 				currentMessageState?.address !== address ||
@@ -941,15 +941,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.gcNodeUpdated({
 				node: { type: "DataStore", path: `/${address}` },
 				reason: "Changed",
-				timestampMs: message.timestamp,
+				timestampMs: messageCollection.envelope.timestamp,
 				packagePath: context.isLoaded ? context.packagePath : undefined,
 			});
 
-			detectOutboundReferences(
-				envelope.address,
-				contextContents,
-				(fromPath: string, toPath: string) =>
-					this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp),
+			detectOutboundReferences(address, contextContents, (fromPath: string, toPath: string) =>
+				this.parentContext.addedGCOutboundRoute(
+					fromPath,
+					toPath,
+					messageCollection.envelope.timestamp,
+				),
 			);
 		}
 

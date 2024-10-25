@@ -54,7 +54,7 @@ import {
 	channelsTreeName,
 	IInboundSignalMessage,
 	type IPendingMessagesState,
-	type IProcessMessagesProps,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -325,7 +325,7 @@ export abstract class FluidDataStoreContext
 	private loaded = false;
 	/** Tracks the messages for this data store that are sent while it's not loaded */
 	private pendingMessagesState: IPendingMessagesState | undefined = {
-		propsList: [],
+		messageCollections: [],
 		pendingCount: 0,
 	};
 	protected channelP: Promise<IFluidDataStoreChannel> | undefined;
@@ -575,15 +575,15 @@ export abstract class FluidDataStoreContext
 	 */
 	private processMessagesCompat(
 		channel: IFluidDataStoreChannel,
-		props: IProcessMessagesProps,
+		messageCollection: IRuntimeMessageCollection,
 	) {
 		if (channel.processMessages !== undefined) {
-			channel.processMessages(props);
+			channel.processMessages(messageCollection);
 		} else {
-			const { message, messagesContent, local } = props;
+			const { envelope, messagesContent, local } = messageCollection;
 			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 				channel.process(
-					{ ...message, contents, clientSequenceNumber },
+					{ ...envelope, contents, clientSequenceNumber },
 					local,
 					localOpMetadata,
 				);
@@ -593,26 +593,28 @@ export abstract class FluidDataStoreContext
 
 	/**
 	 * Process messages for this data store. The messages here are contiguous messages for this data store in a batch.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	public processMessages(props: IProcessMessagesProps): void {
-		const { message, messagesContent, local } = props;
-		const safeTelemetryProps = extractSafePropertiesFromMessage(message);
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
+		const safeTelemetryProps = extractSafePropertiesFromMessage(envelope);
 		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
 		// "verifyNotClosed" which logs tombstone errors.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 
 		// It's sufficient to record only the last message in the batch to track the latest change to this data store.
-		this.summarizerNode.recordChange(message as ISequencedDocumentMessage);
+		this.summarizerNode.recordChange(envelope as ISequencedDocumentMessage);
 
 		if (this.loaded) {
 			assert(this.channel !== undefined, "Channel is not loaded");
-			this.processMessagesCompat(this.channel, props);
+			this.processMessagesCompat(this.channel, messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
 			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
-			const propsCopy = { ...props, messagesContent: Array.from(messagesContent) };
-			this.pendingMessagesState.propsList.push(propsCopy);
+			this.pendingMessagesState.messageCollections.push({
+				...messageCollection,
+				messagesContent: Array.from(messagesContent),
+			});
 			this.pendingMessagesState.pendingCount += messagesContent.length;
 			this.thresholdOpsCounter.sendIfMultiple(
 				"StorePendingOps",
@@ -829,10 +831,10 @@ export abstract class FluidDataStoreContext
 		const baseSequenceNumber = this.baseSnapshotSequenceNumber ?? -1;
 
 		assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
-		for (const props of this.pendingMessagesState.propsList) {
+		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
-			if (props.message.sequenceNumber > baseSequenceNumber) {
-				this.processMessagesCompat(channel, props);
+			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
+				this.processMessagesCompat(channel, messageCollection);
 			}
 		}
 

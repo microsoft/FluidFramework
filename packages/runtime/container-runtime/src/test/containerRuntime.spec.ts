@@ -40,7 +40,7 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
-	type IProcessMessagesProps,
+	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -2524,15 +2524,15 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
-				const messages: ISequencedMessageEnvelope[] = [
+				const envelopes: ISequencedMessageEnvelope[] = [
 					{ sequenceNumber: 1 },
 					{ sequenceNumber: 2 },
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
 				] as unknown as ISequencedMessageEnvelope[];
-				messages.forEach((message) => {
+				envelopes.forEach((envelope) => {
 					missingDataStoreContext.processMessages({
-						message,
+						envelope,
 						messagesContent: [
 							{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 },
 						],
@@ -2545,11 +2545,11 @@ describe("Runtime", () => {
 
 				let opsProcessed = 0;
 				let opsStart: number | undefined;
-				const processMessagesStub = (props: IProcessMessagesProps) => {
+				const processMessagesStub = (messageCollection: IRuntimeMessageCollection) => {
 					if (opsProcessed === 0) {
-						opsStart = props.message.sequenceNumber;
+						opsStart = messageCollection.envelope.sequenceNumber;
 					}
-					opsProcessed += props.messagesContent.length;
+					opsProcessed += messageCollection.messagesContent.length;
 				};
 				const stub = sandbox
 					.stub(missingDataStoreRuntime, "processMessages")
