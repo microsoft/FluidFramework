@@ -13,6 +13,9 @@ import { ServiceSection } from "@site/src/components/serviceSection";
 
 import "@site/src/css/homepage.css";
 
+/**
+ * Root homepage component.
+ */
 export function Homepage(): React.ReactElement {
 	return (
 		<div className="ffcom_homepage">

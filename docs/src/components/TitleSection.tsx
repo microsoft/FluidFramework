@@ -7,6 +7,9 @@ import React from "react";
 
 import "@site/src/css/titleSection.css";
 
+/**
+ * Homepage title component.
+ */
 export function TitleSection(): React.ReactElement {
 	return (
 		<div className={"ffcom-title-section-container"}>
