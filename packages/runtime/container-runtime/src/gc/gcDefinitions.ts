@@ -352,7 +352,7 @@ export interface IGarbageCollector {
 		timestampMs: number,
 		autorecovery?: true,
 	): void;
-	/** Called to process garbage collection message.s */
+	/** Called to process garbage collection messages */
 	processMessages(
 		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,

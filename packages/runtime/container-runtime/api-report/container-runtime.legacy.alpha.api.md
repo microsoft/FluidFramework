@@ -194,7 +194,7 @@ export const disabledCompressionConfig: ICompressionRuntimeOptions;
 // @alpha
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
-// @alpha
+// @alpha @sealed
 export class DocumentsSchemaController {
     constructor(existing: boolean, snapshotSequenceNumber: number, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;

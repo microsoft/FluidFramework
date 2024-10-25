@@ -429,6 +429,7 @@ function arrayToProp(arr: string[]) {
  *
  * @legacy
  * @alpha
+ * @sealed
  */
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
@@ -601,7 +602,7 @@ export class DocumentsSchemaController {
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
 	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
-	 * @deprecated - it has been replaced by processDocumentSchemaMessages instead.
+	 * @deprecated It has been replaced by processDocumentSchemaMessages instead.
 	 */
 	public processDocumentSchemaOp(
 		content: IDocumentSchemaChangeMessage,
