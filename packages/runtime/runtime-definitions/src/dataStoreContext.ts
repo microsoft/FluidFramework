@@ -433,7 +433,7 @@ export type CreateChildSummarizerNodeFn = (
  * @internal
  */
 export interface IPendingMessagesState {
-	props: IProcessMessagesProps[];
+	propsList: IProcessMessagesProps[];
 	pendingCount: number;
 }
 

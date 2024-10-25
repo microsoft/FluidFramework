@@ -325,7 +325,7 @@ export abstract class FluidDataStoreContext
 	private loaded = false;
 	/** Tracks the messages for this data store that are sent while it's not loaded */
 	private pendingMessagesState: IPendingMessagesState | undefined = {
-		props: [],
+		propsList: [],
 		pendingCount: 0,
 	};
 	protected channelP: Promise<IFluidDataStoreChannel> | undefined;
@@ -612,7 +612,7 @@ export abstract class FluidDataStoreContext
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
 			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
 			const propsCopy = { ...props, messagesContent: Array.from(messagesContent) };
-			this.pendingMessagesState.props.push(propsCopy);
+			this.pendingMessagesState.propsList.push(propsCopy);
 			this.pendingMessagesState.pendingCount += messagesContent.length;
 			this.thresholdOpsCounter.sendIfMultiple(
 				"StorePendingOps",
@@ -829,8 +829,7 @@ export abstract class FluidDataStoreContext
 		const baseSequenceNumber = this.baseSnapshotSequenceNumber ?? -1;
 
 		assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
-		const pendingMessagesProps = this.pendingMessagesState.props;
-		for (const props of pendingMessagesProps) {
+		for (const props of this.pendingMessagesState.propsList) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
 			if (props.message.sequenceNumber > baseSequenceNumber) {
 				this.processMessagesCompat(channel, props);
