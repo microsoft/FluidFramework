@@ -1,4 +1,4 @@
-.titleSectionContainer {
+.ffcom-title-section-container {
 	width: 100%;
 	display: flex;
 	flex-direction: row;
@@ -14,7 +14,7 @@
 	background-repeat: no-repeat;
 }
 
-.rootContainer {
+.ffcom-root-container {
 	height: 100%;
 	width: 100%;
 	padding: 0% 10%;
@@ -22,16 +22,16 @@
 }
 
 @media (min-width: 1640px) {
-	.rootContainer {
+	.ffcom-root-container {
 		padding: 0% 20%;
 	}
-	.titleSectionContainer {
+	.ffcom-title-section-container {
 		height: 45vh;
 	}
 }
 
 /* Light mode override */
-[data-theme="light"] .titleSectionContainer {
+[data-theme="light"] .ffcom-title-section-container {
 	background-image: linear-gradient(
 			90.5deg,
 			rgba(255, 255, 255, 0.9) 19.21%,
@@ -41,12 +41,12 @@
 }
 
 /* Dark mode override */
-[data-theme="dark"] .titleSectionContainer {
+[data-theme="dark"] .ffcom-title-section-container {
 	background-image: linear-gradient(90.5deg, rgba(0, 0, 0, 0.8) 19.21%, rgba(0, 0, 0, 0.3)),
 		url("@site/static/assets/home//title-background-dark.png");
 }
 
-.contentContainer {
+.ffcom-content-container {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -58,7 +58,7 @@
 	flex-grow: 0;
 }
 
-.videoContainer {
+.ffcom-video-container {
 	width: 50%;
 	aspect-ratio: 1.68;
 	padding: 12px;
@@ -69,26 +69,20 @@
 	border-radius: 24px;
 }
 
-.roundedVideo {
+.ffcom-rounded-video {
 	overflow: hidden;
 	border-radius: 15px;
 	height: 100%;
 }
 
-.bgImage {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-
-.titleBox {
+.ffcom-title-box {
 	z-index: 2;
 	height: 15vh;
 	width: 50%;
 	max-height: 164px;
 }
 
-.title {
+.ffcom-title {
 	color: #0e1726;
 	font-family: "Segoe UI";
 	font-weight: 600;
@@ -103,12 +97,12 @@
 }
 
 @media (min-width: 1640px) {
-	.title {
+	.ffcom-title {
 		font-size: 60px;
 	}
 }
 
-.description {
+.ffcom-description {
 	color: #17253d;
 	font-family: "Segoe UI";
 	font-weight: 400;
@@ -122,28 +116,28 @@
 }
 
 @media (max-width: 768px) {
-	.description {
+	.ffcom-description {
 		font-size: 16px;
 	}
-	.contentContainer {
+	.ffcom-content-container {
 		flex-direction: column;
 	}
-	.titleBox {
+	.ffcom-title-box {
 		width: 100%;
 		align-content: center;
 		text-align: center;
 	}
-	.title {
+	.ffcom-title {
 		display: flex;
 		justify-content: center;
 	}
-	.videoContainer {
+	.ffcom-video-container {
 		margin: 0;
 		width: 80%;
 	}
 }
 @media (max-width: 425px) {
-	.videoContainer {
+	.ffcom-video-container {
 		width: 100%;
 	}
 }

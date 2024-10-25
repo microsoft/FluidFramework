@@ -9,18 +9,18 @@ import "@site/src/css/titleSection.css";
 
 export function TitleSection(): React.ReactElement {
 	return (
-		<div className={"titleSectionContainer"}>
-			<div className="rootContainer">
-				<div className="contentContainer">
-					<div className="titleBox">
-						<h3 className="title">Fluid Framework</h3>
-						<span className="description">
+		<div className={"ffcom-title-section-container"}>
+			<div className="ffcom-root-container">
+				<div className="ffcom-content-container">
+					<div className="ffcom-title-box">
+						<h3 className="ffcom-title">Fluid Framework</h3>
+						<span className="ffcom-description">
 							Empower collaborative innovation with Fluid Framework's seamless,
 							high-performance tech stack for real-time applications.
 						</span>
 					</div>
-					<div className="videoContainer">
-						<div className="roundedVideo">
+					<div className="ffcom-video-container">
+						<div className="ffcom-rounded-video">
 							<iframe
 								width="100%"
 								height="100%"
