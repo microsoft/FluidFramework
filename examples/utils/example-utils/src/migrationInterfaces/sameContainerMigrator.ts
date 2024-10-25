@@ -14,6 +14,7 @@ import type {
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
  * to the new model.  The modelVersion is also provided to inform the appropriate transformation to perform.
  * It is async to permit network calls or lazy-loading the transform logic within the function.
+ * @internal
  */
 export type DataTransformationCallback = (
 	exportedData: unknown,

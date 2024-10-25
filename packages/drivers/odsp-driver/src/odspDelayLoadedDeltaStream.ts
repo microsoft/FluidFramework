@@ -472,8 +472,7 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	private emitMetaDataUpdateEvent(metadata: Record<string, string>): void {
-		// TODO Why are we non null asserting here?
-		const label = JSON.parse(metadata.sensitivityLabelsInfo!) as {
+		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
 			labels: unknown;
 			timestamp: number;
 		};
@@ -482,8 +481,7 @@ export class OdspDelayLoadedDeltaStream {
 		if (time > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = time;
 			this.metadataUpdateHandler({
-				// TODO Why are we non null asserting here?
-				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo!,
+				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
 			});
 		}
 	}

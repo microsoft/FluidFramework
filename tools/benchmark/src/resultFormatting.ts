@@ -73,23 +73,3 @@ export function objectCell(key: string, title: string, f: (a: object) => string)
 export function skipCell(key: string): ExpectedCell {
 	return { key, cell: (): void => {} };
 }
-
-export function addCells(
-	table: Table,
-	data: Record<string, unknown>,
-	dataFormatter: Record<string, (value: unknown) => string>,
-	expected: readonly ExpectedCell[],
-): void {
-	const keys = new Set(Object.getOwnPropertyNames(data));
-	// Add expected cells, with their custom formatting and canonical order
-	for (const cell of expected) {
-		if (keys.delete(cell.key)) {
-			cell.cell(table, data);
-		}
-	}
-	// Add custom data cells
-	for (const [key, val] of Object.entries(data)) {
-		const displayValue = key in dataFormatter ? dataFormatter[key](val) : (val as string);
-		table.cell(key, displayValue, Table.padLeft);
-	}
-}

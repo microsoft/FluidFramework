@@ -1,0 +1,18 @@
+{
+	// This configuration is used to test "exactOptionalPropertyTypes=false" option with type utilities.
+	"extends": "../tsconfig.json",
+	"include": ["./**/*"],
+	"exclude": ["jsonSerializable.exactOptionalPropertyTypes.true.spec.ts"],
+	"compilerOptions": {
+		// Even though this is no-emit. The tsbuildinfo file needs a place to go.
+		// Note: placing it at the root confuses the build system incrementality for eslint.
+		"outDir": "../../../lib/test/core-interfaces/no-exactOptionalPropertyTypes",
+		"exactOptionalPropertyTypes": false,
+		"noEmit": true,
+	},
+	"references": [
+		{
+			"path": "../../..",
+		},
+	],
+}

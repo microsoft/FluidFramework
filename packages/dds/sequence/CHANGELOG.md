@@ -1,5 +1,45 @@
 # @fluidframework/sequence
 
+## 2.4.0
+
+### Minor Changes
+
+-   Several MergeTree `Client` Legacy APIs are now deprecated ([#22629](https://github.com/microsoft/FluidFramework/pull/22629)) [0b59ae89e0](https://github.com/microsoft/FluidFramework/commit/0b59ae89e0aefefad0ccef198adf99929bc4d783)
+
+    To reduce exposure of the `Client` class in the merge-tree package, several types have been deprecated. These types directly or indirectly expose the merge-tree `Client` class.
+
+    Most of these types are not meant to be used directly, and direct use is not supported:
+
+    -   AttributionPolicy
+    -   IClientEvents
+    -   IMergeTreeAttributionOptions
+    -   SharedSegmentSequence
+    -   SharedStringClass
+
+    Some of the deprecations are class constructors. In those cases, we plan to replace the class with an interface which has an equivalent API. Direct instantiation of these classes is not currently supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
+
+    -   SequenceInterval
+    -   SequenceEvent
+    -   SequenceDeltaEvent
+    -   SequenceMaintenanceEvent
+
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+### Minor Changes
+
+-   The PropertyManager class and related functions and properties are deprecated ([#22183](https://github.com/microsoft/FluidFramework/pull/22183)) [cbba69554f](https://github.com/microsoft/FluidFramework/commit/cbba69554fc5026f562f44683a902474fabd6e81)
+
+    The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.
+    These elements will be removed in a future release for the following reasons:
+
+    -   There are no scenarios where they need to be used directly.
+    -   Using them directly will cause eventual consistency problems.
+    -   Upcoming features will require modifications to these mechanisms.
+
 ## 2.1.0
 
 Dependency updates only.

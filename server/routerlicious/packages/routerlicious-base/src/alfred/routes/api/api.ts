@@ -18,13 +18,16 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	getCorrelationId,
 	getBooleanFromConfig,
 	verifyToken,
 	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+	getGlobalTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
@@ -49,6 +52,7 @@ export function create(
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();
 
@@ -84,6 +88,29 @@ export function create(
 			response.sendStatus(200);
 		},
 	);
+
+	if (fluidAccessTokenGenerator) {
+		router.post(
+			"/tenants/:tenantId/accesstoken",
+			validateRequestParams("tenantId"),
+			throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			async (request, response) => {
+				const tenantId = getParam(request.params, "tenantId");
+				const bearerAuthToken = request?.header("Authorization");
+				if (!bearerAuthToken) {
+					response.status(400).send(`Missing Authorization header in the request.`);
+					return;
+				}
+				const fluidAccessTokenRequest = fluidAccessTokenGenerator.generateFluidToken(
+					tenantId,
+					bearerAuthToken,
+					request?.body,
+				);
+				handleResponse(fluidAccessTokenRequest, response, undefined, undefined, 201);
+			},
+		);
+	}
 
 	router.patch(
 		"/:tenantId/:id/root",
@@ -353,7 +380,10 @@ const uploadBlob = async (
 		undefined,
 		undefined,
 		undefined,
-		() => getCorrelationId() || uuid(),
+		() =>
+			getGlobalTelemetryContext().getProperties().correlationId ??
+			uuid() /* getCorrelationId */,
+		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",

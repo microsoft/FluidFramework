@@ -94,6 +94,18 @@ export interface IContext {
 	 * Used to log events / errors.
 	 */
 	readonly log: ILogger | undefined;
+
+	/**
+	 * Pauses the context
+	 * @param offset - The offset to pause at. This is the offset from which it will be resumed.
+	 * @param reason - The reason for pausing
+	 */
+	pause(offset: number, reason?: any): void;
+
+	/**
+	 * Resumes the context
+	 */
+	resume(): void;
 }
 
 /**
@@ -117,6 +129,11 @@ export interface IPartitionLambda {
 	 * any deferred work.
 	 */
 	close(closeType: LambdaCloseType): void;
+
+	/**
+	 * Pauses the lambda. It should clear any pending work.
+	 */
+	pause?(): void;
 }
 
 /**

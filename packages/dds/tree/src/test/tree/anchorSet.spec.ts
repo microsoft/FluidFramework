@@ -31,7 +31,6 @@ import {
 	makeDetachedFieldIndex,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -41,6 +40,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
+import { stringSchema } from "../../simple-tree/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -450,7 +450,9 @@ describe("AnchorSet", () => {
 		const build = [
 			{
 				id: buildId,
-				trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
+				trees: [
+					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "x" }),
+				],
 			},
 		];
 		announceTestDelta(
@@ -492,11 +494,56 @@ describe("AnchorSet", () => {
 		]);
 	});
 
+	it("childrenChangedAfterBatch event includes the changed fields", () => {
+		const fieldOne: FieldKey = brand("one");
+		const fieldTwo: FieldKey = brand("two");
+		const fieldThree: FieldKey = brand("three");
+
+		const anchors = new AnchorSet();
+
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+		const node0 = anchors.locate(anchor0) ?? assert.fail();
+
+		const expectedChangedFields = new Set<FieldKey>([fieldOne, fieldTwo, fieldThree]);
+		let listenerFired = false;
+		node0.on("childrenChangedAfterBatch", ({ changedFields }) => {
+			// This is the main validation of this test
+			assert.deepEqual(changedFields, expectedChangedFields);
+			listenerFired = true;
+		});
+
+		// Try to test all cases of changes happening on a delta visitor: attaches, detaches, replaces
+		withVisitor(anchors, (v) => {
+			v.enterField(rootFieldKey);
+			v.enterNode(0);
+			v.enterField(fieldOne);
+			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"));
+			v.exitField(fieldOne);
+			v.enterField(fieldTwo);
+			v.attach(brand("fakeAttachSource"), 1, 0);
+			v.exitField(fieldTwo);
+			v.enterField(fieldThree);
+			v.replace(
+				brand("fakeReplaceSource"),
+				{ start: 0, end: 1 },
+				brand("fakeReplaceDestination"),
+			);
+			v.exitField(fieldThree);
+			v.exitNode(0);
+			v.exitField(rootFieldKey);
+		});
+
+		// Make sure the listener actually fired and validated the changed fields.
+		assert.equal(listenerFired, true);
+	});
+
 	it("triggers path visitor callbacks", () => {
 		const build = [
 			{
 				id: buildId,
-				trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
+				trees: [
+					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "x" }),
+				],
 			},
 		];
 		const insertAtFoo4 = makeFieldDelta(

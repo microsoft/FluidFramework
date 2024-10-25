@@ -69,7 +69,7 @@ export abstract class BrandedType<out ValueType, Name> {
 	 */
 	public static [Symbol.hasInstance](value: never): value is never {
 		throw new UsageError(
-			"BrandedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
+			"BrandedType is a compile time type brand not a real class that can be used with `instanceof` at runtime.",
 		);
 	}
 }
@@ -77,7 +77,6 @@ export abstract class BrandedType<out ValueType, Name> {
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
- * @internal
  */
 export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
 	infer ValueType,
@@ -89,7 +88,6 @@ export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extend
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
- * @internal
  */
 export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
 	unknown,
@@ -109,7 +107,6 @@ export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends
  * For example leaving T unconstrained instead allows the union of `BrandedType | undefined` to distribute over the conditional allowing the branding only the the union members which should be branded.
  * This does not permit branding an optional value into an optional field since non branded union members are still excluded from input to this function:
  * this is an intended restriction as it causes compile errors for misuse of this function (like using brand when the relevant type is not a branded type).
- * @internal
  */
 export function brand<T>(
 	value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never,

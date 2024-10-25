@@ -47,7 +47,8 @@ FLAGS
   -g, --releaseGroup=<option>   (required) Name of a release group.
                                 <options: client|server|azure|build-tools|gitrest|historian>
       --dependencyName=<value>  (required) Name of the dependency (npm package) to update.
-      --version=<value>         (required) Semver range specifier to use when updating the dependency.
+      --version=<value>         (required) A semver version or range specifier (e.g. ^1.2.3) to use when updating the
+                                dependency.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

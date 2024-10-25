@@ -16,11 +16,21 @@ module.exports = function handler(fileData, logger): void {
 		console.log(`Could not locate test result info.`);
 		return;
 	}
+
 	if (process.env.BUILD_ID === undefined) {
-		console.log("BUILD_ID not defined.");
-	} else {
-		console.log("BUILD_ID", process.env.BUILD_ID);
+		throw new Error("BUILD_ID environment variable is not set.");
 	}
+	if (process.env.PIPELINE === undefined) {
+		throw new Error("PIPELINE environment variable is not set.");
+	}
+	if (process.env.STAGE_ID === undefined) {
+		throw new Error("STAGE_ID environment variable is not set.");
+	}
+
+	console.log("BUILD_ID:", process.env.BUILD_ID);
+	console.log("PIPELINE:", process.env.PIPELINE);
+	console.log("STAGE_ID:", process.env.STAGE_ID);
+
 	const resultSummary = fileData.resultSummary.resultSummaryByRunState.Completed;
 	console.log(resultSummary);
 
@@ -28,7 +38,7 @@ module.exports = function handler(fileData, logger): void {
 	const failedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Failed?.count ?? 0;
 	const totalTests = passedTests + failedTests;
 	const passRate = totalTests === 0 ? 0 : passedTests / totalTests;
-	console.log(passRate);
+	console.log("Pass rate:", passRate);
 
 	logger.send({
 		namespace: "FFEngineering", // Transfer the telemetry associated with test passing rate to namespace "FFEngineering"

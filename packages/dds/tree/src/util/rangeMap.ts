@@ -20,8 +20,6 @@ export interface RangeEntry<T> {
 
 /**
  * The result of a query about a range of keys.
- *
- * @internal
  */
 export interface RangeQueryResult<T> {
 	/**

@@ -113,7 +113,7 @@ required packages that you can pass to `getFluidTestMochaConfig()`.
 For example, the path to a reporter file:
 
 ```console
-mocha --require @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaMemoryTestReporter.js
+mocha --require @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js
 ```
 
 Depending on where that file is coming from, you'll need to be careful with how that path is specified.

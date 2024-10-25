@@ -12,23 +12,22 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 
-// This test expects that if a certain env variable is specified, it points to a package that will
-// pollute the global with a "getTestLogger" when imported.  getTestLogger is actually expected to be
-// "instantiateTestLogger" in practice (it creates a new one, rather than retrieving an existing one).
-// Generally speaking, this global logger type will be the one that actually knows how to log to a real
+// This test expects that if a certain env variable is specified, it points to a package that exports
+// a "createTestLogger" function.
+// Generally speaking, this logger will be the one that actually knows how to log to a real
 // destination (i.e. aria-logger).
 // TODO: Consider injecting a logger rather than relying on an environment variable and dynamic import.
-// TODO: Consider just exporting the function and importing it directly rather than polluting the global.
-const maybeInstantiateGlobalLoggerType = async () => {
+const createInjectedLoggerIfExists = async (): Promise<
+	ITelemetryBufferedLogger | undefined
+> => {
 	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
-		// We expect that the call to import the specified package will result in a global getTestLogger.
-		// Check that it's not already available to avoid double-importing on repeat calls.
-		if (getTestLogger === undefined) {
-			await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
-		}
-		const logger = getTestLogger?.();
-		assert(logger !== undefined, "Expected getTestLogger to return something");
-		return logger;
+		// We expect that the specified package provides a createTestLogger function.
+		const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		assert(
+			typeof createTestLogger === "function",
+			"A createTestLogger function was not provided from the specified package",
+		);
+		return createTestLogger() as ITelemetryBufferedLogger;
 	}
 	return undefined;
 };
@@ -43,7 +42,7 @@ export const createLogger = async (
 		runId: number | undefined;
 	},
 ) => {
-	const baseLogger = await maybeInstantiateGlobalLoggerType();
+	const baseLogger = await createInjectedLoggerIfExists();
 	const fileLogger = new FileLogger(outputDirectoryPath, fileNamePrefix, baseLogger);
 	const childLogger = createChildLogger({
 		logger: fileLogger,

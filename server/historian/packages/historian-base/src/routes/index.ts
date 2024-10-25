@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -23,6 +22,7 @@ import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
 import * as summaries from "./summaries";
+import { CommonRouteParams } from "./utils";
 /* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {
@@ -49,114 +49,35 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
 ): IRoutes {
+	const commonRouteParams: CommonRouteParams = [
+		config,
+		tenantService,
+		storageNameRetriever,
+		restTenantThrottlers,
+		restClusterThrottlers,
+		documentManager,
+		cache,
+		revokedTokenChecker,
+		denyList,
+		ephemeralDocumentTTLSec,
+	];
 	return {
 		git: {
-			blobs: blobs.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
-			commits: commits.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
-			refs: refs.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
-			tags: tags.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
-			trees: trees.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
+			blobs: blobs.create(...commonRouteParams),
+			commits: commits.create(...commonRouteParams),
+			refs: refs.create(...commonRouteParams),
+			tags: tags.create(...commonRouteParams),
+			trees: trees.create(...commonRouteParams),
 		},
 		repository: {
-			commits: repositoryCommits.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
-			contents: contents.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
-			headers: headers.create(
-				config,
-				tenantService,
-				storageNameRetriever,
-				restTenantThrottlers,
-				documentManager,
-				cache,
-				asyncLocalStorage,
-				revokedTokenChecker,
-				denyList,
-			),
+			commits: repositoryCommits.create(...commonRouteParams),
+			contents: contents.create(...commonRouteParams),
+			headers: headers.create(...commonRouteParams),
 		},
-		summaries: summaries.create(
-			config,
-			tenantService,
-			storageNameRetriever,
-			restTenantThrottlers,
-			restClusterThrottlers,
-			documentManager,
-			cache,
-			asyncLocalStorage,
-			revokedTokenChecker,
-			denyList,
-		),
+		summaries: summaries.create(...commonRouteParams),
 	};
 }

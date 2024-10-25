@@ -43,9 +43,8 @@ export {
 } from "./documentation-domain-to-html/index.js";
 export {
 	DocumentWriter,
-	type HtmlRenderContext,
-	type HtmlRenderers,
-	type HtmlRenderConfiguration,
+	type RenderDocumentAsHtmlConfig,
+	type RenderHtmlConfig,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type MarkdownRenderConfiguration,
@@ -54,7 +53,13 @@ export type { ConfigurationBase } from "./ConfigurationBase.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 export type { Heading } from "./Heading.js";
 export type { Link, UrlTarget } from "./Link.js";
-export { loadModel } from "./LoadModel.js";
+export {
+	lintApiModel,
+	type LintApiModelConfiguration,
+	type LinterErrors,
+	type LinterReferenceError,
+} from "./LintApiModel.js";
+export { loadModel, type LoadModelOptions } from "./LoadModel.js";
 export {
 	defaultConsoleLogger,
 	type LoggingFunction,

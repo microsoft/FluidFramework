@@ -72,8 +72,7 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
-		// Non null asserting for now this should change to Object.entries
-		const summaryObject = summary.tree[key]!;
+		const summaryObject = summary.tree[key];
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
@@ -151,8 +150,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
 		assert(!key.includes("/"), 0x9cc /* id should not include slashes */);
-		// Non null asserting for now this should change to Object.entries
-		const summaryObject = summary.tree[key]!;
+		const summaryObject = summary.tree[key];
 
 		let value: OdspSummaryTreeValue;
 		// Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
@@ -253,8 +251,10 @@ export async function createNewFluidContainerCore<T>(args: {
 					`\r\n--${formBoundary}--`;
 
 				let postBody = snapshotBody;
+				// We use the byte length of the post body to determine if we should use the multipart/form-data or not. This helps
+				// in cases where the body contains data with different language where 1 char could be multiple code points.
 				if (
-					postBodyWithAuth.length <= maxUmpPostBodySize &&
+					new TextEncoder().encode(postBodyWithAuth).length <= maxUmpPostBodySize &&
 					authHeader?.startsWith("Bearer")
 				) {
 					url = authInBodyUrl;

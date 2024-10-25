@@ -7,7 +7,7 @@
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export interface AttributionPolicy {
     attach: (client: Client) => void;
     detach: () => void;
@@ -18,9 +18,10 @@ export interface AttributionPolicy {
 
 // @alpha (undocumented)
 export abstract class BaseSegment implements ISegment {
-    // (undocumented)
+    constructor(properties?: PropertySet);
+    // @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    // (undocumented)
+    // @deprecated
     addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
@@ -64,13 +65,13 @@ export abstract class BaseSegment implements ISegment {
     ordinal: string;
     // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
+    // @deprecated
     propertyManager?: PropertiesManager;
     // (undocumented)
     removedClientIds?: number[];
     // (undocumented)
     removedSeq?: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
     // (undocumented)
     seq: number;
@@ -143,7 +144,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
-    obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
+    obliterateRangeLocal(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
     peekPendingSegmentGroups(): SegmentGroup | undefined;
     // (undocumented)
     peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
@@ -243,7 +244,7 @@ export interface IAttributionCollectionSpec<T> {
     }>;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IClientEvents {
     // (undocumented)
     (event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -301,7 +302,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IMergeTreeAttributionOptions {
     policyFactory?: () => AttributionPolicy;
     track?: boolean;
@@ -319,7 +320,7 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
 }
 
 // @alpha (undocumented)
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaOpArgs {
@@ -369,6 +370,24 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
 }
 
 // @alpha (undocumented)
+export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1: {
+        pos: number;
+        before: boolean;
+    };
+    // (undocumented)
+    pos2: {
+        pos: number;
+        before: boolean;
+    };
+    relativePos1?: never;
+    relativePos2?: never;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.OBLITERATE_SIDED;
+}
+
+// @alpha (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
 // @alpha (undocumented)
@@ -377,6 +396,8 @@ export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
+    mergeTreeEnableObliterateReconnect?: boolean;
+    mergeTreeEnableSidedObliterate?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
@@ -443,7 +464,9 @@ export interface IRemovalInfo {
 
 // @alpha
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+    // @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    // @deprecated
     addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     append(segment: ISegment): void;
@@ -455,18 +478,17 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     // (undocumented)
     clone(): ISegment;
     readonly endpointType?: "start" | "end";
-    endSide?: Side.Before | Side.After;
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
     properties?: PropertySet;
+    // @deprecated
     propertyManager?: PropertiesManager;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
-    startSide?: Side.Before | Side.After;
     // (undocumented)
     toJSONObject(): any;
     // (undocumented)
@@ -521,6 +543,8 @@ export class LocalReferenceCollection {
 // @alpha @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
+    addProperties(newProps: PropertySet): void;
+    // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
     readonly canSlideToEndpoint?: boolean;
     // (undocumented)
@@ -535,7 +559,7 @@ export interface MapLike<T> {
 
 // @alpha
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
-    constructor(refType: ReferenceType);
+    constructor(refType: ReferenceType, props?: PropertySet);
     // (undocumented)
     append(): void;
     // (undocumented)
@@ -608,6 +632,7 @@ export const MergeTreeDeltaType: {
     readonly ANNOTATE: 2;
     readonly GROUP: 3;
     readonly OBLITERATE: 4;
+    readonly OBLITERATE_SIDED: 5;
 };
 
 // @alpha (undocumented)
@@ -634,7 +659,25 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
+export interface ObliterateInfo {
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    end: LocalReferencePosition;
+    // (undocumented)
+    localSeq: number | undefined;
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    segmentGroup: SegmentGroup | undefined;
+    // (undocumented)
+    seq: number;
+    // (undocumented)
+    start: LocalReferencePosition;
+}
+
+// @alpha @deprecated (undocumented)
 export class PropertiesManager {
     // (undocumented)
     ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
@@ -647,7 +690,7 @@ export class PropertiesManager {
     hasPendingProperty(key: string): boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export enum PropertiesRollback {
     None = 0,
     Rollback = 1
@@ -658,7 +701,7 @@ export type PropertySet = MapLike<any>;
 
 // @alpha
 export interface ReferencePosition {
-    // (undocumented)
+    // @deprecated (undocumented)
     addProperties(newProps: PropertySet): void;
     getOffset(): number;
     getSegment(): ISegment | undefined;
@@ -699,6 +742,8 @@ export interface SegmentGroup {
     // (undocumented)
     localSeq?: number;
     // (undocumented)
+    obliterateInfo?: ObliterateInfo;
+    // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)
     refSeq: number;
@@ -706,7 +751,7 @@ export interface SegmentGroup {
     segments: ISegment[];
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
     // (undocumented)
@@ -764,7 +809,7 @@ export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingP
 
 // @alpha (undocumented)
 export class TextSegment extends BaseSegment {
-    constructor(text: string);
+    constructor(text: string, props?: PropertySet);
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)

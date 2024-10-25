@@ -4,6 +4,12 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "docs/**"
+      - "*.md"
+      - "**/*.md"
+      - "!.changeset/**"
+      - "!build-tools/**"
+      - "!RELEASE_NOTES/**"
+      - "!server/**"
 
 defaults:
   run:

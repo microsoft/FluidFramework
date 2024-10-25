@@ -54,14 +54,13 @@ module.exports = (env) => {
 			},
 			plugins: [
 				new webpack.ProvidePlugin({
-					process: "process/browser",
+					process: "process/browser.js",
 				}),
 				// No need to write a index.html
 				new HtmlWebpackPlugin({
 					title: "Hello Demo",
 					favicon: "",
 				}),
-				// new CleanWebpackPlugin(),
 			],
 		},
 		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),

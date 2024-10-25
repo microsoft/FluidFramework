@@ -4,18 +4,18 @@
     "effect": {
       "attachAndDetach": {
         "attach": {
-          "insert": {
-            "revision": 0,
-            "id": 0
-          }
-        },
-        "detach": {
-          "moveOut": {
+          "moveIn": {
             "revision": 0,
             "finalEndpoint": [
               0,
               0
             ],
+            "id": 0
+          }
+        },
+        "detach": {
+          "delete": {
+            "revision": 0,
             "idOverride": {
               "type": 0,
               "id": {

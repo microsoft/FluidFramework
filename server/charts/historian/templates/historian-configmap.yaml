@@ -65,6 +65,7 @@ data:
             }
         },
         "restGitService": {
+            "ephemeralDocumentTTLSec": {{ .Values.historian.restGitService.ephemeralDocumentTTLSec }},
             "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}
         },
         "storageUrl": "{{ .Values.historian.storageUrl }}",

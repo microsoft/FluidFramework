@@ -12,6 +12,9 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
 		"prettier",
 	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
 	rules: {
 		// This rule is often triggered when using custom Flags, so disabling.
 		"object-shorthand": "off",
@@ -38,9 +41,13 @@ module.exports = {
 					// These are all excluded because they're "submodules" used for organization.
 					// AB#8118 tracks removing the barrel files and importing directly from the submodules.
 					"**/library/index.js",
+					"**/library/githubRest.js",
 					"**/handlers/index.js",
 					"**/machines/index.js",
 					"**/repoPolicyCheck/index.js",
+					"**/azureDevops/**",
+					"**/codeCoverage/**",
+					"azure-devops-node-api/**",
 				],
 			},
 		],
@@ -86,4 +93,14 @@ module.exports = {
 		"perfectionist/sort-union-types": "off",
 		"perfectionist/sort-vue-attributes": "off",
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Test files can import from anywhere
+				"import/no-internal-modules": "off",
+			},
+		},
+	],
 };

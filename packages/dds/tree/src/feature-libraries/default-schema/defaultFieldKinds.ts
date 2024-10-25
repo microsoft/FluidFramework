@@ -4,7 +4,7 @@
  */
 
 import {
-	type ChangesetLocalId,
+	type ChangeAtomId,
 	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type FieldKindIdentifier,
@@ -54,11 +54,9 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
-	 * @param newContent - the new content for the field
-	 * @param changeId - the ID associated with the replacement of the current content.
-	 * @param buildId - the ID associated with the creation of the `newContent`.
+	 * @param ids - The ids for the fill and detach fields.
 	 */
-	set(ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset;
+	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -77,8 +75,10 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset =>
-		optionalFieldEditor.set(false, ids),
+	set: (ids: {
+		fill: ChangeAtomId;
+		detach: ChangeAtomId;
+	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
@@ -257,30 +257,24 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 /**
- * @internal
  */
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
 /**
- * @internal
  */
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
 /**
- * @internal
  */
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
 /**
- * @internal
  */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 /**
- * @internal
  */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
- * @internal
  */
 export const FieldKinds: {
 	// TODO: inheritDoc for these somehow

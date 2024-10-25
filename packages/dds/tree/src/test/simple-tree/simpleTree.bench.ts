@@ -17,7 +17,7 @@ import {
 	type WideTreeNode,
 } from "./benchmarkUtilities.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
-import { hydrate } from "./utils.js";
+import { hydrate, hydrateUnsafe } from "./utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -250,11 +250,11 @@ describe("SimpleTree benchmarks", () => {
 						title: `Read value from union of leaf and non-leaf`,
 						mapType: NumberObjectMap,
 					},
-				];
+				] as const;
 
 				for (const { title, mapType } of valueTestCases) {
 					const initUnhydrated = () => new mapType([["a", 1]]);
-					const initFlex = () => hydrate(mapType, initUnhydrated());
+					const initFlex = () => hydrateUnsafe(mapType, initUnhydrated());
 					const readFunction = (tree: CombinedTypes) => tree.get("a") as number;
 					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
 				}
@@ -282,7 +282,7 @@ describe("SimpleTree benchmarks", () => {
 
 				for (const { title, mapType } of undefinedTestCases) {
 					const initUnhydrated = () => new mapType([["a", 1]]);
-					const initFlex = () => hydrate(mapType, initUnhydrated());
+					const initFlex = () => hydrateUnsafe(mapType, initUnhydrated());
 					const readFunction = (tree: CombinedTypes) => tree.get("b") as number;
 					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
 				}
@@ -314,7 +314,7 @@ describe("SimpleTree benchmarks", () => {
 
 				for (const { title, arrayType } of testCases) {
 					const initUnhydrated = () => new arrayType([1]);
-					const initFlex = () => hydrate(arrayType, initUnhydrated());
+					const initFlex = () => hydrateUnsafe(arrayType, initUnhydrated());
 					const read = (tree: NumArray | NumStringArray | NumObjectArray) => tree[0] as number;
 					generateBenchmarkPair(title, initUnhydrated, initFlex, read, 1);
 				}

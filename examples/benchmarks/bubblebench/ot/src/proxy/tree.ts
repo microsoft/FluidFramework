@@ -28,27 +28,29 @@ const cache = new WeakMap<Object, IProxy>();
 const arrayPatch = {
 	push:
 		(target: unknown[], consumer: Consumer, receiver: IProxy) =>
-		(...item) => {
+		(...item: json1.Doc[]): number => {
 			const path = getPath(receiver, 0);
 			path.pop();
 
 			const start = target.length;
 			consumer(
 				item
-					.map((value, index) => json1.insertOp(path.concat(start + index), value))
+					.map((value, index) => json1.insertOp([...path, start + index], value))
+					// eslint-disable-next-line unicorn/no-array-reduce, unicorn/no-array-callback-reference
 					.reduce(json1.type.compose),
 			);
 			return target.push(...item);
 		},
-	pop: (target: unknown[], consumer: Consumer, receiver: IProxy) => () => {
-		const length = target.length;
+	pop:
+		(target: unknown[], consumer: Consumer, receiver: IProxy) => (): unknown | undefined => {
+			const length = target.length;
 
-		if (length > 0) {
-			consumer(json1.removeOp(getPath(receiver, length - 1)));
-		}
+			if (length > 0) {
+				consumer(json1.removeOp(getPath(receiver, length - 1)));
+			}
 
-		return target.pop();
-	},
+			return target.pop();
+		},
 };
 
 const createObjectProxy = (
@@ -56,26 +58,26 @@ const createObjectProxy = (
 	consumer: Consumer,
 	parent?: IProxy,
 	parentKey?: json1.Key,
-) => {
+): Object => {
 	const handler: ProxyHandler<IProxy> = {
-		get: (target, key, receiver) => {
+		get: (target: IProxy, key: string | symbol, receiver: IProxy) => {
 			if (key === contextSym) {
 				return { parent, parentKey };
 			}
 
-			const value = target[key];
+			const value: unknown = target[key];
 
-			/* eslint-disable @typescript-eslint/no-unsafe-return */
 			return value !== null && typeof value === "object"
 				? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key as string)
 				: value;
-			/* eslint-enable @typescript-eslint/no-unsafe-return */
 		},
-		set: (target, key, value, receiver) => {
+		set: (target: IProxy, key: string | symbol, value: json1.Doc, receiver: IProxy) => {
 			const path = getPath(receiver, key as json1.Key);
 
 			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				consumer(json1.replaceOp(path, /* oldVal: */ target[key], /* newVal: */ value));
+				consumer(
+					json1.replaceOp(path, /* oldVal: */ target[key] as json1.Doc, /* newVal: */ value),
+				);
 			} else {
 				consumer(json1.insertOp(path, value));
 			}
@@ -97,8 +99,7 @@ const createObjectProxy = (
 function indexify(key: string | symbol): string | symbol | number {
 	if (typeof key === "string") {
 		const asNumber = +key;
-		// eslint-disable-next-line no-bitwise
-		if ((asNumber | 0) === asNumber) {
+		if (Math.trunc(asNumber) === asNumber) {
 			return asNumber;
 		}
 	}
@@ -111,57 +112,70 @@ const createArrayProxy = (
 	consumer: Consumer,
 	parent?: IProxy,
 	parentKey?: json1.Key,
-) =>
+): Object =>
 	new Proxy(subject, {
-		get: (target, key, receiver) => {
+		get: (target: Object, key: string | symbol, receiver: IProxy): unknown => {
 			if (key === contextSym) {
 				return { parent, parentKey };
 			}
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const maybePatch = arrayPatch[key];
 			if (maybePatch !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				return maybePatch(target, consumer, receiver);
 			}
 
 			// eslint-disable-next-line no-param-reassign
 			key = indexify(key as string) as string;
-			const value = target[key];
+			const value = target[key] as Object;
 
-			/* eslint-disable @typescript-eslint/no-unsafe-return */
 			return value !== null && typeof value === "object"
 				? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key)
 				: value;
-			/* eslint-enable @typescript-eslint/no-unsafe-return */
 		},
-		set: (target, key, value, receiver) => {
-			// eslint-disable-next-line no-param-reassign
-			key = indexify(key as string) as string;
-			const path = getPath(receiver, key);
+		set: (
+			target: Object,
+			key: string | symbol,
+			value: json1.Doc,
+			receiver: IProxy,
+		): boolean => {
+			const indexifiedKey = indexify(key as string) as string;
+			const path = getPath(receiver, indexifiedKey);
 
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
-				consumer(json1.replaceOp(path, /* oldVal: */ target[key], /* newVal: */ value));
+			if (Object.prototype.hasOwnProperty.call(target, indexifiedKey)) {
+				consumer(
+					json1.replaceOp(
+						path,
+						/* oldVal: */ target[indexifiedKey] as json1.Doc,
+						/* newVal: */ value,
+					),
+				);
 			} else {
 				consumer(json1.insertOp(path, value));
 			}
 
-			target[key] = value;
+			target[indexifiedKey] = value;
 			return true;
 		},
 	});
 
-function getProxy(target: Object, consumer: Consumer, parent?: IProxy, parentKey?: json1.Key) {
-	let self = cache.get(target);
+function getProxy(
+	target: Object,
+	consumer: Consumer,
+	parent?: IProxy,
+	parentKey?: json1.Key,
+): IProxy {
+	let self: IProxy | undefined = cache.get(target);
 	if (self === undefined) {
 		self = Array.isArray(target)
-			? createArrayProxy(target, consumer, parent, parentKey)
-			: createObjectProxy(target, consumer, parent, parentKey);
+			? (createArrayProxy(target, consumer, parent, parentKey) as IProxy)
+			: (createObjectProxy(target, consumer, parent, parentKey) as IProxy);
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		cache.set(target, self!);
+		cache.set(target, self);
 	}
 	return self;
 }
 
 export const observe = <T extends Object>(target: T, consumer: Consumer): T =>
-	getProxy(target, consumer) as T;
+	getProxy(target, consumer) as unknown as T;

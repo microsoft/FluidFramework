@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -16,10 +16,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type IEditableForest,
 	type JsonableTree,
 	RevisionTagCodec,
+	type TaggedChange,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
+	type TreeStoredSchemaSubscription,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -31,14 +34,11 @@ import {
 } from "../events/index.js";
 import {
 	DetachedFieldIndexSummarizer,
-	type FlexFieldSchema,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
-	ViewSchema,
 	buildChunkedForest,
 	buildForest,
-	createNodeKeyManager,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
@@ -53,18 +53,23 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
+	TreeView,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
-import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
-import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
-import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
+import {
+	type CheckoutEvents,
+	type TreeCheckout,
+	type TreeBranch,
+	createTreeCheckout,
+} from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -82,20 +87,17 @@ export interface SharedTreeContentSnapshot {
 	 */
 	readonly schema: TreeStoredSchema;
 	/**
-	 * All {@link TreeStatus#InDocument} content.
+	 * All {@link TreeStatus.InDocument} content.
 	 */
 	readonly tree: JsonableTree[];
 	/**
-	 * All {@link TreeStatus#Removed} content.
+	 * All {@link TreeStatus.Removed} content.
 	 */
 	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
 
 /**
- * Collaboratively editable tree distributed data-structure,
- * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
- *
- * See [the README](../../README.md) for details.
+ * {@link ITree} extended with some non-public APIs.
  * @internal
  */
 export interface ISharedTree extends ISharedObject, ITree {
@@ -107,17 +109,6 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
-
-	/**
-	 * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
-	 *
-	 * Returned view is disposed when the stored schema becomes incompatible with the view schema.
-	 * Undefined is returned if the stored data could not be made compatible with the view schema.
-	 */
-	schematizeFlexTree<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose: () => void,
-	): FlexTreeView<TRoot> | undefined;
 }
 
 /**
@@ -163,6 +154,30 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 }
 
 /**
+ * Build and return a forest of the requested type.
+ */
+export function buildConfiguredForest(
+	type: ForestType,
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+): IEditableForest {
+	switch (type) {
+		case ForestType.Optimized:
+			return buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy),
+				undefined,
+				idCompressor,
+			);
+		case ForestType.Reference:
+			return buildForest();
+		case ForestType.Expensive:
+			return buildForest(undefined, true);
+		default:
+			unreachableCase(type);
+	}
+}
+
+/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
  * TODO: detail compatibility requirements.
@@ -194,12 +209,7 @@ export class SharedTree
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest =
-			options.forest === ForestType.Optimized
-				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
-				: options.forest === ForestType.Reference
-					? buildForest()
-					: buildForest(undefined, true);
+		const forest = buildConfiguredForest(options.forest, schema, runtime.idCompressor);
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
@@ -235,6 +245,7 @@ export class SharedTree
 			fieldBatchCodec,
 			options,
 			options.treeEncodeType,
+			runtime.idCompressor,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -271,7 +282,8 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(change: TaggedChange<SharedTreeChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			),
 			changeEnricher,
@@ -292,6 +304,7 @@ export class SharedTree
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
 				logger: this.logger,
+				breaker: this.breaker,
 			},
 		);
 	}
@@ -311,32 +324,10 @@ export class SharedTree
 		}
 	}
 
-	public schematizeFlexTree<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose: () => void,
-	): CheckoutFlexTreeView<TRoot> | undefined {
-		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
-		if (!ensureSchema(viewSchema, config.allowedSchemaModifications, this.checkout, config)) {
-			return undefined;
-		}
-
-		return requireSchema(
-			this.checkout,
-			viewSchema,
-			onDispose,
-			createNodeKeyManager(this.runtime.idCompressor),
-		);
-	}
-
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): SchematizingSimpleTreeView<TRoot> {
-		return new SchematizingSimpleTreeView(
-			this.checkout,
-			config,
-			createNodeKeyManager(this.runtime.idCompressor),
-			this.breaker,
-		);
+		return this.checkout.viewWith(config);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -347,10 +338,39 @@ export class SharedTree
 }
 
 /**
+ * Get a {@link TreeBranch} from a {@link ITree}.
+ * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
+ * @privateRemarks This function will be removed if/when the branching API becomes public,
+ * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
+ * @alpha
+ */
+export function getBranch(tree: ITree): TreeBranch;
+/**
+ * Get a {@link TreeBranch} from a {@link TreeView}.
+ * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
+ * Branches are currently an unstable "alpha" API and are subject to change in the future.
+ * @privateRemarks This function will be removed if/when the branching API becomes public,
+ * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
+ * @alpha
+ */
+export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): TreeBranch;
+export function getBranch<T extends ImplicitFieldSchema>(
+	treeOrView: ITree | TreeView<T>,
+): TreeBranch {
+	assert(
+		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
+		0xa48 /* Unsupported implementation */,
+	);
+	const checkout: TreeCheckout = treeOrView.checkout;
+	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
+	return checkout as unknown as TreeBranch;
+}
+
+/**
  * Format versions supported by SharedTree.
  *
  * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @internal
+ * @alpha
  */
 export const SharedTreeFormatVersion = {
 	/**
@@ -376,26 +396,38 @@ export const SharedTreeFormatVersion = {
  * Format versions supported by SharedTree.
  *
  * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @internal
+ * @alpha
  * @privateRemarks
  * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
+ *
+ * TODO: Before this gets promoted past Alpha,
+ * a separate abstraction more suited for use in the public API should be adopted rather than reusing the same types used internally.
+ * Such an abstraction should probably be in the form of a Fluid-Framework wide compatibility enum.
  */
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 /**
- * @internal
+ * Configuration options for SharedTree.
+ * @alpha
  */
 export type SharedTreeOptions = Partial<ICodecOptions> &
-	Partial<SharedTreeFormatOptions> & {
-		/**
-		 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
-		 */
-		forest?: ForestType;
-	};
+	Partial<SharedTreeFormatOptions> &
+	ForestOptions;
+
+/**
+ * Configuration options for SharedTree's internal tree storage.
+ * @alpha
+ */
+export interface ForestOptions {
+	/**
+	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 */
+	readonly forest?: ForestType;
+}
 
 /**
  * Options for configuring the persisted format SharedTree uses.
- * @internal
+ * @alpha
  */
 export interface SharedTreeFormatOptions {
 	/**
@@ -419,7 +451,7 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
- * @internal
+ * @alpha
  */
 export enum ForestType {
 	/**

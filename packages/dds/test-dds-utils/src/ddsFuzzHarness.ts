@@ -18,6 +18,7 @@ import type {
 } from "@fluid-private/stochastic-test-utils";
 import {
 	ExitBehavior,
+	StressMode,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
@@ -123,7 +124,8 @@ export interface ChangeConnectionState {
  */
 export interface StashClient {
 	type: "stashClient";
-	clientId: string;
+	existingClientId: string;
+	newClientId: string;
 }
 
 /**
@@ -1107,9 +1109,16 @@ export function mixinStashedClient<
 			);
 
 			if (!state.isDetached && stashable.length > 0 && state.random.bool(0.5)) {
+				const existingClientId = state.random.pick(stashable).channel.id;
+				const instanceIndex = existingClientId.lastIndexOf("_");
+				const instance =
+					instanceIndex < 0
+						? 0
+						: Number.parseInt(existingClientId.slice(instanceIndex + 1), 10);
 				return {
 					type: "stashClient",
-					clientId: state.random.pick(stashable).containerRuntime.clientId,
+					existingClientId,
+					newClientId: `${existingClientId}_${instance + 1}`,
 				};
 			}
 			return baseGenerator(state);
@@ -1119,7 +1128,7 @@ export function mixinStashedClient<
 	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
 		const { clients, containerRuntimeFactory } = state;
 		if (isOperationType<StashClient>("stashClient", operation)) {
-			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
+			const client = clients.find((c) => c.channel.id === operation.existingClientId);
 			if (!hasStashData(client)) {
 				throw new ReducerPreconditionError("client not stashable");
 			}
@@ -1130,7 +1139,7 @@ export function mixinStashedClient<
 				containerRuntimeFactory,
 				loadData,
 				model.factory,
-				client.containerRuntime.clientId,
+				operation.newClientId,
 				options,
 			);
 
@@ -1139,12 +1148,7 @@ export function mixinStashedClient<
 			// replace the old client with the new client
 			return {
 				...state,
-				clients: [
-					...clients.filter(
-						(c) => c.containerRuntime.clientId !== client.containerRuntime.clientId,
-					),
-					newClient,
-				],
+				clients: [...clients.filter((c) => c.channel.id !== client.channel.id), newClient],
 			};
 		}
 
@@ -1588,6 +1592,31 @@ export async function replayTest<
 	await runTestForSeed(model, options, seed, saveInfo);
 }
 
+export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
+	switch (stressMode) {
+		case StressMode.Short:
+		case StressMode.Normal: {
+			// Deterministic, fixed seeds
+			return Array.from({ length: testCount }, (_, i) => i);
+		}
+
+		case StressMode.Long: {
+			// Non-deterministic, random seeds
+			const random = makeRandom();
+			const longModeFactor = 2;
+			const initialSeed = random.integer(
+				0,
+				Number.MAX_SAFE_INTEGER - longModeFactor * testCount,
+			);
+			return Array.from({ length: testCount * longModeFactor }, (_, i) => initialSeed + i);
+		}
+
+		default: {
+			throw new Error(`Unsupported stress mode: ${stressMode}`);
+		}
+	}
+}
+
 /**
  * Creates a suite of eventual consistency tests for a particular DDS model.
  * @internal
@@ -1612,7 +1641,7 @@ export function createDDSFuzzSuite<
 	const model = getFullModel(ddsModel, options);
 
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
-	describeFuzz(model.workloadName, ({ testCount }) => {
+	describeFuzz(model.workloadName, ({ testCount, stressMode }) => {
 		before(() => {
 			if (options.saveFailures !== false) {
 				mkdirSync(getSaveDirectory(options.saveFailures.directory, model), {
@@ -1626,7 +1655,8 @@ export function createDDSFuzzSuite<
 			}
 		});
 
-		for (let seed = 0; seed < testCount; seed++) {
+		const seeds = generateTestSeeds(testCount, stressMode);
+		for (const seed of seeds) {
 			runTest(model, options, seed, getSaveInfo(model, options, seed));
 		}
 

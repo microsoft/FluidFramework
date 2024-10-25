@@ -10,52 +10,62 @@ import { TelemetryClient } from "applicationinsights";
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
 module.exports = function handler(fileData, telemetryClient: TelemetryClient): void {
-	console.log(`Found ${fileData.tests.length} total benchmark tests to emit`);
-	for (const testData of fileData.tests) {
-		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
+	console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
+	for (const testData of fileData.benchmarks) {
+		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.benchmarkName}_heapUsedAvg`;
 		try {
-			console.log(
-				`emitting metric ${heapUsedAvgMetricName} with value ${testData.testData.stats.mean}`,
-			);
-			telemetryClient.trackMetric({
-				name: heapUsedAvgMetricName,
-				value: testData.testData.stats.mean,
-				namespace: "performance_benchmark_memoryUsage",
-				properties: {
-					buildId: process.env.BUILD_ID,
-					branchName: process.env.BRANCH_NAME,
-					category: "performance",
-					eventName: "Benchmark",
-					benchmarkType: "MemoryUsage",
-					suiteName: fileData.suiteName,
-					testName: testData.testName,
-				},
-			});
+			const value = testData.customData["Heap Used Avg"];
+			if (Number.isNaN(Number.parseFloat(value))) {
+				console.error(
+					`skipping metric '${heapUsedAvgMetricName}' with value '${value}' as it is not a number`,
+				);
+			} else {
+				console.log(`emitting metric '${heapUsedAvgMetricName}' with value '${value}'`);
+				telemetryClient.trackMetric({
+					name: heapUsedAvgMetricName,
+					value,
+					namespace: "performance_benchmark_memoryUsage",
+					properties: {
+						buildId: process.env.BUILD_ID,
+						branchName: process.env.BRANCH_NAME,
+						category: "performance",
+						eventName: "Benchmark",
+						benchmarkType: "MemoryUsage",
+						suiteName: fileData.suiteName,
+						testName: testData.benchmarkName,
+					},
+				});
+			}
 		} catch (error) {
-			console.error(`failed to emit metric ${heapUsedAvgMetricName}`, error);
+			console.error(`failed to emit metric '${heapUsedAvgMetricName}'`, error);
 		}
 
-		const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedStdDev`;
+		const heapUsedStdDevMetricName = `${fileData.suiteName}_${testData.benchmarkName}_heapUsedStdDev`;
 		try {
-			console.log(
-				`emitting metric ${heapUsedStdDevMetricName} with value ${testData.testData.stats.deviation}`,
-			);
-			telemetryClient.trackMetric({
-				name: heapUsedStdDevMetricName,
-				value: testData.testData.stats.deviation,
-				namespace: "performance_benchmark_memoryUsage",
-				properties: {
-					buildId: process.env.BUILD_ID,
-					branchName: process.env.BRANCH_NAME,
-					category: "performance",
-					eventName: "Benchmark",
-					benchmarkType: "MemoryUsage",
-					suiteName: fileData.suiteName,
-					testName: testData.testName,
-				},
-			});
+			const value = testData.customData["Heap Used StdDev"];
+			if (Number.isNaN(Number.parseFloat(value))) {
+				console.error(
+					`skipping metric '${heapUsedStdDevMetricName}' with value '${value}' as it is not a number`,
+				);
+			} else {
+				console.log(`emitting metric '${heapUsedStdDevMetricName}' with value '${value}'`);
+				telemetryClient.trackMetric({
+					name: heapUsedStdDevMetricName,
+					value,
+					namespace: "performance_benchmark_memoryUsage",
+					properties: {
+						buildId: process.env.BUILD_ID,
+						branchName: process.env.BRANCH_NAME,
+						category: "performance",
+						eventName: "Benchmark",
+						benchmarkType: "MemoryUsage",
+						suiteName: fileData.suiteName,
+						testName: testData.benchmarkName,
+					},
+				});
+			}
 		} catch (error) {
-			console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
+			console.error(`failed to emit metric '${heapUsedStdDevMetricName}'`, error);
 		}
 	}
 };

@@ -10,21 +10,14 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
+	getBranch,
 	type ISharedTree,
-	type ITreeCheckoutFork,
 	SharedTreeFactory,
 	type SharedTreeOptions,
 	Tree,
 } from "../../shared-tree/index.js";
 import { TestTreeProviderLite, treeTestFactory } from "../utils.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-} from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -85,10 +78,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree = provider.trees[0];
 
-				const view = tree.viewWith({
-					schema: [NodeSchema],
-					enableSchemaValidation,
-				});
+				const view = tree.viewWith(
+					new TreeViewConfiguration({
+						schema: [NodeSchema],
+						enableSchemaValidation,
+					}),
+				);
 				view.initialize(new NodeSchema({ foo: ["a", "b", "c"], bar: ["d", "e", "f"] }));
 				view.root.bar.moveRangeToIndex(1, 1, 3, view.root.foo);
 				provider.processMessages();
@@ -101,10 +96,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const sf = new SchemaFactory("insert-and-remove");
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = provider.trees[0];
-				const view = tree1.viewWith({
-					schema: [sf.array(sf.string)],
-					enableSchemaValidation,
-				});
+				const view = tree1.viewWith(
+					new TreeViewConfiguration({
+						schema: [sf.array(sf.string)],
+						enableSchemaValidation,
+					}),
+				);
 				view.initialize([]);
 				provider.processMessages();
 
@@ -134,19 +131,23 @@ export function generateTestTrees(options: SharedTreeOptions) {
 
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = provider.trees[0];
-				const view1 = tree1.viewWith({
-					schema: sf.optional(MapNode),
-					enableSchemaValidation,
-				});
+				const view1 = tree1.viewWith(
+					new TreeViewConfiguration({
+						schema: sf.optional(MapNode),
+						enableSchemaValidation,
+					}),
+				);
 				view1.initialize(undefined);
 				view1.root = new MapNode([]);
 				provider.processMessages();
 
 				const tree2 = provider.trees[1];
-				const view2 = tree2.viewWith({
-					schema: sf.optional(MapNode),
-					enableSchemaValidation,
-				});
+				const view2 = tree2.viewWith(
+					new TreeViewConfiguration({
+						schema: sf.optional(MapNode),
+						enableSchemaValidation,
+					}),
+				);
 				view2.root?.set("root 1 child", 40);
 				view2.root = new MapNode(new Map([["root 2 child", 41]]));
 
@@ -172,20 +173,26 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				for (const index of [0, 1, 2, 3]) {
 					const sf = new SchemaFactory("competing-removes");
 					const provider = new TestTreeProviderLite(3, factory, true);
-					const view1 = provider.trees[0].viewWith({
-						schema: [sf.array(sf.number)],
-						enableSchemaValidation,
-					});
+					const view1 = provider.trees[0].viewWith(
+						new TreeViewConfiguration({
+							schema: [sf.array(sf.number)],
+							enableSchemaValidation,
+						}),
+					);
 					view1.initialize([0, 1, 2, 3]);
 					provider.processMessages();
-					const view2 = provider.trees[1].viewWith({
-						schema: [sf.array(sf.number)],
-						enableSchemaValidation,
-					});
-					const view3 = provider.trees[2].viewWith({
-						schema: [sf.array(sf.number)],
-						enableSchemaValidation,
-					});
+					const view2 = provider.trees[1].viewWith(
+						new TreeViewConfiguration({
+							schema: [sf.array(sf.number)],
+							enableSchemaValidation,
+						}),
+					);
+					const view3 = provider.trees[2].viewWith(
+						new TreeViewConfiguration({
+							schema: [sf.array(sf.number)],
+							enableSchemaValidation,
+						}),
+					);
 					provider.processMessages();
 					view1.root.removeAt(index);
 					view2.root.removeAt(index);
@@ -198,52 +205,47 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				function forkView<T extends ImplicitFieldSchema>(
-					viewToFork: SchematizingSimpleTreeView<T>,
-				): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
-					return new SchematizingSimpleTreeView<T>(
-						viewToFork.checkout.fork(),
-						viewToFork.config,
-						new MockNodeKeyManager(),
-					) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
-				}
-
 				const sf = new SchemaFactory("concurrent-inserts");
 				const provider = new TestTreeProviderLite(1, factory, true);
-				const baseTree = provider.trees[0];
-				const view1 = baseTree.viewWith({
-					schema: [sf.array(sf.string)],
-					enableSchemaValidation,
-				});
+				const tree1 = provider.trees[0];
+				const view1 = tree1.viewWith(
+					new TreeViewConfiguration({
+						schema: [sf.array(sf.string)],
+						enableSchemaValidation,
+					}),
+				);
 				view1.initialize([]);
 				provider.processMessages();
 
-				const view2 = forkView(view1);
+				const branch1 = getBranch(tree1);
+				const tree2 = branch1.branch();
+				const view2 = tree2.viewWith(view1.config);
 				view1.root.insertAt(0, "y");
-				view2.checkout.rebaseOnto(view1.checkout);
+				tree2.rebaseOnto(branch1);
 
 				view1.root.insertAt(0, "x");
 				view2.root.insertAt(1, "a", "c");
 				view2.root.insertAt(2, "b");
 
-				view2.checkout.rebaseOnto(view1.checkout);
-				view1.checkout.merge(view2.checkout);
+				tree2.rebaseOnto(branch1);
+				branch1.merge(tree2, false);
 
 				provider.processMessages();
-				await takeSnapshot(baseTree, "tree2");
+				await takeSnapshot(tree1, "tree2");
 
 				assert.deepEqual(view1.root, ["x", "y", "a", "b", "c"]);
 				assert.deepEqual(view1.root, view2.root);
 
-				const view3 = forkView(view1);
+				const tree3 = branch1.branch();
+				const view3 = tree3.viewWith(view1.config);
 				view1.root.insertAt(0, "z");
 				view3.root.insertAt(1, "d", "e");
 				view3.root.insertAt(2, "f");
-				view3.checkout.rebaseOnto(view1.checkout);
-				view1.checkout.merge(view3.checkout);
+				tree3.rebaseOnto(branch1);
+				branch1.merge(tree3);
 
 				provider.processMessages();
-				await takeSnapshot(baseTree, "tree3");
+				await takeSnapshot(tree1, "tree3");
 			},
 		},
 		{
@@ -265,10 +267,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 
 					const provider = new TestTreeProviderLite(1, new SharedTreeFactory(options), true);
 					const tree = provider.trees[0];
-					const view = tree.viewWith({
-						schema: [RecursiveMap, StringArray],
-						enableSchemaValidation,
-					});
+					const view = tree.viewWith(
+						new TreeViewConfiguration({
+							schema: [RecursiveMap, StringArray],
+							enableSchemaValidation,
+						}),
+					);
 
 					function generateTreeRecursively(
 						keys: string[],
@@ -310,10 +314,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const sf = new SchemaFactory("has-handle");
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const tree = provider.trees[0];
-				const view = tree.viewWith({
-					schema: [sf.object("HandleObject", { handleField: sf.optional(sf.handle) })],
-					enableSchemaValidation,
-				});
+				const view = tree.viewWith(
+					new TreeViewConfiguration({
+						schema: [sf.object("HandleObject", { handleField: sf.optional(sf.handle) })],
+						enableSchemaValidation,
+					}),
+				);
 				view.initialize({ handleField: undefined });
 				provider.processMessages();
 
@@ -333,10 +339,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const tree = provider.trees[0];
-				const view = tree.viewWith({
-					schema: [sf.array(SequenceMap)],
-					enableSchemaValidation,
-				});
+				const view = tree.viewWith(
+					new TreeViewConfiguration({
+						schema: [sf.array(SequenceMap)],
+						enableSchemaValidation,
+					}),
+				);
 				view.initialize([]);
 				provider.processMessages();
 
@@ -360,10 +368,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const sf = new SchemaFactory("test trees");
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const tree = provider.trees[0];
-				const view = tree.viewWith({
-					schema: sf.optional(sf.number),
-					enableSchemaValidation,
-				});
+				const view = tree.viewWith(
+					new TreeViewConfiguration({
+						schema: sf.optional(sf.number),
+						enableSchemaValidation,
+					}),
+				);
 				view.initialize(undefined);
 				provider.processMessages();
 				await takeSnapshot(tree, "final");
@@ -384,10 +394,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				});
 
 				const sf = new SchemaFactory("attachment-tree");
-				const view = tree.viewWith({
-					schema: [sf.array(sf.string)],
-					enableSchemaValidation,
-				});
+				const view = tree.viewWith(
+					new TreeViewConfiguration({
+						schema: [sf.array(sf.string)],
+						enableSchemaValidation,
+					}),
+				);
 				view.initialize([]);
 				view.root.insertAtStart("a");
 				view.root.insertAtEnd("b");

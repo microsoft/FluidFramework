@@ -10,7 +10,7 @@ import {
 	makeBubble,
 	randomColor,
 } from "@fluid-example/bubblebench-common";
-import type { TreeView } from "@fluidframework/tree";
+import { type TreeView, Tree } from "@fluidframework/tree";
 
 import { type App, Client } from "./schema.js";
 
@@ -68,5 +68,9 @@ export class AppState implements IAppState {
 		if (bubbles.length > 1) {
 			bubbles.removeAt(bubbles.length - 1);
 		}
+	}
+
+	public runTransaction(inner: () => void): void {
+		Tree.runTransaction(this.localClient, inner);
 	}
 }
