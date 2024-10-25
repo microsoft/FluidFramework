@@ -44,7 +44,7 @@ import {
 	IInboundSignalMessage,
 	gcDataBlobKey,
 	type InboundAttachMessage,
-	type IProcessMessagesProps,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -401,8 +401,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.parentContext.makeLocallyVisible();
 	}
 
-	private processAttachMessages(props: IProcessMessagesProps) {
-		const { message, messagesContent, local } = props;
+	private processAttachMessages(messageCollection: IRuntimeMessageCollection) {
+		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as InboundAttachMessage;
 			// We need to process the GC Data for both local and remote attach messages
@@ -411,7 +411,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				(nodeId, toPath) => {
 					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-					this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
+					this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp);
 				},
 			);
 
@@ -427,7 +427,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						snapshot: !!attachMessage.snapshot,
 						foundGCData,
 					},
-					...extractSafePropertiesFromMessage(message),
+					...extractSafePropertiesFromMessage(envelope),
 				});
 			}
 
@@ -449,7 +449,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
 					"Duplicate DataStore created with existing id",
 					{
-						...extractSafePropertiesFromMessage(message),
+						...extractSafePropertiesFromMessage(envelope),
 						...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
 					},
 				);
@@ -482,7 +482,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					attachMessage.id,
 					{
 						type: CreateSummarizerNodeSource.FromAttach,
-						sequenceNumber: message.sequenceNumber,
+						sequenceNumber: envelope.sequenceNumber,
 						snapshot: attachMessage.snapshot ?? {
 							entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
 						},
@@ -495,13 +495,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	private processAliasMessages(props: IProcessMessagesProps): void {
-		const { message, messagesContent, local } = props;
+	private processAliasMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents, localOpMetadata } of messagesContent) {
 			const aliasMessage = contents as IDataStoreAliasMessage;
 			if (!isDataStoreAliasMessage(aliasMessage)) {
 				throw new DataCorruptionError("malformedDataStoreAliasMessage", {
-					...extractSafePropertiesFromMessage(message),
+					...extractSafePropertiesFromMessage(envelope),
 				});
 			}
 
@@ -509,7 +509,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			const aliasResult = this.processAliasMessageCore(
 				aliasMessage.internalId,
 				aliasMessage.alias,
-				message.timestamp,
+				envelope.timestamp,
 			);
 			if (local) {
 				resolve(aliasResult);
@@ -835,18 +835,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	/**
 	 * Process messages for this channel collection. The messages here are contiguous messages in a batch.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	public processMessages(props: IProcessMessagesProps): void {
-		switch (props.message.type) {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		switch (messageCollection.envelope.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				this.processChannelMessages(props);
+				this.processChannelMessages(messageCollection);
 				break;
 			case ContainerMessageType.Attach:
-				this.processAttachMessages(props);
+				this.processAttachMessages(messageCollection);
 				break;
 			case ContainerMessageType.Alias:
-				this.processAliasMessages(props);
+				this.processAliasMessages(messageCollection);
 				break;
 			default:
 				assert(false, 0x8e9 /* unreached */);
@@ -864,7 +864,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		localOpMetadata: unknown,
 	) {
 		this.processMessages({
-			message,
+			envelope: message,
 			messagesContent: [
 				{
 					contents: message.contents,
@@ -879,16 +879,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	/**
 	 * Process channel messages. The messages here are contiguous channel type messages in a batch. Bunch
 	 * of contiguous messages for a data store should be sent to it together.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	private processChannelMessages(props: IProcessMessagesProps): void {
-		const { message, messagesContent, local } = props;
+	private processChannelMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-			const envelope = contents as IEnvelope;
-			const address = envelope.address;
-			const innerContents = envelope.contents as FluidDataStoreMessage;
+			const contentEnvelope = contents as IEnvelope;
+			const address = contentEnvelope.address;
+			const innerContents = contentEnvelope.contents as FluidDataStoreMessage;
 			const transformedMessage: ISequencedDocumentMessage = {
-				...message,
+				...envelope,
 				type: innerContents.type,
 				contents: innerContents.content,
 				clientSequenceNumber,

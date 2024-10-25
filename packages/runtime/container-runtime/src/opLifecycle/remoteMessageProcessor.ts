@@ -59,7 +59,7 @@ export type InboundMessageResult =
 			messages: InboundSequencedContainerRuntimeMessage[];
 			batchStart: BatchStartInfo;
 			length: number;
-			groupedBatch: boolean;
+			groupedBatch: boolean; // Messages in a grouped batches are sent to the runtime in bunches.
 	  }
 	| {
 			type: "batchStartingMessage";

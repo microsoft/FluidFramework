@@ -2806,7 +2806,9 @@ export class ContainerRuntime
 				local,
 				savedOp,
 				runtimeBatch,
-				inboundResult.type === "fullBatch" ? inboundResult.groupedBatch : false,
+				inboundResult.type === "fullBatch"
+					? inboundResult.groupedBatch
+					: false /* groupedBatch */,
 			);
 		} else {
 			if (!runtimeBatch) {
@@ -2919,10 +2921,10 @@ export class ContainerRuntime
 			// Helper that processes the previous bunch of messages.
 			const sendBunchedMessages = () => {
 				assert(previousMessage !== undefined, "previous message must exist");
-				const runtimeMessage = previousMessage;
 				this.ensureNoDataModelChanges(() => {
 					this.validateAndProcessRuntimeMessages(
-						runtimeMessage,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						previousMessage!,
 						bunchedMessagesContent,
 						local,
 						savedOp,
@@ -3022,7 +3024,7 @@ export class ContainerRuntime
 				// Remove the metadata from the message before sending it to the channel collection. The metadata
 				// is added by the container runtime and is not part of the message that the channel collection and
 				// layers below it expect.
-				this.channelCollection.processMessages({ message, messagesContent, local });
+				this.channelCollection.processMessages({ envelope: message, messagesContent, local });
 				break;
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.processBlobAttachMessage(message, local);

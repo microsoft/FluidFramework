@@ -259,16 +259,6 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
 
-// @alpha
-export interface IProcessMessagesProps {
-    // (undocumented)
-    local: boolean;
-    // (undocumented)
-    message: ISequencedMessageEnvelope;
-    // (undocumented)
-    messagesContent: IRuntimeMessagesContent[];
-}
-
 // @alpha (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
@@ -279,6 +269,16 @@ export interface IProvideFluidDataStoreFactory {
 export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+}
+
+// @alpha
+export interface IRuntimeMessageCollection {
+    // (undocumented)
+    envelope: ISequencedMessageEnvelope;
+    // (undocumented)
+    local: boolean;
+    // (undocumented)
+    messagesContent: IRuntimeMessagesContent[];
 }
 
 // @alpha
