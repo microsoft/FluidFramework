@@ -144,7 +144,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 		this.runSchemaEdit(() => {
 			const mapTree = mapTreeFromNodeData(
-				content as InsertableContent,
+				content as InsertableContent | undefined,
 				this.rootFieldSchema,
 				this.nodeKeyManager,
 				{
@@ -359,7 +359,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		const view = this.getView();
-		setField(view.context.root, this.rootFieldSchema, newRoot as InsertableContent);
+		setField(
+			view.context.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent | undefined,
+		);
 	}
 }
 

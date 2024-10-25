@@ -31,7 +31,7 @@ export class GitrestResources implements core.IResources {
 		public readonly port: string | number,
 		public readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		public readonly repositoryManagerFactory: IRepositoryManagerFactory,
-		public readonly startupCheck: services.StartupCheck,
+		public readonly startupCheck: core.IReadinessCheck,
 		public readonly enableOptimizedInitialSummary?: boolean,
 		public readonly readinessCheck?: core.IReadinessCheck,
 	) {

@@ -177,3 +177,4 @@ export { IServiceMessageResourceManager } from "./serviceMessage";
 export { IClusterDrainingChecker, clusterDrainingRetryTimeInMs } from "./clusterDraining";
 export { IWebSocketTracker } from "./webSocketTracker";
 export { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";
+export { IFluidAccessToken, IFluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";

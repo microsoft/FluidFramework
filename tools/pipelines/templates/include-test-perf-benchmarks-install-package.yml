@@ -33,6 +33,7 @@ steps:
     # use the same name in the pipeline that includes this template.
     # Using isOutput=true variables was too complicated/dirty.
     script: |
+      set -eu -o pipefail
       echo "Setting local variables for yml template"
 
       # Doing the character replacements with sed at runtime because using replace() in ADO template expression (which
@@ -72,6 +73,7 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.installPath }}
     script: |
+      set -eu -o pipefail
       echo "Installing ${{ parameters.testPackageName }}"
 
       # Note that this path must match the path that the packed packages are saved to in the build pipeline.
