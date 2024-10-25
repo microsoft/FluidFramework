@@ -32,13 +32,13 @@ const optionDefaults = {
 } as const;
 
 /**
- * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
+ * Generates files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
 export class GenerateSourceEntrypointsCommand extends BaseCommand<
 	typeof GenerateSourceEntrypointsCommand
 > {
 	static readonly description =
-		`Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"`;
+		`Generates entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"`;
 
 	static readonly flags = {
 		mainEntrypoint: Flags.file({
