@@ -63,7 +63,7 @@ function LinkItem({ ariaLabel, children, targetUrl }: LinkItemProps): JSX.Elemen
 
 function FooterSocialLinks(): JSX.Element {
 	return (
-		<div className="footer-social">
+		<div className="ffcom-footer-social">
 			<LinkItem targetUrl={xUrl} ariaLabel="Fluid Framework on X (Twitter).">
 				<XIcon /> @fluidframework
 			</LinkItem>
@@ -82,7 +82,7 @@ function FooterSocialLinks(): JSX.Element {
 
 function FooterPrivacyLinks(): JSX.Element {
 	return (
-		<div className="footer-privacy">
+		<div className="ffcom-footer-privacy">
 			<LinkItem targetUrl="https://privacy.microsoft.com/privacystatement">Privacy</LinkItem>
 			<LinkItem targetUrl="https://go.microsoft.com/fwlink/?linkid=2259814">
 				Consumer Health Privacy
@@ -99,7 +99,7 @@ function FooterPrivacyLinks(): JSX.Element {
 
 function FooterCopyright(): JSX.Element {
 	return (
-		<div className="footer-copyright">
+		<div className="ffcom-footer-copyright">
 			<FooterLogo
 				src="https://storage.fluidframework.com/static/images/microsoft-logo.png"
 				href="https://www.microsoft.com/"
