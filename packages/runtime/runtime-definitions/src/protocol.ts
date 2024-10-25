@@ -95,12 +95,12 @@ export interface IRuntimeMessagesContent {
 }
 
 /**
- * The properties for the processMessages function in the runtime.
+ * A collection of messages that are processed by the runtime.
  * @alpha
  * @legacy
  */
-export interface IProcessMessagesProps {
-	message: ISequencedMessageEnvelope;
+export interface IRuntimeMessageCollection {
+	envelope: ISequencedMessageEnvelope;
 	local: boolean;
 	messagesContent: IRuntimeMessagesContent[];
 }

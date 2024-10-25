@@ -8,7 +8,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
-	IProcessMessagesProps,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -141,9 +141,9 @@ export interface IDeltaHandler {
 
 	/**
 	 * Process messages for this channel. The messages here are contiguous messages for this channel in a batch.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	processMessages?: (props: IProcessMessagesProps) => void;
+	processMessages?: (messageCollection: IRuntimeMessageCollection) => void;
 
 	/**
 	 * State change events to indicate changes to the delta connection

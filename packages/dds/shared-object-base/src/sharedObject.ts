@@ -32,7 +32,7 @@ import {
 	IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
-	type IProcessMessagesProps,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -498,8 +498,8 @@ export abstract class SharedObjectCore<
 					localOpMetadata,
 				);
 			},
-			processMessages: (props: IProcessMessagesProps) => {
-				this.processMessages(props);
+			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
+				this.processMessages(messagesCollection);
 			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
@@ -579,14 +579,14 @@ export abstract class SharedObjectCore<
 
 	/**
 	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	private processMessages(props: IProcessMessagesProps) {
-		const { message, messagesContent, local } = props;
+	private processMessages(messagesCollection: IRuntimeMessageCollection) {
+		const { envelope, messagesContent, local } = messagesCollection;
 		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 			this.process(
 				{
-					...message,
+					...envelope,
 					clientSequenceNumber,
 					contents: parseHandles(contents, this.serializer),
 				},

@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
-	IProcessMessagesProps,
+	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
@@ -97,17 +97,20 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		this.handler.setConnectionState(connected);
 	}
 
-	public processMessages(props: IProcessMessagesProps): void {
-		const { message, messagesContent, local } = props;
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
 		// catches as data processing error whether or not they come from async pending queues
 		try {
 			const newMessagesContent = getContentsWithStashedOpHandling(messagesContent);
 			if (this.handler.processMessages !== undefined) {
-				this.handler.processMessages({ ...props, messagesContent: newMessagesContent });
+				this.handler.processMessages({
+					...messageCollection,
+					messagesContent: newMessagesContent,
+				});
 			} else {
 				for (const { contents, localOpMetadata, clientSequenceNumber } of newMessagesContent) {
 					const compatMessage: ISequencedDocumentMessage = {
-						...message,
+						...envelope,
 						contents,
 						clientSequenceNumber,
 					};
@@ -118,7 +121,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 			throw DataProcessingError.wrapIfUnrecognized(
 				error,
 				"channelDeltaConnectionFailedToProcessMessages",
-				message,
+				envelope,
 			);
 		}
 	}

@@ -23,7 +23,7 @@ import {
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 	type IPendingMessagesState,
-	type IProcessMessagesProps,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -45,7 +45,7 @@ export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
 	/** Tracks the messages for this channel that are sent while it's not loaded */
 	private pendingMessagesState: IPendingMessagesState | undefined = {
-		propsList: [],
+		messageCollections: [],
 		pendingCount: 0,
 	};
 	private readonly channelP: Promise<IChannel>;
@@ -106,8 +106,8 @@ export class RemoteChannelContext implements IChannelContext {
 			);
 
 			assert(this.pendingMessagesState !== undefined, "pending messages state is undefined");
-			for (const props of this.pendingMessagesState.propsList) {
-				this.services.deltaConnection.processMessages(props);
+			for (const messageCollection of this.pendingMessagesState.messageCollections) {
+				this.services.deltaConnection.processMessages(messageCollection);
 			}
 			this.thresholdOpsCounter.send(
 				"ProcessPendingOps",
@@ -170,19 +170,21 @@ export class RemoteChannelContext implements IChannelContext {
 
 	/**
 	 * Process messages for this channel context. The messages here are contiguous messages for this context in a batch.
-	 * @param props - The properties needed to process the messages.
+	 * @param messageCollection - The collection of messages to process.
 	 */
-	public processMessages(props: IProcessMessagesProps): void {
-		const { message, messagesContent, local } = props;
-		this.summarizerNode.invalidate(message.sequenceNumber);
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
+		this.summarizerNode.invalidate(envelope.sequenceNumber);
 
 		if (this.isLoaded) {
-			this.services.deltaConnection.processMessages(props);
+			this.services.deltaConnection.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
 			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
-			const propsCopy = { ...props, messagesContent: Array.from(messagesContent) };
-			this.pendingMessagesState.propsList.push(propsCopy);
+			this.pendingMessagesState.messageCollections.push({
+				...messageCollection,
+				messagesContent: Array.from(messagesContent),
+			});
 			this.pendingMessagesState.pendingCount += messagesContent.length;
 			this.thresholdOpsCounter.sendIfMultiple(
 				"StorePendingOps",
