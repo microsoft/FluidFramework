@@ -356,6 +356,9 @@ export class FluidDataStoreRuntime
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
+			if (parser.pathParts.length === 0 && request.headers?.viaHandle === true) {
+				return { mimeType: "fluid/object", status: 200, value: await this.entryPoint.get() };
+			}
 			const id = parser.pathParts[0];
 
 			if (id === "_channels" || id === "_custom") {
