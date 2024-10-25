@@ -1,13 +1,12 @@
 .ffcom-title-section-container {
+	height: 40vh;
 	width: 100%;
+
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 	align-items: center;
-	height: 40vh;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
+
 	overflow: hidden;
 	background-size: cover;
 	background-position: center;
@@ -17,8 +16,8 @@
 .ffcom-root-container {
 	height: 100%;
 	width: 100%;
+
 	padding: 0% 10%;
-	align-content: center;
 }
 
 @media (min-width: 1640px) {
@@ -51,18 +50,18 @@
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
+
 	padding: 0px;
 	gap: 16px;
-	flex: none;
-	order: 0;
-	flex-grow: 0;
 }
 
 .ffcom-video-container {
 	width: 50%;
 	aspect-ratio: 1.68;
+
 	padding: 12px;
 	margin: 50px 0 0 0;
+
 	background: rgba(255, 255, 255, 0.4);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	backdrop-filter: blur(20px);
@@ -70,13 +69,12 @@
 }
 
 .ffcom-rounded-video {
+	height: 100%;
 	overflow: hidden;
 	border-radius: 15px;
-	height: 100%;
 }
 
 .ffcom-title-box {
-	z-index: 2;
 	height: 15vh;
 	width: 50%;
 	max-height: 164px;
@@ -90,10 +88,6 @@
 	font-style: normal;
 	font-size: 45px;
 	letter-spacing: -0.05em;
-	flex: none;
-	order: 0;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 @media (min-width: 1640px) {

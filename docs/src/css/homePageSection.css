@@ -1,21 +1,21 @@
 .homePageSection {
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-
-	width: 100%;
 
 	padding-top: 25px;
 }
 
 .homePageSectionInner {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-
 	height: 100%;
 	width: 100%;
 	max-width: 1600px;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 
 	padding: 15px;
 }

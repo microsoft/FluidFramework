@@ -1,35 +1,35 @@
 .serviceContentContainer {
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
+	justify-content: center;
 	align-items: center;
 	flex-wrap: wrap;
+
 	padding-bottom: 2%;
 	gap: 15px;
-	width: 100%;
-	justify-content: center;
-	flex: none;
-	order: 1;
-	flex-grow: 0;
 }
 
 .services {
 	width: 100%;
+
 	display: flex;
 	flex-direction: row;
 	justify-content: space-evenly;
 	flex-wrap: wrap;
-	margin: 0px;
 
+	margin: 0px;
 	gap: 20px;
 	padding-top: 3%;
 }
 
 .service {
+	max-width: 500px;
+
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-
-	max-width: 500px;
 
 	padding: 15px;
 
@@ -49,17 +49,15 @@
 }
 
 .serviceContent {
+	width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	justify-content: space-between;
+
 	padding: 0px;
 	gap: 16px;
-	width: 100%;
-	flex: none;
-	order: 1;
-	align-self: stretch;
-	flex-grow: 0;
 }
 
 .serviceTitle {

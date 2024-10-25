@@ -1,5 +1,6 @@
 .howItWorksSectionBody {
 	width: 100%;
+
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -10,6 +11,7 @@
 
 .howItWorksSectionCodeBody {
 	width: 100%;
+
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
@@ -19,6 +21,7 @@
 }
 
 .howItWorksCodeColumn {
+	/* Code column should occupy more horizontal space than the dice cards. */
 	flex-grow: 2;
 	max-width: 100%;
 
@@ -28,6 +31,7 @@
 }
 
 .howItWorksOutputColumn {
+	/* Dice cards column should occupy less horizontal space than the code. */
 	flex-grow: 1;
 	max-width: 100%;
 
@@ -37,24 +41,23 @@
 }
 
 .howItWorksDiceCards {
+	height: 100%;
+
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 	align-items: center;
 
-	height: 100%;
 	gap: 15px;
 }
 
 .howItWorksColumnLabel {
-	/* Sample Code */
-
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 400;
 	font-size: 16px;
 	line-height: 25px;
-	/* or 156% */
+
 	text-align: center;
 	letter-spacing: -0.02em;
 
@@ -62,8 +65,6 @@
 }
 
 .howItWorksCodeCardBody {
-	/* Rectangle 34647952 */
-
 	width: 100%;
 
 	box-sizing: border-box;
@@ -74,57 +75,21 @@
 }
 
 .howItWorksCodeCardText {
-	overflow: auto;
 	max-height: 600px;
 	width: 100%;
+	overflow: auto;
 
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 350;
 	font-size: 16px;
 	line-height: 25px;
-	/* or 156% */
 	letter-spacing: -0.02em;
 
 	color: #000000;
 
 	/* Override styling from Docusaurus */
 	margin-bottom: 0px;
-}
-
-.howItWorksTryOtherSamplesButton {
-	/* Button */
-
-	/* Auto layout */
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-	align-items: center;
-	padding: 12px 16px;
-	gap: 12px;
-
-	width: 208px;
-	min-width: 48px;
-	height: 48px;
-	min-height: 48px;
-
-	/* reimagine/day/background/accent-strong(cta)/normal */
-	background: #0078d4;
-	border-radius: 8px;
-}
-
-.howItWorksTryOtherSamplesButtonFrame {
-	/* Auto layout */
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	padding: 0px 0px 2px;
-
-	/* Inside auto layout */
-	flex: none;
-	order: 1;
-	flex-grow: 0;
 }
 
 .howItWorksTrySamplesRow {
@@ -139,10 +104,8 @@
 }
 
 .howItWorksTrySamplesLink {
-	/* Label */
 	cursor: pointer;
 
-	/* VP4/action/button */
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;
