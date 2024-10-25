@@ -103,7 +103,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 			process.env.FLUID_LOGGER_PROPS !== undefined &&
 			process.env.FLUID_LOGGER_PROPS.includes("displayName") === true
 		) {
-			plainEvent.details = JSON.parse(process.env.FLUID_LOGGER_PROPS);
+			plainEvent.details = JSON.stringify(process.env.FLUID_LOGGER_PROPS);
 		}
 		this.baseLogger?.send(plainEvent);
 

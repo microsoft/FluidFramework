@@ -39,12 +39,10 @@ class TestLogger implements ITelemetryBufferedLogger {
 		event.hostName = pkgName;
 		this.parentLogger.send({
 			...event,
-			...propsDict,
-			hostName:
-				process.env.FLUID_LOGGER_PROPS?.includes("hostName") === true
-					? JSON.parse(process.env.FLUID_LOGGER_PROPS).hostName
-					: pkgName,
-			details: JSON.parse(process.env.FLUID_LOGGER_PROPS ?? ""),
+			// If there's an override for the hostName in FLUID_LOGGER_PROPS,
+			// display that in the telemetry instead of the package name.
+			hostName: propsDict.hostName ?? pkgName,
+			details: JSON.stringify(propsDict),
 		});
 	}
 	async flush() {
