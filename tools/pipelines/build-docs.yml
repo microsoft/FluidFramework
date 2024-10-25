@@ -104,12 +104,7 @@ resources:
       trigger:
         branches:
           include:
-            - refs/heads/test/michaelzhen-1.0
-  repositories:
-    - repository: FluidFrameworkRepo
-      name: ff_internal
-      type: git
-      ref: refs/heads/test/michaelzhen
+            - refs/heads/test/build-docs
 
 stages:
 - stage: check_branch_version
@@ -119,7 +114,15 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
-        - checkout: FluidFrameworkRepo
+        - checkout: self
+          persistCredentials: true
+
+        - script: |
+            set -eu -o pipefail
+            git fetch origin
+            git checkout test/michaelzhen
+          displayName: 'Switch to branch'
+
         - template: /tools/pipelines/templates/include-install-build-tools.yml
           parameters:
             buildDirectory: $(Build.SourcesDirectory)
