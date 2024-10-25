@@ -58,7 +58,7 @@ stages:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": ${{variables.pipelineIdentifierForTelemetry}}}'
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests odsp dogfood
   - template: templates/include-test-real-service.yml
@@ -79,7 +79,7 @@ stages:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": ${{variables.pipelineIdentifierForTelemetry}}}'
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests tinylicious
   - template: templates/include-test-real-service.yml
@@ -96,7 +96,7 @@ stages:
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": ${{variables.pipelineIdentifierForTelemetry}}}'
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         # Disable colorization for tinylicious logs (not useful when printing to a file)
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
@@ -119,7 +119,7 @@ stages:
       env:
         fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": ${{variables.pipelineIdentifierForTelemetry}}}'
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests frs canary
   - template: templates/include-test-real-service.yml
@@ -139,4 +139,4 @@ stages:
       env:
         fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": ${{variables.pipelineIdentifierForTelemetry}}}'
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'

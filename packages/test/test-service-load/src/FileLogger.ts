@@ -94,16 +94,18 @@ class FileLogger implements ITelemetryBufferedLogger {
 			event.category = "generic";
 		}
 
-		const plainEvent = {
+		const plainEvent: ITelemetryBaseEvent = {
 			...event,
 			hostName: pkgName,
 			testVersion: pkgVersion,
 		};
-		let augmentedEvent: ITelemetryBaseEvent | undefined;
-		if (process.env.FLUID_LOGGER_PROPS?.includes("displayName") !== false) {
-			plainEvent.details = JSON.stringify(process.env.FLUID_LOGGER_PROPS);
+		if (
+			process.env.FLUID_LOGGER_PROPS !== undefined &&
+			process.env.FLUID_LOGGER_PROPS.includes("displayName") === true
+		) {
+			plainEvent.details = JSON.parse(process.env.FLUID_LOGGER_PROPS);
 		}
-		this.baseLogger?.send(augmentedEvent ?? plainEvent);
+		this.baseLogger?.send(plainEvent);
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
