@@ -25,6 +25,13 @@ export {
 	getFluidRepoLayout,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
+export {
+	FluidRepo as FluidRepoBase,
+	getAllDependenciesInRepo,
+	loadFluidRepo,
+} from "./fluidRepo.js";
+export { PackageBase } from "./package.js";
+export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,
 	Installable,
