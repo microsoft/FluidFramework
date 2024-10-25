@@ -110,8 +110,8 @@
 }
 
 /* Dark mode override */
-[data-theme="dark"] .title,
-[data-theme="dark"] .description {
+[data-theme="dark"] .ffcom-title,
+[data-theme="dark"] .ffcom-description {
 	color: #fefefe;
 }
 
