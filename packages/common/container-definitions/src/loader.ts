@@ -549,6 +549,8 @@ export interface ILoader extends Partial<IProvideLoader> {
  * The Host's view of the Loader, used for loading Containers
  * @legacy
  * @alpha
+ * @deprecated Use the standalone apis instead to create detached containers namely {@link @fluidframework/container-loader#rehydrateDetachedContainerFromSnapshot}
+ * and {@link @fluidframework/container-loader#createDetachedContainer}
  */
 export interface IHostLoader extends ILoader {
 	/**

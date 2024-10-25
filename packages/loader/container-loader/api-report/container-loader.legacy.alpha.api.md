@@ -126,7 +126,7 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @alpha
+// @alpha @deprecated
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)

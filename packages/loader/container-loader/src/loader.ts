@@ -7,6 +7,7 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 	IFluidModule,
+	// eslint-disable-next-line import/no-deprecated
 	IHostLoader,
 	ILoader,
 	ILoaderOptions as ILoaderOptions1,
@@ -281,7 +282,9 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * Manages Fluid resource loading
  * @legacy
  * @alpha
+ * @deprecated Use the standalone apis instead to load or create detached containers.
  */
+// eslint-disable-next-line import/no-deprecated
 export class Loader implements IHostLoader {
 	public readonly services: ILoaderServices;
 	private readonly mc: MonitoringContext;
@@ -430,7 +433,25 @@ export class Loader implements IHostLoader {
 }
 
 /**
- * {@inheritDoc @fluidframework/container-definitions#IHostLoader.createDetachedContainer}
+ * {@inheritDoc @fluidframework/container-definitions#ILoader.resolve}
+ * @legacy
+ * @alpha
+ */
+export async function resolve(
+	request: IRequest,
+	loaderProps: ILoaderProps,
+	pendingLocalState?: string,
+): Promise<IContainer> {
+	const loader = new Loader(loaderProps);
+	return loader.resolve(request, pendingLocalState);
+}
+
+/**
+ * Creates a new container using the specified code details but in an unattached state. While unattached, all
+ * updates will only be local until the user explicitly attaches the container to a service provider.
+ * @param codeDetails - The code details for the container to be created.
+ * @param loaderProps - Services and properties necessary for creating a loader.
+ * @param createDetachedProps - Optional properties for creating a detached container.
  * @legacy
  * @alpha
  */
@@ -447,7 +468,11 @@ export async function createDetachedContainer(
 }
 
 /**
- * {@inheritDoc @fluidframework/container-definitions#IHostLoader.rehydrateDetachedContainerFromSnapshot}
+ * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
+ * updates will only be local until the user explicitly attaches the container to a service provider.
+ * @param snapshot - The snapshot for the container to be loaded from. This snapshot should have been created from a detached container.
+ * @param loaderProps - Services and properties necessary for creating a loader.
+ * @param createDetachedProps - Optional properties for creating a detached container.
  * @legacy
  * @alpha
  */
@@ -461,18 +486,4 @@ export async function rehydrateDetachedContainerFromSnapshot(
 ): Promise<IContainer> {
 	const loader = new Loader(loaderProps);
 	return loader.rehydrateDetachedContainerFromSnapshot(snapshot, createDetachedProps);
-}
-
-/**
- * {@inheritDoc @fluidframework/container-definitions#ILoader.resolve}
- * @legacy
- * @alpha
- */
-export async function resolve(
-	request: IRequest,
-	loaderProps: ILoaderProps,
-	pendingLocalState?: string,
-): Promise<IContainer> {
-	const loader = new Loader(loaderProps);
-	return loader.resolve(request, pendingLocalState);
 }
