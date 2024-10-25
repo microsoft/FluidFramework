@@ -58,8 +58,7 @@ import {
 	IFluidDataStoreChannel,
 	VisibilityState,
 	type ITelemetryContext,
-	type ISequencedRuntimeMessageCore,
-	type IRuntimeMessageContents,
+	type IProcessMessagesProps,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -121,12 +120,8 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.process(message, local, localOpMetadata);
 	}
 
-	public processMessages(
-		message: ISequencedRuntimeMessageCore,
-		messageContents: IRuntimeMessageContents[],
-		local: boolean,
-	) {
-		this.handler?.processMessages?.(message, messageContents, local);
+	public processMessages(props: IProcessMessagesProps) {
+		this.handler?.processMessages?.(props);
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {

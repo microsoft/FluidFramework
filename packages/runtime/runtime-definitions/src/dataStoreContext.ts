@@ -34,11 +34,7 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type {
-	IInboundSignalMessage,
-	IRuntimeMessageContents,
-	ISequencedRuntimeMessageCore,
-} from "./protocol.js";
+import type { IInboundSignalMessage, IProcessMessagesProps } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -340,7 +336,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
+	 * Process messages for this channel. The messages here are contiguous messages in a batch.
+	 * @param props - The properties needed to process the messages.
+	 */
+	processMessages?(props: IProcessMessagesProps): void;
+
+	/**
 	 * Processes the op.
+	 * @deprecated - processMessages is used instead to process messages for a channel.
 	 */
 	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
@@ -430,10 +433,7 @@ export type CreateChildSummarizerNodeFn = (
  * @internal
  */
 export interface IPendingMessagesState {
-	messages: {
-		message: ISequencedRuntimeMessageCore;
-		messageContents: IRuntimeMessageContents[];
-	}[];
+	propsList: IProcessMessagesProps[];
 	pendingCount: number;
 }
 

@@ -10,8 +10,8 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
-	IRuntimeMessageContents,
-	ISequencedRuntimeMessageCore,
+	IProcessMessagesProps,
+	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
@@ -50,9 +50,9 @@ function processWithStashedOpMetadataHandling(
 	}
 }
 
-function getMessagesWithStashedOpHandling(messageContents: IRuntimeMessageContents[]) {
-	const newMessageContents: IRuntimeMessageContents[] = [];
-	for (const messageContent of messageContents) {
+function getContentsWithStashedOpHandling(messagesContent: IRuntimeMessagesContent[]) {
+	const newMessageContents: IRuntimeMessagesContent[] = [];
+	for (const messageContent of messagesContent) {
 		if (isStashedOpMetadata(messageContent.localOpMetadata)) {
 			messageContent.localOpMetadata.forEach(({ contents, metadata }) => {
 				newMessageContents.push({
@@ -97,41 +97,29 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		this.handler.setConnectionState(connected);
 	}
 
-	public processMessages(
-		message: ISequencedRuntimeMessageCore,
-		messageContents: IRuntimeMessageContents[],
-		local: boolean,
-	): void {
-		const newMessageContents = getMessagesWithStashedOpHandling(messageContents);
-		if (this.handler.processMessages !== undefined) {
-			try {
-				// catches as data processing error whether or not they come from async pending queues
-				this.handler.processMessages(message, newMessageContents, local);
-			} catch (error) {
-				throw DataProcessingError.wrapIfUnrecognized(
-					error,
-					"channelDeltaConnectionFailedToProcessMessages",
-				);
+	public processMessages(props: IProcessMessagesProps): void {
+		const { message, messagesContent, local } = props;
+		// catches as data processing error whether or not they come from async pending queues
+		try {
+			const newMessagesContent = getContentsWithStashedOpHandling(messagesContent);
+			if (this.handler.processMessages !== undefined) {
+				this.handler.processMessages({ ...props, messagesContent: newMessagesContent });
+			} else {
+				for (const { contents, localOpMetadata, clientSequenceNumber } of newMessagesContent) {
+					const compatMessage: ISequencedDocumentMessage = {
+						...message,
+						contents,
+						clientSequenceNumber,
+					};
+					this.handler.process(compatMessage, local, localOpMetadata);
+				}
 			}
-			return;
-		}
-
-		for (const { contents, localOpMetadata, clientSequenceNumber } of newMessageContents) {
-			const compatMessage: ISequencedDocumentMessage = {
-				...message,
-				contents,
-				clientSequenceNumber,
-			};
-			try {
-				// catches as data processing error whether or not they come from async pending queues
-				this.handler.process(compatMessage, local, localOpMetadata);
-			} catch (error) {
-				throw DataProcessingError.wrapIfUnrecognized(
-					error,
-					"channelDeltaConnectionFailedToProcessMessage",
-					compatMessage,
-				);
-			}
+		} catch (error) {
+			throw DataProcessingError.wrapIfUnrecognized(
+				error,
+				"channelDeltaConnectionFailedToProcessMessages",
+				message,
+			);
 		}
 	}
 

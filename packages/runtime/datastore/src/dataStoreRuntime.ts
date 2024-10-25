@@ -1142,9 +1142,9 @@ export class FluidDataStoreRuntime
 
 		const channelContext = this.contexts.get(envelope.address);
 		assert(!!channelContext, 0x185 /* "Channel not found" */);
-		channelContext.processMessages(
-			transformed,
-			[
+		channelContext.processMessages({
+			message: transformed,
+			messagesContent: [
 				{
 					contents: transformed.contents,
 					clientSequenceNumber: transformed.clientSequenceNumber,
@@ -1152,7 +1152,7 @@ export class FluidDataStoreRuntime
 				},
 			],
 			local,
-		);
+		});
 
 		return channelContext;
 	}
