@@ -30,9 +30,14 @@ import "@site/src/css/mockDiceRoller.css";
  */
 export interface MockDiceRollerSampleProps {
 	/**
-	 * Style properties to apply to the element of the component.
+	 * Style properties to apply to the root element of the component.
 	 */
 	style?: React.CSSProperties;
+
+	/**
+	 * Optional CSS class name to apply to the root element of the component.
+	 */
+	className?: string;
 }
 
 /**
@@ -42,7 +47,10 @@ export interface MockDiceRollerSampleProps {
  * This is a temporary implementation until we have a way to embed live Fluid sample apps.
  * In the future, we should remove this and embed the dice roller app directly.
  */
-export function MockDiceRollerSample({ style }: MockDiceRollerSampleProps): React.ReactElement {
+export function MockDiceRollerSample({
+	style,
+	className,
+}: MockDiceRollerSampleProps): React.ReactElement {
 	const [containerId] = React.useState(Date.now().toString());
 	const [diceValue, setDiceValue] = React.useState(1);
 
@@ -51,7 +59,7 @@ export function MockDiceRollerSample({ style }: MockDiceRollerSampleProps): Reac
 	};
 
 	return (
-		<div style={style}>
+		<div style={style} className={className}>
 			<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
 			<DiceRollerCard diceValue={diceValue} containerId={containerId} onClick={rollDice} />
 		</div>

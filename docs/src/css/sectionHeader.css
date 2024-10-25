@@ -1,0 +1,84 @@
+.sectionHeader {
+	/* Layout */
+
+	/* Auto layout */
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	padding: 0px;
+	gap: 16px;
+
+	width: 100%;
+	flex: none;
+	order: 0;
+	flex-grow: 0;
+}
+
+/* TODO: better name */
+.sectionHeaderInner {
+	/* Heading */
+
+	/* Auto layout */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 0px;
+	width: 100%;
+	flex: none;
+	order: 0;
+	flex-grow: 1;
+}
+
+.sectionHeaderSubtitle {
+	/* VP4/label/eyebrow */
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 600;
+	font-size: 12px;
+	line-height: 16px;
+	/* identical to box height, or 133% */
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+
+	/* M365/Day/Section Eyebrow */
+	color: #61615e;
+
+	/* Inside auto layout */
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+/* TODO: allow wrapping */
+.sectionHeaderTitle {
+	font-family: 'Segoe UI';
+	font-style: normal;
+	font-weight: 600;
+	font-size: 40px;
+	line-height: 48px;
+	letter-spacing: -0.05em;
+	color: #0E1726;
+	flex: none;
+	order: 0;
+	align-self: stretch;
+	flex-grow: 0;
+}
+
+@media (max-width: 768px) {
+	.sectionHeaderTitle{
+		font-size: 28px;
+	}
+	.sectionHeaderSubtitle {
+		font-size: 10px;
+	}
+}
+
+@media (max-width: 425px) {
+	.sectionHeaderTitle{
+		font-size: 24px;
+	}
+	.sectionHeaderSubtitle {
+		font-size: 10px;
+	}
+}
