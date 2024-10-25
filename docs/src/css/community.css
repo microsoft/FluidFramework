@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-.community-links {
+.ffcom-community-links {
 	display: flex;
 	justify-items: space-evenly;
 	align-items: center;
@@ -11,7 +11,7 @@
 	width: 100%;
 }
 
-.community-link-icon {
+.ffcom-community-link-icon {
 	height: 150px;
 	width: 150px;
 }
