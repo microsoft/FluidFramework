@@ -231,9 +231,13 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 USAGE
   $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
     [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
-    [--outFileSuffix <value>] [--node10TypeCompat]
+    [--outFileSuffix <value>] [--node10TypeCompat] [--concurrency <value>] [--branch <value> [--changed |  |  |  |
+    [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
+  --concurrency=<value>     [default: 25] The number of tasks to execute concurrently.
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
   --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
@@ -247,9 +251,37 @@ FLAGS
   --outFileSuffix=<value>   [default: .d.ts] File name suffix including extension for emitting entrypoint declaration
                             files.
 
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
+      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
 
 DESCRIPTION
   Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
