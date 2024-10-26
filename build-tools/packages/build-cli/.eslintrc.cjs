@@ -42,7 +42,6 @@ module.exports = {
 					"**/commands/**",
 
 					// These are all excluded because they're "submodules" used for organization.
-					// AB#8118 tracks removing the barrel files and importing directly from the submodules.
 					"**/codeCoverage/**",
 					"**/handlers/**",
 					"**/library/**",
