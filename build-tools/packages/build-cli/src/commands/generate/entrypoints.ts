@@ -16,8 +16,6 @@ import {
 } from "../../library/commands/generateEntrypoints.js";
 import { ApiLevel, unscopedPackageNameString } from "../../library/index.js";
 
-// export default class GenerateEntrypointsCommand_ extends GenerateEntrypointsCommand {}
-
 /**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
@@ -69,8 +67,12 @@ export default class GenerateEntrypointsCommand extends PackageCommand<
 		...PackageCommand.flags,
 	};
 
+	// If no selection flags are used, select the current directory. (`--dir .`)
 	protected defaultSelection = "dir" as PackageSelectionDefault;
 
+	/**
+	 * This is called for every package selected/filtered by the selection arguments.
+	 */
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { mainEntrypoint, node10TypeCompat } = this.flags;
 		const { packageJson } = pkg;
