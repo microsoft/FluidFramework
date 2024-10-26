@@ -25,34 +25,8 @@ module.exports = {
 		// oclif uses default exports for commands
 		"import/no-default-export": "off",
 
-		"import/no-internal-modules": [
-			"error",
-			{
-				allow: [
-					// This package uses submodules for organization.
-					"azure-devops-node-api/**",
-
-					// fs-extra's ./esm export is needed for ESM support.
-					"fs-extra/esm",
-
-					// This package uses interfaces and types that are not exposed directly by npm-check-updates.
-					"npm-check-updates/build/src/types/**",
-
-					// We call oclif commands' run method directly in some cases, so these are all excluded.
-					"**/commands/**",
-
-					// These are all excluded because they're "submodules" used for organization.
-					"**/codeCoverage/**",
-					"**/handlers/**",
-					"**/library/**",
-					"**/machines/**",
-					"**/typeValidator/**",
-				],
-			},
-		],
-
-		// Superseded by prettier and @trivago/prettier-plugin-sort-imports
-		"import/order": "off",
+		// We don't use barrel files; we import directly from submodules
+		"import/no-internal-modules": "off",
 
 		"jsdoc/multiline-blocks": [
 			"error",
