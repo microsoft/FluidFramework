@@ -6,7 +6,8 @@
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
-import { BaseCommand, sortVersions } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { sortVersions } from "../../library/package.js";
 
 type MajorVersion = number;
 

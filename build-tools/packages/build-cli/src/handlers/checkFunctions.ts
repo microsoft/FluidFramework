@@ -17,12 +17,11 @@ import {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	generateReleaseBranchName,
-	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
-	isReleased,
-} from "../library/index.js";
+} from "../library/branches.js";
+import { getPreReleaseDependencies, isReleased } from "../library/package.js";
 import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import { type MachineState } from "../machines/types.js";
 import { ReleaseSource, isReleaseGroup } from "../releaseGroups.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";

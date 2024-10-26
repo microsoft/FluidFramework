@@ -6,7 +6,8 @@
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { Context, Repository } from "./library/index.js";
+import { Context } from "./library/context.js";
+import { Repository } from "./library/git.js";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
 
 /**

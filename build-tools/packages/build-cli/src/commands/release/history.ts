@@ -3,23 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { detectBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { table } from "table";
 
-import {
-	ReleaseReport,
-	VersionDetails,
-	getDisplayDate,
-	getDisplayDateRelative,
-	sortVersions,
-} from "../../library/index.js";
-
-import { detectBumpType } from "@fluid-tools/version-tools";
-
 import { findPackageOrReleaseGroup } from "../../args.js";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
-import { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
+import type { VersionDetails } from "../../library/context.js";
+import { getDisplayDate, getDisplayDateRelative } from "../../library/dates.js";
+import { sortVersions } from "../../library/package.js";
+import type { ReleaseReport } from "../../library/release.js";
+import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report.js";
 
 const DEFAULT_MIN_VERSION = "0.0.0";

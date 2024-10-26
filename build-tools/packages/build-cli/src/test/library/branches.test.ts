@@ -6,7 +6,7 @@
 import { assert } from "chai";
 import { describe, it } from "mocha";
 
-import { MonoRepoKind } from "../../library/index.js";
+import { MonoRepoKind } from "../../library/context.js";
 
 import {
 	generateBumpDepsBranchName,

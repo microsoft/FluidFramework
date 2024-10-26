@@ -7,13 +7,13 @@ import { Command } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { Context } from "../library/index.js";
+import { Context } from "../library/context.js";
 
 import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 
 import { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
 import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import { type MachineState } from "../machines/types.js";
 import { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
 import { askForReleaseType } from "./askFunctions.js";
 import {

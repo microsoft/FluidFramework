@@ -29,6 +29,9 @@ module.exports = {
 			"error",
 			{
 				allow: [
+					// This package uses submodules for organization.
+					"azure-devops-node-api/**",
+
 					// fs-extra's ./esm export is needed for ESM support.
 					"fs-extra/esm",
 
@@ -40,14 +43,11 @@ module.exports = {
 
 					// These are all excluded because they're "submodules" used for organization.
 					// AB#8118 tracks removing the barrel files and importing directly from the submodules.
-					"**/library/index.js",
-					"**/library/githubRest.js",
-					"**/handlers/index.js",
-					"**/machines/index.js",
-					"**/repoPolicyCheck/index.js",
-					"**/azureDevops/**",
 					"**/codeCoverage/**",
-					"azure-devops-node-api/**",
+					"**/handlers/**",
+					"**/library/**",
+					"**/machines/**",
+					"**/typeValidator/**",
 				],
 			},
 		],

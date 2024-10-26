@@ -12,16 +12,12 @@ import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
 import { getDefaultInterdependencyRange } from "../config.js";
-import {
-	difference,
-	getPreReleaseDependencies,
-	npmCheckUpdates,
-	setVersion,
-} from "../library/index.js";
+import { getPreReleaseDependencies, npmCheckUpdates, setVersion } from "../library/package.js";
+import { difference } from "../library/sets.js";
 import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import { type MachineState } from "../machines/types.js";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { type FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
 
 /**

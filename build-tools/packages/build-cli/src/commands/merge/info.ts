@@ -6,7 +6,8 @@
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
-import { BaseCommand, Repository } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { Repository } from "../../library/git.js";
 
 /**
  * An object containing merge status between two branches.

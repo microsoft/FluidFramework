@@ -8,13 +8,9 @@ import { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
-import {
-	BaseCommand,
-	Repository,
-	createPullRequest,
-	getCommitInfo,
-	pullRequestExists,
-} from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { Repository } from "../../library/git.js";
+import { createPullRequest, getCommitInfo, pullRequestExists } from "../../library/github.js";
 
 interface CleanupBranch {
 	branch: string;
