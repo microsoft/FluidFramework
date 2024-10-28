@@ -126,7 +126,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Defined in
 
-node\_modules/.pnpm/@types+node@18.19.59/node\_modules/@types/node/globals.d.ts:98
+node\_modules/.pnpm/@types+node@18.19.60/node\_modules/@types/node/globals.d.ts:98
 
 ***
 
@@ -142,7 +142,7 @@ static stackTraceLimit: number;
 
 #### Defined in
 
-node\_modules/.pnpm/@types+node@18.19.59/node\_modules/@types/node/globals.d.ts:100
+node\_modules/.pnpm/@types+node@18.19.60/node\_modules/@types/node/globals.d.ts:100
 
 ## Methods
 
@@ -170,4 +170,4 @@ Create .stack property on a target object
 
 #### Defined in
 
-node\_modules/.pnpm/@types+node@18.19.59/node\_modules/@types/node/globals.d.ts:91
+node\_modules/.pnpm/@types+node@18.19.60/node\_modules/@types/node/globals.d.ts:91
