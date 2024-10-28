@@ -6,15 +6,12 @@
 import { strict as assert } from "assert";
 import { brand, fail } from "../../util/index.js";
 import {
-	type InsertableTypedNode,
 	SchemaFactory,
 	type TreeNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	createIdentifierIndex,
-	getOrCreateInnerNode,
 } from "../../simple-tree/index.js";
-import { hydrate } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSimpleTreeIndex } from "../../simple-tree/api/identifierIndex.js";
 import {
@@ -24,11 +21,6 @@ import {
 } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
 import { rootFieldKey, type FieldKey, type UpPath } from "../../core/index.js";
-import {
-	ViewSlot,
-	type SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../shared-tree/schematizingTreeView.js";
 
 /** The field key under which the parentId node puts its identifier */
 const parentKey: FieldKey = brand("parentKey");
@@ -52,15 +44,15 @@ function isStringKey(key: TreeIndexKey): key is string {
 	return typeof key === "string";
 }
 
+function createView(child?: IndexableChild) {
+	const config = new TreeViewConfiguration({ schema: IndexableParent });
+	const view = getView(config);
+	view.initialize({ [parentKey]: parentId, child });
+
+	return { view, parent: view.root };
+}
+
 describe("simple tree indexes", () => {
-	function createView(child?: IndexableChild) {
-		const config = new TreeViewConfiguration({ schema: IndexableParent });
-		const view = getView(config);
-		view.initialize({ [parentKey]: parentId, child });
-
-		return { view, parent: view.root };
-	}
-
 	function indexer(schema: TreeNodeSchema) {
 		if (
 			schema.identifier === IndexableParent.identifier ||
@@ -72,12 +64,7 @@ describe("simple tree indexes", () => {
 	}
 
 	it("can index nodes", () => {
-		const parent = hydrate(IndexableParent, {
-			[parentKey]: parentId,
-			child: { [childKey]: childId },
-		});
-		const node = getOrCreateInnerNode(parent);
-		const view = node.anchorNode.slots.get(ViewSlot) ?? fail("no view");
+		const { view } = createView(new IndexableChild({ [childKey]: childId }));
 		const index = createSimpleTreeIndex(
 			view,
 			(s) => indexer(s),
@@ -93,13 +80,7 @@ describe("simple tree indexes", () => {
 	});
 
 	it("does not reify tree of nodes being scanned", () => {
-		const parent = hydrate(IndexableParent, {
-			[parentKey]: parentId,
-			child: { [childKey]: childId },
-		});
-		const node = getOrCreateInnerNode(parent);
-		const view = node.anchorNode.slots.get(ViewSlot) ?? fail("no view");
-
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const index = createSimpleTreeIndex(
 			view,
 			(s) => indexer(s),
@@ -108,8 +89,7 @@ describe("simple tree indexes", () => {
 			[IndexableParent, IndexableChild],
 		);
 
-		const { forest } = (view as SchematizingSimpleTreeView<typeof IndexableParent>).getView()
-			.checkout;
+		const { forest } = view.checkout;
 		const path: UpPath = {
 			parent: {
 				parent: undefined,
@@ -187,16 +167,14 @@ describe("simple tree indexes", () => {
 });
 
 describe("identifier indexes", () => {
-	function init(child?: InsertableTypedNode<typeof IndexableChild>) {
-		const parent = hydrate(IndexableParent, { [parentKey]: parentId, child });
-		const index = createIdentifierIndex(
-			getOrCreateInnerNode(parent).anchorNode.slots.get(ViewSlot) ?? fail("no view"),
-		);
+	function init(child: IndexableChild) {
+		const { view, parent } = createView(child);
+		const index = createIdentifierIndex(view);
 		return { parent, index };
 	}
 
 	it("can look up nodes", () => {
-		const { parent, index } = init({ [childKey]: childId });
+		const { parent, index } = init(new IndexableChild({ [childKey]: childId }));
 		assert.equal(index.get(parentId), parent);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -205,7 +183,7 @@ describe("identifier indexes", () => {
 	});
 
 	it("indexes newly inserted nodes", () => {
-		const { parent, index } = init({ [childKey]: childId });
+		const { parent, index } = init(new IndexableChild({ [childKey]: childId }));
 		parent.child = new IndexableChild({ [childKey]: `${childId}2` });
 		assert.equal(index.get(parentId), parent);
 		assert.equal(index.get(`${childId}2`), parent.child);
@@ -213,7 +191,7 @@ describe("identifier indexes", () => {
 	});
 
 	it("does not index detached nodes", () => {
-		const { parent, index } = init({ [childKey]: childId });
+		const { parent, index } = init(new IndexableChild({ [childKey]: childId }));
 		const child = parent.child;
 		assert(child !== undefined);
 		assert.equal(index.get(childId), child);
@@ -225,7 +203,7 @@ describe("identifier indexes", () => {
 	});
 
 	it("fail on lookup if two nodes have the same key", () => {
-		const { index } = init({ [childKey]: parentId });
+		const { index } = init(new IndexableChild({ [childKey]: parentId }));
 		assert.throws(() => index.get(parentId));
 	});
 });
