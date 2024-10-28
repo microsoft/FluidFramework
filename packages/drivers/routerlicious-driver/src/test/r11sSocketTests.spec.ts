@@ -14,13 +14,11 @@ import {
 import { stub } from "sinon";
 import { Socket } from "socket.io-client";
 
+import { R11sServiceClusterDrainingErrorCode } from "../contracts.js";
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
 import { DocumentService } from "../documentService.js";
 import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
-import {
-	R11sServiceClusterDrainingErrorCode,
-	RouterliciousErrorTypes,
-} from "../errorUtils.js";
+import { RouterliciousErrorTypes } from "../errorUtils.js";
 import * as socketModule from "../socketModule.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ClientSocketMock } from "../test/socketTestUtils.ts/socketMock.js";

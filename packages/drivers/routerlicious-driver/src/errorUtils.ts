@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
+import { R11sServiceClusterDrainingErrorCode } from "./contracts.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
@@ -44,13 +45,6 @@ export const RouterliciousErrorTypes = {
  */
 export type RouterliciousErrorTypes =
 	(typeof RouterliciousErrorTypes)[keyof typeof RouterliciousErrorTypes];
-
-/**
- * Error code for when the service drains a cluster to which the socket connection is connected to and it disconnects
- * all the clients in that cluster.
- * @internal
- */
-export const R11sServiceClusterDrainingErrorCode = "ClusterDraining";
 
 /**
  * Interface for error responses for the WebSocket connection
