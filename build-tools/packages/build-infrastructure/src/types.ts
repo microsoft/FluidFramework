@@ -102,11 +102,6 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
 	 * Returns the {@link IReleaseGroup} associated with a package.
 	 */
 	getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-
-	/**
-	 * Returns the {@link IWorkspace} associated with a package.
-	 */
-	getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
 }
 
 /**

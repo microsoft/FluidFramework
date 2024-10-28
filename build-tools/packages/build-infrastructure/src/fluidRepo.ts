@@ -180,15 +180,6 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 
 		return found;
 	}
-
-	/**
-	 * {@inheritDoc IFluidRepo.getPackageWorkspace}
-	 */
-	public getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace> {
-		const releaseGroup = this.getPackageReleaseGroup(pkg);
-		const found = releaseGroup.workspace;
-		return found;
-	}
 }
 
 /**

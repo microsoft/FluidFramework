@@ -33,7 +33,6 @@ export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
     readonly configuration: IFluidRepoLayout;
     getGitRepository(): Promise<Readonly<SimpleGit>>;
     getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-    getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
     get packages(): Map<PackageName, P>;
     relativeToRepo(p: string): string;
     get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
@@ -77,7 +76,6 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
     configuration: IFluidRepoLayout;
     getGitRepository(): Promise<Readonly<SimpleGit>>;
     getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-    getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
     packages: Map<PackageName, P>;
     relativeToRepo(p: string): string;
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
