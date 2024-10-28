@@ -272,6 +272,23 @@ export interface IProvideFluidDataStoreRegistry {
 }
 
 // @alpha
+export interface IRuntimeMessageCollection {
+    envelope: ISequencedMessageEnvelope;
+    local: boolean;
+    messagesContent: IRuntimeMessagesContent[];
+}
+
+// @alpha
+export interface IRuntimeMessagesContent {
+    clientSequenceNumber: number;
+    contents: unknown;
+    localOpMetadata: unknown;
+}
+
+// @alpha
+export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
+
+// @alpha
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;

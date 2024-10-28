@@ -194,12 +194,14 @@ export const disabledCompressionConfig: ICompressionRuntimeOptions;
 // @alpha
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
-// @alpha
+// @alpha @sealed
 export class DocumentsSchemaController {
     constructor(existing: boolean, snapshotSequenceNumber: number, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
     // (undocumented)
     onDisconnect(): void;
+    processDocumentSchemaMessages(contents: IDocumentSchemaChangeMessage[], local: boolean, sequenceNumber: number): boolean;
+    // @deprecated
     processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
