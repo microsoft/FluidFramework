@@ -402,115 +402,119 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.parentContext.makeLocallyVisible();
 	}
 
-	private processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
-		const attachMessage = message.contents as InboundAttachMessage;
-
-		// We need to process the GC Data for both local and remote attach messages
-		const foundGCData = processAttachMessageGCData(
-			attachMessage.snapshot,
-			(nodeId, toPath) => {
-				// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
-				const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-				this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
-			},
-		);
-
-		// Only log once per container to avoid noise/cost.
-		// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
-		if (this.shouldSendAttachLog) {
-			this.shouldSendAttachLog = false;
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "dataStoreAttachMessage_sampled",
-				...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
-				details: {
-					local,
-					snapshot: !!attachMessage.snapshot,
-					foundGCData,
-				},
-				...extractSafePropertiesFromMessage(message),
-			});
-		}
-
-		// The local object has already been attached
-		if (local) {
-			assert(
-				this.pendingAttach.has(attachMessage.id),
-				0x15e /* "Local object does not have matching attach message id" */,
-			);
-			this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
-			this.pendingAttach.delete(attachMessage.id);
-			return;
-		}
-
-		// If a non-local operation then go and create the object, otherwise mark it as officially attached.
-		if (this.alreadyProcessed(attachMessage.id)) {
-			// TODO: dataStoreId may require a different tag from PackageData #7488
-			const error = new DataCorruptionError(
-				// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
-				"Duplicate DataStore created with existing id",
-				{
-					...extractSafePropertiesFromMessage(message),
-					...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
+	private processAttachMessages(messageCollection: IRuntimeMessageCollection) {
+		const { envelope, messagesContent, local } = messageCollection;
+		for (const { contents } of messagesContent) {
+			const attachMessage = contents as InboundAttachMessage;
+			// We need to process the GC Data for both local and remote attach messages
+			const foundGCData = processAttachMessageGCData(
+				attachMessage.snapshot,
+				(nodeId, toPath) => {
+					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
+					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
+					this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp);
 				},
 			);
-			throw error;
-		}
 
-		const flatAttachBlobs = new Map<string, ArrayBufferLike>();
-		let snapshot: ISnapshotTree | ISnapshot | undefined;
-		if (attachMessage.snapshot) {
-			snapshot = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
-			if (isInstanceOfISnapshot(this.baseSnapshot)) {
-				snapshot = { ...this.baseSnapshot, snapshotTree: snapshot };
-			}
-		}
-
-		// Include the type of attach message which is the pkg of the store to be
-		// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
-		const pkg = [attachMessage.type];
-		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
-			id: attachMessage.id,
-			snapshot,
-			parentContext: this.wrapContextForInnerChannel(attachMessage.id),
-			storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, flatAttachBlobs),
-			scope: this.parentContext.scope,
-			loadingGroupId: attachMessage.snapshot?.groupId,
-			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(
-				attachMessage.id,
-				{
-					type: CreateSummarizerNodeSource.FromAttach,
-					sequenceNumber: message.sequenceNumber,
-					snapshot: attachMessage.snapshot ?? {
-						entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+			// Only log once per container to avoid noise/cost.
+			// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
+			if (this.shouldSendAttachLog) {
+				this.shouldSendAttachLog = false;
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "dataStoreAttachMessage_sampled",
+					...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
+					details: {
+						local,
+						snapshot: !!attachMessage.snapshot,
+						foundGCData,
 					},
-				},
-			),
-			pkg,
-		});
+					...extractSafePropertiesFromMessage(envelope),
+				});
+			}
 
-		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
+			// The local object has already been attached
+			if (local) {
+				assert(
+					this.pendingAttach.has(attachMessage.id),
+					0x15e /* "Local object does not have matching attach message id" */,
+				);
+				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
+				this.pendingAttach.delete(attachMessage.id);
+				continue;
+			}
+
+			// If a non-local operation then go and create the object, otherwise mark it as officially attached.
+			if (this.alreadyProcessed(attachMessage.id)) {
+				// TODO: dataStoreId may require a different tag from PackageData #7488
+				const error = new DataCorruptionError(
+					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
+					"Duplicate DataStore created with existing id",
+					{
+						...extractSafePropertiesFromMessage(envelope),
+						...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
+					},
+				);
+				throw error;
+			}
+
+			const flatAttachBlobs = new Map<string, ArrayBufferLike>();
+			let snapshot: ISnapshotTree | ISnapshot | undefined;
+			if (attachMessage.snapshot) {
+				snapshot = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
+				if (isInstanceOfISnapshot(this.baseSnapshot)) {
+					snapshot = { ...this.baseSnapshot, snapshotTree: snapshot };
+				}
+			}
+
+			// Include the type of attach message which is the pkg of the store to be
+			// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
+			const pkg = [attachMessage.type];
+			const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
+				id: attachMessage.id,
+				snapshot,
+				parentContext: this.wrapContextForInnerChannel(attachMessage.id),
+				storage: new StorageServiceWithAttachBlobs(
+					this.parentContext.storage,
+					flatAttachBlobs,
+				),
+				scope: this.parentContext.scope,
+				loadingGroupId: attachMessage.snapshot?.groupId,
+				createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(
+					attachMessage.id,
+					{
+						type: CreateSummarizerNodeSource.FromAttach,
+						sequenceNumber: envelope.sequenceNumber,
+						snapshot: attachMessage.snapshot ?? {
+							entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+						},
+					},
+				),
+				pkg,
+			});
+
+			this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
+		}
 	}
 
-	private processAliasMessage(
-		message: ISequencedDocumentMessage,
-		localOpMetadata: unknown,
-		local: boolean,
-	): void {
-		const aliasMessage = message.contents as IDataStoreAliasMessage;
-		if (!isDataStoreAliasMessage(aliasMessage)) {
-			throw new DataCorruptionError("malformedDataStoreAliasMessage", {
-				...extractSafePropertiesFromMessage(message),
-			});
-		}
+	private processAliasMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
+		for (const { contents, localOpMetadata } of messagesContent) {
+			const aliasMessage = contents as IDataStoreAliasMessage;
+			if (!isDataStoreAliasMessage(aliasMessage)) {
+				throw new DataCorruptionError("malformedDataStoreAliasMessage", {
+					...extractSafePropertiesFromMessage(envelope),
+				});
+			}
 
-		const resolve = localOpMetadata as PendingAliasResolve;
-		const aliasResult = this.processAliasMessageCore(
-			aliasMessage.internalId,
-			aliasMessage.alias,
-			message.timestamp,
-		);
-		if (local) {
-			resolve(aliasResult);
+			const resolve = localOpMetadata as PendingAliasResolve;
+			const aliasResult = this.processAliasMessageCore(
+				aliasMessage.internalId,
+				aliasMessage.alias,
+				envelope.timestamp,
+			);
+			if (local) {
+				resolve(aliasResult);
+			}
 		}
 	}
 
@@ -830,35 +834,47 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localMessageMetadata: unknown,
-	) {
-		switch (message.type) {
-			case ContainerMessageType.Attach:
-				this.processAttachMessage(message, local);
-				return;
-			case ContainerMessageType.Alias:
-				this.processAliasMessage(message, localMessageMetadata, local);
-				return;
-			case ContainerMessageType.FluidDataStoreOp: {
-				this.processChannelMessages({
-					envelope: message,
-					messagesContent: [
-						{
-							contents: message.contents,
-							clientSequenceNumber: message.clientSequenceNumber,
-							localOpMetadata: localMessageMetadata,
-						},
-					],
-					local,
-				});
+	/**
+	 * Process messages for this channel collection. The messages here are contiguous messages in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		switch (messageCollection.envelope.type) {
+			case ContainerMessageType.FluidDataStoreOp:
+				this.processChannelMessages(messageCollection);
 				break;
-			}
+			case ContainerMessageType.Attach:
+				this.processAttachMessages(messageCollection);
+				break;
+			case ContainerMessageType.Alias:
+				this.processAliasMessages(messageCollection);
+				break;
 			default:
 				assert(false, 0x8e9 /* unreached */);
 		}
+	}
+
+	/**
+	 * This is still here for back-compat purposes because channel collection implements
+	 * IFluidDataStoreChannel. Once it is removed from the interface, this method can be removed.
+	 * Container runtime calls `processMessages` instead.
+	 */
+	public process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
+		this.processMessages({
+			envelope: message,
+			messagesContent: [
+				{
+					contents: message.contents,
+					localOpMetadata,
+					clientSequenceNumber: message.clientSequenceNumber,
+				},
+			],
+			local,
+		});
 	}
 
 	/**

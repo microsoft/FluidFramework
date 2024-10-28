@@ -22,11 +22,7 @@ import {
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
-import {
-	RestLessServer,
-	createHealthCheckEndpoints,
-	type StartupCheck,
-} from "@fluidframework/server-services-shared";
+import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, IDenyList, ITenantService } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
@@ -38,7 +34,7 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
-	startupCheck: StartupCheck,
+	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
