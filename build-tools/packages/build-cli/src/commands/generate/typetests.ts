@@ -27,26 +27,18 @@ import {
 	type SourceFile,
 	SyntaxKind,
 } from "ts-morph";
+
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
-import {
-	ApiLevel,
-	ensureDevDependencyExists,
-	knownApiLevels,
-	unscopedPackageNameString,
-} from "../../library/index.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
+import { ApiLevel, knownApiLevels } from "../../library/apiLevel.js";
+import { unscopedPackageNameString } from "../../library/commands/constants.js";
+import { ensureDevDependencyExists } from "../../library/package.js";
 import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
 import type { TypeData } from "../../typeValidator/typeData.js";
 import {
 	type BrokenCompatTypes,
 	type PackageWithTypeTestSettings,
 	defaultTypeValidationConfig,
-	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<

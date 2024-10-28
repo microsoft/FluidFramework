@@ -8,9 +8,9 @@ import { Machine } from "jssm";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
-import { getDefaultBumpTypeForBranch } from "../library/index.js";
+import { getDefaultBumpTypeForBranch } from "../library/branches.js";
 import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import { type MachineState } from "../machines/types.js";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { StateHandlerFunction } from "./stateHandlers.js";
 

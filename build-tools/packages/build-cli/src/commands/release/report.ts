@@ -14,22 +14,6 @@ import sortJson from "sort-json";
 import { table } from "table";
 
 import {
-	BaseCommand,
-	Context,
-	PackageVersionMap,
-	ReleaseReport,
-	ReportKind,
-	VersionDetails,
-	filterVersionsOlderThan,
-	getDisplayDate,
-	getDisplayDateRelative,
-	getFluidDependencies,
-	getRanges,
-	sortVersions,
-	toReportKind,
-} from "../../library/index.js";
-
-import {
 	ReleaseVersion,
 	VersionBumpType,
 	detectBumpType,
@@ -39,6 +23,21 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import type { Context, VersionDetails } from "../../library/context.js";
+import { getDisplayDate, getDisplayDateRelative } from "../../library/dates.js";
+import {
+	type PackageVersionMap,
+	filterVersionsOlderThan,
+	getFluidDependencies,
+	sortVersions,
+} from "../../library/package.js";
+import {
+	type ReleaseReport,
+	type ReportKind,
+	getRanges,
+	toReportKind,
+} from "../../library/release.js";
 import { CommandLogger } from "../../logging.js";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
 

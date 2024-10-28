@@ -14,12 +14,10 @@ import { humanId } from "human-id";
 import prompts from "prompts";
 
 import { releaseGroupFlag } from "../../flags.js";
-import {
-	BaseCommand,
-	type FluidCustomChangesetMetadata,
-	Repository,
-	getDefaultBumpTypeForBranch,
-} from "../../library/index.js";
+import { getDefaultBumpTypeForBranch } from "../../library/branches.js";
+import type { FluidCustomChangesetMetadata } from "../../library/changesets.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { Repository } from "../../library/git.js";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select

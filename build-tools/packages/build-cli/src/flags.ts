@@ -7,7 +7,7 @@ import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
 // eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "./library/index.js";
+import { MonoRepoKind } from "./library/context.js";
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
@@ -29,7 +29,7 @@ import {
 	isVersionScheme,
 } from "@fluid-tools/version-tools";
 
-import type { DependencyUpdateType } from "./library/index.js";
+import type { DependencyUpdateType } from "./library/bump.js";
 import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
 /**

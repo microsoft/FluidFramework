@@ -17,12 +17,9 @@ import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
-import {
-	BaseCommand,
-	DEFAULT_CHANGESET_PATH,
-	Repository,
-	loadChangesets,
-} from "../../library/index.js";
+import { DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/changesets.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { Repository } from "../../library/git.js";
 import { isReleaseGroup } from "../../releaseGroups.js";
 
 async function replaceInFile(

@@ -8,7 +8,7 @@ import { Flags } from "@oclif/core";
 import execa from "execa";
 
 import { releaseGroupFlag } from "../../flags.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Updates the version of a dependency in the lockfile.

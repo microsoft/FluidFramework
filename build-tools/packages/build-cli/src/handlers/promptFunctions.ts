@@ -7,13 +7,11 @@ import chalk from "chalk";
 import { Machine } from "jssm";
 
 import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter.js";
-import {
-	difference,
-	generateReleaseBranchName,
-	getPreReleaseDependencies,
-} from "../library/index.js";
+import { generateReleaseBranchName } from "../library/branches.js";
+import { getPreReleaseDependencies } from "../library/package.js";
+import { difference } from "../library/sets.js";
 import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import { type MachineState } from "../machines/types.js";
 import { isReleaseGroup } from "../releaseGroups.js";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { StateHandlerFunction } from "./stateHandlers.js";

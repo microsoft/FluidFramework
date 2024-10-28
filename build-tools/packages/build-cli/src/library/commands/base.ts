@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "chalk";
 
-import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";

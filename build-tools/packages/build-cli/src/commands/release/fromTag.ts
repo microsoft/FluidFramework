@@ -11,7 +11,8 @@ import { sortPackageJson as sortJson } from "sort-package-json";
 
 import { findPackageOrReleaseGroup } from "../../args.js";
 // eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind, sortVersions } from "../../library/index.js";
+import { MonoRepoKind } from "../../library/context.js";
+import { sortVersions } from "../../library/package.js";
 import { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report.js";
 

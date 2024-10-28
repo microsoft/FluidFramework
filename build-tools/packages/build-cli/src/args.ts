@@ -8,7 +8,7 @@ import { Args } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 // eslint-disable-next-line import/no-deprecated
-import { Context, isMonoRepoKind } from "./library/index.js";
+import { Context, isMonoRepoKind } from "./library/context.js";
 
 /**
  * Creates a CLI argument for package or release group names. It's a factory function so that commands can override the

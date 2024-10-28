@@ -7,7 +7,8 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
-import { BaseCommand, Repository } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { Repository } from "../../library/git.js";
 
 export default class CheckChangesetCommand extends BaseCommand<typeof CheckChangesetCommand> {
 	static readonly summary =

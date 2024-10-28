@@ -30,5 +30,3 @@ export const policyHandlers: Handler[] = [
 	noJsFileHandler,
 	yamlTabsHandler,
 ];
-
-export { type Handler } from "./common.js";

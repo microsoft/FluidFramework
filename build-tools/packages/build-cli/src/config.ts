@@ -11,7 +11,7 @@ import {
 } from "@fluid-tools/version-tools";
 import { MonoRepo } from "@fluidframework/build-tools";
 import { cosmiconfigSync } from "cosmiconfig";
-import { Context } from "./library/index.js";
+import { Context } from "./library/context.js";
 import type { ReleaseGroup } from "./releaseGroups.js";
 
 /**

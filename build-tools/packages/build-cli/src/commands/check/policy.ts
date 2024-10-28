@@ -9,13 +9,11 @@ import * as path from "node:path";
 import { Flags } from "@oclif/core";
 import { readJson } from "fs-extra/esm";
 
-import {
-	BaseCommand,
-	Context,
-	Handler,
-	Repository,
-	policyHandlers,
-} from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import type { Context } from "../../library/context.js";
+import { Repository } from "../../library/git.js";
+import type { Handler } from "../../library/repoPolicyCheck/common.js";
+import { policyHandlers } from "../../library/repoPolicyCheck/handlers.js";
 
 type policyAction = "handle" | "resolve" | "final";
 

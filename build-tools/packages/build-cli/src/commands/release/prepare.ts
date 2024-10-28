@@ -6,7 +6,7 @@
 import chalk from "chalk";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import {
 	CheckDependenciesInstalled,
 	type CheckFunction,
@@ -16,7 +16,6 @@ import {
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,
 	// library is overloaded with too much stuff now, and we should consider allowing interior imports.
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/releasePrepChecks.js";
 
 /**

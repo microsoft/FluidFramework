@@ -6,7 +6,7 @@
 import type { Machine } from "jssm";
 
 import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import { type MachineState } from "../machines/types.js";
 
 /**
  * An async function that handles state. Typically this type is used via the {@link BaseStateHandler} class and its
