@@ -15,7 +15,6 @@ import {
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
 	FluidDataStoreRegistryEntry,
-	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -25,112 +24,128 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 
 import { createLoader } from "../utils.js";
 
-class IAmFooBar {
+// a data store object which can create another instance of it self as synchronously as possible
+class DataStoreWithSyncCreate {
 	public static create(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
 		const root = SharedMap.create(runtime, "root");
 		root.bindToContext();
-		return new IAmFooBar(context, runtime, root);
+		return new DataStoreWithSyncCreate(context, runtime, root);
 	}
 
 	public static async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
 		const root = (await runtime.getChannel("root")) as unknown as ISharedMap;
-		return new IAmFooBar(context, runtime, root);
+		return new DataStoreWithSyncCreate(context, runtime, root);
 	}
+	public static readonly type = "DataStoreWithSyncCreate";
 
 	private constructor(
-		public readonly context: IFluidDataStoreContext,
-		public readonly runtime: IFluidDataStoreRuntime,
+		private readonly context: IFluidDataStoreContext,
+		private readonly runtime: IFluidDataStoreRuntime,
 		public readonly sharedMap: ISharedMap,
 	) {}
 
-	get IAmFooBar() {
+	get DataStoreWithSyncCreate() {
 		return this;
+	}
+	get handle() {
+		return this.runtime.entryPoint;
 	}
 
 	createAnother() {
-		const context = this.context.containerRuntime.createDetachedDataStore(["foo", "foo"]);
-		const { runtime, fooBar } = factory.createDataStoreSync(context);
+		// creates a detached context with a factory who's package path is the same
+		// as the current datastore, but with another copy of its own type.
+		const context = this.context.containerRuntime.createDetachedDataStore([
+			...this.context.packagePath,
+			DataStoreWithSyncCreate.type,
+		]);
 
-		const bindP = context.attachRuntime(factory, runtime);
+		const runtime = new FluidDataStoreRuntime(
+			context,
+			sharedObjectRegistry,
+			false,
+			async () => dataStore,
+		);
+		const dataStore = DataStoreWithSyncCreate.create(context, runtime);
 
-		return { fooBar, bindP };
+		const attachRuntimeP = context.attachRuntime(
+			DataStoreWithSyncCreateFactory.instance,
+			runtime,
+		);
+
+		return { dataStore, attachRuntimeP };
 	}
 }
 
-const mapFactory = SharedMap.getFactory();
-const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
+// a simple datastore factory that is also a registry so that it can create instances of itself
+class DataStoreWithSyncCreateFactory
+	implements IFluidDataStoreFactory, IFluidDataStoreRegistry
+{
+	static readonly instance = new DataStoreWithSyncCreateFactory();
+	public readonly type = DataStoreWithSyncCreate.type;
 
-class Factory implements IFluidDataStoreFactory, IFluidDataStoreRegistry {
-	get IFluidDataStoreFactory() {
-		return this;
-	}
+	private constructor() {}
+
 	get IFluidDataStoreRegistry() {
 		return this;
 	}
 	async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
+		// this factory is also a registry, which only supports creating itself
 		if (name === this.type) {
 			return this;
 		}
 	}
 
-	public readonly type = "foo";
-
-	createDataStoreSync(context: IFluidDataStoreContext): {
-		runtime: IFluidDataStoreChannel;
-		fooBar: IAmFooBar;
-	} {
-		const runtime = new FluidDataStoreRuntime(
-			context,
-			sharedObjectRegistry,
-			false,
-			async () => fooBar,
-		);
-		const fooBar = IAmFooBar.create(context, runtime);
-
-		return {
-			fooBar,
-			runtime,
-		};
+	get IFluidDataStoreFactory() {
+		return this;
 	}
 	async instantiateDataStore(context, existing) {
-		if (existing) {
-			return new FluidDataStoreRuntime(context, sharedObjectRegistry, true, async (rt) =>
-				IAmFooBar.load(context, rt),
-			);
-		}
-		return this.createDataStoreSync(context).runtime;
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+			context,
+			sharedObjectRegistry,
+			existing,
+			async () => dataStore,
+		);
+		const dataStore = existing
+			? DataStoreWithSyncCreate.load(context, runtime)
+			: DataStoreWithSyncCreate.create(context, runtime);
+
+		return runtime;
 	}
 }
-const factory = new Factory();
+
+// a simple container runtime factory with a single datastore aliased as default.
+// the default datastore is also returned as the entrypoint
+const runtimeFactory: IRuntimeFactory = {
+	get IRuntimeFactory() {
+		return this;
+	},
+	instantiateRuntime: async (context, existing) => {
+		return loadContainerRuntime({
+			context,
+			existing,
+			registryEntries: [
+				[
+					DataStoreWithSyncCreateFactory.instance.type,
+					Promise.resolve(DataStoreWithSyncCreateFactory.instance),
+				],
+			],
+			provideEntryPoint: async (rt) => {
+				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
+				if (maybeRoot === undefined) {
+					const ds = await rt.createDataStore(DataStoreWithSyncCreate.type);
+					await ds.trySetAlias("default");
+				}
+				const root = await rt.getAliasedDataStoreEntryPoint("default");
+				assert(root !== undefined, "default must exist");
+				return root.get();
+			},
+		});
+	},
+};
 
 describe("Scenario Test", () => {
 	it("Synchronously create nested data store", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-		const runtimeFactory: IRuntimeFactory = {
-			get IRuntimeFactory() {
-				return this;
-			},
-			instantiateRuntime: async (context, existing) => {
-				return loadContainerRuntime({
-					context,
-					existing,
-					registryEntries: [[factory.type, Promise.resolve(factory)]],
-					provideEntryPoint: async (rt) => {
-						const maybeRoot = await rt.getAliasedDataStoreEntryPoint("root");
-						if (maybeRoot === undefined) {
-							const ds = await rt.createDataStore("foo");
-
-							const alias = await ds.trySetAlias("root");
-							assert(alias === "Success", "asd");
-						}
-						const root = await rt.getAliasedDataStoreEntryPoint("root");
-						assert(root !== undefined, "asd");
-						return root.get();
-					},
-				});
-			},
-		};
 
 		const { loader, codeDetails, urlResolver } = createLoader({
 			deltaConnectionServer,
@@ -140,36 +155,53 @@ describe("Scenario Test", () => {
 		const container = await loader.createDetachedContainer(codeDetails);
 
 		await container.attach(urlResolver.createCreateNewRequest("test"));
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "container must have url");
 		{
-			const entrypoint: FluidObject<IAmFooBar> = await container.getEntryPoint();
+			const entrypoint: FluidObject<DataStoreWithSyncCreate> = await container.getEntryPoint();
 
-			assert(entrypoint.IAmFooBar !== undefined, "blah");
+			assert(
+				entrypoint.DataStoreWithSyncCreate !== undefined,
+				"container entrypoint must be DataStoreWithSyncCreate",
+			);
 
-			const { bindP, fooBar } = entrypoint.IAmFooBar.createAnother();
+			const { attachRuntimeP, dataStore } = entrypoint.DataStoreWithSyncCreate.createAnother();
 
-			fooBar.sharedMap.set("child", "me");
+			dataStore.sharedMap.set("childValue", "childValue");
 
 			// can we make this synchronous
-			await bindP;
+			await attachRuntimeP;
 
-			entrypoint.IAmFooBar.sharedMap.set("child", fooBar.runtime.entryPoint);
-			await new Promise<void>((resolve) => container.once("saved", () => resolve()));
+			entrypoint.DataStoreWithSyncCreate.sharedMap.set("childInstance", dataStore.handle);
+			if (container.isDirty) {
+				await new Promise<void>((resolve) => container.once("saved", () => resolve()));
+			}
+			container.dispose();
 		}
 
-		const url = await container.getAbsoluteUrl("");
-		assert(url !== undefined, "asd");
 		{
 			const container2 = await loader.resolve({ url });
 			await waitContainerToCatchUp(container2);
-			const entrypoint: FluidObject<IAmFooBar> = await container2.getEntryPoint();
+			const entrypoint: FluidObject<DataStoreWithSyncCreate> =
+				await container2.getEntryPoint();
 
-			assert(entrypoint.IAmFooBar !== undefined, "blah");
+			assert(
+				entrypoint.DataStoreWithSyncCreate !== undefined,
+				"container2 entrypoint must be DataStoreWithSyncCreate",
+			);
 
-			const childHandle = entrypoint.IAmFooBar.sharedMap.get("child");
-			assert(isFluidHandle(childHandle), "blah");
-			const child = (await childHandle.get()) as FluidObject<IAmFooBar>;
-			assert(child.IAmFooBar !== undefined, "asdsad");
-			assert(child.IAmFooBar.sharedMap.get("child") === "me", "me");
+			const childHandle = entrypoint.DataStoreWithSyncCreate.sharedMap.get("childInstance");
+			assert(isFluidHandle(childHandle), "childInstance should be a handle");
+			const child = (await childHandle.get()) as FluidObject<DataStoreWithSyncCreate>;
+			assert(
+				child.DataStoreWithSyncCreate !== undefined,
+				"child must be DataStoreWithSyncCreate",
+			);
+			assert(
+				child.DataStoreWithSyncCreate.sharedMap.get("childValue") === "childValue",
+				"unexpected childValue",
+			);
+			container2.dispose();
 		}
 	});
 });
