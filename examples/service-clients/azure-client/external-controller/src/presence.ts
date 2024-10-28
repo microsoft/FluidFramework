@@ -7,6 +7,8 @@ import {
 	IPresence,
 	Latest,
 	LatestMap,
+	Notifications,
+	type ISessionClient,
 	type PresenceStates,
 	type PresenceStatesSchema,
 } from "@fluid-experimental/presence";
@@ -49,4 +51,35 @@ export type DicePresence = PresenceStates<typeof statesSchema>;
 export function buildDicePresence(presence: IPresence): DicePresence {
 	const states = presence.getStates("name:app-client-states", statesSchema);
 	return states;
+}
+
+export function initNotifications(presence: IPresence): void {
+	const notificationsWorkspace = presence.getNotifications("name:name:app-notifications", {
+		chat: Notifications<{
+			msg: (message: string) => void;
+		}>({
+			msg: (client: ISessionClient, message: string) => {
+				console.log(`${client.sessionId} says, "${message}"`);
+			},
+		}),
+	});
+
+	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type
+	// annotation.
+	const notifications: typeof notificationsWorkspace = notificationsWorkspace;
+
+	notifications.add(
+		"CustomEvents",
+		Notifications<
+			// Below explicit generic specifiction should not be required.
+			{
+				newId: (id: number) => void;
+			},
+			"CustomEvents"
+		>({
+			newId: (client: ISessionClient, id: number) => {
+				console.log(`${client.sessionId} has a new id: ${id}`);
+			},
+		}),
+	);
 }

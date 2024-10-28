@@ -175,6 +175,7 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): void {
+		console.debug(`NotificationsManager.update called:`)
 		this.events.emit("unattendedNotification", value.value.name, client, ...value.value.args);
 	}
 }
