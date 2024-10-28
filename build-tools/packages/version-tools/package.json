@@ -94,7 +94,7 @@
 		"@microsoft/api-extractor": "^7.47.11",
 		"@oclif/test": "^4.1.0",
 		"@types/chai": "^4.3.20",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.9",
 		"@types/node": "^18.19.59",
 		"@types/semver": "^7.5.8",
 		"c8": "^7.14.0",
