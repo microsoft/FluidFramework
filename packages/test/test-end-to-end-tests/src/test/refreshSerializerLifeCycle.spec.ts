@@ -7,8 +7,10 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
+import {
+	ConnectionState,
+	type IContainerExperimental,
+} from "@fluidframework/container-loader/internal";
 import type {
 	IFluidHandle,
 	ConfigTypes,
@@ -29,7 +31,8 @@ import {
 	type ChannelFactoryRegistry,
 	type ITestContainerConfig,
 	type ITestObjectProvider,
-	waitForSummaryOps,
+	createSummarizer,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -99,6 +102,33 @@ async function loadOffline(
 	return container;
 }
 
+/**
+ * Waits for a summary op and ack to be seen.
+ *
+ * Manually summarizes the container
+ *
+ * @param container - A container, just for the purpose of creating a summarizing container.
+ * @returns A promise that resolves when a summary op and ack is received.
+ */
+const waitForSummary = async (
+	provider: ITestObjectProvider,
+	container: IContainerExperimental,
+	testContainerConfig: ITestContainerConfig,
+	testConfig,
+) => {
+	assert(
+		container.connectionState === ConnectionState.Connected,
+		"Container should be connected",
+	);
+	const { summarizer, container: summarizingContainer } = await createSummarizer(
+		provider,
+		container,
+		testContainerConfig,
+	);
+	await summarizeNow(summarizer);
+	summarizingContainer.close();
+};
+
 describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -107,18 +137,9 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 	});
 	const runtimeOptions = (idCompressorEnabled) => {
 		return {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					...DefaultSummaryConfiguration,
-					...{
-						maxTime: 5000 * 12,
-						maxAckWaitTime: 120000,
-						maxOps: 1,
-						initialSummarizerDelayMs: 20,
-					},
-				},
-			},
+			summaryOptions: undefined,
 			enableRuntimeIdCompressor: idCompressorEnabled,
+			enableGroupedBatching: true,
 		};
 	};
 
@@ -222,7 +243,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					map.set(`${i}`, i++);
 					groupIdDataObject.root.set(`${j}`, j++);
 				}
-				await waitForSummaryOps(container1);
+				await waitForSummary(provider, container1, testContainerConfig, testConfig);
 				if (testConfig.timeoutRefreshInOriginalContainer) {
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
@@ -251,7 +272,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 
 			if (testConfig.summaryWhileOffline) {
 				map.set(`${i}`, i++);
-				await waitForSummaryOps(container);
+				await waitForSummary(provider, container, testContainerConfig, testConfig);
 			}
 
 			// container loaded from previous pending state. The snapshot should refresh
@@ -283,7 +304,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			if (testConfig.savedOps2 && !testConfig.loadOffline) {
 				map2.set(`${i}`, i++);
 				groupIdDataObject2.root.set(`${j}`, j++);
-				await waitForSummaryOps(container2, pendingOps);
+				await waitForContainerConnection(container2);
+				await waitForSummary(provider, container2, testContainerConfig, testConfig);
 				await provider.ensureSynchronized();
 			}
 
@@ -312,7 +334,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				map.set(`${i}`, i++);
 				groupIdDataObject.root.set(`${j}`, j++);
 			}
-			await waitForSummaryOps(container3, pendingOps2);
+			await waitForSummary(provider, container3, testContainerConfig, testConfig);
 			await provider.opProcessingController.pauseProcessing(container3);
 			map3.set(`${i}`, i++);
 			map3.set(`${i}`, i++);
