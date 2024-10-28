@@ -657,9 +657,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const checkout = branch ? (branch as unknown as TreeCheckout) : this;
 		const commitBranches = checkout.revertibleCommitBranches;
 
-		const newValue = this.revertibleCommitBranches.get(revision);
-		if (branch !== undefined && newValue !== undefined) {
-			commitBranches.set(revision, newValue);
+		const targetRevision = this.revertibleCommitBranches.get(revision);
+		if (branch !== undefined && targetRevision !== undefined) {
+			commitBranches.set(revision, targetRevision);
 		}
 
 		const revertible: ClonableRevertible = {
@@ -675,7 +675,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 
 				const revertMetrics = checkout.revertRevertible(revision, kind);
-				this.logger?.sendTelemetryEvent({
+				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
 				});
@@ -685,7 +685,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			},
 			clone: (newBranch?: TreeBranch | TreeBranchFork) => {
-				return this.cloneRevertible(revision, kind, newBranch);
+				return checkout.cloneRevertible(revision, kind, newBranch);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -693,7 +693,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						"Unable to dispose a revertible that has already been disposed.",
 					);
 				}
-				this.disposeRevertible(revertible, revision);
+				checkout.disposeRevertible(revertible, revision);
 				onRevertibleDisposed?.(revertible);
 			},
 		};

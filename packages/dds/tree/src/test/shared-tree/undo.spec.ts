@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import { type UpPath, rootFieldKey } from "../../core/index.js";
+import { RevertibleStatus, type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
 import { getBranch, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
@@ -521,7 +521,7 @@ describe("Undo and redo", () => {
 		console.log(originalData, forkedData);
 	});
 
-	it.only("revert the original and forked revertibles separately", () => {
+	it("revert the original and forked revertibles separately", () => {
 		const originalView: TreeView<typeof RootNodeSchema> =
 			createLocalSharedTree("testSharedTree");
 
@@ -589,10 +589,13 @@ describe("Undo and redo", () => {
 
 		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
 		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
+		assert.equal(propertyTwoUndo?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedPropertyTwoUndo?.status, RevertibleStatus.Valid);
 
 		clonedPropertyTwoUndo?.revert();
 
 		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
+		assert.equal(clonedPropertyTwoUndo?.status, RevertibleStatus.Disposed);
 	});
 });
 
