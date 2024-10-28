@@ -23,6 +23,7 @@ export async function aiCollab(
 ): Promise<AiCollabSuccessResponse | AiCollabErrorResponse> {
 	const response = await generateTreeEdits({
 		treeView: options.treeView,
+		treeNode: options.treeNode,
 		validator: options.validator,
 		openAI: options.openAI,
 		prompt: options.prompt,

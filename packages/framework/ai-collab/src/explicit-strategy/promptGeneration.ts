@@ -17,8 +17,9 @@ import {
 	type JsonTreeSchema,
 	getSimpleSchema,
 	Tree,
+	type TreeNode,
 } from "@fluidframework/tree/internal";
-// eslint-disable-next-line import/no-extraneous-dependencies, import/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
 
 import {
@@ -75,10 +76,15 @@ export function toDecoratedJson(
  */
 export function getPlanningSystemPrompt(
 	view: TreeView<ImplicitFieldSchema>,
+	treeNode: TreeNode,
 	userPrompt: string,
 	systemRoleContext?: string,
 ): string {
-	const schema = normalizeFieldSchema(view.schema);
+	const isRootNode = Tree.parent(treeNode) === undefined;
+	const schema = isRootNode
+		? normalizeFieldSchema(view.schema)
+		: normalizeFieldSchema(Tree.schema(treeNode));
+
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
 	const role = `I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.${
 		systemRoleContext === undefined
@@ -90,7 +96,7 @@ export function getPlanningSystemPrompt(
 	const systemPrompt = `
 	${role}
 	The application state tree is a JSON object with the following schema: ${promptFriendlySchema}
-	The current state is: ${JSON.stringify(view.root)}.
+	The current state is: ${JSON.stringify(treeNode)}.
 	The user requested that I accomplish the following goal:
 	"${userPrompt}"
 	I've made a plan to accomplish this goal by doing a sequence of edits to the tree.
@@ -107,13 +113,17 @@ export function getEditingSystemPrompt(
 	userPrompt: string,
 	idGenerator: IdGenerator,
 	view: TreeView<ImplicitFieldSchema>,
+	treeNode: TreeNode,
 	log: EditLog,
 	appGuidance?: string,
 	plan?: string,
 ): string {
-	const schema = normalizeFieldSchema(view.schema);
+	const isRootNode = Tree.parent(treeNode) === undefined;
+	const schema = isRootNode
+		? normalizeFieldSchema(view.schema)
+		: normalizeFieldSchema(Tree.schema(treeNode));
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
-	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
+	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
 	function createEditList(edits: EditLog): string {
 		return edits
@@ -134,7 +144,6 @@ export function getEditingSystemPrompt(
 			The application that owns the JSON tree has the following guidance about your role: ${appGuidance}`
 	}`;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	const treeSchemaString = createZodJsonValidator(
 		...generateGenericEditTypes(getSimpleSchema(schema), false),
 	).getSchemaText();
@@ -169,12 +178,16 @@ export function getReviewSystemPrompt(
 	userPrompt: string,
 	idGenerator: IdGenerator,
 	view: TreeView<ImplicitFieldSchema>,
+	treeNode: TreeNode,
 	originalDecoratedJson: string,
 	appGuidance?: string,
 ): string {
-	const schema = normalizeFieldSchema(view.schema);
+	const isRootNode = Tree.parent(treeNode) === undefined;
+	const schema = isRootNode
+		? normalizeFieldSchema(view.schema)
+		: normalizeFieldSchema(Tree.schema(treeNode));
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
-	const decoratedTreeJson = toDecoratedJson(idGenerator, view.root);
+	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
 		appGuidance === undefined

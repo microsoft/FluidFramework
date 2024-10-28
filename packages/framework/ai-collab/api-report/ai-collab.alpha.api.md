@@ -35,6 +35,7 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
         systemRoleContext: string;
         userAsk: string;
     };
+    treeNode: TreeNode;
     treeView: TreeView<TSchema>;
     validator?: (newContent: TreeNode) => void;
 }

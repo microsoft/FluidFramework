@@ -169,6 +169,7 @@ describe.skip("Agent Editing Integration", () => {
 		await generateTreeEdits({
 			openAI: { client: openAIClient, modelName: TEST_MODEL_NAME },
 			treeView: view,
+			treeNode: view.root,
 			prompt: {
 				userAsk: "Please alphabetize the sessions.",
 				systemRoleContext: "",

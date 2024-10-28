@@ -6,6 +6,7 @@
 import {
 	getSimpleSchema,
 	normalizeFieldSchema,
+	Tree,
 	type ImplicitFieldSchema,
 	type SimpleTreeSchema,
 	type TreeNode,
@@ -44,6 +45,7 @@ const DEBUG_LOG: string[] = [];
 export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
 	openAI: OpenAiClientOptions;
 	treeView: TreeView<TSchema>;
+	treeNode: TreeNode;
 	prompt: {
 		systemRoleContext: string;
 		userAsk: string;
@@ -75,6 +77,10 @@ interface GenerateTreeEditsErrorResponse {
  * Prompts the provided LLM client to generate valid tree edits.
  * Applies those edits to the provided tree branch before returning.
  *
+ * @remarks
+ * - Optional root nodes are not supported
+ * - Primitive root nodes are not supported
+ *
  * @internal
  */
 export async function generateTreeEdits(
@@ -84,11 +90,11 @@ export async function generateTreeEdits(
 	const editLog: EditLog = [];
 	let editCount = 0;
 	let sequentialErrorCount = 0;
-	const simpleSchema = getSimpleSchema(
-		normalizeFieldSchema(options.treeView.schema).allowedTypes,
-	);
 
-	// const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
+	const isRootNode = Tree.parent(options.treeNode) === undefined;
+	const simpleSchema = isRootNode
+		? getSimpleSchema(normalizeFieldSchema(options.treeView.schema).allowedTypes)
+		: getSimpleSchema(Tree.schema(options.treeNode));
 
 	const tokenUsage = { inputTokens: 0, outputTokens: 0 };
 
@@ -104,6 +110,7 @@ export async function generateTreeEdits(
 			try {
 				const result = applyAgentEdit(
 					options.treeView,
+					options.treeNode,
 					edit,
 					idGenerator,
 					simpleSchema.definitions,
@@ -190,19 +197,19 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 
 	let plan: string | undefined;
 	if (options.planningStep !== undefined) {
-		plan = await getStringFromLlm(
-			getPlanningSystemPrompt(
-				options.treeView,
-				options.prompt.userAsk,
-				options.prompt.systemRoleContext,
-			),
-			options.openAI,
+		const planningPromt = getPlanningSystemPrompt(
+			options.treeView,
+			options.treeNode,
+			options.prompt.userAsk,
+			options.prompt.systemRoleContext,
 		);
+		DEBUG_LOG?.push(planningPromt);
+		plan = await getStringFromLlm(planningPromt, options.openAI);
 	}
 
 	const originalDecoratedJson =
 		(options.finalReviewStep ?? false)
-			? toDecoratedJson(idGenerator, options.treeView.root)
+			? toDecoratedJson(idGenerator, options.treeNode)
 			: undefined;
 	// reviewed is implicitly true if finalReviewStep is false
 	let hasReviewed = (options.finalReviewStep ?? false) ? false : true;
@@ -211,6 +218,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 			options.prompt.userAsk,
 			idGenerator,
 			options.treeView,
+			options.treeNode,
 			editLog,
 			options.prompt.systemRoleContext,
 			plan,
@@ -261,6 +269,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 			options.prompt.userAsk,
 			idGenerator,
 			options.treeView,
+			options.treeNode,
 			originalDecoratedJson ?? fail("Original decorated tree not provided."),
 			options.prompt.systemRoleContext,
 		);

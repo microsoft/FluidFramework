@@ -30,6 +30,14 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
 	 * and merge said branch back to the main tree when the AI is done and the user accepts
 	 */
 	treeView: TreeView<TSchema>;
+	/**
+	 * The specific tree node you want the AI to collaborate on. Pass the root node of your tree if you intend
+	 * for the AI to work on the entire tree.
+	 * @remarks
+	 * - Optional root nodes are not supported
+	 * - Primitive root nodes are not supported
+	 */
+	treeNode: TreeNode;
 	prompt: {
 		/**
 		 * The context to give the LLM about its role in the collaboration.

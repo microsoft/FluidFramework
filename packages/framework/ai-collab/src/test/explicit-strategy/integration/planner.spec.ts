@@ -30,7 +30,7 @@ export class SharedTreeTask extends sf.object("Task", {
 	priority: sf.string,
 	complexity: sf.number,
 	status: sf.string,
-	assignee: sf.optional(sf.string),
+	assignee: sf.string,
 }) {}
 
 export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
@@ -50,14 +50,12 @@ export class SharedTreeTaskGroup extends sf.object("TaskGroup", {
 	title: sf.string,
 	tasks: SharedTreeTaskList,
 	engineers: SharedTreeEngineerList,
-	// optionalInfo: sf.optional(sf.string),
 }) {}
 
 export class SharedTreeTaskGroupList extends sf.array("TaskGroupList", SharedTreeTaskGroup) {}
 
 export class SharedTreeAppState extends sf.object("AppState", {
 	taskGroups: SharedTreeTaskGroupList,
-	optionalInfo: sf.optional(sf.string),
 }) {}
 
 export const INITIAL_APP_STATE = {
@@ -173,7 +171,38 @@ const factory = SharedTree.getFactory();
 
 const OPENAI_API_KEY = "";
 
-describe("Ai Planner App", () => {
+describe.skip("Ai Planner App", () => {
+	it("should be able to change the priority of a task", async () => {
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: SharedTreeAppState }));
+		view.initialize(INITIAL_APP_STATE);
+
+		await aiCollab({
+			openAI: {
+				client: new OpenAI({
+					apiKey: OPENAI_API_KEY,
+				}),
+				modelName: "gpt-4o",
+			},
+			treeView: view,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			treeNode: view.root.taskGroups[0]!,
+			prompt: {
+				systemRoleContext: "You are a managing objects with a priority field.",
+				userAsk:
+					"Change the priority of the first task within the first task group from low to high",
+			},
+			planningStep: true,
+			finalReviewStep: true,
+			dumpDebugLog: true,
+		});
+
+		assert(view.root.taskGroups[0]?.tasks[0]?.priority === "high");
+	});
+
 	it.skip("BUG: Invalid json schema produced when schema has no arrays at all", async () => {
 		class TestAppSchema extends sf.object("PrioritySpecification", {
 			priority: sf.string,
@@ -195,6 +224,7 @@ describe("Ai Planner App", () => {
 					modelName: "gpt-4o",
 				},
 				treeView: view,
+				treeNode: view.root,
 				prompt: {
 					systemRoleContext: "You are a managing objects with a priority field.",
 					userAsk: "Change the priority from low to high",
@@ -214,13 +244,15 @@ describe("Ai Planner App", () => {
 	});
 
 	it.skip("BUG: Invalid json schema produced when schema has multiple keys with the same name and order", async () => {
+		class TaskList extends sf.array("taskList", sf.string) {}
+
 		class TestInnerAppSchema extends sf.object("TestInnerAppSchema", {
 			title: sf.string,
 		}) {}
 
 		class TestAppSchema extends sf.object("TestAppSchema", {
 			title: sf.string,
-			taskList: SharedTreeTaskList,
+			taskList: TaskList,
 			appData: TestInnerAppSchema,
 		}) {}
 
@@ -244,6 +276,7 @@ describe("Ai Planner App", () => {
 					modelName: "gpt-4o",
 				},
 				treeView: view,
+				treeNode: view.root,
 				prompt: {
 					systemRoleContext: "You are a managing json objects",
 					userAsk: "Change the `title` field of the outer object to 'Hello World'",
@@ -262,49 +295,12 @@ describe("Ai Planner App", () => {
 		}
 	});
 
-	it.skip("BUG: Invalid json schema produced when schema has no arrays", async () => {
-		class TestAppSchema extends sf.object("TestAppSchema", {
-			title: sf.string,
-		}) {}
-
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
-		view.initialize({ title: "Sample Title" });
-
-		try {
-			await aiCollab({
-				openAI: {
-					client: new OpenAI({
-						apiKey: OPENAI_API_KEY,
-					}),
-					modelName: "gpt-4o",
-				},
-				treeView: view,
-				prompt: {
-					systemRoleContext: "You are a managing json objects",
-					userAsk: "Change the `title` field to 'Hello World'",
-				},
-				planningStep: true,
-				finalReviewStep: true,
-			});
-		} catch (error) {
-			assert(error instanceof APIError);
-			assert(error.status === 400);
-			assert(error.type === "invalid_request_error");
-			assert(
-				error.message ===
-					"400 Invalid schema for response_format 'SharedTreeAI': In context=('properties', 'edit', 'anyOf', '1', 'properties', 'content', 'not'), schema must have a 'type' key.",
-			);
-		}
-	});
-
 	it.skip("BUG: OpenAI structured output fails when json schema with psuedo optional field is used in response format", async () => {
+		class TaskList extends sf.array("taskList", sf.string) {}
+
 		class TestAppSchemaWithOptionalProp extends sf.object("TestAppSchemaWithOptionalProp", {
 			nonOptionalProp: sf.string,
-			taskList: SharedTreeTaskList,
+			taskList: TaskList,
 			optionalProp: sf.optional(sf.string),
 		}) {}
 
@@ -326,6 +322,7 @@ describe("Ai Planner App", () => {
 					modelName: "gpt-4o",
 				},
 				treeView: view,
+				treeNode: view.root,
 				prompt: {
 					systemRoleContext: "You are a managing json objects",
 					userAsk: "Change the `optionalProp` field to 'Hello World'",
@@ -367,6 +364,7 @@ describe("Ai Planner App", () => {
 				modelName: "gpt-4o",
 			},
 			treeView: view2,
+			treeNode: view.root,
 			prompt: {
 				systemRoleContext: "You are a managing json objects",
 				userAsk: "Change the `optionalProp` field to 'Hello World'",
@@ -374,8 +372,6 @@ describe("Ai Planner App", () => {
 			planningStep: true,
 			finalReviewStep: true,
 		});
-
-		const jsonified = JSON.stringify(view.root);
 
 		assert.equal(view.root.nonOptionalProp, "Hello World");
 	});
