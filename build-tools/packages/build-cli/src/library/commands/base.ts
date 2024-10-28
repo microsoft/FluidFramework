@@ -148,7 +148,6 @@ export abstract class BaseCommand<T extends typeof Command>
 		if (this._context === undefined) {
 			const resolvedRoot = await getResolvedFluidRoot();
 
-
 			this._context = new Context(resolvedRoot);
 		}
 
