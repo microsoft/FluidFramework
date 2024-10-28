@@ -32,7 +32,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:webpack": "webpack --config webpack.config.cjs",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -78,9 +78,9 @@
 		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
+		"@fluidframework/build-tools": "^0.45.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@5.0.0",
 		"@types/mocha": "^10.0.1",
@@ -96,21 +96,22 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_LocalKafka": {
+			"Class_LocalKafka": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_LocalOrderer": {
+			"Class_LocalOrderer": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IKafkaSubscriber": {
+			"Interface_IKafkaSubscriber": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_LocalContext": {
+			"Class_LocalContext": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_LocalLambdaController": {
+			"Class_LocalLambdaController": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

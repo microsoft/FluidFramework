@@ -25,7 +25,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -41,9 +41,9 @@
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
+		"@fluidframework/build-tools": "^0.45.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@5.0.0",
 		"concurrently": "^8.2.1",
@@ -62,24 +62,37 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IOrdererManager": {
+      "Class_TokenRevokedError": {
+        "backCompat": false
+      },
+      "Class_TokenRevocationError": {
+        "backCompat": false
+      },
+			"ClassStatics_TokenRevokedError": {
+				"backCompat": false
+			},
+			"ClassStatics_TokenRevocationError": {
+				"backCompat": false
+			},
+			"Interface_IOrdererManager": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IProducer": {
+			"Interface_IProducer": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_CombinedProducer": {
+			"Class_CombinedProducer": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IOrdererConnection": {
+			"Interface_IOrdererConnection": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IContext": {
+			"Interface_IContext": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_MongoManager": {
+			"Class_MongoManager": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

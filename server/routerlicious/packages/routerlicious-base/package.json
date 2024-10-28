@@ -27,7 +27,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:debug": "mocha inspect --recursive \"dist/test/**/*.spec.*js\"",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -86,9 +86,9 @@
 		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
+		"@fluidframework/build-tools": "^0.45.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@5.0.0",
@@ -131,18 +131,19 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_NexusResources": {
+			"Class_NexusResources": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_OrdererManager": {
+			"Class_OrdererManager": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_AlfredResources": {
+			"Class_AlfredResources": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_RiddlerResources": {
+			"Class_RiddlerResources": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }
