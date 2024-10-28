@@ -47,6 +47,9 @@ export type {
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "./protocol.js";
 export type {
 	CreateChildSummarizerNodeParam,
