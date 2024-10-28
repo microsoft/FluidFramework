@@ -572,9 +572,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 												...revertMetrics,
 											});
 
-											// if (release) {
-											//  revertible.dispose();
-											// }
+											if (release) {
+												revertible.dispose();
+											}
 										},
 										clone: (branch?: TreeBranch | TreeBranchFork): ClonableRevertible => {
 											return this.cloneRevertible(revision, kind, branch);
@@ -655,7 +655,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		onRevertibleDisposed?: (revertible: Revertible) => void,
 	): ClonableRevertible {
 		const checkout = branch ? (branch as unknown as TreeCheckout) : this;
-		const commitBranches = this.revertibleCommitBranches;
+		const commitBranches = checkout.revertibleCommitBranches;
+
+		const newValue = this.revertibleCommitBranches.get(revision);
+		if (branch !== undefined && newValue !== undefined) {
+			commitBranches.set(revision, newValue);
+		}
 
 		const revertible: ClonableRevertible = {
 			get status(): RevertibleStatus {
@@ -675,9 +680,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					...revertMetrics,
 				});
 
-				// if (release) {
-				// 	revertible.dispose();
-				// }
+				if (release) {
+					revertible.dispose();
+				}
 			},
 			clone: (newBranch?: TreeBranch | TreeBranchFork) => {
 				return this.cloneRevertible(revision, kind, newBranch);
