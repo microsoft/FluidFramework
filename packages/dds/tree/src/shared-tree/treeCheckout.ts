@@ -534,6 +534,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					event.type === "append" ||
 					(event.type === "replace" && getChangeReplaceType(event) === "transactionCommit")
 				) {
+					// TODO:#20949: When the SharedTree is detached, these commits will already have been garbage collected.
+					//       Figure out a way to generate revertibles before the commits are garbage collected.
 					for (const commit of event.newCommits) {
 						const kind = event.type === "append" ? event.kind : CommitKind.Default;
 						const { change, revision } = commit;

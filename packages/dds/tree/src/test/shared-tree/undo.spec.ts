@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import { RevertibleStatus, type UpPath, rootFieldKey } from "../../core/index.js";
+import {
+	type Revertible,
+	type UpPath,
+	rootFieldKey,
+	RevertibleStatus,
+} from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import { getBranch, type ITreeCheckout } from "../../shared-tree/index.js";
+import { SharedTreeFactory, type ITreeCheckout, getBranch } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	createClonableUndoRedoStacks,
@@ -15,13 +20,10 @@ import {
 	testIdCompressor,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import {
-	SchemaFactory,
-	SharedTree,
-	TreeViewConfiguration,
-	type TreeView,
-} from "../../index.js";
+import { SharedTree, type TreeView } from "../../index.js";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -429,140 +431,28 @@ describe("Undo and redo", () => {
 		unsubscribe();
 	});
 
-	it("can undo / redo", () => {
-		const view: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
-
-		const { undoStack, redoStack, unsubscribe } = createClonableUndoRedoStacks(view.events);
-
-		const originalPropertyTwoBefore = view.root.child?.propertyTwo.itemOne;
-		console.log(originalPropertyTwoBefore);
-
-		// make edits to the original view.
-		if (view.root.child !== undefined) {
-			view.root.child.propertyTwo.itemOne = "newItem";
-			view.root.child.propertyTwo.itemOne = "newItem2";
-		}
-
-		const forkedBranch = getBranch(view).branch();
-
-		const forkedView = forkedBranch.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
-
-		const { undoStack: forkedUndoStack, redoStack: forkedRedoStack } =
-			createClonableUndoRedoStacks(forkedView.events);
-
-		if (forkedView.root.child !== undefined) {
-			forkedView.root.child.propertyTwo.itemOne = "newItem3";
-		}
-
-		forkedUndoStack.pop()?.revert(); // "newItem3" -> "newItem2"
-
-		const forkedEqualTwo = forkedView.root.child?.propertyTwo.itemOne;
-		console.log(forkedEqualTwo);
-
-		undoStack[1].clone(forkedBranch).revert(); // "newItem2" -> "newItem"
-
-		const original = view.root.child?.propertyTwo.itemOne;
-		const forkedEqualOne = forkedView.root.child?.propertyTwo.itemOne;
-
-		console.log(original);
-		console.log(forkedEqualOne);
-
-		undoStack[1].revert();
-
-		const originalPrime = view.root.child?.propertyTwo.itemOne;
-		const forkedEqualOnePrime = forkedView.root.child?.propertyTwo.itemOne;
-
-		console.log(originalPrime);
-		console.log(forkedEqualOnePrime);
-	});
-
-	it("can undo / redo with multiple branches", () => {
-		const originalView: TreeView<typeof RootNodeSchema> =
-			createLocalSharedTree("testSharedTree");
-
-		const forkedBranch = getBranch(originalView).branch();
-		const forkedView = forkedBranch.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
-
-		const {
-			undoStack: undoStack1,
-			redoStack: redoStack1,
-			unsubscribe: unsubscribe1,
-		} = createClonableUndoRedoStacks(originalView.events);
-		const {
-			undoStack: undoStack2,
-			redoStack: redoStack2,
-			unsubscribe: unsubscribe2,
-		} = createClonableUndoRedoStacks(forkedView.events);
-
-		if (originalView.root.child !== undefined) {
-			originalView.root.child.propertyTwo.itemOne = "newItem";
-		}
-
-		undoStack2.push(undoStack1[undoStack1.length - 1].clone(forkedBranch));
-
-		console.log(undoStack1, undoStack2);
-
-		undoStack2.pop()?.revert();
-
-		let originalData = originalView.root.child?.propertyTwo.itemOne;
-		let forkedData = forkedView.root.child?.propertyTwo.itemOne;
-
-		console.log(originalData, forkedData);
-
-		undoStack1.pop()?.revert();
-
-		originalData = originalView.root.child?.propertyTwo.itemOne;
-		forkedData = forkedView.root.child?.propertyTwo.itemOne;
-
-		console.log(originalData, forkedData);
+	// TODO:#20949: Enable when undo/redo is supported for detached trees (currently failing with error: "refresher data not found")
+	it.skip("can undo while detached", () => {
+		const sf = new SchemaFactory(undefined);
+		class Schema extends sf.object("Object", { foo: sf.number }) {}
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: Schema }));
+		view.initialize({ foo: 1 });
+		assert.equal(tree.isAttached(), false);
+		let revertible: Revertible | undefined;
+		view.events.on("commitApplied", (_, getRevertible) => {
+			revertible = getRevertible?.();
+		});
+		view.root.foo = 2;
+		assert.equal(view.root.foo, 2);
+		assert(revertible !== undefined);
+		revertible.revert();
+		assert.equal(view.root.foo, 1);
 	});
 
 	it("revert the original and forked revertibles separately", () => {
-		const originalView: TreeView<typeof RootNodeSchema> =
-			createLocalSharedTree("testSharedTree");
-
-		const forkedBranch = getBranch(originalView).branch();
-		const forkedView = forkedBranch.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
-
-		const {
-			undoStack: undoStack1,
-			redoStack: redoStack1,
-			unsubscribe: unsubscribe1,
-		} = createClonableUndoRedoStacks(originalView.events);
-		const {
-			undoStack: undoStack2,
-			redoStack: redoStack2,
-			unsubscribe: unsubscribe2,
-		} = createClonableUndoRedoStacks(forkedView.events);
-
-		if (originalView.root.child !== undefined) {
-			originalView.root.child.propertyTwo.itemOne = "newItem";
-		}
-
-		if (forkedView.root.child !== undefined) {
-			forkedView.root.child.propertyOne = 256;
-		}
-
-		undoStack1.pop()?.revert();
-		undoStack2.pop()?.revert();
-
-		let originalData = originalView.root.child?.propertyTwo.itemOne;
-		let forkedData = forkedView.root.child?.propertyOne;
-
-		redoStack1.pop()?.revert();
-		redoStack2.pop()?.revert();
-
-		originalData = originalView.root.child?.propertyTwo.itemOne;
-		forkedData = forkedView.root.child?.propertyOne;
-	});
-
-	it.only("revert the original and forked revertibles separately", () => {
 		const originalView: TreeView<typeof RootNodeSchema> =
 			createLocalSharedTree("testSharedTree");
 
