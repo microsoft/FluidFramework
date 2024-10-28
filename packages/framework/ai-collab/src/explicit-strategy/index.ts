@@ -83,8 +83,8 @@ interface GenerateTreeEditsErrorResponse {
  *
  * @internal
  */
-export async function generateTreeEdits(
-	options: GenerateTreeEditsOptions<ImplicitFieldSchema>,
+export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
+	options: GenerateTreeEditsOptions<TSchema>,
 ): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];

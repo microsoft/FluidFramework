@@ -128,6 +128,7 @@ export {
 	type InsertableField,
 	type Insertable,
 	type UnsafeUnknownSchema,
+	normalizeAllowedTypes,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

@@ -180,7 +180,7 @@ describe.skip("Ai Planner App", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: SharedTreeAppState }));
 		view.initialize(INITIAL_APP_STATE);
 
-		await aiCollab({
+		await aiCollab<typeof SharedTreeAppState>({
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
@@ -216,7 +216,7 @@ describe.skip("Ai Planner App", () => {
 		view.initialize({ priority: "low" });
 
 		try {
-			await aiCollab({
+			await aiCollab<typeof TestAppSchema>({
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -268,7 +268,7 @@ describe.skip("Ai Planner App", () => {
 		});
 
 		try {
-			await aiCollab({
+			await aiCollab<typeof TestAppSchema>({
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -356,7 +356,7 @@ describe.skip("Ai Planner App", () => {
 		);
 		view2.initialize({ nonOptionalProp: "Hello" });
 
-		await aiCollab({
+		await aiCollab<typeof TestAppSchemaWithoutOptionalProp>({
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,

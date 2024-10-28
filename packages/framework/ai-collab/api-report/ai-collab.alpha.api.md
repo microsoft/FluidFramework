@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export function aiCollab(options: AiCollabOptions<ImplicitFieldSchema>): Promise<AiCollabSuccessResponse | AiCollabErrorResponse>;
+export function aiCollab<TSchema extends ImplicitFieldSchema>(options: AiCollabOptions<TSchema>): Promise<AiCollabSuccessResponse | AiCollabErrorResponse>;
 
 // @alpha
 export interface AiCollabErrorResponse {

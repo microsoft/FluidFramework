@@ -18,8 +18,8 @@ import { generateTreeEdits } from "./explicit-strategy/index.js";
  *
  * @alpha
  */
-export async function aiCollab(
-	options: AiCollabOptions<ImplicitFieldSchema>,
+export async function aiCollab<TSchema extends ImplicitFieldSchema>(
+	options: AiCollabOptions<TSchema>,
 ): Promise<AiCollabSuccessResponse | AiCollabErrorResponse> {
 	const response = await generateTreeEdits({
 		treeView: options.treeView,

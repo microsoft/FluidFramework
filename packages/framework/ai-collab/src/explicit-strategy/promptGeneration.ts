@@ -74,8 +74,8 @@ export function toDecoratedJson(
 /**
  * TBD
  */
-export function getPlanningSystemPrompt(
-	view: TreeView<ImplicitFieldSchema>,
+export function getPlanningSystemPrompt<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
 	treeNode: TreeNode,
 	userPrompt: string,
 	systemRoleContext?: string,
@@ -109,10 +109,10 @@ export function getPlanningSystemPrompt(
 /**
  * TBD
  */
-export function getEditingSystemPrompt(
+export function getEditingSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	userPrompt: string,
 	idGenerator: IdGenerator,
-	view: TreeView<ImplicitFieldSchema>,
+	view: TreeView<TSchema>,
 	treeNode: TreeNode,
 	log: EditLog,
 	appGuidance?: string,
@@ -174,10 +174,10 @@ export function getEditingSystemPrompt(
 /**
  * TBD
  */
-export function getReviewSystemPrompt(
+export function getReviewSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	userPrompt: string,
 	idGenerator: IdGenerator,
-	view: TreeView<ImplicitFieldSchema>,
+	view: TreeView<TSchema>,
 	treeNode: TreeNode,
 	originalDecoratedJson: string,
 	appGuidance?: string,
