@@ -85,28 +85,17 @@ describe("R11s Socket Tests", () => {
 			connect_document: { eventToEmit: errorEventName, errorToThrow },
 		});
 
-		let errorOccurred = false;
-		try {
-			await mockSocket(socket as unknown as Socket, async () =>
+		await assert.rejects(
+			mockSocket(socket as unknown as Socket, async () =>
 				documentService.connectToDeltaStream(client),
-			);
-		} catch (error) {
-			errorOccurred = true;
-			const anyDriverError = error as IAnyDriverError;
-			assert(
-				anyDriverError.errorType === DriverErrorTypes.authorizationError,
-				"Error type should be authorizationError",
-			);
-			assert(
-				anyDriverError.scenarioName === "connect_document_error",
-				"Error scenario name should be connect_document_error",
-			);
-			assert(
-				(anyDriverError as any).internalErrorCode === "TokenRevoked",
-				"Error internal code should be TokenRevoked",
-			);
-		}
-		assert(errorOccurred, "Error should have occurred");
+			),
+			{
+				errorType: DriverErrorTypes.authorizationError,
+				scenarioName: "connect_document_error",
+				internalErrorCode: "TokenRevoked",
+			},
+			"Error should have occurred",
+		);
 	});
 
 	it("Socket error with Token Revoked error", async () => {
@@ -159,28 +148,17 @@ describe("R11s Socket Tests", () => {
 			connect_document: { eventToEmit: errorEventName, errorToThrow },
 		});
 
-		let errorOccurred = false;
-		try {
-			await mockSocket(socket as unknown as Socket, async () =>
+		await assert.rejects(
+			mockSocket(socket as unknown as Socket, async () =>
 				documentService.connectToDeltaStream(client),
-			);
-		} catch (error) {
-			errorOccurred = true;
-			const anyDriverError = error as IAnyDriverError;
-			assert(
-				anyDriverError.errorType === RouterliciousErrorTypes.clusterDrainingError,
-				"Error type should be clusterDrainingError",
-			);
-			assert(
-				anyDriverError.scenarioName === "connect_document_error",
-				"Error scenario name should be connect_document_error",
-			);
-			assert(
-				(anyDriverError as any).internalErrorCode === R11sServiceClusterDrainingErrorCode,
-				"Error internal code should be R11sServiceClusterDrainingErrorCode",
-			);
-		}
-		assert(errorOccurred, "Error should have occurred");
+			),
+			{
+				errorType: RouterliciousErrorTypes.clusterDrainingError,
+				scenarioName: "connect_document_error",
+				internalErrorCode: R11sServiceClusterDrainingErrorCode,
+			},
+			"Error should have occurred",
+		);
 	});
 
 	it("Socket error with Cluster Draining error", async () => {
