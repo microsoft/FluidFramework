@@ -264,7 +264,10 @@ export class ObjectForest implements IEditableForest {
 		}
 
 		const forestVisitor = new Visitor(this);
-		const combinedVisitor = combineVisitors([forestVisitor, ...this.deltaVisitors]);
+		const combinedVisitor = combineVisitors(
+			[forestVisitor, ...this.deltaVisitors],
+			this.deltaVisitors,
+		);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}

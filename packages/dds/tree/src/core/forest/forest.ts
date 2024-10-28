@@ -132,8 +132,6 @@ export interface IForestSubscription extends Listenable<ForestEvents> {
 
 	/**
 	 * Registers an {@link AnnouncedVisitor} that responds to changes on the forest.
-	 *
-	 * TODO: check if we need to store a factory rather than the actual visitors
 	 */
 	registerAnnouncedVisitor(visitor: AnnouncedVisitor): void;
 }

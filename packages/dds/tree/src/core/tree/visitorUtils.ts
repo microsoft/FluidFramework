@@ -170,7 +170,7 @@ export function createAnnouncedVisitor(visitorFunctions: {
 	return {
 		free: visitorFunctions.free ?? noOp,
 		create: visitorFunctions.create ?? noOp,
-		afterCreate: visitorFunctions.create ?? noOp,
+		afterCreate: visitorFunctions.afterCreate ?? noOp,
 		beforeDestroy: visitorFunctions.beforeDestroy ?? noOp,
 		destroy: visitorFunctions.destroy ?? noOp,
 		beforeAttach: visitorFunctions.beforeAttach ?? noOp,
