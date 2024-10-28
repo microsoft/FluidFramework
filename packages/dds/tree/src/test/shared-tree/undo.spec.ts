@@ -587,14 +587,12 @@ describe("Undo and redo", () => {
 
 		propertyTwoUndo?.revert();
 
-		assert(originalView.root.child?.propertyTwo.itemOne === "");
-		assert(forkedView.root.child?.propertyTwo.itemOne === "newItem");
+		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
 
 		clonedPropertyTwoUndo?.revert();
 
-		const check = forkedView.root.child?.propertyTwo.itemOne;
-
-		console.log(check);
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
 	});
 });
 

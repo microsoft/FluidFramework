@@ -573,7 +573,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 											});
 
 											// if (release) {
-											// 	revertible.dispose();
+											//  revertible.dispose();
 											// }
 										},
 										clone: (branch?: TreeBranch | TreeBranchFork): ClonableRevertible => {
@@ -654,6 +654,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch?: TreeBranch | TreeBranchFork,
 		onRevertibleDisposed?: (revertible: Revertible) => void,
 	): ClonableRevertible {
+		const checkout = branch ? (branch as unknown as TreeCheckout) : this;
 		const commitBranches = this.revertibleCommitBranches;
 
 		const revertible: ClonableRevertible = {
@@ -668,15 +669,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
-				const revertMetrics = this.revertRevertible(revision, kind, branch ?? undefined);
+				const revertMetrics = checkout.revertRevertible(revision, kind);
 				this.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
 				});
 
-				if (release) {
-					revertible.dispose();
-				}
+				// if (release) {
+				// 	revertible.dispose();
+				// }
 			},
 			clone: (newBranch?: TreeBranch | TreeBranchFork) => {
 				return this.cloneRevertible(revision, kind, newBranch);
@@ -850,11 +851,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(
-		revision: RevisionTag,
-		kind: CommitKind,
-		forkedBranch?: TreeBranch | TreeBranchFork,
-	): RevertMetrics {
+	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
 		if (this._branch.isTransacting()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
@@ -869,10 +866,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revisionForInvert,
 		);
 
-		const headCommit =
-			forkedBranch !== undefined
-				? (forkedBranch as unknown as TreeCheckout)._branch.getHead()
-				: this._branch.getHead();
+		const headCommit = this._branch.getHead();
 
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
@@ -888,23 +882,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			);
 		}
 
-		if (forkedBranch !== undefined) {
-			const forkedBranchToCheckout = forkedBranch as unknown as TreeCheckout;
-			const internalBranch = forkedBranchToCheckout._branch;
-			internalBranch.apply(
-				change,
-				kind === CommitKind.Default || kind === CommitKind.Redo
-					? CommitKind.Undo
-					: CommitKind.Redo,
-			);
-		} else {
-			this._branch.apply(
-				change,
-				kind === CommitKind.Default || kind === CommitKind.Redo
-					? CommitKind.Undo
-					: CommitKind.Redo,
-			);
-		}
+		this._branch.apply(
+			change,
+			kind === CommitKind.Default || kind === CommitKind.Redo
+				? CommitKind.Undo
+				: CommitKind.Redo,
+		);
 
 		// Derive some stats about the reversion to return to the caller.
 		let revertAge = 0;
