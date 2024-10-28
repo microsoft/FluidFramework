@@ -37,7 +37,7 @@ import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from 
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import type { ITenantRepository } from "./mongoTenantRepository";
+import { ITenantRepository } from "../riddler";
 
 export function create(
 	config: Provider,

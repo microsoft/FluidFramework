@@ -27,7 +27,7 @@ import * as deltas from "./deltas";
 import * as documents from "./documents";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import type { ITenantRepository } from "../../mongoTenantRepository";
+import { ITenantRepository } from "../../../riddler";
 
 export function create(
 	config: Provider,

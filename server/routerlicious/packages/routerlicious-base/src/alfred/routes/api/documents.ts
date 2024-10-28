@@ -51,7 +51,7 @@ import { v4 as uuid } from "uuid";
 import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
-import type { ITenantRepository } from "../../mongoTenantRepository";
+import { ITenantRepository, ITenantDocument } from "../../../riddler";
 
 export function create(
 	storage: IDocumentStorage,
@@ -302,7 +302,7 @@ export function create(
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
 	}> {
-		const tenantInfo = await tenantRepository.findOne(tenantId);
+		const tenantInfo: ITenantDocument = await tenantRepository.findOne({ _id: tenantId });
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
 		// const privateLinkEnable = true;
 		if (privateLinkEnable) {

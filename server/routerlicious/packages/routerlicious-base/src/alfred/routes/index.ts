@@ -23,7 +23,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import type { ITenantRepository } from "../mongoTenantRepository";
+import { ITenantRepository } from "../../riddler";
 
 export interface IRoutes {
 	agent: Router;

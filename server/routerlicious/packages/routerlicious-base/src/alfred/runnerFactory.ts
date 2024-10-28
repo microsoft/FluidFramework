@@ -22,8 +22,7 @@ import {
 import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
-import { ITenantDocument } from "./tenantManager";
-import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
+import { ITenantRepository, MongoTenantRepository, ITenantDocument } from "../riddler";
 
 /**
  * @internal

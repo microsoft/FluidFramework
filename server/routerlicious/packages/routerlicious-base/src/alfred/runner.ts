@@ -29,7 +29,7 @@ import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
-import type { ITenantRepository } from "./mongoTenantRepository";
+import { ITenantRepository } from "../riddler";
 
 /**
  * @internal
