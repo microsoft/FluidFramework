@@ -41,7 +41,7 @@ class TestLogger implements ITelemetryBufferedLogger {
 			...event,
 			// If there's an override for the hostName in FLUID_LOGGER_PROPS,
 			// display that in the telemetry instead of the package name.
-			hostName: propsDict.hostName ?? pkgName,
+			hostName: propsDict?.hostName ?? pkgName,
 			details: JSON.stringify(propsDict),
 		});
 	}
