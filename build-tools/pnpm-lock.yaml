@@ -41,7 +41,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ~0.49.0
-        version: 0.49.0
+        version: 0.49.0(@types/node@18.19.60)
       '@microsoft/api-documenter':
         specifier: ^7.25.21
         version: 7.25.21
@@ -115,17 +115,17 @@ importers:
         specifier: ^4.0.30
         version: 4.0.30
       '@oclif/plugin-autocomplete':
-        specifier: ^3.2.6
-        version: 3.2.6
+        specifier: ^3.2.7
+        version: 3.2.7
       '@oclif/plugin-commands':
-        specifier: ^4.1.3
-        version: 4.1.3
+        specifier: ^4.1.5
+        version: 4.1.5
       '@oclif/plugin-help':
         specifier: ^6.2.16
         version: 6.2.16
       '@oclif/plugin-not-found':
-        specifier: ^3.2.22
-        version: 3.2.22
+        specifier: ^3.2.24
+        version: 3.2.24(@types/node@18.19.60)
       '@octokit/core':
         specifier: ^5.2.0
         version: 5.2.0
@@ -214,8 +214,8 @@ importers:
         specifier: ^16.14.20
         version: 16.14.20
       oclif:
-        specifier: ^4.15.12
-        version: 4.15.12
+        specifier: ^4.15.16
+        version: 4.15.16(@types/node@18.19.60)
       prettier:
         specifier: ~3.2.5
         version: 3.2.5
@@ -428,8 +428,8 @@ importers:
         specifier: ^4.0.8
         version: 4.0.8
       oclif:
-        specifier: ^4.15.12
-        version: 4.15.12
+        specifier: ^4.15.16
+        version: 4.15.16(@types/node@18.19.60)
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
@@ -463,7 +463,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools-bin':
         specifier: npm:@fluidframework/build-tools@~0.49.0
-        version: /@fluidframework/build-tools@0.49.0
+        version: /@fluidframework/build-tools@0.49.0(@types/node@18.19.60)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.57.0)(typescript@5.4.5)
@@ -623,7 +623,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools-bin':
         specifier: npm:@fluidframework/build-tools@~0.49.0
-        version: /@fluidframework/build-tools@0.49.0
+        version: /@fluidframework/build-tools@0.49.0(@types/node@18.19.60)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.57.0)(typescript@5.4.5)
@@ -699,7 +699,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools-bin':
         specifier: npm:@fluidframework/build-tools@~0.49.0
-        version: /@fluidframework/build-tools@0.49.0
+        version: /@fluidframework/build-tools@0.49.0(@types/node@18.19.60)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.57.0)(typescript@5.4.5)
@@ -734,17 +734,17 @@ importers:
         specifier: ^4.0.30
         version: 4.0.30
       '@oclif/plugin-autocomplete':
-        specifier: ^3.2.6
-        version: 3.2.6
+        specifier: ^3.2.7
+        version: 3.2.7
       '@oclif/plugin-commands':
-        specifier: ^4.1.3
-        version: 4.1.3
+        specifier: ^4.1.5
+        version: 4.1.5
       '@oclif/plugin-help':
         specifier: ^6.2.16
         version: 6.2.16
       '@oclif/plugin-not-found':
-        specifier: ^3.2.22
-        version: 3.2.22
+        specifier: ^3.2.24
+        version: 3.2.24(@types/node@18.19.60)
       chalk:
         specifier: ^2.4.2
         version: 2.4.2
@@ -763,7 +763,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools-bin':
         specifier: npm:@fluidframework/build-tools@~0.49.0
-        version: /@fluidframework/build-tools@0.49.0
+        version: /@fluidframework/build-tools@0.49.0(@types/node@18.19.60)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.57.0)(typescript@5.4.5)
@@ -816,8 +816,8 @@ importers:
         specifier: ^2.30.1
         version: 2.30.1
       oclif:
-        specifier: ^4.15.12
-        version: 4.15.12
+        specifier: ^4.15.16
+        version: 4.15.16(@types/node@18.19.60)
       rimraf:
         specifier: ^4.4.1
         version: 4.4.1
@@ -1325,15 +1325,15 @@ packages:
     hasBin: true
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/version-tools': 0.49.0
-      '@fluidframework/build-tools': 0.49.0
+      '@fluid-tools/version-tools': 0.49.0(@types/node@18.19.60)
+      '@fluidframework/build-tools': 0.49.0(@types/node@18.19.60)
       '@fluidframework/bundle-size-tools': 0.49.0
       '@microsoft/api-extractor': 7.47.11(@types/node@18.19.60)
       '@oclif/core': 4.0.30
-      '@oclif/plugin-autocomplete': 3.2.6
-      '@oclif/plugin-commands': 4.1.3
+      '@oclif/plugin-autocomplete': 3.2.7
+      '@oclif/plugin-commands': 4.1.5
       '@oclif/plugin-help': 6.2.16
-      '@oclif/plugin-not-found': 3.2.22
+      '@oclif/plugin-not-found': 3.2.24(@types/node@18.19.60)
       '@octokit/core': 4.2.4
       '@octokit/rest': 21.0.2
       '@rushstack/node-core-library': 3.66.1(@types/node@18.19.60)
@@ -1364,7 +1364,7 @@ packages:
       minimatch: 7.4.6
       node-fetch: 3.3.2
       npm-check-updates: 16.14.20
-      oclif: 4.15.12
+      oclif: 4.15.16(@types/node@18.19.60)
       prettier: 3.2.5
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -1401,20 +1401,21 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools@0.49.0:
+  /@fluid-tools/version-tools@0.49.0(@types/node@18.19.60):
     resolution: {integrity: sha512-3BI1rmCBx7ZZGhuchtwCNgL6XSRMRtDtflvi2ks7dKE04T8WoKxUwi3+YNVlXf5XlcSLtwprbRjnraIA2rjgAQ==}
     engines: {node: '>=18.17.1'}
     hasBin: true
     dependencies:
       '@oclif/core': 4.0.30
-      '@oclif/plugin-autocomplete': 3.2.6
-      '@oclif/plugin-commands': 4.1.3
+      '@oclif/plugin-autocomplete': 3.2.7
+      '@oclif/plugin-commands': 4.1.5
       '@oclif/plugin-help': 6.2.16
-      '@oclif/plugin-not-found': 3.2.22
+      '@oclif/plugin-not-found': 3.2.24(@types/node@18.19.60)
       chalk: 2.4.2
       semver: 7.6.3
       table: 6.8.2
     transitivePeerDependencies:
+      - '@types/node'
       - bufferutil
       - react-devtools-core
       - supports-color
@@ -1426,12 +1427,12 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.49.0:
+  /@fluidframework/build-tools@0.49.0(@types/node@18.19.60):
     resolution: {integrity: sha512-hz5xf320HfbnpziCOw1I+BqbYktaJbtX5nuSsjSSvJJTzm/RPM+kvRgp02isG8kF1WKhMsMwueHwcNek+sHOxQ==}
     engines: {node: '>=18.17.1'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.49.0
+      '@fluid-tools/version-tools': 0.49.0(@types/node@18.19.60)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       chalk: 2.4.2
@@ -1458,6 +1459,7 @@ packages:
       typescript: 5.4.5
       yaml: 2.6.0
     transitivePeerDependencies:
+      - '@types/node'
       - bufferutil
       - react-devtools-core
       - supports-color
@@ -1799,7 +1801,6 @@ packages:
       '@types/node': 18.19.60
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
-    dev: false
 
   /@inquirer/confirm@3.2.0:
     resolution: {integrity: sha512-oOIwPs0Dvq5220Z8lGL/6LHRTEr9TgLHmiI99Rj1PJ1p1czTys+olrgBqZk4E2qC0YTzeHprxSQmoHioVdJ7Lw==}
@@ -1820,7 +1821,6 @@ packages:
       '@inquirer/core': 10.0.1(@types/node@18.19.60)
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
-    dev: false
 
   /@inquirer/core@10.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-KKTgjViBQUi3AAssqjUFMnMO3CM3qwCHvePV9EW+zTKGKafFGFF01sc1yOIYjLJ7QU52G/FbzKc+c01WLzXmVQ==}
@@ -1837,25 +1837,6 @@ packages:
       yoctocolors-cjs: 2.1.2
     transitivePeerDependencies:
       - '@types/node'
-    dev: false
-
-  /@inquirer/core@9.0.5:
-    resolution: {integrity: sha512-QWG41I7vn62O9stYKg/juKXt1PEbr/4ZZCPb4KgXDQGwgA9M5NBTQ7FnOvT1ridbxkm/wTxLCNraUs7y47pIRQ==}
-    engines: {node: '>=18'}
-    dependencies:
-      '@inquirer/figures': 1.0.5
-      '@inquirer/type': 1.5.1
-      '@types/mute-stream': 0.0.4
-      '@types/node': 20.14.12
-      '@types/wrap-ansi': 3.0.0
-      ansi-escapes: 4.3.2
-      cli-spinners: 2.9.2
-      cli-width: 4.1.0
-      mute-stream: 1.0.0
-      signal-exit: 4.1.0
-      strip-ansi: 6.0.1
-      wrap-ansi: 6.2.0
-      yoctocolors-cjs: 2.1.2
 
   /@inquirer/core@9.2.1:
     resolution: {integrity: sha512-F2VBt7W/mwqEU4bL0RnHNZmC/OxzNx9cOYxHqnXX3MP6ruYvZUZAW9imgN9+h/uBT/oP8Gh888J2OZSbjSeWcg==}
@@ -1887,7 +1868,6 @@ packages:
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
       external-editor: 3.1.0
-    dev: false
 
   /@inquirer/expand@4.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-9anjpdc802YInXekwePsa5LWySzVMHbhVS6v6n5IJxrl8w09mODOeP69wZ1d0WrOvot2buQSmYp4lW/pq8y+zQ==}
@@ -1902,11 +1882,6 @@ packages:
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
       yoctocolors-cjs: 2.1.2
-    dev: false
-
-  /@inquirer/figures@1.0.5:
-    resolution: {integrity: sha512-79hP/VWdZ2UVc9bFGJnoQ/lQMpL74mGgzSYX1xUqCVk7/v73vJCMw1VuyWN1jGkZ9B3z7THAbySqGbCNefcjfA==}
-    engines: {node: '>=18'}
 
   /@inquirer/figures@1.0.7:
     resolution: {integrity: sha512-m+Trk77mp54Zma6xLkLuY+mvanPxlE4A7yNKs2HBiyZ4UkVs28Mv5c/pgWrHeInx+USHeX/WEPzjrWrcJiQgjw==}
@@ -1916,8 +1891,8 @@ packages:
     resolution: {integrity: sha512-wvYnDITPQn+ltktj/O9kQjPxOvpmwcpxLWh8brAyD+jlEbihxtrx9cZdZcxqaCVQj3caw4eZa2Uq5xELo4yXkA==}
     engines: {node: '>=18'}
     dependencies:
-      '@inquirer/core': 9.0.5
-      '@inquirer/type': 1.5.1
+      '@inquirer/core': 9.2.1
+      '@inquirer/type': 1.5.5
 
   /@inquirer/input@4.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-m+SliZ2m43cDRIpAdQxfv5QOeAQCuhS8TGLvtzEP1An4IH1kBES4RLMRgE/fC+z29aN8qYG8Tq/eXQQKTYwqAg==}
@@ -1931,7 +1906,6 @@ packages:
       '@inquirer/core': 10.0.1(@types/node@18.19.60)
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
-    dev: false
 
   /@inquirer/number@3.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-gF3erqfm0snpwBjbyKXUUe17QJ7ebm49btXApajrM0rgCCoYX0o9W5NCuYNae87iPxaIJVjtuoQ42DX32IdbMA==}
@@ -1945,7 +1919,6 @@ packages:
       '@inquirer/core': 10.0.1(@types/node@18.19.60)
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
-    dev: false
 
   /@inquirer/password@4.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-D7zUuX4l4ZpL3D7/SWu9ibijP09jigwHi/gfUHLx5GMS5oXzuMfPV2xPMG1tskco4enTx70HA0VtMXecerpvbg==}
@@ -1960,7 +1933,6 @@ packages:
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
       ansi-escapes: 4.3.2
-    dev: false
 
   /@inquirer/prompts@7.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-cu2CpGC2hz7WTt2VBvdkzahDvYice6vYA/8Dm7Fy3tRNzKuQTF2EY3CV4H2GamveWE6tA2XzyXtbWX8+t4WMQg==}
@@ -1982,7 +1954,6 @@ packages:
       '@inquirer/search': 3.0.1(@types/node@18.19.60)
       '@inquirer/select': 4.0.1(@types/node@18.19.60)
       '@types/node': 18.19.60
-    dev: false
 
   /@inquirer/rawlist@4.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-0LuMOgaWs7W8JNcbiKkoFwyWFDEeCmLqDCygF0hidQUVa6J5grFVRZxrpompiWDFM49Km2rf7WoZwRo1uf1yWQ==}
@@ -1997,7 +1968,6 @@ packages:
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
       yoctocolors-cjs: 2.1.2
-    dev: false
 
   /@inquirer/search@3.0.1(@types/node@18.19.60):
     resolution: {integrity: sha512-ehMqjiO0pAf+KtdONKeCLVy4i3fy3feyRRhDrvzWhiwB8JccgKn7eHFr39l+Nx/FaZAhr0YxIJvkK5NuNvG+Ww==}
@@ -2013,14 +1983,13 @@ packages:
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
       yoctocolors-cjs: 2.1.2
-    dev: false
 
   /@inquirer/select@2.5.0:
     resolution: {integrity: sha512-YmDobTItPP3WcEI86GvPo+T2sRHkxxOq/kXmsBjHS5BVXUgvgZ5AfJjkvQvZr03T81NnI3KrrRuMzeuYUQRFOA==}
     engines: {node: '>=18'}
     dependencies:
       '@inquirer/core': 9.2.1
-      '@inquirer/figures': 1.0.5
+      '@inquirer/figures': 1.0.7
       '@inquirer/type': 1.5.5
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
@@ -2040,13 +2009,6 @@ packages:
       '@types/node': 18.19.60
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
-    dev: false
-
-  /@inquirer/type@1.5.1:
-    resolution: {integrity: sha512-m3YgGQlKNS0BM+8AFiJkCsTqHEFCWn6s/Rqye3mYwvqY6LdfUv12eSwbsgNzrYyrLXiy7IrrjDLPysaSBwEfhw==}
-    engines: {node: '>=18'}
-    dependencies:
-      mute-stream: 1.0.0
 
   /@inquirer/type@1.5.5:
     resolution: {integrity: sha512-MzICLu4yS7V8AA61sANROZ9vT1H3ooca5dSmI1FjZkzq7o/koMsRfQSzRtFo+F3Ao4Sf1C0bpLKejpKB/+j6MA==}
@@ -2070,7 +2032,6 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.19.60
-    dev: false
 
   /@isaacs/cliui@8.0.2:
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -2390,8 +2351,8 @@ packages:
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
 
-  /@oclif/plugin-autocomplete@3.2.6:
-    resolution: {integrity: sha512-PLBvRFt4DRRGcLFTOPcqCOi79Jp03bxXGlbF3kAMzZx9jX2fjiRT54nYnC8qJzL+tcLLA7Oz9b9S07uHTuGu5A==}
+  /@oclif/plugin-autocomplete@3.2.7:
+    resolution: {integrity: sha512-mjXaBwN972UaOj1pjBCy60io4HzGoGjXDC7pUSlpb5BrKY20U0ggkZAehK4EF/DxuMfDz5sHk+8f5Lsgxfm54g==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@oclif/core': 4.0.30
@@ -2401,12 +2362,12 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@oclif/plugin-commands@4.1.3:
-    resolution: {integrity: sha512-wRxYfD+isEtP64RBfhlaUXorM110YgeYEgwMppcSnH0KrvCngxFiKad1HE5MNUratEmDpsDT2UIWh86hOFKkSw==}
+  /@oclif/plugin-commands@4.1.5:
+    resolution: {integrity: sha512-sjIDkCYJAjeIyiYrFsdeiazZnQjPGOU9zYyDUlQ51h192y34O7zkPpppOA6CvEbmabxrNYwUag5jWXWDOybIkA==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@oclif/core': 4.0.30
-      '@oclif/table': 0.1.24
+      '@oclif/table': 0.2.4
       lodash: 4.17.21
       object-treeify: 4.0.1
     transitivePeerDependencies:
@@ -2420,14 +2381,16 @@ packages:
     dependencies:
       '@oclif/core': 4.0.30
 
-  /@oclif/plugin-not-found@3.2.22:
-    resolution: {integrity: sha512-snd/gmYjTYIa8vr5rPLNus0ymKhhITRTFWLlYCJvAZTs2kX+vUMMdpKId9pEPSzoVGmyddNVshWSCJ2FSgR0mg==}
+  /@oclif/plugin-not-found@3.2.24(@types/node@18.19.60):
+    resolution: {integrity: sha512-oseOiNfvcaB4tB9YLnUo16DlW61yi/glfpxk6Z6e5BzQkmD0D0vptfBB6/gLf0/vP+0/C8NZbJoqwae08mRpOA==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@inquirer/confirm': 3.2.0
+      '@inquirer/prompts': 7.0.1(@types/node@18.19.60)
       '@oclif/core': 4.0.30
       ansis: 3.3.2
       fast-levenshtein: 3.0.0
+    transitivePeerDependencies:
+      - '@types/node'
 
   /@oclif/plugin-warn-if-update-available@3.1.20:
     resolution: {integrity: sha512-gvovUQXwWkQZzHG7WknLq+yoSe61Cbv45rEUooKbzo7tfRDChFnCyLQ+OCCldQOsSYvS/KTsiawyyCetSaCR1g==}
@@ -2442,8 +2405,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@oclif/table@0.1.24:
-    resolution: {integrity: sha512-HC5lIdy8Q0crW+ImJhzux3lQ2UobcDM//Tw4+HjTcYi9xzgy1hnKQZ7mYSofgRO42bwN7iZulaLvb8dG1giz0g==}
+  /@oclif/table@0.2.4:
+    resolution: {integrity: sha512-qbkBEkpvIXdiZ844stwX6vH+RaRkOH7k0X3U2zJqRGMJl3Uqr9d78vWpuUX7gmsuspCDavsgi/Gbnx2MXH5GQw==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@oclif/core': 4.0.30
@@ -3197,11 +3160,6 @@ packages:
 
   /@types/node@18.19.60:
     resolution: {integrity: sha512-cYRj7igVqgxhlHFdBHHpU2SNw3+dN2x0VTZJtLYk6y/ieuGN4XiBgtDjYVktM/yk2y/8pKMileNc6IoEzEJnUw==}
-    dependencies:
-      undici-types: 5.26.5
-
-  /@types/node@20.14.12:
-    resolution: {integrity: sha512-r7wNXakLeSsGT0H1AU863vS2wa5wBOK4bWMjZz2wj+8nBx+m5PeIn0k8AloSLpRuiwdRQZwarZqHE4FNArPuJQ==}
     dependencies:
       undici-types: 5.26.5
 
@@ -9680,7 +9638,6 @@ packages:
   /mute-stream@2.0.0:
     resolution: {integrity: sha512-WWdIxpyjEn+FhQJQQv9aQAYlHoNVdzIzUySNV1gHUPDSdZJ3yZn7pAAbQcV7B56Mvu881q9FZV+0Vx2xC44VWA==}
     engines: {node: ^18.17.0 || >=20.5.0}
-    dev: false
 
   /natural-compare-lite@1.4.0:
     resolution: {integrity: sha512-Tj+HTDSJJKaZnfiuw+iaF9skdPpTo2GtEly5JHnWV/hfv2Qj/9RKsGISQtLh2ox3l5EAGw487hnBee0sIJ6v2g==}
@@ -10033,8 +9990,8 @@ packages:
       es-object-atoms: 1.0.0
     dev: true
 
-  /oclif@4.15.12:
-    resolution: {integrity: sha512-L1D7dM6nEA+6QZSm+h7qfN7jLF19eOopCE8bs5V4Hmj002c2i4vw41rSL95yaUaLYM6kDlCEsJhgs+gC2wVsiA==}
+  /oclif@4.15.16(@types/node@18.19.60):
+    resolution: {integrity: sha512-y/xBQpFrYZihmEoCUwCzGM2aoKKWHMEcnEHrXrsrTOmDIcS8diwk7IoL8k72Ztp7kbD+GrAVhUXfsbo1jUZCaQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     dependencies:
@@ -10045,7 +10002,7 @@ packages:
       '@inquirer/select': 2.5.0
       '@oclif/core': 4.0.30
       '@oclif/plugin-help': 6.2.16
-      '@oclif/plugin-not-found': 3.2.22
+      '@oclif/plugin-not-found': 3.2.24(@types/node@18.19.60)
       '@oclif/plugin-warn-if-update-available': 3.1.20
       async-retry: 1.3.3
       chalk: 4.1.2
@@ -10063,6 +10020,7 @@ packages:
       tiny-jsonc: 1.0.1
       validate-npm-package-name: 5.0.1
     transitivePeerDependencies:
+      - '@types/node'
       - supports-color
 
   /once@1.4.0:
