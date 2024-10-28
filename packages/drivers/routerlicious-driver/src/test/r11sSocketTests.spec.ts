@@ -143,11 +143,6 @@ describe("R11s Socket Tests", () => {
 			(error as any).internalErrorCode === "TokenRevoked",
 			"Error internal code should be TokenRevoked",
 		);
-		assert(
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			documentService["refreshTokenOnConnect"],
-			"Token should be set to refresh on connect",
-		);
 	});
 
 	it("connect_document_error with Cluster Draining error", async () => {

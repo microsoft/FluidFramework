@@ -15,7 +15,6 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	NetworkErrorBasic,
@@ -61,7 +60,6 @@ export class DocumentService
 {
 	private storageManager: GitManager | undefined;
 	private noCacheStorageManager: GitManager | undefined;
-	private refreshTokenOnConnect = false;
 
 	private _policies: IDocumentServicePolicies | undefined;
 
@@ -223,9 +221,6 @@ export class DocumentService
 							.then(
 								(newOrdererToken) => {
 									this.ordererRestWrapper.setToken(newOrdererToken);
-									// Since the token is refreshed, we should not refresh it again on the next connect
-									// if we don't see any error regarding Token Revocation.
-									this.refreshTokenOnConnect = false;
 									return newOrdererToken;
 								},
 								(error) => {
@@ -270,7 +265,7 @@ export class DocumentService
 		// Attempt to establish connection.
 		// Retry with new token on authorization error; otherwise, allow container layer to handle.
 		try {
-			const connection = await connect(this.refreshTokenOnConnect);
+			const connection = await connect();
 			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag which maybe provided by the service during connection.
 			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
 			const shouldSummarizeProtocolTree = (connection as R11sDocumentDeltaConnection).details
@@ -282,22 +277,15 @@ export class DocumentService
 				summarizeProtocolTree: shouldSummarizeProtocolTree,
 			};
 
-			connection.once("disconnect", (reason: IAnyDriverError) => {
-				if (reason.errorType === RouterliciousErrorTypes.authorizationError) {
-					this.refreshTokenOnConnect = true;
-				}
-			});
 			return connection;
 		} catch (error: any) {
 			if (
 				typeof error === "object" &&
 				error !== null &&
-				((error as Partial<IR11sError>).errorType ===
-					RouterliciousErrorTypes.authorizationError ||
-					error?.statusCode === 401)
+				(error as Partial<IR11sError>).errorType === RouterliciousErrorTypes.authorizationError
 			) {
 				// Fetch new token and retry once,
-				// otherwise 401 will be bubbled up as non-retriable AuthorizationError.
+				// otherwise 401/403 will be bubbled up as non-retriable AuthorizationError.
 				return connect(true /* refreshToken */);
 			}
 			throw error;
