@@ -302,15 +302,10 @@ export function create(
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
 	}> {
-		// const tenantInfo = await tenantRepository.findOne(tenantId);
-		// const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
-		const privateLinkEnable = true;
-		if (
-			privateLinkEnable &&
-			externalOrdererUrl.includes("https://") &&
-			(externalOrdererUrl.includes("frs.azure") ||
-				externalOrdererUrl.includes("fluidrelay.azure"))
-		) {
+		const tenantInfo = await tenantRepository.findOne(tenantId);
+		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+		// const privateLinkEnable = true;
+		if (privateLinkEnable) {
 			return {
 				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
 				documentHistorianUrl: externalHistorianUrl.replace(
