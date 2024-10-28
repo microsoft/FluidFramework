@@ -356,6 +356,10 @@ export class FluidDataStoreRuntime
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
+			// if there are not path parts, and the request is via a handle
+			// then we should return the entrypoint object for this runtime.
+			// this allows the entrypoint handle to be resolved without the need
+			// for the entrypoint object to know anything about requests or handles.
 			if (parser.pathParts.length === 0 && request.headers?.viaHandle === true) {
 				return { mimeType: "fluid/object", status: 200, value: await this.entryPoint.get() };
 			}

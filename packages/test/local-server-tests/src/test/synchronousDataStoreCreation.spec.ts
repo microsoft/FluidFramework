@@ -24,6 +24,9 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 
 import { createLoader } from "../utils.js";
 
+const mapFactory = SharedMap.getFactory();
+const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
+
 // a data store object which can create another instance of it self as synchronously as possible
 class DataStoreWithSyncCreate {
 	public static create(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
