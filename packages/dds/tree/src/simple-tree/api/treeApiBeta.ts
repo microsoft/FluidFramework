@@ -12,7 +12,11 @@ import {
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+import type {
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+	UnsafeUnknownSchema,
+} from "../schemaTypes.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 import { createFromCursor, cursorFromInsertable } from "./create.js";
 import type { ITreeCursorSynchronous } from "../../core/index.js";
@@ -145,7 +149,7 @@ export const TreeBeta: {
 		if (!kernel.isHydrated()) {
 			return createFromCursor(
 				kernel.schema,
-				cursorFromInsertable(kernel.schema, node),
+				cursorFromInsertable<UnsafeUnknownSchema>(kernel.schema, node),
 			) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
 
