@@ -598,11 +598,10 @@ export abstract class FluidDataStoreContext
 	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent, local } = messageCollection;
 		const safeTelemetryProps = extractSafePropertiesFromMessage(envelope);
-		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
+		// Tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
 		// "verifyNotClosed" which logs tombstone errors.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 
-		// It's sufficient to record only the last message in the batch to track the latest change to this data store.
 		this.summarizerNode.recordChange(envelope as ISequencedDocumentMessage);
 
 		if (this.loaded) {
