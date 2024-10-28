@@ -140,7 +140,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
     makeVisibleAndAttachGraph(): void;
     // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+<<<<<<< HEAD
     processMessages?(props: IRuntimeMessageCollection): void;
+=======
+    processMessages?(messageCollection: IRuntimeMessageCollection): void;
+>>>>>>> opBunchingPart2
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -284,12 +288,16 @@ export interface IProvideFluidDataStoreRegistry {
 }
 
 // @alpha
+export interface IRuntimeMessageCollection {
+    envelope: ISequencedMessageEnvelope;
+    local: boolean;
+    messagesContent: IRuntimeMessagesContent[];
+}
+
+// @alpha
 export interface IRuntimeMessagesContent {
-    // (undocumented)
     clientSequenceNumber: number;
-    // (undocumented)
     contents: unknown;
-    // (undocumented)
     localOpMetadata: unknown;
 }
 

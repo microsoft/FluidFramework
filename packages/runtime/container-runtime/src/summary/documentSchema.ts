@@ -429,6 +429,7 @@ function arrayToProp(arr: string[]) {
  *
  * @legacy
  * @alpha
+ * @sealed
  */
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
@@ -601,55 +602,73 @@ export class DocumentsSchemaController {
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
 	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 * @deprecated It has been replaced by processDocumentSchemaMessages instead.
 	 */
 	public processDocumentSchemaOp(
 		content: IDocumentSchemaChangeMessage,
 		local: boolean,
 		sequenceNumber: number,
 	) {
-		this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
-		this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
-		// validate is strickly less, not equal
-		assert(
-			this.documentSchema.refSeq < sequenceNumber,
-			0x950 /* time should move forward only! */,
-		);
+		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
+	}
 
-		if (content.refSeq !== this.documentSchema.refSeq) {
-			// CAS failed
-			return false;
+	/**
+	 * Process document schema change messages
+	 * Called by ContainerRuntime whenever it sees document schema messages.
+	 * @param contents - contents of the messages
+	 * @param local - whether op is local
+	 * @param sequenceNumber - sequence number of the op
+	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 */
+	public processDocumentSchemaMessages(
+		contents: IDocumentSchemaChangeMessage[],
+		local: boolean,
+		sequenceNumber: number,
+	) {
+		for (const content of contents) {
+			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
+			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
+			// validate is strickly less, not equal
+			assert(
+				this.documentSchema.refSeq < sequenceNumber,
+				0x950 /* time should move forward only! */,
+			);
+
+			if (content.refSeq !== this.documentSchema.refSeq) {
+				// CAS failed
+				return false;
+			}
+
+			// This assert should be after checking for successful CAS above.
+			// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
+			assert(
+				!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
+				0x951 /* not sending ops */,
+			);
+
+			// Changes are in effect. Immediately check that this client understands these changes
+			checkRuntimeCompatibility(content, "change");
+
+			const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
+			this.documentSchema = schema as IDocumentSchemaCurrent;
+			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
+			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
+
+			// legacy behavior is automatically off for the document once someone sends a schema op -
+			// from now on it's fully controlled by ops.
+			// This is very important, as summarizeDocumentSchema() should use this new schema!
+			this.explicitSchemaControl = true;
+
+			// Stop attempting changing schema.
+			// If it was local op, then we succeeded and do not need to try again.
+			// If it was remote op, then some changes happened to schema.
+			// We would need to recalculate this.futureSchema by merging changes that we just received.
+			// Avoid this complexity for now - a new client session (loading from new summary with these changes)
+			// will automatically do this recalculation and will figure out
+			this.futureSchema = undefined;
+
+			this.onSchemaChange(this.sessionSchema);
 		}
-
-		// This assert should be after checking for successful CAS above.
-		// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
-		assert(
-			!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
-			0x951 /* not sending ops */,
-		);
-
-		// Changes are in effect. Immediately check that this client understands these changes
-		checkRuntimeCompatibility(content, "change");
-
-		const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
-		this.documentSchema = schema as IDocumentSchemaCurrent;
-		this.sessionSchema = and(this.documentSchema, this.desiredSchema);
-		assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
-
-		// legacy behavior is automatically off for the document once someone sends a schema op -
-		// from now on it's fully controlled by ops.
-		// This is very important, as summarizeDocumentSchema() should use this new schema!
-		this.explicitSchemaControl = true;
-
-		// Stop attempting changing schema.
-		// If it was local op, then we succeeded and do not need to try again.
-		// If it was remote op, then some changes happened to schema.
-		// We would need to recalculate this.futureSchema by merging changes that we just received.
-		// Avoid this complexity for now - a new client session (loading from new summary with these changes)
-		// will automatically do this recalculation and will figure out
-		this.futureSchema = undefined;
-
-		this.onSchemaChange(this.sessionSchema);
-
 		return true;
 	}
 

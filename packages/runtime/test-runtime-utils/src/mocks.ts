@@ -998,6 +998,9 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -1006,6 +1009,20 @@ export class MockFluidDataStoreRuntime
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
 		});
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messageCollection.messagesContent) {
+			this.process(
+				{ ...messageCollection.envelope, contents, clientSequenceNumber },
+				messageCollection.local,
+				localOpMetadata,
+			);
+		}
 	}
 
 	public processSignal(message: any, local: boolean) {
