@@ -174,7 +174,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     // @deprecated (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
-    processMessages(props: IRuntimeMessageCollection): void;
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     reSubmit(content: any, localOpMetadata: unknown): void;
     // (undocumented)

@@ -140,11 +140,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     makeVisibleAndAttachGraph(): void;
     // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-<<<<<<< HEAD
-    processMessages?(props: IRuntimeMessageCollection): void;
-=======
     processMessages?(messageCollection: IRuntimeMessageCollection): void;
->>>>>>> opBunchingPart2
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -264,16 +260,6 @@ export interface IInboundSignalMessage extends ISignalMessage {
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
-
-// @alpha
-export interface IRuntimeMessageCollection {
-    // (undocumented)
-    local: boolean;
-    // (undocumented)
-    message: ISequencedMessageEnvelope;
-    // (undocumented)
-    messagesContent: IRuntimeMessagesContent[];
-}
 
 // @alpha (undocumented)
 export interface IProvideFluidDataStoreFactory {
