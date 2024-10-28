@@ -5,14 +5,24 @@
 
 import { strict as assert } from "node:assert";
 import path from "node:path";
+
+import {
+	ReleaseVersion,
+	VersionBumpType,
+	detectBumpType,
+	detectVersionScheme,
+	getPreviousVersions,
+	isVersionBumpType,
+} from "@fluid-tools/version-tools";
+import { rawlist } from "@inquirer/prompts";
 import { Command, Flags, ux } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra/esm";
-import inquirer from "inquirer";
 import sortJson from "sort-json";
 import { table } from "table";
 
+import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
 	Context,
@@ -29,17 +39,6 @@ import {
 	sortVersions,
 	toReportKind,
 } from "../../library/index.js";
-
-import {
-	ReleaseVersion,
-	VersionBumpType,
-	detectBumpType,
-	detectVersionScheme,
-	getPreviousVersions,
-	isVersionBumpType,
-} from "@fluid-tools/version-tools";
-
-import { releaseGroupFlag } from "../../flags.js";
 import { CommandLogger } from "../../logging.js";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
 
@@ -233,8 +232,6 @@ export abstract class ReleaseReportBaseCommand<
 		switch (latestReleaseChooseMode) {
 			case undefined:
 			case "interactive": {
-				let answer: inquirer.Answers | undefined;
-
 				const recentReleases =
 					this.numberBusinessDaysToConsiderRecent === undefined
 						? sortedByDate
@@ -252,9 +249,7 @@ export abstract class ReleaseReportBaseCommand<
 				if (recentReleases.length === 1) {
 					latestReleasedVersion = recentReleases[0];
 				} else if (recentReleases.length > 1) {
-					const question: inquirer.ListQuestion = {
-						type: "list",
-						name: "selectedPackageVersion",
+					const answer = await rawlist({
 						message: `Multiple versions of ${releaseGroupOrPackage} have been released. Select the one you want to include in the release report.`,
 						choices: recentReleases.map((v) => {
 							return {
@@ -263,13 +258,8 @@ export abstract class ReleaseReportBaseCommand<
 								short: v.version,
 							};
 						}),
-					};
-
-					answer = await inquirer.prompt(question);
-					const selectedVersion =
-						answer === undefined
-							? recentReleases[0].version
-							: (answer.selectedPackageVersion as string);
+					});
+					const selectedVersion = answer ?? recentReleases[0].version;
 					latestReleasedVersion = recentReleases.find((v) => v.version === selectedVersion);
 				}
 
