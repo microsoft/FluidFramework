@@ -171,6 +171,12 @@ function makePresenceView(
 			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
+
+		presenceConfig.presence.events.on("attendeeDisconnected", (attendee) => {
+			const name = audience.getMembers().get(attendee.connectionId())?.name;
+			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} left`;
+			addLogEntry(logContentDiv, update);
+		});
 	}
 	logDiv.append(logHeaderDiv, logContentDiv);
 
