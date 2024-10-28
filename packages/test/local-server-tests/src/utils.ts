@@ -6,12 +6,11 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	type IFluidCodeDetails,
-	type IHostLoader,
 	type ILoaderOptions,
 	type IRuntimeFactory,
 	ICodeDetailsLoader,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
@@ -59,7 +58,7 @@ export interface CreateLoaderDefaultResults
 	codeLoader: LocalCodeLoader;
 	defaultDataStoreFactory: TestFluidObjectFactory;
 	runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
-	loader: IHostLoader;
+	loaderProps: ILoaderProps;
 }
 
 export function createLoader<T extends CreateLoaderParams>(
@@ -88,11 +87,11 @@ export function createLoader<T extends CreateLoaderParams>(
 
 	const codeLoader = opts.codeLoader ?? new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-	const loader = new Loader({
+	const loaderProps = {
 		codeLoader,
 		documentServiceFactory,
 		urlResolver,
-	});
+	};
 
 	const rtn: OptionalToDefault<CreateLoaderParams, CreateLoaderDefaultResults> = {
 		deltaConnectionServer,
@@ -102,7 +101,7 @@ export function createLoader<T extends CreateLoaderParams>(
 		defaultDataStoreFactory,
 		runtimeFactory,
 		codeLoader,
-		loader,
+		loaderProps,
 	};
 	return rtn as OptionalToDefault<T, CreateLoaderDefaultResults>;
 }

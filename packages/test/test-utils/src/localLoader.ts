@@ -33,9 +33,11 @@ export function createLoader(
 	urlResolver: IUrlResolver,
 	logger?: ITelemetryBaseLogger,
 	options?: ILoaderOptions,
+	// eslint-disable-next-line import/no-deprecated
 ): IHostLoader {
 	const codeLoader: ICodeDetailsLoader = new LocalCodeLoader(packageEntries);
 
+	// eslint-disable-next-line import/no-deprecated
 	return new Loader({
 		urlResolver,
 		documentServiceFactory,

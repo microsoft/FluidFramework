@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ILoader,
-	LoaderHeader,
-	type IContainer,
-} from "@fluidframework/container-definitions/internal";
+import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
+
+import { resolve, type ILoaderProps } from "./loader.js";
 
 /* eslint-disable jsdoc/check-indentation */
 
@@ -33,7 +31,7 @@ import { GenericError } from "@fluidframework/telemetry-utils/internal";
  *    network connectivity issues / ability to cancel (IContainer.disconnect) or close container (IContainer.close)
  *    This flow needs to fetch ops (potentially connecting to delta connection), and any retriable errors on this path result in infinite retry.
  *    If you need to cancel that process, consider supplying AbortSignal parameter.
- * @param loader - loader instance to use to load container
+ * @param loaderProps - loader props to use to load container.
  * @param request - request identifying container instance / load parameters. LoaderHeader.loadMode headers are ignored (see above)
  * @param loadToSequenceNumber - optional sequence number. If provided, ops are processed up to this sequence number.
  * @param signal - optional abort signal that can be used to cancel waiting for the ops.
@@ -42,19 +40,22 @@ import { GenericError } from "@fluidframework/telemetry-utils/internal";
  * @internal
  */
 export async function loadContainerPaused(
-	loader: ILoader,
+	loaderProps: ILoaderProps,
 	request: IRequest,
 	loadToSequenceNumber?: number,
 	signal?: AbortSignal,
 ): Promise<IContainer> {
-	const container = await loader.resolve({
-		url: request.url,
-		headers: {
-			...request.headers,
-			// ensure we do not process any ops, such that we can examine container before ops starts to flow.
-			[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
+	const container = await resolve(
+		{
+			url: request.url,
+			headers: {
+				...request.headers,
+				// ensure we do not process any ops, such that we can examine container before ops starts to flow.
+				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
+			},
 		},
-	});
+		loaderProps,
+	);
 
 	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
 	container.forceReadonly?.(true);

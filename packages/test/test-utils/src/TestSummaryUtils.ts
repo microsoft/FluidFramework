@@ -61,6 +61,7 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 /** @internal */
 export async function createSummarizerCore(
 	container: IContainer,
+	// eslint-disable-next-line import/no-deprecated
 	loader: IHostLoader,
 	summaryVersion?: string,
 ) {
