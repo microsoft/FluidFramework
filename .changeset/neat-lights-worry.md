@@ -15,8 +15,8 @@ A new function `processMessages` has been added in its place which will be calle
 "section": other
 ---
 
-The timing of the `op` event on `IFluidDataStoreRuntimeEvents` has changed.
+The timing of the `op` event on `IFluidDataStoreRuntimeEvents` and `IContainerRuntimeBaseEvents` has changed.
 
-Previous behavior - It was emitted after an op was processed and before the next op was processed.
+Previous behavior - It was emitted immediately after an op was processed and before the next op was processed.
 
-New behavior - It will still be emitted after an op is processed. However, other ops for the data store in a batch may be processed before it is emitted.
+New behavior - It will still be emitted after an op is processed but it may not be immediate. Other ops in a batch may be processed before the op event is emitted for an op.

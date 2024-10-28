@@ -275,21 +275,15 @@ export interface IProvideFluidDataStoreRegistry {
 
 // @alpha
 export interface IRuntimeMessageCollection {
-    // (undocumented)
     envelope: ISequencedMessageEnvelope;
-    // (undocumented)
     local: boolean;
-    // (undocumented)
     messagesContent: IRuntimeMessagesContent[];
 }
 
 // @alpha
 export interface IRuntimeMessagesContent {
-    // (undocumented)
     clientSequenceNumber: number;
-    // (undocumented)
     contents: unknown;
-    // (undocumented)
     localOpMetadata: unknown;
 }
 

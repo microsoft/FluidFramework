@@ -343,7 +343,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	/**
 	 * Processes the op.
-	 * @deprecated - processMessages is used instead to process messages for a channel.
+	 * @deprecated processMessages should be used instead to process messages for a channel.
 	 */
 	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
