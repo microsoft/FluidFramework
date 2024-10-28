@@ -99,11 +99,8 @@ class FileLogger implements ITelemetryBufferedLogger {
 			hostName: pkgName,
 			testVersion: pkgVersion,
 		};
-		if (
-			process.env.FLUID_LOGGER_PROPS !== undefined &&
-			process.env.FLUID_LOGGER_PROPS.includes("displayName") === true
-		) {
-			plainEvent.details = JSON.stringify(process.env.FLUID_LOGGER_PROPS);
+		if (process.env.FLUID_LOGGER_PROPS !== undefined) {
+			plainEvent.details = process.env.FLUID_LOGGER_PROPS;
 		}
 		this.baseLogger?.send(plainEvent);
 
