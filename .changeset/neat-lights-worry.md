@@ -1,5 +1,4 @@
 ---
-"@fluidframework/datastore-definitions": minor
 "@fluidframework/runtime-definitions": minor
 "@fluidframework/test-runtime-utils": minor
 ---
