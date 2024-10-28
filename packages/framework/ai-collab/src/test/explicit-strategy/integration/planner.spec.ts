@@ -191,9 +191,9 @@ describe.skip("Ai Planner App", () => {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			treeNode: view.root.taskGroups[0]!,
 			prompt: {
-				systemRoleContext: "You are a managing objects with a priority field.",
-				userAsk:
-					"Change the priority of the first task within the first task group from low to high",
+				systemRoleContext:
+					"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+				userAsk: "Change the priority of the first task from low to high",
 			},
 			planningStep: true,
 			finalReviewStep: true,
