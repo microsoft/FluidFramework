@@ -43,7 +43,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.45.0",
+		"@fluidframework/build-tools": "^0.49.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@5.0.0",
 		"concurrently": "^8.2.1",
@@ -62,12 +62,12 @@
 	},
 	"typeValidation": {
 		"broken": {
-      "Class_TokenRevokedError": {
-        "backCompat": false
-      },
-      "Class_TokenRevocationError": {
-        "backCompat": false
-      },
+			"Class_TokenRevokedError": {
+				"backCompat": false
+			},
+			"Class_TokenRevocationError": {
+				"backCompat": false
+			},
 			"ClassStatics_TokenRevokedError": {
 				"backCompat": false
 			},
